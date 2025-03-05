@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шифрування - Шифр Цезаря</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --error-color: #FF5252;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+        }
+
+        p {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            text-align: left;
+            font-size: 1.2rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.4rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.4rem;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            word-break: break-all;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .success {
+            color: var(--primary-color);
+        }
+
+        .error {
+            color: var(--error-color);
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            p {
+                font-size: 1.1rem;
+            }
+
+            input, .btn, label {
+                font-size: 1.2rem;
+            }
+
+            #result {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Шифр Цезаря</h1>
+        <p>Введіть текст і ключ для шифрування:</p>
+        
+        <div class="input-group">
+            <label for="text">Текст:</label>
+            <input type="text" id="text" placeholder="Введіть текст для шифрування">
+        </div>
+        
+        <div class="input-group">
+            <label for="key">Ключ:</label>
+            <input type="number" id="key" placeholder="Введіть число для зсуву">
+        </div>
+        
+        <button class="btn" onclick="encryptText()">Зашифрувати</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Клас для шифрування
+        class CaesarCipher {
+            constructor() {
+                this.alphabet = 'абвгґдежзийіклмнопрстуфхцчшщьюя';
+            }
+
+            encrypt(text, key) {
+                if (!text || isNaN(key)) {
+                    throw new Error('Будь ласка, введіть текст і ключ.');
+                }
+
+                return text
+                    .toLowerCase()
+                    .split('')
+                    .map(char => this.encryptChar(char, key))
+                    .join('');
+            }
+
+            encryptChar(char, shift) {
+                const index = this.alphabet.indexOf(char);
+                if (index === -1) {
+                    return char;
+                }
+                return this.alphabet[(index + shift + this.alphabet.length) % this.alphabet.length];
+            }
+        }
+
+        // Функція для обробки шифрування
+        function encryptText() {
+            const textInput = document.getElementById('text');
+            const keyInput = document.getElementById('key');
+            const resultDiv = document.getElementById('result');
+            const cipher = new CaesarCipher();
+
+            try {
+                const encryptedText = cipher.encrypt(textInput.value, parseInt(keyInput.value));
+                resultDiv.textContent = `Зашифрований текст: ${encryptedText}`;
+                resultDiv.className = 'success';
+            } catch (error) {
+                resultDiv.textContent = error.message;
+                resultDiv.className = 'error';
+            }
+        }
+    </script>
+</body>
+</html>
