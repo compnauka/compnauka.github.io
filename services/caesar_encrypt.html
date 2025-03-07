@@ -7,9 +7,13 @@
     <style>
         :root {
             --primary-color: #4CAF50;
+            --primary-dark: #45a049;
+            --primary-light: #e8f5e9;
             --error-color: #FF5252;
             --background-color: #f4f4f4;
             --text-color: #333;
+            --accent-color: #2196F3;
+            --card-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -27,22 +31,36 @@
             flex-direction: column;
             align-items: center;
             padding: 30px;
+            min-height: 100vh;
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
             background-color: white;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--card-shadow);
             text-align: center;
+            margin-bottom: 30px;
         }
 
         h1 {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             color: var(--primary-color);
             font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background-color: var(--primary-color);
+            margin: 8px auto 0;
+            border-radius: 2px;
         }
 
         p {
@@ -52,6 +70,7 @@
 
         .input-group {
             margin-bottom: 25px;
+            position: relative;
         }
 
         label {
@@ -59,6 +78,8 @@
             margin-bottom: 10px;
             text-align: left;
             font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
         }
 
         input {
@@ -67,12 +88,13 @@
             font-size: 1.4rem;
             border: 2px solid #ddd;
             border-radius: 8px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
 
         input:focus {
             outline: none;
             border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
         }
 
         .btn {
@@ -84,23 +106,93 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 1.4rem;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             width: 100%;
             margin-top: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .btn:hover {
-            background-color: #45a049;
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .result-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: left;
         }
 
         #result {
-            margin-top: 30px;
             font-size: 1.5rem;
-            font-weight: bold;
             word-break: break-all;
+            padding: 20px;
+            background-color: var(--primary-light);
+            text-align: left;
+            min-height: 60px;
+        }
+
+        .info-section {
+            width: 100%;
+            max-width: 650px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        .info-section h2 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .info-section h2::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin: 8px 0 0;
+            border-radius: 2px;
+        }
+
+        .info-section p {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .example {
+            background-color: #f8f9fa;
             padding: 15px;
-            background-color: #f9f9f9;
             border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .example strong {
+            color: var(--accent-color);
         }
 
         .success {
@@ -109,10 +201,16 @@
 
         .error {
             color: var(--error-color);
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(255, 82, 82, 0.1);
+            text-align: center;
+            margin-top: 15px;
+            display: none;
         }
 
-        @media screen and (max-width: 600px) {
-            .container {
+        @media screen and (max-width: 700px) {
+            .container, .info-section {
                 width: 95%;
                 padding: 25px;
             }
@@ -146,59 +244,118 @@
         </div>
         
         <div class="input-group">
-            <label for="key">Ключ:</label>
-            <input type="number" id="key" placeholder="Введіть число для зсуву">
+            <label for="key">Ключ (число):</label>
+            <input type="number" id="key" placeholder="Введіть число для зсуву" min="1" max="32">
         </div>
         
-        <button class="btn" onclick="encryptText()">Зашифрувати</button>
+        <button class="btn" id="encryptBtn">Зашифрувати</button>
         
-        <div id="result"></div>
+        <div id="errorMessage" class="error"></div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">Результат шифрування:</div>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Що таке шифр Цезаря?</h2>
+        <p>Шифр Цезаря — один з найпростіших і найвідоміших методів шифрування. Це тип шифру підстановки, в якому кожна літера в тексті замінюється на іншу, зміщену на певну кількість позицій в алфавіті.</p>
+        
+        <div class="example">
+            <p><strong>Приклад:</strong> якщо ключ (зсув) дорівнює 3, то:</p>
+            <p>А → Г, Б → Ґ, В → Д, і так далі.</p>
+            <p>Слово "абетка" перетвориться на "гґзхнг".</p>
+        </div>
+        
+        <p>Назва шифру походить від римського імператора Юлія Цезаря, який використовував цей метод для секретного листування зі своїми генералами.</p>
+        
+        <p>Хоча цей шифр дуже простий і легко зламується, він є чудовим введенням до основ криптографії і демонструє принципи шифрування за допомогою заміни.</p>
     </div>
 
     <script>
         // Клас для шифрування
         class CaesarCipher {
             constructor() {
-                this.alphabet = 'абвгґдежзийіклмнопрстуфхцчшщьюя';
+                this.alphabet = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
             }
 
             encrypt(text, key) {
-                if (!text || isNaN(key)) {
-                    throw new Error('Будь ласка, введіть текст і ключ.');
+                if (!text.trim()) {
+                    throw new Error('Будь ласка, введіть текст для шифрування.');
+                }
+
+                if (isNaN(key) || key < 1) {
+                    throw new Error('Ключ повинен бути додатним числом.');
                 }
 
                 return text
                     .toLowerCase()
                     .split('')
-                    .map(char => this.encryptChar(char, key))
+                    .map(char => this.encryptChar(char, parseInt(key)))
                     .join('');
             }
 
             encryptChar(char, shift) {
                 const index = this.alphabet.indexOf(char);
                 if (index === -1) {
-                    return char;
+                    return char; // Повертаємо без змін, якщо символ не знайдено в алфавіті
                 }
-                return this.alphabet[(index + shift + this.alphabet.length) % this.alphabet.length];
+                const newIndex = (index + shift) % this.alphabet.length;
+                return this.alphabet[newIndex];
             }
         }
 
-        // Функція для обробки шифрування
-        function encryptText() {
+        // Ініціалізація при завантаженні
+        document.addEventListener('DOMContentLoaded', function() {
             const textInput = document.getElementById('text');
             const keyInput = document.getElementById('key');
+            const encryptBtn = document.getElementById('encryptBtn');
             const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('errorMessage');
+            const resultContainer = document.getElementById('resultContainer');
             const cipher = new CaesarCipher();
 
-            try {
-                const encryptedText = cipher.encrypt(textInput.value, parseInt(keyInput.value));
-                resultDiv.textContent = `Зашифрований текст: ${encryptedText}`;
-                resultDiv.className = 'success';
-            } catch (error) {
-                resultDiv.textContent = error.message;
-                resultDiv.className = 'error';
+            // Встановлюємо фокус на поле вводу тексту
+            textInput.focus();
+
+            // Обробник для кнопки шифрування
+            encryptBtn.addEventListener('click', encryptText);
+            
+            // Також обробляємо натискання Enter у полях вводу
+            textInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    encryptText();
+                }
+            });
+            
+            keyInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    encryptText();
+                }
+            });
+
+            function encryptText() {
+                try {
+                    // Приховуємо попередні повідомлення про помилки
+                    errorDiv.style.display = 'none';
+                    
+                    const encryptedText = cipher.encrypt(textInput.value, parseInt(keyInput.value));
+                    
+                    // Показуємо результат
+                    resultDiv.textContent = encryptedText;
+                    resultContainer.style.display = 'block';
+                    
+                    // Прокручуємо до результату
+                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    // Показуємо повідомлення про помилку
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                    resultContainer.style.display = 'none';
+                }
             }
-        }
+        });
     </script>
 </body>
 </html>
