@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Тренажер клавіатури для дітей</title>
+    <style>
+      body {
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        background-color: #f2f9fe;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        color: #4285f4;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 2.2em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      #game-container {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      #info-panel {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      #score,
+      #timer {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #333;
+        background-color: #ffeb3b;
+        padding: 10px 20px;
+        border-radius: 10px;
+        min-width: 120px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #game-field {
+        width: 100%;
+        height: 300px;
+        background-color: #e6f7ff;
+        border: 4px solid #4285f4;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #levels,
+      #speed-control {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1.2em;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      button:hover {
+        background-color: #3367d6;
+        transform: translateY(-2px);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button.selected {
+        background-color: #34a853;
+      }
+
+      button.start-again {
+        background-color: #fbbc05;
+        display: none;
+        margin: 0 auto;
+      }
+
+      .letter {
+        position: absolute;
+        font-size: 2em;
+        font-weight: bold;
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+      }
+
+      .letter.correct {
+        background-color: #34a853;
+        color: white;
+      }
+
+      .letter.missed {
+        background-color: #ea4335;
+        color: white;
+      }
+
+      #game-over {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.9);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: 15px;
+      }
+
+      #game-over h2 {
+        color: #4285f4;
+        font-size: 2em;
+        margin-bottom: 10px;
+      }
+
+      #final-score,
+      #final-level,
+      #final-speed {
+        font-size: 1.4em;
+        color: #34a853;
+        margin-bottom: 10px;
+      }
+
+      #instructions {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        max-width: 800px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #instructions h3 {
+        color: #4285f4;
+        margin-top: 0;
+      }
+
+      #instructions p {
+        color: #333;
+        line-height: 1.5;
+      }
+
+      .shift-example {
+        background-color: #e6f7ff;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+
+      @keyframes moveRight {
+        from {
+          left: 0;
+        }
+        to {
+          left: calc(100% - 50px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Клавіатурний тренажер</h1>
+    <div id="game-container">
+      <div id="info-panel">
+        <div id="score">Бали: 0</div>
+        <div id="timer">Час: 60</div>
+      </div>
+      <div id="game-field">
+        <div id="game-over">
+          <h2>Час вийшов!</h2>
+          <div id="final-score">Ваш результат: 0 балів</div>
+          <div id="final-level">Рівень складності: Простий</div>
+          <div id="final-speed">Швидкість: Середня</div>
+        </div>
+      </div>
+      <div id="levels">
+        <button id="easy" class="selected" onclick="selectLevel('easy')">
+          Простий
+        </button>
+        <button id="medium" onclick="selectLevel('medium')">Середній</button>
+        <button id="hard" onclick="selectLevel('hard')">Складний</button>
+      </div>
+      <div id="speed-control">
+        <button id="slow" onclick="selectSpeed('slow')">Повільно</button>
+        <button
+          id="medium-speed"
+          class="selected"
+          onclick="selectSpeed('medium')"
+        >
+          Середньо
+        </button>
+        <button id="fast" onclick="selectSpeed('fast')">Швидко</button>
+      </div>
+      <button id="start-button" onclick="startGame()">Почати гру</button>
+      <button id="restart-button" class="start-again" onclick="resetGame()">
+        Зупинити гру
+      </button>
+    </div>
+    <div id="instructions">
+      <h3>Як грати:</h3>
+      <p>
+        1. Обери рівень складності та швидкість, потім натисни "Почати гру".
+      </p>
+      <p>2. Літери будуть з'являтися зліва і рухатися вправо.</p>
+      <p>
+        3. Натисни відповідну клавішу на клавіатурі до того, як літера зникне за
+        правим краєм.
+      </p>
+      <p>4. За кожне правильне натискання ти отримуєш 1 бал.</p>
+      <p>5. У тебе є 1 хвилина (60 секунд) для кожної гри.</p>
+      <p>
+        <strong>Рівні складності:</strong> <br />• Простий: тільки малі літери
+        (просто натискай відповідну клавішу) <br />• Середній: малі та великі
+        літери (для великих літер використовуйте Shift) <br />• Складний:
+        літери, цифри та спеціальні символи (деякі символи вимагають Shift)
+      </p>
+      <div class="shift-example">
+        <strong>Як вводити великі літери та спеціальні символи:</strong>
+        <br />• Для великої літери: натисни Shift + літера (наприклад, Shift + а
+        = А) <br />• Для спеціальних символів: натисни Shift + цифра/символ
+        (наприклад, Shift + 1 = !)
+      </div>
+      <p>
+        <strong>Швидкість:</strong> <br />• Повільно: літери рухаються повільно
+        <br />• Середньо: літери рухаються з середньою швидкістю <br />• Швидко:
+        літери рухаються швидко
+      </p>
+      <div class="shift-example">
+        <strong
+          >ПЕРЕД ПОЧАТКОМ РОБОТИ <br />НЕ ЗАБУДЬ ОБРАТИ УКРАЇНСЬКУ МОВУ НА
+          КОМП'ЮТЕРІ 💛💙</strong
+        >
+      </div>
+    </div>
+
+    <script>
+      // Об'єкт стану гри
+      const gameState = {
+        score: 0, // Поточний рахунок
+        timer: 60, // Час гри в секундах
+        selectedLevel: "easy", // Обраний рівень складності
+        selectedSpeed: "medium", // Обрана швидкість
+        isGameRunning: false, // Чи запущена гра
+        isPaused: false, // Чи на паузі
+        animationSpeed: 6000, // Швидкість анімації (мс)
+        spawnInterval: 1500, // Інтервал появи нових символів (мс)
+        activeLetters: new Map(), // Мапа активних символів
+        timerInterval: null, // Інтервал таймера
+        spawnTimeout: null, // Таймаут для спавну
+      };
+
+      // Набори символів для різних рівнів складності
+      const basicLevels = {
+        easy: "абвгдеєжзиіїйклмнопрстуфхцчшщьюя",
+        medium:
+          "абвгдеєжзиіїйклмнопрстуфхцчшщьюяАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ",
+        hard: 'абвгдеєжзиіїйклмнопрстуфхцчшщьюяАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ0123456789!"№;%:?*()-_=+',
+      };
+
+      // Рідкісні символи для рівнів
+      const rareChars = {
+        easy: "ґ",
+        medium: "ґҐ",
+        hard: "ґҐ",
+      };
+
+      // Налаштування швидкості гри
+      const speedSettings = {
+        slow: { animationSpeed: 8000, spawnInterval: 2000 },
+        medium: { animationSpeed: 6000, spawnInterval: 1500 },
+        fast: { animationSpeed: 4000, spawnInterval: 1000 },
+      };
+
+      // Мапа для зіставлення символів із клавішами
+      const keyMap = new Map();
+
+      // Ініціалізація мапи клавіш
+      function initializeKeyMap() {
+        const smallLetters = "абвгдеєжзиіїйклмнопрстуфхцчшщьюяґ";
+        const capitalLetters = "АБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯҐ";
+
+        // Додавання малих і великих літер
+        for (let i = 0; i < smallLetters.length; i++) {
+          keyMap.set(smallLetters[i], { key: smallLetters[i], shift: false });
+          keyMap.set(capitalLetters[i], { key: smallLetters[i], shift: true });
+        }
+
+        // Додавання цифр
+        for (let i = 0; i <= 9; i++) {
+          keyMap.set(i.toString(), { key: i.toString(), shift: false });
+        }
+
+        // Додавання спеціальних символів із Shift
+        const specialChars = {
+          "!": "1",
+          '"': "2",
+          "№": "3",
+          ";": "4",
+          "%": "5",
+          ":": "6",
+          "?": "7",
+          "*": "8",
+          "(": "9",
+          ")": "0",
+          _: "-",
+          "+": "=",
+        };
+        for (const [char, key] of Object.entries(specialChars)) {
+          keyMap.set(char, { key, shift: true });
+        }
+
+        // Додавання символів без Shift
+        keyMap.set("-", { key: "-", shift: false });
+        keyMap.set("=", { key: "=", shift: false });
+      }
+
+      // Вибір рівня або швидкості
+      function selectOption(type, value) {
+        if (type === "level") {
+          gameState.selectedLevel = value;
+          document
+            .querySelectorAll("#levels button")
+            .forEach((btn) => btn.classList.remove("selected"));
+          document.getElementById(value).classList.add("selected");
+        } else if (type === "speed") {
+          gameState.selectedSpeed = value;
+          document
+            .querySelectorAll("#speed-control button")
+            .forEach((btn) => btn.classList.remove("selected"));
+          document
+            .getElementById(value === "medium" ? "medium-speed" : value)
+            .classList.add("selected");
+        }
+        updateGameSpeed();
+      }
+
+      // Оновлення швидкості гри залежно від рівня та налаштувань
+      function updateGameSpeed() {
+        const base = speedSettings[gameState.selectedSpeed];
+        const modifier = { easy: 1, medium: 0.9, hard: 0.8 }[
+          gameState.selectedLevel
+        ];
+        gameState.animationSpeed = base.animationSpeed * modifier;
+        gameState.spawnInterval = base.spawnInterval * modifier;
+      }
+
+      // Вибір випадкового символу
+      function getRandomChar() {
+        return Math.random() < 0.02
+          ? rareChars[gameState.selectedLevel][
+              Math.floor(
+                Math.random() * rareChars[gameState.selectedLevel].length
+              )
+            ]
+          : basicLevels[gameState.selectedLevel][
+              Math.floor(
+                Math.random() * basicLevels[gameState.selectedLevel].length
+              )
+            ];
+      }
+
+      // Початок гри
+      function startGame() {
+        if (gameState.isGameRunning) return;
+        resetGameState();
+        document.getElementById("game-over").style.display = "none";
+        document.getElementById("start-button").style.display = "none";
+        document.getElementById("restart-button").style.display = "block";
+        gameState.isGameRunning = true;
+        gameState.timerInterval = setInterval(updateTimer, 1000);
+        spawnLetter();
+        document.addEventListener("keydown", handleKeyPress);
+      }
+
+      // Перезапуск гри
+      function resetGame() {
+        if (gameState.isGameRunning) clearAllIntervals();
+        document
+          .getElementById("game-field")
+          .querySelectorAll(".letter")
+          .forEach((letter) => letter.remove());
+        document.getElementById("game-over").style.display = "none";
+        document.getElementById("start-button").style.display = "block";
+        document.getElementById("restart-button").style.display = "none";
+        resetGameState();
+        updateScore();
+        updateTimer();
+        gameState.isGameRunning = false;
+      }
+
+      // Скидання стану гри
+      function resetGameState() {
+        gameState.score = 0;
+        gameState.timer = 60;
+        gameState.activeLetters.clear();
+      }
+
+      // Оновлення рахунку на екрані
+      function updateScore() {
+        document.getElementById(
+          "score"
+        ).textContent = `Бали: ${gameState.score}`;
+      }
+
+      // Оновлення таймера
+      function updateTimer() {
+        gameState.timer--;
+        document.getElementById(
+          "timer"
+        ).textContent = `Час: ${gameState.timer}`;
+        if (gameState.timer <= 0) endGame();
+      }
+
+      // Завершення гри
+      function endGame() {
+        gameState.isGameRunning = false;
+        clearAllIntervals();
+        document.removeEventListener("keydown", handleKeyPress);
+        document.getElementById(
+          "final-score"
+        ).textContent = `Ваш результат: ${gameState.score} балів`;
+        document.getElementById(
+          "final-level"
+        ).textContent = `Рівень складності: ${
+          {
+            easy: "Простий",
+            medium: "Середній",
+            hard: "Складний",
+          }[gameState.selectedLevel]
+        }`;
+        document.getElementById("final-speed").textContent = `Швидкість: ${
+          {
+            slow: "Повільна",
+            medium: "Середня",
+            fast: "Швидка",
+          }[gameState.selectedSpeed]
+        }`;
+        document.getElementById("game-over").style.display = "flex";
+        document.getElementById("start-button").style.display = "none";
+      }
+
+      // Очищення всіх інтервалів і таймаутів
+      function clearAllIntervals() {
+        clearInterval(gameState.timerInterval);
+        clearTimeout(gameState.spawnTimeout);
+        gameState.activeLetters.forEach((letter) =>
+          clearTimeout(letter.timeout)
+        );
+      }
+
+      // Створення нового символу на полі
+      function spawnLetter() {
+        if (!gameState.isGameRunning) return;
+        const gameField = document.getElementById("game-field");
+        const letterElement = document.createElement("div");
+        const char = getRandomChar();
+        const letterId = `letter-${Date.now()}`;
+        letterElement.className = "letter";
+        letterElement.textContent = char;
+        letterElement.id = letterId;
+        letterElement.style.top = `${Math.floor(
+          Math.random() * (gameField.offsetHeight - 50)
+        )}px`;
+        letterElement.style.animation = `moveRight ${gameState.animationSpeed}ms linear forwards`;
+        gameField.appendChild(letterElement);
+
+        const timeout = setTimeout(() => {
+          if (
+            gameState.isGameRunning &&
+            gameState.activeLetters.has(letterId)
+          ) {
+            letterElement.classList.add("missed");
+            setTimeout(() => {
+              if (letterElement.parentNode) letterElement.remove();
+              gameState.activeLetters.delete(letterId);
+            }, 300);
+          }
+        }, gameState.animationSpeed);
+
+        gameState.activeLetters.set(letterId, {
+          char,
+          element: letterElement,
+          timeout,
+        });
+        gameState.spawnTimeout = setTimeout(
+          spawnLetter,
+          gameState.spawnInterval
+        );
+      }
+
+      // Обробка натискання клавіш
+      function handleKeyPress(e) {
+        if (!gameState.isGameRunning || gameState.isPaused) return;
+
+        let matched = false;
+        gameState.activeLetters.forEach((letterInfo, id) => {
+          if (matched) return;
+
+          const char = letterInfo.char;
+          const mapping = keyMap.get(char);
+          if (mapping && e.key === char && e.shiftKey === mapping.shift) {
+            matched = true;
+            gameState.score++;
+            updateScore();
+            letterInfo.element.classList.add("correct");
+            clearTimeout(letterInfo.timeout);
+            setTimeout(() => {
+              if (letterInfo.element.parentNode) letterInfo.element.remove();
+              gameState.activeLetters.delete(id);
+            }, 200);
+          }
+        });
+      }
+
+      // Ініціалізація при завантаженні сторінки
+      window.onload = () => {
+        initializeKeyMap();
+        selectOption("level", "easy");
+        selectOption("speed", "medium");
+        document.querySelectorAll("#levels button").forEach((btn) => {
+          btn.addEventListener("click", () => selectOption("level", btn.id));
+        });
+        document.querySelectorAll("#speed-control button").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            selectOption("speed", btn.id === "medium-speed" ? "medium" : btn.id)
+          );
+        });
+        document
+          .getElementById("start-button")
+          .addEventListener("click", startGame);
+        document
+          .getElementById("restart-button")
+          .addEventListener("click", resetGame);
+      };
+    </script>
+  </body>
+</html>
