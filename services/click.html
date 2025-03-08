@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Тренажер для роботи з мишкою</title>
+    <style>
+      body {
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f8ff;
+        color: #333;
+      }
+
+      h1 {
+        color: #4682b4;
+        margin-bottom: 20px;
+      }
+
+      .game-info {
+        margin-bottom: 20px;
+        font-size: 1.2em;
+        display: flex;
+        justify-content: space-around;
+        max-width: 800px;
+        margin: 0 auto 20px auto;
+      }
+
+      .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .game-grid {
+        display: grid;
+        margin: 0 auto;
+        border: 3px solid #4682b4;
+        background-color: #e6e6fa;
+        max-width: 90vw;
+        max-height: 80vh;
+      }
+
+      .cell {
+        background-color: #e0e0e0;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        position: relative;
+      }
+
+      .cell.wrong {
+        background-color: #ff6b6b;
+        transition: background-color 0.3s;
+      }
+
+      .highlighted {
+        background-color: #66cc66;
+        animation: pulse 1s infinite;
+      }
+
+      .timer-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        background-color: #ff9900;
+        transform-origin: left;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: #4682b4;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: "Comic Sans MS", cursive, sans-serif;
+      }
+
+      button:hover {
+        background-color: #5f9ea0;
+      }
+
+      .message {
+        margin-top: 20px;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #4682b4;
+        min-height: 60px;
+      }
+
+      .missed {
+        color: #ff6b6b;
+        animation: fadeOut 1s forwards;
+      }
+
+      @keyframes fadeOut {
+        0% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .game-screen,
+      .level-complete,
+      .game-complete {
+        display: none;
+      }
+
+      .start-screen {
+        display: block;
+      }
+
+      .level-description {
+        margin: 10px 0;
+        font-size: 1em;
+        color: #555;
+      }
+
+      /* Адаптивність дизайну */
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.5em;
+        }
+
+        .game-info {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        button {
+          font-size: 16px;
+          padding: 8px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Тренажер для роботи з мишкою</h1>
+
+    <!-- Start Screen -->
+    <div class="start-screen">
+      <p>Цей тренажер допоможе тобі розвинути навички роботи з мишкою!</p>
+      <p>У грі є три рівні складності:</p>
+      <p class="level-description">
+        1. Простий: великі клітинки, без обмеження часу
+      </p>
+      <p class="level-description">
+        2. Середній: середні клітинки, 2 секунди на кожну
+      </p>
+      <p class="level-description">
+        3. Складний: маленькі клітинки, 1,5 секунди на кожну
+      </p>
+      <button id="start-game">Почати гру</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-screen">
+      <div class="game-info">
+        <div id="level-info">Рівень: Простий</div>
+        <div id="score-info">Бали: 0</div>
+        <div id="missed-info">Пропущено: 0</div>
+      </div>
+
+      <div class="game-container">
+        <div id="game-grid" class="game-grid"></div>
+      </div>
+
+      <div class="message" id="message"></div>
+    </div>
+
+    <!-- Level Complete Screen -->
+    <div class="level-complete">
+      <div class="message" id="level-complete-message"></div>
+      <button id="next-level">Наступний рівень</button>
+    </div>
+
+    <!-- Game Complete Screen -->
+    <div class="game-complete">
+      <div class="message" id="game-complete-message"></div>
+      <button id="restart-game">Почати знову</button>
+    </div>
+
+    <script>
+      // Звуки
+      const clickSound = new Audio(
+        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
+      );
+      clickSound.volume = 0.3;
+
+      const wrongSound = new Audio(
+        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
+      );
+      wrongSound.volume = 0.2;
+      wrongSound.playbackRate = 0.5;
+
+      const missedSound = new Audio(
+        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
+      );
+      missedSound.volume = 0.2;
+      missedSound.playbackRate = 0.7;
+
+      // Рівні гри
+      const levels = [
+        {
+          name: "Простий",
+          size: 5,
+          cellSize: 80,
+          timeLimit: null,
+          cellCount: 10,
+        },
+        {
+          name: "Середній",
+          size: 8,
+          cellSize: 60,
+          timeLimit: 2000,
+          cellCount: 25,
+        },
+        {
+          name: "Складний",
+          size: 12,
+          cellSize: 40,
+          timeLimit: 1500,
+          cellCount: 30,
+        },
+      ];
+
+      let currentLevel = 0;
+      let score = 0;
+      let missedClicks = 0;
+      let cellsClicked = 0;
+      let currentTarget = null;
+      let timer = null;
+      let animationTimer = null;
+      let cellWasMissed = false; // Прапорець для відстеження пропущених кліків
+      let clickTimeout = null; // Для дебаунсу кліків
+
+      // DOM елементи
+      const startScreen = document.querySelector(".start-screen");
+      const gameScreen = document.querySelector(".game-screen");
+      const levelCompleteScreen = document.querySelector(".level-complete");
+      const gameCompleteScreen = document.querySelector(".game-complete");
+      const gameGrid = document.getElementById("game-grid");
+      const levelInfo = document.getElementById("level-info");
+      const scoreInfo = document.getElementById("score-info");
+      const missedInfo = document.getElementById("missed-info");
+      const message = document.getElementById("message");
+      const levelCompleteMessage = document.getElementById(
+        "level-complete-message"
+      );
+      const gameCompleteMessage = document.getElementById(
+        "game-complete-message"
+      );
+
+      // Обробники кнопок
+      document
+        .getElementById("start-game")
+        .addEventListener("click", startGame);
+      document
+        .getElementById("next-level")
+        .addEventListener("click", nextLevel);
+      document
+        .getElementById("restart-game")
+        .addEventListener("click", startGame);
+
+      // Початок гри
+      function startGame() {
+        startScreen.style.display = "none";
+        gameScreen.style.display = "block";
+        score = 0;
+        currentLevel = 0;
+        missedClicks = 0;
+        updateLevel();
+      }
+
+      // Оновлення рівня
+      function updateLevel() {
+        cellsClicked = 0;
+        clearTimeout(timer);
+        clearTimeout(animationTimer);
+
+        const level = levels[currentLevel];
+        levelInfo.textContent = `Рівень: ${level.name}`;
+        scoreInfo.textContent = `Бали: ${score}`;
+        missedInfo.textContent = `Пропущено: ${missedClicks}`;
+        message.textContent = "";
+        message.className = "message";
+
+        // Адаптація розміру клітинок до екрану
+        let adaptiveCellSize = level.cellSize;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const maxWidthCellSize = Math.floor((screenWidth * 0.9) / level.size);
+        const maxHeightCellSize = Math.floor((screenHeight * 0.7) / level.size);
+        adaptiveCellSize = Math.min(
+          adaptiveCellSize,
+          maxWidthCellSize,
+          maxHeightCellSize
+        );
+
+        // Створення сітки
+        gameGrid.style.gridTemplateColumns = `repeat(${level.size}, ${adaptiveCellSize}px)`;
+        gameGrid.style.gridTemplateRows = `repeat(${level.size}, ${adaptiveCellSize}px)`;
+        gameGrid.innerHTML = "";
+
+        for (let i = 0; i < level.size * level.size; i++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.style.width = `${adaptiveCellSize}px`;
+          cell.style.height = `${adaptiveCellSize}px`;
+          cell.dataset.index = i;
+          cell.addEventListener("click", handleCellClick);
+          gameGrid.appendChild(cell);
+        }
+
+        highlightRandomCell();
+      }
+
+      // Підсвічування випадкової клітинки
+      function highlightRandomCell() {
+        if (cellsClicked >= levels[currentLevel].cellCount) {
+          completeLevelOrGame();
+          return;
+        }
+
+        const cells = document.querySelectorAll(".cell");
+        cells.forEach((cell) => {
+          cell.classList.remove("processed");
+          const bar = cell.querySelector(".timer-bar");
+          if (bar) bar.remove();
+        });
+
+        if (currentTarget !== null) {
+          const previousCell = cells[currentTarget];
+          if (previousCell && previousCell.classList.contains("highlighted")) {
+            previousCell.classList.remove("highlighted");
+            const level = levels[currentLevel];
+            if (level.timeLimit && cellWasMissed) {
+              missedClicks++;
+              missedInfo.textContent = `Пропущено: ${missedClicks}`;
+              message.textContent = "Пропущено!";
+              message.className = "message missed";
+              missedSound.currentTime = 0;
+              missedSound.play().catch((e) => console.log("Помилка звуку:", e));
+            }
+          }
+        }
+
+        cellWasMissed = true;
+        const level = levels[currentLevel];
+        const totalCells = level.size * level.size;
+        let randomIndex;
+        do {
+          randomIndex = Math.floor(Math.random() * totalCells);
+        } while (randomIndex === currentTarget);
+
+        currentTarget = randomIndex;
+        cells[currentTarget].classList.add("highlighted");
+
+        if (level.timeLimit) {
+          const timerBar = document.createElement("div");
+          timerBar.className = "timer-bar";
+          cells[currentTarget].appendChild(timerBar);
+          timerBar.style.transition = `transform ${
+            level.timeLimit / 1500
+          }s linear`;
+          animationTimer = setTimeout(() => {
+            timerBar.style.transform = "scaleX(0)";
+          }, 50);
+          clearTimeout(timer);
+          timer = setTimeout(highlightRandomCell, level.timeLimit);
+        }
+      }
+
+      // Обробка кліку з дебаунсом
+      function handleCellClick(e) {
+        // Використовуємо closest, щоб завжди отримувати елемент-клітинку
+        const cell = e.target.closest(".cell");
+        if (!cell) return;
+        if (clickTimeout) return; // Ігноруємо повторні кліки під час дебаунсу
+
+        clickTimeout = setTimeout(() => {
+          const clickedIndex = parseInt(cell.dataset.index);
+          if (
+            clickedIndex === currentTarget &&
+            !cell.classList.contains("processed")
+          ) {
+            cell.classList.add("processed");
+            clickSound.currentTime = 0;
+            clickSound.play().catch((e) => console.log("Помилка звуку:", e));
+            cellWasMissed = false;
+            score++;
+            cellsClicked++;
+            scoreInfo.textContent = `Бали: ${score}`;
+
+            const level = levels[currentLevel];
+            if (!level.timeLimit) {
+              highlightRandomCell();
+            } else {
+              clearTimeout(timer);
+              clearTimeout(animationTimer);
+              setTimeout(highlightRandomCell, 50);
+            }
+          } else if (!cell.classList.contains("processed")) {
+            wrongSound.currentTime = 0;
+            wrongSound.play().catch((e) => console.log("Помилка звуку:", e));
+            cell.classList.add("wrong");
+            setTimeout(() => cell.classList.remove("wrong"), 300);
+          }
+          clearTimeout(clickTimeout);
+          clickTimeout = null;
+        }, 100);
+      }
+
+      // Завершення рівня або гри
+      function completeLevelOrGame() {
+        clearTimeout(timer);
+        clearTimeout(animationTimer);
+        gameScreen.style.display = "none";
+
+        if (currentLevel < levels.length - 1) {
+          levelCompleteScreen.style.display = "block";
+          levelCompleteMessage.textContent = `Рівень ${levels[currentLevel].name} завершено! Ви отримали ${score} балів. Пропущено: ${missedClicks}.`;
+        } else {
+          gameCompleteScreen.style.display = "block";
+          const totalPossibleScore = levels.reduce(
+            (total, level) => total + level.cellCount,
+            0
+          );
+          const successRate = Math.round((score / totalPossibleScore) * 100);
+          let motivationalMessage = "";
+          if (successRate > 90) {
+            motivationalMessage =
+              "Неймовірний результат! Ти справжній майстер мишки!";
+          } else if (successRate > 70) {
+            motivationalMessage = "Чудова робота! Твої навички вражають!";
+          } else if (successRate > 50) {
+            motivationalMessage = "Гарна робота! Потренуйся ще трохи!";
+          } else {
+            motivationalMessage = "Ти молодець! Продовжуй вдосконалюватися!";
+          }
+          gameCompleteMessage.innerHTML = `Гра завершена!<br>Твій рахунок: ${score} з ${totalPossibleScore} (${successRate}%).<br>Пропущено: ${missedClicks}.<br><br>${motivationalMessage}<br>Спробуєш ще раз?`;
+        }
+      }
+
+      // Наступний рівень
+      function nextLevel() {
+        levelCompleteScreen.style.display = "none";
+        gameScreen.style.display = "block";
+        currentLevel++;
+        updateLevel();
+      }
+
+      // Адаптивність при зміні розміру вікна
+      window.addEventListener("resize", () => {
+        if (gameScreen.style.display === "block") {
+          updateLevel();
+        }
+      });
+    </script>
+  </body>
+</html>
