@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Алгоритми</title>
+    <style>
+      :root {
+        --primary-color: #6a5acd;
+        --primary-dark: #483d8b;
+        --background-color: #f0f8ff;
+        --card-color: #ffffff;
+        --example-bg: #e6f7ff;
+        --example-border: #1e90ff;
+        --interactive-bg: #f0fff0;
+        --text-color: #333333;
+        --success-color: #4caf50;
+        --border-radius: 10px;
+        --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        --strong-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.7;
+        font-family: "Roboto", "Arial", sans-serif;
+        font-size: 16px;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+
+      header {
+        background-color: var(--primary-color);
+        color: white;
+        text-align: center;
+        padding: 30px 20px;
+        border-radius: var(--border-radius);
+        margin-bottom: 30px;
+        box-shadow: var(--strong-shadow);
+      }
+
+      h1 {
+        font-size: 42px;
+        margin-bottom: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      h2 {
+        color: var(--primary-color);
+        margin: 25px 0 20px;
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 8px;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      h3 {
+        font-size: 22px;
+        margin-bottom: 12px;
+        color: var(--primary-dark);
+      }
+
+      p {
+        margin-bottom: 18px;
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      ul,
+      ol {
+        margin-left: 25px;
+        margin-bottom: 20px;
+      }
+
+      li {
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+
+      .card {
+        background-color: var(--card-color);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+      }
+
+      .example {
+        background-color: var(--example-bg);
+        border-left: 5px solid var(--example-border);
+        padding: 20px;
+        margin: 25px 0;
+        border-radius: 5px;
+      }
+
+      .interactive {
+        background-color: var(--interactive-bg);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+      }
+
+      /* Нова секція - стилі для оптимізованого розташування гри */
+      .game-container {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        margin: 20px 0;
+        align-items: flex-start;
+      }
+
+      .game-column {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .field-column {
+        flex-basis: 40%;
+      }
+
+      .controls-column {
+        flex-basis: 60%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .commands-section,
+      .program-section {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: var(--border-radius);
+        padding: 15px;
+        box-shadow: var(--shadow);
+      }
+
+      .program {
+        min-height: 150px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+        border: 2px dashed var(--primary-color);
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        background-color: rgba(255, 255, 255, 0.7);
+      }
+
+      .commands {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 10px 0;
+      }
+
+      .interactive h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      /* Кінець нової секції */
+
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 15px 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      button:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      footer {
+        background-color: var(--primary-color);
+        color: white;
+        text-align: center;
+        padding: 2rem 0;
+        border-radius: 20px 20px 0 0;
+        margin-top: 3rem;
+        box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      footer p {
+        font-size: 1.1rem;
+      }
+
+      .robot-field {
+        display: grid;
+        grid-template-columns: repeat(5, 60px);
+        grid-template-rows: repeat(5, 60px);
+        gap: 4px;
+        margin: 15px auto;
+        max-width: 320px;
+        background-color: #eee;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .cell {
+        width: 60px;
+        height: 60px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.2s;
+      }
+
+      .cell:hover {
+        background-color: #f8f8f8;
+      }
+
+      .robot-icon {
+        font-size: 40px;
+        color: var(--primary-color);
+        filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.2));
+      }
+
+      .apple {
+        font-size: 40px;
+        color: red;
+        filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.2));
+      }
+
+      .command {
+        padding: 12px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        min-width: 110px;
+        text-align: center;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .command:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .command:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .program-step {
+        padding: 8px 15px;
+        background-color: #e6e6fa;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .program-step.active {
+        background-color: #ffcccb;
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .delete-step {
+        margin-left: 10px;
+        cursor: pointer;
+        color: red;
+        font-weight: bold;
+        transition: transform 0.2s;
+      }
+
+      .delete-step:hover {
+        transform: scale(1.2);
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--success-color);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        display: none;
+        z-index: 1000;
+        font-size: 18px;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      /* Адаптивний дизайн */
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        header {
+          padding: 20px 15px;
+        }
+
+        h1 {
+          font-size: 32px;
+        }
+
+        h2 {
+          font-size: 24px;
+        }
+
+        p,
+        li {
+          font-size: 16px;
+        }
+
+        .card,
+        .interactive {
+          padding: 20px;
+        }
+
+        .game-container {
+          flex-direction: column;
+        }
+
+        .field-column,
+        .controls-column {
+          flex-basis: 100%;
+          width: 100%;
+        }
+
+        .robot-field {
+          grid-template-columns: repeat(5, 50px);
+          grid-template-rows: repeat(5, 50px);
+          max-width: 270px;
+          gap: 3px;
+        }
+
+        .cell {
+          width: 50px;
+          height: 50px;
+        }
+
+        .robot-icon,
+        .apple {
+          font-size: 32px;
+        }
+
+        .commands {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        .command {
+          min-width: 90px;
+          padding: 10px 15px;
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🤖 Алгоритми 🤖</h1>
+        <p>Вивчай програмування через гру!</p>
+      </header>
+
+      <div class="card">
+        <h2>Що таке алгоритм?</h2>
+        <p>
+          Алгоритм — це набір чітких кроків, які потрібно виконати, щоб вирішити
+          певну задачу. Як рецепт для приготування їжі або інструкція зі
+          збирання конструктора, алгоритми допомагають нам досягти бажаного
+          результату.
+        </p>
+
+        <div class="example">
+          <h3>Приклад алгоритму з повсякденного життя:</h3>
+          <p><strong>🦷 Алгоритм чищення зубів:</strong></p>
+          <ol>
+            <li>Візьми зубну щітку</li>
+            <li>Візьми зубну пасту</li>
+            <li>Видави пасту на щітку</li>
+            <li>Почисти зуби</li>
+            <li>Сполосни рот водою</li>
+            <li>Промий щітку</li>
+          </ol>
+        </div>
+
+        <div class="example">
+          <h3>Ще один приклад:</h3>
+          <p><strong>🚘 Алгоритм переходу дороги:</strong></p>
+          <ol>
+            <li>Зупинись біля дороги</li>
+            <li>Подивись ліворуч</li>
+            <li>Подивись праворуч</li>
+            <li>Якщо немає машин, то переходь дорогу</li>
+            <li>Якщо є машини, то почекай і повернись до кроку 2</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Чому алгоритми важливі?</h2>
+        <p>
+          Алгоритми відіграють важливу роль у нашому житті та допомагають нам:
+        </p>
+        <ul>
+          <li>Розбивати складні завдання на прості, зрозумілі кроки</li>
+          <li>Чітко пояснювати іншим послідовність дій</li>
+          <li>Створювати комп'ютерні програми, ігри та застосунки</li>
+          <li>Розвивати логічне мислення та навички розв'язання проблем</li>
+        </ul>
+      </div>
+
+      <div class="interactive">
+        <h2>Давай запрограмуємо роботом!</h2>
+        <p>
+          Спробуй створити свій алгоритм для робота, щоб він зібрав всі яблука
+          на полі!
+        </p>
+
+        <div class="game-container">
+          <!-- Ліва колонка з полем робота -->
+          <div class="game-column field-column">
+            <h3>Поле гри:</h3>
+            <div class="robot-field" id="robotField">
+              <!-- Клітинки будуть створені за допомогою JavaScript -->
+            </div>
+          </div>
+
+          <!-- Права колонка з командами та програмою -->
+          <div class="game-column controls-column">
+            <div class="commands-section">
+              <h3>Команди для робота:</h3>
+              <div class="commands">
+                <div class="command" onclick="addCommand('вгору')">
+                  ⬆️ Вгору
+                </div>
+                <div class="command" onclick="addCommand('вниз')">⬇️ Вниз</div>
+                <div class="command" onclick="addCommand('вліво')">
+                  ⬅️ Вліво
+                </div>
+                <div class="command" onclick="addCommand('вправо')">
+                  ➡️ Вправо
+                </div>
+              </div>
+            </div>
+
+            <div class="program-section">
+              <h3>Твоя програма:</h3>
+              <div class="program" id="program">
+                <!-- Тут будуть з'являтися команди, які додає користувач -->
+              </div>
+
+              <div class="controls">
+                <button onclick="runProgram()">🚀 Запустити</button>
+                <button onclick="clearProgram()">🧹 Очистити</button>
+                <button onclick="resetGame()">🔄 Нова гра</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Цікаві факти про алгоритми</h2>
+        <ul>
+          <li>
+            Слово "алгоритм" походить від імені персидського математика
+            Аль-Хорезмі, який жив у 9 столітті.
+          </li>
+          <li>
+            Навіть найскладніші комп'ютерні програми та ігри складаються з
+            простих алгоритмів, поєднаних разом.
+          </li>
+          <li>
+            Люди використовують алгоритми в повсякденному житті, навіть не
+            усвідомлюючи цього, наприклад, коли готують їжу за рецептом.
+          </li>
+          <li>
+            Роботи та штучний інтелект працюють за алгоритмами, які для них
+            створили люди.
+          </li>
+          <li>
+            Вивчення алгоритмів допомагає тобі розвивати логічне мислення та
+            підготуватися до вивчення програмування в майбутньому.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">Молодець! Ти зібрав усі яблука!</div>
+
+    <footer>
+      <p>
+        Розроблено паном Артемом для юних програмістів <br />2025 © Комп'ютерна
+        наука для дітей
+      </p>
+    </footer>
+
+    <script>
+      // Змінні для гри
+      let robotPosition = { x: 0, y: 0 };
+      let apples = [];
+      let program = [];
+      let isRunning = false;
+
+      // Створюємо поле для гри
+      function createField() {
+        const field = document.getElementById("robotField");
+        field.innerHTML = "";
+
+        for (let y = 0; y < 5; y++) {
+          for (let x = 0; x < 5; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            field.appendChild(cell);
+          }
+        }
+
+        // Ставимо робота на початкову позицію
+        updateRobotPosition();
+
+        // Розміщуємо яблука випадково
+        placeApples();
+      }
+
+      // Функція для розміщення яблук
+      function placeApples() {
+        apples = [];
+
+        // Створюємо 3 випадкові яблука
+        while (apples.length < 3) {
+          const x = Math.floor(Math.random() * 5);
+          const y = Math.floor(Math.random() * 5);
+
+          // Перевіряємо, що яблуко не на позиції робота і не дублює інше яблуко
+          if (
+            (x !== robotPosition.x || y !== robotPosition.y) &&
+            !apples.some((apple) => apple.x === x && apple.y === y)
+          ) {
+            apples.push({ x, y });
+          }
+        }
+
+        // Відображаємо яблука на полі
+        updateApples();
+      }
+
+      // Оновлюємо позицію робота на полі
+      function updateRobotPosition() {
+        // Спочатку очищаємо всі клітинки від робота
+        document.querySelectorAll(".robot-icon").forEach((icon) => {
+          icon.remove();
+        });
+
+        // Додаємо робота на нову позицію
+        const cell = document.querySelector(
+          `.cell[data-x="${robotPosition.x}"][data-y="${robotPosition.y}"]`
+        );
+        if (cell) {
+          const robotIcon = document.createElement("div");
+          robotIcon.className = "robot-icon";
+          robotIcon.innerHTML = "🤖";
+          cell.appendChild(robotIcon);
+        }
+
+        // Перевіряємо, чи робот зібрав яблуко
+        checkApples();
+      }
+
+      // Оновлюємо відображення яблук
+      function updateApples() {
+        // Спочатку очищаємо всі клітинки від яблук
+        document.querySelectorAll(".apple").forEach((apple) => {
+          apple.remove();
+        });
+
+        // Додаємо яблука на їх позиції
+        apples.forEach((apple) => {
+          const cell = document.querySelector(
+            `.cell[data-x="${apple.x}"][data-y="${apple.y}"]`
+          );
+          if (cell) {
+            const appleIcon = document.createElement("div");
+            appleIcon.className = "apple";
+            appleIcon.innerHTML = "🍎";
+            cell.appendChild(appleIcon);
+          }
+        });
+      }
+
+      // Перевіряємо, чи робот зібрав яблуко
+      function checkApples() {
+        const appleIndex = apples.findIndex(
+          (apple) => apple.x === robotPosition.x && apple.y === robotPosition.y
+        );
+
+        if (appleIndex !== -1) {
+          // Видаляємо зібране яблуко
+          apples.splice(appleIndex, 1);
+          updateApples();
+
+          // Якщо всі яблука зібрані
+          if (apples.length === 0) {
+            showToast("Молодець! Ти зібрав усі яблука!");
+            setTimeout(() => {
+              placeApples();
+            }, 2000);
+          }
+        }
+      }
+
+      // Додаємо команду до програми
+      function addCommand(command) {
+        if (isRunning) return;
+
+        program.push(command);
+        updateProgramDisplay();
+      }
+
+      // Оновлюємо відображення програми
+      function updateProgramDisplay() {
+        const programContainer = document.getElementById("program");
+        programContainer.innerHTML = "";
+
+        program.forEach((command, index) => {
+          const step = document.createElement("div");
+          step.className = "program-step";
+
+          let icon = "";
+          switch (command) {
+            case "вгору":
+              icon = "⬆️";
+              break;
+            case "вниз":
+              icon = "⬇️";
+              break;
+            case "вліво":
+              icon = "⬅️";
+              break;
+            case "вправо":
+              icon = "➡️";
+              break;
+          }
+
+          step.innerHTML = `${icon} ${command} <span class="delete-step" onclick="removeCommand(${index})">✖</span>`;
+          programContainer.appendChild(step);
+        });
+      }
+
+      // Видаляємо команду з програми
+      function removeCommand(index) {
+        if (isRunning) return;
+
+        program.splice(index, 1);
+        updateProgramDisplay();
+      }
+
+      // Очищаємо всю програму
+      function clearProgram() {
+        if (isRunning) return;
+
+        program = [];
+        updateProgramDisplay();
+      }
+
+      // Запускаємо програму
+      function runProgram() {
+        if (isRunning || program.length === 0) return;
+
+        isRunning = true;
+        executeCommands(0);
+      }
+
+      // Виконуємо команди послідовно
+      function executeCommands(index) {
+        if (index >= program.length) {
+          isRunning = false;
+          return;
+        }
+
+        const command = program[index];
+
+        // Видаляємо активні класи зі всіх кроків
+        document.querySelectorAll(".program-step").forEach((step) => {
+          step.classList.remove("active");
+        });
+
+        // Додаємо активний клас до поточного кроку
+        const steps = document.querySelectorAll(".program-step");
+        if (steps[index]) {
+          steps[index].classList.add("active");
+        }
+
+        // Змінюємо позицію робота відповідно до команди
+        switch (command) {
+          case "вгору":
+            if (robotPosition.y > 0) robotPosition.y--;
+            break;
+          case "вниз":
+            if (robotPosition.y < 4) robotPosition.y++;
+            break;
+          case "вліво":
+            if (robotPosition.x > 0) robotPosition.x--;
+            break;
+          case "вправо":
+            if (robotPosition.x < 4) robotPosition.x++;
+            break;
+        }
+
+        updateRobotPosition();
+
+        // Виконуємо наступну команду через інтервал
+        setTimeout(() => {
+          executeCommands(index + 1);
+        }, 600);
+      }
+
+      // Починаємо нову гру
+      function resetGame() {
+        if (isRunning) return;
+
+        robotPosition = { x: 0, y: 0 };
+        clearProgram();
+        createField();
+      }
+
+      // Показуємо повідомлення
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.display = "block";
+        toast.style.opacity = "0";
+
+        // Анімуємо появу повідомлення
+        setTimeout(() => {
+          toast.style.transition = "opacity 0.5s ease";
+          toast.style.opacity = "1";
+        }, 10);
+
+        // Приховуємо повідомлення через 3 секунди
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          setTimeout(() => {
+            toast.style.display = "none";
+          }, 500);
+        }, 3000);
+      }
+
+      // Починаємо гру при завантаженні сторінки
+      window.onload = function () {
+        createField();
+      };
+    </script>
+  </body>
+</html>
