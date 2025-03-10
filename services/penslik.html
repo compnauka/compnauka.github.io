@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Пензлик | Графічний редактор для дітей</title>
+    <style>
+      body {
+        font-family: "Roboto", "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f8ff;
+        text-align: center;
+      }
+
+      h1 {
+        color: #ff6b6b;
+        margin-bottom: 10px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      #canvas-container {
+        position: relative;
+        margin: 20px auto;
+        border: 5px solid #ffc0cb;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      #drawing-canvas {
+        background-color: white;
+        cursor: crosshair;
+        display: block;
+      }
+
+      .controls {
+        margin: 15px 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .tool-button {
+        padding: 10px 15px;
+        font-size: 16px;
+        background-color: #9cc4ff;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .tool-button:hover {
+        background-color: #7aa5f8;
+        transform: translateY(-2px);
+      }
+
+      .tool-button.active {
+        background-color: #5980d9;
+      }
+
+      .color-palette {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 15px 0;
+      }
+
+      .color {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: transform 0.2s;
+        border: 3px solid transparent;
+      }
+
+      .color:hover {
+        transform: scale(1.1);
+      }
+
+      .color.active {
+        border: 3px solid #333;
+      }
+
+      .size-slider {
+        width: 200px;
+        margin: 10px;
+      }
+
+      .shapes-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 15px 0;
+      }
+
+      .shape-btn {
+        font-size: 24px;
+        background-color: #9cc4ff;
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+      }
+
+      .shape-btn:hover {
+        background-color: #7aa5f8;
+      }
+
+      .shape-btn.active {
+        background-color: #5980d9;
+      }
+
+      #stamps-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin: 15px 0;
+      }
+
+      .stamp {
+        font-size: 24px;
+        padding: 5px;
+        background-color: #f8f8f8;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .stamp:hover {
+        transform: scale(1.2);
+        background-color: #e0e0e0;
+      }
+
+      .stamp.active {
+        background-color: #e0e0e0;
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Пензлик 🎨</h1>
+      <p>Малюй, твори, розважайся!</p>
+
+      <div class="controls">
+        <button id="pencil" class="tool-button active">
+          <strong>✏️ Олівець</strong>
+        </button>
+        <button id="eraser" class="tool-button">
+          <strong>🧽 Гумка</strong>
+        </button>
+        <button id="shapes" class="tool-button">
+          <strong>📐 Фігури</strong>
+        </button>
+        <button id="stamps" class="tool-button">
+          <strong>🎭 Штампи</strong>
+        </button>
+        <button id="clear" class="tool-button">
+          <strong>🗑️ Очистити</strong>
+        </button>
+        <button id="save" class="tool-button">
+          <strong>💾 Зберегти</strong>
+        </button>
+      </div>
+
+      <div class="color-palette">
+        <div class="color active" style="background-color: #000000"></div>
+        <div class="color" style="background-color: #ff0000"></div>
+        <div class="color" style="background-color: #ff9900"></div>
+        <div class="color" style="background-color: #ffff00"></div>
+        <div class="color" style="background-color: #00ff00"></div>
+        <div class="color" style="background-color: #00ffff"></div>
+        <div class="color" style="background-color: #0000ff"></div>
+        <div class="color" style="background-color: #9900ff"></div>
+        <div class="color" style="background-color: #ff00ff"></div>
+        <div class="color" style="background-color: #ff6b6b"></div>
+        <div class="color" style="background-color: #7aa5f8"></div>
+        <div class="color" style="background-color: #ffffff"></div>
+      </div>
+
+      <div>
+        <label for="size-slider">Розмір: </label>
+        <input
+          type="range"
+          id="size-slider"
+          class="size-slider"
+          min="1"
+          max="50"
+          value="5"
+        />
+      </div>
+
+      <div class="shapes-container" style="display: none">
+        <button class="shape-btn active" data-shape="line">╱</button>
+        <button class="shape-btn" data-shape="rect">□</button>
+        <button class="shape-btn" data-shape="circle">○</button>
+        <button class="shape-btn" data-shape="triangle">△</button>
+        <button class="shape-btn" data-shape="star">★</button>
+      </div>
+
+      <div id="stamps-container" style="display: none">
+        <div class="stamp" data-emoji="🦄">🦄</div>
+        <div class="stamp" data-emoji="🐱">🐱</div>
+        <div class="stamp" data-emoji="🐶">🐶</div>
+        <div class="stamp" data-emoji="🦖">🦖</div>
+        <div class="stamp" data-emoji="🌈">🌈</div>
+        <div class="stamp" data-emoji="🌟">🌟</div>
+        <div class="stamp" data-emoji="🍕">🍕</div>
+        <div class="stamp" data-emoji="🚀">🚀</div>
+        <div class="stamp" data-emoji="🎮">🎮</div>
+        <div class="stamp" data-emoji="🏀">🏀</div>
+        <div class="stamp" data-emoji="🌸">🌸</div>
+        <div class="stamp" data-emoji="🌞">🌞</div>
+      </div>
+
+      <div id="canvas-container">
+        <canvas id="drawing-canvas" width="600" height="400"></canvas>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Основні елементи
+        const canvas = document.getElementById("drawing-canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Змінні для зберігання стану
+        const state = {
+          isDrawing: false,
+          lastX: 0,
+          lastY: 0,
+          currentTool: "pencil",
+          currentColor: "#000000",
+          currentSize: 5,
+          currentShape: "line",
+          startX: 0,
+          startY: 0,
+          currentStamp: null,
+        };
+
+        // DOM елементи
+        const elements = {
+          pencilBtn: document.getElementById("pencil"),
+          eraserBtn: document.getElementById("eraser"),
+          shapesBtn: document.getElementById("shapes"),
+          stampsBtn: document.getElementById("stamps"),
+          clearBtn: document.getElementById("clear"),
+          saveBtn: document.getElementById("save"),
+          colors: document.querySelectorAll(".color"),
+          sizeSlider: document.getElementById("size-slider"),
+          shapesContainer: document.querySelector(".shapes-container"),
+          shapeButtons: document.querySelectorAll(".shape-btn"),
+          stampsContainer: document.getElementById("stamps-container"),
+          stamps: document.querySelectorAll(".stamp"),
+        };
+
+        // Функція зміни розміру полотна
+        function resizeCanvas() {
+          const container = document.getElementById("canvas-container");
+          canvas.width = container.clientWidth;
+          canvas.height = Math.min(container.clientWidth * 0.66, 400);
+
+          // Ініціалізація фону
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Ініціалізація полотна
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        // Функції малювання
+        function getMousePos(canvas, e) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+
+          if (e.touches) {
+            return [
+              (e.touches[0].clientX - rect.left) * scaleX,
+              (e.touches[0].clientY - rect.top) * scaleY,
+            ];
+          }
+
+          return [
+            (e.clientX - rect.left) * scaleX,
+            (e.clientY - rect.top) * scaleY,
+          ];
+        }
+
+        function startDrawing(e) {
+          state.isDrawing = true;
+          [state.lastX, state.lastY] = getMousePos(canvas, e);
+          state.startX = state.lastX;
+          state.startY = state.lastY;
+
+          // Якщо обрано інструмент "Штамп", одразу малюємо штамп
+          if (state.currentTool === "stamps" && state.currentStamp) {
+            placeStamp(state.lastX, state.lastY);
+            state.isDrawing = false; // Припиняємо малювання, щоб уникнути перетягування
+          }
+        }
+
+        function draw(e) {
+          if (!state.isDrawing) return;
+
+          const [currentX, currentY] = getMousePos(canvas, e);
+
+          if (state.currentTool === "pencil") {
+            drawFreehand(currentX, currentY);
+          } else if (state.currentTool === "eraser") {
+            erase(currentX, currentY);
+          } else if (state.currentTool === "shapes") {
+            drawShape(currentX, currentY);
+          }
+        }
+
+        function drawFreehand(currentX, currentY) {
+          ctx.strokeStyle = state.currentColor;
+          ctx.lineWidth = state.currentSize;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          ctx.beginPath();
+          ctx.moveTo(state.lastX, state.lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+
+          [state.lastX, state.lastY] = [currentX, currentY];
+        }
+
+        function erase(currentX, currentY) {
+          ctx.strokeStyle = "white";
+          ctx.lineWidth = state.currentSize;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          ctx.beginPath();
+          ctx.moveTo(state.lastX, state.lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+
+          [state.lastX, state.lastY] = [currentX, currentY];
+        }
+
+        function drawShape(currentX, currentY) {
+          // Створюємо копію полотна для оновлення при перетягуванні
+          const canvasCopy = document.createElement("canvas");
+          canvasCopy.width = canvas.width;
+          canvasCopy.height = canvas.height;
+          canvasCopy.getContext("2d").drawImage(canvas, 0, 0);
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(canvasCopy, 0, 0);
+
+          ctx.strokeStyle = state.currentColor;
+          ctx.fillStyle = state.currentColor;
+          ctx.lineWidth = state.currentSize;
+
+          switch (state.currentShape) {
+            case "line":
+              drawLine(state.startX, state.startY, currentX, currentY);
+              break;
+            case "rect":
+              drawRectangle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "circle":
+              drawCircle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "triangle":
+              drawTriangle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "star":
+              drawStar(state.startX, state.startY, currentX, currentY);
+              break;
+          }
+        }
+
+        function drawLine(startX, startY, endX, endY) {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
+
+        function drawRectangle(startX, startY, endX, endY) {
+          const width = endX - startX;
+          const height = endY - startY;
+          ctx.beginPath();
+          ctx.rect(startX, startY, width, height);
+          ctx.stroke();
+        }
+
+        function drawCircle(startX, startY, endX, endY) {
+          const radius = Math.sqrt(
+            Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+          );
+          ctx.beginPath();
+          ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        function drawTriangle(startX, startY, endX, endY) {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.lineTo(startX - (endX - startX), endY);
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        function drawStar(startX, startY, endX, endY) {
+          const spikes = 5;
+          const outerRadius = Math.sqrt(
+            Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+          );
+          const innerRadius = outerRadius / 2;
+          const cx = startX;
+          const cy = startY;
+          let rot = (Math.PI / 2) * 3;
+          const step = Math.PI / spikes;
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - outerRadius);
+
+          for (let i = 0; i < spikes; i++) {
+            ctx.lineTo(
+              cx + Math.cos(rot) * outerRadius,
+              cy + Math.sin(rot) * outerRadius
+            );
+            rot += step;
+            ctx.lineTo(
+              cx + Math.cos(rot) * innerRadius,
+              cy + Math.sin(rot) * innerRadius
+            );
+            rot += step;
+          }
+
+          ctx.lineTo(cx, cy - outerRadius);
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Функція для розміщення штампу
+        function placeStamp(x, y) {
+          if (!state.currentStamp) return;
+
+          ctx.font = `${state.currentSize * 5}px Arial`;
+          ctx.fillStyle = state.currentColor;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(state.currentStamp, x, y);
+        }
+
+        function stopDrawing() {
+          state.isDrawing = false;
+        }
+
+        function clearCanvas() {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveCanvas() {
+          const link = document.createElement("a");
+          link.download = "my-drawing.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        }
+
+        // Функція встановлення активного інструменту
+        function setActiveTool(tool) {
+          state.currentTool = tool;
+
+          // Скидаємо активний стан
+          elements.pencilBtn.classList.remove("active");
+          elements.eraserBtn.classList.remove("active");
+          elements.shapesBtn.classList.remove("active");
+          elements.stampsBtn.classList.remove("active");
+
+          // Приховуємо/показуємо контейнери
+          elements.shapesContainer.style.display = "none";
+          elements.stampsContainer.style.display = "none";
+
+          // Встановлюємо активний стан для обраного інструменту
+          switch (tool) {
+            case "pencil":
+              elements.pencilBtn.classList.add("active");
+              break;
+            case "eraser":
+              elements.eraserBtn.classList.add("active");
+              break;
+            case "shapes":
+              elements.shapesBtn.classList.add("active");
+              elements.shapesContainer.style.display = "flex";
+              break;
+            case "stamps":
+              elements.stampsBtn.classList.add("active");
+              elements.stampsContainer.style.display = "flex";
+              break;
+          }
+        }
+
+        // Налаштування подій для інструментів
+        elements.pencilBtn.addEventListener("click", () =>
+          setActiveTool("pencil")
+        );
+        elements.eraserBtn.addEventListener("click", () =>
+          setActiveTool("eraser")
+        );
+        elements.shapesBtn.addEventListener("click", () =>
+          setActiveTool("shapes")
+        );
+        elements.stampsBtn.addEventListener("click", () =>
+          setActiveTool("stamps")
+        );
+        elements.clearBtn.addEventListener("click", clearCanvas);
+        elements.saveBtn.addEventListener("click", saveCanvas);
+
+        // Налаштування подій для кольорів
+        elements.colors.forEach((color) => {
+          color.addEventListener("click", function () {
+            elements.colors.forEach((c) => c.classList.remove("active"));
+            this.classList.add("active");
+            state.currentColor = this.style.backgroundColor;
+          });
+        });
+
+        // Налаштування події для слайдера розміру
+        elements.sizeSlider.addEventListener("input", function () {
+          state.currentSize = Number(this.value);
+        });
+
+        // Налаштування подій для кнопок фігур
+        elements.shapeButtons.forEach((button) => {
+          button.addEventListener("click", function () {
+            elements.shapeButtons.forEach((btn) =>
+              btn.classList.remove("active")
+            );
+            this.classList.add("active");
+            state.currentShape = this.dataset.shape;
+          });
+        });
+
+        // Налаштування подій для штампів
+        elements.stamps.forEach((stamp) => {
+          stamp.addEventListener("click", function () {
+            // Знімаємо активний стан з усіх штампів
+            elements.stamps.forEach((s) => s.classList.remove("active"));
+            // Встановлюємо активний стан для обраного штампу
+            this.classList.add("active");
+            // Зберігаємо обраний штамп
+            state.currentStamp = this.dataset.emoji;
+          });
+        });
+
+        // Налаштування подій для полотна
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("touchstart", function (e) {
+          e.preventDefault();
+          startDrawing(e);
+        });
+
+        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("touchmove", function (e) {
+          e.preventDefault();
+          draw(e);
+        });
+
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("touchend", stopDrawing);
+        canvas.addEventListener("mouseout", stopDrawing);
+
+        // Ініціалізуємо полотно
+        clearCanvas();
+      });
+    </script>
+  </body>
+</html>
