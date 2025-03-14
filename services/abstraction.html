@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Абстракція | Обчислювальне мислення для дітей</title>
+    <style>
+      body {
+        font-family: 'Roboto', 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f8ff;
+        color: #333;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      h1,
+      h2 {
+        color: #4169e1;
+        text-align: center;
+      }
+
+      p,
+      li {
+        font-size: 1.2em;
+      }
+
+      .section {
+        background-color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .canvas-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .canvas-area {
+        border: 2px solid #4169e1;
+        border-radius: 10px;
+        margin: 10px;
+        padding: 10px;
+        text-align: center;
+        background-color: white;
+      }
+
+      canvas {
+        border: 1px solid #ccc;
+        cursor: pointer;
+        background-color: white;
+      }
+
+      button {
+        background-color: #4169e1;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background-color: #3a5fcd;
+      }
+
+      .color-picker {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 10px 0;
+      }
+
+      .color {
+        width: 30px;
+        height: 30px;
+        margin: 5px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid #ddd;
+      }
+
+      .color.active {
+        border: 2px solid #333;
+      }
+
+      .levels {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+
+      .level {
+        background-color: #e6f2ff;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px;
+        flex: 1;
+        min-width: 200px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .level:hover {
+        transform: scale(1.05);
+        background-color: #d4e6ff;
+      }
+
+      .example {
+        max-width: 150px;
+        margin: 10px auto;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+      }
+
+      .explanation {
+        background-color: #fff9c4;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .show {
+        display: block;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 10;
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 15px;
+        width: 80%;
+        max-width: 600px;
+      }
+
+      .close {
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .progress-bar {
+        width: 100%;
+        background-color: #ddd;
+        border-radius: 10px;
+        margin: 10px 0;
+      }
+
+      .progress {
+        height: 20px;
+        background-color: #4caf50;
+        border-radius: 10px;
+        width: 0%;
+        transition: width 0.5s;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        padding: 10px;
+        color: #666;
+      }
+
+      @media (min-width: 601px) {
+        .canvas-container {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          justify-content: space-between;
+        }
+        .canvas-area {
+          /* Зменшуємо враховуючи відступи */
+          width: calc(50% - 20px);
+          margin: 10px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .canvas-area {
+          flex-basis: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Абстракція 🔺🟩🔵</h1>
+
+      <div class="section">
+        <h2>Що таке абстракція?</h2>
+        <p>
+          Абстракція - це коли ми беремо складні речі і спрощуємо їх до чогось
+          простого, але важливого. Давай навчимося цьому завдяки малювання!
+        </p>
+      </div>
+
+      <div class="section" id="drawingSection">
+        <h2>Малюй, спрощуй, навчайся!</h2>
+        <p>Обери рівень абстракції для малювання:</p>
+
+        <div class="levels">
+          <div class="level" onclick="selectLevel(1)">
+            <h3>Рівень 1: Детальний</h3>
+            <p>Малюй з усіма деталями</p>
+            <img src="/images/19.jpg" alt="Детальне малювання" class="example" />
+          </div>
+
+          <div class="level" onclick="selectLevel(2)">
+            <h3>Рівень 2: Середній</h3>
+            <p>Малюй основні форми</p>
+            <img src="/images/20.jpg" alt="Середнє малювання" class="example" />
+          </div>
+
+          <div class="level" onclick="selectLevel(3)">
+            <h3>Рівень 3: Простий</h3>
+            <p>Малюй тільки найважливіше</p>
+            <img src="/images/21.jpg" alt="Просте малювання" class="example" />
+          </div>
+        </div>
+
+        <div id="canvas-container" class="canvas-container hidden">
+          <div class="canvas-area">
+            <h3>Твій малюнок</h3>
+            <canvas id="drawingCanvas" width="300" height="300"></canvas>
+            <div class="color-picker">
+              <div class="color active" style="background-color: black" data-color="black"></div>
+              <div class="color" style="background-color: red" data-color="red"></div>
+              <div class="color" style="background-color: blue" data-color="blue"></div>
+              <div class="color" style="background-color: green" data-color="green"></div>
+              <div class="color" style="background-color: yellow" data-color="yellow"></div>
+            </div>
+            <button id="clearButton">Очистити</button>
+            <button id="doneButton">Готово</button>
+          </div>
+
+          <div class="canvas-area">
+            <h3>Зразок</h3>
+            <canvas id="exampleCanvas" width="300" height="300"></canvas>
+            <p id="levelDescription">Опис рівня буде тут</p>
+          </div>
+        </div>
+
+        <div id="explanation" class="explanation hidden">
+          <h3>Молодець! Ти використав абстракцію!</h3>
+          <p id="explanationText">Текст пояснення буде тут</p>
+          <div class="progress-bar">
+            <div class="progress" id="progressBar"></div>
+          </div>
+          <button id="nextLevelButton">Наступний рівень</button>
+          <button id="startOverButton">Почати спочатку</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Абстракція та комп'ютерна наука</h2>
+        <p>
+          Абстракція - це одна з фундаментальних концепцій в інформатиці та
+          програмуванні.
+        </p>
+        <p>
+          В інформатиці абстракція допомагає нам розв'язувати складні проблеми,
+          фокусуючись на найважливіших моментах і ігноруючи несуттєві деталі.
+        </p>
+        <p>
+          Наприклад, коли ми використовуємо іконки на комп'ютері, ми не бачимо
+          складний код, який працює в фоновому режимі.
+        </p>
+        <h3>Інші приклади абстракції в програмуванні:</h3>
+        <ul>
+          <li><strong>Функції:</strong> Упаковують складні операції в простий виклик.</li>
+          <li>
+            <strong>Класи та об'єкти:</strong> Організовують код в зрозумілі структури.
+          </li>
+          <li>
+            <strong>Бібліотеки та модулі:</strong> Дозволяють використовувати складні
+            функції без розуміння їх внутрішньої роботи.
+          </li>
+        </ul>
+        <p>
+          Абстракція допомагає нам керувати складністю та фокусуватись на важливому!
+        </p>
+      </div>
+
+      <div class="footer">2025 © Комп'ютерна наука для дітей</div>
+    </div>
+
+    <div id="congratsModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Вітаємо!</h2>
+        <p>Ти пройшов усі рівні і зрозумів, що таке абстракція!</p>
+        <p>
+          Абстракція - це процес відділення важливих частин від неважливих деталей.
+        </p>
+        <p>
+          Ти використовуєш абстракцію кожного дня, навіть не помічаючи цього!
+        </p>
+        <button onclick="closeModal()">Закрити</button>
+      </div>
+    </div>
+
+    <script>
+      // Глобальні змінні
+      let currentLevel = 0;
+      let currentColor = "black";
+      let isDrawing = false;
+      let completedLevels = 0;
+
+      // DOM елементи
+      const drawingCanvas = document.getElementById("drawingCanvas");
+      const exampleCanvas = document.getElementById("exampleCanvas");
+      const canvasContainer = document.getElementById("canvas-container");
+      const explanationDiv = document.getElementById("explanation");
+      const levelDescription = document.getElementById("levelDescription");
+      const explanationText = document.getElementById("explanationText");
+      const progressBar = document.getElementById("progressBar");
+      const congratsModal = document.getElementById("congratsModal");
+
+      // Канваси
+      const drawingCtx = drawingCanvas.getContext("2d");
+      const exampleCtx = exampleCanvas.getContext("2d");
+
+      // Обробники подій для малювання
+      drawingCanvas.addEventListener("mousedown", startDrawing);
+      drawingCanvas.addEventListener("mousemove", draw);
+      drawingCanvas.addEventListener("mouseup", stopDrawing);
+      drawingCanvas.addEventListener("mouseout", stopDrawing);
+
+      // Тач-івенти для мобільних пристроїв
+      drawingCanvas.addEventListener("touchstart", handleTouchStart);
+      drawingCanvas.addEventListener("touchmove", handleTouchMove);
+      drawingCanvas.addEventListener("touchend", stopDrawing);
+
+      // Кнопки
+      document.getElementById("clearButton").addEventListener("click", clearCanvas);
+      document.getElementById("doneButton").addEventListener("click", finishDrawing);
+      document.getElementById("nextLevelButton").addEventListener("click", nextLevel);
+      document.getElementById("startOverButton").addEventListener("click", startOver);
+
+      // Вибір кольору
+      const colorPickers = document.querySelectorAll(".color");
+      colorPickers.forEach((color) => {
+        color.addEventListener("click", function () {
+          // Зняти активний клас з усіх кольорів
+          colorPickers.forEach((c) => c.classList.remove("active"));
+          // Додати активний клас до обраного кольору
+          this.classList.add("active");
+          // Встановити поточний колір
+          currentColor = this.getAttribute("data-color");
+        });
+      });
+
+      // Функції для малювання
+      function startDrawing(e) {
+        isDrawing = true;
+        draw(e);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+
+        const rect = drawingCanvas.getBoundingClientRect();
+        let x, y;
+
+        if (e.type === "touchmove") {
+          x = e.touches[0].clientX - rect.left;
+          y = e.touches[0].clientY - rect.top;
+        } else {
+          x = e.clientX - rect.left;
+          y = e.clientY - rect.top;
+        }
+
+        drawingCtx.lineWidth = 5;
+        drawingCtx.lineCap = "round";
+        drawingCtx.strokeStyle = currentColor;
+
+        drawingCtx.lineTo(x, y);
+        drawingCtx.stroke();
+        drawingCtx.beginPath();
+        drawingCtx.moveTo(x, y);
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+        drawingCtx.beginPath();
+      }
+
+      function handleTouchStart(e) {
+        e.preventDefault();
+        const rect = drawingCanvas.getBoundingClientRect();
+        const x = e.touches[0].clientX - rect.left;
+        const y = e.touches[0].clientY - rect.top;
+
+        drawingCtx.beginPath();
+        drawingCtx.moveTo(x, y);
+        isDrawing = true;
+      }
+
+      function handleTouchMove(e) {
+        e.preventDefault();
+        draw(e);
+      }
+
+      function clearCanvas() {
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      }
+
+      // Функції для рівнів
+      function selectLevel(level) {
+        currentLevel = level;
+        canvasContainer.classList.remove("hidden");
+        canvasContainer.classList.add("show");
+        clearCanvas();
+        drawExample();
+        updateLevelDescription();
+      }
+
+      function drawExample() {
+        exampleCtx.clearRect(0, 0, exampleCanvas.width, exampleCanvas.height);
+
+        // Малюємо приклад залежно від рівня
+        switch (currentLevel) {
+          case 1:
+            drawDetailedHouse();
+            break;
+          case 2:
+            drawMediumHouse();
+            break;
+          case 3:
+            drawSimpleHouse();
+            break;
+        }
+      }
+
+      function updateLevelDescription() {
+        switch (currentLevel) {
+          case 1:
+            levelDescription.textContent =
+              "Намалюй детальний будинок з усіма елементами: дах, вікна, двері, димар, дерево поруч, сонце, хмаринки.";
+            break;
+          case 2:
+            levelDescription.textContent =
+              "Намалюй спрощений будинок з основними елементами: стіни, дах, вікна, двері.";
+            break;
+          case 3:
+            levelDescription.textContent =
+              "Намалюй дуже простий будинок - лише прямокутник і трикутник для даху.";
+            break;
+        }
+      }
+
+      function drawDetailedHouse() {
+        exampleCtx.fillStyle = "#87CEEB";
+        exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
+
+        exampleCtx.fillStyle = "yellow";
+        exampleCtx.beginPath();
+        exampleCtx.arc(50, 50, 30, 0, Math.PI * 2);
+        exampleCtx.fill();
+
+        exampleCtx.fillStyle = "white";
+        exampleCtx.beginPath();
+        exampleCtx.arc(100, 60, 15, 0, Math.PI * 2);
+        exampleCtx.arc(120, 60, 15, 0, Math.PI * 2);
+        exampleCtx.arc(140, 60, 15, 0, Math.PI * 2);
+        exampleCtx.fill();
+
+        exampleCtx.fillStyle = "green";
+        exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
+
+        exampleCtx.fillStyle = "#CD853F";
+        exampleCtx.fillRect(100, 150, 150, 100);
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.beginPath();
+        exampleCtx.moveTo(80, 150);
+        exampleCtx.lineTo(175, 80);
+        exampleCtx.lineTo(270, 150);
+        exampleCtx.closePath();
+        exampleCtx.fill();
+
+        exampleCtx.fillStyle = "#A52A2A";
+        exampleCtx.fillRect(220, 100, 20, 50);
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.fillRect(150, 200, 30, 50);
+
+        exampleCtx.fillStyle = "black";
+        exampleCtx.beginPath();
+        exampleCtx.arc(157, 225, 3, 0, Math.PI * 2);
+        exampleCtx.fill();
+
+        exampleCtx.fillStyle = "#ADD8E6";
+        exampleCtx.fillRect(120, 170, 20, 20);
+        exampleCtx.fillRect(200, 170, 20, 20);
+
+        exampleCtx.strokeStyle = "black";
+        exampleCtx.lineWidth = 2;
+        exampleCtx.strokeRect(120, 170, 20, 20);
+        exampleCtx.strokeRect(200, 170, 20, 20);
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.fillRect(40, 180, 15, 70);
+
+        exampleCtx.fillStyle = "#006400";
+        exampleCtx.beginPath();
+        exampleCtx.arc(47, 180, 25, 0, Math.PI * 2);
+        exampleCtx.fill();
+        exampleCtx.beginPath();
+        exampleCtx.arc(47, 160, 20, 0, Math.PI * 2);
+        exampleCtx.fill();
+        exampleCtx.beginPath();
+        exampleCtx.arc(47, 140, 15, 0, Math.PI * 2);
+        exampleCtx.fill();
+      }
+
+      function drawMediumHouse() {
+        exampleCtx.fillStyle = "#87CEEB";
+        exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
+
+        exampleCtx.fillStyle = "green";
+        exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
+
+        exampleCtx.fillStyle = "#CD853F";
+        exampleCtx.fillRect(100, 150, 150, 100);
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.beginPath();
+        exampleCtx.moveTo(80, 150);
+        exampleCtx.lineTo(175, 80);
+        exampleCtx.lineTo(270, 150);
+        exampleCtx.closePath();
+        exampleCtx.fill();
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.fillRect(150, 200, 30, 50);
+
+        exampleCtx.fillStyle = "#ADD8E6";
+        exampleCtx.fillRect(120, 170, 20, 20);
+        exampleCtx.fillRect(200, 170, 20, 20);
+      }
+
+      function drawSimpleHouse() {
+        exampleCtx.fillStyle = "#87CEEB";
+        exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
+
+        exampleCtx.fillStyle = "green";
+        exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
+
+        exampleCtx.fillStyle = "#CD853F";
+        exampleCtx.fillRect(100, 150, 150, 100);
+
+        exampleCtx.fillStyle = "#8B4513";
+        exampleCtx.beginPath();
+        exampleCtx.moveTo(100, 150);
+        exampleCtx.lineTo(175, 80);
+        exampleCtx.lineTo(250, 150);
+        exampleCtx.closePath();
+        exampleCtx.fill();
+      }
+
+      function finishDrawing() {
+        canvasContainer.classList.add("hidden");
+        explanationDiv.classList.remove("hidden");
+        explanationDiv.classList.add("show");
+
+        switch (currentLevel) {
+          case 1:
+            explanationText.textContent =
+              "Це детальний рівень, де ми бачимо всі елементи будинку та оточення. Іноді нам потрібні всі деталі, щоб максимально точно передати інформацію.";
+            break;
+          case 2:
+            explanationText.textContent =
+              "Це середній рівень абстракції, де ми бачимо лише головні елементи будинку. Ми прибрали несуттєві деталі, але все ще можемо впізнати будинок.";
+            break;
+          case 3:
+            explanationText.textContent =
+              "Це найпростіший рівень абстракції, де ми бачимо лише основну форму будинку. Ця проста форма передає достатньо інформації, щоб ми зрозуміли, що це будинок.";
+            break;
+        }
+
+        completedLevels++;
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const progressPercentage = (completedLevels / 3) * 100;
+        progressBar.style.width = progressPercentage + "%";
+
+        if (completedLevels >= 3) {
+          congratsModal.style.display = "block";
+        }
+      }
+
+      function nextLevel() {
+        if (currentLevel < 3) {
+          selectLevel(currentLevel + 1);
+        } else {
+          selectLevel(1);
+        }
+        explanationDiv.classList.add("hidden");
+        canvasContainer.classList.remove("hidden");
+        canvasContainer.classList.add("show");
+      }
+
+      function startOver() {
+        completedLevels = 0;
+        updateProgress();
+        selectLevel(1);
+        explanationDiv.classList.add("hidden");
+        canvasContainer.classList.remove("hidden");
+        canvasContainer.classList.add("show");
+      }
+
+      function closeModal() {
+        congratsModal.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
