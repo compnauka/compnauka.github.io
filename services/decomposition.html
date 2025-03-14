@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Декомпозиція | Обчислювальне мислення для дітей</title>
+  <style>
+    :root {
+      --primary-color: #4e8df5;
+      --secondary-color: #f5824e;
+      --accent-color: #4ef58d;
+      --light-bg: #f0f7ff;
+      --dark-text: #333;
+      --active-task-color: #2c6cb0; /* колір активного завдання */
+    }
+    
+    body {
+      font-family: 'Roboto', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--light-bg);
+      color: var(--dark-text);
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary-color), #6aa9f8);
+      color: white;
+      text-align: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header-bubbles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 8s infinite ease-in-out;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(-20px) translateX(15px); }
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    p {
+      font-size: 1.2em;
+    }
+    li {
+      font-size: 1.1em;
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      margin-top: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    .section {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .section h2 {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+    }
+    
+    .section h3 {
+      color: var(--secondary-color);
+    }
+    
+    .example-box {
+      border: 2px dashed var(--secondary-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background-color: rgba(245, 130, 78, 0.05);
+    }
+    
+    .example-box h3 {
+      margin-top: 0;
+    }
+    
+    .interactive-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 2rem 0;
+    }
+    
+    .task-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1rem 0;
+      width: 100%;
+    }
+    
+    .task-box {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+      width: 200px;
+      position: relative;
+    }
+    
+    .task-box:hover {
+      transform: scale(1.05);
+      background-color: #3b75d6;
+    }
+    
+    /* Стиль для активного завдання */
+    .task-box.active {
+      background-color: var(--active-task-color);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .subtask-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1rem 0;
+      width: 100%;
+      min-height: 100px;
+    }
+    
+    .subtask {
+      background-color: var(--accent-color);
+      color: var(--dark-text);
+      padding: 0.8rem;
+      border-radius: 8px;
+      text-align: center;
+      width: 150px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    
+    .visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .game-area {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      margin-top: 2rem;
+      text-align: center;
+    }
+    
+    .game-instructions {
+      margin-bottom: 1rem;
+    }
+    
+    .drag-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    
+    .draggable {
+      padding: 0.8rem;
+      margin: 0.5rem;
+      background-color: var(--accent-color);
+      border-radius: 8px;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.2s;
+    }
+    
+    .draggable:hover {
+      transform: scale(1.05);
+    }
+    
+    .drop-area {
+      min-height: 300px;
+      border: 2px dashed var(--primary-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .drop-zone {
+      min-height: 50px;
+      border: 1px solid var(--primary-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      margin: 0.2rem 0;
+      background-color: rgba(78, 141, 245, 0.1);
+      transition: background-color 0.3s;
+    }
+    
+    button {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.2s;
+      margin: 1rem 0;
+    }
+    
+    button:hover {
+      background-color: #e67341;
+      transform: scale(1.03);
+    }
+    
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0.8;
+      animation: confetti-fall 4s linear forwards;
+    }
+    
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-50px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(calc(100vh + 50px)) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .task-box, .subtask {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+    
+    /* Стилі для модального вікна */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-bubbles" id="headerBubbles"></div>
+    <h1>Декомпозиція</h1>
+    <div class="subtitle">Розбиваємо складні завдання на простіші</div>
+  </header>
+  
+  <div class="container">
+    <div class="section">
+      <h2>Що таке декомпозиція?</h2>
+      <p>Уяви, що тобі потрібно з'їсти великий торт 🎂. Це може здатися складним завданням! Але якщо розрізати торт на маленькі шматочки 🍰🍰🍰 - ти з'їш його без проблем.</p>
+      <p><strong>Декомпозиція</strong> — це коли ми розбиваємо велике або складне завдання на кілька менших, простіших кроків.</p>
+      <p>Це як розбирати іграшку на окремі деталі, щоб краще зрозуміти, з чого вона зроблена.</p>
+    </div>
+    
+    <div class="section">
+      <h2>Навіщо потрібна декомпозиція?</h2>
+      <ul>
+        <li>Робить складні завдання простішими</li>
+        <li>Допомагає краще розуміти, що треба зробити</li>
+        <li>Дозволяє легше планувати свій час</li>
+        <li>Зменшує стрес від великих завдань</li>
+        <li>Допомагає не пропустити важливі деталі</li>
+      </ul>
+    </div>
+    
+    <div class="section">
+      <h2>Приклади з життя</h2>
+      
+      <div class="example-box">
+        <h3>Прибирання кімнати</h3>
+        <p><strong>Велике завдання:</strong> Прибрати в кімнаті</p>
+        <p><strong>Менші кроки:</strong></p>
+        <ol>
+          <li>Зібрати всі іграшки</li>
+          <li>Скласти речі в шафу</li>
+          <li>Заправити ліжко</li>
+          <li>Витерти пил</li>
+          <li>Пропилососити підлогу</li>
+        </ol>
+      </div>
+      
+      <div class="example-box">
+        <h3>Підготовка до школи</h3>
+        <p><strong>Велике завдання:</strong> Зібратися до школи</p>
+        <p><strong>Менші кроки:</strong></p>
+        <ol>
+          <li>Підготувати рюкзак (зошити, підручники, пенал)</li>
+          <li>Одягнутися у шкільний одяг</li>
+          <li>Перевірити, чи взято їжу та воду</li>
+          <li>Взутися та вийти з дому</li>
+        </ol>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Спробуй сам!</h2>
+      <p>Натисни на завдання, щоб побачити, як воно розбивається на менші кроки:</p>
+      
+      <div class="interactive-area">
+        <div class="task-container">
+          <!-- Використовуємо data-task -->
+          <div class="task-box" data-task="cooking">Спекти печиву</div>
+          <div class="task-box" data-task="homework">Зробити домашнє завдання</div>
+          <div class="task-box" data-task="bicycle">Навчитися кататися на велосипеді</div>
+        </div>
+        
+        <div class="subtask-container" id="subtaskContainer">
+          <!-- Підзадачі з’являться тут -->
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Декомпозиція в програмуванні</h2>
+      <p>Програмісти часто використовують декомпозицію, щоб розбити складні програми на простіші частини:</p>
+      
+      <div class="example-box">
+        <h3>Створення комп'ютерної гри</h3>
+        <p><strong>Велике завдання:</strong> Створити гру</p>
+        <p><strong>Менші кроки:</strong></p>
+        <ol>
+          <li>Придумати ідею гри</li>
+          <li>Намалювати головного героя</li>
+          <li>Створити рівні гри</li>
+          <li>Запрограмувати рухи героя</li>
+          <li>Додати звуки та музику</li>
+          <li>Перевірити гру на помилки</li>
+        </ol>
+      </div>
+      
+      <p>Коли програмісти пишуть код, вони розбивають його на маленькі функції, кожна з яких виконує своє завдання. Потім ці функції разом створюють цілу програму.</p>
+    </div>
+    
+    <div class="game-area">
+      <h2>Гра "Майстер декомпозиції"</h2>
+      <div class="game-instructions">
+        <p>Перетягни картки з діями у правильному порядку, щоб розбити велике завдання на кроки:</p>
+        <h3 id="currentTask">Завдання: Спекти торт</h3>
+      </div>
+      
+      <div class="drag-container" id="dragItems">
+        <!-- Елементи з'являтимуться через JavaScript -->
+      </div>
+      
+      <div class="drop-area" id="dropArea">
+        <div class="drop-zone" id="dropZone1"></div>
+        <div class="drop-zone" id="dropZone2"></div>
+        <div class="drop-zone" id="dropZone3"></div>
+        <div class="drop-zone" id="dropZone4"></div>
+        <div class="drop-zone" id="dropZone5"></div>
+      </div>
+      
+      <button id="checkAnswerBtn" onclick="checkAnswer()">Перевірити</button>
+      <button id="nextTaskBtn" onclick="loadNewTask()" style="display: none;">Наступне завдання</button>
+    </div>
+  </div>
+  
+  <!-- Модальне вікно -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <p id="modalMessage"></p>
+    </div>
+  </div>
+  
+  <div class="confetti-container" id="confettiContainer"></div>
+  
+  <script>
+    (function() {
+      // Функція для створення бульбашок у заголовку
+      function createBubbles() {
+        const headerBubbles = document.getElementById('headerBubbles');
+        const colors = ['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.1)'];
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 15; i++) {
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          const size = Math.floor(Math.random() * 60 + 20);
+          bubble.style.width = size + 'px';
+          bubble.style.height = size + 'px';
+          bubble.style.left = Math.floor(Math.random() * 100) + '%';
+          bubble.style.top = Math.floor(Math.random() * 100) + '%';
+          bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          bubble.style.animationDuration = Math.floor(Math.random() * 8 + 5) + 's';
+          bubble.style.animationDelay = Math.floor(Math.random() * 5) + 's';
+          fragment.appendChild(bubble);
+        }
+        headerBubbles.appendChild(fragment);
+      }
+      
+      // Функція для показу модального вікна
+      function showModal(message) {
+        const modal = document.getElementById('modal');
+        const modalMessage = document.getElementById('modalMessage');
+        modalMessage.textContent = message;
+        modal.style.display = 'block';
+      }
+      
+      // Закриття модального вікна
+      function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+      }
+      
+      // Призначення події для закриття модального вікна
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('closeModal').addEventListener('click', closeModal);
+        // Закриття модального вікна при кліку поза його вмістом
+        window.addEventListener('click', (e) => {
+          if (e.target === document.getElementById('modal')) {
+            closeModal();
+          }
+        });
+      });
+      
+      // Об’єкт з підзадачами
+      const subtasks = {
+        cooking: [
+          "Підготувати інгредієнти",
+          "Змішати все за рецептом",
+          "Викласти тісто на деко",
+          "Випікати у духовці",
+          "Дати печиву охолонути"
+        ],
+        homework: [
+          "Підготувати робоче місце",
+          "Перевірити, які завдання задані",
+          "Розділити на маленькі частини",
+          "Виконати кожну частину",
+          "Перевірити виконану роботу"
+        ],
+        bicycle: [
+          "Надіти захисне спорядження",
+          "Знайти рівне місце",
+          "Навчитися тримати рівновагу",
+          "Почати крутити педалі",
+          "Тренуватися повертати"
+        ]
+      };
+      
+      // Відображення підзадач із затримкою
+      window.showSubtasks = (taskType) => {
+        const container = document.getElementById('subtaskContainer');
+        container.innerHTML = '';
+        const tasks = subtasks[taskType] || [];
+        tasks.forEach((task, index) => {
+          const subtask = document.createElement('div');
+          subtask.className = 'subtask';
+          subtask.textContent = task;
+          container.appendChild(subtask);
+          setTimeout(() => subtask.classList.add('visible'), 100 * index);
+        });
+      };
+      
+      // Дані для гри
+      const gameTasks = [
+        {
+          task: "Спекти торт",
+          steps: [
+            "Підготувати інгредієнти",
+            "Змішати тісто",
+            "Випікати у духовці",
+            "Приготувати крем",
+            "Прикрасити торт"
+          ]
+        },
+        {
+          task: "Підготувати виступ",
+          steps: [
+            "Вибрати тему",
+            "Знайти інформацію",
+            "Створити презентацію",
+            "Підготувати текст",
+            "Потренуватися виступати"
+          ]
+        },
+        {
+          task: "Посадити рослину",
+          steps: [
+            "Підготувати горщик",
+            "Насипати ґрунт",
+            "Посадити насіння",
+            "Полити водою",
+            "Поставити на сонячне місце"
+          ]
+        }
+      ];
+      
+      // Початковий індекс – встановлюємо -1, щоб перший виклик loadNewTask завантажив 0-ий елемент
+      let currentGameTaskIndex = -1;
+      let currentCorrectOrder = [];
+      let draggedItem = null;
+      
+      // Завантаження нового завдання для гри
+      window.loadNewTask = () => {
+        document.getElementById('nextTaskBtn').style.display = 'none';
+        document.getElementById('checkAnswerBtn').style.display = 'inline-block';
+        
+        // Очищення drop-зон
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+          zone.innerHTML = '';
+          zone.style.backgroundColor = 'rgba(78, 141, 245, 0.1)';
+        });
+        
+        // Завантаження наступного завдання
+        currentGameTaskIndex = (currentGameTaskIndex + 1) % gameTasks.length;
+        const gameTask = gameTasks[currentGameTaskIndex];
+        document.getElementById('currentTask').textContent = `Завдання: ${gameTask.task}`;
+        
+        const dragContainer = document.getElementById('dragItems');
+        dragContainer.innerHTML = '';
+        
+        const steps = [...gameTask.steps];
+        currentCorrectOrder = [...steps];
+        shuffleArray(steps);
+        
+        steps.forEach(step => {
+          const draggable = document.createElement('div');
+          draggable.className = 'draggable';
+          draggable.textContent = step;
+          draggable.draggable = true;
+          draggable.addEventListener('dragstart', dragStart);
+          draggable.addEventListener('dragend', dragEnd);
+          dragContainer.appendChild(draggable);
+        });
+      };
+      
+      // Алгоритм Фішера–Йейтса для тасування масиву
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+      
+      // Drag and drop функціонал
+      function dragStart(e) {
+        draggedItem = e.target;
+        setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
+      }
+      
+      function dragEnd(e) {
+        e.target.style.opacity = '1';
+        draggedItem = null;
+      }
+      
+      function dragOver(e) {
+        e.preventDefault();
+      }
+      
+      function dragEnter(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+          dropZone.style.backgroundColor = 'rgba(78, 141, 245, 0.25)';
+        }
+      }
+      
+      function dragLeave(e) {
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+          dropZone.style.backgroundColor = 'rgba(78, 141, 245, 0.1)';
+        }
+      }
+      
+      // Функція drop – дозволяємо переміщення та обмін елементами
+      function drop(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone && draggedItem) {
+          // Якщо dropZone вже містить елемент – обмін
+          if (dropZone.hasChildNodes()) {
+            const existingItem = dropZone.firstChild;
+            const originalParent = draggedItem.parentNode;
+            dropZone.replaceChild(draggedItem, existingItem);
+            originalParent.appendChild(existingItem);
+          } else {
+            dropZone.appendChild(draggedItem);
+          }
+          dropZone.style.backgroundColor = 'rgba(78, 141, 245, 0.1)';
+        }
+      }
+      
+      // Дозволяємо повертати елементи в початковий контейнер
+      function dropToContainer(e) {
+        e.preventDefault();
+        const container = document.getElementById('dragItems');
+        container.appendChild(draggedItem);
+      }
+      
+      // Функція перевірки відповіді
+      window.checkAnswer = () => {
+        const dropZones = document.querySelectorAll('.drop-zone');
+        let isCorrect = true, allFilled = true;
+        dropZones.forEach((zone, index) => {
+          if (!zone.hasChildNodes()) {
+            allFilled = false;
+            return;
+          }
+          const step = zone.firstChild.textContent;
+          if (step !== currentCorrectOrder[index]) {
+            isCorrect = false;
+            zone.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+          } else {
+            zone.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
+          }
+        });
+        
+        if (!allFilled) {
+          showModal('Заповни всі кроки!');
+          return;
+        }
+        
+        if (isCorrect) {
+          createConfetti();
+          showModal('Чудово! Ти правильно розбив завдання на кроки!');
+          document.getElementById('nextTaskBtn').style.display = 'inline-block';
+          document.getElementById('checkAnswerBtn').style.display = 'none';
+        } else {
+          showModal('Спробуй ще раз! Порядок кроків не правильний.');
+        }
+      };
+      
+      // Анімація конфетті
+      function createConfetti() {
+        const confettiContainer = document.getElementById('confettiContainer');
+        confettiContainer.innerHTML = '';
+        const colors = ['#4e8df5', '#f5824e', '#4ef58d', '#f54e8d', '#8df54e'];
+        for (let i = 0; i < 100; i++) {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.width = Math.floor(Math.random() * 10 + 5) + 'px';
+          confetti.style.height = Math.floor(Math.random() * 10 + 5) + 'px';
+          confetti.style.opacity = Math.random();
+          confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+          confettiContainer.appendChild(confetti);
+        }
+        setTimeout(() => { confettiContainer.innerHTML = ''; }, 5000);
+      }
+      
+      // Призначення обробників подій після завантаження DOM
+      document.addEventListener('DOMContentLoaded', () => {
+        createBubbles();
+        // Автоматично активуємо "Спекти печиву"
+        const defaultTask = document.querySelector('.task-box[data-task="cooking"]');
+        if (defaultTask) {
+          defaultTask.classList.add('active');
+          showSubtasks(defaultTask.getAttribute('data-task'));
+        }
+        loadNewTask();
+        
+        // Призначення подій для drop-зон
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+          zone.addEventListener('dragover', dragOver);
+          zone.addEventListener('dragenter', dragEnter);
+          zone.addEventListener('dragleave', dragLeave);
+          zone.addEventListener('drop', drop);
+        });
+        
+        // Дозвіл для повернення елементів у початковий контейнер
+        const dragContainer = document.getElementById('dragItems');
+        dragContainer.addEventListener('dragover', dragOver);
+        dragContainer.addEventListener('drop', dropToContainer);
+        
+        // Призначення подій для текст-боксів "Спробуй сам!" (без inline onclick)
+        document.querySelectorAll('.task-box').forEach(box => {
+          box.addEventListener('click', function() {
+            // Знімаємо активний клас з усіх
+            document.querySelectorAll('.task-box').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const taskType = this.getAttribute('data-task');
+            showSubtasks(taskType);
+          });
+        });
+        
+        // Забезпечення, що елементи з класом .draggable вже мають обробники dragstart/dragend
+        document.querySelectorAll('.draggable').forEach(item => {
+          item.addEventListener('dragstart', dragStart);
+          item.addEventListener('dragend', dragEnd);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
