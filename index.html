@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Освітні сервіси для вивчення інформаційних технологій та програмування для дітей" />
     <title>Комп'ютерна наука з паном Артемом</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
+      const gtag = (...args) => dataLayer.push(args);
       gtag("js", new Date());
       gtag("config", "G-N8T05K3NGT");
     </script>
@@ -31,6 +29,8 @@
         --footer-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
         --border-radius: 10px;
         --transition-duration: 0.3s;
+        --category-bg-color: #e8f4fc;
+        --category-text-color: #2c3e50;
       }
 
       * {
@@ -61,6 +61,25 @@
         border-radius: var(--border-radius);
       }
 
+      .categories-container {
+        margin-bottom: 30px;
+      }
+
+      .category {
+        margin-bottom: 50px;
+      }
+
+      .category-header {
+        background-color: var(--category-bg-color);
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: var(--border-radius);
+        color: var(--category-text-color);
+        font-weight: 700;
+        font-size: 1.5rem;
+        border-left: 5px solid var(--primary-color);
+      }
+
       .services-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -75,6 +94,7 @@
         transition: transform var(--transition-duration) ease;
         display: flex;
         flex-direction: column;
+        height: 100%;
       }
 
       .service-card:hover {
@@ -129,6 +149,29 @@
         background-color: var(--secondary-color);
       }
 
+      .categories-nav {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px 0;
+        margin-bottom: 30px;
+        gap: 10px;
+      }
+
+      .category-button {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color var(--transition-duration) ease;
+      }
+
+      .category-button:hover {
+        background-color: var(--secondary-color);
+      }
+
       footer {
         background-color: var(--primary-color);
         color: var(--header-text-color);
@@ -168,9 +211,11 @@
         .services-grid {
           grid-template-columns: 1fr;
         }
-        
         .header h1 {
           font-size: 1.5rem;
+        }
+        .category-header {
+          font-size: 1.2rem;
         }
       }
     </style>
@@ -181,234 +226,278 @@
         <h1>Комп'ютерна наука з паном Артемом</h1>
         <p>Освітні сервіси для вивчення інформаційних технологій</p>
       </header>
-
-      <main class="services-grid" id="services-container">
-        <!-- Сервіси будуть додаватися динамічно через JavaScript -->
+      <nav class="categories-nav" id="categories-nav">
+        <!-- Категорії додаються динамічно через JavaScript -->
+      </nav>
+      <main class="categories-container" id="categories-container">
+        <!-- Категорії та сервіси додаються динамічно через JavaScript -->
       </main>
     </div>
-
     <footer>
       <p>2025 © Комп'ютерна наука для дітей</p>
     </footer>
-
     <script>
-      // Використовуємо одразу IIFE для ізоляції коду
-      (function() {
-        // Налаштування для оптимізації зображень
+      (() => {
         const IMAGE_OPTIONS = {
           threshold: 0.1,
           rootMargin: '50px'
         };
 
-        // Оновлені дані сервісів
-        const SERVICES = [
+        const CATEGORIES = [
           {
+            id: "computational-thinking",
             name: "Обчислювальне мислення",
-            description: "Простими словами про обчислювальне мислення.",
-            link: "https://compnauka.github.io/services/compthinking.html",
-            image: "images/1.jpg",
+            services: [
+              {
+                name: "Обчислювальне мислення",
+                description: "Простими словами про обчислювальне мислення.",
+                link: "https://compnauka.github.io/services/compthinking.html",
+                image: "images/1.jpg"
+              },
+              {
+                name: "Алгоритми для дітей",
+                description: "Як програмувати роботів та комп'ютери.",
+                link: "https://compnauka.github.io/services/algorithm.html",
+                image: "images/12.jpg"
+              },
+              {
+                name: "Абстракція для дітей",
+                description: "Інтерактивний урок про рівні абстракції.",
+                link: "https://compnauka.github.io/services/abstraction.html",
+                image: "images/22.jpg"
+              },
+              {
+                name: "Виявлення шаблонів",
+                description: "Інтерактивний урок про виявлення шаблонів.",
+                link: "https://compnauka.github.io/services/patterns.html",
+                image: "images/23.jpg"
+              },
+              {
+                name: "Декомпозиція для дітей",
+                description: "Інтерактивний урок про декомпозицію.",
+                link: "https://compnauka.github.io/services/decomposition.html",
+                image: "images/24.jpg"
+              }
+            ]
           },
           {
-            name: "Програмування з Равликом",
-            description: "Онлайн редактор для текстової мови програмування РАВЛИК",
-            link: "https://ravlykonline.github.io/",
-            image: "images/2.jpg",
+            id: "programming",
+            name: "Програмування",
+            services: [
+              {
+                name: "Програмування з Равликом",
+                description: "Онлайн редактор для текстової мови програмування РАВЛИК",
+                link: "https://ravlykonline.github.io/",
+                image: "images/2.jpg"
+              },
+              {
+                name: "Посібник з програмування Равлика",
+                description: "Знайомство з мовою програмування РАВЛИК.",
+                link: "https://ravlykonline.github.io/manual.html",
+                image: "images/3.jpg"
+              }
+            ]
           },
           {
-            name: "Посібник з програмування Равлика",
-            description: "Знайомство з мовою програмування РАВЛИК.",
-            link: "https://ravlykonline.github.io/manual.html",
-            image: "images/3.jpg",
-          },
-
-          {
-            name: "Алгоритми для дітей",
-            description: "Як програмувати роботів та комп'ютери.",
-            link: "https://compnauka.github.io/services/algorithm.html",
-            image: "images/12.jpg",
-          },
-          {
-            name: "Абстракція для дітей",
-            description: "Інтерактивний урок про рівні абстракції.",
-            link: "https://compnauka.github.io/services/abstraction.html",
-            image: "images/22.jpg",
-          },
-                    {
-            name: "Виявлення шаблонів",
-            description: "Інтерактивний урок про виявлення шаблонів.",
-            link: "https://compnauka.github.io/services/patterns.html",
-            image: "images/23.jpg",
-          },
-                    {
-            name: "Декомпозиція для дітей",
-            description: "Інтерактивний урок про декомпозицію.",
-            link: "https://compnauka.github.io/services/decomposition.html",
-            image: "images/24.jpg",
-          },
-          {
-            name: "Привіт, ШІ!",
-            description: "Інтерактивна книга для дітей про штучний інтелект.",
-            link: "https://pryvitshi.github.io/",
-            image: "images/4.jpg",
+            id: "digital-security",
+            name: "Цифрова безпека",
+            services: [
+              {
+                name: "Кібербезпека для дітей",
+                description: "Дізнайся, як захистити себе в інтернеті.",
+                link: "https://compnauka.github.io/services/cyber.html",
+                image: "images/9.jpg"
+              },
+              {
+                name: "Криптографія для дітей",
+                description: "Інтерактивний сайт про шифрування інформації.",
+                link: "https://compnauka.github.io/services/crypto.html",
+                image: "images/8.jpg"
+              },
+              {
+                name: "Шифр Цезаря",
+                description: "Зашифруй своє повідомлення одним з найдавніших шифрів.",
+                link: "https://compnauka.github.io/services/caesar_encrypt.html",
+                image: "images/6.jpg"
+              },
+              {
+                name: "Розшифрування шифру Цезаря",
+                description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.",
+                link: "https://compnauka.github.io/services/caesar_decrypt.html",
+                image: "images/7.jpg"
+              }
+            ]
           },
           {
-            name: "Кібербезпека для дітей",
-            description: "Дізнайся, як захистити себе в інтернеті.",
-            link: "https://compnauka.github.io/services/cyber.html",
-            image: "images/9.jpg",
+            id: "computer-skills",
+            name: "Комп'ютерні навички",
+            services: [
+              {
+                name: "Мишачі перегони",
+                description: "Тренажер для роботи з мишкою.",
+                link: "https://compnauka.github.io/services/click.html",
+                image: "images/10.jpg"
+              },
+              {
+                name: "Гарячі клавіши",
+                description: "Інтерактивний урок про роботу з клавіатурою.",
+                link: "https://compnauka.github.io/services/typing.html",
+                image: "images/18.jpg"
+              },
+              {
+                name: "Спритні пальчики",
+                description: "Веселий тренажер для роботи з клавіатурою.",
+                link: "https://compnauka.github.io/services/keys.html",
+                image: "images/11.jpg"
+              }
+            ]
           },
           {
-            name: "Криптографія для дітей",
-            description: "Інтерактивний сайт про шифрування інформації.",
-            link: "https://compnauka.github.io/services/crypto.html",
-            image: "images/8.jpg",
+            id: "information-literacy",
+            name: "Інформаційна грамотність",
+            services: [
+              {
+                name: "Перевіряй інформацію!",
+                description: "Інтерактивний тренажер з критичного оцінювання інформації.",
+                link: "https://compnauka.github.io/services/critic.html",
+                image: "images/13.jpg"
+              },
+              {
+                name: "Привіт, ШІ!",
+                description: "Інтерактивна книга для дітей про штучний інтелект.",
+                link: "https://pryvitshi.github.io/",
+                image: "images/4.jpg"
+              }
+            ]
           },
           {
-            name: "Мишачі перегони",
-            description: "Тренажер для роботи з мишкою.",
-            link: "https://compnauka.github.io/services/click.html",
-            image: "images/10.jpg",
-          },
-          {
-            name: "Гарячі клавіши",
-            description: "Інтерактивний урок про роботу з клавіатурою.",
-            link: "https://compnauka.github.io/services/typing.html",
-            image: "images/18.jpg",
-          },
-          {
-            name: "Спритні пальчики",
-            description: "Веселий тренажер для роботи з клавіатурою.",
-            link: "https://compnauka.github.io/services/keys.html",
-            image: "images/11.jpg",
-          },
-          {
-            name: "Перевіряй інформацію!",
-            description: "Інтерактивний тренажер з критичного оцінювання інформації.",
-            link: "https://compnauka.github.io/services/critic.html",
-            image: "images/13.jpg",
-          },
-          {
-            name: "Бітовий конвертер",
-            description: "Простий конвертер з двійкової в десяткову систему.",
-            link: "https://compnauka.github.io/services/bitconverter.html",
-            image: "images/5.jpg",
-          },
-          {
-            name: "Шифр Цезаря",
-            description: "Зашифруй своє повідомлення одним з найдавніших шифрів.",
-            link: "https://compnauka.github.io/services/caesar_encrypt.html",
-            image: "images/6.jpg",
-          },
-          {
-            name: "Розшифрування шифру Цезаря",
-            description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.",
-            link: "https://compnauka.github.io/services/caesar_decrypt.html",
-            image: "images/7.jpg",
-          },
+            id: "digital-tools",
+            name: "Цифрові інструменти",
+            services: [
+              {
+                name: "Бітовий конвертер",
+                description: "Простий конвертер з двійкової в десяткову систему.",
+                link: "https://compnauka.github.io/services/bitconverter.html",
+                image: "images/5.jpg"
+              }
+            ]
+          }
         ];
 
-        // Функція для спостереження за зображеннями та ледачого завантаження
-        function setupImageObserver() {
-          if ('IntersectionObserver' in window) {
+        const setupImageObserver = () => {
+          if ("IntersectionObserver" in window) {
             const imageObserver = new IntersectionObserver((entries, observer) => {
-              entries.forEach(entry => {
+              entries.forEach((entry) => {
                 if (entry.isIntersecting) {
                   const img = entry.target;
-                  const src = img.getAttribute('data-src');
-                  
+                  const src = img.getAttribute("data-src");
                   if (src) {
                     img.src = src;
-                    img.classList.remove('skeleton-loading');
-                    img.onload = () => {
-                      img.setAttribute('alt', img.getAttribute('data-alt'));
-                    };
+                    img.classList.remove("skeleton-loading");
+                    img.onload = () => img.removeAttribute("data-src");
                     observer.unobserve(img);
                   }
                 }
               });
             }, IMAGE_OPTIONS);
-            
-            return imageObserver;
-          }
-          return null;
-        }
 
-        // Функція для створення картки сервісу
-        function createServiceCard(service, imageObserver) {
-          const card = document.createElement("div");
-          card.classList.add("service-card");
-          
-          const imageContainer = document.createElement("div");
-          imageContainer.classList.add("service-card__image-container");
-          
-          const img = document.createElement("img");
-          img.classList.add("service-card__image", "skeleton-loading");
-          img.setAttribute('data-src', service.image);
-          img.setAttribute('data-alt', service.name);
-          img.setAttribute('alt', 'Завантаження...');
-          
-          const content = document.createElement("div");
-          content.classList.add("service-card__content");
-          
-          const title = document.createElement("h2");
-          title.classList.add("service-card__title");
-          title.textContent = service.name;
-          
-          const description = document.createElement("p");
-          description.classList.add("service-card__description");
-          description.textContent = service.description;
-          
-          const link = document.createElement("a");
-          link.classList.add("service-card__link");
-          link.href = service.link;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = "Перейти до сервісу";
-          
-          imageContainer.appendChild(img);
-          content.appendChild(title);
-          content.appendChild(description);
-          content.appendChild(link);
-          
-          card.appendChild(imageContainer);
-          card.appendChild(content);
-          
-          // Додати зображення до спостерігача, якщо він доступний
-          if (imageObserver) {
-            imageObserver.observe(img);
+            document.querySelectorAll('img[data-src]').forEach((img) =>
+              imageObserver.observe(img)
+            );
           } else {
-            // Резервний варіант для браузерів без підтримки IntersectionObserver
-            img.src = service.image;
-            img.alt = service.name;
-            img.classList.remove('skeleton-loading');
-          }
-          
-          return card;
-        }
-
-        // Функція для початкового завантаження пріоритетних сервісів
-        function loadPriorityServices(count = 4) {
-          const container = document.getElementById("services-container");
-          const imageObserver = setupImageObserver();
-          
-          // Показуємо спочатку певну кількість сервісів
-          SERVICES.slice(0, count).forEach(service => {
-            const card = createServiceCard(service, imageObserver);
-            container.appendChild(card);
-          });
-          
-          // Завантажуємо решту сервісів із затримкою
-          setTimeout(() => {
-            SERVICES.slice(count).forEach(service => {
-              const card = createServiceCard(service, imageObserver);
-              container.appendChild(card);
+            document.querySelectorAll('img[data-src]').forEach((img) => {
+              const src = img.getAttribute("data-src");
+              if (src) {
+                img.src = src;
+                img.classList.remove("skeleton-loading");
+                img.removeAttribute("data-src");
+              }
             });
-          }, 100);
-        }
+          }
+        };
 
-        // Ініціалізуємо сайт при завантаженні DOM
+        const createServiceCard = (service) => {
+          const card = document.createElement("div");
+          card.className = "service-card";
+
+          const imageContainer = document.createElement("div");
+          imageContainer.className = "service-card__image-container";
+
+          const image = document.createElement("img");
+          image.className = "service-card__image skeleton-loading";
+          image.alt = service.name;
+          image.setAttribute("data-src", service.image);
+
+          imageContainer.appendChild(image);
+          card.appendChild(imageContainer);
+
+          const content = document.createElement("div");
+          content.className = "service-card__content";
+
+          const title = document.createElement("h3");
+          title.className = "service-card__title";
+          title.textContent = service.name;
+
+          const description = document.createElement("p");
+          description.className = "service-card__description";
+          description.textContent = service.description;
+
+          const link = document.createElement("a");
+          link.className = "service-card__link";
+          link.href = service.link;
+          link.textContent = "Відкрити";
+          link.target = "_blank";
+
+          content.append(title, description, link);
+          card.appendChild(content);
+
+          return card;
+        };
+
+        const createCategorySection = (category) => {
+          const categorySection = document.createElement("section");
+          categorySection.className = "category";
+          categorySection.id = category.id;
+
+          const categoryHeader = document.createElement("h2");
+          categoryHeader.className = "category-header";
+          categoryHeader.textContent = category.name;
+
+          const servicesGrid = document.createElement("div");
+          servicesGrid.className = "services-grid";
+
+          category.services.forEach((service) => {
+            servicesGrid.appendChild(createServiceCard(service));
+          });
+
+          categorySection.append(categoryHeader, servicesGrid);
+          return categorySection;
+        };
+
+        const createCategoryNavigation = () => {
+          const nav = document.getElementById("categories-nav");
+          CATEGORIES.forEach((category) => {
+            const button = document.createElement("button");
+            button.className = "category-button";
+            button.textContent = category.name;
+            button.addEventListener("click", () => {
+              document.getElementById(category.id)?.scrollIntoView({ behavior: "smooth" });
+            });
+            nav.appendChild(button);
+          });
+        };
+
+        const renderCategories = () => {
+          const categoriesContainer = document.getElementById("categories-container");
+          CATEGORIES.forEach((category) => {
+            categoriesContainer.appendChild(createCategorySection(category));
+          });
+          setupImageObserver();
+        };
+
         document.addEventListener("DOMContentLoaded", () => {
-          loadPriorityServices();
+          createCategoryNavigation();
+          renderCategories();
         });
       })();
     </script>
