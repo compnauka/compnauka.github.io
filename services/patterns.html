@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Виявлення шаблонів | Обчислювальне мислення для дітей</title>
+  <title>Виявлення шаблонів для дітей</title>
   <style>
     :root {
       --primary-color: #4c6ef5;
@@ -12,6 +12,10 @@
       --bg-color: #f8f9fa;
       --text-color: #212529;
       --pattern-highlight: #f3d9fa;
+      --blue: #74b9ff;
+      --green: #55efc4;
+      --color-a: #ff9ff3;
+      --color-b: #a29bfe;
     }
     
     body {
@@ -125,6 +129,22 @@
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
+    }
+    
+    /* Класи для математичних шаблонів */
+    .bg-blue {
+      background-color: var(--blue);
+    }
+    .bg-green {
+      background-color: var(--green);
+    }
+    
+    /* Класи для числових шаблонів */
+    .color-a {
+      background-color: var(--color-a);
+    }
+    .color-b {
+      background-color: var(--color-b);
     }
     
     .shape-item {
@@ -287,6 +307,22 @@
       border-radius: 20px 20px 0 0;
     }
     
+    /* Стилі для блоків у Pattern Creator */
+    .color-block {
+      width: 40px;
+      height: 40px;
+      border: none;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    
+    .user-color-block {
+      width: 40px;
+      height: 40px;
+      margin: 5px;
+      display: inline-block;
+    }
+    
     @media (max-width: 768px) {
       .examples {
         grid-template-columns: 1fr;
@@ -359,11 +395,11 @@
           </p>
           <p>Бачиш шаблон? Кожного разу додається 10!</p>
           <div id="math-pattern">
-            <div class="pattern-item" style="background-color: #74b9ff;">10</div>
-            <div class="pattern-item" style="background-color: #55efc4;">20</div>
-            <div class="pattern-item" style="background-color: #74b9ff;">30</div>
-            <div class="pattern-item" style="background-color: #55efc4;">40</div>
-            <div class="pattern-item" style="background-color: #74b9ff;">50</div>
+            <div class="pattern-item bg-blue">10</div>
+            <div class="pattern-item bg-green">20</div>
+            <div class="pattern-item bg-blue">30</div>
+            <div class="pattern-item bg-green">40</div>
+            <div class="pattern-item bg-blue">50</div>
           </div>
         </div>
         
@@ -443,12 +479,12 @@
       <p>Поглянь на числовий ряд і визнач, яке число повинно бути наступним:</p>
       
       <div class="pattern-game" id="number-game">
-        <div class="pattern-item" style="background-color: #ff9ff3;">2</div>
-        <div class="pattern-item" style="background-color: #a29bfe;">4</div>
-        <div class="pattern-item" style="background-color: #ff9ff3;">6</div>
-        <div class="pattern-item" style="background-color: #a29bfe;">8</div>
-        <div class="pattern-item" style="background-color: #ff9ff3;">10</div>
-        <div class="pattern-item" style="background-color: #a29bfe;">?</div>
+        <div class="pattern-item color-a">2</div>
+        <div class="pattern-item color-b">4</div>
+        <div class="pattern-item color-a">6</div>
+        <div class="pattern-item color-b">8</div>
+        <div class="pattern-item color-a">10</div>
+        <div class="pattern-item color-b">?</div>
       </div>
       
       <div class="pattern-controls">
@@ -483,10 +519,10 @@
       
       <div id="pattern-creator">
         <div style="margin-bottom: 15px;">
-          <button class="color-block" style="background-color: #ff6b6b; width: 40px; height: 40px;"></button>
-          <button class="color-block" style="background-color: #48dbfb; width: 40px; height: 40px;"></button>
-          <button class="color-block" style="background-color: #1dd1a1; width: 40px; height: 40px;"></button>
-          <button class="color-block" style="background-color: #feca57; width: 40px; height: 40px;"></button>
+          <button class="color-block" style="background-color: #ff6b6b;"></button>
+          <button class="color-block" style="background-color: #48dbfb;"></button>
+          <button class="color-block" style="background-color: #1dd1a1;"></button>
+          <button class="color-block" style="background-color: #feca57;"></button>
         </div>
         
         <div id="user-pattern" style="min-height: 50px; background-color: #f1f2f6; border-radius: 10px; padding: 10px; display: flex; flex-wrap: wrap;"></div>
@@ -507,84 +543,83 @@
   </footer>
   
   <script>
-    // ініціалізація гри з фігурами
-    const shapeButtons = [
-      { id: 'circle-btn', value: 'circle' },
-      { id: 'triangle-btn', value: 'triangle' },
-      { id: 'square-btn', value: 'square' }
-    ];
-    
-    shapeButtons.forEach(btn => {
-      document.getElementById(btn.id).addEventListener('click', () => {
-        checkShapeAnswer(btn.value);
-      });
-    });
-    
-    function checkShapeAnswer(userAnswer) {
-      const feedback = document.getElementById('shape-feedback');
-      feedback.style.display = 'block';
-      
-      // правильна відповідь: квадрат
-      if (userAnswer === 'square') {
-        feedback.className = 'feedback success';
-        feedback.innerHTML = '<span class="emoji">👍</span> Правильно! Наступна фігура повинна бути квадратом, тому що шаблон повторюється: коло-трикутник-квадрат-коло-трикутник-квадрат.';
-      } else {
-        feedback.className = 'feedback error';
-        feedback.innerHTML = '<span class="emoji">🤔</span> Спробуй ще раз! Подивись уважно на послідовність фігур.';
+    document.addEventListener("DOMContentLoaded", function() {
+      // Універсальна функція для перевірки відповідей гри
+      function checkAnswer(feedbackId, userAnswer, correctAnswer, successMsg, errorMsg) {
+        const feedback = document.getElementById(feedbackId);
+        feedback.style.display = 'block';
+        if (userAnswer === correctAnswer) {
+          feedback.className = 'feedback success';
+          feedback.innerHTML = successMsg;
+        } else {
+          feedback.className = 'feedback error';
+          feedback.innerHTML = errorMsg;
+        }
       }
-    }
-    
-    // ініціалізація гри з числами
-    const numberButtons = [
-      { id: 'btn-10', value: 10 },
-      { id: 'btn-11', value: 11 },
-      { id: 'btn-12', value: 12 },
-      { id: 'btn-14', value: 14 }
-    ];
-    
-    numberButtons.forEach(btn => {
-      document.getElementById(btn.id).addEventListener('click', () => {
-        checkNumberAnswer(btn.value);
-      });
-    });
-    
-    function checkNumberAnswer(userAnswer) {
-      const feedback = document.getElementById('number-feedback');
-      feedback.style.display = 'block';
       
-      // правильна відповідь: 12
-      if (userAnswer === 12) {
-        feedback.className = 'feedback success';
-        feedback.innerHTML = '<span class="emoji">👍</span> Правильно! Числа збільшуються на 2 кожного разу: 2, 4, 6, 8, 10, 12.';
-      } else {
-        feedback.className = 'feedback error';
-        feedback.innerHTML = '<span class="emoji">🤔</span> Спробуй ще раз! Подивись, яка закономірність у зміні чисел.';
-      }
-    }
-    
-    // Створення власного шаблону
-    const colorBlocks = document.querySelectorAll('.color-block');
-    const userPattern = document.getElementById('user-pattern');
-    const clearButton = document.getElementById('clear-pattern');
-    const repeatButton = document.getElementById('repeat-pattern');
-    
-    colorBlocks.forEach(block => {
-      block.addEventListener('click', () => {
-        const color = block.style.backgroundColor;
-        const newBlock = document.createElement('div');
-        newBlock.style.cssText = 'width: 40px; height: 40px; background-color: ' + color + '; margin: 5px; display: inline-block;';
-        userPattern.appendChild(newBlock);
+      // Ініціалізація гри з фігурами
+      const shapeButtons = [
+        { id: 'circle-btn', value: 'circle' },
+        { id: 'triangle-btn', value: 'triangle' },
+        { id: 'square-btn', value: 'square' }
+      ];
+      
+      shapeButtons.forEach(btn => {
+        document.getElementById(btn.id).addEventListener('click', () => {
+          checkAnswer(
+            'shape-feedback',
+            btn.value,
+            'square',
+            '<span class="emoji">👍</span> Правильно! Наступна фігура повинна бути квадратом, тому що шаблон повторюється: коло-трикутник-квадрат-коло-трикутник-квадрат.',
+            '<span class="emoji">🤔</span> Спробуй ще раз! Подивись уважно на послідовність фігур.'
+          );
+        });
       });
-    });
-    
-    clearButton.addEventListener('click', () => {
-      userPattern.innerHTML = '';
-    });
-    
-    repeatButton.addEventListener('click', () => {
-      userPattern.innerHTML += userPattern.innerHTML;
+      
+      // Ініціалізація гри з числами
+      const numberButtons = [
+        { id: 'btn-10', value: 10 },
+        { id: 'btn-11', value: 11 },
+        { id: 'btn-12', value: 12 },
+        { id: 'btn-14', value: 14 }
+      ];
+      
+      numberButtons.forEach(btn => {
+        document.getElementById(btn.id).addEventListener('click', () => {
+          checkAnswer(
+            'number-feedback',
+            btn.value,
+            12,
+            '<span class="emoji">👍</span> Правильно! Числа збільшуються на 2 кожного разу: 2, 4, 6, 8, 10, 12.',
+            '<span class="emoji">🤔</span> Спробуй ще раз! Подивись, яка закономірність у зміні чисел.'
+          );
+        });
+      });
+      
+      // Ініціалізація функціоналу для створення власного шаблону
+      const colorBlocks = document.querySelectorAll('.color-block');
+      const userPattern = document.getElementById('user-pattern');
+      const clearButton = document.getElementById('clear-pattern');
+      const repeatButton = document.getElementById('repeat-pattern');
+      
+      colorBlocks.forEach(block => {
+        block.addEventListener('click', () => {
+          const color = block.style.backgroundColor;
+          const newBlock = document.createElement('div');
+          newBlock.className = 'user-color-block';
+          newBlock.style.backgroundColor = color;
+          userPattern.appendChild(newBlock);
+        });
+      });
+      
+      clearButton.addEventListener('click', () => {
+        userPattern.innerHTML = '';
+      });
+      
+      repeatButton.addEventListener('click', () => {
+        userPattern.innerHTML += userPattern.innerHTML;
+      });
     });
   </script>
 </body>
 </html>
-
