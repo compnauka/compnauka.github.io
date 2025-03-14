@@ -118,6 +118,11 @@
         background-color: #d4e6ff;
       }
 
+      /* Стиль для активного рівня */
+      .level.active {
+        background-color: #a3c9f1;
+      }
+
       .example {
         max-width: 200px;
         margin: 5px auto;
@@ -227,19 +232,19 @@
         <p>Обери рівень абстракції для малювання:</p>
 
         <div class="levels">
-          <div class="level" onclick="selectLevel(1)">
+          <div class="level" id="level1" onclick="selectLevel(1, this)">
             <h3>Рівень 1: Детальний</h3>
             <p>Малюй з усіма деталями</p>
             <img src="../images/19.jpg" alt="Детальне малювання" class="example" />
           </div>
 
-          <div class="level" onclick="selectLevel(2)">
+          <div class="level" id="level2" onclick="selectLevel(2, this)">
             <h3>Рівень 2: Середній</h3>
             <p>Малюй основні форми</p>
             <img src="../images/20.jpg" alt="Середнє малювання" class="example" />
           </div>
 
-          <div class="level" onclick="selectLevel(3)">
+          <div class="level" id="level3" onclick="selectLevel(3, this)">
             <h3>Рівень 3: Простий</h3>
             <p>Малюй найважливіше</p>
             <img src="../images/21.jpg" alt="Просте малювання" class="example" />
@@ -369,11 +374,8 @@
       const colorPickers = document.querySelectorAll(".color");
       colorPickers.forEach((color) => {
         color.addEventListener("click", function () {
-          // Зняти активний клас з усіх кольорів
           colorPickers.forEach((c) => c.classList.remove("active"));
-          // Додати активний клас до обраного кольору
           this.classList.add("active");
-          // Встановити поточний колір
           currentColor = this.getAttribute("data-color");
         });
       });
@@ -386,10 +388,8 @@
 
       function draw(e) {
         if (!isDrawing) return;
-
         const rect = drawingCanvas.getBoundingClientRect();
         let x, y;
-
         if (e.type === "touchmove") {
           x = e.touches[0].clientX - rect.left;
           y = e.touches[0].clientY - rect.top;
@@ -397,11 +397,9 @@
           x = e.clientX - rect.left;
           y = e.clientY - rect.top;
         }
-
         drawingCtx.lineWidth = 5;
         drawingCtx.lineCap = "round";
         drawingCtx.strokeStyle = currentColor;
-
         drawingCtx.lineTo(x, y);
         drawingCtx.stroke();
         drawingCtx.beginPath();
@@ -418,7 +416,6 @@
         const rect = drawingCanvas.getBoundingClientRect();
         const x = e.touches[0].clientX - rect.left;
         const y = e.touches[0].clientY - rect.top;
-
         drawingCtx.beginPath();
         drawingCtx.moveTo(x, y);
         isDrawing = true;
@@ -434,8 +431,18 @@
       }
 
       // Функції для рівнів
-      function selectLevel(level) {
+      function selectLevel(level, elem) {
         currentLevel = level;
+        // Знімаємо клас active з усіх елементів рівнів
+        const levelDivs = document.querySelectorAll(".level");
+        levelDivs.forEach((div) => div.classList.remove("active"));
+        // Якщо передано елемент, додаємо до нього клас active
+        if (elem) {
+          elem.classList.add("active");
+        } else {
+          const defaultElem = document.getElementById("level" + level);
+          if (defaultElem) defaultElem.classList.add("active");
+        }
         canvasContainer.classList.remove("hidden");
         canvasContainer.classList.add("show");
         clearCanvas();
@@ -445,8 +452,6 @@
 
       function drawExample() {
         exampleCtx.clearRect(0, 0, exampleCanvas.width, exampleCanvas.height);
-
-        // Малюємо приклад залежно від рівня
         switch (currentLevel) {
           case 1:
             drawDetailedHouse();
@@ -480,25 +485,20 @@
       function drawDetailedHouse() {
         exampleCtx.fillStyle = "#87CEEB";
         exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
-
         exampleCtx.fillStyle = "yellow";
         exampleCtx.beginPath();
         exampleCtx.arc(50, 50, 30, 0, Math.PI * 2);
         exampleCtx.fill();
-
         exampleCtx.fillStyle = "white";
         exampleCtx.beginPath();
         exampleCtx.arc(100, 60, 15, 0, Math.PI * 2);
         exampleCtx.arc(120, 60, 15, 0, Math.PI * 2);
         exampleCtx.arc(140, 60, 15, 0, Math.PI * 2);
         exampleCtx.fill();
-
         exampleCtx.fillStyle = "green";
         exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
-
         exampleCtx.fillStyle = "#CD853F";
         exampleCtx.fillRect(100, 150, 150, 100);
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.beginPath();
         exampleCtx.moveTo(80, 150);
@@ -506,30 +506,23 @@
         exampleCtx.lineTo(270, 150);
         exampleCtx.closePath();
         exampleCtx.fill();
-
         exampleCtx.fillStyle = "#A52A2A";
         exampleCtx.fillRect(220, 100, 20, 50);
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.fillRect(150, 200, 30, 50);
-
         exampleCtx.fillStyle = "black";
         exampleCtx.beginPath();
         exampleCtx.arc(157, 225, 3, 0, Math.PI * 2);
         exampleCtx.fill();
-
         exampleCtx.fillStyle = "#ADD8E6";
         exampleCtx.fillRect(120, 170, 20, 20);
         exampleCtx.fillRect(200, 170, 20, 20);
-
         exampleCtx.strokeStyle = "black";
         exampleCtx.lineWidth = 2;
         exampleCtx.strokeRect(120, 170, 20, 20);
         exampleCtx.strokeRect(200, 170, 20, 20);
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.fillRect(40, 180, 15, 70);
-
         exampleCtx.fillStyle = "#006400";
         exampleCtx.beginPath();
         exampleCtx.arc(47, 180, 25, 0, Math.PI * 2);
@@ -545,13 +538,10 @@
       function drawMediumHouse() {
         exampleCtx.fillStyle = "#87CEEB";
         exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
-
         exampleCtx.fillStyle = "green";
         exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
-
         exampleCtx.fillStyle = "#CD853F";
         exampleCtx.fillRect(100, 150, 150, 100);
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.beginPath();
         exampleCtx.moveTo(80, 150);
@@ -559,10 +549,8 @@
         exampleCtx.lineTo(270, 150);
         exampleCtx.closePath();
         exampleCtx.fill();
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.fillRect(150, 200, 30, 50);
-
         exampleCtx.fillStyle = "#ADD8E6";
         exampleCtx.fillRect(120, 170, 20, 20);
         exampleCtx.fillRect(200, 170, 20, 20);
@@ -571,13 +559,10 @@
       function drawSimpleHouse() {
         exampleCtx.fillStyle = "#87CEEB";
         exampleCtx.fillRect(0, 0, exampleCanvas.width, exampleCanvas.height);
-
         exampleCtx.fillStyle = "green";
         exampleCtx.fillRect(0, 220, exampleCanvas.width, 80);
-
         exampleCtx.fillStyle = "#CD853F";
         exampleCtx.fillRect(100, 150, 150, 100);
-
         exampleCtx.fillStyle = "#8B4513";
         exampleCtx.beginPath();
         exampleCtx.moveTo(100, 150);
@@ -591,7 +576,6 @@
         canvasContainer.classList.add("hidden");
         explanationDiv.classList.remove("hidden");
         explanationDiv.classList.add("show");
-
         switch (currentLevel) {
           case 1:
             explanationText.textContent =
@@ -606,7 +590,6 @@
               "Це найпростіший рівень абстракції, де ми бачимо лише основну форму будинку. Ця проста форма передає достатньо інформації, щоб ми зрозуміли, що це будинок.";
             break;
         }
-
         completedLevels++;
         updateProgress();
       }
@@ -614,7 +597,6 @@
       function updateProgress() {
         const progressPercentage = (completedLevels / 3) * 100;
         progressBar.style.width = progressPercentage + "%";
-
         if (completedLevels >= 3) {
           congratsModal.style.display = "block";
         }
@@ -643,6 +625,9 @@
       function closeModal() {
         congratsModal.style.display = "none";
       }
+
+      // Автоматичне увімкнення детального рівня при завантаженні сторінки
+      selectLevel(1, document.getElementById("level1"));
     </script>
   </body>
 </html>
