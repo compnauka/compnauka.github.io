@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комп'ютерний зір | Розпізнавання облич</title>
+    <style>
+        body {
+            font-family: 'Roboto', 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+        }
+        p, li {
+        font-size: 1.1em;
+        }
+        
+        #video-container {
+            position: relative;
+            margin: 20px auto;
+            width: 640px;
+            height: 480px;
+        }
+        
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+        }
+        
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .explanation {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .detection-info {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div id="loadingText">Завантаження face-api.js...</div>
+    </div>
+
+    <h1>Розпізнавач облич 🤪</h1>
+    
+    <div id="video-container">
+        <video id="video" autoplay muted></video>
+        <canvas id="overlay"></canvas>
+    </div>
+    
+    <div id="controls">
+        <button id="startButton">Увімкнути камеру</button>
+        <button id="stopButton" disabled>Вимкнути камеру</button>
+    </div>
+    
+    <div id="status">Завантаження необхідних файлів...</div>
+    <div id="faces-detected" class="detection-info">Знайдено облич: 0</div>
+    
+    <div class="explanation">
+        <h2>Як це працює?</h2>
+        <p>Ця демонстрація використовує бібліотеку face-api.js для розпізнавання облич:</p>
+        <ol>
+            <li>Програма отримує доступ до веб-камери вашого пристрою.</li>
+            <li>Кожен кадр аналізується за допомогою штучного інтелекту, а саме нейронної мережі TinyFaceDetector.</li>
+            <li>Коли програма "бачить" обличчя, вона малює навколо нього рамку.</li>
+            <li>Це відбувається в реальному часі з невеликою затримкою, демонструючи сучасні методи комп'ютерного зору.</li>
+        </ol>
+    </div>
+
+    <!-- Підключення бібліотеки face-api.js -->
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    
+    <script>
+        // Елементи інтерфейсу
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const statusText = document.getElementById('status');
+        const facesDetectedText = document.getElementById('faces-detected');
+        const loadingElement = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        
+        // Змінні для роботи
+        let streaming = false;
+        let stream = null;
+        let detectInterval;
+        
+        // Адреса для завантаження моделей
+        const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+        
+        // Завантаження моделей розпізнавання
+        async function loadModels() {
+            try {
+                loadingText.textContent = 'Завантаження моделей face-api.js...';
+                
+                // Завантаження моделі Tiny Face Detector
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                // Додатково можна завантажити інші моделі
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                
+                loadingElement.style.display = 'none';
+                statusText.textContent = "Моделі завантажено. Натисніть 'Увімкнути камеру' для початку.";
+                startButton.disabled = false;
+            } catch (err) {
+                loadingElement.style.display = 'none';
+                statusText.textContent = "Помилка завантаження моделей: " + err.message;
+                console.error("Помилка завантаження:", err);
+            }
+        }
+        
+        // Функція для запуску веб-камери
+        async function startCamera() {
+            if (streaming) return;
+            
+            try {
+                // Отримання доступу до камери
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: "user", 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 } 
+                    },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                video.play();
+                
+                streaming = true;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                statusText.textContent = "Камера працює. Розпізнавання облич увімкнено.";
+                
+                // Налаштування канвасу для відображення результатів
+                const canvas = document.getElementById('overlay');
+                const displaySize = { width: video.clientWidth, height: video.clientHeight };
+                faceapi.matchDimensions(canvas, displaySize);
+                
+                // Запуск детектування
+                detectInterval = setInterval(async () => {
+                    if (!streaming) return;
+                    
+                    try {
+                        // Виявлення облич з усіма додатковими опціями
+                        const detections = await faceapi.detectAllFaces(
+                            video, 
+                            new faceapi.TinyFaceDetectorOptions()
+                        ).withFaceLandmarks().withFaceExpressions();
+                        
+                        // Масштабування результатів
+                        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                        
+                        // Оновлення лічильника знайдених облич
+                        facesDetectedText.textContent = `Знайдено облич: ${resizedDetections.length}`;
+                        
+                        // Очищення канвасу
+                        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Малювання рамок навколо облич
+                        faceapi.draw.drawDetections(canvas, resizedDetections);
+                        
+                        // Малювання орієнтирів обличчя
+                        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                        
+                        // Відображення емоцій
+                        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                    } catch (error) {
+                        console.error("Помилка в обробці кадру:", error);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                statusText.textContent = "Помилка доступу до камери: " + error.message;
+                console.error("Помилка камери:", error);
+            }
+        }
+        
+        // Функція для зупинки веб-камери
+        function stopCamera() {
+            if (!streaming) return;
+            
+            // Зупинка відео обробки
+            clearInterval(detectInterval);
+            
+            // Зупинка камери
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            video.srcObject = null;
+            streaming = false;
+            
+            // Очищення полотна
+            const canvas = document.getElementById('overlay');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            
+            statusText.textContent = "Камеру вимкнено.";
+            facesDetectedText.textContent = "Знайдено облич: 0";
+        }
+        
+        // Додаємо обробники подій для кнопок
+        startButton.addEventListener('click', startCamera);
+        stopButton.addEventListener('click', stopCamera);
+        
+        // Завантажуємо моделі при запуску
+        document.addEventListener("DOMContentLoaded", loadModels);
+        
+        // На випадок, якщо DOMContentLoaded вже відбувся
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            loadModels();
+        }
+    </script>
+</body>
+</html>
