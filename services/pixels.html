@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пикселізатор</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --background-color: #f0f0f0;
+            --card-background: #ffffff;
+            --border-color: #333;
+            --text-color: #333;
+            --disabled-color: #cccccc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+        }
+        
+        h2 {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            margin-bottom: 10px;
+        }
+        
+        h3 {
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            margin-bottom: 8px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+          font-size:1.1em;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .video-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        
+        .video-wrapper {
+            flex: 1;
+            min-width: 280px;
+            max-width: 500px;
+            margin: 10px;
+        }
+        
+        video, canvas {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 3px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+            background-color: #000;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            margin: 15px 5px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background-color: #3e8e41;
+            transform: scale(1.05);
+        }
+        
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+        }
+        
+        button#screenshotButton {
+            background-color: var(--secondary-color);
+        }
+        
+        button#screenshotButton:hover:not(:disabled) {
+            background-color: #0b7dda;
+        }
+        
+        .controls {
+            margin: 25px 0;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .controls label {
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            min-width: 150px;
+            max-width: 300px;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        .pixel-value {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .explanation {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            text-align: left;
+            width: 100%;
+        }
+        
+        .explanation ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .explanation li {
+            margin-bottom: 8px;
+        }
+        
+        .screenshot-container {
+            margin-top: 30px;
+            display: none;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .screenshot-container img {
+            border: 3px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .download-link:hover {
+            background-color: #0b7dda;
+        }
+        
+        .error-message {
+            color: #f44336;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background-color: #ffebee;
+            display: none;
+        }
+        
+        /* Адаптивні стилі для різних екранів */
+        @media (max-width: 768px) {
+            .video-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .video-wrapper {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .explanation {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            button {
+                width: 100%;
+                margin: 10px 0;
+            }
+            
+            .video-wrapper {
+                margin: 5px 0;
+            }
+        }
+        
+        /* Темна тема для користувачів, які її включили */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #121212;
+                --card-background: #1e1e1e;
+                --border-color: #555;
+                --text-color: #f0f0f0;
+            }
+            
+            .error-message {
+                background-color: #3d0000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Абстракція на прикладі пікселізації</h1>
+    
+    <p>Абстракція — це спрощення деталей, щоб зосередитись на головному.</p>
+    
+    <div class="container">
+        <button id="startButton">Увімкнути камеру</button>
+        
+        <div id="errorMessage" class="error-message"></div>
+        
+        <div class="video-container">
+            <div class="video-wrapper">
+                <h3>Реальність (оригінал)</h3>
+                <video id="webcam" autoplay playsinline muted></video>
+            </div>
+            
+            <div class="video-wrapper">
+                <h3>Абстракція (пикселізація)</h3>
+                <canvas id="pixelCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <label for="pixelSize">Рівень абстракції:</label>
+            <input type="range" id="pixelSize" min="5" max="20" value="16">
+            <span id="pixelValue" class="pixel-value">16</span>
+        </div>
+        
+        <button id="screenshotButton" disabled>Зробити скріншот</button>
+        
+        <div class="screenshot-container" id="screenshotContainer">
+            <h3>Ваш скріншот</h3>
+            <img id="screenshot" alt="Скріншот пікселізованого зображення">
+            <br>
+            <a id="downloadLink" class="download-link" download="abstraction.png">Завантажити зображення</a>
+        </div>
+        
+        <div class="explanation">
+            <h2>Пояснення для дітей:</h2>
+            <p>Абстракція — це коли ми прибираємо дрібні деталі й залишаємо тільки найважливіше.</p>
+            <p>На екрані ліворуч ти бачиш себе таким, яким ти є насправді, з усіма дрібними деталями.</p>
+            <p>На екрані праворуч — теж ти, але "абстрактний", тобто спрощений до великих пікселів.</p>
+            <p>За допомогою повзунка ти можеш змінювати рівень абстракції:</p>
+            <ul>
+                <li>Маленькі пікселі — менша абстракція, більше деталей</li>
+                <li>Великі пікселі — більша абстракція, менше деталей</li>
+            </ul>
+            <p>Навіть коли зображення дуже абстрактне, ти все одно можеш здогадатися, що на ньому. Це тому, що абстракція зберігає найголовніше, і нашому мозку цього достатньо!</p>
+        </div>
+    </div>
+    
+    <script>
+        // Основний модуль додатку
+        const AbstractionApp = (function() {
+            // Приватні змінні
+            const elements = {
+                video: document.getElementById('webcam'),
+                canvas: document.getElementById('pixelCanvas'),
+                startButton: document.getElementById('startButton'),
+                pixelSizeSlider: document.getElementById('pixelSize'),
+                pixelValue: document.getElementById('pixelValue'),
+                screenshotButton: document.getElementById('screenshotButton'),
+                screenshotContainer: document.getElementById('screenshotContainer'),
+                screenshot: document.getElementById('screenshot'),
+                downloadLink: document.getElementById('downloadLink'),
+                errorMessage: document.getElementById('errorMessage')
+            };
+            
+            let pixelSize = parseInt(elements.pixelSizeSlider.value);
+            let isStreaming = false;
+            let animationFrameId = null;
+            let videoAspectRatio = 4/3; // Стандартне співвідношення сторін, оновиться після завантаження відео
+            
+            // Налаштування розмірів відео та канвасу
+            function setupVideoCanvasDimensions() {
+                const containerWidth = elements.video.parentElement.clientWidth;
+                const videoHeight = Math.floor(containerWidth / videoAspectRatio);
+                
+                elements.video.width = containerWidth;
+                elements.video.height = videoHeight;
+                
+                elements.canvas.width = containerWidth;
+                elements.canvas.height = videoHeight;
+            }
+            
+            // Ініціалізація камери
+            async function initCamera() {
+                try {
+                    hideError();
+                    const constraints = {
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: "user"
+                        }
+                    };
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    elements.video.srcObject = stream;
+                    isStreaming = true;
+                    
+                    elements.startButton.disabled = true;
+                    elements.startButton.textContent = 'Камера увімкнена';
+                    elements.screenshotButton.disabled = false;
+                    
+                    // Чекаємо завантаження метаданих для визначення правильного співвідношення сторін
+                    elements.video.addEventListener('loadedmetadata', function() {
+                        videoAspectRatio = elements.video.videoWidth / elements.video.videoHeight;
+                        setupVideoCanvasDimensions();
+                        startProcessing();
+                    });
+                    
+                    // На випадок якщо подія 'loadedmetadata' вже спрацювала
+                    if (elements.video.readyState >= 2) {
+                        videoAspectRatio = elements.video.videoWidth / elements.video.videoHeight;
+                        setupVideoCanvasDimensions();
+                        startProcessing();
+                    }
+                    
+                } catch (err) {
+                    showError('Не вдалося отримати доступ до веб-камери: ' + err.message);
+                    console.error('Помилка доступу до камери:', err);
+                }
+            }
+            
+            // Показати повідомлення про помилку
+            function showError(message) {
+                elements.errorMessage.textContent = message;
+                elements.errorMessage.style.display = 'block';
+            }
+            
+            // Приховати повідомлення про помилку
+            function hideError() {
+                elements.errorMessage.style.display = 'none';
+            }
+            
+            // Початок обробки відео та пикселізації
+            function startProcessing() {
+                if (!isStreaming) return;
+                
+                // Обробка кадрів відео та їхня пикселізація
+                processVideo();
+                
+                // Оновлення значення пикселізації
+                elements.pixelValue.textContent = pixelSize;
+            }
+            
+            // Обробка потоку відео
+            function processVideo() {
+                if (!isStreaming) return;
+                
+                const ctx = elements.canvas.getContext('2d');
+                const width = elements.canvas.width;
+                const height = elements.canvas.height;
+                
+                // Очищення канвасу
+                ctx.clearRect(0, 0, width, height);
+                
+                // Пикселізація зображення
+                pixelateImage(ctx, width, height);
+                
+                // Рекурсивний виклик для наступного кадру
+                animationFrameId = requestAnimationFrame(processVideo);
+            }
+            
+            // Алгоритм пикселізації
+            function pixelateImage(ctx, width, height) {
+                // Спочатку малюємо оригінальне відео на канвасі
+                ctx.drawImage(elements.video, 0, 0, width, height);
+                
+                // Отримуємо дані зображення
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                
+                // Проходимо через зображення блоками заданого розміру
+                for (let y = 0; y < height; y += pixelSize) {
+                    for (let x = 0; x < width; x += pixelSize) {
+                        // Обмежуємо розмір блоку в межах канвасу
+                        const blockWidth = Math.min(pixelSize, width - x);
+                        const blockHeight = Math.min(pixelSize, height - y);
+                        
+                        // Збираємо середні значення RGB для блоку
+                        let r = 0, g = 0, b = 0;
+                        let pixelCount = 0;
+                        
+                        // Підсумовуємо значення кольорів всіх пікселів у блоці
+                        for (let blockY = 0; blockY < blockHeight; blockY++) {
+                            const posY = y + blockY;
+                            for (let blockX = 0; blockX < blockWidth; blockX++) {
+                                const posX = x + blockX;
+                                const i = (posY * width + posX) * 4;
+                                
+                                r += data[i];     // Red
+                                g += data[i + 1]; // Green
+                                b += data[i + 2]; // Blue
+                                
+                                pixelCount++;
+                            }
+                        }
+                        
+                        // Обчислюємо середні значення кольорів
+                        r = Math.floor(r / pixelCount);
+                        g = Math.floor(g / pixelCount);
+                        b = Math.floor(b / pixelCount);
+                        
+                        // Заповнюємо блок середнім кольором
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.fillRect(x, y, blockWidth, blockHeight);
+                    }
+                }
+            }
+            
+            // Функція для зробити скріншот
+            function takeScreenshot() {
+                // Створюємо новий канвас для збереження зображення
+                const screenshotCanvas = document.createElement('canvas');
+                screenshotCanvas.width = elements.canvas.width;
+                screenshotCanvas.height = elements.canvas.height;
+                
+                // Копіюємо поточне зображення з основного канвасу
+                const ctx = screenshotCanvas.getContext('2d');
+                ctx.drawImage(elements.canvas, 0, 0);
+                
+                // Конвертуємо канвас в URL зображення
+                const imageUrl = screenshotCanvas.toDataURL('image/png');
+                
+                // Встановлюємо зображення та посилання для завантаження
+                elements.screenshot.src = imageUrl;
+                elements.downloadLink.href = imageUrl;
+                
+                // Показуємо контейнер зі скріншотом
+                elements.screenshotContainer.style.display = 'block';
+                
+                // Прокручуємо до контейнера зі скріншотом
+                elements.screenshotContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Функція для адаптації розмірів при зміні розміру вікна
+            function handleResize() {
+                setupVideoCanvasDimensions();
+                if (isStreaming) {
+                    cancelAnimationFrame(animationFrameId);
+                    startProcessing();
+                }
+            }
+            
+            // Публічний інтерфейс
+            return {
+                // Ініціалізація додатку
+                init: function() {
+                    // Встановлення обробників подій
+                    elements.startButton.addEventListener('click', initCamera);
+                    
+                    elements.pixelSizeSlider.addEventListener('input', function() {
+                        pixelSize = parseInt(this.value);
+                        elements.pixelValue.textContent = pixelSize;
+                    });
+                    
+                    elements.screenshotButton.addEventListener('click', takeScreenshot);
+                    
+                    // Обробка зміни розміру вікна
+                    window.addEventListener('resize', handleResize);
+                    
+                    // Початкова настройка розмірів
+                    setupVideoCanvasDimensions();
+                }
+            };
+        })();
+        
+        // Ініціалізація додатку при завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', function() {
+            AbstractionApp.init();
+        });
+    </script>
+</body>
+</html>
