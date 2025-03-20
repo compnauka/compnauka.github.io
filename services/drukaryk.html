@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Друкарик - простий текстовий редактор для створення та збереження історій">
     <title>Друкарик | Текстовий редактор</title>
     <style>
         body {
@@ -18,7 +19,7 @@
         
         .container {
             max-width: 800px;
-            width: 100%;
+            width: 95%;
             background-color: white;
             border-radius: 15px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -57,11 +58,21 @@
             background-color: #0984e3;
         }
         
+        button:focus {
+            outline: 3px solid #0984e3;
+            outline-offset: 2px;
+        }
+        
         .color-btn {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             border: 2px solid white;
+        }
+        
+        .active-button {
+            background-color: #0984e3;
+            transform: scale(1.05);
         }
         
         #text-area {
@@ -75,6 +86,11 @@
             box-sizing: border-box;
             outline: none;
             margin-bottom: 15px;
+            overflow-y: auto;
+        }
+        
+        #text-area:focus {
+            border-color: #74b9ff;
         }
         
         .font-size-btn {
@@ -85,6 +101,24 @@
             display: flex;
             justify-content: space-between;
             margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .toolbar button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+            
+            #text-area {
+                min-height: 200px;
+                font-size: 16px;
+            }
         }
         
         #message {
@@ -93,14 +127,15 @@
             font-weight: bold;
             height: 20px;
             margin-top: 10px;
+            min-height: 20px;
         }
         
         .emoji-panel {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 8px;
             margin-top: 10px;
-            margin-bottom:15px;
+            margin-bottom: 15px;
             justify-content: center;
         }
         
@@ -122,10 +157,38 @@
         }
         
         .file-format {
-            margin-top: 10px;
+            margin-top: 15px;
             display: flex;
             justify-content: center;
             gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .file-format select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #dfe6e9;
+            font-size: 16px;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 5px;
+            margin: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+        }
+        
+        .word-count {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -134,49 +197,66 @@
         <h1>Друкарик 📜</h1>
         
         <div class="toolbar">
-            <button id="bold-btn" title="Жирний шрифт"><strong>Ж</strong></button>
-            <button id="italic-btn" title="Курсив"><em>К</em></button>
-            <button id="underline-btn" title="Підкреслений"><u>П</u></button>
+            <div class="toolbar-group">
+                <button id="bold-btn" title="Жирний шрифт" aria-label="Жирний шрифт"><strong>Ж</strong></button>
+                <button id="italic-btn" title="Курсив" aria-label="Курсив"><em>К</em></button>
+                <button id="underline-btn" title="Підкреслений" aria-label="Підкреслений"><u>П</u></button>
+                <button id="remove-format-btn" title="Видалити форматування" aria-label="Видалити форматування">Аа</button>
+            </div>
             
-            <button class="font-size-btn" id="increase-font" title="Збільшити шрифт">A+</button>
-            <button class="font-size-btn" id="decrease-font" title="Зменшити шрифт">A-</button>
+            <div class="toolbar-group">
+                <button class="font-size-btn" id="increase-font" title="Збільшити шрифт" aria-label="Збільшити шрифт">A+</button>
+                <button class="font-size-btn" id="decrease-font" title="Зменшити шрифт" aria-label="Зменшити шрифт">A-</button>
+            </div>
             
-            <button class="color-btn" style="background-color: #e74c3c;" data-color="#e74c3c" title="Червоний колір"></button>
-            <button class="color-btn" style="background-color: #2ecc71;" data-color="#2ecc71" title="Зелений колір"></button>
-            <button class="color-btn" style="background-color: #3498db;" data-color="#3498db" title="Синій колір"></button>
-            <button class="color-btn" style="background-color: #f1c40f;" data-color="#f1c40f" title="Жовтий колір"></button>
-            <button class="color-btn" style="background-color: #9b59b6;" data-color="#9b59b6" title="Фіолетовий колір"></button>
-            <button class="color-btn" style="background-color: #000000;" data-color="#000000" title="Чорний колір"></button>
+            <div class="toolbar-group">
+                <button id="align-left-btn" title="Вирівняти ліворуч" aria-label="Вирівняти ліворуч">⟵</button>
+                <button id="align-center-btn" title="Вирівняти по центру" aria-label="Вирівняти по центру">⟷</button>
+                <button id="align-right-btn" title="Вирівняти праворуч" aria-label="Вирівняти праворуч">⟶</button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="color-btn" style="background-color: #e74c3c;" data-color="#e74c3c" title="Червоний колір" aria-label="Червоний колір"></button>
+                <button class="color-btn" style="background-color: #2ecc71;" data-color="#2ecc71" title="Зелений колір" aria-label="Зелений колір"></button>
+                <button class="color-btn" style="background-color: #3498db;" data-color="#3498db" title="Синій колір" aria-label="Синій колір"></button>
+                <button class="color-btn" style="background-color: #f1c40f;" data-color="#f1c40f" title="Жовтий колір" aria-label="Жовтий колір"></button>
+                <button class="color-btn" style="background-color: #9b59b6;" data-color="#9b59b6" title="Фіолетовий колір" aria-label="Фіолетовий колір"></button>
+                <button class="color-btn" style="background-color: #000000;" data-color="#000000" title="Чорний колір" aria-label="Чорний колір"></button>
+            </div>
         </div>
         
-        <div class="emoji-panel">
-            <button class="emoji-btn" data-emoji="😊" title="Посмішка">😊</button>
-            <button class="emoji-btn" data-emoji="😂" title="Сміх">😂</button>
-            <button class="emoji-btn" data-emoji="❤️" title="Серце">❤️</button>
-            <button class="emoji-btn" data-emoji="⭐" title="Зірка">⭐</button>
-            <button class="emoji-btn" data-emoji="☀️" title="Сонце">☀️</button>
-            <button class="emoji-btn" data-emoji="🌙" title="Місяць">🌙</button>
-            <button class="emoji-btn" data-emoji="🌸" title="Квітка">🌸</button>
-            <button class="emoji-btn" data-emoji="🐶" title="Тварина">🐶</button>
+        <div class="emoji-panel" role="toolbar" aria-label="Емодзі">
+            <button class="emoji-btn" data-emoji="😊" title="Посмішка" aria-label="Додати емодзі посмішка">😊</button>
+            <button class="emoji-btn" data-emoji="😂" title="Сміх" aria-label="Додати емодзі сміх">😂</button>
+            <button class="emoji-btn" data-emoji="❤️" title="Серце" aria-label="Додати емодзі серце">❤️</button>
+            <button class="emoji-btn" data-emoji="⭐" title="Зірка" aria-label="Додати емодзі зірка">⭐</button>
+            <button class="emoji-btn" data-emoji="☀️" title="Сонце" aria-label="Додати емодзі сонце">☀️</button>
+            <button class="emoji-btn" data-emoji="🌙" title="Місяць" aria-label="Додати емодзі місяць">🌙</button>
+            <button class="emoji-btn" data-emoji="🌸" title="Квітка" aria-label="Додати емодзі квітка">🌸</button>
+            <button class="emoji-btn" data-emoji="🐶" title="Тварина" aria-label="Додати емодзі тварина">🐶</button>
         </div>
         
-        <div id="text-area" contenteditable="true">Напиши тут свою історію...</div>
+        <div id="text-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Редактор тексту">Напиши тут свою історію...</div>
+        
+        <div class="word-count" id="word-count">Слова: 0 | Символи: 0</div>
         
         <div class="file-format">
-            <label>Формат збереження:</label>
-            <select id="file-format">
+            <label for="file-format">Формат збереження:</label>
+            <select id="file-format" aria-label="Вибір формату збереження">
                 <option value="text">Текстовий файл (.txt)</option>
                 <option value="html">HTML файл (.html)</option>
+                <option value="pdf">PDF файл (.pdf)</option>
             </select>
         </div>
         
         <div class="action-buttons">
-            <button id="clear-btn" title="Очистити все">Очистити</button>
-            <button id="save-btn" title="Зберегти текст">Зберегти</button>
-            <button id="print-btn" title="Роздрукувати">Роздрукувати</button>
+            <button id="clear-btn" title="Очистити все" aria-label="Очистити весь текст">Очистити</button>
+            <button id="copy-btn" title="Скопіювати текст" aria-label="Скопіювати текст">Скопіювати</button>
+            <button id="save-btn" title="Зберегти текст" aria-label="Зберегти текст">Зберегти</button>
+            <button id="print-btn" title="Роздрукувати" aria-label="Роздрукувати текст">Роздрукувати</button>
         </div>
         
-        <div id="message"></div>
+        <div id="message" role="status" aria-live="polite"></div>
     </div>
     
     <script>
@@ -185,16 +265,29 @@
             textArea: document.getElementById('text-area'),
             message: document.getElementById('message'),
             fileFormat: document.getElementById('file-format'),
+            wordCount: document.getElementById('word-count'),
+            placeholderText: 'Напиши тут свою історію...',
             
             // Ініціалізація редактора
             init: function() {
                 // Обробка початкового тексту
-                this.textArea.addEventListener('focus', this.clearInitialText);
+                this.textArea.addEventListener('focus', this.handleFocus.bind(this));
+                this.textArea.addEventListener('blur', this.handleBlur.bind(this));
+                this.textArea.addEventListener('input', this.updateWordCount.bind(this));
+                
+                // Ініціалізація лічильника слів
+                this.updateWordCount();
                 
                 // Кнопки форматування
                 document.getElementById('bold-btn').addEventListener('click', () => this.formatText('bold'));
                 document.getElementById('italic-btn').addEventListener('click', () => this.formatText('italic'));
                 document.getElementById('underline-btn').addEventListener('click', () => this.formatText('underline'));
+                document.getElementById('remove-format-btn').addEventListener('click', () => this.formatText('removeFormat'));
+                
+                // Кнопки вирівнювання
+                document.getElementById('align-left-btn').addEventListener('click', () => this.formatText('justifyLeft'));
+                document.getElementById('align-center-btn').addEventListener('click', () => this.formatText('justifyCenter'));
+                document.getElementById('align-right-btn').addEventListener('click', () => this.formatText('justifyRight'));
                 
                 // Кнопки зміни розміру
                 document.getElementById('increase-font').addEventListener('click', () => this.changeSize(5));
@@ -212,93 +305,326 @@
                 
                 // Кнопки дій
                 document.getElementById('clear-btn').addEventListener('click', this.clearText.bind(this));
+                document.getElementById('copy-btn').addEventListener('click', this.copyText.bind(this));
                 document.getElementById('save-btn').addEventListener('click', this.saveText.bind(this));
                 document.getElementById('print-btn').addEventListener('click', this.printText.bind(this));
+                
+                // Додавання обробників клавіатури для кращої доступності
+                this.addKeyboardShortcuts();
+                
+                // Додавання збереження чернетки
+                this.loadDraft();
+                setInterval(this.saveDraft.bind(this), 30000); // Автозбереження кожні 30 секунд
             },
             
             // Методи редактора
-            clearInitialText: function(e) {
-                if (e.target.textContent === 'Напиши тут свою історію...') {
+            handleFocus: function(e) {
+                if (e.target.textContent === this.placeholderText) {
                     e.target.textContent = '';
+                    e.target.style.color = '#000000';
                 }
             },
             
+            handleBlur: function(e) {
+                if (e.target.textContent.trim() === '') {
+                    e.target.textContent = this.placeholderText;
+                    e.target.style.color = '#7f8c8d';
+                }
+            },
+            
+            updateWordCount: function() {
+                const text = this.textArea.textContent || '';
+                const content = text === this.placeholderText ? '' : text;
+                const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+                const charCount = content.length;
+                
+                this.wordCount.textContent = `Слова: ${wordCount} | Символи: ${charCount}`;
+                
+                // Автозбереження при введенні
+                this.saveDraft();
+            },
+            
             formatText: function(command) {
-                document.execCommand(command, false, null);
-                this.textArea.focus();
+                try {
+                    document.execCommand(command, false, null);
+                    this.textArea.focus();
+                    
+                    // Оновлення активних кнопок
+                    this.updateButtonStates();
+                } catch (error) {
+                    this.showMessage('Помилка при форматуванні тексту', true);
+                    console.error('Помилка форматування:', error);
+                }
+            },
+            
+            updateButtonStates: function() {
+                // Оновлюємо активний стан кнопок на основі поточного форматування
+                document.getElementById('bold-btn').classList.toggle('active-button', document.queryCommandState('bold'));
+                document.getElementById('italic-btn').classList.toggle('active-button', document.queryCommandState('italic'));
+                document.getElementById('underline-btn').classList.toggle('active-button', document.queryCommandState('underline'));
+                
+                document.getElementById('align-left-btn').classList.toggle('active-button', document.queryCommandState('justifyLeft'));
+                document.getElementById('align-center-btn').classList.toggle('active-button', document.queryCommandState('justifyCenter'));
+                document.getElementById('align-right-btn').classList.toggle('active-button', document.queryCommandState('justifyRight'));
             },
             
             changeSize: function(size) {
-                document.execCommand('fontSize', false, size);
-                this.textArea.focus();
+                try {
+                    document.execCommand('fontSize', false, size);
+                    this.textArea.focus();
+                } catch (error) {
+                    this.showMessage('Помилка при зміні розміру тексту', true);
+                    console.error('Помилка зміни розміру:', error);
+                }
             },
             
             changeColor: function(color) {
-                document.execCommand('foreColor', false, color);
-                this.textArea.focus();
+                try {
+                    document.execCommand('foreColor', false, color);
+                    this.textArea.focus();
+                } catch (error) {
+                    this.showMessage('Помилка при зміні кольору тексту', true);
+                    console.error('Помилка зміни кольору:', error);
+                }
             },
             
             addEmoji: function(emoji) {
-                this.textArea.focus();
-                document.execCommand('insertText', false, emoji);
+                try {
+                    this.textArea.focus();
+                    document.execCommand('insertText', false, emoji);
+                    this.updateWordCount();
+                } catch (error) {
+                    this.showMessage('Помилка при додаванні емодзі', true);
+                    console.error('Помилка додавання емодзі:', error);
+                }
             },
             
             clearText: function() {
                 if (confirm('Ти впевнений, що хочеш видалити весь текст?')) {
                     this.textArea.innerHTML = '';
+                    this.textArea.style.color = '#000000';
                     this.showMessage('Текст очищено!');
+                    this.updateWordCount();
+                    this.handleBlur({target: this.textArea});
+                }
+            },
+            
+            copyText: function() {
+                try {
+                    const selection = window.getSelection();
+                    const hasSelection = selection.toString().length > 0;
+                    
+                    if (hasSelection) {
+                        // Копіюємо виділений текст
+                        document.execCommand('copy');
+                        this.showMessage('Виділений текст скопійовано!');
+                    } else {
+                        // Копіюємо весь текст
+                        const text = this.textArea.textContent;
+                        if (text !== this.placeholderText) {
+                            navigator.clipboard.writeText(text)
+                                .then(() => this.showMessage('Весь текст скопійовано!'))
+                                .catch(err => {
+                                    console.error('Помилка копіювання: ', err);
+                                    this.showMessage('Не вдалося скопіювати текст', true);
+                                });
+                        } else {
+                            this.showMessage('Немає тексту для копіювання!', true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Помилка при копіюванні:', error);
+                    this.showMessage('Не вдалося скопіювати текст', true);
                 }
             },
             
             saveText: function() {
-                const format = this.fileFormat.value;
-                let content, mimeType, fileName;
-                
-                if (format === 'text') {
-                    // Зберігаємо лише текст без форматування
-                    content = this.textArea.innerText || this.textArea.textContent;
-                    mimeType = 'text/plain';
-                    fileName = 'моя_історія.txt';
-                } else {
-                    // Зберігаємо як HTML з форматуванням
-                    content = this.textArea.innerHTML;
-                    mimeType = 'text/html';
-                    fileName = 'моя_історія.html';
+                try {
+                    const format = this.fileFormat.value;
+                    let content, mimeType, fileName;
+                    
+                    if (this.textArea.textContent === this.placeholderText || this.textArea.textContent.trim() === '') {
+                        this.showMessage('Немає тексту для збереження!', true);
+                        return;
+                    }
+                    
+                    if (format === 'text') {
+                        // Зберігаємо лише текст без форматування
+                        content = this.textArea.innerText || this.textArea.textContent;
+                        mimeType = 'text/plain';
+                        fileName = 'моя_історія.txt';
+                    } else if (format === 'html') {
+                        // Зберігаємо як HTML з форматуванням
+                        content = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Моя історія</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    ${this.textArea.innerHTML}
+</body>
+</html>`;
+                        mimeType = 'text/html';
+                        fileName = 'моя_історія.html';
+                    } else if (format === 'pdf') {
+                        this.printText(true);
+                        return;
+                    }
+                    
+                    const blob = new Blob([content], {type: mimeType});
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    this.showMessage('Твоя історія збережена як ' + fileName + '!');
+                } catch (error) {
+                    console.error('Помилка при збереженні:', error);
+                    this.showMessage('Помилка при збереженні файлу', true);
                 }
-                
-                const blob = new Blob([content], {type: mimeType});
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url); // Важливо: звільнити пам'ять
-                
-                this.showMessage('Твоя історія збережена як ' + fileName + '!');
             },
             
-            printText: function() {
-                const content = this.textArea.innerHTML;
-                const printWindow = window.open('', '', 'height=600,width=800');
-                printWindow.document.write('<html><head><title>Моя історія</title>');
-                printWindow.document.write('<style>body { font-family: "Comic Sans MS", cursive; margin: 20px; }</style>');
-                printWindow.document.write('</head><body>');
-                printWindow.document.write(content);
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.print();
-                this.showMessage('Готово до друку!');
+            printText: function(asPDF = false) {
+                try {
+                    if (this.textArea.textContent === this.placeholderText || this.textArea.textContent.trim() === '') {
+                        this.showMessage('Немає тексту для друку!', true);
+                        return;
+                    }
+                    
+                    const content = this.textArea.innerHTML;
+                    const printWindow = window.open('', '', 'height=600,width=800');
+                    
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html lang="uk">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Моя історія</title>
+                            <style>
+                                @media print {
+                                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                                    @page { size: A4; margin: 2cm; }
+                                }
+                                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                            </style>
+                        </head>
+                        <body>
+                            ${content}
+                        </body>
+                        </html>
+                    `);
+                    
+                    printWindow.document.close();
+                    
+                    // Почекаємо поки завантажиться сторінка
+                    printWindow.onload = function() {
+                        if (asPDF) {
+                            printWindow.document.title = "моя_історія.pdf";
+                        }
+                        printWindow.print();
+                        if (!asPDF) {
+                            printWindow.close();
+                        }
+                    };
+                    
+                    this.showMessage(asPDF ? 'Підготовлено до збереження як PDF!' : 'Готово до друку!');
+                } catch (error) {
+                    console.error('Помилка при підготовці до друку:', error);
+                    this.showMessage('Помилка при підготовці до друку', true);
+                }
             },
             
-            showMessage: function(msg) {
+            showMessage: function(msg, isError = false) {
                 this.message.textContent = msg;
-                setTimeout(() => {
+                this.message.className = isError ? 'error-message' : '';
+                
+                clearTimeout(this.messageTimer);
+                this.messageTimer = setTimeout(() => {
                     this.message.textContent = '';
-                }, 2000);
+                    this.message.className = '';
+                }, 3000);
+            },
+            
+            addKeyboardShortcuts: function() {
+                document.addEventListener('keydown', (e) => {
+                    // Перевіряємо, чи не в текстовому полі натиснута клавіша
+                    const isEditorFocused = document.activeElement === this.textArea;
+                    
+                    // Комбінації, які працюють всюди
+                    if (e.ctrlKey && e.key === 's') {
+                        e.preventDefault();
+                        this.saveText();
+                    } else if (e.ctrlKey && e.key === 'p') {
+                        e.preventDefault();
+                        this.printText();
+                    }
+                    
+                    // Комбінації, які працюють тільки коли активний редактор
+                    if (isEditorFocused) {
+                        // Ці комбінації вже обробляються браузером (Ctrl+B, Ctrl+I, Ctrl+U)
+                        if (e.ctrlKey && e.key === ' ') {
+                            e.preventDefault();
+                            this.formatText('removeFormat');
+                        }
+                    }
+                });
+            },
+            
+            saveDraft: function() {
+                // Не зберігаємо якщо текст порожній або це плейсхолдер
+                if (this.textArea.textContent !== this.placeholderText && this.textArea.textContent.trim() !== '') {
+                    try {
+                        localStorage.setItem('drukaryk_draft_content', this.textArea.innerHTML);
+                        localStorage.setItem('drukaryk_draft_time', new Date().toISOString());
+                    } catch (error) {
+                        console.error('Помилка автозбереження:', error);
+                    }
+                }
+            },
+            
+            loadDraft: function() {
+                try {
+                    const savedContent = localStorage.getItem('drukaryk_draft_content');
+                    const savedTime = localStorage.getItem('drukaryk_draft_time');
+                    
+                    if (savedContent && savedTime) {
+                        const timeAgo = this.getTimeAgo(new Date(savedTime));
+                        
+                        if (confirm(`Знайдено збережений чернетку (${timeAgo}). Завантажити його?`)) {
+                            this.textArea.innerHTML = savedContent;
+                            this.textArea.style.color = '#000000';
+                            this.updateWordCount();
+                            this.showMessage('Чернетку завантажено!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Помилка завантаження чернетки:', error);
+                }
+            },
+            
+            getTimeAgo: function(date) {
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+                
+                if (diffMins < 1) return 'щойно';
+                if (diffMins < 60) return `${diffMins} хв тому`;
+                
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours} год тому`;
+                
+                const diffDays = Math.floor(diffHours / 24);
+                return `${diffDays} днів тому`;
             }
         };
         
