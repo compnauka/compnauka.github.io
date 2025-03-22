@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Інтерактивний симулятор сонячної системи</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+      font-family: Arial, sans-serif;
+      color: white;
+      background-image: radial-gradient(circle at center, rgba(30, 30, 60, 0.5) 0%, transparent 80%), url('/api/placeholder/1000/1000');
+      background-size: cover;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    .sun {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff176, #ff9800, #ff5722);
+      box-shadow: 0 0 50px #ff9500, 0 0 100px #ff5722;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    .orbit {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+    .planet {
+      position: absolute;
+      border-radius: 50%;
+      transform-origin: center;
+      z-index: 2;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s;
+    }
+    .planet:hover {
+      transform: scale(1.3);
+    }
+    .moon {
+      position: absolute;
+      border-radius: 50%;
+      background-color: #ccc;
+      transform-origin: center;
+      z-index: 3;
+    }
+    .controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      width: 250px;
+      max-height: 80vh;
+      overflow-y: auto;
+      transition: opacity 0.3s;
+    }
+    .control-group {
+      margin-bottom: 15px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 5px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    button.active {
+      background-color: #27ae60;
+    }
+    .hide-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      color: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .show-controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      display: none;
+    }
+    .slider {
+      width: 100%;
+      margin: 10px 0;
+    }
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 20;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+    .info-panel h2 {
+      margin-top: 0;
+      border-bottom: 1px solid #3498db;
+      padding-bottom: 5px;
+    }
+    .info-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .title {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 20;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    }
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
+      pointer-events: none;
+      font-size: 12px;
+      display: none;
+      z-index: 50;
+      white-space: nowrap;
+    }
+    .tab-container {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      background-color: #2c3e50;
+      cursor: pointer;
+      border-radius: 5px 5px 0 0;
+    }
+    .tab.active {
+      background-color: #3498db;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .planet-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .planet-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .fact-of-day {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 300px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 20;
+    }
+    .fact-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .controls {
+        width: 200px;
+      }
+      .info-panel, .fact-of-day {
+        width: 250px;
+      }
+      .title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Інтерактивний симулятор сонячної системи</div>
+    <div class="sun"></div>
+    <div class="controls" id="controls-panel">
+      <button class="hide-controls" id="hide-controls">×</button>
+      <div class="tab-container">
+        <div class="tab active" data-tab="basic">Основне</div>
+        <div class="tab" data-tab="advanced">Додатково</div>
+      </div>
+      <div class="tab-content active" id="basic-tab">
+        <div class="control-group">
+          <button id="play-pause">Пауза</button>
+          <button id="reset">Скинути</button>
+        </div>
+        <div class="control-group">
+          <label>Швидкість:</label>
+          <input type="range" id="speed-control" class="slider" min="1" max="50" value="10">
+        </div>
+        <div class="control-group">
+          <label>Масштаб орбіт:</label>
+          <input type="range" id="scale-control" class="slider" min="10" max="100" value="40">
+        </div>
+        <div class="control-group">
+          <label>Масштаб планет:</label>
+          <input type="range" id="planet-size-control" class="slider" min="1" max="5" value="1" step="0.1">
+        </div>
+        <div class="control-group">
+          <button id="show-labels">Показати назви</button>
+          <button id="show-real-scale">Реальний масштаб</button>
+        </div>
+      </div>
+      <div class="tab-content" id="advanced-tab">
+        <div class="control-group">
+          <button id="show-moons">Показати супутники</button>
+          <button id="toggle-tooltips">Показати підказки</button>
+        </div>
+        <div class="control-group">
+          <label>Видимість планет:</label>
+          <div id="planet-visibility"></div>
+        </div>
+        <div class="control-group">
+          <button id="show-fact">Цікавий факт</button>
+          <button id="toggle-trail">Показати траєкторії</button>
+        </div>
+        <div class="control-group">
+          <label>Одиниці вимірювання:</label>
+          <select id="units-select">
+            <option value="km">Кілометри</option>
+            <option value="miles">Милі</option>
+            <option value="au">Астрономічні одиниці</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="show-controls" id="show-controls">☰ Панель керування</button>
+    <div class="info-panel" id="info-panel">
+      <button class="info-close" id="close-info">×</button>
+      <h2 id="info-title">Назва планети</h2>
+      <div id="info-content"></div>
+    </div>
+    <div class="fact-of-day" id="fact-panel" style="display: none;">
+      <button class="fact-close" id="close-fact">×</button>
+      <h3>Цікавий факт дня</h3>
+      <p id="fact-content"></p>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <script>
+    // Константи і змінні
+    const container = document.querySelector('.container');
+    const sun = document.querySelector('.sun');
+    const controlsPanel = document.getElementById('controls-panel');
+    const showControlsBtn = document.getElementById('show-controls');
+    const hideControlsBtn = document.getElementById('hide-controls');
+    const playPauseBtn = document.getElementById('play-pause');
+    const resetBtn = document.getElementById('reset');
+    const speedControl = document.getElementById('speed-control');
+    const scaleControl = document.getElementById('scale-control');
+    const planetSizeControl = document.getElementById('planet-size-control');
+    const showLabelsBtn = document.getElementById('show-labels');
+    const showRealScaleBtn = document.getElementById('show-real-scale');
+    const showMoonsBtn = document.getElementById('show-moons');
+    const toggleTooltipsBtn = document.getElementById('toggle-tooltips');
+    const toggleTrailBtn = document.getElementById('toggle-trail');
+    const unitsSelect = document.getElementById('units-select');
+    const infoPanel = document.getElementById('info-panel');
+    const infoTitle = document.getElementById('info-title');
+    const infoContent = document.getElementById('info-content');
+    const closeInfoBtn = document.getElementById('close-info');
+    const tooltip = document.getElementById('tooltip');
+    const factPanel = document.getElementById('fact-panel');
+    const factContent = document.getElementById('fact-content');
+    const showFactBtn = document.getElementById('show-fact');
+    const closeFactBtn = document.getElementById('close-fact');
+    const planetVisibilityDiv = document.getElementById('planet-visibility');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    let isPlaying = true;
+    let showLabels = false;
+    let showMoons = false;
+    let showTooltips = false;
+    let showTrails = false;
+    let realScale = false;
+    let speedFactor = parseInt(speedControl.value) / 10;
+    let scaleFactor = parseInt(scaleControl.value) / 10;
+    let planetSizeFactor = parseFloat(planetSizeControl.value);
+    let currentTime = 0;
+    let planets = [];
+    let moons = [];
+    let orbits = [];
+    let trails = [];
+    let labels = [];
+    let selectedUnits = 'km';
+
+    // Дані про планети
+    const planetsData = [
+      {
+        name: "Меркурій",
+        distanceFromSun: 57900000,
+        orbitPeriod: 88,
+        diameter: 4879,
+        color: "#9c9388",
+        description: "Меркурій — найменша планета Сонячної системи і найближча до Сонця. Його поверхня вкрита кратерами, подібно до Місяця. День на Меркурії триває близько 176 земних днів, а рік — всього 88 земних днів.",
+        moons: []
+      },
+      {
+        name: "Венера",
+        distanceFromSun: 108200000,
+        orbitPeriod: 225,
+        diameter: 12104,
+        color: "#e8c973",
+        description: "Венера — друга планета від Сонця, яка має найщільнішу атмосферу з усіх планет земної групи. Її атмосфера складається переважно з вуглекислого газу. Через парниковий ефект поверхня Венери розжарена до 462°C, що робить її найгарячішою планетою системи.",
+        moons: []
+      },
+      {
+        name: "Земля",
+        distanceFromSun: 149600000,
+        orbitPeriod: 365,
+        diameter: 12742,
+        color: "#4b8abd",
+        description: "Земля — наша домівка, третя планета від Сонця. Єдина відома планета, на якій існує життя. 71% її поверхні покрито водою. Земля має один природний супутник — Місяць.",
+        moons: [
+          {
+            name: "Місяць",
+            distanceFromPlanet: 384400,
+            orbitPeriod: 27.3,
+            diameter: 3474,
+            color: "#cccccc"
+          }
+        ]
+      },
+      {
+        name: "Марс",
+        distanceFromSun: 227900000,
+        orbitPeriod: 687,
+        diameter: 6779,
+        color: "#c1440e",
+        description: "Марс — четверта планета від Сонця, відома як 'Червона планета' через оксид заліза (іржу) на її поверхні. Марс має сезони, полярні шапки, каньйони та вулкани. На Марсі знаходиться найвища гора в Сонячній системі — Олімп.",
+        moons: [
+          {
+            name: "Фобос",
+            distanceFromPlanet: 9376,
+            orbitPeriod: 0.32,
+            diameter: 22,
+            color: "#7a7670"
+          },
+          {
+            name: "Деймос",
+            distanceFromPlanet: 23460,
+            orbitPeriod: 1.26,
+            diameter: 12,
+            color: "#7a7670"
+          }
+        ]
+      },
+      {
+        name: "Юпітер",
+        distanceFromSun: 778500000,
+        orbitPeriod: 4333,
+        diameter: 139820,
+        color: "#d5b174",
+        description: "Юпітер — найбільша планета Сонячної системи, газовий гігант. Юпітер має понад 79 супутників. Його атмосфера складається переважно з водню та гелію, а найвідомішою особливістю є Велика Червона Пляма — гігантський шторм, що триває вже кілька сотень років.",
+        moons: [
+          {
+            name: "Іо",
+            distanceFromPlanet: 421700,
+            orbitPeriod: 1.77,
+            diameter: 3643,
+            color: "#e5df56"
+          },
+          {
+            name: "Європа",
+            distanceFromPlanet: 671100,
+            orbitPeriod: 3.55,
+            diameter: 3122,
+            color: "#b6b3ab"
+          },
+          {
+            name: "Ганімед",
+            distanceFromPlanet: 1070400,
+            orbitPeriod: 7.15,
+            diameter: 5262,
+            color: "#b4b1a8"
+          },
+          {
+            name: "Каллісто",
+            distanceFromPlanet: 1882700,
+            orbitPeriod: 16.69,
+            diameter: 4821,
+            color: "#4d4c47"
+          }
+        ]
+      },
+      {
+        name: "Сатурн",
+        distanceFromSun: 1434000000,
+        orbitPeriod: 10759,
+        diameter: 116460,
+        color: "#e1c17b",
+        description: "Сатурн — друга за величиною планета Сонячної системи, відома своїми вражаючими кільцями, які складаються з льоду, каміння та пилу. Сатурн має щонайменше 82 супутники, найбільший з яких — Титан.",
+        hasRings: true,
+        moons: [
+          {
+            name: "Титан",
+            distanceFromPlanet: 1221870,
+            orbitPeriod: 15.95,
+            diameter: 5150,
+            color: "#d9aa63"
+          },
+          {
+            name: "Енцелад",
+            distanceFromPlanet: 238020,
+            orbitPeriod: 1.37,
+            diameter: 504,
+            color: "#ffffff"
+          }
+        ]
+      },
+      {
+        name: "Уран",
+        distanceFromSun: 2871000000,
+        orbitPeriod: 30687,
+        diameter: 50724,
+        color: "#91c5d5",
+        description: "Уран — сьома планета від Сонця і третій за розміром газовий гігант у Сонячній системі. Унікальність Урана в тому, що він обертається 'на боку' — його вісь обертання нахилена майже на 90 градусів до площини орбіти.",
+        hasRings: true,
+        moons: [
+          {
+            name: "Титанія",
+            distanceFromPlanet: 436300,
+            orbitPeriod: 8.71,
+            diameter: 1578,
+            color: "#cccccc"
+          },
+          {
+            name: "Оберон",
+            distanceFromPlanet: 583500,
+            orbitPeriod: 13.46,
+            diameter: 1522,
+            color: "#c1c1c1"
+          }
+        ]
+      },
+      {
+        name: "Нептун",
+        distanceFromSun: 4495000000,
+        orbitPeriod: 60190,
+        diameter: 49244,
+        color: "#3e5fac",
+        description: "Нептун — восьма і найбільш віддалена планета Сонячної системи, льодяний гігант. Нептун має найсильніші вітри у Сонячній системі, що досягають швидкості понад 2100 км/год. У нього є 14 відомих супутників, найбільший — Тритон.",
+        hasRings: true,
+        moons: [
+          {
+            name: "Тритон",
+            distanceFromPlanet: 354800,
+            orbitPeriod: 5.88,
+            diameter: 2706,
+            color: "#d1cfca"
+          }
+        ]
+      }
+    ];
+
+    // Цікаві факти
+    const spaceFacts = [
+      "Один день на Венері довший, ніж один рік на Венері. Венера обертається настільки повільно, що її день триває довше, ніж її рік.",
+      "Юпітер настільки масивний, що його центр мас із Сонцем знаходиться не всередині Сонця, а трохи поза ним.",
+      "Сонячне світло потребує 8 хвилин і 20 секунд, щоб досягти Землі.",
+      "На Місяці досі знаходяться сліди астронавтів, які його відвідали, і вони залишаться там ще мільйони років.",
+      "Якби Сатурн помістили у велетенський океан, він би плавав, бо його густина менша за густину води.",
+      "За останні 4000 років жодна нова зірка не стала видимою для неозброєного ока.",
+      "Марс має найвищу гору в Сонячній системі — Олімп заввишки близько 25 км.",
+      "Меркурій і Венера — єдині планети Сонячної системи, які не мають супутників.",
+      "Уран обертається 'на боку' — його вісь обертання нахилена майже на 90 градусів до площини орбіти.",
+      "Сонце містить 99,86% усієї маси Сонячної системи.",
+      "За один день через тіло середньостатистичної людини проходить більше атомів, ніж зірок у всьому Всесвіті."
+    ];
+
+    // Конвертація одиниць
+    function convertUnits(value, from = 'km', to = selectedUnits) {
+      if (from === to) return value;
+      let kmValue = value;
+      if (from === 'miles') {
+        kmValue = value * 1.60934;
+      } else if (from === 'au') {
+        kmValue = value * 149597870.7;
+      }
+      if (to === 'km') {
+        return kmValue;
+      } else if (to === 'miles') {
+        return kmValue * 0.621371;
+      } else if (to === 'au') {
+        return kmValue / 149597870.7;
+      }
+      return value;
+    }
+
+    // Форматування чисел
+    function formatNumber(number) {
+      if (number >= 1000000) {
+        return (number / 1000000).toFixed(1) + ' млн';
+      } else if (number >= 1000) {
+        return (number / 1000).toFixed(1) + ' тис';
+      } else {
+        return number.toFixed(selectedUnits === 'au' ? 5 : 0);
+      }
+    }
+
+    // Ініціалізація симулятора
+    function initSimulator() {
+      // Видаляємо існуючі елементи
+      planets.forEach(planet => planet.remove());
+      moons.forEach(moon => moon.remove());
+      orbits.forEach(orbit => orbit.remove());
+      trails.forEach(trail => trail.remove());
+      labels.forEach(label => label.remove());
+      planets = [];
+      moons = [];
+      orbits = [];
+      trails = [];
+      labels = [];
+
+      // Створення планет та орбіт
+      planetsData.forEach((planetData, index) => {
+        createPlanet(planetData, index);
+      });
+      createPlanetOptions();
+      updateOrbits();
+      currentTime = 0;
+      updatePositions();
+    }
+
+    // Оновлення орбіт при кожній ініціалізації
+    function updateOrbits() {
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      const baseMultiplier = Math.min(containerWidth, containerHeight) / 40;
+      planetsData.forEach((planetData, index) => {
+        const orbit = orbits[index];
+        if (!orbit) return;
+        let orbitSize;
+        if (realScale) {
+          orbitSize = (planetData.distanceFromSun / 149600000) * baseMultiplier * scaleFactor;
+        } else {
+          orbitSize = (planetData.distanceFromSun / 149600000) * (baseMultiplier / 2) * scaleFactor;
+        }
+        orbit.style.width = `${orbitSize * 2}px`;
+        orbit.style.height = `${orbitSize * 2}px`;
+      });
+    }
+
+    // Опції видимості планет
+    function createPlanetOptions() {
+      planetVisibilityDiv.innerHTML = '';
+      planetsData.forEach((planetData, index) => {
+        const option = document.createElement('div');
+        option.className = 'planet-option';
+        const colorSpan = document.createElement('span');
+        colorSpan.className = 'planet-color';
+        colorSpan.style.backgroundColor = planetData.color;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.dataset.planetIndex = index;
+        checkbox.addEventListener('change', function() {
+          togglePlanetVisibility(index, this.checked);
+        });
+        const label = document.createElement('span');
+        label.textContent = planetData.name;
+        option.appendChild(colorSpan);
+        option.appendChild(checkbox);
+        option.appendChild(label);
+        planetVisibilityDiv.appendChild(option);
+      });
+    }
+
+    // Перемикання видимості планети
+    function togglePlanetVisibility(planetIndex, isVisible) {
+      if (planets[planetIndex]) {
+        planets[planetIndex].style.display = isVisible ? 'block' : 'none';
+      }
+      if (orbits[planetIndex]) {
+        orbits[planetIndex].style.display = isVisible ? 'block' : 'none';
+      }
+      if (labels[planetIndex]) {
+        labels[planetIndex].style.display = isVisible && showLabels ? 'block' : 'none';
+      }
+      const planetData = planetsData[planetIndex];
+      if (planetData.moons) {
+        for (let i = 0; i < planetData.moons.length; i++) {
+          const moonIndex = moons.findIndex(m =>
+            m.dataset.parentPlanet == planetIndex &&
+            m.dataset.moonIndex == i
+          );
+          if (moonIndex !== -1 && moons[moonIndex]) {
+            moons[moonIndex].style.display = isVisible && showMoons ? 'block' : 'none';
+          }
+          const moonOrbit = document.querySelector(`.moon-orbit[data-parent-planet="${planetIndex}"][data-moon-index="${i}"]`);
+          if (moonOrbit) {
+            moonOrbit.style.display = isVisible && showMoons ? 'block' : 'none';
+          }
+        }
+      }
+    }
+
+    // Створення планети
+    function createPlanet(planetData, index) {
+      // Обчислюємо адаптивний множник
+      const baseMultiplier = Math.min(container.offsetWidth, container.offsetHeight) / 40;
+      // Створення орбіти (використовуємо baseMultiplier/2 для компактнішого відображення)
+      const orbit = document.createElement('div');
+      orbit.className = 'orbit';
+      const orbitSize = (planetData.distanceFromSun / 149600000) * (realScale ? baseMultiplier : (baseMultiplier / 2)) * scaleFactor;
+      orbit.style.width = `${orbitSize * 2}px`;
+      orbit.style.height = `${orbitSize * 2}px`;
+      container.appendChild(orbit);
+      orbits.push(orbit);
+
+      // Створення планети
+      const planet = document.createElement('div');
+      planet.className = 'planet';
+      planet.dataset.name = planetData.name;
+      planet.dataset.planetIndex = index;
+      const planetSize = Math.max(5, (planetData.diameter / 12742) * 10 * planetSizeFactor);
+      planet.style.width = `${planetSize}px`;
+      planet.style.height = `${planetSize}px`;
+      planet.style.backgroundColor = planetData.color;
+      if (planetData.hasRings) {
+        planet.style.boxShadow = `0 0 0 ${planetSize * 0.4}px rgba(255, 255, 255, 0.1)`;
+      }
+      // Центруємо планету
+      planet.style.transform = 'translate(-50%, -50%)';
+      container.appendChild(planet);
+      planets.push(planet);
+
+      // Траєкторія руху
+      const trail = document.createElement('canvas');
+      trail.className = 'trail';
+      trail.width = container.offsetWidth;
+      trail.height = container.offsetHeight;
+      trail.style.position = 'absolute';
+      trail.style.top = '0';
+      trail.style.left = '0';
+      trail.style.pointerEvents = 'none';
+      trail.style.opacity = '0.5';
+      trail.style.zIndex = '1';
+      trail.style.display = 'none';
+      container.appendChild(trail);
+      trails.push(trail);
+
+      // Мітка з назвою
+      const label = document.createElement('div');
+      label.className = 'planet-label';
+      label.style.position = 'absolute';
+      label.style.color = 'white';
+      label.style.fontSize = '12px';
+      label.style.pointerEvents = 'none';
+      label.style.textShadow = '0 0 3px black';
+      label.style.display = showLabels ? 'block' : 'none';
+      label.textContent = planetData.name;
+      container.appendChild(label);
+      labels.push(label);
+
+      // Обробники подій для планети
+      planet.addEventListener('click', function() {
+        showPlanetInfo(planetData);
+      });
+      planet.addEventListener('mouseover', function(e) {
+        if (showTooltips) {
+          tooltip.style.display = 'block';
+          tooltip.textContent = planetData.name;
+          tooltip.style.left = `${e.pageX + 10}px`;
+          tooltip.style.top = `${e.pageY + 10}px`;
+        }
+      });
+      planet.addEventListener('mousemove', function(e) {
+        if (showTooltips) {
+          tooltip.style.left = `${e.pageX + 10}px`;
+          tooltip.style.top = `${e.pageY + 10}px`;
+        }
+      });
+      planet.addEventListener('mouseout', function() {
+        tooltip.style.display = 'none';
+      });
+
+      // Створення супутників та їх орбіт
+      if (planetData.moons) {
+        createMoons(planetData, planet, index);
+        createMoonOrbits(planetData, planet, index);
+      }
+    }
+
+    // Створення супутників
+    function createMoons(planetData, planetElement, planetIndex) {
+      if (!planetData.moons || planetData.moons.length === 0) return;
+      planetData.moons.forEach((moonData, moonIndex) => {
+        const moonSize = Math.max(3, (moonData.diameter / 3474) * 5 * planetSizeFactor);
+        const moon = document.createElement('div');
+        moon.className = 'moon';
+        moon.dataset.name = moonData.name;
+        moon.dataset.parentPlanet = planetIndex;
+        moon.dataset.moonIndex = moonIndex;
+        moon.style.width = `${moonSize}px`;
+        moon.style.height = `${moonSize}px`;
+        moon.style.backgroundColor = moonData.color;
+        moon.style.display = showMoons ? 'block' : 'none';
+        // Центруємо супутник
+        moon.style.transform = 'translate(-50%, -50%)';
+        container.appendChild(moon);
+        moons.push(moon);
+
+        moon.addEventListener('mouseover', function(e) {
+          if (showTooltips) {
+            tooltip.style.display = 'block';
+            tooltip.textContent = moonData.name;
+            tooltip.style.left = `${e.pageX + 10}px`;
+            tooltip.style.top = `${e.pageY + 10}px`;
+          }
+        });
+        moon.addEventListener('mousemove', function(e) {
+          if (showTooltips) {
+            tooltip.style.left = `${e.pageX + 10}px`;
+            tooltip.style.top = `${e.pageY + 10}px`;
+          }
+        });
+        moon.addEventListener('mouseout', function() {
+          tooltip.style.display = 'none';
+        });
+      });
+    }
+
+    // Додавання орбіт для супутників
+    function createMoonOrbits(planetData, planetElement, planetIndex) {
+      if (!planetData.moons || planetData.moons.length === 0) return;
+      planetData.moons.forEach((moonData, moonIndex) => {
+        const moonOrbit = document.createElement('div');
+        moonOrbit.className = 'orbit moon-orbit';
+        moonOrbit.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        moonOrbit.dataset.parentPlanet = planetIndex;
+        moonOrbit.dataset.moonIndex = moonIndex;
+        const moonDistanceFactor = (moonData.distanceFromPlanet / 384400) * 20 * planetSizeFactor;
+        moonOrbit.style.width = `${moonDistanceFactor * 2}px`;
+        moonOrbit.style.height = `${moonDistanceFactor * 2}px`;
+        moonOrbit.style.position = 'absolute';
+        moonOrbit.style.display = showMoons ? 'block' : 'none';
+        moonOrbit.style.zIndex = '1';
+        container.appendChild(moonOrbit);
+      });
+    }
+
+    // Оновлення позицій планет, супутників та їх орбіт
+    function updatePositions() {
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      const centerX = containerWidth / 2;
+      const centerY = containerHeight / 2;
+      const baseMultiplier = Math.min(containerWidth, containerHeight) / 40;
+      planetsData.forEach((planetData, index) => {
+        const planet = planets[index];
+        if (!planet) return;
+        const angle = (currentTime / planetData.orbitPeriod) * 2 * Math.PI;
+        let distanceFactor;
+        if (realScale) {
+          distanceFactor = (planetData.distanceFromSun / 149600000) * baseMultiplier * scaleFactor;
+        } else {
+          distanceFactor = (planetData.distanceFromSun / 149600000) * (baseMultiplier / 2) * scaleFactor;
+        }
+        const planetSize = parseFloat(planet.style.width);
+        // Вираховуємо позицію так, щоб центр планети був на орбіті
+        const x = centerX + distanceFactor * Math.cos(angle) - planetSize / 2;
+        const y = centerY + distanceFactor * Math.sin(angle) - planetSize / 2;
+        planet.style.left = `${x}px`;
+        planet.style.top = `${y}px`;
+        if (labels[index]) {
+          labels[index].style.left = `${x + 15}px`;
+          labels[index].style.top = `${y - 10}px`;
+        }
+        const trail = trails[index];
+        if (trail) {
+          if (showTrails) {
+            trail.style.display = 'block';
+            const ctx = trail.getContext('2d');
+            ctx.beginPath();
+            // Малюємо слід у центрі планети
+            ctx.arc(x + planetSize / 2, y + planetSize / 2, 1, 0, 2 * Math.PI);
+            ctx.fillStyle = planetData.color;
+            ctx.fill();
+          } else {
+            trail.style.display = 'none';
+            const ctx = trail.getContext('2d');
+            ctx.clearRect(0, 0, trail.width, trail.height);
+          }
+        }
+        if (planetData.moons && planetData.moons.length > 0) {
+          planetData.moons.forEach((moonData, moonIndex) => {
+            const moon = moons.find(m =>
+              m.dataset.parentPlanet == index &&
+              m.dataset.moonIndex == moonIndex
+            );
+            if (moon) {
+              const moonAngle = (currentTime / moonData.orbitPeriod) * 2 * Math.PI;
+              const moonDistanceFactor = (moonData.distanceFromPlanet / 384400) * 20 * planetSizeFactor;
+              const moonSize = parseFloat(moon.style.width);
+              // Обчислюємо центр планети
+              const planetCenterX = x + planetSize / 2;
+              const planetCenterY = y + planetSize / 2;
+              const moonX = planetCenterX + moonDistanceFactor * Math.cos(moonAngle) - moonSize / 2;
+              const moonY = planetCenterY + moonDistanceFactor * Math.sin(moonAngle) - moonSize / 2;
+              moon.style.left = `${moonX}px`;
+              moon.style.top = `${moonY}px`;
+              // Оновлення позиції орбіти супутника так, щоб її центр співпадав з центром планети
+              const moonOrbit = document.querySelector(`.moon-orbit[data-parent-planet="${index}"][data-moon-index="${moonIndex}"]`);
+              if (moonOrbit) {
+                moonOrbit.style.left = `${planetCenterX}px`;
+                moonOrbit.style.top = `${planetCenterY}px`;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // Відображення інформації про планету
+    function showPlanetInfo(planetData) {
+      infoTitle.textContent = planetData.name;
+      let content = `
+        <p>${planetData.description}</p>
+        <ul>
+          <li>Відстань від Сонця: ${formatNumber(convertUnits(planetData.distanceFromSun))} ${selectedUnits}</li>
+          <li>Діаметр: ${formatNumber(convertUnits(planetData.diameter))} ${selectedUnits}</li>
+          <li>Період обертання: ${planetData.orbitPeriod} днів</li>
+        </ul>
+      `;
+      if (planetData.moons && planetData.moons.length > 0) {
+        content += `<p>Супутники:</p><ul>`;
+        planetData.moons.forEach(moon => {
+          content += `<li>${moon.name} - діаметр: ${formatNumber(convertUnits(moon.diameter))} ${selectedUnits}</li>`;
+        });
+        content += `</ul>`;
+      }
+      infoContent.innerHTML = content;
+      infoPanel.style.display = 'block';
+    }
+
+    // Показ випадкового факту
+    function showRandomFact() {
+      const randomIndex = Math.floor(Math.random() * spaceFacts.length);
+      factContent.textContent = spaceFacts[randomIndex];
+      factPanel.style.display = 'block';
+    }
+
+    // Анімаційний цикл
+    function animate() {
+      if (isPlaying) {
+        currentTime += speedFactor;
+        updatePositions();
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function init() {
+      initSimulator();
+      animate();
+      hideControlsBtn.addEventListener('click', function() {
+        controlsPanel.style.display = 'none';
+        showControlsBtn.style.display = 'block';
+      });
+      showControlsBtn.addEventListener('click', function() {
+        controlsPanel.style.display = 'block';
+        showControlsBtn.style.display = 'none';
+      });
+      playPauseBtn.addEventListener('click', function() {
+        isPlaying = !isPlaying;
+        playPauseBtn.textContent = isPlaying ? 'Пауза' : 'Старт';
+      });
+      resetBtn.addEventListener('click', function() {
+        currentTime = 0;
+        updatePositions();
+      });
+      speedControl.addEventListener('input', function() {
+        speedFactor = parseInt(this.value) / 10;
+      });
+      scaleControl.addEventListener('input', function() {
+        scaleFactor = parseInt(this.value) / 10;
+        initSimulator();
+      });
+      planetSizeControl.addEventListener('input', function() {
+        planetSizeFactor = parseFloat(this.value);
+        initSimulator();
+      });
+      showLabelsBtn.addEventListener('click', function() {
+        showLabels = !showLabels;
+        this.classList.toggle('active');
+        labels.forEach(label => {
+          label.style.display = showLabels ? 'block' : 'none';
+        });
+      });
+      showRealScaleBtn.addEventListener('click', function() {
+        realScale = !realScale;
+        this.classList.toggle('active');
+        updatePositions();
+      });
+      showMoonsBtn.addEventListener('click', function() {
+        showMoons = !showMoons;
+        this.classList.toggle('active');
+        document.querySelectorAll('.moon').forEach(moon => {
+          moon.style.display = showMoons ? 'block' : 'none';
+        });
+        document.querySelectorAll('.moon-orbit').forEach(orbit => {
+          orbit.style.display = showMoons ? 'block' : 'none';
+        });
+      });
+      toggleTooltipsBtn.addEventListener('click', function() {
+        showTooltips = !showTooltips;
+        this.classList.toggle('active');
+      });
+      toggleTrailBtn.addEventListener('click', function() {
+        showTrails = !showTrails;
+        this.classList.toggle('active');
+        trails.forEach(trail => {
+          if (!showTrails) {
+            const ctx = trail.getContext('2d');
+            ctx.clearRect(0, 0, trail.width, trail.height);
+          }
+          trail.style.display = showTrails ? 'block' : 'none';
+        });
+      });
+      unitsSelect.addEventListener('change', function() {
+        selectedUnits = this.value;
+        if (infoPanel.style.display === 'block') {
+          const planetIndex = planets.findIndex(p => p.dataset.name === infoTitle.textContent);
+          if (planetIndex !== -1) {
+            showPlanetInfo(planetsData[planetIndex]);
+          }
+        }
+      });
+      closeInfoBtn.addEventListener('click', function() {
+        infoPanel.style.display = 'none';
+      });
+      showFactBtn.addEventListener('click', function() {
+        showRandomFact();
+      });
+      closeFactBtn.addEventListener('click', function() {
+        factPanel.style.display = 'none';
+      });
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          const tabId = this.dataset.tab;
+          tabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          this.classList.add('active');
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+      });
+      setTimeout(showRandomFact, 2000);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
