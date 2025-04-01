@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Симулятор гравітації планет</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #66fcf1;
+      text-shadow: 0 0 10px rgba(102, 252, 241, 0.5);
+    }
+    
+    .form-container {
+      margin-bottom: 20px;
+      background-color: rgba(41, 50, 65, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #66fcf1;
+    }
+    
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 16px;
+    }
+    
+    button {
+      background: linear-gradient(to right, #45a29e, #66fcf1);
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      color: #0b0c10;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(102, 252, 241, 0.5);
+    }
+    
+    .results {
+      display: none;
+      margin-top: 30px;
+    }
+    
+    .planet-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 20px;
+    }
+    
+    .planet-card {
+      background-color: rgba(41, 50, 65, 0.7);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .planet-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 15px rgba(102, 252, 241, 0.3);
+    }
+    
+    .planet-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+    
+    .planet-name {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #66fcf1;
+    }
+    
+    .planet-info {
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #c5c6c7;
+    }
+    
+    .jump-height {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+      margin-top: 10px;
+    }
+    
+    .jump-animation {
+      height: 80px;
+      position: relative;
+      margin-top: 15px;
+    }
+    
+    .jumper {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      background-color: #fff;
+      border-radius: 50%;
+      z-index: 2;
+    }
+    
+    .planet-surface {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 15px;
+      border-radius: 5px;
+      z-index: 1;
+    }
+    
+    .info-text {
+      text-align: center;
+      font-size: 14px;
+      color: #c5c6c7;
+      margin-top: 30px;
+    }
+    
+    .restart-btn {
+      display: none;
+      margin-top: 20px;
+      background: linear-gradient(to right, #fc466b, #3f5efb);
+    }
+    
+    @keyframes bounce {
+      0%, 100% {
+        bottom: 15px;
+      }
+      50% {
+        bottom: calc(15px + var(--jump-height));
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .planet-cards {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      .planet-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Симулятор гравітації планет</h1>
+    
+    <div class="form-container">
+      <div class="input-group">
+        <label for="name">Твоє ім'я:</label>
+        <input type="text" id="name" placeholder="Введи своє ім'я">
+      </div>
+      
+      <div class="input-group">
+        <label for="weight">Твоя вага (кг):</label>
+        <input type="number" id="weight" min="1" max="150" placeholder="Введи свою вагу">
+      </div>
+      
+      <div class="input-group">
+        <label for="jump-height">Висота твого стрибка на Землі (см):</label>
+        <input type="number" id="jump-height" min="1" max="150" placeholder="Висота стрибка">
+      </div>
+      
+      <button id="calculate-btn">Розрахувати стрибки на планетах</button>
+    </div>
+    
+    <div id="results" class="results">
+      <div class="planet-cards" id="planet-cards"></div>
+      
+      <div class="info-text">
+        <p>Висота стрибка залежить від сили гравітації на планеті. Чим менша гравітація, тим вище ти зможеш стрибнути!</p>
+      </div>
+      
+      <button id="restart-btn" class="restart-btn">Спробувати з іншими даними</button>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const calculateBtn = document.getElementById('calculate-btn');
+      const restartBtn = document.getElementById('restart-btn');
+      const resultsDiv = document.getElementById('results');
+      const planetCardsDiv = document.getElementById('planet-cards');
+      
+      const planets = [
+        {
+          name: 'Меркурій',
+          gravitationalForce: 0.38,
+          color: '#A9A9A9',
+          surfaceColor: '#A9A9A9',
+          emoji: '☿',
+          fact: 'Найближча до Сонця планета з дуже тонкою атмосферою'
+        },
+        {
+          name: 'Венера',
+          gravitationalForce: 0.91,
+          color: '#FFD700',
+          surfaceColor: '#DDA700',
+          emoji: '♀',
+          fact: 'На Венері йдуть дощі з сірчаної кислоти'
+        },
+        {
+          name: 'Земля',
+          gravitationalForce: 1.0,
+          color: '#1E90FF',
+          surfaceColor: '#4CAF50',
+          emoji: '🌍',
+          fact: 'Наша домівка - єдина відома планета з життям'
+        },
+        {
+          name: 'Марс',
+          gravitationalForce: 0.38,
+          color: '#FF4500',
+          surfaceColor: '#D73502',
+          emoji: '♂',
+          fact: 'На Марсі є найвища гора у Сонячній системі'
+        },
+        {
+          name: 'Юпітер',
+          gravitationalForce: 2.34,
+          color: '#FF8C00',
+          surfaceColor: '#E67E00',
+          emoji: '♃',
+          fact: 'Найбільша планета з великою червоною плямою'
+        },
+        {
+          name: 'Сатурн',
+          gravitationalForce: 0.93,
+          color: '#DAA520',
+          surfaceColor: '#C69320',
+          emoji: '♄',
+          fact: 'Відомий своїми красивими кільцями з льоду і каміння'
+        },
+        {
+          name: 'Уран',
+          gravitationalForce: 0.92,
+          color: '#ADD8E6',
+          surfaceColor: '#86C5D8',
+          emoji: '♅',
+          fact: 'Крижаний гігант, що обертається на боці'
+        },
+        {
+          name: 'Нептун',
+          gravitationalForce: 1.12,
+          color: '#4169E1',
+          surfaceColor: '#3A5CC8',
+          emoji: '♆',
+          fact: 'Має найсильніші вітри у Сонячній системі'
+        },
+        {
+          name: 'Плутон',
+          gravitationalForce: 0.06,
+          color: '#778899',
+          surfaceColor: '#647382',
+          emoji: '♇',
+          fact: 'Колишня планета, тепер карликова планета'
+        },
+        {
+          name: 'Місяць',
+          gravitationalForce: 0.166,
+          color: '#F5F5F5',
+          surfaceColor: '#CCCCCC',
+          emoji: '🌕',
+          fact: 'Єдине небесне тіло, на якому побувала людина'
+        }
+      ];
+      
+      calculateBtn.addEventListener('click', function() {
+        const name = document.getElementById('name').value.trim();
+        const weight = parseFloat(document.getElementById('weight').value);
+        const jumpHeight = parseFloat(document.getElementById('jump-height').value);
+        
+        if (!name) {
+          alert('Будь ласка, введи своє ім\'я');
+          return;
+        }
+        
+        if (isNaN(weight) || weight <= 0 || weight > 150) {
+          alert('Будь ласка, введи коректну вагу (від 1 до 150 кг)');
+          return;
+        }
+        
+        if (isNaN(jumpHeight) || jumpHeight <= 0 || jumpHeight > 150) {
+          alert('Будь ласка, введи коректну висоту стрибка (від 1 до 150 см)');
+          return;
+        }
+        
+        showResults(name, weight, jumpHeight);
+      });
+      
+      restartBtn.addEventListener('click', function() {
+        resultsDiv.style.display = 'none';
+        restartBtn.style.display = 'none';
+        document.getElementById('name').value = '';
+        document.getElementById('weight').value = '';
+        document.getElementById('jump-height').value = '';
+      });
+      
+      function showResults(name, weight, jumpHeight) {
+        // Очистити попередні результати
+        planetCardsDiv.innerHTML = '';
+        
+        // Створити картку для кожної планети
+        planets.forEach(planet => {
+          // Розрахунок висоти стрибка на планеті
+          const jumpHeightOnPlanet = (jumpHeight / planet.gravitationalForce).toFixed(1);
+          
+          // Створення картки
+          const planetCard = document.createElement('div');
+          planetCard.className = 'planet-card';
+          
+          const planetIcon = document.createElement('div');
+          planetIcon.className = 'planet-icon';
+          planetIcon.textContent = planet.emoji;
+          planetIcon.style.backgroundColor = planet.color;
+          
+          const planetName = document.createElement('div');
+          planetName.className = 'planet-name';
+          planetName.textContent = planet.name;
+          
+          const planetInfo = document.createElement('div');
+          planetInfo.className = 'planet-info';
+          planetInfo.textContent = planet.fact;
+          
+          const gravityInfo = document.createElement('div');
+          gravityInfo.className = 'planet-info';
+          gravityInfo.textContent = `Гравітація: ${planet.gravitationalForce}g`;
+          
+          const jumpHeightDiv = document.createElement('div');
+          jumpHeightDiv.className = 'jump-height';
+          jumpHeightDiv.textContent = `${jumpHeightOnPlanet} см`;
+          
+          const jumpAnimation = document.createElement('div');
+          jumpAnimation.className = 'jump-animation';
+          
+          // Додаємо поверхню планети
+          const planetSurface = document.createElement('div');
+          planetSurface.className = 'planet-surface';
+          planetSurface.style.backgroundColor = planet.surfaceColor;
+          jumpAnimation.appendChild(planetSurface);
+          
+          const jumper = document.createElement('div');
+          jumper.className = 'jumper';
+          
+          // Додаємо анімацію стрибка
+          const animationHeight = Math.min(Math.max(parseFloat(jumpHeightOnPlanet) / 3, 5), 60);
+          jumper.style.animation = `bounce 1s infinite ease-in-out`;
+          jumpAnimation.style.setProperty('--jump-height', `${animationHeight}px`);
+          
+          jumpAnimation.appendChild(jumper);
+          
+          planetCard.appendChild(planetIcon);
+          planetCard.appendChild(planetName);
+          planetCard.appendChild(planetInfo);
+          planetCard.appendChild(gravityInfo);
+          planetCard.appendChild(jumpHeightDiv);
+          planetCard.appendChild(jumpAnimation);
+          
+          planetCardsDiv.appendChild(planetCard);
+        });
+        
+        // Показати результати
+        resultsDiv.style.display = 'block';
+        restartBtn.style.display = 'block';
+        
+        // Плавний скрол до результатів
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
+</body>
+</html>
