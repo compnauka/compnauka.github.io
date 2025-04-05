@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Космічний квіз</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #0a1128;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      background-image: url("/api/placeholder/800/600");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: rgba(10, 17, 40, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(65, 243, 255, 0.3);
+    }
+    h1 {
+      text-align: center;
+      color: #41f3ff;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(65, 243, 255, 0.5);
+    }
+    .intro {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+    .quiz-container, .result-container {
+      display: none;
+    }
+    .question-container {
+      margin-bottom: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid #5664bd;
+      background-color: rgba(29, 38, 84, 0.5);
+    }
+    .question {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #41f3ff;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .option {
+      padding: 12px 15px;
+      background-color: #272d5b;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+    }
+    .option:hover {
+      background-color: #3a407c;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 10px rgba(65, 243, 255, 0.3);
+    }
+    .selected {
+      background-color: #5664bd;
+      border: 2px solid #41f3ff;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .incorrect {
+      background-color: #f44336;
+      color: white;
+    }
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #5664bd;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background-color: #41f3ff;
+      color: #0a1128;
+    }
+    .planet-animation {
+      position: relative;
+      height: 100px;
+      margin: 30px 0;
+    }
+    .planet {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      top: 20px;
+      animation: orbit 15s linear infinite;
+    }
+    @keyframes orbit {
+      from { transform: rotate(0deg) translateX(150px); }
+      to { transform: rotate(360deg) translateX(150px); }
+    }
+    .start-screen {
+      text-align: center;
+    }
+    #start-button {
+      font-size: 1.2rem;
+      padding: 15px 40px;
+      margin: 20px auto;
+      display: block;
+      background-color: #41f3ff;
+      color: #0a1128;
+      font-weight: bold;
+    }
+    #start-button:hover {
+      background-color: #5664bd;
+      color: white;
+      transform: scale(1.05);
+    }
+    #progress {
+      margin-bottom: 20px;
+      font-size: 1rem;
+      text-align: center;
+      color: #41f3ff;
+    }
+    .restart-button {
+      margin-top: 20px;
+    }
+    @media (max-width: 600px) {
+      .options {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 20px 15px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Початковий екран -->
+    <div class="start-screen" id="start-screen">
+      <h1>Космічний квіз</h1>
+      <div class="intro">
+        <p>Вітаю, юні дослідники космосу! Готові перевірити свої знання про Сонячну систему та космічні таємниці?</p>
+        <p>У цьому квізі 15 запитань. Обирайте правильну відповідь і дізнайтеся, наскільки добре ви знаєте космос!</p>
+      </div>
+      <div class="planet-animation">
+        <div class="planet" style="background-color: #e3a857; left: 50%; animation-duration: 20s;"></div>
+      </div>
+      <button id="start-button">Почати квіз</button>
+    </div>
+
+    <!-- Контейнер для квізу -->
+    <div class="quiz-container" id="quiz-container">
+      <h1>Космічний квіз</h1>
+      <div id="progress">Запитання 1 з 15</div>
+      <div class="question-container">
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+      </div>
+      <div class="navigation">
+        <button id="prev-btn">Назад</button>
+        <button id="next-btn">Далі</button>
+        <button id="submit-btn" style="display: none;">Завершити</button>
+      </div>
+    </div>
+
+    <!-- Результати квізу -->
+    <div class="result-container" id="result-container">
+      <h1>Результати квізу</h1>
+      <div class="score" id="score"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="planet-animation">
+        <div class="planet" style="background-color: #3498db; left: 30%; animation-duration: 12s;"></div>
+        <div class="planet" style="background-color: #e74c3c; left: 70%; animation-duration: 18s;"></div>
+      </div>
+      <button class="restart-button" id="restart-btn">Спробувати ще раз</button>
+    </div>
+  </div>
+
+  <script>
+    // Дані квізу
+    const quizData = [
+      {
+        question: "Яка планета найближча до Сонця?",
+        options: ["Венера", "Меркурій", "Марс", "Земля"],
+        answer: 1
+      },
+      {
+        question: "Скільки планет у Сонячній системі?",
+        options: ["7", "8", "9", "10"],
+        answer: 1
+      },
+      {
+        question: "Яка планета має найбільше кілець?",
+        options: ["Юпітер", "Уран", "Нептун", "Сатурн"],
+        answer: 3
+      },
+      {
+        question: "Що таке Чумацький Шлях?",
+        options: [
+          "Галактика, в якій знаходиться наша Сонячна система",
+          "Шлях комет",
+          "Скупчення зірок біля Сонця",
+          "Траєкторія руху Землі навколо Сонця"
+        ],
+        answer: 0
+      },
+      {
+        question: "Як називається природний супутник Землі?",
+        options: ["Каліпсо", "Фобос", "Місяць", "Титан"],
+        answer: 2
+      },
+      {
+        question: "Яка найбільша планета Сонячної системи?",
+        options: ["Земля", "Нептун", "Юпітер", "Сатурн"],
+        answer: 2
+      },
+      {
+        question: "Скільки приблизно часу потрібно, щоб світло від Сонця досягло Землі?",
+        options: ["8 хвилин", "8 годин", "8 секунд", "8 днів"],
+        answer: 0
+      },
+      {
+        question: "Яка планета має найдовший день у Сонячній системі?",
+        options: ["Марс", "Венера", "Юпітер", "Сатурн"],
+        answer: 1
+      },
+      {
+        question: "Що таке астероїд?",
+        options: ["Маленька зірка", "Залишки комети", "Невелике кам'янисте тіло в космосі", "Газова хмара"],
+        answer: 2
+      },
+      {
+        question: "Що відбувається під час сонячного затемнення?",
+        options: [
+          "Земля закриває Сонце від Місяця",
+          "Місяць закриває Сонце від Землі",
+          "Сонце закриває Місяць від Землі",
+          "Венера закриває Сонце від Землі"
+        ],
+        answer: 1
+      },
+      {
+        question: "Яка планета відома як червона планета?",
+        options: ["Юпітер", "Венера", "Марс", "Сатурн"],
+        answer: 2
+      },
+      {
+        question: "Яка планета має температуру поверхні, найбільш близьку до температури Землі?",
+        options: ["Венера", "Марс", "Меркурій", "Нептун"],
+        answer: 1
+      },
+      {
+        question: "Які з цих планет не є газовим гігантом?",
+        options: ["Юпітер", "Нептун", "Уран", "Марс"],
+        answer: 3
+      },
+      {
+        question: "Яку форму має наша Галактика?",
+        options: ["Сферичну", "Спіральну", "Кубічну", "Конусоподібну"],
+        answer: 1
+      },
+      {
+        question: "Як називається хвіст комети?",
+        options: ["Кома", "Хвіст", "Кома і хвіст", "Ядро"],
+        answer: 1
+      }
+    ];
+
+    // Елементи інтерфейсу
+    const startScreen = document.getElementById('start-screen');
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionElement = document.getElementById('question');
+    const optionsElement = document.getElementById('options');
+    const progressElement = document.getElementById('progress');
+    const prevButton = document.getElementById('prev-btn');
+    const nextButton = document.getElementById('next-btn');
+    const submitButton = document.getElementById('submit-btn');
+    const startButton = document.getElementById('start-button');
+    const restartButton = document.getElementById('restart-btn');
+    const scoreElement = document.getElementById('score');
+    const feedbackElement = document.getElementById('feedback');
+
+    // Змінні стану квізу
+    let currentQuestion = 0;
+    let userAnswers = Array(quizData.length).fill(-1);
+
+    // Слухачі подій
+    startButton.addEventListener('click', startQuiz);
+    prevButton.addEventListener('click', showPreviousQuestion);
+    nextButton.addEventListener('click', showNextQuestion);
+    submitButton.addEventListener('click', showResults);
+    restartButton.addEventListener('click', restartQuiz);
+
+    // Функція для старту квізу
+    function startQuiz() {
+      startScreen.style.display = 'none';
+      quizContainer.style.display = 'block';
+      loadQuestion();
+    }
+
+    // Завантаження поточного запитання
+    function loadQuestion() {
+      const current = quizData[currentQuestion];
+      questionElement.textContent = `${currentQuestion + 1}. ${current.question}`;
+      progressElement.textContent = `Запитання ${currentQuestion + 1} з ${quizData.length}`;
+      
+      optionsElement.innerHTML = '';
+      current.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = option;
+        btn.classList.add('option');
+        if (userAnswers[currentQuestion] === index) {
+          btn.classList.add('selected');
+        }
+        btn.addEventListener('click', () => selectOption(index));
+        optionsElement.appendChild(btn);
+      });
+      
+      updateNavigationButtons();
+    }
+
+    // Обробка вибору опції
+    function selectOption(index) {
+      userAnswers[currentQuestion] = index;
+      const options = optionsElement.querySelectorAll('.option');
+      options.forEach((btn, idx) => {
+        btn.classList.toggle('selected', idx === index);
+      });
+      
+      // Якщо це останнє запитання – відобразити кнопку "Завершити"
+      if (currentQuestion === quizData.length - 1) {
+        nextButton.style.display = 'none';
+        submitButton.style.display = 'block';
+      }
+    }
+
+    // Перехід до наступного запитання
+    function showNextQuestion() {
+      if (currentQuestion < quizData.length - 1) {
+        currentQuestion++;
+        loadQuestion();
+      }
+    }
+
+    // Перехід до попереднього запитання
+    function showPreviousQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+      }
+    }
+
+    // Оновлення відображення кнопок навігації
+    function updateNavigationButtons() {
+      prevButton.style.display = currentQuestion === 0 ? 'none' : 'block';
+      if (currentQuestion === quizData.length - 1) {
+        nextButton.style.display = 'none';
+        submitButton.style.display = userAnswers[currentQuestion] !== -1 ? 'block' : 'none';
+      } else {
+        nextButton.style.display = 'block';
+        submitButton.style.display = 'none';
+      }
+    }
+
+    // Обчислення результатів та показ відгуку
+    function showResults() {
+      quizContainer.style.display = 'none';
+      resultContainer.style.display = 'block';
+      
+      let score = 0;
+      userAnswers.forEach((ans, idx) => {
+        if (ans === quizData[idx].answer) score++;
+      });
+      
+      const percentage = (score / quizData.length) * 100;
+      scoreElement.textContent = `Ви відповіли правильно на ${score} з ${quizData.length} запитань (${percentage.toFixed(0)}%)`;
+      
+      if (percentage >= 90) {
+        feedbackElement.textContent = "Неймовірно! Ви справжній знавець космосу! 🚀";
+      } else if (percentage >= 70) {
+        feedbackElement.textContent = "Чудовий результат! Ви багато знаєте про космос! 🌠";
+      } else if (percentage >= 50) {
+        feedbackElement.textContent = "Непогано! Продовжуйте вивчати таємниці Всесвіту! ✨";
+      } else {
+        feedbackElement.textContent = "Вам варто більше дізнатися про космос. Не здавайтеся! 🌌";
+      }
+    }
+
+    // Перезапуск квізу
+    function restartQuiz() {
+      currentQuestion = 0;
+      userAnswers = Array(quizData.length).fill(-1);
+      resultContainer.style.display = 'none';
+      quizContainer.style.display = 'block';
+      loadQuestion();
+    }
+  </script>
+</body>
+</html>
