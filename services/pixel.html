@@ -472,7 +472,8 @@
             let isDrawing = false;        // Чи зараз відбувається малювання
             let canvasSize = 16;          // Кількість пікселів у рядку/стовпці
             let pixelSize = 24;           // Розмір одного пікселя (в px)
-
+            let pixelStates = [];         // Зберігаємо стан полотна для відновлення після прокрутки
+            
             // Адаптація розміру пікселя для малих екранів
             if (window.innerWidth < 768) {
                 pixelSize = window.innerWidth < 400 ? 12 : 18;
@@ -496,6 +497,9 @@
                 // Встановлюємо розміри grid
                 canvas.style.gridTemplateColumns = `repeat(${canvasSize}, 1fr)`;
                 canvas.style.gridTemplateRows = `repeat(${canvasSize}, 1fr)`;
+                
+                // Ініціалізуємо pixelStates пустим двовимірним масивом
+                pixelStates = Array(canvasSize).fill().map(() => Array(canvasSize).fill('white'));
 
                 // Створюємо пікселі
                 for (let y = 0; y < canvasSize; y++) {
@@ -553,12 +557,20 @@
                 const pixel = e.target;
                 // Тактильний відгук при малюванні
                 if ('vibrate' in navigator) navigator.vibrate(5);
+                
+                const x = parseInt(pixel.dataset.x);
+                const y = parseInt(pixel.dataset.y);
+                
                 if (currentTool === 'pencil') {
                     // Олівець: малюємо поточним кольором
                     pixel.style.backgroundColor = currentColor;
+                    // Зберігаємо стан у масиві
+                    pixelStates[y][x] = currentColor;
                 } else if (currentTool === 'eraser') {
                     // Гумка: "малюємо" білим
                     pixel.style.backgroundColor = 'white';
+                    // Зберігаємо стан у масиві
+                    pixelStates[y][x] = 'white';
                 } else if (currentTool === 'fill') {
                     // Заливка: ітеративно заливаємо суміжні пікселі того ж кольору
                     const targetColor = pixel.style.backgroundColor || 'white';
@@ -582,6 +594,8 @@
                         const currentPixelColor = currentPixel.style.backgroundColor || 'white';
                         if (currentPixelColor !== targetColor) continue;
                         currentPixel.style.backgroundColor = currentColor;
+                        // Зберігаємо стан у масиві
+                        pixelStates[current.y][current.x] = currentColor;
                         // Додаємо сусідів
                         stack.push({x: current.x + 1, y: current.y});
                         stack.push({x: current.x - 1, y: current.y});
@@ -601,6 +615,9 @@
                 if (confirmed) {
                     document.querySelectorAll('.pixel').forEach(pixel => {
                         pixel.style.backgroundColor = 'white';
+                        const x = parseInt(pixel.dataset.x);
+                        const y = parseInt(pixel.dataset.y);
+                        pixelStates[y][x] = 'white';
                     });
                     if ('vibrate' in navigator) navigator.vibrate([50, 100, 50]);
                 }
@@ -702,21 +719,57 @@
             });
 
             // ================================
-            //  Додаємо обробники подій для кнопок "Очистити" та "Зберегти"
-            // ================================
-            clearBtn.addEventListener('click', clearCanvas);
-            saveBtn.addEventListener('click', saveCanvas);
-
-            // ================================
-            //  Адаптація під розмір екрану
+            //  Адаптація під розмір екрану та обробка скролінгу
             // ================================
             function adjustForScreenSize() {
                 if (window.innerWidth < 768) {
                     pixelSize = window.innerWidth < 400 ? 12 : 18;
+                    // Зберігаємо поточний стан перед перемальовуванням
+                    const prevPixelStates = [...pixelStates];
                     initCanvas();
+                    // Відновлюємо стан після перемальовування
+                    if (prevPixelStates.length > 0) {
+                        restoreCanvasState(prevPixelStates);
+                    }
                 }
             }
+            
+            // Відновлення стану полотна із збереженого стану
+            function restoreCanvasState(state) {
+                const minSize = Math.min(state.length, canvasSize);
+                for (let y = 0; y < minSize; y++) {
+                    for (let x = 0; x < minSize; x++) {
+                        if (state[y] && state[y][x]) {
+                            const pixel = document.querySelector(`.pixel[data-x="${x}"][data-y="${y}"]`);
+                            if (pixel) {
+                                pixel.style.backgroundColor = state[y][x];
+                                pixelStates[y][x] = state[y][x];
+                            }
+                        }
+                    }
+                }
+            }
+            
             window.addEventListener('resize', adjustForScreenSize);
+            
+            // Запобігаємо зникненню при прокрутці
+            window.addEventListener('scroll', () => {
+                // Відновлюємо стан полотна після прокрутки
+                document.querySelectorAll('.pixel').forEach(pixel => {
+                    const x = parseInt(pixel.dataset.x);
+                    const y = parseInt(pixel.dataset.y);
+                    if (pixelStates[y] && pixelStates[y][x]) {
+                        pixel.style.backgroundColor = pixelStates[y][x];
+                    }
+                });
+            });
+            
+            // Запобігаємо прокрутці під час малювання на мобільних пристроях
+            canvas.addEventListener('touchmove', function(e) {
+                if (isDrawing) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
 
             // ================================
             //  Модальне підтвердження замість alert/confirm
