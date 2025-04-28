@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Що таке блок-схеми</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3f51b5;    /* Основний колір для заголовків та елементів інтерфейсу */
+            --primary-light: #757de8; /* Світліший варіант основного кольору */
+            --primary-dark: #002984; /* Темніший варіант основного кольору */
+            --secondary: #ff9800;   /* Вторинний колір для елементів акценту */
+            --success: #4caf50;     /* Колір для успішних дій та фігур початку/кінця */
+            --danger: #f44336;      /* Колір для помилок та кнопок видалення */
+            --neutral: #f5f5f5;     /* Нейтральний колір для фону та простих фігур */
+            --dark: #212121;        /* Темний колір для тексту та контурів */
+            --light: #ffffff;       /* Білий колір для фону та тексту */
+            --gray: #9e9e9e;        /* Сірий колір для неактивних елементів */
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .manual-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--light);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .manual-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: var(--primary);
+        }
+        .manual-container h1 {
+            color: var(--primary);
+            font-size: 32px;
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        .manual-container h2 {
+            color: var(--primary-dark);
+            font-size: 24px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--neutral);
+        }
+        .manual-container h3 {
+            color: var(--primary);
+            font-size: 20px;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .manual-container ul, .manual-container ol {
+            margin-left: 24px;
+            padding-left: 0;
+        }
+        .manual-container p, .manual-container li {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .manual-example {
+            background: var(--neutral);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .manual-shape {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            min-height: 40px;
+            padding: 0 24px;
+            margin: 0 8px 16px 0;
+            text-align: center;
+            font-weight: 500;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            vertical-align: middle;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            background: var(--neutral);
+            color: var(--dark);
+        }
+        .manual-shape:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .manual-shape.start-end {
+            background: var(--success);
+            color: #fff;
+            border-radius: 50px;
+            min-width: 120px;
+            min-height: 38px;
+            padding: 0 32px;
+        }
+        .manual-shape.process {
+            background: #03a9f4;
+            color: #fff;
+            border-radius: 8px;
+            min-width: 100px;
+            min-height: 38px;
+        }
+        .manual-shape.decision {
+            background: var(--secondary);
+            color: #fff;
+            width: 70px;
+            height: 70px;
+            min-width: 70px;
+            min-height: 70px;
+            padding: 0;
+            border-radius: 8px;
+            position: relative;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .manual-shape.decision:hover {
+            transform: rotate(45deg) translateY(-2px);
+        }
+        .manual-shape.decision .content {
+            transform: rotate(-45deg);
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .manual-shape.input-output {
+            background: var(--primary);
+            color: #fff;
+            border-radius: 8px;
+            min-width: 110px;
+            min-height: 38px;
+            transform: skew(-20deg);
+            padding: 0 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .manual-shape.input-output:hover {
+            transform: skew(-20deg) translateY(-2px);
+        }
+        .manual-shape.input-output .content {
+            transform: skew(20deg);
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+        .flow-example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 40px 0;
+            padding: 25px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .flow-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            z-index: 1;
+        }
+        .flow-arrow {
+            font-size: 24px;
+            margin: 0 12px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        .flow-arrow-down {
+            font-size: 24px;
+            margin: 5px 0;
+            color: var(--primary);
+            font-weight: bold;
+            position: relative;
+        }
+        .flow-arrow-down::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            width: 2px;
+            height: 30px;
+            background-color: var(--primary);
+            transform: translateX(-50%);
+            z-index: -1;
+        }
+        .flow-branch {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px 0;
+        }
+        .branch-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+            position: relative;
+        }
+        .branch-label {
+            font-weight: bold;
+            margin: 0 5px 5px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: var(--primary-light);
+            color: white;
+        }
+        .highlight-box {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary);
+            position: relative;
+        }
+        .highlight-box::before {
+            content: '💡';
+            font-size: 24px;
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 36px;
+            height: 36px;
+            background: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .fun-fact {
+            background-color: rgba(63, 81, 181, 0.1);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+            position: relative;
+        }
+        .fun-fact::before {
+            content: '🧠';
+            font-size: 24px;
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 36px;
+            height: 36px;
+            background: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .tool-button {
+            display: inline-block;
+            padding: 12px 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
+        .tool-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        .back-to-editor {
+            margin-top: 40px;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            .manual-container { 
+                padding: 20px 16px;
+                margin: 20px 4vw;
+            }
+            .flow-branch {
+                flex-direction: column;
+                align-items: center;
+            }
+            .branch-option {
+                margin: 10px 0;
+            }
+            .manual-shape {
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="manual-container">
+        <h1>Блок-схеми: крок за кроком!</h1>
+        
+        <p>Іноді важливо чітко описати якусь послідовність дій або інструкцію. Саме для цього і використовують <b>блок-схеми</b>!</p>
+        
+        <div class="highlight-box">
+            <p><b>Блок-схема</b> — це спеціальне зображення, яке показує, як робити різні дії крок за кроком. Вона складається з кольорових фігур та стрілочок!</p>
+        </div>
+
+        <h2>Фігури</h2>
+        <p>У блок-схемах кожна фігура щось означає:</p>
+        
+        <ul>
+            <li style="display: flex; align-items: center; margin-bottom: 18px;"><span class="manual-shape start-end">Початок/Кінець</span> <span style="margin-left:8px;">— <b>Овал</b>. Він показує, де ми починаємо і де закінчуємо нашу інструкцію.</span></li>
+            <li style="display: flex; align-items: center; margin-bottom: 18px;"><span class="manual-shape process">Дія</span> <span style="margin-left:8px;">— <b>Прямокутник</b>. Він означає "зроби щось".</span></li>
+            <li style="display: flex; align-items: center; margin-bottom: 18px;"><span class="manual-shape decision"><span class="content">Питання?</span></span> <span style="margin-left:8px;">— <b>Ромб</b>. Це блок умови, на яку може бути два варіанти відповіді: "так" або "ні".</span></li>
+            <li style="display: flex; align-items: center; margin-bottom: 18px;"><span class="manual-shape input-output"><span class="content">Ввід/Вивід</span></span> <span style="margin-left:8px;">— <b>Паралелограм</b>. Ми використовуємо його, коли треба щось отримати або показати.</span></li>
+        </ul>
+
+        <div class="fun-fact">
+            <p><b>Цікавий факт:</b> Блок-схеми використовують програмісти, коли створюють ігри та програми для комп'ютерів!</p>
+        </div>
+
+        <h2>Як малювати блок-схему?</h2>
+        <ol>
+            <li>Починай із зеленого овалу "Початок".</li>
+            <li>Подумай, які дії потрібно зробити, і розмісти їх по порядку.</li>
+            <li>Якщо треба щось вирішити, використовуй ромбик з питанням.</li>
+            <li>З'єднай усі фігурки стрілочками, щоб показати, який блок йде наступним.</li>
+            <li>Закінчи схему овалом "Кінець".</li>
+        </ol>
+
+        <h2>Приклади з нашого життя</h2>
+        
+        <h3>1. Як приготувати бутерброд</h3>
+        <div style="text-align:center; margin: 32px 0;">
+            <img src="schema_001.png" alt="Блок-схема: Як приготувати бутерброд" style="max-width:100%; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+            <div style="color:var(--gray); font-size:15px; margin-top:8px;">Блок-схема: Як приготувати бутерброд</div>
+        </div>
+        <p>Бачиш, як працює наша схема? Ми починаємо, беремо хліб, вирішуємо чи є масло, кладемо сир і закінчуємо!</p>
+
+        <h3>2. Збираємося до школи</h3>
+        <div style="text-align:center; margin: 32px 0;">
+            <img src="schema_002.png" alt="Блок-схема: Збираємося до школи" style="max-width:100%; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+            <div style="color:var(--gray); font-size:15px; margin-top:8px;">Блок-схема: Збираємося до школи</div>
+        </div>
+
+        <h3>3. Граємо в комп'ютерну гру</h3>
+        <div style="text-align:center; margin: 32px 0;">
+            <img src="schema_003.png" alt="Блок-схема: Граємо в комп'ютерну гру" style="max-width:100%; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+            <div style="color:var(--gray); font-size:15px; margin-top:8px;">Блок-схема: Граємо в комп'ютерну гру</div>
+        </div>
+
+        <h2>Приклади використання блоків Ввід/Вивід</h2>
+        
+        <p>Фігури "Ввід/Вивід" особливо корисні, коли треба отримати дані від користувача або показати якийсь результат. Ось декілька прикладів:</p>
+        
+        <h3>1. Калькулятор двох чисел</h3>
+        <div style="text-align:center; margin: 32px 0;">
+            <img src="schema_004.png" alt="Блок-схема: Калькулятор двох чисел" style="max-width:100%; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+            <div style="color:var(--gray); font-size:15px; margin-top:8px;">Блок-схема: Калькулятор двох чисел</div>
+        </div>
+        
+        <h3>2. Перевірка віку</h3>
+        <div style="text-align:center; margin: 32px 0;">
+            <img src="schema_005.png" alt="Блок-схема: Перевірка віку" style="max-width:100%; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+            <div style="color:var(--gray); font-size:15px; margin-top:8px;">Блок-схема: Перевірка віку</div>
+        </div>
+        
+        <div class="highlight-box">
+            <p><b>Важливо знати!</b> Блоки "Ввід/Вивід" часто використовуються на початку блок-схеми (для отримання даних) та в кінці (для виведення результатів).</p>
+        </div>
+
+        <h2>Для чого потрібні блок-схеми?</h2>
+        <ul>
+            <li>Щоб легко пояснити іншим, як щось робити</li>
+            <li>Щоб не забути важливі кроки</li>
+            <li>Щоб придумувати нові ігри та правила</li>
+            <li>Щоб вчитися розв'язувати задачі</li>
+        </ul>
+
+        <div class="highlight-box">
+            <p><b>Спробуймо!</b> Намалюй блок-схему "Як доглядати за домашнім улюбленцем" або "Як приготувати улюблену страву".</p>
+        </div>
+
+        <div class="fun-fact">
+            <p><b>Ти Знаєш?</b> Роботи теж використовують щось схоже на блок-схеми, щоб знати, що їм робити!</p>
+        </div>
+
+        <div class="back-to-editor">
+            <a href="index.html" class="tool-button">Перейти до редактора блок-схем</a>
+        </div>
+    </div>
+</body>
+</html>
