@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Шукарик | Вивчаємо пошукові системи</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="browser-header" role="banner">
+      <div class="browser-controls">
+        <span class="browser-btn red" aria-label="Закрити вікно"></span>
+        <span class="browser-btn yellow" aria-label="Згорнути вікно"></span>
+        <span class="browser-btn green" aria-label="Розгорнути вікно"></span>
+      </div>
+      <div class="address-bar" id="addressBar" aria-label="Адресний рядок">
+        <span id="addressBarProtocol">https://</span>
+        <span id="addressBarHostPath">shukaryk.fun</span>
+        <span class="hint-container">
+          <span
+            class="hint-icon"
+            data-tooltip-id="addressBarTip"
+            tabindex="0"
+            role="button"
+            aria-label="Пояснення адресного рядка"
+            aria-describedby="addressBarTip"
+            >?</span
+          >
+        </span>
+      </div>
+    </header>
+
+    <main>
+      <section
+        class="search-container"
+        id="searchContainer"
+        aria-label="Пошуковий інтерфейс"
+      >
+        <h1 class="logo" id="logo">
+          <span>Ш</span><span>у</span><span>к</span><span>а</span><span>р</span
+          ><span>и</span><span>к</span>
+        </h1>
+        <div class="search-box-container" id="searchBoxContainer">
+          <div class="search-icon" aria-hidden="true">
+            <svg
+              height="20px"
+              width="20px"
+              focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                fill="currentColor"
+              ></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            class="search-box"
+            id="searchBox"
+            placeholder="Введіть ключові слова для пошуку..."
+            aria-label="Пошуковий рядок"
+            tabindex="0"
+          />
+          <span class="hint-container search-hint-container">
+            <span
+              class="hint-icon"
+              data-tooltip-id="searchBoxTip"
+              tabindex="0"
+              role="button"
+              aria-label="Пояснення пошукового рядка"
+              aria-describedby="searchBoxTip"
+              >?</span
+            >
+          </span>
+        </div>
+        <div class="search-buttons" id="searchButtonsContainer">
+          <button
+            class="search-btn"
+            id="searchBtn"
+            aria-label="Шукати"
+            tabindex="0"
+          >
+            Шукати
+          </button>
+          <button
+            class="search-btn"
+            id="luckyBtn"
+            aria-label="Мені пощастить"
+            tabindex="0"
+          >
+            Мені пощастить
+          </button>
+          <span class="hint-container">
+            <span
+              class="hint-icon"
+              data-tooltip-id="searchBtnTip"
+              tabindex="0"
+              role="button"
+              aria-label="Пояснення кнопки пошуку"
+              aria-describedby="searchBtnTip"
+              >?</span
+            >
+          </span>
+        </div>
+        <div
+          class="back-button-container"
+          id="backButtonContainer"
+          style="display: none"
+        >
+          <button
+            class="back-btn"
+            id="backBtn"
+            aria-label="Повернутися до пошуку"
+            tabindex="0"
+          >
+            ← Назад
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="results-container"
+        id="resultsContainer"
+        aria-label="Результати пошуку"
+      >
+        <div class="results-header" id="resultsHeaderInfo">
+          <span class="hint-container">
+            Знайдено приблизно&nbsp;<span id="resultsCount">0</span
+            >&nbsp;результатів (<span id="searchTime">0.00</span> секунд)
+            <span
+              class="hint-icon"
+              data-tooltip-id="resultsCountTip"
+              tabindex="0"
+              role="button"
+              aria-label="Пояснення кількості результатів"
+              aria-describedby="resultsCountTip"
+              >?</span
+            >
+            <div class="tooltip" id="resultsCountTip" role="tooltip">
+              Тут відображається приблизна кількість веб-сторінок, знайдених за
+              вашим запитом, та час, витрачений на пошук. Велика кількість
+              результатів не завжди означає кращу якість!
+            </div>
+          </span>
+          <span class="hint-container">
+            <span
+              class="hint-icon"
+              data-tooltip-id="resultStructureTip"
+              tabindex="0"
+              role="button"
+              aria-label="Пояснення структури результатів"
+              aria-describedby="resultStructureTip"
+              >?</span
+            >
+          </span>
+        </div>
+        <div id="resultsContent"></div>
+      </section>
+
+      <div
+        class="highlight-area"
+        id="addressBarHighlight"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="highlight-area"
+        id="searchBoxHighlight"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="highlight-area"
+        id="searchBtnHighlight"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="highlight-area"
+        id="luckyBtnHighlight"
+        aria-hidden="true"
+      ></div>
+    </main>
+
+    <aside
+      class="help-panel"
+      id="helpPanel"
+      aria-label="Навчальні завдання"
+      tabindex="-1"
+    >
+      <h2>Завдання</h2>
+      <div class="task-card">
+        <h3>Завдання 1: Розуміння інтерфейсу</h3>
+        <p>Знайдіть в інтерфейсі пошукової системи:</p>
+        <ul>
+          <li>Адресний рядок (де знаходиться?)</li>
+          <li>Пошуковий рядок (у чому різниця?)</li>
+          <li>Кнопку пошуку та "Мені пощастить"</li>
+        </ul>
+        <p>Натискайте на значки "?" для підказок.</p>
+      </div>
+      <div class="task-card">
+        <h3>Завдання 2: Ключові слова</h3>
+        <p>Спробуйте здійснити пошук за такими запитами:</p>
+        <ul>
+          <li>"Столиця України" - простий запит</li>
+          <li>"погода Київ сьогодні" - складений запит</li>
+          <li>"що таке фотосинтез" - запитання</li>
+          <li>"найкращі ресторани Львова недорого" - запит з уточненням</li>
+        </ul>
+        <p>
+          Тепер спробуйте поставити запит, який краще підійде для ШІ-пошуку,
+          наприклад: "Поясни, як працює класичний пошук порівняно з ШІ-пошуком,
+          для п'ятикласника."
+        </p>
+      </div>
+      <div class="task-card">
+        <h3>Завдання 3: Аналіз результатів</h3>
+        <p>Після пошуку зверніть увагу на:</p>
+        <ul>
+          <li>Заголовки результатів (сині тексти)</li>
+          <li>URL-адреси (зелені тексти)</li>
+          <li>Опис сторінки (сірий текст)</li>
+          <li>Підсвічені ключові слова</li>
+        </ul>
+        <p>
+          Якщо б це був ШІ-пошук, як би могла виглядати відповідь на запит
+          "користь зеленого чаю"?
+        </p>
+      </div>
+      <div class="task-card">
+        <h3>Підказки:</h3>
+        <p>
+          <strong>Адресний рядок:</strong> Показує веб-адресу (URL) поточної
+          сторінки. Наприклад, <code>https://www.google.com</code>.
+        </p>
+        <p>
+          <strong>Пошуковий рядок:</strong> Сюди ви вводите слова (ключові
+          слова), щоб знайти інформацію. Наприклад, <code>рецепт борщу</code>.
+        </p>
+        <p>
+          <strong>Ключові слова:</strong> Головні слова, що описують те, що ви
+          шукаєте. Чим точніші ключові слова, тим кращі результати для
+          класичного пошуку.
+        </p>
+        <p>
+          <strong>ШІ-запит:</strong> Для ШІ-пошуку можна ставити більш
+          розгорнуті, розмовні запитання.
+        </p>
+        <p>
+          <strong>"Мені пощастить":</strong> Кнопка, яка намагається одразу
+          відкрити найімовірніший результат, минаючи сторінку зі списком.
+        </p>
+      </div>
+      <div class="task-card safe-search-links">
+        <h3>Безпечні дитячі пошукові системи</h3>
+        <ul>
+          <li>
+            <a
+              href="https://www.kiddle.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Kiddle</a
+            >
+            — безпечна пошукова система для дітей з фільтрацією контенту.
+          </li>
+          <li>
+            <a
+              href="https://www.swiggle.org.uk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Swiggle</a
+            >
+            — освітня пошукова система для школярів.
+          </li>
+        </ul>
+        <p>
+          <em
+            >Використовуйте ці ресурси для безпечного та цікавого пошуку
+            інформації!</em
+          >
+        </p>
+      </div>
+    </aside>
+    <button
+      class="help-toggle"
+      id="helpToggle"
+      aria-label="Відкрити/Закрити навчальні завдання"
+      aria-expanded="false"
+      tabindex="0"
+    >
+      ?
+    </button>
+
+    <nav class="lesson-nav" aria-label="Навігація по модулях">
+      <select
+        class="lesson-dropdown"
+        id="lessonSelect"
+        aria-label="Оберіть модуль"
+        tabindex="0"
+      >
+        <option value="intro">Оберіть модуль</option>
+        <option value="addressBar">1. Адресний рядок</option>
+        <option value="searchBox">2. Пошуковий рядок</option>
+        <option value="keywords">3. Ключові слова</option>
+        <option value="luckyButton">3.1. Кнопка "Мені пощастить"</option>
+        <option value="results">4. Аналіз результатів</option>
+        <option value="classicSearch">
+          4.1. Класичний пошук: Основа основ
+        </option>
+        <option value="aiSearch">5. ШІ-пошук: Нова ера</option>
+      </select>
+      <button
+        class="lesson-btn"
+        id="startLessonBtn"
+        aria-label="Почати модуль"
+        tabindex="0"
+      >
+        Почати модуль
+      </button>
+    </nav>
+
+    <div
+      class="modal"
+      id="lessonModal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      tabindex="-1"
+      aria-labelledby="modalTitle"
+      aria-describedby="modalBody"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle">Назва модуля</div>
+          <span
+            class="close-btn"
+            id="closeModal"
+            role="button"
+            aria-label="Закрити модальне вікно"
+            tabindex="0"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body" id="modalBody">Зміст модуля буде тут.</div>
+        <div class="modal-footer">
+          <button class="modal-btn" id="modalBtn" aria-label="Закрити">
+            Зрозуміло
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <!-- Tooltip Container - всі підказки зібрані в одному місці для кращого позиціонування -->
+    <div id="tooltips-container" class="tooltips-container">
+      <div class="tooltip" id="addressBarTip" role="tooltip">
+        Це <strong>адресний рядок</strong> браузера. Тут відображається адреса
+        (URL) веб-сторінки, яку ви зараз бачите. Наприклад, "shukaryk.fun" – це
+        доменне ім'я цього сайту.
+      </div>
+
+      <div class="tooltip" id="searchBoxTip" role="tooltip">
+        Це <strong>рядок пошуку</strong>. Сюди ви вводите слова або фрази
+        (<strong>ключові слова</strong>), щоб знайти інформацію. Наприклад:
+        "рецепт яблучного пирога", "погода в Одесі на завтра", "як зав'язати
+        краватку".
+      </div>
+
+      <div class="tooltip" id="searchBtnTip" role="tooltip">
+        Натисніть <strong>"Шукати"</strong> (або Enter на клавіатурі) після
+        введення запиту, щоб побачити список результатів. Кнопка
+        <strong>"Мені пощастить"</strong> спробує одразу відкрити найпершу,
+        найбільш підходящу сторінку.
+      </div>
+
+      <div class="tooltip" id="resultsHeaderTip" role="tooltip">
+        <p>Тут показана статистика пошуку:</p>
+        <ul>
+          <li>
+            <strong>Кількість результатів</strong> - скільки сторінок знайдено
+            за вашим запитом (приблизно)
+          </li>
+          <li>
+            <strong>Час пошуку</strong> - як швидко пошукова система знайшла
+            результати (у секундах)
+          </li>
+        </ul>
+      </div>
+
+      <div class="tooltip" id="resultStructureTip" role="tooltip">
+        <p><strong>Структура пошукового результату:</strong></p>
+        <ul>
+          <li>
+            <strong>Заголовок</strong> (синій текст) - назва веб-сторінки, яка
+            дає загальне уявлення про її вміст
+          </li>
+          <li>
+            <strong>Посилання</strong> (зелений текст) - веб-адреса сторінки,
+            допомагає оцінити релевантність та надійність сайту
+          </li>
+          <li>
+            <strong>Опис</strong> (сірий текст) - короткий фрагмент зі сторінки,
+            де виділені ваші ключові слова
+          </li>
+        </ul>
+        <p>
+          Найбільш релевантні результати з'являються вгорі списку. Звертайте
+          увагу на те, чи містить опис ваші ключові слова.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
