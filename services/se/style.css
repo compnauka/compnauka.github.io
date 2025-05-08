@@ -1,0 +1,732 @@
+/* ---- Основні змінні та стилі ---- */
+:root {
+  --primary-color: #4285f4;
+  --secondary-color-red: #ea4335;
+  --secondary-color-yellow: #fbbc05;
+  --secondary-color-green: #34a853;
+  --text-color-primary: #202124;
+  --text-color-secondary: #4d5156;
+  --text-color-link: #1a0dab;
+  --text-color-url: #006621;
+  --background-light: #f8f9fa;
+  --background-browser-header: #f1f3f4;
+  --border-color-light: #dfe1e5;
+  --border-color-medium: #dadce0;
+  --focus-outline-color: #4285f4;
+
+  --font-family-main: Arial, sans-serif;
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 24px;
+  --tooltip-max-width: 350px;
+  --tooltip-max-width-mobile: calc(100vw - 40px);
+
+  /* Z-index variables */
+  --z-index-highlight-area: 50;
+  --z-index-tooltip: 100;
+  --z-index-lesson-nav: 800;
+  --z-index-help-panel: 900;
+  --z-index-help-toggle: 901;
+  --z-index-modal: 1000;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-family-main);
+}
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-color-primary);
+}
+.tooltip {
+  position: fixed;
+  background-color: var(--background-light);
+  border: 1px solid var(--border-color-medium);
+  border-radius: var(--border-radius-medium);
+  padding: 14px 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: none;
+  top: 0;
+  left: 0;
+  transform: none;
+  z-index: 3000;
+  max-width: 380px;
+  min-width: 220px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-color-primary);
+  text-align: left;
+  word-break: break-word;
+  white-space: normal;
+  opacity: 0.9;
+}
+
+.hint-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+.hint-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-hint-container {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+/* Browser Header Styles */
+.browser-header {
+  overflow: visible !important;
+}
+.address-bar {
+  overflow: visible !important;
+}
+.browser-header {
+  background-color: var(--background-browser-header);
+  padding: 8px 15px;
+  border-bottom: 1px solid var(--border-color-medium);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.address-bar {
+  flex-grow: 1;
+  background-color: white;
+  border-radius: 20px;
+  height: 36px;
+  padding: 0 15px;
+  border: 1px solid var(--border-color-medium);
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+  position: relative;
+  font-size: 14px;
+  overflow: visible !important;
+}
+#addressBarProtocol {
+  flex-shrink: 0;
+  color: var(--text-color-secondary);
+}
+#addressBarHostPath {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 2px;
+}
+.address-bar .hint-container {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.browser-controls {
+  display: flex;
+  gap: 8px;
+}
+.browser-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.red {
+  background-color: #ff5f57;
+}
+.yellow {
+  background-color: #febc2e;
+}
+.green {
+  background-color: #28c840;
+}
+
+/* Search Engine Styles */
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 150px;
+  flex-grow: 1;
+  transition: padding-top 0.3s ease, align-items 0.3s ease;
+  width: 100%;
+}
+.search-container.results-active {
+  padding-top: 20px;
+  align-items: flex-start;
+}
+.logo {
+  font-size: 70px;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 20px;
+  letter-spacing: -2px;
+  transition: font-size 0.3s ease, margin-bottom 0.3s ease;
+}
+.logo.results-active {
+  font-size: 30px;
+  margin-bottom: 10px;
+  /* Для узгодження з .results-container та .search-box-container при align-items: flex-start */
+  /* Використовуємо відступ, який відповідає .results-container або .search-box-container */
+  padding-left: 20px; /* Узгоджуємо з відступом контейнерів нижче */
+}
+.logo span:nth-child(1) {
+  color: var(--primary-color);
+}
+.logo span:nth-child(2) {
+  color: var(--secondary-color-red);
+}
+.logo span:nth-child(3) {
+  color: var(--secondary-color-yellow);
+}
+.logo span:nth-child(4) {
+  color: var(--primary-color);
+}
+.logo span:nth-child(5) {
+  color: var(--secondary-color-green);
+}
+.logo span:nth-child(6) {
+  color: var(--secondary-color-red);
+}
+.logo span:nth-child(7) {
+  color: var(--primary-color);
+}
+
+.search-box-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px; /* Додаємо padding, щоб контент не притискався до країв на мобільних */
+  transition: max-width 0.3s ease;
+  overflow: visible !important;
+}
+.search-box-container.results-active {
+  max-width: 700px;
+  /* Залишаємо padding: 0 20px; для внутрішніх відступів */
+}
+.search-box {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--border-radius-large);
+  border: 1px solid var(--border-color-light);
+  padding: 0 45px 0 60px; /* Збільшуємо лівий padding для кращого відступу від лупи */
+  font-size: 16px;
+  outline: none;
+  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+}
+.search-box:hover {
+  box-shadow: 0 1px 8px rgba(32, 33, 36, 0.2);
+}
+.search-icon {
+  position: absolute;
+  left: 25px; /* Встановлюємо правильне положення з лівого боку */
+  top: 50%;
+  transform: translateY(-50%); /* Центруємо лише вертикально */
+  color: #9aa0a6;
+  pointer-events: none;
+  z-index: 1;
+}
+.search-buttons {
+  margin-top: 30px;
+  display: flex;
+  gap: 10px;
+  padding: 0 20px; /* Узгодження з .search-box-container */
+}
+
+.back-button-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.back-btn {
+  background-color: var(--background-light);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-small);
+  color: var(--text-color-primary);
+  font-size: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.back-btn:hover {
+  border: 1px solid var(--border-color-medium);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+.search-buttons .hint-container {
+  margin-left: 0;
+}
+.search-buttons .hint-icon {
+  margin-left: 10px;
+}
+.search-btn {
+  background-color: var(--background-light);
+  border: 1px solid var(--background-light);
+  border-radius: var(--border-radius-small);
+  color: var(--text-color-primary);
+  font-size: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.search-btn:hover {
+  border: 1px solid var(--border-color-medium);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Results Area */
+.results-container {
+  padding: 0 20px 20px 20px;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  display: none;
+  margin-top: 20px; /* Додав відступ зверху для уникнення накладання */
+}
+.results-header {
+  border-bottom: 1px solid var(--border-color-medium);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: var(--text-color-secondary);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.results-header .hint-icon {
+  margin-left: 5px;
+}
+.result-item {
+  margin-bottom: 25px;
+}
+.result-title {
+  color: var(--text-color-link);
+  font-size: 20px;
+  font-weight: normal;
+  margin-bottom: 3px;
+  cursor: pointer;
+}
+.result-title:hover {
+  text-decoration: underline;
+}
+.result-url {
+  color: var(--text-color-url);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.result-description {
+  color: var(--text-color-secondary);
+  font-size: 14px;
+  line-height: 1.57;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: var(--z-index-modal);
+  padding: 15px;
+  overflow-y: auto;
+}
+.modal-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: var(--border-radius-medium);
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 30px);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--text-color-primary);
+}
+.close-btn {
+  cursor: pointer;
+  font-size: 28px;
+  color: var(--text-color-secondary);
+  line-height: 1;
+  padding: 5px;
+}
+.close-btn:hover {
+  color: var(--text-color-primary);
+}
+.modal-body {
+  margin-bottom: 25px;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+.modal-body p,
+.modal-body ul,
+.modal-body ol,
+.modal-body h3 {
+  /* Додано h3 для заголовків в уроці */
+  margin-bottom: 15px;
+}
+.modal-body h3 {
+  font-size: 18px;
+  color: var(--primary-color);
+  margin-top: 20px;
+}
+.modal-body ul,
+.modal-body ol {
+  padding-left: 25px;
+}
+.modal-body strong {
+  color: var(--primary-color);
+}
+.modal-body code {
+  background-color: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: var(--border-radius-small);
+  font-size: 0.9em;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.modal-btn {
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  font-size: 15px;
+}
+.modal-btn:hover {
+  background-color: #357ae8;
+}
+
+/* Highlighted area styles */
+.highlight-area {
+  position: absolute;
+  border: 3px dashed var(--secondary-color-red);
+  border-radius: var(--border-radius-small);
+  pointer-events: none;
+  z-index: var(--z-index-highlight-area);
+  display: none;
+  opacity: 0.8;
+}
+
+/* Lesson navigation */
+.lesson-nav {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: var(--border-radius-medium);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: var(--z-index-lesson-nav);
+  flex-shrink: 0;
+}
+.lesson-btn {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  margin-left: 10px;
+}
+.lesson-btn:hover {
+  background-color: #357ae8;
+}
+.lesson-dropdown {
+  padding: 8px;
+  border-radius: var(--border-radius-small);
+  border: 1px solid var(--border-color-medium);
+}
+
+/* Keywords styles */
+.keyword {
+  background-color: #e8f0fe;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Help panel */
+.help-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 320px;
+  background-color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: var(--z-index-help-panel);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.help-panel.visible {
+  transform: translateX(0);
+}
+.help-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: var(--z-index-help-toggle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+.help-toggle:hover {
+  background-color: #357ae8;
+}
+.task-card {
+  background-color: var(--background-light);
+  border: 1px solid var(--border-color-medium);
+  border-radius: var(--border-radius-medium);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+.task-card h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+.task-card p,
+.task-card ul {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.task-card ul {
+  padding-left: 20px;
+}
+
+/* Global focus style for accessibility */
+:focus-visible {
+  outline: 3px solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.search-box:focus-visible {
+  outline: none;
+  border-color: var(--border-color-medium);
+  box-shadow: 0 0 0 2px var(--focus-outline-color),
+    0 1px 10px rgba(32, 33, 36, 0.35);
+}
+.hint-icon:focus-visible,
+.close-btn:focus-visible,
+.modal-btn:focus-visible,
+.search-btn:focus-visible,
+.lesson-btn:focus-visible,
+.help-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px white, 0 0 0 5px var(--focus-outline-color);
+}
+.result-title:focus-visible {
+  outline: none;
+  background-color: #e8f0fe;
+  text-decoration: underline;
+}
+.lesson-dropdown:focus-visible {
+  outline: none;
+  border-color: var(--focus-outline-color);
+  box-shadow: 0 0 0 2px var(--focus-outline-color);
+}
+
+@media (max-width: 768px) {
+  .search-box-container {
+    /* Залишаємо padding з батьківського .search-container */
+    max-width: 95%; /* Обмежуємо ширину */
+    padding: 0; /* Власний padding не потрібен, якщо батько має */
+    margin: 0 auto; /* Центрування, якщо search-container має width 100% */
+  }
+  .search-container.results-active .logo {
+    padding-left: 20px; /* Зберігаємо відступ для лого при звуженні */
+  }
+  .search-container.results-active .search-box-container {
+    padding: 0;
+    margin: 0 20px; /* Залишаємо бічні відступи */
+  }
+
+  .results-container {
+    max-width: 100%;
+    padding: 0 10px 10px 10px;
+  }
+  .logo {
+    font-size: 56px;
+  }
+  .modal-content {
+    max-height: calc(100vh - 30px);
+  }
+}
+
+@media (max-width: 600px) {
+  .search-container {
+    padding-top: 50px;
+  }
+  .search-container.results-active {
+    padding-top: 15px;
+  }
+  .logo {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+  .logo.results-active {
+    font-size: 24px;
+    padding-left: 10px;
+  }
+  .search-box-container {
+    padding: 0;
+    margin: 0 10px;
+    width: calc(100% - 20px);
+    max-width: none;
+  }
+  .search-container.results-active .search-box-container {
+    margin: 0 10px;
+    width: calc(100% - 20px);
+  }
+
+  .search-box {
+    font-size: 14px;
+    height: 42px;
+    padding: 0 40px 0 45px;
+  }
+  .search-buttons {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 0; /* Відступи вже є у батька або в margin самого search-buttons */
+    width: calc(100% - 20px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .search-btn {
+    width: 100%;
+  }
+  .results-container {
+    padding: 10px 5px;
+  }
+  .result-title {
+    font-size: 18px;
+  }
+  .modal-content {
+    padding: 20px;
+    max-height: calc(100vh - 20px);
+  }
+  .modal-title {
+    font-size: 20px;
+  }
+  .modal-body h3 {
+    font-size: 17px;
+  }
+  .help-panel {
+    width: calc(100vw - 30px);
+    padding: 15px;
+  }
+  .lesson-nav {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .lesson-nav .lesson-dropdown {
+    flex-grow: 1;
+    min-width: 150px;
+  }
+  .lesson-nav .lesson-btn {
+    flex-grow: 1;
+    margin-left: 0;
+  }
+  .tooltip {
+    position: fixed;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color-medium);
+    border-radius: var(--border-radius-medium);
+    padding: 14px 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+    display: none;
+    top: 0;
+    left: 0;
+    transform: none;
+    z-index: 3000;
+    max-width: 380px;
+    min-width: 220px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-color-primary);
+    text-align: left;
+    word-break: break-word;
+    white-space: normal;
+    transition: max-width 0.2s;
+  }
+
+  .tooltip {
+    max-width: var(--tooltip-max-width-mobile);
+    font-size: 13px;
+  }
+
+  .browser-header {
+    padding: 8px 10px;
+  }
+  .address-bar {
+    height: 32px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+  #addressBarHostPath {
+    padding-left: 1px;
+  }
+  .address-bar .hint-container {
+    margin-left: 5px;
+  }
+}
