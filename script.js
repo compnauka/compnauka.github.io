@@ -115,7 +115,16 @@
 
         const categoryHeader = document.createElement("h2");
         categoryHeader.className = "category-header-main";
-        categoryHeader.textContent = category.name;
+        if (category.iconClass) {
+            const iconElement = document.createElement("i");
+            iconElement.className = category.iconClass; // Наприклад, "fas fa-laptop"
+            iconElement.setAttribute("aria-hidden", "true"); // Для доступності
+            categoryHeader.appendChild(iconElement);
+            // Додаємо невеликий відступ після іконки
+            categoryHeader.appendChild(document.createTextNode(" ")); 
+        }
+        categoryHeader.appendChild(document.createTextNode(category.name)); // Додаємо назву категорії
+
         servicesContentArea.appendChild(categoryHeader);
 
         const servicesGrid = document.createElement("div");
