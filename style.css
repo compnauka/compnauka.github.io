@@ -1,0 +1,460 @@
+/* style.css */
+
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2980b9;
+    --background-color: #f4f7f6;
+    --text-color: #333;
+    --card-bg-color: white;
+    --header-text-color: white;
+    --card-title-color: #2c3e50;
+    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    --footer-shadow: 0 -4px 8px rgba(0, 0, 0, 0.05);
+    --border-radius: 10px;
+    --transition-duration: 0.3s;
+    
+    /* Категорії та навігація */
+    --category-bg-color: #e8f4fc;
+    --category-text-color: #2c3e50;
+    --sidebar-bg-color: #ffffff;
+    --sidebar-width: 260px; /* Ширина бічної панелі на десктопі */
+    --sidebar-link-color: #454f5b;
+    --sidebar-link-hover-bg: #f0f4f8;
+    --sidebar-link-active-bg: var(--primary-color);
+    --sidebar-link-active-color: white;
+
+    /* Теги */
+    --tag-bg-color: #e0e7ef;
+    --tag-text-color: #4a5568;
+
+    /* Шрифти */
+    --font-family-headings: 'Nunito', sans-serif;
+    --font-family-body: 'Open Sans', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family-body);
+    background-color: var(--background-color);
+    line-height: 1.65;
+    color: var(--text-color);
+    overflow-x: hidden; /* Запобігає горизонтальній прокрутці на рівні body */
+}
+
+body.mobile-nav-active {
+    overflow-y: hidden; /* Запобігає прокрутці основного контенту, коли мобільне меню відкрите */
+}
+
+/* Затемнення основного контенту, коли мобільне меню відкрите */
+body.mobile-nav-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999; /* Нижче, ніж саме меню */
+    transition: opacity var(--transition-duration) ease;
+}
+
+
+.page-container {
+    /* Загальна обгортка */
+}
+
+.header {
+    text-align: center;
+    padding: 25px 20px;
+    background-color: var(--primary-color);
+    color: var(--header-text-color);
+    position: relative; 
+}
+
+.mobile-nav-toggle {
+    display: none; 
+    position: absolute;
+    top: 50%;
+    left: 15px; /* Трохи ближче до краю */
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--header-text-color);
+    font-size: 1.6rem; /* Адаптовано розмір */
+    cursor: pointer;
+    padding: 8px; /* Збільшено область кліку */
+    z-index: 1100; 
+    line-height: 1; /* Для кращого вирівнювання іконки */
+}
+
+.mobile-nav-toggle .fa-times {
+    display: none;
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .fa-bars {
+    display: none;
+}
+.mobile-nav-toggle[aria-expanded="true"] .fa-times {
+    display: block;
+}
+
+.header h1 {
+    font-family: var(--font-family-headings);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+.header p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.main-layout {
+    display: flex;
+    max-width: 1200px;
+    margin: 30px auto;
+    gap: 30px;
+}
+
+.sidebar-nav {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg-color);
+    padding: 20px 0;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    flex-shrink: 0;
+    height: fit-content;
+    position: sticky;
+    top: 30px;
+    transition: transform 0.35s ease-in-out; /* Плавність для мобільного меню */
+}
+
+.sidebar-nav__list {
+    list-style: none;
+    padding: 0; /* Забрано внутрішній padding, щоб посилання займали всю ширину */
+    margin: 0;
+}
+
+.sidebar-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 25px;
+    text-decoration: none;
+    color: var(--sidebar-link-color);
+    border-left: 4px solid transparent;
+    transition: background-color var(--transition-duration) ease, color var(--transition-duration) ease, border-left-color var(--transition-duration) ease;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.sidebar-nav__link i {
+    width: 22px;
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 1.2em;
+    transition: color var(--transition-duration) ease;
+}
+
+.sidebar-nav__link:hover {
+    background-color: var(--sidebar-link-hover-bg);
+    color: var(--secondary-color);
+    border-left-color: var(--secondary-color);
+}
+.sidebar-nav__link:hover i {
+    color: var(--secondary-color);
+}
+
+.sidebar-nav__link.active {
+    background-color: var(--sidebar-link-active-bg);
+    color: var(--sidebar-link-active-color);
+    font-weight: 700;
+    font-family: var(--font-family-headings);
+    border-left-color: var(--secondary-color);
+}
+
+.sidebar-nav__link.active i {
+    color: var(--sidebar-link-active-color);
+}
+
+.main-content {
+    flex-grow: 1;
+    min-width: 0; /* Для правильної роботи flex-grow з потенційно широким вмістом */
+}
+
+.category-header-main {
+    font-family: var(--font-family-headings);
+    background-color: transparent;
+    padding: 0 0 20px 0;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--card-title-color);
+    font-weight: 800;
+    font-size: 1.8rem;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.service-card {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.service-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.service-card__image-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.service-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity var(--transition-duration) ease, transform var(--transition-duration) ease;
+}
+
+.service-card:hover .service-card__image {
+    transform: scale(1.05);
+}
+
+.service-card__content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.service-card__title {
+    font-family: var(--font-family-headings);
+    margin-bottom: 8px;
+    color: var(--card-title-color);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.service-card__tags {
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.service-card__tag {
+    background-color: var(--tag-bg-color);
+    color: var(--tag-text-color);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.service-card__description {
+    margin-bottom: 20px;
+    flex-grow: 1;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #5a6778;
+}
+
+.service-card__link {
+    font-family: var(--font-family-headings);
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--header-text-color);
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    align-self: flex-start;
+    transition: background-color var(--transition-duration) ease, transform var(--transition-duration) ease;
+    margin-top: auto;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.service-card__link:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+/* --- Адаптивність --- */
+@media screen and (max-width: 992px) {
+    .main-layout {
+        gap: 20px;
+        margin: 20px auto;
+    }
+    :root {
+        --sidebar-width: 220px; /* Вужча панель на планшетах */
+    }
+    .sidebar-nav__link {
+        padding: 12px 20px;
+    }
+    .category-header-main {
+        font-size: 1.6rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .header {
+        padding: 20px 15px; /* Адаптуємо відступи шапки */
+    }
+    .header h1 {
+        font-size: 1.5rem; /* Менший заголовок на мобільних */
+        margin-left: 40px; /* Відступ від кнопки меню */
+        margin-right: 10px; /* Запас справа */
+        text-align: left; /* Вирівнювання для кращого вигляду з кнопкою */
+    }
+    .header p {
+        font-size: 0.85rem;
+        margin-left: 40px;
+        text-align: left;
+    }
+
+    .mobile-nav-toggle {
+        display: block; /* Показуємо кнопку "сендвіч" */
+    }
+
+    .main-layout {
+        flex-direction: column;
+        margin: 20px 15px;
+        gap: 20px;
+        position: relative; 
+        /* overflow-x: clip; Забрано, щоб тінь від меню була видна */
+    }
+    
+    .sidebar-nav {
+        position: fixed; 
+        top: 0;
+        left: 0;
+        width: min(75vw, 280px); /* Ширина меню, трохи збільшена */
+        height: 100%; /* На всю висоту екрану */
+        background-color: var(--sidebar-bg-color);
+        z-index: 1000; 
+        transform: translateX(-100%); 
+        overflow-y: auto; 
+        padding-top: 60px; /* Відступ для вмісту від верху */
+        border-radius: 0; /* Забираємо заокруглення на мобільному меню */
+        box-shadow: 3px 0px 10px rgba(0,0,0,0.1); /* Тінь справа */
+        /* Прибираємо position: sticky та top для мобільної версії */
+    }
+
+    .sidebar-nav[data-visible="true"] {
+        transform: translateX(0); /* Показати меню */
+    }
+
+    .sidebar-nav__list {
+        display: flex; 
+        flex-direction: column; 
+        padding: 0; 
+    }
+
+    .sidebar-nav__link {
+        white-space: normal; 
+        border-left: 4px solid transparent; 
+        border-bottom: 1px solid #eef2f7; /* Світліший розділювач */
+        padding: 15px 25px; 
+    }
+     .sidebar-nav__link:last-child {
+        border-bottom: none; 
+     }
+
+    .sidebar-nav__link.active {
+        border-left-color: var(--secondary-color); 
+        /* border-bottom-color: #eef2f7; */ /* Колір фону вже встановлений */
+    }
+    
+    .main-content {
+        /* Залишається без додаткових відступів, оскільки вони в .main-layout */
+    }
+    
+    .category-header-main { 
+        font-size: 1.5rem; 
+        padding-bottom: 15px; 
+        margin-left: 0; /* Скидаємо відступи, якщо були */
+        margin-right: 0;
+    }
+    .services-grid { 
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+        gap: 20px; 
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .main-layout { 
+        margin: 15px 10px; 
+    }
+    .header h1 {
+        font-size: 1.3rem;
+        margin-left: 35px;
+    }
+     .header p {
+        font-size: 0.8rem;
+        margin-left: 35px;
+    }
+    .mobile-nav-toggle {
+        font-size: 1.4rem;
+        left: 10px;
+    }
+    .services-grid {
+        grid-template-columns: 1fr; /* Одна колонка на дуже малих екранах */
+    }
+     .service-card__title { 
+        font-size: 1.15rem; 
+    }
+     .service-card__description { 
+        font-size: 0.85rem; 
+    }
+}
+
+/* --- Старі стилі, які більше не потрібні --- */
+.categories-nav, .category, .category-header { 
+    display: none; 
+}
+
+/* --- Skeleton Loading --- */
+.skeleton-loading {
+    background: linear-gradient(90deg, #e9ecef 25%, #f5f7fa 50%, #e9ecef 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite ease-in-out;
+}
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+footer {
+    background-color: #34495e; 
+    color: var(--header-text-color);
+    text-align: center;
+    padding: 2rem 0;
+    border-radius: 20px 20px 0 0; 
+    margin-top: 40px;
+    box-shadow: var(--footer-shadow);
+}
+footer p {
+    font-size: 1rem;
+    font-weight: 600;
+}
