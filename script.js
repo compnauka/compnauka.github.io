@@ -72,6 +72,11 @@
         title.textContent = service.name;
         content.appendChild(title);
 
+        const description = document.createElement("p");
+        description.className = "service-card__description";
+        description.textContent = service.description;
+        content.appendChild(description);
+
         if (service.tags && Array.isArray(service.tags) && service.tags.length > 0) {
             const tagsContainer = document.createElement("div");
             tagsContainer.className = "service-card__tags";
@@ -79,15 +84,15 @@
                 const tagElement = document.createElement("span");
                 tagElement.className = "service-card__tag";
                 tagElement.textContent = tagText;
+                tagElement.style.cursor = "pointer";
+                tagElement.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    filterServicesByTag(tagText);
+                });
                 tagsContainer.appendChild(tagElement);
             });
             content.appendChild(tagsContainer);
         }
-
-        const description = document.createElement("p");
-        description.className = "service-card__description";
-        description.textContent = service.description;
-        content.appendChild(description);
 
         const link = document.createElement("a");
         link.className = "service-card__link";
@@ -142,6 +147,41 @@
         servicesContentArea.appendChild(servicesGrid);
         setupImageObserver();
     };
+
+    // --- Фільтрація по тегу ---
+    function filterServicesByTag(tag) {
+        const servicesContentArea = document.getElementById("services-content-area");
+        if (!servicesContentArea) return;
+        servicesContentArea.innerHTML = '';
+
+        // Збираємо всі сервіси з усіх категорій
+        let allServices = [];
+        CATEGORIES.forEach(cat => {
+            if (Array.isArray(cat.services)) {
+                allServices = allServices.concat(cat.services.map(service => ({...service, _category: cat.name})));
+            }
+        });
+        // Фільтруємо сервіси за тегом
+        const filtered = allServices.filter(service => Array.isArray(service.tags) && service.tags.includes(tag));
+
+        // Додаємо заголовок
+        const header = document.createElement("h2");
+        header.className = "category-header-main";
+        header.textContent = `Тег: ${tag}`;
+        servicesContentArea.appendChild(header);
+
+        const servicesGrid = document.createElement("div");
+        servicesGrid.className = "services-grid";
+        if (filtered.length > 0) {
+            filtered.forEach(service => {
+                servicesGrid.appendChild(createServiceCard(service));
+            });
+        } else {
+            servicesGrid.innerHTML = `<p>Немає карток з тегом "${tag}".</p>`;
+        }
+        servicesContentArea.appendChild(servicesGrid);
+        setupImageObserver();
+    }
 
     const createSidebarNavigation = () => {
         const sidebarNavContainer = document.getElementById("sidebar-categories-nav");
@@ -278,13 +318,61 @@
             // Якщо немає ні pushState, ні hash, емулюємо hashchange для першої категорії
             window.location.hash = `#${CATEGORIES[0].id}`; // Це викличе hashchange, якщо слухач вже є
         }
+    };
 
+    // Функціонал для помічника (Пана Артема)
+    const initializeAssistant = () => {
+        const toggleBtn = document.getElementById('assistant-toggle');
+        const closeBtn = document.getElementById('assistant-close');
+        const assistantBox = document.getElementById('assistant-box');
 
+        // Визначаємо чи має бути асистент відкритий в сесії
+        const assistantShown = sessionStorage.getItem('assistantShown');
+
+        // Перевіряємо чи елементи існують
+        if (toggleBtn && closeBtn && assistantBox) {
+            // Автоматично показуємо новим відвідувачам
+            if (!assistantShown) {
+                // Затримуємо показ на 2 секунди, щоб не виникав одразу при завантаженні
+                setTimeout(() => {
+                    assistantBox.classList.add('active');
+                    sessionStorage.setItem('assistantShown', 'true');
+                }, 2000);
+            }
+
+            // Показ асистента при натисканні на кнопку
+            toggleBtn.addEventListener('click', () => {
+                assistantBox.classList.toggle('active');
+            });
+
+            // Закриття асистента при натисканні на хрестик
+            closeBtn.addEventListener('click', () => {
+                assistantBox.classList.remove('active');
+            });
+
+            // Приховуємо асистента при кліку поза його межами
+            document.addEventListener('click', (e) => {
+                if (assistantBox.classList.contains('active') && 
+                    !assistantBox.contains(e.target) && 
+                    e.target !== toggleBtn && 
+                    !toggleBtn.contains(e.target)) {
+                    assistantBox.classList.remove('active');
+                }
+            });
+        } else {
+            console.error('Assistant elements not found in DOM');
+        }
+    };
+
+    // Додаємо ініціалізацію асистента до загальної ініціалізації
+    const init = () => {
+        initializeApp();
+        initializeAssistant();
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", initializeApp);
+        document.addEventListener("DOMContentLoaded", init);
     } else {
-        initializeApp();
+        init();
     }
 })();

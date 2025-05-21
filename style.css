@@ -64,9 +64,7 @@ body.mobile-nav-active::before {
 }
 
 
-.page-container {
-    /* Загальна обгортка */
-}
+
 
 .header {
     text-align: center;
@@ -80,25 +78,28 @@ body.mobile-nav-active::before {
     display: none; 
     position: absolute;
     top: 50%;
-    left: 15px; /* Трохи ближче до краю */
+    right: 15px; /* Переміщено праворуч */
     transform: translateY(-50%);
-    background: transparent;
+    background-color: rgba(255, 255, 255, 0.15);
     border: none;
+    border-radius: 5px;
     color: var(--header-text-color);
-    font-size: 1.6rem; /* Адаптовано розмір */
+    font-size: 1.6rem;
     cursor: pointer;
-    padding: 8px; /* Збільшено область кліку */
+    padding: 10px; /* Збільшено область кліку для зручності */
     z-index: 1100; 
-    line-height: 1; /* Для кращого вирівнювання іконки */
+    line-height: 1;
+    transition: background-color 0.2s ease;
+}
+
+.mobile-nav-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
 .mobile-nav-toggle .fa-times {
     display: none;
 }
 
-.mobile-nav-toggle[aria-expanded="true"] .fa-bars {
-    display: none;
-}
 .mobile-nav-toggle[aria-expanded="true"] .fa-times {
     display: block;
 }
@@ -108,7 +109,9 @@ body.mobile-nav-active::before {
     font-size: 2.2rem;
     font-weight: 800;
     margin-bottom: 5px;
+    text-align: center;
 }
+
 .header p {
     font-size: 1rem;
     opacity: 0.9;
@@ -131,7 +134,7 @@ body.mobile-nav-active::before {
     height: fit-content;
     position: sticky;
     top: 30px;
-    transition: transform 0.35s ease-in-out; /* Плавність для мобільного меню */
+    transition: transform 0.35s ease-in-out, box-shadow 0.35s ease-in-out; /* Плавність для анімацій */
 }
 
 .sidebar-nav__list {
@@ -166,6 +169,7 @@ body.mobile-nav-active::before {
     color: var(--secondary-color);
     border-left-color: var(--secondary-color);
 }
+
 .sidebar-nav__link:hover i {
     color: var(--secondary-color);
 }
@@ -300,6 +304,27 @@ body.mobile-nav-active::before {
     transform: translateY(-2px);
 }
 
+.show-all-cards-btn {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--header-text-color);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-family: var(--font-family-headings);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 22px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
+}
+.show-all-cards-btn:hover {
+    background-color: var(--secondary-color);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(41, 128, 185, 0.14);
+}
+
 /* --- Адаптивність --- */
 @media screen and (max-width: 992px) {
     .main-layout {
@@ -323,14 +348,13 @@ body.mobile-nav-active::before {
     }
     .header h1 {
         font-size: 1.5rem; /* Менший заголовок на мобільних */
-        margin-left: 40px; /* Відступ від кнопки меню */
-        margin-right: 10px; /* Запас справа */
-        text-align: left; /* Вирівнювання для кращого вигляду з кнопкою */
+        text-align: center; /* Центрування заголовка */
+        margin-left: 10px; 
+        margin-right: 40px; /* Відступ для кнопки меню */
     }
     .header p {
         font-size: 0.85rem;
-        margin-left: 40px;
-        text-align: left;
+        text-align: center; /* Центрування підзаголовка */
     }
 
     .mobile-nav-toggle {
@@ -348,17 +372,16 @@ body.mobile-nav-active::before {
     .sidebar-nav {
         position: fixed; 
         top: 0;
-        left: 0;
-        width: min(75vw, 280px); /* Ширина меню, трохи збільшена */
-        height: 100%; /* На всю висоту екрану */
+        right: 0; /* Змінено з left: 0 на right: 0 для розміщення справа */
+        width: min(75vw, 280px);
+        height: 100%;
         background-color: var(--sidebar-bg-color);
         z-index: 1000; 
-        transform: translateX(-100%); 
+        transform: translateX(100%); /* Змінено на 100%, щоб меню висувалось справа */
         overflow-y: auto; 
-        padding-top: 60px; /* Відступ для вмісту від верху */
-        border-radius: 0; /* Забираємо заокруглення на мобільному меню */
-        box-shadow: 3px 0px 10px rgba(0,0,0,0.1); /* Тінь справа */
-        /* Прибираємо position: sticky та top для мобільної версії */
+        padding-top: 60px;
+        border-radius: 0;
+        box-shadow: -3px 0px 15px rgba(0,0,0,0.2); /* Змінено тінь для правого боку */
     }
 
     .sidebar-nav[data-visible="true"] {
@@ -386,9 +409,6 @@ body.mobile-nav-active::before {
         /* border-bottom-color: #eef2f7; */ /* Колір фону вже встановлений */
     }
     
-    .main-content {
-        /* Залишається без додаткових відступів, оскільки вони в .main-layout */
-    }
     
     .category-header-main { 
         font-size: 1.5rem; 
@@ -408,15 +428,17 @@ body.mobile-nav-active::before {
     }
     .header h1 {
         font-size: 1.3rem;
-        margin-left: 35px;
+        margin-left: 0;
+        margin-right: 0;
     }
-     .header p {
+    .header p {
         font-size: 0.8rem;
-        margin-left: 35px;
+        margin-left: 0;
+        margin-right: 0;
     }
     .mobile-nav-toggle {
         font-size: 1.4rem;
-        left: 10px;
+        right: 10px; /* Переміщено праворуч */
     }
     .services-grid {
         grid-template-columns: 1fr; /* Одна колонка на дуже малих екранах */
@@ -430,9 +452,7 @@ body.mobile-nav-active::before {
 }
 
 /* --- Старі стилі, які більше не потрібні --- */
-.categories-nav, .category, .category-header { 
-    display: none; 
-}
+/* Видалено невикористовувані класи .categories-nav, .category, .category-header */
 
 /* --- Skeleton Loading --- */
 .skeleton-loading {
@@ -453,8 +473,194 @@ footer {
     border-radius: 20px 20px 0 0; 
     margin-top: 40px;
     box-shadow: var(--footer-shadow);
+    position: relative;
 }
 footer p {
     font-size: 1rem;
     font-weight: 600;
+}
+
+/* --- Пан Артем (Асистент) --- */
+.assistant-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 950;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.assistant-toggle {
+    background-color: var(--primary-color);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border: none;
+    font-size: 1.5rem;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    background-image: url('pan_artem.png');
+    background-size: 35px 35px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.assistant-toggle:hover {
+    background-color: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.assistant-box {
+    position: absolute;
+    bottom: 75px;
+    right: 0;
+    width: 300px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    overflow: hidden;
+    transform: scale(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.assistant-box.active {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.assistant-header {
+    background-color: var(--primary-color);
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.assistant-title {
+    font-family: var(--font-family-headings);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.assistant-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.assistant-content {
+    padding: 20px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.assistant-content p {
+    margin-bottom: 16px;
+}
+
+.assistant-content .greeting {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 18px;
+}
+
+.assistant-content .highlight {
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+/* Стилі для соціальних мереж пана Артема */
+.social-links {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.social-links p {
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.social-icons a:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-3px);
+}
+
+.assistant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-right: 10px;
+    background-image: url('pan_artem.png');
+    background-size: 25px 25px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+@media screen and (max-width: 768px) {
+    .assistant-container {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .assistant-box {
+        width: 280px;
+        bottom: 70px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .assistant-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+    
+    .assistant-box {
+        width: calc(100vw - 40px);
+        max-height: 70vh;
+        overflow-y: auto;
+    }
 }
