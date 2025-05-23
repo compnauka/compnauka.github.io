@@ -1,0 +1,434 @@
+/* Основні кольори */
+:root {
+    --main-bg: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+    --header-bg: #FF6B6B;
+    --header-color: #fff;
+    --text-area-bg: #fff;
+    --text-area-border: #FFD700;
+    --text-display-bg: #FFFACD;
+    --text-display-border: #FFB347;
+    --key-bg: linear-gradient(145deg, #FFE4B5, #F0E68C);
+    --key-border: #DAA520;
+    --key-color: #8B4513;
+    --space-key-bg: linear-gradient(145deg, #87CEEB, #4682B4);
+    --backspace-key-bg: linear-gradient(145deg, #FFB6C1, #FF69B4);
+    --suggestion-bg: #F0F8FF;
+    --suggestion-border: #87CEEB;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    background: var(--main-bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    width: 100vw;
+    overflow: hidden;
+    width: 100%;
+    position: fixed;
+    touch-action: manipulation;
+}
+
+.header {
+    background: var(--header-bg);
+    color: var(--header-color);
+    text-align: center;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+/* Оптимізована панель з пропозиціями слів та кнопкою очистити */
+.word-suggestions-row {
+    display: flex;
+    align-items: stretch;
+    gap: 15px;
+    margin: 8px 15px;
+    height: 100px;
+}
+
+.word-suggestions {
+    background: var(--suggestion-bg);
+    padding: 12px;
+    border-radius: 15px;
+    border: 3px solid var(--suggestion-border);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.suggestion-title {
+    font-size: 14px;
+    color: #4169E1;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.suggestion-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    align-items: center;
+}
+
+.suggestion-word {
+    background: #FFE4E1;
+    color: #DC143C;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #FFB6C1;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.suggestion-word:hover {
+    background: #FFB6C1;
+    transform: scale(1.05);
+}
+
+/* Кнопка очистити праворуч */
+.clear-btn-right {
+    background: #FF69B4;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    min-width: 100px;
+    height: 100px;
+}
+
+.clear-btn-right:hover {
+    background: #FF1493;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* Зменшене поле для введення з більшими буквами */
+.text-area {
+    padding: 10px 15px;
+    background: var(--text-area-bg);
+    margin: 8px 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: 3px solid var(--text-area-border);
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.text-display {
+    font-size: 80px;
+    line-height: 1.2;
+    color: #333;
+    flex: 1;
+    word-wrap: break-word;
+    padding: 15px;
+    background: var(--text-display-bg);
+    border-radius: 10px;
+    border: 2px dashed var(--text-display-border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.cursor {
+    display: inline-block;
+    width: 3px;
+    height: 70px;
+    background: var(--header-bg);
+    animation: blink 1s infinite;
+    margin-left: 3px;
+}
+
+.visible-space {
+    display: inline-block;
+    background: rgba(173, 216, 230, 0.2);
+    border-radius: 3px;
+    min-width: 0.5em;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Збільшена клавіатура */
+.keyboard {
+    background: #4169E1;
+    padding: 15px;
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.2);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.keyboard-title {
+    color: white;
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.keys-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.key {
+    background: var(--key-bg);
+    border: 3px solid var(--key-border);
+    border-radius: 12px;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--key-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    user-select: none;
+    min-height: 65px;
+    min-width: 48px;
+    min-height: 65px;
+}
+
+.key:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #FFF8DC, #FFEB3B);
+}
+
+.key:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.key.pressed {
+    animation: keyPress 0.3s ease;
+}
+
+@keyframes keyPress {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); background: #FF69B4; }
+    100% { transform: scale(1); }
+}
+
+/* Спеціальні клавіші в кінці */
+.bottom-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.space-key {
+    background: var(--space-key-bg);
+    color: white;
+    font-weight: bold;
+    grid-column: span 2;
+}
+
+.backspace-key {
+    background: var(--backspace-key-bg);
+    color: white;
+    font-weight: bold;
+    grid-column: span 2;
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+    .keys-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+    .key {
+        font-size: 24px;
+        min-width: 48px;
+        min-height: 48px;
+    }
+    .text-display {
+        font-size: 32px;
+        padding: 10px;
+        height: 60px;
+    }
+    .text-area {
+        height: 70px;
+    }
+    .header {
+        font-size: 18px;
+        padding: 8px;
+    }
+    .word-suggestions-row {
+        height: 80px;
+        gap: 10px;
+    }
+    .suggestion-word {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+    .suggestion-title {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    .bottom-row {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    .space-key {
+        grid-column: 2 / 4;
+    }
+    .backspace-key {
+        grid-column: 4 / 6;
+    }
+    .clear-btn-right {
+        min-width: 80px;
+        height: 80px;
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .keys-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .key {
+        font-size: 20px;
+        min-height: 45px;
+        border-width: 2px;
+    }
+    .text-display {
+        font-size: 28px;
+        height: 50px;
+    }
+    .text-area {
+        height: 60px;
+        margin: 5px 10px;
+    }
+    .header {
+        font-size: 16px;
+        padding: 6px;
+    }
+    .word-suggestions-row {
+        height: 70px;
+        gap: 8px;
+        margin: 5px 10px;
+    }
+    .suggestion-words {
+        gap: 5px;
+    }
+    .suggestion-word {
+        font-size: 11px;
+        padding: 3px 6px;
+        border-width: 1px;
+    }
+    .suggestion-title {
+        font-size: 11px;
+    }
+    .bottom-row {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .space-key {
+        grid-column: 1 / 3;
+        font-size: 18px;
+    }
+    .backspace-key {
+        grid-column: 3 / 5;
+        font-size: 18px;
+    }
+    .clear-btn-right {
+        min-width: 60px;
+        height: 70px;
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+    .keyboard {
+        padding: 8px;
+    }
+    .keyboard-title {
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+    .cursor {
+        height: 28px;
+    }
+}
+
+@media (max-height: 600px) {
+    .text-display {
+        font-size: 28px;
+        height: 50px;
+    }
+    .text-area {
+        height: 60px;
+    }
+    .key {
+        font-size: 20px;
+        min-height: 45px;
+    }
+    .header {
+        font-size: 16px;
+        padding: 6px;
+    }
+    .keyboard {
+        padding: 8px;
+    }
+    .word-suggestions-row {
+        height: 70px;
+    }
+    .clear-btn-right {
+        height: 70px;
+    }
+}
+
+/* Додаткова адаптація для дуже маленьких екранів */
+@media (max-width: 350px) {
+    .keys-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+    }
+    .key {
+        font-size: 18px;
+        min-height: 40px;
+    }
+    .word-suggestions-row {
+        height: 60px;
+    }
+    .suggestion-word {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+    .clear-btn-right {
+        min-width: 50px;
+        height: 60px;
+        font-size: 11px;
+        padding: 4px;
+    }
+}
