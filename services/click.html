@@ -1,497 +1,1167 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Тренажер для роботи з мишкою</title>
-        <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      const gtag = (...args) => dataLayer.push(args);
-      gtag("js", new Date());
-      gtag("config", "G-N8T05K3NGT");
-    </script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Тренажер мишки</title>
+    <meta name="description" content="Онлайн тренажер для розвитку навичок користування мишкою. Грайте, тренуйтеся та покращуйте свою точність і швидкість!">
+    <meta name="keywords" content="тренажер мишки, тренування мишкою, гра, розвиток навичок, онлайн гра, mouse trainer, тренування, точність, швидкість">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://itnauka.org/" />
+    <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
     <style>
-      body {
-        font-family: "Roboto", "Arial", sans-serif;
-        text-align: center;
-        margin: 0;
-        padding: 20px;
-        background-color: #f0f8ff;
-        color: #333;
-      }
-
-      h1 {
-        color: #4682b4;
-        margin-bottom: 20px;
-      }
-
-      .game-info {
-        margin-bottom: 20px;
-        font-size: 1.2em;
-        display: flex;
-        justify-content: space-around;
-        max-width: 800px;
-        margin: 0 auto 20px auto;
-      }
-
-      .game-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 20px;
-      }
-
-      .game-grid {
-        display: grid;
-        margin: 0 auto;
-        border: 3px solid #4682b4;
-        background-color: #e6e6fa;
-        max-width: 90vw;
-        max-height: 80vh;
-      }
-
-      .cell {
-        background-color: #e0e0e0;
-        border: 1px solid #ccc;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        position: relative;
-      }
-
-      .cell.wrong {
-        background-color: #ff6b6b;
-        transition: background-color 0.3s;
-      }
-
-      .highlighted {
-        background-color: #66cc66;
-        animation: pulse 1s infinite;
-      }
-
-      .timer-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 3px;
-        width: 100%;
-        background-color: #ff9900;
-        transform-origin: left;
-      }
-
-      @keyframes pulse {
-        0% {
-          opacity: 1;
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
         }
-        50% {
-          opacity: 0.7;
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
         }
-        100% {
-          opacity: 1;
+        
+        .container {
+            max-width: 1000px;
+            width: 100%; 
+            margin: 0 auto;
+            text-align: center;
         }
-      }
-
-      button {
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 18px;
-        background-color: #4682b4;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: "Comic Sans MS", cursive, sans-serif;
-      }
-
-      button:hover {
-        background-color: #5f9ea0;
-      }
-
-      .message {
-        margin-top: 20px;
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #4682b4;
-        min-height: 60px;
-      }
-
-      .missed {
-        color: #ff6b6b;
-        animation: fadeOut 1s forwards;
-      }
-
-      @keyframes fadeOut {
-        0% {
-          opacity: 1;
-        }
-        90% {
-          opacity: 1;
-        }
-        100% {
-          opacity: 0;
-        }
-      }
-
-      .game-screen,
-      .level-complete,
-      .game-complete {
-        display: none;
-      }
-
-      .start-screen {
-        display: block;
-      }
-
-      .level-description {
-        margin: 10px 0;
-        font-size: 1em;
-        color: #555;
-      }
-
-      /* Адаптивність дизайну */
-      @media (max-width: 768px) {
+        
         h1 {
-          font-size: 1.5em;
+            font-size: 2.5em;
+            color: #e74c3c;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-top: 1px; 
+            margin-bottom: 20px;
         }
-
+        
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 15px 0; 
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .start-screen p {
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: #34495e;
+            margin: 15px 0;
+        }
+        
+        .level-list {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        
+        .level-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            flex-basis: 280px; 
+            flex-grow: 1; 
+        }
+        .level-card h3, .level-card p {
+            color: #fff !important;
+        }
+        
+        .level-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.4em;
+        }
+        
         .game-info {
-          flex-direction: column;
-          gap: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center; 
+            margin-bottom: 15px; 
+            font-size: 1.2em; 
+            font-weight: bold;
+            flex-wrap: wrap; 
+            gap: 10px; 
         }
-
-        button {
-          font-size: 16px;
-          padding: 8px 16px;
+        
+        .info-card {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Тренажер для роботи з мишкою</h1>
-
-    <!-- Start Screen -->
-    <div class="start-screen">
-      <p>Цей тренажер допоможе тобі розвинути навички роботи з мишкою!</p>
-      <p>У грі є три рівні складності:</p>
-      <p class="level-description">
-        1. Простий: великі клітинки, без обмеження часу
-      </p>
-      <p class="level-description">
-        2. Середній: середні клітинки, 2 секунди на кожну
-      </p>
-      <p class="level-description">
-        3. Складний: маленькі клітинки, 1,5 секунди на кожну
-      </p>
-      <p>Клікай на клітинки та заробляй бали!</p>
-      <button id="start-game">Почати гру</button>
-    </div>
-
-    <!-- Game Screen -->
-    <div class="game-screen">
-      <div class="game-info">
-        <div id="level-info">Рівень: Простий</div>
-        <div id="score-info">Бали: 0</div>
-        <div id="missed-info">Пропущено: 0</div>
-      </div>
-
-      <div class="game-container">
-        <div id="game-grid" class="game-grid"></div>
-      </div>
-
-      <div class="message" id="message"></div>
-    </div>
-
-    <!-- Level Complete Screen -->
-    <div class="level-complete">
-      <div class="message" id="level-complete-message"></div>
-      <button id="next-level">Наступний рівень</button>
-    </div>
-
-    <!-- Game Complete Screen -->
-    <div class="game-complete">
-      <div class="message" id="game-complete-message"></div>
-      <button id="restart-game">Почати знову</button>
+        
+        .game-grid {
+            display: inline-grid; 
+            gap: 3px;
+            background: #ecf0f1;
+            padding: 10px; 
+            border-radius: 15px;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.1);
+            margin: 10px 0; 
+        }
+        
+        .cell {
+            background: linear-gradient(135deg, #ddd, #bbb);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative; 
+            border: 2px solid transparent; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        .cell:hover {
+            transform: scale(1.05);
+        }
+        
+        .cell.highlighted {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            animation: rainbow-pulse 1s infinite;
+            border: 3px solid #fdcb6e;
+            transform: scale(1.1);
+            z-index: 1; 
+        }
+        
+        @keyframes rainbow-pulse {
+            0% { box-shadow: 0 0 15px #ff7675; } 
+            25% { box-shadow: 0 0 15px #fdcb6e; }
+            50% { box-shadow: 0 0 15px #00b894; }
+            75% { box-shadow: 0 0 15px #74b9ff; }
+            100% { box-shadow: 0 0 15px #ff7675; }
+        }
+        
+        .cell.correct {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            animation: celebrate 0.5s ease;
+            z-index: 2; 
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); } 
+            100% { transform: scale(1); }
+        }
+        
+        .cell.wrong {
+            background: linear-gradient(135deg, #e17055, #fab1a0);
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e17055, #fdcb6e); 
+            border-radius: 0 0 6px 6px; 
+            transform-origin: left; 
+        }
+        
+        .btn {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.3em; 
+            font-weight: bold;
+            padding: 12px 25px; 
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #43ea75, #0cc86e);
+            color: white;
+            box-shadow: 0 5px 15px rgba(67, 234, 117, 0.4);
+        }
+        .btn-pause {
+            background: linear-gradient(135deg, #ff512f, #ff9966);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 81, 47, 0.4);
+        }
+        .btn-pause:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 81, 47, 0.6);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 234, 117, 0.6);
+        }
+        
+        .message {
+            font-size: 1.4em; 
+            font-weight: bold;
+            min-height: 40px; 
+            margin: 5px 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease; 
+        }
+        
+        .message.success {
+            color: #00b894;
+        }
+        
+        .message.missed {
+            color: #e17055;
+        }
+        
+        .celebration {
+            font-size: 1.8em; 
+            margin: 15px 0;
+        }
+        
+        .stars {
+            font-size: 2.5em; 
+            margin: 15px 0;
+            animation: twinkle 1s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .game-info { font-size: 1.1em; }
+            .level-list { flex-direction: column; align-items: center; }
+            .level-card { min-width: 80%; flex-basis: auto; } 
+            .btn { font-size: 1.2em; padding: 12px 24px; }
+            .message { font-size: 1.2em; min-height: 35px; }
+            .celebration { font-size: 1.5em; }
+            .stars { font-size: 2.5em; }
+        }
+         @media (max-width: 480px) {
+            h1 { font-size: 1.6em; margin-top: 5px; margin-bottom: 10px; }
+            .start-screen p { font-size: 1em; }
+            .info-card { font-size: 0.8em; padding: 6px 10px; }
+            .message { font-size: 1em; min-height: 30px; margin: 5px 0;}
+            .game-grid { padding: 8px; margin: 5px 0;}
+            .screen { padding: 15px; margin: 10px 0;}
+            .btn { font-size: 1em; padding: 10px 20px; }
+            .celebration { font-size: 1.3em; }
+            .stars { font-size: 2em; }
+        }
+    .footer {
+    width: 100%;
+    color: #fff;
+    text-align: center;
+    padding: 18px 0 12px 0;
+    font-size: 1.1em;
+    letter-spacing: 0.5px;
+    margin-top: 40px;
+    position: static;
+    background: none;
+    box-shadow: none;
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Тренажер мишки 🎮</h1>
+        
+        <div class="screen start-screen active">
+            <p>🌟 Привіт, юний друже! 🌟</p>
+            <p>Давай разом навчимося керувати мишкою!</p>
+            <p>Твоє завдання - клікати на кольорові квадратики швидко і точно!</p>
+            
+            <div class="level-list">
+                <div class="level-card">
+                    <h3>🐌 Повільний</h3>
+                    <p>Великі квадратики<br>Стільки часу, скільки потрібно</p>
+                </div>
+                <div class="level-card">
+                    <h3>🐰 Швидкий</h3>
+                    <p>Середні квадратики<br>2 секунди на кожен<br>Час на рівень: 30 сек</p>
+                </div>
+                <div class="level-card">
+                    <h3>🚀 Блискавка</h3>
+                    <p>Маленькі квадратики<br>1.5 секунди на кожен<br>Час на рівень: 45 сек</p>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="start-btn">🎯 Почати гру!</button>
+        </div>
+        
+        <div class="screen game-screen">
+            <div class="game-info">
+                <div class="info-card" id="level-info">Рівень: Повільний</div>
+                <div class="info-card" id="score-info">⭐ Бали: 0</div>
+                <div class="info-card" id="missed-info">❌ Пропущено: 0</div> 
+                <div class="info-card" id="level-time-info">⏳ Час: --</div> 
+            </div>
+            <div class="message" id="message">Клікай на кольоровий квадратик!</div> 
+            <div id="game-grid" class="game-grid"></div>
+            <div id="pause-controls" style="margin-top: 20px;">
+                <button class="btn btn-pause" id="pause-btn">⏸️ ЗУПИНИТИ ГРУ</button>
+                <button class="btn btn-primary" id="resume-btn" style="display:none;">▶️ ПРОДОВЖИТИ ГРУ</button>
+            </div>
+        </div>
+        
+        <div class="screen level-complete-screen">
+            <div class="stars">⭐⭐⭐</div>
+            <div class="celebration" id="level-message"></div>
+            <button class="btn btn-primary" id="next-btn">🎯 Наступний рівень!</button>
+        </div>
+        
+        <div class="screen game-complete-screen">
+            <div class="stars">🎉⭐🎉⭐🎉</div>
+            <div class="celebration" id="final-message"></div>
+            <button class="btn btn-primary" id="restart-btn">🔄 Грати знову!</button>
+        </div>
+        <footer class="footer">
+            2025 Комп'ютерна наука з паном Артемом
+        </footer>
     </div>
 
     <script>
-      // Звуки
-      const clickSound = new Audio(
-        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
-      );
-      clickSound.volume = 0.3;
+        const CONFIG = {
+            AUDIO_RAMP_TARGET: 0.001,
+            RESIZE_DEBOUNCE_DELAY: 250,
+            DEFAULT_MESSAGE_REVERT_DELAY: 1500,
+            SUCCESS_MESSAGE_REVERT_DELAY: 1000,
+            HIGHLIGHT_FIRST_CELL_DELAY: 1200,
+            SETUP_LEVEL_MESSAGE_DELAY: 500,
+            ANIMATION_TIMEOUT_DELAY: 50,
+            CELL_ANIMATION_DURATION: 500,
+            MIN_CELL_SIZE: 25,
+            GAME_GRID_PADDING_ADJUST: 20
+        };
 
-      const wrongSound = new Audio(
-        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
-      );
-      wrongSound.volume = 0.2;
-      wrongSound.playbackRate = 0.5;
-
-      const missedSound = new Audio(
-        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
-      );
-      missedSound.volume = 0.2;
-      missedSound.playbackRate = 0.7;
-
-      // Рівні гри
-      const levels = [
-        {
-          name: "Простий",
-          size: 5,
-          cellSize: 80,
-          timeLimit: null,
-          cellCount: 10,
-        },
-        {
-          name: "Середній",
-          size: 8,
-          cellSize: 60,
-          timeLimit: 2000,
-          cellCount: 25,
-        },
-        {
-          name: "Складний",
-          size: 12,
-          cellSize: 40,
-          timeLimit: 1500,
-          cellCount: 30,
-        },
-      ];
-
-      let currentLevel = 0;
-      let score = 0;
-      let missedClicks = 0;
-      let cellsClicked = 0;
-      let currentTarget = null;
-      let timer = null;
-      let animationTimer = null;
-      let cellWasMissed = false; // Прапорець для відстеження пропущених кліків
-      let clickTimeout = null; // Для дебаунсу кліків
-
-      // DOM елементи
-      const startScreen = document.querySelector(".start-screen");
-      const gameScreen = document.querySelector(".game-screen");
-      const levelCompleteScreen = document.querySelector(".level-complete");
-      const gameCompleteScreen = document.querySelector(".game-complete");
-      const gameGrid = document.getElementById("game-grid");
-      const levelInfo = document.getElementById("level-info");
-      const scoreInfo = document.getElementById("score-info");
-      const missedInfo = document.getElementById("missed-info");
-      const message = document.getElementById("message");
-      const levelCompleteMessage = document.getElementById(
-        "level-complete-message"
-      );
-      const gameCompleteMessage = document.getElementById(
-        "game-complete-message"
-      );
-
-      // Обробники кнопок
-      document
-        .getElementById("start-game")
-        .addEventListener("click", startGame);
-      document
-        .getElementById("next-level")
-        .addEventListener("click", nextLevel);
-      document
-        .getElementById("restart-game")
-        .addEventListener("click", startGame);
-
-      // Початок гри
-      function startGame() {
-        startScreen.style.display = "none";
-        gameScreen.style.display = "block";
-        levelCompleteScreen.style.display = "none"; // Додана ця лінія
-        gameCompleteScreen.style.display = "none"; // Додана ця лінія
-        score = 0;
-        currentLevel = 0;
-        missedClicks = 0;
-        updateLevel();
-      }
-
-      // Оновлення рівня
-      function updateLevel() {
-        cellsClicked = 0;
-        clearTimeout(timer);
-        clearTimeout(animationTimer);
-
-        const level = levels[currentLevel];
-        levelInfo.textContent = `Рівень: ${level.name}`;
-        scoreInfo.textContent = `Бали: ${score}`;
-        missedInfo.textContent = `Пропущено: ${missedClicks}`;
-        message.textContent = "";
-        message.className = "message";
-
-        // Адаптація розміру клітинок до екрану
-        let adaptiveCellSize = level.cellSize;
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        const maxWidthCellSize = Math.floor((screenWidth * 0.9) / level.size);
-        const maxHeightCellSize = Math.floor((screenHeight * 0.7) / level.size);
-        adaptiveCellSize = Math.min(
-          adaptiveCellSize,
-          maxWidthCellSize,
-          maxHeightCellSize
-        );
-
-        // Створення сітки
-        gameGrid.style.gridTemplateColumns = `repeat(${level.size}, ${adaptiveCellSize}px)`;
-        gameGrid.style.gridTemplateRows = `repeat(${level.size}, ${adaptiveCellSize}px)`;
-        gameGrid.innerHTML = "";
-
-        for (let i = 0; i < level.size * level.size; i++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.style.width = `${adaptiveCellSize}px`;
-          cell.style.height = `${adaptiveCellSize}px`;
-          cell.dataset.index = i;
-          cell.addEventListener("click", handleCellClick);
-          gameGrid.appendChild(cell);
+        function safeQuerySelector(selector, container = document) {
+            const element = container.querySelector(selector);
+            if (!element) {
+                console.error(`Елемент з селектором "${selector}" не знайдено в`, container);
+            }
+            return element;
         }
 
-        highlightRandomCell();
-      }
-
-      // Підсвічування випадкової клітинки
-      function highlightRandomCell() {
-        if (cellsClicked >= levels[currentLevel].cellCount) {
-          completeLevelOrGame();
-          return;
+        let audioCtx;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API не підтримується цим браузером.');
+            audioCtx = null;
         }
 
-        const cells = document.querySelectorAll(".cell");
-        cells.forEach((cell) => {
-          cell.classList.remove("processed");
-          const bar = cell.querySelector(".timer-bar");
-          if (bar) bar.remove();
+        const sounds = {
+            correct: createSound(800, 0.08, 'square', 0.08),
+            wrong: createSound(200, 0.15, 'sawtooth', 0.12),
+            missed: createSound(150, 0.15, 'triangle', 0.1),
+            levelComplete: createSound(600, 0.3, 'sine', 0.15),
+            timeUp: createSound(300, 0.4, 'triangle', 0.15) // Added a sound for time up
+        };
+
+        function createSound(frequency, duration, type = 'sine', volume = 0.1) {
+            return () => {
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(err => console.error("Помилка відновлення AudioContext:", err));
+                }
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+                    osc.type = type;
+                    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(CONFIG.AUDIO_RAMP_TARGET, audioCtx.currentTime + duration);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch (e) {
+                    console.error('Помилка відтворення звуку:', e);
+                }
+            };
+        }
+
+        const levels = [
+            { name: 'Повільний', size: 4, cellSize: 90, timeLimit: null, targets: 8, emoji: '🐌', overallTimeLimit: null },
+            { name: 'Швидкий', size: 6, cellSize: 70, timeLimit: 2000, targets: 15, emoji: '🐰', overallTimeLimit: 30 },
+            { name: 'Блискавка', size: 8, cellSize: 50, timeLimit: 1500, targets: 20, emoji: '🚀', overallTimeLimit: 45 }
+        ];
+
+        let gameState = {
+            currentLevel: 0,
+            score: 0,
+            missed: 0,
+            missedThisLevel: 0,
+            targetsClicked: 0,
+            currentTarget: null,
+            cellTimerId: null,          // Renamed from 'timer' for clarity: individual cell's countdown
+            cellAnimationTimerId: null, // Renamed from 'animationTimer' for clarity
+            isWaiting: true,
+            isPaused: false,
+            pausedAt: 0,
+            highlightStartTime: null,
+            timeRemainingOnPauseForCell: null, // Renamed for clarity
+            levelTimeRemaining: null,
+            levelIntervalId: null       // Renamed from 'levelTimerId' for clarity: overall level setInterval
+        };
+
+        class MessageManager {
+            constructor(messageElement, defaultMessageProvider) {
+                this.element = messageElement;
+                this.defaultMessageProvider = defaultMessageProvider;
+                this.messageClearTimeout = null;
+                if (!this.element) console.error("Message element не надано для MessageManager.");
+            }
+
+            show(text, type = '', isTemporary = false, revertDelay = CONFIG.DEFAULT_MESSAGE_REVERT_DELAY) {
+                if (!this.element) return;
+                this.element.textContent = text;
+                this.element.className = `message ${type}`;
+                if (this.messageClearTimeout) clearTimeout(this.messageClearTimeout);
+
+                const currentDefaultMessage = this.defaultMessageProvider ? this.defaultMessageProvider() : "";
+                if (isTemporary && text !== currentDefaultMessage) {
+                    this.messageClearTimeout = setTimeout(() => {
+                        if (this.element.textContent === text) { // Check if message hasn't changed
+                            this.element.textContent = currentDefaultMessage;
+                            this.element.className = 'message';
+                        }
+                    }, revertDelay);
+                } else if (text === currentDefaultMessage) {
+                    this.element.className = 'message';
+                }
+            }
+            clearCurrentTimeout() {
+                if (this.messageClearTimeout) clearTimeout(this.messageClearTimeout);
+                this.messageClearTimeout = null;
+            }
+            setDefaultMessage() {
+                 if (!this.element) return;
+                 const defaultMsg = this.defaultMessageProvider ? this.defaultMessageProvider() : "Клікай на кольоровий квадратик!";
+                 this.show(defaultMsg, '', false);
+            }
+        }
+
+        const screens = {
+            start: safeQuerySelector('.start-screen'),
+            game: safeQuerySelector('.game-screen'),
+            levelComplete: safeQuerySelector('.level-complete-screen'),
+            gameComplete: safeQuerySelector('.game-complete-screen')
+        };
+
+        const elements = {
+            levelInfo: safeQuerySelector('#level-info'),
+            scoreInfo: safeQuerySelector('#score-info'),
+            missedInfo: safeQuerySelector('#missed-info'),
+            levelTimeInfo: safeQuerySelector('#level-time-info'),
+            message: safeQuerySelector('#message'),
+            gameGrid: safeQuerySelector('#game-grid'),
+            levelMessage: safeQuerySelector('#level-message'),
+            finalMessage: safeQuerySelector('#final-message')
+        };
+
+        function updateDomElements() { // Call this if DOM elements are dynamically added/removed (not the case here after init)
+            elements.levelInfo = safeQuerySelector('#level-info');
+            elements.scoreInfo = safeQuerySelector('#score-info');
+            elements.missedInfo = safeQuerySelector('#missed-info');
+            elements.levelTimeInfo = safeQuerySelector('#level-time-info');
+            elements.message = safeQuerySelector('#message');
+            elements.gameGrid = safeQuerySelector('#game-grid');
+            elements.levelMessage = safeQuerySelector('#level-message');
+            elements.finalMessage = safeQuerySelector('#final-message');
+        }
+
+        let messageManager;
+        if (elements.message) {
+             messageManager = new MessageManager(
+                elements.message,
+                () => levels[gameState.currentLevel] ? `${levels[gameState.currentLevel].emoji} Клікай на кольоровий квадратик!` : "Клікай на кольоровий квадратик!"
+             );
+        } else {
+            console.error("Не вдалося ініціалізувати MessageManager: елемент повідомлень не знайдено.");
+        }
+
+        const startBtn = safeQuerySelector('#start-btn');
+        if (startBtn) startBtn.onclick = startGame;
+
+        const nextBtn = safeQuerySelector('#next-btn');
+        if (nextBtn) nextBtn.onclick = nextLevel;
+
+        const restartBtn = safeQuerySelector('#restart-btn');
+        if (restartBtn) restartBtn.onclick = restartGame;
+
+        const pauseBtn = safeQuerySelector('#pause-btn');
+        const resumeBtn = safeQuerySelector('#resume-btn');
+        if (pauseBtn) pauseBtn.onclick = pauseGame;
+        if (resumeBtn) resumeBtn.onclick = resumeGame;
+
+
+        function showScreen(screenName) {
+            if (!screens[screenName]) {
+                console.error(`Екран з ім'ям "${screenName}" не знайдено.`);
+                return;
+            }
+            Object.values(screens).forEach(screen => {
+                if (screen) screen.classList.remove('active');
+            });
+            screens[screenName].classList.add('active');
+        }
+
+        // Clears timers related to the individual highlighted cell
+        function clearCellTimers() {
+            if (gameState.cellTimerId) clearTimeout(gameState.cellTimerId);
+            gameState.cellTimerId = null;
+            if (gameState.cellAnimationTimerId) clearTimeout(gameState.cellAnimationTimerId);
+            gameState.cellAnimationTimerId = null;
+            gameState.highlightStartTime = null; // Current cell is no longer actively timed
+        }
+
+        // Clears all game-related timeouts and intervals; used for full stops or level transitions
+        function stopAllGameActivity() {
+            clearCellTimers(); // Stop individual cell timers
+
+            if (gameState.levelIntervalId) { // Stop overall level timer
+                clearInterval(gameState.levelIntervalId);
+                gameState.levelIntervalId = null;
+            }
+            if (messageManager) messageManager.clearCurrentTimeout(); // Clear pending message reverts
+
+            // Clean up any visual state of a highlighted cell if game is abruptly stopped/reset
+            if (elements.gameGrid && gameState.currentTarget !== null && elements.gameGrid.children[gameState.currentTarget]) {
+                const cell = elements.gameGrid.children[gameState.currentTarget];
+                if (cell && cell.classList.contains('highlighted')) {
+                    cell.classList.remove('highlighted');
+                    const timerBar = cell.querySelector('.timer-bar');
+                    if (timerBar) timerBar.remove();
+                }
+            }
+            // Reset relevant parts of gameState
+            gameState.currentTarget = null;
+            gameState.isWaiting = true; // Ready for new actions
+            gameState.timeRemainingOnPauseForCell = null;
+        }
+
+
+        function startGame() {
+    // Відновлюємо AudioContext після першої взаємодії користувача
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(err => console.error("Помилка відновлення AudioContext:", err));
+    }
+    gameState = { // Reset game state
+        ...gameState, // Keep some settings like audioCtx if needed, or selectively reset
+        currentLevel: 0,
+        score: 0,
+        missed: 0,
+        missedThisLevel: 0,
+        targetsClicked: 0,
+        isPaused: false,
+        pausedAt: 0,
+        highlightStartTime: null,
+        timeRemainingOnPauseForCell: null,
+        levelTimeRemaining: null,
+        // Nullify timers, interval IDs here explicitly
+        cellTimerId: null,
+        cellAnimationTimerId: null,
+        levelIntervalId: null
+    };
+    stopAllGameActivity(); // Clear any residual timers from previous game instances
+    showScreen('game');
+    // updateDomElements(); // Usually not needed if elements are static
+    updatePauseButtons();
+    setupLevel();
+}
+
+        function restartGame() {
+            startGame();
+        }
+
+        function pauseGame() {
+            if (gameState.isPaused) return;
+            gameState.isPaused = true;
+            gameState.pausedAt = Date.now();
+
+            const level = levels[gameState.currentLevel];
+            if (level && level.timeLimit && gameState.currentTarget !== null && gameState.highlightStartTime) {
+                const elapsedTime = Date.now() - gameState.highlightStartTime;
+                gameState.timeRemainingOnPauseForCell = Math.max(0, level.timeLimit - elapsedTime);
+
+                const targetCell = elements.gameGrid.children[gameState.currentTarget];
+                if (targetCell && targetCell.classList.contains('highlighted')) {
+                    const timerBar = targetCell.querySelector('.timer-bar');
+                    if (timerBar) {
+                        if (gameState.cellAnimationTimerId) { // If animation was running
+                            clearTimeout(gameState.cellAnimationTimerId); // Stop the animation timeout
+                            gameState.cellAnimationTimerId = null;
+                            timerBar.style.transition = 'none'; // Freeze animation
+                            // Get current transform scaleX to preserve it visually
+                            const computedStyle = window.getComputedStyle(timerBar);
+                            const currentTransform = computedStyle.getPropertyValue('transform');
+                            if (currentTransform && currentTransform !== 'none') {
+                                timerBar.style.transform = currentTransform;
+                            } else {
+                                // If transform is none, it means it was full or not started, assume full for pause
+                                timerBar.style.transform = 'scaleX(1)';
+                            }
+                        } else { // Animation might not have started (within CONFIG.ANIMATION_TIMEOUT_DELAY)
+                             timerBar.style.transition = 'none';
+                             timerBar.style.transform = 'scaleX(1)'; // Show full bar
+                        }
+                        timerBar.dataset.paused = 'true';
+                    }
+                }
+            } else {
+                gameState.timeRemainingOnPauseForCell = null;
+            }
+
+            // Clear the cell's own countdown timer; levelIntervalId continues but decrementLevelTime checks isPaused
+            if (gameState.cellTimerId) clearTimeout(gameState.cellTimerId);
+            gameState.cellTimerId = null;
+            // gameState.cellAnimationTimerId is handled above
+
+            updatePauseButtons();
+            if (messageManager) messageManager.show('Гру призупинено. Натисніть ПРОДОВЖИТИ!', '', false);
+        }
+
+        function resumeGame() {
+            if (!gameState.isPaused) return;
+            gameState.isPaused = false;
+            updatePauseButtons();
+            if (messageManager) messageManager.setDefaultMessage();
+
+            if (screens.game.classList.contains('active')) {
+                const level = levels[gameState.currentLevel];
+                // Resume cell timer if it was active and had time remaining
+                if (level && level.timeLimit && gameState.currentTarget !== null &&
+                    typeof gameState.timeRemainingOnPauseForCell === 'number' && gameState.timeRemainingOnPauseForCell > 0) {
+
+                    const targetCell = elements.gameGrid.children[gameState.currentTarget];
+                    if (targetCell && targetCell.classList.contains('highlighted')) { // Check if target is still valid
+                        let timerBar = targetCell.querySelector('.timer-bar');
+                        if (!timerBar) { // Should exist if paused correctly
+                            timerBar = document.createElement('div');
+                            timerBar.className = 'timer-bar';
+                            timerBar.style.width = '100%';
+                            targetCell.appendChild(timerBar);
+                            // Set its initial scale based on remaining time if possible, or full
+                            const progress = gameState.timeRemainingOnPauseForCell / level.timeLimit;
+                            timerBar.style.transform = `scaleX(${progress})`;
+                        }
+                        delete timerBar.dataset.paused;
+
+                        // Restart animation for the remaining duration
+                        const remainingDurationSeconds = gameState.timeRemainingOnPauseForCell / 1000;
+                        requestAnimationFrame(() => { // Ensure style is applied before transition starts
+                            timerBar.style.transition = `transform ${remainingDurationSeconds}s linear`;
+                            requestAnimationFrame(() => {
+                                timerBar.style.transform = 'scaleX(0)';
+                            });
+                        });
+                         // Restart cell's own countdown timer
+                        gameState.cellTimerId = setTimeout(() => {
+                            if (gameState.isPaused || !targetCell.classList.contains('highlighted')) return;
+                            highlightRandomCell(); // Cell timed out after resume
+                        }, gameState.timeRemainingOnPauseForCell);
+                        gameState.highlightStartTime = Date.now() - (level.timeLimit - gameState.timeRemainingOnPauseForCell);
+                    } else { // Target cell no longer valid or highlighted, so just get a new one
+                        gameState.highlightStartTime = null;
+                        highlightRandomCell();
+                    }
+                } else if (gameState.currentTarget === null || (level && !level.timeLimit)) {
+                     // If no current target, or level has no cell time limits, just ensure a cell is highlighted
+                    if (gameState.currentTarget === null && screens.game.classList.contains('active') && !gameState.cellTimerId) {
+                        highlightRandomCell();
+                    }
+                }
+                gameState.timeRemainingOnPauseForCell = null; // Consume the paused time
+            }
+            // The levelIntervalId for overall level time was not cleared and will resume via isPaused flag in decrementLevelTime
+        }
+
+
+        function updatePauseButtons() {
+            if (!pauseBtn || !resumeBtn) return;
+            if (gameState.isPaused) {
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = '';
+            } else {
+                pauseBtn.style.display = '';
+                resumeBtn.style.display = 'none';
+            }
+        }
+
+        function updateLevelTimeDisplay() {
+            if (elements.levelTimeInfo) {
+                const currentLevelConfig = levels[gameState.currentLevel];
+                if (gameState.levelTimeRemaining !== null && currentLevelConfig && currentLevelConfig.overallTimeLimit) {
+                    elements.levelTimeInfo.textContent = `⏳ Час: ${gameState.levelTimeRemaining}с`;
+                } else if (currentLevelConfig && !currentLevelConfig.overallTimeLimit) {
+                    elements.levelTimeInfo.textContent = '⏳ Час: ∞';
+                } else {
+                    elements.levelTimeInfo.textContent = '⏳ Час: --';
+                }
+            }
+        }
+
+        function decrementLevelTime() {
+            if (gameState.isPaused || gameState.levelTimeRemaining === null || !screens.game.classList.contains('active')) {
+                return;
+            }
+
+            gameState.levelTimeRemaining--;
+            updateLevelTimeDisplay();
+
+            if (gameState.levelTimeRemaining <= 0) {
+                // No need to clear levelIntervalId here, handleLevelTimeUp will call stopAllGameActivity
+                handleLevelTimeUp();
+            }
+        }
+
+        function handleLevelTimeUp() { // Called when overall level time expires
+            stopAllGameActivity(); // Stop all timers and intervals
+            sounds.timeUp();
+
+            const level = levels[gameState.currentLevel];
+            if (!level) return;
+
+            if (messageManager) messageManager.show("Час на рівень вийшов!", "missed", false);
+
+            setTimeout(() => {
+                if (gameState.currentLevel < levels.length - 1) {
+                    if (elements.levelMessage) {
+                        elements.levelMessage.innerHTML = `
+                            ⌛ Час на рівень "${level.emoji} ${level.name}" ВИЙШОВ! ⌛<br>
+                            Ви не встигли виконати завдання рівня.<br>
+                            ⭐ Набрано балів за гру: ${gameState.score}<br>
+                            ❌ Пропущено на цьому рівні: ${gameState.missedThisLevel} (всього: ${gameState.missed})
+                        `;
+                    }
+                    if(nextBtn) nextBtn.textContent = "🎯 Наступний рівень!";
+                    showScreen('levelComplete');
+                } else {
+                    if (elements.finalMessage) {
+                        elements.finalMessage.innerHTML = `
+                            ⌛ Час гри ВИЙШОВ! ⌛<br><br>
+                            Ви не встигли завершити останній рівень вчасно.<br>
+                            📊 Твій фінальний результат: ${gameState.score} балів<br>
+                            ❌ Всього пропущено за гру: ${gameState.missed}
+                        `;
+                    }
+                    showScreen('gameComplete');
+                }
+            }, 1500);
+        }
+
+
+        function setupLevel() {
+            if (gameState.isPaused && screens.game.classList.contains('active')) { // If paused during setup attempt, defer or skip
+                console.log("SetupLevel called while paused, deferring actual setup or relying on resume.");
+                return;
+            }
+            const level = levels[gameState.currentLevel];
+            if (!level) {
+                console.error(`Рівень ${gameState.currentLevel} не знайдено.`);
+                if (messageManager) messageManager.show("Помилка завантаження рівня!", "missed");
+                showScreen('start');
+                return;
+            }
+
+            stopAllGameActivity(); // Ensure clean state before setting up new level timers
+
+            gameState.targetsClicked = 0;
+            gameState.currentTarget = null;
+            gameState.isWaiting = true;
+            gameState.missedThisLevel = 0;
+            gameState.levelTimeRemaining = null; // Reset overall level time remaining
+            // gameState.levelIntervalId is already cleared by stopAllGameActivity()
+
+            updateUI(); // Update score, level name, and clear level time display initially
+            createGrid(level);
+            // updateDomElements(); // Not typically needed if elements are static
+
+            if (level.overallTimeLimit) {
+                gameState.levelTimeRemaining = level.overallTimeLimit;
+                updateLevelTimeDisplay(); // Show initial time
+                gameState.levelIntervalId = setInterval(decrementLevelTime, 1000);
+            } else {
+                if(elements.levelTimeInfo) elements.levelTimeInfo.textContent = '⏳ Час: ∞';
+            }
+
+            // Delay first highlight to give player a moment
+            setTimeout(() => {
+                if (gameState.isPaused || !screens.game.classList.contains('active')) return; // Check if game state changed during delay
+                if (messageManager) messageManager.setDefaultMessage();
+
+                // Check if level time might have instantly run out (e.g. overallTimeLimit = 0 or negative, though unlikely)
+                if (level.overallTimeLimit && gameState.levelTimeRemaining <= 0) {
+                    if (!gameState.levelIntervalId) { // If interval didn't even start due to immediate timeout
+                         handleLevelTimeUp();
+                    }
+                } else if (gameState.targetsClicked < level.targets) { // Ensure level isn't already 'complete'
+                    setTimeout(highlightRandomCell, CONFIG.HIGHLIGHT_FIRST_CELL_DELAY);
+                }
+
+            }, CONFIG.SETUP_LEVEL_MESSAGE_DELAY);
+        }
+
+        function createGrid(level) {
+            if (!elements.gameGrid || !elements.gameGrid.parentElement || !screens.game) {
+                console.error("Необхідні елементи для створення сітки не знайдено.");
+                return;
+            }
+            const screenStyle = getComputedStyle(screens.game);
+            const screenPadding = parseFloat(screenStyle.paddingLeft) + parseFloat(screenStyle.paddingRight);
+            const availableWidth = screens.game.offsetWidth - screenPadding - CONFIG.GAME_GRID_PADDING_ADJUST;
+
+            const maxCellSizeBasedOnWidth = Math.floor(availableWidth / level.size) - (level.size > 1 ? 3 : 0) ; // 3 for gap
+            let cellSize = Math.min(level.cellSize, maxCellSizeBasedOnWidth);
+            cellSize = Math.max(cellSize, CONFIG.MIN_CELL_SIZE);
+
+            elements.gameGrid.style.gridTemplateColumns = `repeat(${level.size}, ${cellSize}px)`;
+            elements.gameGrid.innerHTML = '';
+
+            for (let i = 0; i < level.size * level.size; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.style.width = cell.style.height = `${cellSize}px`;
+                cell.onclick = () => handleCellClick(i);
+                elements.gameGrid.appendChild(cell);
+            }
+        }
+
+        function highlightRandomCell() {
+            if (gameState.isPaused || !screens.game.classList.contains('active')) return;
+
+            const level = levels[gameState.currentLevel];
+            if (!level || !elements.gameGrid) {
+                 console.error("Не вдалося підсвітити клітинку: рівень або сітка не визначені.");
+                 return;
+            }
+
+            // Check for level completion / time up conditions before highlighting a new cell
+            if (level.overallTimeLimit && gameState.levelTimeRemaining <= 0) {
+                // Time up might have been processed by decrementLevelTime, but this is a safeguard
+                // If levelIntervalId is still running, it will call handleLevelTimeUp. If not, call it.
+                if (!gameState.levelIntervalId && screens.game.classList.contains('active')) {
+                    handleLevelTimeUp();
+                }
+                return;
+            }
+            if (gameState.targetsClicked >= level.targets) {
+                // completeLevel should have been called. If not, call it.
+                if (screens.game.classList.contains('active')) { // ensure game screen is active
+                    completeLevel();
+                }
+                return;
+            }
+
+            const cells = elements.gameGrid.children;
+            if (cells.length === 0) return;
+
+            // Process miss for the previous cell if its timer expired
+            if (gameState.currentTarget !== null && cells[gameState.currentTarget]) {
+                const prevCell = cells[gameState.currentTarget];
+                if (prevCell.classList.contains('highlighted') && gameState.isWaiting) { // It was highlighted and not clicked
+                    prevCell.classList.remove('highlighted');
+                    const timerBar = prevCell.querySelector('.timer-bar');
+                    if (timerBar) timerBar.remove();
+
+                    gameState.missed++;
+                    gameState.missedThisLevel++;
+                    sounds.missed();
+                    updateUI();
+                    if (messageManager) messageManager.show("Ой! Пропустив!", 'missed', true, CONFIG.SUCCESS_MESSAGE_REVERT_DELAY);
+                }
+            }
+            clearCellTimers(); // Clear timers for the previous cell before highlighting new one
+
+            // Set default message if a temporary one (like "Пропустив!") was shown
+            if (messageManager && (messageManager.element.textContent.includes("Пропустив") || messageManager.element.textContent.includes("Спробуй ще раз"))) {
+                 messageManager.setDefaultMessage();
+            }
+
+
+            let newTargetIndex;
+            do {
+                newTargetIndex = Math.floor(Math.random() * (level.size * level.size));
+            } while (newTargetIndex === gameState.currentTarget && cells.length > 1);
+
+            gameState.currentTarget = newTargetIndex;
+            gameState.isWaiting = true;
+            const targetCell = cells[newTargetIndex];
+            if (!targetCell) return;
+
+            targetCell.classList.add('highlighted');
+
+            if (level.timeLimit) {
+                gameState.highlightStartTime = Date.now();
+
+                const timerBar = document.createElement('div');
+                timerBar.className = 'timer-bar';
+                timerBar.style.width = '100%';
+                targetCell.appendChild(timerBar);
+
+                // Clear any old animation timer just in case, though clearCellTimers should handle it
+                if (gameState.cellAnimationTimerId) clearTimeout(gameState.cellAnimationTimerId);
+                gameState.cellAnimationTimerId = setTimeout(() => {
+                    if(targetCell.contains(timerBar) && targetCell.classList.contains('highlighted') && !gameState.isPaused) {
+                         timerBar.style.transition = `transform ${level.timeLimit / 1000}s linear`;
+                         timerBar.style.transform = 'scaleX(0)';
+                    } else if (targetCell.contains(timerBar) && !targetCell.classList.contains('highlighted')) {
+                        timerBar.remove();
+                    }
+                }, CONFIG.ANIMATION_TIMEOUT_DELAY);
+
+                // Clear old cell timer, then set new one
+                if (gameState.cellTimerId) clearTimeout(gameState.cellTimerId);
+                gameState.cellTimerId = setTimeout(() => {
+                    // This executes if the individual cell's timeLimit runs out
+                    if (gameState.isPaused || !targetCell.classList.contains('highlighted')) return;
+                    // The current cell was missed. Call highlightRandomCell, which will process the miss.
+                    highlightRandomCell();
+                }, level.timeLimit);
+            }
+        }
+
+        function handleCellClick(index) {
+            if (gameState.isPaused || !screens.game.classList.contains('active')) return;
+
+            const level = levels[gameState.currentLevel];
+            // Check if level time already expired
+            if (level.overallTimeLimit && gameState.levelTimeRemaining <= 0) {
+                return; // Don't process clicks if level time is up
+            }
+            // Check if targets already met
+            if (gameState.targetsClicked >= level.targets) {
+                return; // Don't process clicks if targets are met
+            }
+
+            if (!gameState.isWaiting && index === gameState.currentTarget) return; // Debounce accidental double-clicks
+
+            if (!elements.gameGrid) return;
+            const cells = elements.gameGrid.children;
+            const clickedCell = cells[index];
+            if (!clickedCell) return;
+
+            if (index === gameState.currentTarget) {
+                gameState.isWaiting = false; // To prevent re-triggering logic for this same cell
+                gameState.score++;
+                gameState.targetsClicked++;
+
+                clickedCell.classList.remove('highlighted');
+                // Clear timers specific to this cell as it's now resolved
+                clearCellTimers(); // This also removes its timer bar indirectly if animation was robust
+                const timerBar = clickedCell.querySelector('.timer-bar'); // Explicit removal
+                if (timerBar) timerBar.remove();
+
+                clickedCell.classList.add('correct');
+                const successMessages = ['Супер!', 'Молодець!', 'Чудово!', 'Так тримати!', 'Круто!'];
+                if (messageManager) messageManager.show(successMessages[Math.floor(Math.random() * successMessages.length)], 'success', true, CONFIG.SUCCESS_MESSAGE_REVERT_DELAY);
+                sounds.correct();
+                updateUI();
+
+                // gameState.highlightStartTime = null; // Done by clearCellTimers()
+
+                // DO NOT CALL stopAllGameActivity() here, it stops the level timer.
+                // Only cell-specific timers were cleared by clearCellTimers().
+
+                setTimeout(() => {
+                    if (clickedCell) clickedCell.classList.remove('correct');
+                    gameState.isWaiting = true; // Ready for next cell interactions
+
+                    if (gameState.isPaused || !screens.game.classList.contains('active')) return; // Check state again
+
+                    if (gameState.targetsClicked >= level.targets) {
+                        completeLevel();
+                    } else if (level.overallTimeLimit && gameState.levelTimeRemaining <= 0) {
+                        // This case should ideally be caught by decrementLevelTime, but as a safeguard:
+                        handleLevelTimeUp();
+                    } else {
+                        highlightRandomCell(); // Highlight next cell
+                    }
+                }, CONFIG.CELL_ANIMATION_DURATION);
+
+            } else { // Clicked wrong cell
+                if (!clickedCell.classList.contains('correct') && !clickedCell.classList.contains('highlighted')) {
+                    clickedCell.classList.add('wrong');
+                    if (messageManager) messageManager.show('Спробуй ще раз!', 'missed', true, CONFIG.DEFAULT_MESSAGE_REVERT_DELAY); // Use default revert
+                    sounds.wrong();
+
+                    setTimeout(() => {
+                        if (clickedCell) clickedCell.classList.remove('wrong');
+                        // Revert to default message if "Спробуй ще раз" is still showing and no other message took over
+                        if (messageManager && messageManager.element.textContent.includes("Спробуй ще раз")) {
+                             messageManager.setDefaultMessage();
+                        }
+                    }, CONFIG.CELL_ANIMATION_DURATION);
+                }
+            }
+        }
+
+        function completeLevel() { // Called when targets are met
+            stopAllGameActivity(); // Crucial: stops the overall level timer too
+            sounds.levelComplete();
+
+            const level = levels[gameState.currentLevel];
+             if (!level) {
+                console.error("Не вдалося завершити рівень: дані рівня відсутні.");
+                showScreen('start');
+                return;
+            }
+            const levelPerfect = gameState.missedThisLevel === 0;
+
+            setTimeout(() => { // Delay to show last click animation
+                if (gameState.currentLevel < levels.length - 1) {
+                    if (elements.levelMessage) elements.levelMessage.innerHTML = `
+                        🎉 Рівень "${level.emoji} ${level.name}" пройдено! 🎉<br>
+                        ⭐ Загальні бали: ${gameState.score}<br>
+                        ${levelPerfect ? '🏆 Ідеально! Жодного промаху на цьому рівні!' : `❌ На цьому рівні пропущено: ${gameState.missedThisLevel}`}
+                    `;
+                    if(nextBtn) nextBtn.textContent = "🎯 Наступний рівень!";
+                    showScreen('levelComplete');
+                } else {
+                    completeGame(); // All levels passed by meeting targets
+                }
+            }, 500);
+        }
+
+        function completeGame() { // Called when all levels are passed by meeting targets
+            // stopAllGameActivity(); // Already called by completeLevel for the last level
+            const totalTargetsPossible = levels.reduce((sum, level) => sum + (level.targets || 0), 0);
+            // Ensure score doesn't exceed total possible targets if that's a rule
+            const effectiveScore = Math.min(gameState.score, totalTargetsPossible);
+            const percentage = totalTargetsPossible > 0 ? Math.round((effectiveScore / totalTargetsPossible) * 100) : 0;
+
+            let messageText = '';
+            if (percentage >= 90 && gameState.missed === 0) {
+                messageText = '🏆 ТИ АБСОЛЮТНИЙ ЧЕМПІОН! Бездоганно!';
+            } else if (percentage >= 85) {
+                messageText = '🌟 ЧУДОВА РОБОТА! Ти справжній професіонал!';
+            } else if (percentage >= 65) {
+                messageText = '👍 ДУЖЕ ДОБРЕ! Продовжуй тренуватися!';
+            } else if (percentage >= 40) {
+                 messageText = '🙂 НЕПОГАНО! Ще трохи практики і буде супер!';
+            } else {
+                messageText = '💪 МОЛОДЕЦЬ, ЩО СПРОБУВАВ! Кожна спроба - це крок до успіху!';
+            }
+
+            if (elements.finalMessage) elements.finalMessage.innerHTML = `
+                🎉 Вітаємо з завершенням гри! 🎉 <br><br>
+                ${messageText}<br><br>
+                📊 Твій фінальний результат: ${gameState.score} балів<br>
+                ❌ Всього пропущено за гру: ${gameState.missed}
+            `;
+            showScreen('gameComplete');
+        }
+
+        function nextLevel() {
+            gameState.currentLevel++;
+            // gameState state like score, total missed carry over. Level specific (missedThisLevel, targetsClicked) reset in setupLevel.
+            showScreen('game');
+            setupLevel();
+        }
+
+        function updateUI() {
+            const level = levels[gameState.currentLevel];
+             if (!level) return;
+            if (elements.levelInfo) elements.levelInfo.textContent = `${level.emoji} ${level.name}`;
+            if (elements.scoreInfo) elements.scoreInfo.textContent = `⭐ Бали: ${gameState.score}`;
+            if (elements.missedInfo) elements.missedInfo.textContent = `❌ Пропущено: ${gameState.missed}`;
+            updateLevelTimeDisplay(); // This will reflect current levelTimeRemaining or ∞ or --
+        }
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (screens.game && screens.game.classList.contains('active') && levels[gameState.currentLevel]) {
+                    const levelConfig = levels[gameState.currentLevel];
+
+                    // 1. Clear only cell-specific timers and animations. DO NOT stop levelIntervalId.
+                    clearCellTimers();
+                    // gameState.highlightStartTime is cleared by clearCellTimers
+
+                    // 2. Remove visual highlight from current cell if any
+                    if (gameState.currentTarget !== null && elements.gameGrid && elements.gameGrid.children[gameState.currentTarget]) {
+                        const currentCell = elements.gameGrid.children[gameState.currentTarget];
+                        if (currentCell && currentCell.classList.contains('highlighted')) {
+                            currentCell.classList.remove('highlighted');
+                            const timerBar = currentCell.querySelector('.timer-bar');
+                            if (timerBar) timerBar.remove();
+                        }
+                    }
+                    gameState.currentTarget = null; // No cell is the target right now
+                    gameState.isWaiting = true;     // Ready for a new cell
+
+                    // 3. Recreate the grid
+                    createGrid(levelConfig);
+
+                    // 4. Update UI. Level timer display will persist as levelIntervalId is not stopped by resize.
+                    updateUI();
+
+                    // 5. If game is not paused, and level is still active, re-highlight a cell
+                    if (!gameState.isPaused) {
+                        if (messageManager) messageManager.setDefaultMessage();
+
+                        const canContinueLevel =
+                            (!levelConfig.overallTimeLimit || (levelConfig.overallTimeLimit && gameState.levelTimeRemaining > 0)) &&
+                            (gameState.targetsClicked < levelConfig.targets);
+
+                        if (canContinueLevel) {
+                            setTimeout(highlightRandomCell, 700); // Delay to allow redraw
+                        } else if (levelConfig.overallTimeLimit && gameState.levelTimeRemaining <= 0) {
+                            // If time ran out *during* resize or was already up.
+                            // decrementLevelTime should handle this, but if its interval was somehow disrupted by extensive resize lag,
+                            // or if it just expired, ensure handleLevelTimeUp is called if not already processing.
+                            // Check if levelIntervalId is still defined; if not, time's up procedure might have already run.
+                            if (gameState.levelIntervalId || !screens.levelComplete.classList.contains('active') && !screens.gameComplete.classList.contains('active')) {
+                                // If timer is still conceptually running or end screen not shown
+                                // handleLevelTimeUp(); //This might be too aggressive, rely on decrementLevelTime.
+                            }
+                        } else if (gameState.targetsClicked >= levelConfig.targets) {
+                           // completeLevel(); // Similar to above, rely on original flow.
+                        }
+                    } else { // Game is paused during resize
+                        if (messageManager) messageManager.show('Гру призупинено. Змініть розмір вікна та продовжіть.', '', false);
+                    }
+                }
+            }, CONFIG.RESIZE_DEBOUNCE_DELAY);
         });
 
-        if (currentTarget !== null) {
-          const previousCell = cells[currentTarget];
-          if (previousCell && previousCell.classList.contains("highlighted")) {
-            previousCell.classList.remove("highlighted");
-            const level = levels[currentLevel];
-            if (level.timeLimit && cellWasMissed) {
-              missedClicks++;
-              missedInfo.textContent = `Пропущено: ${missedClicks}`;
-              message.textContent = "Пропущено!";
-              message.className = "message missed";
-              missedSound.currentTime = 0;
-              missedSound.play().catch((e) => console.log("Помилка звуку:", e));
-            }
-          }
-        }
-
-        cellWasMissed = true;
-        const level = levels[currentLevel];
-        const totalCells = level.size * level.size;
-        let randomIndex;
-        do {
-          randomIndex = Math.floor(Math.random() * totalCells);
-        } while (randomIndex === currentTarget);
-
-        currentTarget = randomIndex;
-        cells[currentTarget].classList.add("highlighted");
-
-        if (level.timeLimit) {
-          const timerBar = document.createElement("div");
-          timerBar.className = "timer-bar";
-          cells[currentTarget].appendChild(timerBar);
-          timerBar.style.transition = `transform ${
-            level.timeLimit / 1500
-          }s linear`;
-          animationTimer = setTimeout(() => {
-            timerBar.style.transform = "scaleX(0)";
-          }, 50);
-          clearTimeout(timer);
-          timer = setTimeout(highlightRandomCell, level.timeLimit);
-        }
-      }
-
-      // Обробка кліку з дебаунсом
-      function handleCellClick(e) {
-        // Використовуємо closest, щоб завжди отримувати елемент-клітинку
-        const cell = e.target.closest(".cell");
-        if (!cell) return;
-        if (clickTimeout) return; // Ігноруємо повторні кліки під час дебаунсу
-
-        clickTimeout = setTimeout(() => {
-          const clickedIndex = parseInt(cell.dataset.index);
-          if (
-            clickedIndex === currentTarget &&
-            !cell.classList.contains("processed")
-          ) {
-            cell.classList.add("processed");
-            clickSound.currentTime = 0;
-            clickSound.play().catch((e) => console.log("Помилка звуку:", e));
-            cellWasMissed = false;
-            score++;
-            cellsClicked++;
-            scoreInfo.textContent = `Бали: ${score}`;
-
-            const level = levels[currentLevel];
-            if (!level.timeLimit) {
-              highlightRandomCell();
-            } else {
-              clearTimeout(timer);
-              clearTimeout(animationTimer);
-              setTimeout(highlightRandomCell, 50);
-            }
-          } else if (!cell.classList.contains("processed")) {
-            wrongSound.currentTime = 0;
-            wrongSound.play().catch((e) => console.log("Помилка звуку:", e));
-            cell.classList.add("wrong");
-            setTimeout(() => cell.classList.remove("wrong"), 300);
-          }
-          clearTimeout(clickTimeout);
-          clickTimeout = null;
-        }, 100);
-      }
-
-      // Завершення рівня або гри
-      function completeLevelOrGame() {
-        clearTimeout(timer);
-        clearTimeout(animationTimer);
-        gameScreen.style.display = "none";
-
-        if (currentLevel < levels.length - 1) {
-          levelCompleteScreen.style.display = "block";
-          levelCompleteMessage.textContent = `Рівень ${levels[currentLevel].name} завершено! Ви отримали ${score} балів. Пропущено: ${missedClicks}.`;
+        if(screens.start) {
+            showScreen('start');
         } else {
-          gameCompleteScreen.style.display = "block";
-          const totalPossibleScore = levels.reduce(
-            (total, level) => total + level.cellCount,
-            0
-          );
-          const successRate = Math.round((score / totalPossibleScore) * 100);
-          let motivationalMessage = "";
-          if (successRate > 90) {
-            motivationalMessage =
-              "Неймовірний результат! Ти справжній майстер мишки!";
-          } else if (successRate > 70) {
-            motivationalMessage = "Чудова робота! Твої навички вражають!";
-          } else if (successRate > 50) {
-            motivationalMessage = "Гарна робота! Потренуйся ще трохи!";
-          } else {
-            motivationalMessage = "Ти молодець! Продовжуй вдосконалюватися!";
-          }
-          gameCompleteMessage.innerHTML = `Гра завершена!<br>Твій рахунок: ${score} з ${totalPossibleScore} (${successRate}%).<br>Пропущено: ${missedClicks}.<br><br>${motivationalMessage}<br>Спробуєш ще раз?`;
+            console.error("Стартовий екран не знайдено! Гра не може бути ініціалізована.");
+            // Consider a more user-friendly error display within the body
+            document.body.innerHTML = '<p style="color:red; text-align:center; font-size:1.5em;">Помилка завантаження гри. Стартовий екран не знайдено. Будь ласка, спробуйте оновити сторінку.</p>';
         }
-      }
-
-      // Наступний рівень
-      function nextLevel() {
-        levelCompleteScreen.style.display = "none";
-        gameScreen.style.display = "block";
-        currentLevel++;
-        updateLevel();
-      }
-
-      // Адаптивність при зміні розміру вікна
-      window.addEventListener("resize", () => {
-        if (gameScreen.style.display === "block") {
-          updateLevel();
-        }
-      });
     </script>
-  </body>
+    </div>
+
+</body>
 </html>
