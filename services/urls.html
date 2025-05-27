@@ -1,691 +1,979 @@
 <!DOCTYPE html>
 <html lang="uk">
   <head>
-    <!-- Мета-інформація про кодування та viewport для адаптивності -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Тренажер адрес сайтів</title>
+    <title>🌟 Тренажер введення URL-адрес</title>
 
-    <!-- Підключення шрифту Roboto з Google Fonts -->
+    <meta name="description" content="Інтерактивний тренажер для дітей 6-9 років, що допомагає вивчати та запам'ятовувати URL-адреси популярних сайтів у веселій ігровій формі. Розвивай комп'ютерну грамотність граючи!">
+    <meta name="keywords" content="тренажер URL, вивчити адреси сайтів, для дітей, комп'ютерна грамотність, веб-адреси, онлайн гра, навчання, інформатика дітям, тренажер для введення URL">
+    <meta name="author" content="Комп'ютерна наука з паном Артемом">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://itnauka.org/" />
+    <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
+
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
 
     <style>
-      /* ================================================================ */
-      /*                     Змінні CSS для кольорів                     */
-      /* ================================================================ */
       :root {
-        --primary: #00529b; /* Основний синій колір */
-        --primary-hover: #004080; /* Синій при ховері */
-        --success: #27c93f; /* Колір успішної дії */
-        --error: #ff6057; /* Колір помилки */
-        --bg: #ffffff; /* Білий фон */
-        --bg-light: #f0f8ff; /* Світлий фон сторінки */
-        --text: #222222; /* Основний колір тексту */
-        --text-light: #ffffff; /* Світлий текст */
+        --primary: #4c63d2;
+        --primary-light: #6c7ce8;
+        --success: #4caf50;
+        --warning: #ff9800;
+        --error: #f44336;
+        --bg: #f8f9ff;
+        --card-bg: #ffffff;
+        --text: #2d3748;
+        --text-light: #64748b;
+        --rainbow: linear-gradient(45deg, #4c63d2, #7b68ee, #9370db, #8a2be2);
       }
 
-      /* ================================================================ */
-      /*             Скидання відступів та базові налаштування           */
-      /* ================================================================ */
       * {
-        box-sizing: border-box; /* Включати паддінг і бордер у розміри */
+        box-sizing: border-box;
       }
+
       body {
         margin: 0;
-        padding: 0;
-        font-family: "Roboto", sans-serif; /* Використання шрифту Roboto */
-        background-color: var(--bg-light); /* Світлий фон сторінки */
-        color: var(--text); /* Темний текст */
-        line-height: 1.4; /* Відстань між рядками */
-      }
-      .container {
-        max-width: 800px; /* Максимальна ширина контейнера */
-        margin: 0 auto; /* Центрування по горизонталі */
-        padding: 1rem; /* Внутрішній відступ */
-      }
-
-      /* ================================================================ */
-      /*                          Заголовок сторінки                      */
-      /* ================================================================ */
-      h1 {
-        text-align: center; /* Вирівнювання по центру */
-        color: var(--primary); /* Основний колір */
-        margin-bottom: 1rem; /* Відступ знизу */
-      }
-
-      /* ================================================================ */
-      /*                         Статистика гри                           */
-      /* ================================================================ */
-      .stats {
-        display: flex; /* Флекс-контейнер для елементів */
-        justify-content: space-around; /* Пропорційні відступи між елементами */
-        margin-bottom: 1rem;
-      }
-      .stat-item {
+        padding: 15px;
+        font-family: "Nunito", sans-serif;
         background: var(--bg);
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        text-align: center;
-        flex: 1;
-        margin: 0 0.5rem;
+        background-image: 
+          radial-gradient(circle at 25% 25%, #ff6b6b22 0%, transparent 50%),
+          radial-gradient(circle at 75% 75%, #4ecdc422 0%, transparent 50%);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex; /* For footer positioning */
+        flex-direction: column; /* For footer positioning */
       }
-      .stat-value {
-        font-size: 1.5rem;
-        font-weight: bold;
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        flex-grow: 1; /* For footer positioning */
+      }
+
+      /* Заголовок */
+      .header {
+        text-align: center;
+        margin-bottom: 15px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      }
+
+      .header h1 {
+        font-size: 1.7rem; 
+        margin: 0;
+        background: var(--rainbow);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+      }
+
+      .subtitle { /* Стиль для відновленого підзаголовка */
+        font-size: 1.1rem; 
+        color: var(--text-light);
+        margin-top: 8px; 
+      }
+
+      /* Інструкція */
+      .instructions {
+        background: #eef2ff; 
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        max-height: 500px;
+        opacity: 1;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(.5,1,.5,1), opacity 0.5s, margin-bottom 0.5s;
+      }
+      
+      .instructions h2 {
+        font-size: 1.3rem; 
+        color: var(--primary);
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .instructions ol {
+        list-style-type: none; 
+        padding-left: 0;
+        margin-bottom: 0;
+      }
+      .instructions li {
+        font-size: 1.1rem; 
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.5;
+        padding-left: 28px; 
+        position: relative;
+      }
+      .instructions li::before {
+        content: '👉'; 
+        position: absolute;
+        left: 0;
+        top: 0px; /* Adjusted for better alignment */
+        font-size: 1rem; 
         color: var(--primary);
       }
-      .stat-label {
-        font-size: 0.9rem;
-        color: #555;
+      .instructions li:last-child {
+        margin-bottom: 0;
+      }
+      .instructions strong {
+        color: var(--primary);
+        font-weight: 700;
       }
 
-      /* ================================================================ */
-      /*                      Емуляція вікна браузера                    */
-      /* ================================================================ */
-      .browser-window {
-        background: var(--bg);
-        border: 3px solid var(--primary);
-        border-radius: 0.5rem;
-        overflow: hidden;
-        margin-bottom: 1rem;
-        min-height: 350px;
+
+      /* Статистика */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px; 
+        margin-bottom: 15px; 
       }
+
+      .stat-card {
+        background: var(--card-bg);
+        border-radius: 8px; 
+        padding: 8px; 
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 3px solid transparent;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--rainbow);
+      }
+
+      .stat-value {
+        font-size: 1.3rem; 
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 2px; /* Невеликий відступ */
+      }
+
+      .stat-label {
+        font-size: 1rem; 
+        color: var(--text-light);
+        font-weight: 600;
+      }
+
+      /* Система рівнів */
+      .level-system {
+        background: var(--card-bg);
+        border-radius: 8px; 
+        padding: 8px; 
+        margin-bottom: 15px; 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      }
+
+      .level-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .level-badge {
+        background: var(--rainbow);
+        color: white;
+        padding: 6px 12px; 
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1rem; 
+      }
+      
+      #levelText { /* Додано для узгодження розміру шрифту */
+         font-size: 0.9rem;
+      }
+
+      /* Стиль для resultFeedback з наданого файлу */
+      #resultFeedback {
+        font-size: 1.3rem; 
+        margin-bottom: 8px; /* Користувацький стиль */
+      }
+
+      .progress-container {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 10px; 
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: var(--rainbow);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        position: relative;
+      }
+
+      .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      /* Браузер */
+      .browser-window {
+        background: var(--card-bg);
+        border-radius: 15px; 
+        overflow: hidden;
+        margin-bottom: 15px; 
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        border: 4px solid #e2e8f0;
+      }
+
       .browser-header {
-        background: var(--primary);
-        padding: 0.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        padding: 10px 15px; 
         display: flex;
         align-items: center;
       }
+
       .browser-buttons {
         display: flex;
-        gap: 0.3rem;
-        margin-right: 0.5rem;
+        gap: 8px;
+        margin-right: 15px;
       }
+
       .browser-button {
-        width: 0.8rem;
-        height: 0.8rem;
+        width: 12px; 
+        height: 12px; 
         border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       }
-      .red {
-        background: #ff6057;
-      }
-      .yellow {
-        background: #ffbd2e;
-      }
-      .green {
-        background: #27c93f;
-      }
+
+      .red { background: #ff5f57; }
+      .yellow { background: #ffbd2e; }
+      .green { background: #28ca42; }
+
       .url-input-container {
         flex: 1;
-        background: var(--bg);
-        border-radius: 1rem;
+        background: white;
+        border-radius: 10px; 
         display: flex;
         align-items: center;
-        padding: 0.3rem 0.8rem;
+        padding: 10px 12px; 
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
       }
+
       .lock-icon {
-        margin-right: 0.3rem;
+        margin-right: 8px;
+        font-size: 1.2rem; 
       }
+
       #urlInput {
         flex: 1;
         border: none;
         outline: none;
-        font-size: 1rem;
-        background: transparent;
+        font-size: 1.1rem; 
+        font-family: inherit;
         color: var(--text);
-      }
-      #urlInput:focus {
-        outline: 2px dashed var(--primary-hover);
+        background: transparent;
       }
 
-      /* ================================================================ */
-      /*          Вміст браузера: значок сайту, назва та повідомлення      */
-      /* ================================================================ */
+      #urlInput:focus {
+        outline: 3px dashed var(--primary);
+        outline-offset: 2px;
+      }
+
       .browser-content {
-        /* Вирівнювання вмісту по центру по горизонталі та вертикалі */
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-
-        padding: 1rem;
-        min-height: 280px;
+        justify-content: center;
+        padding: 20px 15px; 
+        min-height: auto; 
         text-align: center;
       }
+
       .website-icon {
-        width: 4rem;
-        height: 4rem;
-        margin: 0 auto 0.5rem;
-        border-radius: 0.5rem;
-        background: var(--primary);
+        width: 50px; 
+        height: 50px; 
+        border-radius: 15px; 
+        color: white;
+        font-size: 1.8rem; 
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px; 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+      }
+
+      .website-name {
+        font-size: 1.4rem; 
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 8px; 
+      }
+
+      .target-url-display {
+        font-size: 0.95rem; 
+        color: #007bff; 
+        margin-top: 5px;
+        margin-bottom: 8px; 
+        font-weight: 600;
+        padding: 6px 10px; 
+        background-color: #f0f4f8;
+        border-radius: 8px;
+        word-break: break-all;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .hint-text {
+        font-size: 0.95rem; 
         color: var(--text-light);
-        font-size: 2rem;
+        margin-bottom: 10px; 
+      }
+
+      .alert {
+        margin-top: 10px; 
+        font-size: 1.1rem; 
+        font-weight: 600;
+        padding: 10px 20px; 
+        border-radius: 12px; 
+        visibility: hidden;
+        min-height: 40px; 
         display: flex;
         align-items: center;
         justify-content: center;
       }
-      .website-name {
-        font-size: 1.2rem;
-        margin-bottom: 0.5rem;
-      }
-      .alert {
-        margin-top: 0.5rem;
-        font-size: 1rem;
-        visibility: hidden; /* Приховати за замовчуванням */
-      }
 
-      /* ================================================================ */
-      /*                       Контролери гри                             */
-      /* ================================================================ */
+      /* Кнопки */
       .controls {
         display: flex;
         justify-content: center;
-        gap: 1rem;
+        gap: 15px; 
         flex-wrap: wrap;
-        margin-bottom: 1rem;
+        margin-bottom: 15px; 
       }
+
       .btn {
-        padding: 0.8rem 1.5rem;
-        font-size: 1.1rem;
+        padding: 10px 20px; 
+        font-size: 1.1rem; 
+        font-weight: 700;
         border: none;
-        border-radius: 0.5rem;
+        border-radius: 12px; 
         cursor: pointer;
-        background: var(--primary);
-        color: var(--text-light);
-        transition: background 0.2s;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        min-width: 110px; 
+        position: relative;
+        overflow: hidden;
       }
-      .btn:hover,
-      .btn:focus {
-        background: var(--primary-hover);
-        outline: none;
+
+      .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        transition: all 0.5s ease;
+        transform: translate(-50%, -50%);
       }
+
+      .btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: white;
+        box-shadow: 0 6px 20px rgba(76, 99, 210, 0.4);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(76, 99, 210, 0.5);
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        color: white;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      }
+
+      .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+      }
+
+      .btn-stop {
+        background: linear-gradient(135deg, var(--error), #ef5350);
+        color: white;
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+      }
+
+      .btn-stop:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(244, 67, 54, 0.5);
+      }
+
+      .btn-warning {
+        background: linear-gradient(135deg, #ff9800, #ffb74d);
+        color: white;
+        box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+      }
+
       .btn[disabled] {
         opacity: 0.5;
-        cursor: default;
-      }
-      .btn-green {
-        background: var(--success);
-      }
-      .btn-green:hover,
-      .btn-green:focus {
-        background: #1fa833;
+        cursor: not-allowed;
+        transform: none !important;
       }
 
-      /* ================================================================ */
-      /*                       Екран результатів                          */
-      /* ================================================================ */
+      /* Результати */
       .result-screen {
-        display: none; /* Прихований спочатку */
+        display: none;
         text-align: center;
-      }
-      .emoji-feedback {
-        font-size: 3rem;
-        margin: 0.5rem 0;
+        background: var(--card-bg);
+        border-radius: 25px;
+        padding: 40px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.2);
       }
 
-      /* ================================================================ */
-      /*                           Конфетті                               */
-      /* ================================================================ */
+      .emoji-feedback {
+        font-size: 5rem;
+        margin: 20px 0;
+        animation: celebrate 1s ease-in-out;
+      }
+
+      @keyframes celebrate {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.2) rotate(-5deg); }
+        75% { transform: scale(1.2) rotate(5deg); }
+      }
+
+      .achievement-badges {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        background: var(--rainbow);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        animation: fadeInUp 0.5s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Конфетті */
       .confetti {
         position: fixed;
-        width: 0.5rem;
-        height: 0.5rem;
-        border-radius: 50%;
-        top: -1rem;
+        width: 10px;
+        height: 10px;
+        top: -10px;
         pointer-events: none;
         z-index: 1000;
+        animation: fall linear forwards;
       }
 
-      /* ================================================================ */
-      /*                       Адаптивні стилі                            */
-      /* ================================================================ */
-      @media (max-width: 480px) {
-        .stat-item {
-          margin: 0.2rem;
-          padding: 0.5rem;
+      @keyframes fall {
+        to {
+          transform: translateY(100vh) rotate(360deg);
         }
-        .btn {
-          padding: 1rem;
-          font-size: 1.2rem;
+      }
+
+      /* Адаптивність */
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 1.5rem; /* Ще трохи менше для мобільних */
         }
-        .website-icon {
-          width: 3rem;
-          height: 3rem;
-          font-size: 1.5rem;
+         .instructions h2 {
+          font-size: 1.1rem;
         }
-        .url-input-container {
-          padding: 0.5rem;
+        .instructions li {
+          font-size: 0.85rem;
+          padding-left: 24px;
         }
+        .instructions li::before {
+           font-size: 0.9rem;
+        }
+      }
+
+      /* Анімації появи */
+      .fade-in {
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Футер */
+      .site-footer {
+        text-align: center;
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: var(--text-light);
+        border-top: 1px solid #e2e8f0;
       }
     </style>
   </head>
 
   <body>
     <div class="container">
-      <!-- Заголовок гри -->
-      <h1>Тренажер введення URL-адрес</h1>
+      <div class="header fade-in">
+        <h1>🌟 Тренажер введення URL-адрес 🌟</h1>
+        <div class="subtitle">Вивчай адреси сайтів граючи!</div>
+      </div>
 
-      <!-- Блок статистики: правильні відповіді, спроби, таймер -->
-      <div class="stats" role="region" aria-label="Статистика гри">
-        <div class="stat-item">
+      <div class="instructions fade-in">
+        <h2>🚀 Як грати? Дуже просто! 🚀</h2>
+        <ol>
+          <li>Після того, як ти натиснеш кнопку "Почати", подивись на <strong>назву сайту</strong> (наприклад, "Google") та його <strong>адресу</strong> (наприклад, google.com).</li>
+          <li>Твоє завдання: правильно написати <strong>саме адресу сайту</strong> в адресному рядочку, де є замочок 🔒.</li>
+          <li>Коли написав, сміливо тисни клавішу "<strong>⚡ Enter</strong>" або кнопку "<strong>✅ Перевірити</strong>".</li>
+          <li>Якщо завдання складне, не біда! Тисни "<strong>⏭️ Пропустити</strong>" і спробуй наступне.</li>
+          <li>Гра на час! Постарайся дати якнайбільше правильних відповідей, доки час не скінчиться! ⏰</li>
+        </ol>
+      </div>
+
+      <div class="stats fade-in">
+        <div class="stat-card">
           <div class="stat-value" id="correctCount">0</div>
-          <div class="stat-label">Правильно</div>
+          <div class="stat-label">🎯 Правильно</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-card">
           <div class="stat-value" id="totalCount">0</div>
-          <div class="stat-label">Спроб</div>
+          <div class="stat-label">🎮 Спроб</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-card">
           <div class="stat-value" id="timer">2:00</div>
-          <div class="stat-label">Час</div>
+          <div class="stat-label">⏰ Час</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="streakCount">0</div>
+          <div class="stat-label">🔥 Підряд</div>
         </div>
       </div>
 
-      <!-- Основний екран гри -->
-      <div id="gameScreen" role="application">
-        <div
-          class="browser-window"
-          role="region"
-          aria-label="Емуляція браузера"
-        >
-          <!-- Верхня панель браузера з кнопками та полем введення URL -->
+      <div id="gameScreen">
+        <div class="level-system fade-in"> 
+          <div class="level-info">
+            <div class="level-badge" id="levelBadge">🌟 Початківець</div>
+            <div id="levelText">0 / 5 до наступного рівня</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="browser-window fade-in">
           <div class="browser-header">
-            <div class="browser-buttons" aria-hidden="true">
+            <div class="browser-buttons">
               <div class="browser-button red"></div>
               <div class="browser-button yellow"></div>
               <div class="browser-button green"></div>
             </div>
             <div class="url-input-container">
-              <span class="lock-icon" aria-hidden="true">🔒</span>
+              <span class="lock-icon">🔒</span>
               <input
                 type="text"
                 id="urlInput"
-                placeholder="Введіть адресу сайту..."
+                placeholder="Введи адресу сайту..."
                 autocomplete="off"
-                aria-label="Поле для введення URL"
                 disabled
               />
             </div>
           </div>
-          <!-- Вміст браузера: значок, назва сайту та повідомлення про помилку -->
           <div class="browser-content">
-            <div class="website-icon" id="websiteIcon" aria-hidden="true">
-              ?
-            </div>
-            <div class="website-name" id="websiteName">Натисни "Почати"</div>
-            <div
-              class="alert"
-              id="alertMessage"
-              role="alert"
-              aria-live="assertive"
-            ></div>
+            <div class="website-icon" id="websiteIcon">🎮</div>
+            <div class="website-name" id="websiteName">Готовий почати пригоду?</div>
+            <div class="target-url-display" id="targetUrlDisplay">Адреса сайту з'явиться тут</div> 
+            <div class="hint-text" id="hintText">Натисни "Почати" щоб розпочати!</div>
+            <div class="alert" id="alertMessage"></div>
           </div>
         </div>
 
-        <!-- Кнопки керування грою: Почати, Перевірити, Пропустити -->
         <div class="controls">
-          <button id="startBtn" class="btn btn-green" aria-label="Почати гру">
-            Почати
-          </button>
-          <button
-            id="submitBtn"
-            class="btn"
-            aria-label="Перевірити URL"
-            disabled
-          >
-            Перевірити
-          </button>
-          <button
-            id="skipBtn"
-            class="btn"
-            aria-label="Пропустити сайт"
-            disabled
-          >
-            Пропустити
-          </button>
+          <button id="startBtn" class="btn btn-success">🚀 Почати</button> 
+          <button id="submitBtn" class="btn btn-primary" disabled>✅ Перевірити</button>
+          <button id="skipBtn" class="btn btn-warning" disabled>⏭️ Пропустити</button>
         </div>
       </div>
 
-      <!-- Екран результатів гри -->
-      <div
-        id="resultScreen"
-        class="result-screen"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="result-title"
-      >
-        <h2 id="result-title">Час закінчився!</h2>
+      <div id="resultScreen" class="result-screen">
+        <h2 id="result-title">Молодець!</h2>
         <div class="emoji-feedback" id="resultEmoji">🎉</div>
         <div class="stat-value" id="finalScore">0</div>
-        <div class="feedback" id="resultFeedback">Молодці! Ви впоралися!</div>
-        <button
-          id="restartBtn"
-          class="btn btn-green"
-          aria-label="Спробувати ще раз"
-        >
-          Спробувати ще раз
-        </button>
+        <div class="achievement-badges" id="achievements"></div>
+        <div id="resultFeedback">Чудова гра!</div>
+        <button id="restartBtn" class="btn btn-success">🔄 Грати знову</button>
       </div>
     </div>
 
+    <footer class="site-footer">
+        <p>&copy; 2025 Комп'ютерна наука з паном Артемом</p>
+    </footer>
+
     <script>
-      // ========================
-      // Масив з даними сайтів
-      // ========================
-      const websites = [
-        { name: "YouTube Kids", url: "youtubekids.com" },
-        { name: "Google", url: "google.com" },
-        { name: "Wikipedia", url: "wikipedia.org" },
-        { name: "PBS Kids", url: "pbskids.org" },
-        { name: "Disney", url: "disney.com" },
-        { name: "Nick Jr.", url: "nickjr.com" },
-        { name: "Minecraft", url: "minecraft.net" },
-        { name: "РАВЛИК", url: "rvlk.online" },
-        { name: "NASA Kids' Club", url: "nasa.gov/kidsclub" },
-        { name: "Scratch", url: "scratch.mit.edu" },
-        { name: "Coolmath Games", url: "coolmathgames.com" },
-        { name: "Cartoon Network", url: "cartoonnetwork.com" },
-        { name: "Starfall", url: "starfall.com" },
-        { name: "FunBrain", url: "funbrain.com" },
-        { name: "Sesame Street", url: "sesamestreet.org" },
-        { name: "Code.org", url: "code.org" },
-        { name: "BBC CBeebies", url: "bbc.co.uk/cbeebies" },
-        { name: "ABCya", url: "abcya.com" },
-        { name: "Roblox", url: "roblox.com" },
-        { name: "Weather.gov", url: "weather.gov" },
-        { name: "Poptropica", url: "poptropica.com" },
-        { name: "LEGO", url: "lego.com" },
-        { name: "NASA Space Place", url: "spaceplace.nasa.gov" },
-        { name: "Highlights Kids", url: "highlightskids.com" },
-        { name: "Math Playground", url: "mathplayground.com" },
-        { name: "Time for Kids", url: "timeforkids.com" },
-        { name: "Chess.com Kids", url: "chess.com/kids" },
-        { name: "Education.com", url: "education.com" },
-        { name: "Nickelodeon", url: "nick.com" },
-        { name: "Tynker", url: "tynker.com" },
-        { name: "Storyline Online", url: "storylineonline.net" },
-        { name: "Art for Kids Hub", url: "artforkidshub.com" },
-        { name: "IXL", url: "ixl.com" },
-        { name: "Khan Academy Kids", url: "khanacademy.org/kids" },
-        { name: "BrainPOP", url: "brainpop.com" },
-        { name: "NASA Climate Kids", url: "climatekids.nasa.gov" },
-        { name: "National Zoo", url: "nationalzoo.si.edu" },
-        { name: "Duolingo", url: "duolingo.com" },
-        { name: "Scholastic", url: "scholastic.com" },
-        { name: "Kahoot", url: "kahoot.com" },
-        { name: "Epic!", url: "getepic.com" },
-        { name: "DIY.org", url: "diy.org" },
-        { name: "Prodigy Math", url: "prodigygame.com" },
-        { name: "Mystery Science", url: "mysteryscience.com" },
-        { name: "Squiggle Park", url: "squigglepark.com" },
-        { name: "StoryBots", url: "storybots.com" },
-        { name: "Kodable", url: "kodable.com" },
-        { name: "Hour of Code", url: "hourofcode.com" },
-        { name: "Reading Eggs", url: "readingeggs.com" },
-        { name: "History for Kids", url: "historyforkids.net" },
-        { name: "Smithsonian for Kids", url: "si.edu/kids" },
-        { name: "SpellingCity", url: "spellingcity.com" },
-        { name: "SciShow Kids", url: "youtube.com/scishowkids" },
-        { name: "Kids World Travel Guide", url: "kidsworldtravelguide.com" },
-        { name: "Coding for Kids", url: "codingforkids.org" },
-        { name: "Math is Fun", url: "mathsisfun.com" },
-        { name: "Little Passports", url: "littlepassports.com" },
-        { name: "DuckDuckGo", url: "duckduckgo.com" },
-        { name: "Science Kids", url: "sciencekids.co.nz" },
-        { name: "Kids Nature", url: "kidsnature.org" },
-        { name: "Toy Theater", url: "toytheater.com" },
-        { name: "MakeBeliefsComix", url: "makebeliefscomix.com" },
-        { name: "Kiddle", url: "kiddle.co" },
-        { name: "BrainGenie", url: "braingenie.com" },
-        { name: "TypeTastic", url: "typetastic.com" },
-        { name: "TurtleDiary", url: "turtlediary.com" },
-        { name: "Science Buddies", url: "sciencebuddies.org" },
-        { name: "Kids Music", url: "kidsmusic.org" },
-        { name: "Chess Kid", url: "chesskid.com" },
-        { name: "Quizlet", url: "quizlet.com" },
-        { name: "GoNoodle", url: "gonoodle.com" },
-        { name: "Kids' Health", url: "kidshealth.org" },
-        { name: "Nasa", url: "nasa.gov" },
-        { name: "Typing Club", url: "typingclub.com" },
-        { name: "Chrome Music Lab", url: "musiclab.chromeexperiments.com" },
-        { name: "Learning Games for Kids", url: "learninggamesforkids.com" },
-        { name: "Kids Discover", url: "kidsdiscover.com" },
-        { name: "Crash Course Kids", url: "youtube.com/crashcoursekids" },
-        { name: "Cool Math 4 Kids", url: "coolmath4kids.com" },
-        { name: "Science for Kids", url: "scienceforkids.kidinfo.com" },
-        { name: "TED-Ed", url: "ed.ted.com" },
-        { name: "Britannica Kids", url: "kids.britannica.com" },
-        { name: "Art Hub for Kids", url: "arthubforkids.com" },
-        { name: "Memrise", url: "memrise.com" },
-        { name: "Exploratorium", url: "exploratorium.edu" },
-        { name: "Sheppard Software", url: "sheppardsoftware.com" },
-        { name: "BrainPOP Jr.", url: "jr.brainpop.com" },
-        { name: "Kids Astronomy", url: "kidsastronomy.com" },
-        { name: "Animal Jam", url: "animaljam.com" },
-        { name: "Kids Coding", url: "kidscoding.com" },
-        { name: "CodeMonkey", url: "codemonkey.com" },
-        { name: "Kids Geo", url: "kidsgeo.com" },
-        { name: "Kids Puzzles", url: "kidspuzzles.org" },
-        { name: "History for Children", url: "historyforchildren.org" },
-        { name: "Kids Art Quest", url: "kidsartquest.com" },
-        { name: "Discovery Kids", url: "discoverykids.com" },
-        { name: "Kids Web Japan", url: "web-japan.org/kidsweb" },
-        { name: "Kids Cooking", url: "kidscooking.org" },
-      ];
-
-      // ========================
-      // Отримання елементів DOM
-      // ========================
-      const urlInput = document.getElementById("urlInput");
-      const websiteIcon = document.getElementById("websiteIcon");
-      const websiteName = document.getElementById("websiteName");
-      const startBtn = document.getElementById("startBtn");
-      const submitBtn = document.getElementById("submitBtn");
-      const skipBtn = document.getElementById("skipBtn");
-      const timerEl = document.getElementById("timer");
-      const correctCountEl = document.getElementById("correctCount");
-      const totalCountEl = document.getElementById("totalCount");
-      const alertMessage = document.getElementById("alertMessage");
-      const gameScreen = document.getElementById("gameScreen");
-      const resultScreen = document.getElementById("resultScreen");
-      const finalScoreEl = document.getElementById("finalScore");
-      const resultFeedback = document.getElementById("resultFeedback");
-      const resultEmoji = document.getElementById("resultEmoji");
-      const restartBtn = document.getElementById("restartBtn");
-
-      // Локальні змінні для стану гри
-      let currentWebsite;
-      let correctCount;
-      let totalCount;
-      let remainingSeconds;
-      let timerInterval;
-      let shuffledWebsites = [];
-      let currentIndex = 0;
-
-      /**
-       * Ініціалізація гри при завантаженні сторінки
-       */
-      function initGame() {
-        // Перевірка масиву сайтів
-        if (!Array.isArray(websites) || websites.length === 0) {
-          console.error("Websites array is empty or not defined.");
-          alert("Помилка: немає даних сайтів для гри.");
-          startBtn.disabled = true;
-          return;
+        // --- ДАНІ ---
+        const websites = [
+          { name: "Google", url: "google.com", icon: "🔍", hint: "Тут можна все знайти!" },
+          { name: "YouTube", url: "youtube.com", icon: "📺", hint: "Дивись відео тут!" },
+          { name: "Disney", url: "disney.com", icon: "🏰", hint: "Магічні мультики!" },
+          { name: "LEGO", url: "lego.com", icon: "🧱", hint: "Будуй з кубиків!" },
+          { name: "PBS Kids", url: "pbskids.org", icon: "🎨", hint: "Навчальні ігри!" },
+          { name: "NASA", url: "nasa.gov", icon: "🚀", hint: "Космічні пригоди!" },
+          { name: "Scratch", url: "scratch.mit.edu", icon: "🐱", hint: "Створюй програми!" },
+          { name: "Nick Jr.", url: "nickjr.com", icon: "⭐", hint: "Мультики для малят!" },
+          { name: "Roblox", url: "roblox.com", icon: "🔳", hint: "Ігровий світ!" },
+          { name: "Chess", url: "chess.com", icon: "♟️", hint: "Грай в шахи!" },
+          { name: "Code.org", url: "code.org", icon: "💻", hint: "Вчись програмувати!" },
+          { name: "ABCya", url: "abcya.com", icon: "🎯", hint: "Навчальні ігри!" },
+          { name: "Duolingo", url: "duolingo.com", icon: "🦉", hint: "Вивчай мови!" },
+          { name: "Равлик", url: "ravlyk.org", icon: "🐌", hint: "Вивчай кодування!" },
+          { name: "Комп'ютерна наука", url: "itnauka.org", icon: "🧑‍💻", hint: "Вивчай інформатику!" },
+          { name: "Kahoot!", url: "kahoot.com", icon: "❓", hint: "Вікторини і тести!" },
+          { name: "Epic!", url: "getepic.com", icon: "📚", hint: "Читай книжки!" }
+        ];
+        const levels = [
+          { name: "Твій рівень: 🌱 Початківець", min: 0, icon: "🌱" },
+          { name: "Твій рівень: ⭐ Дослідник", min: 3, icon: "⭐" },
+          { name: "Твій рівень: 🎯 Знавець", min: 7, icon: "🎯" },
+          { name: "Твій рівень: 🚀 Експерт", min: 10, icon: "🚀" },
+          { name: "Твій рівень: 👑 Майстер", min: 15, icon: "👑" }
+        ];
+  
+        // --- DOM ЕЛЕМЕНТИ ---
+        const urlInput = document.getElementById("urlInput");
+        const websiteIcon = document.getElementById("websiteIcon");
+        const websiteName = document.getElementById("websiteName");
+        const targetUrlDisplay = document.getElementById("targetUrlDisplay");
+        const hintText = document.getElementById("hintText");
+        const startBtn = document.getElementById("startBtn");
+        const submitBtn = document.getElementById("submitBtn");
+        const skipBtn = document.getElementById("skipBtn");
+        const timerEl = document.getElementById("timer");
+        const correctCountEl = document.getElementById("correctCount");
+        const totalCountEl = document.getElementById("totalCount");
+        const streakCountEl = document.getElementById("streakCount");
+        const alertMessage = document.getElementById("alertMessage");
+        const gameScreen = document.getElementById("gameScreen");
+        const resultScreen = document.getElementById("resultScreen");
+        const finalScoreEl = document.getElementById("finalScore");
+        const resultFeedback = document.getElementById("resultFeedback");
+        const resultEmoji = document.getElementById("resultEmoji");
+        const restartBtn = document.getElementById("restartBtn");
+        const levelBadge = document.getElementById("levelBadge");
+        const levelText = document.getElementById("levelText");
+        const progressBar = document.getElementById("progressBar");
+        const achievements = document.getElementById("achievements");
+  
+        // --- ГРА ЗМІННІ ---
+        let currentWebsite;
+        let correctCount = 0;
+        let totalCount = 0;
+        let streakCount = 0;
+        let remainingSeconds = 120;
+        let timerInterval;
+        let shuffledWebsites = [];
+        let currentIndex = 0;
+        let isGameActive = false;
+        let stopRequested = false;
+  
+        function setControlsActive(isActive) {
+          urlInput.disabled = !isActive;
+          submitBtn.disabled = !isActive;
+          skipBtn.disabled = !isActive;
         }
-        // Перемішування сайтів
-        shuffledWebsites = [...websites].sort(() => Math.random() - 0.5);
-        currentIndex = 0;
-        correctCount = 0;
-        totalCount = 0;
-        remainingSeconds = 120;
-        correctCountEl.textContent = 0;
-        totalCountEl.textContent = 0;
-        timerEl.textContent = "2:00";
-        urlInput.value = "";
-        urlInput.disabled = submitBtn.disabled = skipBtn.disabled = true;
-        startBtn.disabled = false;
-        websiteName.textContent = 'Натисни "Почати"';
-        websiteIcon.textContent = "?";
-        alertMessage.style.visibility = "hidden";
-        gameScreen.style.display = "block";
-        resultScreen.style.display = "none";
-      }
-
-      /**
-       * Початок гри: активація таймера та відображення першого сайту
-       */
-      function startGame() {
-        startBtn.disabled = true;
-        urlInput.disabled = submitBtn.disabled = skipBtn.disabled = false;
-        showNextWebsite();
-        timerInterval = setInterval(() => {
-          remainingSeconds--;
-          timerEl.textContent = `${Math.floor(remainingSeconds / 60)}:${String(
-            remainingSeconds % 60
-          ).padStart(2, "0")}`;
-          if (remainingSeconds <= 0) endGame();
-        }, 1000);
-        urlInput.focus();
-      }
-
-      /**
-       * Відображення наступного сайту з масиву
-       */
-      function showNextWebsite() {
-        // Якщо дошли до кінця списку, перемішати знову
-        if (currentIndex >= shuffledWebsites.length) {
+  
+        function initGame() {
           shuffledWebsites = [...websites].sort(() => Math.random() - 0.5);
           currentIndex = 0;
+          correctCount = 0;
+          totalCount = 0;
+          streakCount = 0;
+          remainingSeconds = 120;
+  
+          updateStats();
+          updateLevel();
+          setControlsActive(false);
+          startBtn.disabled = false;
+  
+          websiteName.textContent = "Готовий почати пригоду?";
+          hintText.textContent = "Натисни 'Почати' щоб розпочати!";
+          targetUrlDisplay.textContent = "Адреса сайту з'явиться тут";
+          websiteIcon.textContent = "🎮";
+          websiteIcon.style.background = 'var(--rainbow)';
+          alertMessage.style.visibility = "hidden";
+          gameScreen.style.display = "block";
+          resultScreen.style.display = "none";
+          document.querySelector('.instructions').classList.remove('instructions--hidden');
+          isGameActive = false;
+  
+          startBtn.textContent = "🚀 Почати";
+          startBtn.classList.remove("btn-stop");
+          startBtn.classList.add("btn-success");
         }
-        currentWebsite = shuffledWebsites[currentIndex++];
-        // Показати назву та URL сайту у верху
-        websiteName.textContent = `${currentWebsite.name} — ${currentWebsite.url}`;
-        // Встановити першу літеру як значок
-        websiteIcon.textContent = currentWebsite.name.charAt(0).toUpperCase();
-        alertMessage.style.visibility = "hidden";
-        // Випадковий фон для значка
-        websiteIcon.style.backgroundColor = getRandomColor();
-        urlInput.value = "";
-        urlInput.focus();
-      }
-
-      /**
-       * Перевірка введеного URL на відповідність правильному значенню
-       */
-      function checkUrl() {
-        const input = urlInput.value
-          .trim()
-          .toLowerCase()
-          .replace(/^https?:\/\//, "")
-          .replace(/^www\./, "")
-          .replace(/\/$/, "");
-        const correct = currentWebsite.url.toLowerCase();
-        totalCount++;
-        totalCountEl.textContent = totalCount;
-        if (input === correct) {
-          correctCount++;
+  
+        function handleStartStop() {
+          if (!isGameActive) {
+            isGameActive = true;
+            stopRequested = false;
+            startBtn.textContent = "⏹️ Зупинити";
+            startBtn.classList.remove("btn-success");
+            startBtn.classList.add("btn-stop");
+            setControlsActive(true);
+            startGame();
+          } else {
+            stopRequested = true;
+            endGame(true);
+          }
+        }
+  
+        function startGame() {
+          setControlsActive(true);
+          startBtn.disabled = false;
+          showNextWebsite();
+          remainingSeconds = 120;
+          timerEl.textContent = `2:00`;
+          clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            remainingSeconds--;
+            timerEl.textContent = `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+            if (remainingSeconds <= 0) endGame();
+          }, 1000);
+          urlInput.focus();
+        }
+  
+        function showNextWebsite() {
+          if (currentIndex >= shuffledWebsites.length) {
+            shuffledWebsites = [...websites].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+          }
+          currentWebsite = shuffledWebsites[currentIndex++];
+          websiteName.textContent = currentWebsite.name;
+          hintText.textContent = currentWebsite.hint;
+          websiteIcon.textContent = currentWebsite.icon;
+          websiteIcon.style.background = getRandomGradient();
+          targetUrlDisplay.textContent = `${currentWebsite.url}`;
+          alertMessage.style.visibility = "hidden";
+          urlInput.value = "";
+          if (!urlInput.disabled) urlInput.focus();
+        }
+  
+        function checkUrl() {
+          if (!isGameActive || urlInput.disabled) return;
+          const input = urlInput.value.trim().toLowerCase()
+            .replace(/^https?:\/\//, "")
+            .replace(/^www\./, "")
+            .replace(/\/$/, "");
+          const correct = currentWebsite.url.toLowerCase()
+            .replace(/^https?:\/\//, "")
+            .replace(/^www\./, "")
+            .replace(/\/$/, "");
+          totalCount++;
+  
+          if (input === correct) {
+            correctCount++;
+            streakCount++;
+            showAlert("🎉 Супер! Правильно!", "success");
+            createConfetti(20);
+            setTimeout(showNextWebsite, 1200);
+          } else {
+            streakCount = 0;
+            showAlert(`❌ Спробуй ще! Правильно було б: ${currentWebsite.url}`, "error");
+          }
+          updateStats();
+          updateLevel();
+        }
+  
+        function skipWebsite() {
+          if (!isGameActive || skipBtn.disabled) return;
+          totalCount++;
+          streakCount = 0;
+          updateStats();
+          showNextWebsite();
+        }
+  
+        function endGame(isStopped = false) {
+          clearInterval(timerInterval);
+          setControlsActive(false);
+          gameScreen.style.display = "none";
+          resultScreen.style.display = "block";
+          finalScoreEl.textContent = correctCount;
+          const accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+          const achievementList = [];
+          if (correctCount >= 15) achievementList.push("🏆 Супер-зірка URL");
+          if (correctCount >= 10) achievementList.push("🎯 Снайпер Адрес");
+          if (correctCount >= 5) achievementList.push("🚀 Швидкісний Ввід");
+          if (accuracy >= 80 && totalCount > 5) achievementList.push("💯 Точний Гравець");
+          if (streakCount >= 3) achievementList.push("🔥 Вогняна Серія");
+          if (achievementList.length === 0 && correctCount > 0) achievementList.push("👍 Гарний Початок!");
+          else if (achievementList.length === 0 && correctCount === 0) achievementList.push("💪 Спробуй Ще!");
+          achievements.innerHTML = achievementList.map(badge => `<div class="badge">${badge}</div>`).join('');
+          if (correctCount >= 15) {
+            resultFeedback.textContent = `Неймовірно! ${correctCount} правильних відповідей (${accuracy}%)! Ти справжній майстер URL!`;
+            resultEmoji.textContent = "🏆";
+            createConfetti(100);
+          } else if (correctCount >= 10) {
+            resultFeedback.textContent = `Вау! ${correctCount} правильних відповідей (${accuracy}%)! Чудова робота, знавець адрес!`;
+            resultEmoji.textContent = "🎉";
+            createConfetti(60);
+          } else if (correctCount >= 5) {
+            resultFeedback.textContent = `Добре! ${correctCount} правильних відповідей (${accuracy}%)! Так тримати, досліднику!`;
+            resultEmoji.textContent = "👍";
+            createConfetti(30);
+          } else {
+            resultFeedback.textContent = `${correctCount} правильних відповідей (${accuracy}%). Не засмучуйся, тренуйся ще!`;
+            resultEmoji.textContent = "💪";
+          }
+          isGameActive = false;
+          startBtn.textContent = "🚀 Почати";
+          startBtn.classList.remove("btn-stop");
+          startBtn.classList.add("btn-success");
+          startBtn.disabled = false;
+        }
+  
+        function updateStats() {
           correctCountEl.textContent = correctCount;
-          showAlert("Правильно! 👍", "success");
-          setTimeout(showNextWebsite, 800);
-        } else {
-          showAlert("Неправильно! Спробуй ще раз!", "error");
+          totalCountEl.textContent = totalCount;
+          streakCountEl.textContent = streakCount;
+          timerEl.textContent = `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, "0")}`;
         }
-      }
-
-      /**
-       * Показ повідомлення про успіх чи помилку та конфетті
-       */
-      function showAlert(msg, type) {
-        alertMessage.textContent = msg;
-        alertMessage.style.color =
-          type === "success" ? "var(--success)" : "var(--error)";
-        alertMessage.style.visibility = "visible";
-        if (type === "success") createConfetti(30);
-      }
-
-      /**
-       * Пропуск поточного сайту без нарахування правильного
-       */
-      function skipWebsite() {
-        totalCount++;
-        totalCountEl.textContent = totalCount;
-        showNextWebsite();
-      }
-
-      /**
-       * Завершення гри: зупинка таймера, відображення результатів
-       */
-      function endGame() {
-        clearInterval(timerInterval);
-        gameScreen.style.display = "none";
-        resultScreen.style.display = "block";
-        finalScoreEl.textContent = correctCount;
-        const pct = totalCount
-          ? Math.round((correctCount / totalCount) * 100)
-          : 0;
-        // Різні повідомлення залежно від результату
-        if (correctCount >= 15) {
-          resultFeedback.textContent = `Вау! ${correctCount} (${pct}%)! Ти майстер!`;
-          resultEmoji.textContent = "🏆";
-          createConfetti(100);
-        } else if (correctCount >= 10) {
-          resultFeedback.textContent = `Чудово! ${correctCount} (${pct}%)!`;
-          resultEmoji.textContent = "🎉";
-          createConfetti(50);
-        } else if (correctCount >= 5) {
-          resultFeedback.textContent = `Непогано! ${correctCount} (${pct}%)!`;
-          resultEmoji.textContent = "👍";
-        } else {
-          resultFeedback.textContent = `${correctCount} (${pct}%). Спробуй ще!`;
-          resultEmoji.textContent = "💪";
+  
+        // --- ФІКС ПРОГРЕС-БАРУ при переході на новий рівень! ---
+        function updateLevel() {
+          let currentLevel = levels[0];
+          for (let level of levels) {
+            if (correctCount >= level.min) {
+              currentLevel = level;
+            }
+          }
+          levelBadge.textContent = currentLevel.name;
+  
+          const nextLevel = levels[levels.indexOf(currentLevel) + 1];
+          if (nextLevel) {
+            const progress = correctCount - currentLevel.min;
+            const needed = nextLevel.min - currentLevel.min;
+            if (progress === 0 && correctCount !== 0) {
+              // Показати 100% прогрес-бар ще на мить!
+              progressBar.style.width = `100%`;
+              setTimeout(() => {
+                progressBar.style.width = `0%`;
+              }, 400);
+            } else {
+              const percentage = (progress / needed) * 100;
+              progressBar.style.width = `${Math.min(percentage, 100)}%`;
+            }
+            levelText.textContent = `${correctCount} / ${nextLevel.min} до наступного рівня`;
+          } else {
+            progressBar.style.width = "100%";
+            levelText.textContent = "Максимальний рівень досягнуто! 🏆";
+          }
         }
-      }
-
-      /**
-       * Генерація випадкового кольору з визначеного списку
-       */
-      function getRandomColor() {
-        const cols = ["#00529B", "#ff6057", "#27c93f", "#ffbd2e", "#9c27b0"];
-        return cols[Math.floor(Math.random() * cols.length)];
-      }
-
-      /**
-       * Створення конфетті у випадкових позиціях
-       */
-      function createConfetti(count) {
-        const cols = ["#ff6057", "#ffbd2e", "#27c93f", "#75d6ff"];
-        for (let i = 0; i < count; i++) {
-          const c = document.createElement("div");
-          c.className = "confetti";
-          c.style.background = cols[Math.floor(Math.random() * cols.length)];
-          c.style.left = Math.random() * 100 + "vw";
-          document.body.append(c);
-          const anim = c.animate(
-            [
-              { transform: "translateY(0)" },
-              { transform: `translateY(${400 + Math.random() * 200}px)` },
-            ],
-            { duration: 1500 + Math.random() * 1000, easing: "ease-out" }
-          );
-          anim.onfinish = () => c.remove();
+  
+        function getRandomGradient() {
+          const gradients = [
+            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+            "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+            "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+            "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+            "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+          ];
+          return gradients[Math.floor(Math.random() * gradients.length)];
         }
-      }
-
-      // ========================
-      // Обробники подій
-      // ========================
-      startBtn.addEventListener("click", startGame);
-      submitBtn.addEventListener("click", checkUrl);
-      skipBtn.addEventListener("click", skipWebsite);
-      restartBtn.addEventListener("click", initGame);
-      urlInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !submitBtn.disabled) checkUrl();
-      });
-      window.addEventListener("load", initGame);
-    </script>
+  
+        function createConfetti(count) {
+          const colors = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda0dd"];
+          for (let i = 0; i < count; i++) {
+            const confetti = document.createElement("div");
+            confetti.className = "confetti";
+            confetti.style.left = Math.random() * 100 + "vw";
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (Math.random() * 3 + 2) + "s";
+            confetti.style.animationDelay = Math.random() * 0.5 + "s";
+            document.body.appendChild(confetti);
+            setTimeout(() => {
+              if (confetti.parentNode) {
+                confetti.parentNode.removeChild(confetti);
+              }
+            }, 5000);
+          }
+        }
+  
+        function showAlert(message, type) {
+          alertMessage.textContent = message;
+          alertMessage.style.visibility = "visible";
+          alertMessage.style.background = type === "success"
+            ? "linear-gradient(90deg, #a8ff78, #78ffd6)"
+            : "linear-gradient(90deg, #ffecd2, #fcb69f)";
+          alertMessage.style.color = type === "success" ? "#388e3c" : "#c62828";
+        }
+  
+        // --- ОБРОБНИКИ ---
+        startBtn.addEventListener("click", handleStartStop);
+        submitBtn.addEventListener("click", checkUrl);
+        skipBtn.addEventListener("click", skipWebsite);
+        restartBtn.addEventListener("click", initGame);
+  
+        urlInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter" && !submitBtn.disabled) {
+            checkUrl();
+          }
+        });
+  
+        // --- ІНІЦІАЛІЗАЦІЯ ---
+        initGame();
+      </script>
   </body>
 </html>
