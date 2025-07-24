@@ -2,6 +2,16 @@
 
 const CATEGORIES = [
   {
+    id: "offline-activities",
+    name: "Безкомп'ютерні активності",
+    iconClass: "fas fa-child", // Іконка для категорії
+    services: [
+      { name: 'Паперові алгоритми: Залізниця', description: "Допоможи побудувати залізницю.", link: "pdfs/Pre_Coding_Activity_Potyag_UA.pdf", image: "images/41.jpg", tags: ["1-2 класи"] },
+      { name: "Паперові алгоритми: Автомобіль", description: "Проклади маршрут додому.", link: "pdfs/Pre_Coding_Activity_Auto_UA.pdf", image: "images/42.jpg", tags: ["1-2 класи"] },
+      { name: "Паперові алгоритми: Равлик", description: "Допоможи Равлику знайти шлях до смаколика.", link: "pdfs/Pre_CodingActivity_Ravlyk_UA.pdf", image: "images/40.jpg", tags: ["1-2 класи"] }
+    ]
+  },
+  {
     id: "digital-literacy",
     name: "Цифрова грамотність",
     iconClass: "fas fa-laptop", // Іконка для категорії

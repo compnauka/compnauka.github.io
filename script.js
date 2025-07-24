@@ -97,9 +97,20 @@
         const link = document.createElement("a");
         link.className = "service-card__link";
         link.href = service.link;
-        link.textContent = "Відкрити";
-        link.target = "_blank"; 
-        link.rel = "noopener noreferrer"; 
+        // Якщо це PDF із offline-activities, робимо зелену кнопку з "Завантажити"
+        if (service.link && service.link.endsWith('.pdf') && (service._category === "Безкомп'ютерні активності" || service._category === 'Безкомп\'ютерні активності')) {
+            link.textContent = "Завантажити";
+            link.style.backgroundColor = '#27ae60';
+            link.style.color = '#fff';
+            link.style.border = 'none';
+            link.style.boxShadow = '0 2px 8px rgba(39, 174, 96, 0.15)';
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+        } else {
+            link.textContent = "Відкрити";
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+        }
         content.appendChild(link);
 
         card.append(imageContainer, content);
@@ -138,7 +149,8 @@
         if (category.services && category.services.length > 0) {
             const fragment = document.createDocumentFragment();
             category.services.forEach((service) => {
-                fragment.appendChild(createServiceCard(service));
+                // Додаємо _category для коректної логіки кнопки
+                fragment.appendChild(createServiceCard({...service, _category: category.name}));
             });
             servicesGrid.appendChild(fragment);
         } else {
