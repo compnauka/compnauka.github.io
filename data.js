@@ -91,5 +91,14 @@ const CATEGORIES = [
       { name: "Розпізнавач облич", description: "Інтерактивна демонстрація комп'ютерного зору", link: "services/facedetector.html", image: "images/30.jpg", },
       { name: "Фейс ту смайл", description: "Доповнена реальність і смайлики!", link: "services/facemask.html", image: "images/31.jpg", }
     ]
+  },
+  {
+    id: "useful-links",
+    name: "Корисні посилання",
+    iconClass: "fas fa-link", // Іконка для категорії
+    services: [
+      { name: "Інструменти для вчителя інформатики", description: "Добірка корисних інструментів для вчителя інформатики.", link: "outer/", image: "images/44.jpg", tags: [] },
+      { name: "Освітні застосунки для дітей", description: "Добірка перевірених освітніх застосунків для дітей.", link: "apps/", image: "images/43.jpg", tags: [] }
+    ]
   }
 ];
