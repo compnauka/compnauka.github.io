@@ -313,6 +313,19 @@
                     }
                 }
             });
+
+            // Додаємо закриття меню при кліку поза ним (по overlay)
+            document.addEventListener('click', function(e) {
+                const isMobile = window.innerWidth <= 768;
+                const menuVisible = sidebarNavContainer.getAttribute("data-visible") === "true";
+                if (isMobile && menuVisible) {
+                    if (!sidebarNavContainer.contains(e.target) && !mobileNavToggleButton.contains(e.target)) {
+                        sidebarNavContainer.setAttribute("data-visible", "false");
+                        mobileNavToggleButton.setAttribute("aria-expanded", "false");
+                        document.body.classList.remove("mobile-nav-active");
+                    }
+                }
+            });
         }
 
         window.addEventListener('popstate', (event) => {
