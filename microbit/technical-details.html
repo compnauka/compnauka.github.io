@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Повні технічні характеристики BBC micro:bit v2 українською: процесор, пам’ять, датчики, дисплей, радіо/Bluetooth, GPIO, живлення та інтерфейси.">
+    <title>Технічні характеристики micro:bit v2</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="../../favicon.ico" type="image/x-icon" />
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a class="logo" href="index.html#home">Навчаємо(сь) з micro:bit</a>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Головна</a></li>
+                <li><a href="index.html#about">Про micro:bit</a></li>
+                <li><a href="index.html#components">Компоненти</a></li>
+                <li><a href="index.html#resources">Ресурси</a></li>
+                <li><a href="index.html#projects">Проекти</a></li>
+            </ul>
+            <div class="mobile-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <h1 class="section-title">Технічні характеристики BBC micro:bit v2</h1>
+            <p class="section-subtitle">
+                Детальний переклад офіційної документації micro:bit v2 (v1.2) з усіма важливими описами для повного розуміння пристрою.
+            </p>
+
+            <article class="tech-article">
+                <h2 id="overview">1. Загальний опис</h2>
+                <p>
+                    <strong>micro:bit</strong> — це одноплатний комп’ютер (Single Board Computer, SBC), який містить процесор застосунків з багатьма вбудованими периферійними пристроями. 
+                    Інтерфейсний процесор підключений до процесора застосунків і керує комунікацією через USB, включаючи процес перетягування файлів і завантаження коду. Інтерфейсний процесор підключено до основного через внутрішню I2C-шину.
+                </p>
+                <figure style="text-align: center; margin: 2rem 0;">
+                    <img src="microbit_3.png" alt="Діаграма компонентів micro:bit v2" class="featured-image">
+                </figure>
+
+                <h2 id="hardware">2. Апаратне забезпечення</h2>
+
+                <h3 id="nrf52">Процесор застосунків nRF52</h3>
+                <p>
+                    Процесор nRF52 відповідає за виконання всіх програм користувача. Одна програма містить ваш код, середовище виконання та стек Bluetooth, і виконується безпосередньо з flash-пам'яті. Усі доступні GPIO виходи забезпечує саме цей процесор. На платі є вбудований 2.4 GHz радіомодуль для Bluetooth та власного протоколу радіозв'язку.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Модель</th><td>Nordic nRF52833</td></tr>
+                        <tr><th>Ядро</th><td>32-бітний Arm Cortex-M4 з FPU</td></tr>
+                        <tr><th>Flash-пам'ять (ROM)</th><td>512 KB</td></tr>
+                        <tr><th>Оперативна пам'ять (RAM)</th><td>128 KB</td></tr>
+                        <tr><th>Тактова частота</th><td>64 MHz</td></tr>
+                        <tr><th>Налагодження</th><td>SWD, J-Link/OB</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="bluetooth">Бездротовий зв’язок Bluetooth</h3>
+                <p>
+                    Вбудований 2.4 GHz трансивер підтримує зв'язок Bluetooth через Nordic S140 SoftDevice, який забезпечує повноцінний Bluetooth Low Energy стек. Це дозволяє micro:bit обмінюватися даними з різними пристроями, включно зі смартфонами і планшетами.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Стек</th><td>Nordic S140 SoftDevice, Bluetooth 5.1 (BLE)</td></tr>
+                        <tr><th>Діапазон</th><td>2.4 GHz ISM (2.4–2.41 GHz)</td></tr>
+                        <tr><th>Канали</th><td>40 (0–39), з них 3 рекламні</td></tr>
+                        <tr><th>Чутливість приймача</th><td>-93 dBm</td></tr>
+                        <tr><th>Потужність передавача</th><td>-40…+4 dBm</td></tr>
+                        <tr><th>Ролі</th><td>GAP Peripheral / GAP Central</td></tr>
+                        <tr><th>Антиконґестія</th><td>Adaptive Frequency Hopping</td></tr>
+                        <tr><th>Профілі</th><td>BBC micro:bit profile</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="radio">Низькорівневий радіозв’язок (micro:bit Radio)</h3>
+                <p>
+                    Вбудований трансивер 2.4 GHz також підтримує інші протоколи радіозв’язку, серед яких micro:bit Radio. Це простий широкомовний інтерфейс передачі невеликих пакетів між пристроями micro:bit. Усі дані передаються з кодом групи, що дозволяє користувачам просто організовувати адресацію та фільтрацію пристроїв.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Протокол</th><td>Micro:bit Radio</td></tr>
+                        <tr><th>Діапазон</th><td>2.4 GHz ISM</td></tr>
+                        <tr><th>Канали</th><td>80 (0–79)</td></tr>
+                        <tr><th>Швидкість</th><td>1 або 2 Mbps</td></tr>
+                        <tr><th>Шифрування</th><td>Відсутнє</td></tr>
+                        <tr><th>Код групи</th><td>255</td></tr>
+                        <tr><th>Потужність передавача</th><td>8 рівнів (0: -30 dBm … 7: +4 dBm)</td></tr>
+                        <tr><th>Розмір пакету</th><td>32 байти (стандартно), до 255 байт (за налаштуванням)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="buttons">Кнопки</h3>
+                <p>
+                    Дві кнопки на передній панелі (A і B) та одна системна кнопка на звороті плати. Кнопка на звороті підключена до обох процесорів для виконання системного скидання. Кнопки A і B можна програмувати для будь-яких цілей. Всі вони програмно захищені від дребезгу (54 мс) та підтримують розпізнавання короткого, довгого та одночасного натискання A+B.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Тип</th><td>2 тактильні кнопки користувача (A, B), 1 тактильна системна</td></tr>
+                        <tr><th>Придушення дребезгу</th><td>Програмне, 54 мс</td></tr>
+                        <tr><th>Підтягуючі резистори</th><td>A & B: 4.7 кОм; Системна: 10 кОм</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="display">Дисплей</h3>
+                <p>
+                    Дисплей micro:bit — це матриця з 25 (5×5) червоних світлодіодів типу SMT. Керування яскравістю здійснюється програмно, підтримується 255 рівнів. Матриця швидко оновлюється, що забезпечує відсутність мерехтіння, і використовується для оцінки рівня освітленості шляхом вимірювання часу розряду контактів.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Тип</th><td>5×5 SMT-червоні світлодіоди</td></tr>
+                        <tr><th>Керування яскравістю</th><td>Програмне, 255 рівнів</td></tr>
+                        <tr><th>Колірна чутливість</th><td>Червоний, 700 нм</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="motion">Датчик руху (акселерометр/магнітометр)</h3>
+                <p>
+                    micro:bit має комбінований акселерометр і магнітометр, що забезпечують тривимірне визначення прискорення та вимірювання магнітного поля. Аппаратна підтримка розпізнає “вільне падіння”, інші жести визначаються програмно. Можливі різні діапазони вимірювання (2/4/8/16g).
+                </p>
+                <ul>
+                    <li>Модель: ST LSM303AGR або NXP FXOS8700CQ</li>
+                    <li>3-осьовий акселерометр (2/4/8/16g)</li>
+                    <li>3-осьовий магнітометр</li>
+                    <li>Детекція “вільного падіння” — апаратна, інші жести — програмно</li>
+                </ul>
+
+                <h3 id="temperature">Датчик температури</h3>
+                <p>
+                    Вбудований у ядро nRF52 датчик температури дозволяє оцінити температуру довкілля з точністю до 0.25°C. Значення видаються через стандартне програмне забезпечення.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Тип</th><td>Вбудований у ядро nRF52 (on-core)</td></tr>
+                        <tr><th>Діапазон</th><td>-40°C … +105°C</td></tr>
+                        <tr><th>Роздільна здатність</th><td>0.25°C крок</td></tr>
+                        <tr><th>Точність</th><td>±5°C (без калібрування)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="audio">Динамік та мікрофон</h3>
+                <p>
+                    На платі розташований друкований магнітний динамік для виводу звуку (дзвінки, ефекти тощо) і MEMS-мікрофон з індикатором живлення, який дозволяє зчитувати рівень шуму чи голосу з оточення.
+                </p>
+                <ul>
+                    <li>Динамік: магнітний, SPL 80 dB @ 5V, 10 см, резонанс 2700 Гц</li>
+                    <li>Мікрофон: MEMS Knowles SPU0410LR5H-QB-7, чутливість -38dB ±3dB, SNR 63dB, частотний діапазон 100 Гц – 80 кГц, AOP 118 dB SPL</li>
+                    <li>Мікрофон має LED-індикатор живлення</li>
+                </ul>
+
+                <h3 id="gpio">Крайовий роз’єм (GPIO)</h3>
+                <p>
+                    Крайовий роз’єм micro:bit виводить багато з ліній GPIO основного процесора. Частина з них може використовуватись для інших функцій плати (дисплей, кнопки, I2C тощо), але більшість можна перепризначити для задач користувача: цифра, аналог, PWM, серіал, SPI, touch.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Кільця</th><td>3 великі IO-кільця, 2 кільця живлення (сумісні з 4 мм штекерами)</td></tr>
+                        <tr><th>Програмовані GPIO</th><td>19, з них 6 — аналогові входи</td></tr>
+                        <tr><th>Роздільна здатність ADC</th><td>10 біт (0–1023)</td></tr>
+                        <tr><th>Макс. каналів PWM</th><td>3 одночасно</td></tr>
+                        <tr><th>Крок контактів</th><td>1.27 мм, 80 контактів, двосторонній</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="power">Живлення</h3>
+                <p>
+                    Живлення може подаватися через USB (5V), батарейний роз’єм JST (3V) або через крайові кільця (3V/GND). 3V та GND кільця також можуть використовуватися для живлення зовнішніх пристроїв. На платі встановлений LDO-стабілізатор до 300 mA з термозахистом.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Джерела живлення</th><td>USB (5V), роз’єм JST (3V), або крайові кільця (3V/GND)</td></tr>
+                        <tr><th>Діапазон напруги</th><td>1.8 V … 3.6 V</td></tr>
+                        <tr><th>Споживання (USB+батарея)</th><td>До 90 mA (з периферією) / 300 mA max</td></tr>
+                        <tr><th>Макс. струм через крайовий роз’єм</th><td>До 190 mA</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="interface">3. Інтерфейс</h2>
+                <p>
+                    Інтерфейсний чип (MKL27) відповідає за підключення до USB, запис нового коду на micro:bit через drag-and-drop, а також серійний обмін даними з комп’ютером. Підтримується протокол CMSIS-DAP для налагодження.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Модель</th><td>NXP MKL27Z256VFM4</td></tr>
+                        <tr><th>Ядро</th><td>Arm Cortex-M0+</td></tr>
+                        <tr><th>Flash ROM</th><td>256 KB (128 KB резерв для даних)</td></tr>
+                        <tr><th>RAM</th><td>16 KB</td></tr>
+                        <tr><th>Швидкість</th><td>48 MHz</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 id="usb">USB-комунікації</h3>
+                <p>
+                    На платі реалізовано стек USB 2.0 Full Speed (12 Mbit/s). Підтримується клас масового зберігання (Mass Storage Class, MSC) для зручного завантаження коду, а також серійний обмін даними і протокол CMSIS-DAP для налагодження.
+                </p>
+
+                <h3 id="debugging">Налагодження</h3>
+                <p>
+                    Інтерфейсний процесор може використовуватися з інструментами хост-комп’ютера для налагодження коду, який виконується на основному процесорі. Можливо також перепрошивати або відновлювати bootloader через SWD-інтерфейс.
+                </p>
+
+                <h3 id="mechanical">Механічні характеристики</h3>
+                <p>
+                    Для micro:bit доступні 2D та 3D CAD-моделі з усіма основними розмірами. Вони використовуються як для створення ілюстрацій та маркетингових зображень, так і для точного проєктування кріплень і корпусів, наприклад для 3D-друку.
+                </p>
+                <table class="tech-table">
+                    <tbody>
+                        <tr><th>Розміри</th><td>51.60 мм (ш) × 42.00 мм (в) × 11.65 мм (г), глибина кнопки 4.55 мм, глибина динаміка 3.00 мм, висота роз'єму JST 5.50 мм</td></tr>
+                        <tr><th>Вага</th><td>уточнюється</td></tr>
+                    </tbody>
+                </table>
+            </article>
+
+            <div class="source-info">
+                <h3>Джерело інформації</h3>
+                <p>
+                    Технічні характеристики взято з офіційної документації BBC micro:bit v2:
+                    <a href="https://evo.net.ua/content/files/bbc-microbit-v2-datasheet-v1.2-39129182.pdf" target="_blank" rel="noopener noreferrer">
+                        BBC micro:bit v2 Datasheet v1.2
+                    </a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-disclaimer">
+                <p><strong>Відмова від відповідальності:</strong> Цей сайт є незалежним освітнім ресурсом, створеним для підтримки вчителів України. Він не є офіційним сайтом і не створений, не афілійований та не підтримується Micro:bit Educational Foundation. Торгові марки "micro:bit" та логотип micro:bit є власністю Micro:bit Educational Foundation.</p>
+            </div>
+
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Про ресурс</h3>
+                    <p>Навчальний портал для вчителів та учнів, присвячений програмуванню на micro:bit в Україні.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Офіційні ресурси</h3>
+                    <a href="https://microbit.org/" target="_blank" rel="noopener noreferrer">Офіційний сайт micro:bit</a>
+                    <a href="https://makecode.microbit.org/" target="_blank" rel="noopener noreferrer">Середовище програмування MakeCode</a>
+                    <a href="https://classroom.microbit.org/" target="_blank" rel="noopener noreferrer">micro:bit classroom</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Швидкі посилання</h3>
+                    <a href="index.html#about">Про micro:bit</a>
+                    <a href="index.html#projects">Проекти</a>
+                    <a href="technical-details.html">Технічні характеристики</a>
+                </div>
+            </div>
+            <p class="copyright">&copy; 2025 Комп'ютерна наука</p>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
