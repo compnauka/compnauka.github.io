@@ -97,6 +97,7 @@ const CATEGORIES = [
     name: "Корисні посилання",
     iconClass: "fas fa-link", // Іконка для категорії
     services: [
+      { name: "micro:bit для вчителів та учнів", description: "Знайомство з micro:bit та його основними компонентами та можливостями.", link: "microbit/", image: "images/45.jpg", tags: [] },
       { name: "Інструменти для вчителя інформатики", description: "Добірка корисних інструментів для вчителя інформатики.", link: "outer/", image: "images/44.jpg", tags: [] },
       { name: "Освітні застосунки для дітей", description: "Добірка перевірених освітніх застосунків для дітей.", link: "apps/", image: "images/43.jpg", tags: [] }
     ]
