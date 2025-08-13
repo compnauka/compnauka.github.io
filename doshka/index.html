@@ -51,10 +51,10 @@
         }
 
         #qr-viewer-content > * {
+            height: 85vh; /* Встановлюємо висоту у відсотках від висоти екрану */
+            width: 85vh;  /* Встановлюємо ширину такою ж для збереження пропорцій */
             max-height: 90vh;
             max-width: 90vw;
-            width: auto;
-            height: auto;
             object-fit: contain;
             background-color: white;
             padding: 1rem;
@@ -443,9 +443,18 @@
             qrcodeContainer.addEventListener('click', () => {
                 const qrElement = qrcodeContainer.querySelector('canvas, img');
                 if (qrElement) {
-                    const qrClone = qrElement.cloneNode(true);
+                    let viewableElement;
+
+                    if (qrElement.tagName.toLowerCase() === 'canvas') {
+                        viewableElement = document.createElement('img');
+                        viewableElement.src = qrElement.toDataURL("image/png");
+                        viewableElement.style.imageRendering = 'pixelated';
+                    } else {
+                        viewableElement = qrElement.cloneNode(true);
+                    }
+
                     qrViewerContent.innerHTML = '';
-                    qrViewerContent.appendChild(qrClone);
+                    qrViewerContent.appendChild(viewableElement);
                     showModal(qrViewerModal);
                 }
             });
