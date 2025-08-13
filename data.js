@@ -46,7 +46,8 @@ const CATEGORIES = [
       { name: "Фермер Бот", description: "Програмування робота за допомогою блоків.", link: "services/farmbot/index.html", image: "images/25.jpg", tags: ["2-3 класи"] },
       { name: "Фермер Бот Плюс", description: "Програмування робота за допомогою текстових команд.", link: "services/farmbot_plus/index.html", image: "images/26.jpg", tags: ["3-5 класи"] },
       { name: "Що таке змінні", description: "Інтерактивний урок про змінні в програмуванні.", link: "services/variables.html", image: "images/33.jpg", tags: ["5-7 класи"] },
-      { name: "Що таке типи даних", description: "Інтерактивний урок про типи даних в програмуванні.", link: "services/types.html", image: "images/34.jpg", tags: ["5-7 класи"] }
+      { name: "Що таке типи даних", description: "Інтерактивний урок про типи даних в програмуванні.", link: "services/types.html", image: "images/34.jpg", tags: ["5-7 класи"] },
+      { name: "Основи Python", description: "Курс з основ програмування на Python.", link: "/python", image: "images/46.jpg", tags: ["5-7 класи"] }
     ]
   },
   {
