@@ -26,16 +26,14 @@
             background-color: rgba(0, 0, 0, 0.5);
         }
         
-        /* --- Оновлені стилі для панелі інструментів --- */
         .toolbar-responsive {
             max-width: 95vw;
-            flex-wrap: nowrap; /* За замовчуванням в один рядок */
+            flex-wrap: nowrap;
         }
         
-        /* Медіа-запит для вузьких екранів */
         @media (max-width: 1100px) { 
             .toolbar-responsive {
-                flex-wrap: wrap; /* Дозволити перенесення */
+                flex-wrap: wrap;
                 justify-content: center;
                 gap: 8px;
                 padding: 8px;
@@ -44,8 +42,23 @@
                 justify-content: center;
             }
             .separator {
-                display: none; /* Ховати розділювачі при перенесенні */
+                display: none;
             }
+        }
+
+        #qrcode-container {
+            cursor: zoom-in;
+        }
+
+        #qr-viewer-content > * {
+            max-height: 90vh;
+            max-width: 90vw;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
         }
     </style>
 </head>
@@ -146,6 +159,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Модальне вікно перегляду QR-коду -->
+        <div id="qr-viewer-modal" class="fixed inset-0 z-40 items-center justify-center hidden bg-black/80 cursor-zoom-out">
+            <button id="close-qr-viewer-btn" class="absolute top-5 right-8 text-white text-5xl font-light">&times;</button>
+            <div id="qr-viewer-content" class="flex items-center justify-center w-full h-full p-8">
+                 <!-- Сюди буде вставлено клон QR-коду -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -160,8 +181,6 @@
             let currentSize = 5;
             let lastX = 0;
             let lastY = 0;
-
-            // Історія для скасування/повторення
             let history = [];
             let historyIndex = -1;
             const MAX_HISTORY_SIZE = 30;
@@ -188,7 +207,9 @@
             const qrUrlInput = document.getElementById('qr-url-input');
             const generateQrBtn = document.getElementById('generate-qr-btn');
             const qrcodeContainer = document.getElementById('qrcode-container');
-            let qrcodeInstance = null;
+            const qrViewerModal = document.getElementById('qr-viewer-modal');
+            const qrViewerContent = document.getElementById('qr-viewer-content');
+            const closeQrViewerBtn = document.getElementById('close-qr-viewer-btn');
 
             // --- Утилітарні функції ---
             function debounce(func, wait) {
@@ -210,10 +231,8 @@
                 canvas.width = rect.width * dpr;
                 canvas.height = rect.height * dpr;
                 ctx.scale(dpr, dpr);
-                
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 saveState();
             }
 
@@ -226,25 +245,16 @@
             function draw(e) {
                 if (!isDrawing) return;
                 e.preventDefault();
-
                 const [currentX, currentY] = getMousePos(e);
-
                 ctx.beginPath();
                 ctx.moveTo(lastX, lastY);
                 ctx.lineTo(currentX, currentY);
-
-                if (currentTool === 'pen') {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.strokeStyle = currentColor;
-                } else if (currentTool === 'eraser') {
-                    ctx.globalCompositeOperation = 'destination-out';
-                }
-                
+                ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+                ctx.strokeStyle = currentColor;
                 ctx.lineWidth = currentSize;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 ctx.stroke();
-
                 [lastX, lastY] = [currentX, currentY];
             }
 
@@ -265,12 +275,8 @@
             
             // --- Історія (Скасувати/Повторити) ---
             function saveState() {
-                if (historyIndex < history.length - 1) {
-                    history.splice(historyIndex + 1);
-                }
-                if (history.length >= MAX_HISTORY_SIZE) {
-                    history.shift(); 
-                }
+                if (historyIndex < history.length - 1) history.splice(historyIndex + 1);
+                if (history.length >= MAX_HISTORY_SIZE) history.shift(); 
                 history.push(canvas.toDataURL());
                 historyIndex = history.length - 1;
                 updateUndoRedoButtons();
@@ -316,9 +322,7 @@
 
             function setActiveColor(selectedButton) {
                 colorButtons.forEach(button => button.classList.remove('active'));
-                if(selectedButton) {
-                    selectedButton.classList.add('active');
-                }
+                if(selectedButton) selectedButton.classList.add('active');
             }
 
             function clearCanvas() {
@@ -331,11 +335,9 @@
                 const tempCtx = tempCanvas.getContext('2d');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
-                
                 tempCtx.fillStyle = '#FFFFFF';
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 tempCtx.drawImage(canvas, 0, 0);
-                
                 const link = document.createElement('a');
                 link.download = `whiteboard-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
                 link.href = tempCanvas.toDataURL('image/png');
@@ -361,7 +363,7 @@
                 }
                 qrcodeContainer.innerHTML = '';
                 try {
-                    qrcodeInstance = new QRCode(qrcodeContainer, {
+                    new QRCode(qrcodeContainer, {
                         text: url,
                         width: 200,
                         height: 200,
@@ -404,9 +406,8 @@
 
             colorButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    const color = button.dataset.color;
-                    currentColor = color;
-                    colorPicker.value = color;
+                    currentColor = button.dataset.color;
+                    colorPicker.value = currentColor;
                     setActiveColor(button);
                 });
             });
@@ -437,6 +438,23 @@
             generateQrBtn.addEventListener('click', generateQRCode);
             qrUrlInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') generateQRCode();
+            });
+
+            qrcodeContainer.addEventListener('click', () => {
+                const qrElement = qrcodeContainer.querySelector('canvas, img');
+                if (qrElement) {
+                    const qrClone = qrElement.cloneNode(true);
+                    qrViewerContent.innerHTML = '';
+                    qrViewerContent.appendChild(qrClone);
+                    showModal(qrViewerModal);
+                }
+            });
+
+            closeQrViewerBtn.addEventListener('click', () => hideModal(qrViewerModal));
+            qrViewerModal.addEventListener('click', (e) => {
+                if (e.target === qrViewerModal) {
+                    hideModal(qrViewerModal);
+                }
             });
 
             window.addEventListener('resize', handleResize);
