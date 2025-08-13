@@ -1,573 +1,422 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Онлайн-дошка</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Font Awesome -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-
-  <!-- QR Code Library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
-
-  <style>
-    body { font-family: 'Inter', sans-serif; overflow: hidden; }
-    #whiteboard-canvas { display:block; background:#fff; cursor:crosshair; touch-action:none; }
-
-    /* Кнопки інструментів */
-    .tool-btn {
-      width: 2.5rem; height: 2.5rem; display:inline-flex; align-items:center; justify-content:center;
-      border-radius: 0.375rem; transition: all 0.2s ease; background:#e5e7eb;
-    }
-    .tool-btn:disabled { opacity:.5; cursor:not-allowed; }
-    .tool-btn:not(:disabled):hover { background:#d1d5db; }
-    .tool-btn.active { background:#3b82f6; color:#fff; transform:scale(1.10);
-      box-shadow:0 0 0 2px #fff, 0 0 0 4px #3b82f6; }
-
-    /* Колорпікер */
-    input[type="color"]{
-      -webkit-appearance:none; -moz-appearance:none; appearance:none; width:40px; height:40px; padding:0;
-      border:none; border-radius:50%; cursor:pointer;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
-    input[type="color"]::-webkit-color-swatch{ border:2px solid #e5e7eb; border-radius:50%; }
-
-    /* Свотчі */
-    .color-swatch{ width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent;
-      transition: transform .1s ease, border-color .2s ease; }
-    .color-swatch:hover{ transform:scale(1.15); }
-    .color-swatch.active-swatch{ border-color:#3b82f6; }
-
-    /* Модальні оверлеї */
-    .modal-overlay { background:rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-
-    /* Адаптив тулбара */
-    @media (max-width: 720px){
-      #toolbar{ flex-wrap:wrap; width:95vw; bottom:10px; gap:4px; padding:8px; }
-      .tool-btn{ padding:8px; }
-      .h-8.w-px{ display:none; }
-    }
-
-    /* Лоадер */
-    .loader{ border:2px solid #f3f3f3; border-top:2px solid #3498db; border-radius:50%; width:20px; height:20px; animation:spin 1s linear infinite; }
-    @keyframes spin { 0%{ transform:rotate(0) } 100%{ transform:rotate(360deg) } }
-
-    /* Статус-бар */
-    .status-bar{
-      position:fixed; top:1rem; right:1rem; background:rgba(255,255,255,.9);
-      backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-      padding:.5rem 1rem; border-radius:.5rem; font-size:.875rem; color:#6b7280; z-index:20;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн-дошка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Запобігає появі смуг прокрутки */
+        }
+        .tool-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .tool-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .color-btn.active {
+             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-white text-gray-900">
 
-  <canvas id="whiteboard-canvas"></canvas>
+    <!-- Головний контейнер -->
+    <div id="app" class="relative w-screen h-screen flex">
 
-  <!-- Статус бар -->
-  <div class="status-bar" aria-live="polite">
-    <span id="canvas-size">Розмір: <span id="canvas-dimensions"></span></span>
-    <span class="mx-2" aria-hidden="true">|</span>
-    <span id="history-status">Історія: <span id="history-count">0</span>/100</span>
-  </div>
+        <!-- Панель інструментів -->
+        <div id="toolbar" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 bg-gray-100 p-3 rounded-xl shadow-lg flex items-center flex-wrap justify-center gap-y-2 md:space-x-4 border border-gray-200">
+            <!-- Інструменти малювання -->
+            <div class="flex items-center space-x-2">
+                <button id="pen-tool" class="tool-btn p-3 rounded-lg bg-gray-200 hover:bg-blue-200 active" data-tool="pen" title="Перо">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+                <button id="eraser-tool" class="tool-btn p-3 rounded-lg bg-gray-200 hover:bg-blue-200" data-tool="eraser" title="Гумка">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a2.12 2.12 0 0 0-3-3L7.42 13.58a2.12 2.12 0 0 0 0 3l7 7a2.12 2.12 0 0 0 3 0l3-3a2.12 2.12 0 0 0 0-3z"></path><path d="m18 11-7.5 7.5"></path><path d="m14 15-7.5 7.5"></path></svg>
+                </button>
+            </div>
 
-  <!-- Toolbar -->
-  <div id="toolbar" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-sm p-3 rounded-xl shadow-2xl flex items-center justify-center gap-3 z-10" role="toolbar" aria-label="Інструменти малювання">
-    <button id="pen-tool" class="tool-btn active" title="Олівець (P)" aria-label="Олівець" aria-pressed="true">
-      <i class="fa-solid fa-pencil"></i>
-    </button>
-    <button id="eraser-tool" class="tool-btn" title="Гумка (E)" aria-label="Гумка" aria-pressed="false">
-      <i class="fa-solid fa-eraser"></i>
-    </button>
+            <!-- Розділювач -->
+            <div class="w-px h-8 bg-gray-300"></div>
 
-    <div class="h-8 w-px bg-gray-300" aria-hidden="true"></div>
+            <!-- Колір та Розмір -->
+            <div class="flex items-center space-x-2">
+                 <input type="color" id="color-picker" value="#000000" class="w-10 h-10 p-1 bg-gray-200 rounded-lg cursor-pointer" title="Вибір кольору">
+                 <div class="flex items-center space-x-1.5">
+                    <button data-color="#000000" class="color-btn w-8 h-8 rounded-lg bg-black border-2 active" title="Чорний"></button>
+                    <button data-color="#ef4444" class="color-btn w-8 h-8 rounded-lg bg-red-500 border-2 border-transparent" title="Червоний"></button>
+                    <button data-color="#22c55e" class="color-btn w-8 h-8 rounded-lg bg-green-500 border-2 border-transparent" title="Зелений"></button>
+                    <button data-color="#3b82f6" class="color-btn w-8 h-8 rounded-lg bg-blue-500 border-2 border-transparent" title="Синій"></button>
+                 </div>
+            </div>
+             <div class="flex items-center space-x-2 bg-gray-200 p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>
+                <input type="range" id="size-slider" min="1" max="50" value="5" class="w-24 cursor-pointer" title="Розмір пензля">
+            </div>
 
-    <label for="color-picker" class="sr-only">Колір пензля</label>
-    <input type="color" id="color-picker" value="#000000" title="Колір пензля" aria-label="Колір пензля">
 
-    <div id="color-swatches" class="flex gap-2" aria-label="Швидкі кольори">
-      <button class="color-swatch" data-color="#ef4444" style="background-color:#ef4444" title="Червоний" aria-label="Червоний"></button>
-      <button class="color-swatch" data-color="#22c55e" style="background-color:#22c55e" title="Зелений" aria-label="Зелений"></button>
-      <button class="color-swatch" data-color="#3b82f6" style="background-color:#3b82f6" title="Синій" aria-label="Синій"></button>
-      <button class="color-swatch active-swatch" data-color="#000000" style="background-color:#000000" title="Чорний" aria-label="Чорний"></button>
+            <!-- Розділювач -->
+            <div class="w-px h-8 bg-gray-300"></div>
+
+            <!-- Дії -->
+            <div class="flex items-center space-x-2">
+                <button id="undo-btn" class="tool-btn p-3 rounded-lg bg-gray-200 hover:bg-blue-200" title="Скасувати">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+                </button>
+                <button id="redo-btn" class="tool-btn p-3 rounded-lg bg-gray-200 hover:bg-blue-200" title="Повторити">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"></polyline><path d="M4 20v-7a4 4 0 0 1 4-4h12"></path></svg>
+                </button>
+                 <button id="clear-btn" class="tool-btn p-3 rounded-lg bg-red-200 hover:bg-red-300" title="Очистити полотно">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+            </div>
+
+            <!-- Розділювач -->
+            <div class="w-px h-8 bg-gray-300"></div>
+
+            <!-- Збереження та QR -->
+            <div class="flex items-center space-x-2">
+                <button id="save-btn" class="tool-btn p-3 rounded-lg bg-green-200 hover:bg-green-300" title="Зберегти як PNG">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </button>
+                <button id="qr-btn" class="tool-btn p-3 rounded-lg bg-purple-200 hover:bg-purple-300" title="Згенерувати QR-код">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Полотно -->
+        <canvas id="whiteboard" class="w-full h-full bg-white"></canvas>
+
+        <!-- Модальне вікно підтвердження очищення -->
+        <div id="clear-modal" class="fixed inset-0 z-30 items-center justify-center hidden modal-backdrop">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Очистити полотно</h3>
+                <p class="text-sm text-gray-500 mb-4">Ви впевнені, що хочете все стерти? Цю дію неможливо скасувати.</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirm-clear-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Очистити</button>
+                    <button id="cancel-clear-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none">Скасувати</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальне вікно генератора QR-коду -->
+        <div id="qr-modal" class="fixed inset-0 z-30 items-center justify-center hidden modal-backdrop">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Згенерувати QR-код</h3>
+                    <button id="close-qr-btn" class="text-gray-400 hover:text-gray-600">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="qr-url-input" placeholder="https://example.com" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="generate-qr-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Згенерувати</button>
+                    <div id="qrcode-container" class="flex justify-center items-center p-4 bg-white rounded-md mt-4 min-h-[200px]">
+                        <!-- QR-код буде згенеровано тут -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="h-8 w-px bg-gray-300" aria-hidden="true"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('whiteboard');
+            const ctx = canvas.getContext('2d');
 
-    <div class="flex items-center gap-2" title="Розмір пензля" aria-label="Розмір пензля">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/></svg>
-      <label for="brush-size" class="sr-only">Розмір пензля</label>
-      <input type="range" id="brush-size" min="1" max="50" value="5" class="w-24 md:w-32 cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>
-    </div>
+            // --- Керування станом ---
+            let isDrawing = false;
+            let currentTool = 'pen'; // 'pen' або 'eraser'
+            let currentColor = '#000000';
+            let currentSize = 5;
+            let lastX = 0;
+            let lastY = 0;
 
-    <div class="h-8 w-px bg-gray-300" aria-hidden="true"></div>
+            // Історія для скасування/повторення
+            let history = [];
+            let historyIndex = -1;
+            const MAX_HISTORY_SIZE = 30; // Обмеження використання пам'яті
 
-    <button id="undo-btn" class="tool-btn" title="Скасувати (Ctrl+Z)" aria-label="Скасувати"><i class="fa-solid fa-rotate-left"></i></button>
-    <button id="redo-btn" class="tool-btn" title="Повторити (Ctrl+Y)" aria-label="Повторити"><i class="fa-solid fa-rotate-right"></i></button>
-    <button id="clear-canvas" class="tool-btn" title="Очистити полотно" aria-label="Очистити полотно"><i class="fa-solid fa-trash-can"></i></button>
-    <button id="save-image" class="tool-btn" title="Зберегти як PNG (Ctrl+S)" aria-label="Зберегти як PNG"><i class="fa-solid fa-download"></i></button>
-    <button id="qr-code-tool" class="tool-btn" title="Створити QR-код" aria-label="Створити QR-код"><i class="fa-solid fa-qrcode"></i></button>
-  </div>
+            // --- Елементи інтерфейсу ---
+            const penToolBtn = document.getElementById('pen-tool');
+            const eraserToolBtn = document.getElementById('eraser-tool');
+            const colorPicker = document.getElementById('color-picker');
+            const colorButtons = document.querySelectorAll('.color-btn');
+            const sizeSlider = document.getElementById('size-slider');
+            const undoBtn = document.getElementById('undo-btn');
+            const redoBtn = document.getElementById('redo-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const qrBtn = document.getElementById('qr-btn');
 
-  <!-- Confirmation Modal -->
-  <div id="confirmation-modal" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
-    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4 border border-gray-200">
-      <h3 id="confirm-title" class="text-lg font-medium text-gray-900">Очистити полотно</h3>
-      <p id="confirm-desc" class="mt-2 text-sm text-gray-600">Ви впевнені, що хочете очистити все полотно? Цю дію неможливо скасувати.</p>
-      <div class="mt-4 flex justify-end gap-3">
-        <button id="cancel-clear" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Скасувати</button>
-        <button id="confirm-clear" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Очистити</button>
-      </div>
-    </div>
-  </div>
+            // --- Модальні вікна ---
+            const clearModal = document.getElementById('clear-modal');
+            const confirmClearBtn = document.getElementById('confirm-clear-btn');
+            const cancelClearBtn = document.getElementById('cancel-clear-btn');
+            const qrModal = document.getElementById('qr-modal');
+            const closeQrBtn = document.getElementById('close-qr-btn');
+            const qrUrlInput = document.getElementById('qr-url-input');
+            const generateQrBtn = document.getElementById('generate-qr-btn');
+            const qrcodeContainer = document.getElementById('qrcode-container');
+            let qrcodeInstance = null;
 
-  <!-- QR Code Modal -->
-  <div id="qr-code-modal" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="qr-title" aria-describedby="qr-desc">
-    <div class="text-center bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4 border border-gray-200">
-      <h3 id="qr-title" class="text-lg font-medium text-gray-900">Створити QR-код</h3>
-      <p id="qr-desc" class="mt-2 text-sm text-gray-600">Введіть посилання або текст для створення QR-коду.</p>
-      <input type="text" id="qr-input" class="w-full p-2 mt-4 border rounded" placeholder="https://example.com" maxlength="500">
-      <div id="qr-code-display" class="mt-4 p-4 border rounded-md min-h-[232px] flex items-center justify-center"></div>
-      <div class="mt-4 flex justify-end gap-3">
-        <button id="close-qr-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Закрити</button>
-        <button id="generate-qr-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          <span class="button-text">Згенерувати</span>
-          <div class="loader hidden" aria-hidden="true"></div>
-        </button>
-      </div>
-      <div id="qr-error" class="mt-2 text-sm text-red-600 hidden" role="alert"></div>
-    </div>
-  </div>
+            // --- Ініціалізація ---
+            function initializeCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                
+                // Встановлення білого фону за замовчуванням
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  <script>
-    // HiDPI / Retina налаштування канвасу
-    function setupHiDpiCanvas(canvas, ctx) {
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const cssW = Math.floor(window.innerWidth);
-      const cssH = Math.floor(window.innerHeight);
-      canvas.style.width = cssW + 'px';
-      canvas.style.height = cssH + 'px';
-      canvas.width = Math.floor(cssW * dpr);
-      canvas.height = Math.floor(cssH * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    // Простий фокус-трап всередині модалки
-    function trapFocus(modal) {
-      const focusable = modal.querySelectorAll('button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])');
-      if (!focusable.length) return () => {};
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      function onKey(e){
-        if (e.key === 'Tab'){
-          if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-          else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-        }
-      }
-      modal.addEventListener('keydown', onKey);
-      return () => modal.removeEventListener('keydown', onKey);
-    }
-
-    class WhiteboardApp {
-      constructor() {
-        this.canvas = document.getElementById('whiteboard-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.currentTool = 'pen';
-        this.isDrawing = false;
-        this.lastX = 0; this.lastY = 0;
-
-        // Історія
-        this.MAX_HISTORY = 100;
-        this.history = []; // масив objectURL-ів
-        this.historyStep = -1;
-
-        // UI елементи
-        this.penTool = document.getElementById('pen-tool');
-        this.eraserTool = document.getElementById('eraser-tool');
-        this.colorPicker = document.getElementById('color-picker');
-        this.colorSwatches = document.querySelectorAll('.color-swatch');
-        this.brushSize = document.getElementById('brush-size');
-        this.undoBtn = document.getElementById('undo-btn');
-        this.redoBtn = document.getElementById('redo-btn');
-
-        // Статус
-        this.canvasDimensions = document.getElementById('canvas-dimensions');
-        this.historyCount = document.getElementById('history-count');
-
-        // Модалки
-        this.confirmModal = document.getElementById('confirmation-modal');
-        this.qrModal = document.getElementById('qr-code-modal');
-        this.clearBtn = document.getElementById('clear-canvas');
-        this.cancelClearBtn = document.getElementById('cancel-clear');
-        this.confirmClearBtn = document.getElementById('confirm-clear');
-        this.saveImageBtn = document.getElementById('save-image');
-        this.qrBtn = document.getElementById('qr-code-tool');
-        this.closeQrBtn = document.getElementById('close-qr-modal');
-        this.generateQrBtn = document.getElementById('generate-qr-btn');
-        this.qrInput = document.getElementById('qr-input');
-        this.qrDisplay = document.getElementById('qr-code-display');
-        this.qrError = document.getElementById('qr-error');
-
-        this.removeTrap = null; // для фокус-трапу
-        this.lastTrigger = null; // кнопка, що відкрила модалку
-
-        this.init();
-      }
-
-      init() {
-        this.setupCanvas();
-        this.bindEvents();
-        this.saveState();
-        this.updateStatus();
-      }
-
-      setupCanvas() {
-        setupHiDpiCanvas(this.canvas, this.ctx);
-        // Білий фон (у фізичних пікселях, незалежно від трансформації пера)
-        this.ctx.save();
-        this.ctx.setTransform(1,0,0,1,0,0);
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.restore();
-        this.applyBrushSettings();
-      }
-
-      resizeCanvas() {
-        // Знімок поточного стану для плавного ресайзу
-        const snapshot = this.canvas.toDataURL('image/png');
-        setupHiDpiCanvas(this.canvas, this.ctx);
-        if (snapshot) {
-          const img = new Image();
-          img.onload = () => {
-            const cssW = parseFloat(this.canvas.style.width);
-            const cssH = parseFloat(this.canvas.style.height);
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            // Білий фон
-            this.ctx.save();
-            this.ctx.setTransform(1,0,0,1,0,0);
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.restore();
-            // Саме зображення під новий CSS-розмір
-            this.ctx.drawImage(img, 0, 0, cssW, cssH);
-          };
-          img.src = snapshot;
-        }
-        this.updateStatus();
-      }
-
-      applyBrushSettings() {
-        this.ctx.strokeStyle = this.colorPicker.value;
-        this.ctx.lineWidth = this.brushSize.value;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
-        this.ctx.globalCompositeOperation = this.currentTool === 'eraser' ? 'destination-out' : 'source-over';
-      }
-
-      getCoords(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        if (e.touches && e.touches.length > 0) {
-          return {
-            x: (e.touches[0].clientX - rect.left) * (this.canvas.width / rect.width),
-            y: (e.touches[0].clientY - rect.top) * (this.canvas.height / rect.height)
-          };
-        }
-        return {
-          x: ( (e.offsetX ?? (e.clientX - rect.left)) ) * (this.canvas.width / rect.width),
-          y: ( (e.offsetY ?? (e.clientY - rect.top)) ) * (this.canvas.height / rect.height)
-        };
-      }
-
-      startDrawing(e) {
-        e.preventDefault();
-        this.isDrawing = true;
-        this.applyBrushSettings();
-        const { x, y } = this.getCoords(e);
-        this.lastX = x; this.lastY = y;
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.lastX, this.lastY);
-      }
-
-      draw(e) {
-        if (!this.isDrawing) return;
-        e.preventDefault();
-        const { x, y } = this.getCoords(e);
-        this.ctx.quadraticCurveTo(this.lastX, this.lastY, (this.lastX + x) / 2, (this.lastY + y) / 2);
-        this.ctx.stroke();
-        this.lastX = x; this.lastY = y;
-      }
-
-      stopDrawing() {
-        if (!this.isDrawing) return;
-        this.ctx.closePath();
-        this.isDrawing = false;
-        this.saveState();
-      }
-
-      // --- Історія ---
-      revokeURL(url){ try{ URL.revokeObjectURL(url); } catch(_){} }
-
-      async saveState() {
-        // Обрізаємо історію та звільняємо URL-и
-        if (this.history.length >= this.MAX_HISTORY) {
-          const removed = this.history.splice(0, this.history.length - (this.MAX_HISTORY - 1));
-          removed.forEach(u => this.revokeURL(u));
-          this.historyStep = this.history.length - 1;
-        }
-        this.history = this.history.slice(0, this.historyStep + 1);
-
-        const blob = await new Promise(resolve => {
-          // WebP із фолбеком у PNG
-          if (HTMLCanvasElement.prototype.toBlob) {
-            this.canvas.toBlob(b => {
-              if (b && b.type.includes('image/webp')) return resolve(b);
-              // якщо webp не повернувся — повтор у png
-              this.canvas.toBlob(resolve, 'image/png');
-            }, 'image/webp', 0.85);
-          } else {
-            // дуже старі браузери
-            const dataUrl = this.canvas.toDataURL('image/png');
-            fetch(dataUrl).then(r=>r.blob()).then(resolve);
-          }
-        });
-
-        const url = URL.createObjectURL(blob);
-        this.history.push(url);
-        this.historyStep++;
-        this.updateHistoryButtons();
-        this.updateStatus();
-      }
-
-      restoreState(step) {
-        const url = this.history[step];
-        if (!url) return;
-        const img = new Image();
-        img.onload = () => {
-          const cssW = parseFloat(this.canvas.style.width);
-          const cssH = parseFloat(this.canvas.style.height);
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          // Білий фон
-          this.ctx.save();
-          this.ctx.setTransform(1,0,0,1,0,0);
-          this.ctx.fillStyle = '#ffffff';
-          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-          this.ctx.restore();
-          // Малюнок
-          this.ctx.drawImage(img, 0, 0, cssW, cssH);
-        };
-        img.src = url;
-      }
-
-      undo() {
-        if (this.historyStep > 0) {
-          this.historyStep--;
-          this.restoreState(this.historyStep);
-          this.updateHistoryButtons();
-          this.updateStatus();
-        }
-      }
-
-      redo() {
-        if (this.historyStep < this.history.length - 1) {
-          this.historyStep++;
-          this.restoreState(this.historyStep);
-          this.updateHistoryButtons();
-          this.updateStatus();
-        }
-      }
-
-      updateHistoryButtons() {
-        this.undoBtn.disabled = this.historyStep <= 0;
-        this.redoBtn.disabled = this.historyStep >= this.history.length - 1;
-      }
-
-      updateStatus() {
-        const cssW = this.canvas.style.width || window.innerWidth + 'px';
-        const cssH = this.canvas.style.height || window.innerHeight + 'px';
-        this.canvasDimensions.textContent = `${parseInt(cssW)}×${parseInt(cssH)}`;
-        this.historyCount.textContent = this.history.length;
-      }
-
-      // --- Інструменти та дії ---
-      switchTool(tool) {
-        this.currentTool = tool;
-        document.querySelectorAll('.tool-btn').forEach(b=>b.setAttribute('aria-pressed','false'));
-        const btn = document.getElementById(`${tool}-tool`);
-        btn.setAttribute('aria-pressed','true');
-        document.querySelector('.tool-btn.active')?.classList.remove('active');
-        btn.classList.add('active');
-        this.canvas.style.cursor = (tool === 'eraser') ? 'cell' : 'crosshair';
-      }
-
-      clearCanvas() {
-        // Білий фон швидко
-        this.ctx.save();
-        this.ctx.setTransform(1,0,0,1,0,0);
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.restore();
-        this.saveState();
-      }
-
-      saveImage() {
-        const temp = document.createElement('canvas');
-        const cssW = parseFloat(this.canvas.style.width) || window.innerWidth;
-        const cssH = parseFloat(this.canvas.style.height) || window.innerHeight;
-        temp.width = cssW; temp.height = cssH;
-        const tctx = temp.getContext('2d');
-        tctx.fillStyle = '#ffffff';
-        tctx.fillRect(0,0,cssW,cssH);
-        tctx.drawImage(this.canvas, 0, 0, cssW, cssH);
-        temp.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `whiteboard-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }, 'image/png');
-      }
-
-      async generateQR(text) {
-        const buttonText = this.generateQrBtn.querySelector('.button-text');
-        const loader = this.generateQrBtn.querySelector('.loader');
-        try {
-          buttonText.classList.add('hidden');
-          loader.classList.remove('hidden');
-          this.generateQrBtn.disabled = true;
-          this.qrError.classList.add('hidden');
-
-          if (!text || text.length > 500) {
-            throw new Error('Текст повинен бути від 1 до 500 символів');
-          }
-
-          this.qrDisplay.innerHTML = '';
-          await new Promise(r => setTimeout(r, 300)); // невелика затримка для UX
-          new QRCode(this.qrDisplay, { text, width:200, height:200, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.H });
-        } catch (err) {
-          this.qrError.textContent = err.message || 'Помилка генерації QR-коду';
-          this.qrError.classList.remove('hidden');
-        } finally {
-          buttonText.classList.remove('hidden');
-          loader.classList.add('hidden');
-          this.generateQrBtn.disabled = false;
-        }
-      }
-
-      // --- Модалки ---
-      showModal(modal, trigger) {
-        this.lastTrigger = trigger || null;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        this.removeTrap = trapFocus(modal);
-        // Фокус на перший інпут/кнопку
-        const firstFocusable = modal.querySelector('input, button');
-        firstFocusable?.focus();
-      }
-
-      hideModal(modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        if (this.removeTrap) { this.removeTrap(); this.removeTrap = null; }
-        this.lastTrigger?.focus();
-      }
-
-      bindEvents() {
-        // Малювання
-        this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
-        this.canvas.addEventListener('mousemove', (e) => this.draw(e));
-        this.canvas.addEventListener('mouseup', () => this.stopDrawing());
-        this.canvas.addEventListener('mouseout', () => this.stopDrawing());
-        this.canvas.addEventListener('touchstart', (e) => this.startDrawing(e), { passive:false });
-        this.canvas.addEventListener('touchmove', (e) => this.draw(e), { passive:false });
-        this.canvas.addEventListener('touchend', () => this.stopDrawing(), { passive:false });
-
-        // Інструменти
-        this.penTool.addEventListener('click', () => this.switchTool('pen'));
-        this.eraserTool.addEventListener('click', () => this.switchTool('eraser'));
-
-        // Налаштування
-        this.colorPicker.addEventListener('input', () => this.applyBrushSettings());
-        this.brushSize.addEventListener('input', () => this.applyBrushSettings());
-
-        // Кольори
-        this.colorSwatches.forEach(swatch => {
-          swatch.addEventListener('click', () => {
-            this.colorPicker.value = swatch.dataset.color;
-            this.applyBrushSettings();
-            document.querySelector('.color-swatch.active-swatch')?.classList.remove('active-swatch');
-            swatch.classList.add('active-swatch');
-          });
-        });
-
-        // Історія
-        this.undoBtn.addEventListener('click', () => this.undo());
-        this.redoBtn.addEventListener('click', () => this.redo());
-
-        // Модалка очищення
-        this.clearBtn.addEventListener('click', (e) => this.showModal(this.confirmModal, e.currentTarget));
-        this.cancelClearBtn.addEventListener('click', () => this.hideModal(this.confirmModal));
-        this.confirmClearBtn.addEventListener('click', () => { this.clearCanvas(); this.hideModal(this.confirmModal); });
-
-        // Збереження
-        this.saveImageBtn.addEventListener('click', () => this.saveImage());
-
-        // QR
-        this.qrBtn.addEventListener('click', (e) => { this.showModal(this.qrModal, e.currentTarget); this.qrInput.focus(); });
-        this.closeQrBtn.addEventListener('click', () => { this.qrDisplay.innerHTML=''; this.qrInput.value=''; this.qrError.classList.add('hidden'); this.hideModal(this.qrModal); });
-        this.generateQrBtn.addEventListener('click', () => { const text = this.qrInput.value.trim(); if (text) this.generateQR(text); });
-        this.qrInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.generateQrBtn.click(); });
-
-        // Ресайз із дебаунсом
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(() => this.resizeCanvas(), 250);
-        });
-
-        // Гарячі клавіші
-        document.addEventListener('keydown', (e) => {
-          if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-          if (e.key === 'Escape') {
-            // Закрити будь-яку відкриту модалку
-            if (!this.confirmModal.classList.contains('hidden')) this.hideModal(this.confirmModal);
-            if (!this.qrModal.classList.contains('hidden')) this.hideModal(this.qrModal);
-          }
-          if (e.ctrlKey || e.metaKey) {
-            switch(e.key.toLowerCase()) {
-              case 'z': e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); break;
-              case 'y': e.preventDefault(); this.redo(); break;
-              case 's': e.preventDefault(); this.saveImage(); break;
+                saveState(); // Зберегти початковий порожній стан
             }
-          }
-          switch(e.key.toLowerCase()) {
-            case 'p': this.switchTool('pen'); break;
-            case 'e': this.switchTool('eraser'); break;
-          }
+
+            // --- Логіка малювання ---
+            function startDrawing(e) {
+                isDrawing = true;
+                [lastX, lastY] = getMousePos(e);
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+
+                const [currentX, currentY] = getMousePos(e);
+
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(currentX, currentY);
+
+                if (currentTool === 'pen') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentSize;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                } else if (currentTool === 'eraser') {
+                    // Гумка працює, малюючи білим кольором
+                    ctx.strokeStyle = '#FFFFFF'; 
+                    ctx.lineWidth = currentSize;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                }
+                
+                ctx.stroke();
+
+                [lastX, lastY] = [currentX, currentY];
+            }
+
+            function stopDrawing() {
+                if (!isDrawing) return;
+                isDrawing = false;
+                ctx.beginPath(); // Скинути шлях
+                saveState();
+            }
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                // Обробка подій миші та дотику
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                return [clientX - rect.left, clientY - rect.top];
+            }
+            
+            // --- Історія (Скасувати/Повторити) ---
+            function saveState() {
+                if (historyIndex < history.length - 1) {
+                    history.splice(historyIndex + 1);
+                }
+                
+                if (history.length >= MAX_HISTORY_SIZE) {
+                    history.shift(); 
+                }
+
+                history.push(canvas.toDataURL());
+                historyIndex = history.length - 1;
+                updateUndoRedoButtons();
+            }
+
+            function undo() {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    restoreState();
+                }
+            }
+
+            function redo() {
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    restoreState();
+                }
+            }
+
+            function restoreState() {
+                const img = new Image();
+                img.src = history[historyIndex];
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
+                };
+                updateUndoRedoButtons();
+            }
+
+            function updateUndoRedoButtons() {
+                undoBtn.disabled = historyIndex <= 0;
+                redoBtn.disabled = historyIndex >= history.length - 1;
+                undoBtn.classList.toggle('opacity-50', undoBtn.disabled);
+                redoBtn.classList.toggle('opacity-50', redoBtn.disabled);
+            }
+
+            // --- Обробники інструментів та опцій ---
+            function switchTool(tool) {
+                currentTool = tool;
+                document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.tool-btn[data-tool="${tool}"]`).classList.add('active');
+            }
+
+            function setActiveColor(selectedButton) {
+                colorButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                if(selectedButton) {
+                    selectedButton.classList.add('active');
+                }
+            }
+
+            function clearCanvas() {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                saveState();
+            }
+
+            function saveCanvasAsImage() {
+                const link = document.createElement('a');
+                link.download = 'whiteboard-drawing.png';
+                link.href = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+                link.click();
+            }
+            
+            // --- Логіка модальних вікон ---
+            function showModal(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function hideModal(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            function generateQRCode() {
+                const url = qrUrlInput.value.trim();
+                if (!url) {
+                    qrcodeContainer.innerHTML = '<p class="text-gray-500">Будь ласка, введіть URL.</p>';
+                    return;
+                }
+                
+                qrcodeContainer.innerHTML = ''; // Очистити попередній QR-код
+                try {
+                    qrcodeInstance = new QRCode(qrcodeContainer, {
+                        text: url,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (error) {
+                    console.error("Помилка генерації QR-коду:", error);
+                    qrcodeContainer.innerHTML = '<p class="text-red-500">Не вдалося згенерувати QR-код. Неправильний URL?</p>';
+                }
+            }
+
+            // --- Слухачі подій ---
+            // Слухачі полотна
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Слухачі дотику
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // Слухачі панелі інструментів
+            penToolBtn.addEventListener('click', () => switchTool('pen'));
+            eraserToolBtn.addEventListener('click', () => switchTool('eraser'));
+            
+            colorPicker.addEventListener('input', (e) => {
+                currentColor = e.target.value;
+                setActiveColor(null); // Зняти виділення з кнопок швидкого вибору
+            });
+
+            colorButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const color = button.dataset.color;
+                    currentColor = color;
+                    colorPicker.value = color;
+                    setActiveColor(button);
+                });
+            });
+
+            sizeSlider.addEventListener('input', (e) => currentSize = e.target.value);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            saveBtn.addEventListener('click', saveCanvasAsImage);
+
+            // Слухачі модального вікна очищення
+            clearBtn.addEventListener('click', () => showModal(clearModal));
+            confirmClearBtn.addEventListener('click', () => {
+                clearCanvas();
+                hideModal(clearModal);
+            });
+            cancelClearBtn.addEventListener('click', () => hideModal(clearModal));
+            
+            // Слухачі модального вікна QR
+            qrBtn.addEventListener('click', () => {
+                qrUrlInput.value = '';
+                qrcodeContainer.innerHTML = '<p class="text-gray-500">Введіть URL для створення QR-коду.</p>';
+                showModal(qrModal);
+            });
+            closeQrBtn.addEventListener('click', () => hideModal(qrModal));
+            generateQrBtn.addEventListener('click', generateQRCode);
+            
+            // Обробник зміни розміру вікна
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    const imgData = canvas.toDataURL();
+                    initializeCanvas();
+                    
+                    const img = new Image();
+                    img.src = imgData;
+                    img.onload = () => {
+                        ctx.drawImage(img, 0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
+                    };
+                }, 100);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+
+            // --- Початкове налаштування ---
+            initializeCanvas();
         });
-
-        // При розвантаженні сторінки — звільнити URL-и історії
-        window.addEventListener('beforeunload', () => { this.history.forEach(u => this.revokeURL(u)); });
-      }
-    }
-
-    window.addEventListener('load', () => { new WhiteboardApp(); });
-  </script>
+    </script>
 </body>
 </html>
