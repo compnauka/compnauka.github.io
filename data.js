@@ -88,6 +88,7 @@ const CATEGORIES = [
     name: "Експерименти",
     iconClass: "fas fa-flask", // Іконка для категорії
     services: [
+      { name: "Онлайн-дошка", description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", link: "doshka/", image: "images/47.jpg", },
       { name: "Пікселізатор", description: "Вивчай абстракцію за допомогою пікселів!", link: "services/pixels.html", image: "images/29.jpg", },
       { name: "Розпізнавач облич", description: "Інтерактивна демонстрація комп'ютерного зору", link: "services/facedetector.html", image: "images/30.jpg", },
       { name: "Фейс ту смайл", description: "Доповнена реальність і смайлики!", link: "services/facemask.html", image: "images/31.jpg", }
