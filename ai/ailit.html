@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ШІ-грамотність для школи — головні ідеї AILit</title>
   <meta name="description" content="Ключові положення проєкту AILit (Empowering Learners for the Age of AI): визначення, структура, 4 домени, знання-навички-ставлення, компетентності, роль учителя, етика та сталий розвиток." />
+  <!-- COMMENT: Додано Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     :root{
       --bg:#0f172a; /* slate-900 */
@@ -85,21 +87,14 @@
     }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:20px}
     section{scroll-margin-top:72px; padding:40px 0}
-    h2{font-size:clamp(22px, 2.2vw, 32px); margin:0 0 12px}
-    h3{font-size:clamp(18px, 1.8vw, 22px); margin:16px 0 8px}
+    h2{font-size:clamp(22px, 2.2vw, 32px); margin:0 0 12px; display: flex; align-items: center; gap: 12px;}
+    h3{font-size:clamp(18px, 1.8vw, 22px); margin:16px 0 8px; display: flex; align-items: center; gap: 10px;}
+    h2 .fa-solid, h3 .fa-solid { color: var(--brand); opacity: 0.7; }
     p{margin:0 0 10px}
     ul{padding-left:20px; margin:0 0 10px}
     .muted{color:var(--muted)}
     .panel{background:var(--shadow); border:1px solid var(--border-color); border-radius:16px; padding:18px}
-    .kpi{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
-    .kpi .panel{display:flex; flex-direction:column; gap:4px}
-    .badge{display:inline-flex; align-items:center; gap:8px; font-size:13px; padding:4px 10px; border-radius:999px; border:1px solid var(--border-color)}
-    .badge .dot{width:9px; height:9px; border-radius:50%}
-    .list{display:grid; gap:10px; padding-left:0; list-style:none}
-    .list .item{display:flex; gap:12px; align-items:flex-start}
-    .list .num{flex-shrink: 0; min-width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(34,211,238,0.14); border:1px solid rgba(34,211,238,0.35); color:#cffafe; font-weight:700; font-size:13px}
-     [data-theme="light"] .list .num { background:rgba(8,145,178,0.1); border-color:rgba(8,145,178,0.2); color:var(--brand); }
-    .pill{display:inline-block; padding:6px 10px; border-radius:999px; background:var(--shadow); border:1px solid var(--border-color); font-size:13px}
+    .pill{display:inline-flex; align-items: center; gap: 8px; padding:6px 12px; border-radius:999px; background:var(--shadow); border:1px solid var(--border-color); font-size:13px}
     .pill.active, button.pill:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px var(--brand); background:rgba(34,211,238,0.14)}
      [data-theme="light"] .pill.active, [data-theme="light"] button.pill:focus { background:rgba(8,145,178,0.1); }
     .cols{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px}
@@ -111,12 +106,25 @@
     .accordion{border-radius:14px; overflow:hidden; border:1px solid var(--border-color)}
     .accordion details{background:rgba(255,255,255,0.02)}
      [data-theme="light"] .accordion details { background: rgba(0,0,0,0.02); }
-    .accordion summary{padding:14px 16px; cursor:pointer; list-style:none}
+    .accordion summary{padding:14px 16px; cursor:pointer; list-style:none; position: relative; padding-right: 40px;}
     .accordion summary::-webkit-details-marker {display:none;}
     .accordion summary:hover{background:var(--shadow)}
+    /* COMMENT: Додано іконку-шеврон для акордеону */
+    .accordion summary::after {
+        content: '\f078'; /* fa-chevron-down */
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: transform 0.2s;
+        color: var(--muted);
+    }
+    .accordion details[open] > summary::after {
+        transform: translateY(-50%) rotate(180deg);
+    }
     .accordion .content{padding:0 16px 16px}
-    .tag{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid var(--border-color); color:var(--muted)}
-    .tag .dot{width:8px; height:8px; border-radius:99px; background:currentColor; opacity:.8}
     .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
     input[type="search"]{width:min(560px,100%); appearance:none; background:#0b1223; border:1px solid var(--border-color); color:var(--ink); padding:10px 12px; border-radius:12px; font-family:inherit; font-size:inherit}
     [data-theme="light"] input[type="search"] { background: #eef2ff; }
@@ -138,10 +146,9 @@
     @media (max-width: 900px){
       .hero, .personas-grid, .disciplines-grid {grid-template-columns:1fr}
       .cols {grid-template-columns:1fr}
-      .kpi{grid-template-columns:1fr 1fr}
     }
     @media (max-width: 600px){
-      .kpi, .grid {grid-template-columns:1fr}
+      .grid {grid-template-columns:1fr}
       .topbar { flex-direction: column; gap: 12px; }
       nav { justify-content: center; }
     }
@@ -169,27 +176,25 @@
   <main class="wrap">
     <section id="intro" class="hero">
       <div>
-        <span class="chip">Огляд за документом AILit</span>
+        <span class="chip"><i class="fa-solid fa-star"></i> Огляд за документом AILit</span>
         <h1>ШІ-грамотність для початкової та середньої школи</h1>
-        <!-- COMMENT: Додано згадку про PISA 2029 -->
         <p class="muted">Стислий, практичний україномовний сайт з головними ідеями проєкту <em>Empowering Learners for the Age of AI</em> (AILit), що слугуватиме основою для оцінювання PISA 2029. Попри те, що 74% учнів вважають ШІ важливим для майбутньої кар'єри, лише 46% відчувають, що школа готує їх до цього. Цей огляд пояснює, чому ШІ‑грамотність важлива та що саме мають знати й уміти учні.</p>
         <blockquote>
             <strong>Визначення ШІ-грамотності:</strong> це технічні знання, стійкі навички та перспективні ставлення, необхідні для процвітання у світі, що перебуває під впливом ШІ. Вона дозволяє учням взаємодіяти з ШІ, творити за його допомогою, керувати ним і проєктувати його, водночас критично оцінюючи його переваги, ризики та етичні наслідки.
         </blockquote>
       </div>
       <div class="card panel">
-        <h3>Для кого цей матеріал?</h3>
+        <h3><i class="fa-solid fa-users"></i> Для кого цей матеріал?</h3>
         <p>Для вчителів, освітніх лідерів, авторів програм і політик. Матеріал адаптований для інтеграції у різні предмети та шкільний контекст.</p>
         <div class="toolbar" style="margin-top:10px">
-          <a class="pill" href="#structure">До структури рамки</a>
-          <a class="pill" href="#competences">До компетентностей</a>
+          <a class="pill" href="#structure"><i class="fa-solid fa-sitemap"></i> До структури рамки</a>
+          <a class="pill" href="#competences"><i class="fa-solid fa-bullseye"></i> До компетентностей</a>
         </div>
       </div>
     </section>
 
-    <!-- COMMENT: Новий розділ -->
     <section id="what-is-ai">
-        <h2>Що таке Штучний Інтелект?</h2>
+        <h2><i class="fa-solid fa-brain"></i> Що таке Штучний Інтелект?</h2>
         <p class="muted">Щоб розуміти ШІ-грамотність, важливо мати чітке визначення самого ШІ. AILit спирається на офіційне визначення OECD та EU AI Act.</p>
         <div class="panel">
             <strong>Офіційне визначення ШІ:</strong> це "машинна система, яка для явних або неявних цілей виводить з отриманих вхідних даних, як генерувати результати, такі як прогнози, контент, рекомендації або рішення, що можуть впливати на фізичне чи віртуальне середовище".
@@ -198,45 +203,45 @@
     </section>
 
     <section id="foundations">
-        <h2>На чому базується рамка?</h2>
+        <h2><i class="fa-solid fa-landmark"></i> На чому базується рамка?</h2>
         <p class="muted">AILit не виникла на порожньому місці. Вона розвиває ідеї та практики з попередніх впливових рамок, зокрема DigComp від Єврокомісії, рекомендацій UNESCO, AI4K12 та Digital Promise. Це забезпечує міжнародну релевантність та обґрунтованість підходів.</p>
-        <h3>Принципи розробки AILit</h3>
+        <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Принципи розробки AILit</h3>
         <div class="grid principles-grid" style="margin-top: 16px;">
-            <div class="panel"><strong>Фундаментальність</strong><p class="small muted">Визначити базовий набір компетентностей, необхідних для демонстрації ШІ-грамотності.</p></div>
-            <div class="panel"><strong>Практичність</strong><p class="small muted">Зробити ШІ-грамотність керованою та досяжною в різних класних контекстах.</p></div>
-            <div class="panel"><strong>Стійкість</strong><p class="small muted">Визначити знання та навички, що залишаться актуальними в міру еволюції ШІ.</p></div>
-            <div class="panel"><strong>Ілюстративність</strong><p class="small muted">Включити сценарії та приклади, які оживляють ШІ-грамотність.</p></div>
-            <div class="panel"><strong>Глобальність</strong><p class="small muted">Врахувати ідеї від освітян, дослідників та експертів з ШІ з усього світу.</p></div>
-            <div class="panel"><strong>Міждисциплінарність</strong><p class="small muted">Інтегрувати ШІ-грамотність у широкий спектр предметів та освітніх середовищ.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-building-columns"></i> Фундаментальність</strong><p class="small muted">Визначити базовий набір компетентностей, необхідних для демонстрації ШІ-грамотності.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-hand-fist"></i> Практичність</strong><p class="small muted">Зробити ШІ-грамотність керованою та досяжною в різних класних контекстах.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-shield-halved"></i> Стійкість</strong><p class="small muted">Визначити знання та навички, що залишаться актуальними в міру еволюції ШІ.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-image"></i> Ілюстративність</strong><p class="small muted">Включити сценарії та приклади, які оживляють ШІ-грамотність.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-globe"></i> Глобальність</strong><p class="small muted">Врахувати ідеї від освітян, дослідників та експертів з ШІ з усього світу.</p></div>
+            <div class="panel"><strong><i class="fa-solid fa-puzzle-piece"></i> Міждисциплінарність</strong><p class="small muted">Інтегрувати ШІ-грамотність у широкий спектр предметів та освітніх середовищ.</p></div>
         </div>
     </section>
 
     <section id="structure">
-      <h2>Структура рамки: 4 Домени та 3 Компоненти</h2>
+      <h2><i class="fa-solid fa-diagram-project"></i> Структура рамки: 4 Домени та 3 Компоненти</h2>
       <p class="muted">Рамка описує чотири способи взаємодії учнів із ШІ (домени), які реалізуються через поєднання трьох ключових компонентів: <strong>знань</strong>, <strong>навичок</strong> і <strong>ставлень</strong>.</p>
       <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-        <div class="panel"><h3>Знання</h3><p class="small muted">Концептуальне розуміння того, як ШІ працює, які його можливості, обмеження та суспільний вплив.</p></div>
-        <div class="panel"><h3>Навички</h3><p class="small muted">Практичне застосування людських здібностей (критичне мислення, креативність) для ефективної та етичної роботи з ШІ.</p></div>
-        <div class="panel"><h3>Ставлення</h3><p class="small muted">Цінності та мислення (відповідальність, допитливість), які визначають підхід до використання технологій.</p></div>
+        <div class="panel"><h3><i class="fa-solid fa-book-open"></i> Знання</h3><p class="small muted">Концептуальне розуміння того, як ШІ працює, які його можливості, обмеження та суспільний вплив.</p></div>
+        <div class="panel"><h3><i class="fa-solid fa-person-running"></i> Навички</h3><p class="small muted">Практичне застосування людських здібностей (критичне мислення, креативність) для ефективної та етичної роботи з ШІ.</p></div>
+        <div class="panel"><h3><i class="fa-solid fa-heart"></i> Ставлення</h3><p class="small muted">Цінності та мислення (відповідальність, допитливість), які визначають підхід до використання технологій.</p></div>
       </div>
     </section>
     
     <section id="personas">
-        <h2>Персони: ШІ-грамотність у дії</h2>
+        <h2><i class="fa-solid fa-user-graduate"></i> Персони: ШІ-грамотність у дії</h2>
         <p class="muted">Ці персонажі з оригінального документа ілюструють, як ШІ-грамотність виглядає на практиці в різному віці. Вони слугують відправною точкою для уявлення про світ, де навички взаємодії з ШІ активно застосовуються.</p>
         <div class="grid personas-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px;">
-            <div class="panel"><h3>Софія, 10 років</h3><p>Під наглядом мами Софія використовує генеративний ШІ, щоб досліджувати різні сюжети та експериментувати з діалогами для своїх історій. Вона довіряє власному творчому баченню, але цінує, що ШІ пропонує нові ідеї для розгляду.</p></div>
-            <div class="panel"><h3>Джун, 13 років</h3><p>Джун організовує шкільний волонтерський захід. Він використовує ШІ для створення проєктів розкладів, але сам призначає волонтерів, враховуючи їхні особистості та сильні сторони. ШІ автоматизує логістику, дозволяючи Джуну зосередитись на створенні ефективних команд.</p></div>
-            <div class="panel"><h3>Омар, 15 років</h3><p>Омар налаштував голосового асистента для батьків. Коли він помітив, що його стрічка в соцмережах заповнилася рекламою товарів, про які говорила родина, Омар змінив налаштування приватності, щоб система не використовувала їхні дані для таргетованої реклами.</p></div>
-            <div class="panel"><h3>Аніка, 18 років</h3><p>У рамках свого навчального проєкту Аніка розробляє застосунок, який рекомендує ресурси для психічного здоров'я. Тестуючи його, вона помітила, що поради іноді посилюють гендерні стереотипи. Перш ніж продовжити, вона взялася за доопрацювання моделі.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-child"></i> Софія, 10 років</h3><p>Під наглядом мами Софія використовує генеративний ШІ, щоб досліджувати різні сюжети та експериментувати з діалогами для своїх історій. Вона довіряє власному творчому баченню, але цінує, що ШІ пропонує нові ідеї для розгляду.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-glasses"></i> Джун, 13 років</h3><p>Джун організовує шкільний волонтерський захід. Він використовує ШІ для створення проєктів розкладів, але сам призначає волонтерів, враховуючи їхні особистості та сильні сторони. ШІ автоматизує логістику, дозволяючи Джуну зосередитись на створенні ефективних команд.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-headphones"></i> Омар, 15 років</h3><p>Омар налаштував голосового асистента для батьків. Коли він помітив, що його стрічка в соцмережах заповнилася рекламою товарів, про які говорила родина, Омар змінив налаштування приватності, щоб система не використовувала їхні дані для таргетованої реклами.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-hat-winter"></i> Аніка, 18 років</h3><p>У рамках свого навчального проєкту Аніка розробляє застосунок, який рекомендує ресурси для психічного здоров'я. Тестуючи його, вона помітила, що поради іноді посилюють гендерні стереотипи. Перш ніж продовжити, вона взялася за доопрацювання моделі.</p></div>
         </div>
     </section>
 
     <section id="ksa">
-      <h2>Знання — Навички — Ставлення: Детальний огляд</h2>
+      <h2><i class="fa-solid fa-gears"></i> Знання — Навички — Ставлення: Детальний огляд</h2>
       <div class="grid">
         <div class="panel" style="grid-column: 1 / -1;">
-          <h3>Знання</h3>
+          <h3><i class="fa-solid fa-book-open"></i> Знання</h3>
           <p class="muted">Фундаментальні концепції про те, як ШІ працює і впливає на світ.</p>
           <details class="ksa-details"><summary>K1: Природа ШІ</summary><div class="content">Системи ШІ використовують алгоритми, що поєднують покрокові процедури зі статистичними висновками для обробки даних та генерації ймовірних результатів. Генеративний ШІ використовує ймовірності для створення людиноподібного контенту, але не має справжнього розуміння чи наміру.</div></details>
           <details class="ksa-details"><summary>K2: ШІ відображає людський вибір</summary><div class="content">ШІ не є нейтральним. Люди проєктують алгоритми, збирають і розмічають дані. Системи навчаються на величезних масивах даних, які можуть містити суспільні упередження, що ШІ може відтворювати або навіть посилювати.</div></details>
@@ -245,7 +250,7 @@
           <details class="ksa-details"><summary>K5: Роль ШІ в суспільстві</summary><div class="content">ШІ все частіше використовується для прийняття важливих рішень (наймання, медицина, правосуддя). Це створює потребу в регулюванні, прозорості та підзвітності, а також порушує питання щодо авторства, власності та приватності.</div></details>
         </div>
         <div class="panel" style="grid-column: span 6;">
-          <h3>Навички</h3>
+          <h3><i class="fa-solid fa-person-running"></i> Навички</h3>
           <p class="muted">Застосування людських здібностей в контексті ШІ.</p>
           <details class="ksa-details"><summary>Критичне мислення</summary><div class="content">Перевірка точності, релевантності та справедливості згенерованого ШІ контенту. Виявлення потенційної дезінформації та упереджень.</div></details>
           <details class="ksa-details"><summary>Креативність</summary><div class="content">Взаємодія з ШІ для мозкового штурму, генерації та вдосконалення оригінальних ідей, з урахуванням питань авторства та доброчесності.</div></details>
@@ -253,7 +258,7 @@
            <details class="ksa-details"><summary>Само- та соціальна обізнаність</summary><div class="content">Усвідомлення, як ШІ впливає на особисті рішення, стосунки, спільноти та навколишнє середовище.</div></details>
         </div>
         <div class="panel" style="grid-column: span 6;">
-          <h3>Ставлення</h3>
+          <h3><i class="fa-solid fa-heart"></i> Ставлення</h3>
           <p class="muted">Цінності та мислення для взаємодії з ШІ.</p>
           <details class="ksa-details"><summary>Відповідальність</summary><div class="content">Обмірковувати наслідки використання ШІ, бути підзвітним за свій вибір і прагнути запобігти шкоді.</div></details>
           <details class="ksa-details"><summary>Допитливість</summary><div class="content">Прагнути досліджувати можливості ШІ, розуміти його вплив на життя та кар'єру, сприймати навчання як безперервний процес.</div></details>
@@ -264,9 +269,9 @@
     </section>
 
     <section id="competences">
-      <h2>Компетентності по Доменах</h2>
+      <h2><i class="fa-solid fa-layer-group"></i> Компетентності по Доменах</h2>
       <div class="panel" style="margin-bottom: 20px;">
-        <h3>Анатомія компетентності</h3>
+        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> Анатомія компетентності</h3>
         <p class="muted">Кожна з 22 компетентностей є очікуваним результатом навчання, що поєднує технічні знання, стійкі навички та перспективні ставлення. Наприклад, компетентність "Вирішувати, чи використовувати системи ШІ, виходячи з характеру завдання" спирається на:</p>
         <ul>
             <li class="small"><strong>Знання:</strong> ШІ сильний в автоматизації, але позбавлений етичного мислення (K4.1).</li>
@@ -276,14 +281,13 @@
       </div>
       <div class="toolbar" style="margin:6px 0 12px">
         <input type="search" id="search" placeholder="Пошук за ключовими словами (історія, упередження, авторство…)" aria-label="Пошук компетентностей" />
-        <button type="button" class="pill active" data-filter="all">Усі домени</button>
-        <button type="button" class="pill" data-filter="eng">Взаємодія</button>
-        <button type="button" class="pill" data-filter="create">Творення</button>
-        <button type="button" class="pill" data-filter="manage">Керування</button>
-        <button type="button" class="pill" data-filter="design">Проєктування</button>
+        <button type="button" class="pill active" data-filter="all"><i class="fa-solid fa-border-all"></i> Усі домени</button>
+        <button type="button" class="pill" data-filter="eng"><i class="fa-solid fa-comments"></i> Взаємодія</button>
+        <button type="button" class="pill" data-filter="create"><i class="fa-solid fa-palette"></i> Творення</button>
+        <button type="button" class="pill" data-filter="manage"><i class="fa-solid fa-tasks"></i> Керування</button>
+        <button type="button" class="pill" data-filter="design"><i class="fa-solid fa-drafting-compass"></i> Проєктування</button>
       </div>
       
-      <!-- COMMENT: Додано цитати експертів для кожного домену. -->
       <div data-domain-content="eng"><p class="muted">Цей домен вимагає від учнів розпізнавати присутність ШІ, а потім оцінювати точність і релевантність його результатів.</p><blockquote class="expert">"Взаємодія з ШІ — це більше, ніж просто цифрові навички; вона вимагає критичного мислення, медіаграмотності та здатності ставити під сумнів результати ШІ, виявляти дезінформацію та розуміти, як використовуються дані та ідеї."<footer>— Карі Ківінен, European Intellectual Property Observatory</footer></blockquote></div>
       <div class="accordion domain eng" data-domain="eng"><details open><summary><strong>Виявляти та оцінювати роль ШІ у різних контекстах</strong></summary><div class="content"><ul><li><strong>Початкова школа:</strong> скласти перелік цифрових взаємодій (рекомендації відео, веб-камера) і обговорити, де саме працює ШІ.</li><li><strong>Середня школа:</strong> дослідити, як онлайн-платформа добирає рівень складності завдань у реальному часі.</li></ul></div></details><details><summary><strong>Критично вирішувати: прийняти, виправити чи відхилити відповідь ШІ</strong></summary><div class="content"><ul><li><strong>Початкова школа:</strong> порівняти «крок за кроком» розв’язання від ШІ зі своїм способом.</li><li><strong>Середня школа:</strong> ставити питання про історичні події та перевіряти відповіді за надійними джерелами.</li></ul></div></details><details><summary><strong>Пояснювати, як рекомендаційні системи формують перспективу</strong></summary><div class="content"><ul><li><strong>Початкова школа:</strong> гра з послідовностями як модель передбачень.</li><li><strong>Середня школа:</strong> аналіз впливу алгоритмів соцмереж на дезінформацію щодо суспільно важливих тем.</li></ul></div></details><details><summary><strong>Пояснювати, як ШІ може підсилювати суспільні упередження</strong></summary><div class="content"><ul><li><strong>Початкова школа:</strong> класифікація персонажів та розмова про справедливість.</li><li><strong>Середня школа:</strong> розбір навчання розпізнавання облич та шляхів зменшення упереджень.</li></ul></div></details><details><summary><strong>Описувати екологічний слід ШІ</strong></summary><div class="content"><ul><li><strong>Початкова школа:</strong> інфографіка про інфраструктуру даних і електрику.</li><li><strong>Середня школа:</strong> порівняння витрат і шляхів зменшення впливу; дискусія «чи доречно застосовувати ШІ тут?».</li></ul></div></details></div>
       
@@ -298,29 +302,28 @@
     </section>
 
     <section id="disciplines">
-        <h2>Зв'язок з іншими дисциплінами</h2>
+        <h2><i class="fa-solid fa-lightbulb"></i> Зв'язок з іншими дисциплінами</h2>
         <p class="muted">ШІ-грамотність не існує ізольовано. Вона тісно пов'язана з іншими галузями знань, поєднуючи технічне розуміння з критичною оцінкою та творчим розв'язанням проблем.</p>
         <div class="grid disciplines-grid" style="grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
-            <div class="panel"><h3>Етика</h3><p class="small muted">Справедливість, відповідальність, аналіз переваг та ризиків.</p></div>
-            <div class="panel"><h3>Комп'ютерні науки</h3><p class="small muted">Абстракція, алгоритмічне мислення, декомпозиція.</p></div>
-            <div class="panel"><h3>Медіаграмотність</h3><p class="small muted">Критичне мислення, оцінка інформації, створення контенту.</p></div>
-            <div class="panel"><h3>Цифрова грамотність</h3><p class="small muted">Інтелектуальна власність, безпека та приватність, цифрова ввічливість.</p></div>
-            <div class="panel"><h3>Наука про дані</h3><p class="small muted">Аналіз даних, упередження (bias), статистичні висновки.</p></div>
-            <div class="panel"><h3>Дизайн-мислення</h3><p class="small muted">Генерація ідей, формулювання проблеми, ітерації.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-scale-balanced"></i> Етика</h3><p class="small muted">Справедливість, відповідальність, аналіз переваг та ризиків.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-code"></i> Комп'ютерні науки</h3><p class="small muted">Абстракція, алгоритмічне мислення, декомпозиція.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-newspaper"></i> Медіаграмотність</h3><p class="small muted">Критичне мислення, оцінка інформації, створення контенту.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-wifi"></i> Цифрова грамотність</h3><p class="small muted">Інтелектуальна власність, безпека та приватність, цифрова ввічливість.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-chart-simple"></i> Наука про дані</h3><p class="small muted">Аналіз даних, упередження (bias), статистичні висновки.</p></div>
+            <div class="panel"><h3><i class="fa-solid fa-compass-drafting"></i> Дизайн-мислення</h3><p class="small muted">Генерація ідей, формулювання проблеми, ітерації.</p></div>
         </div>
     </section>
 
-    <!-- COMMENT: Новий розділ -->
     <section id="next-steps">
-        <h2>Що далі?</h2>
+        <h2><i class="fa-solid fa-forward"></i> Що далі?</h2>
         <p class="muted">Цей документ є чернеткою для обговорення. Протягом наступних місяців будуть проводитися фокус-групи та обговорення для збору відгуків від зацікавлених сторін по всьому світу. Ваша думка відіграє вирішальну роль у формуванні майбутнього ШІ-грамотності.</p>
         <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="panel">
-                <h3>Фінальна версія</h3>
+                <h3><i class="fa-solid fa-flag-checkered"></i> Фінальна версія</h3>
                 <p>Фінальна версія рамки буде опублікована у 2026 році, разом із набором прикладів для впровадження ШІ-грамотності в навчальні програми, оцінювання та професійний розвиток вчителів.</p>
             </div>
             <div class="panel">
-                <h3>Використовуйте ШІ для дослідження рамки!</h3>
+                <h3><i class="fa-solid fa-robot"></i> Використовуйте ШІ для дослідження рамки!</h3>
                 <p>Ви можете використовувати чат-бот на основі LLM, щоб досліджувати цей документ, ставити критичні запитання та рефлексувати над змістом. Це чудовий спосіб застосувати навички ШІ-грамотності на практиці.</p>
             </div>
         </div>
@@ -329,16 +332,21 @@
     <section>
       <div class="panel">
         <p class="small muted">Матеріал підготовлено українською мовою на основі відкритого оглядового проєкту <em>Empowering Learners for the Age of AI</em> (Review Draft, 2025). Ліцензія джерела: CC BY‑SA 4.0.</p>
+        <!-- COMMENT: Додано посилання на документ та оновлено кнопки -->
         <div class="toolbar" style="margin-top:8px">
-          <a class="pill" href="https://teachai.org/ailiteracy/review" target="_blank" rel="noopener">Залишити відгук про рамку</a>
-          <a class="pill" href="#intro">Догори ↑</a>
+          <a class="pill" href="https://www.teachai.org/media/ailitframework_reviewdraft-i9qkdy" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> Оригінальний документ (PDF)</a>
+          <a class="pill" href="https://teachai.org/ailiteracy/review" target="_blank" rel="noopener"><i class="fa-solid fa-pen-to-square"></i> Залишити відгук про рамку</a>
+          <a class="pill" href="#intro"><i class="fa-solid fa-arrow-up"></i> Догори</a>
         </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="wrap small">© 2025. Освітній огляд для шкіл. Неофіційна локалізація змісту рамки AILit. Цей сайт — статичний приклад HTML/CSS/JS.</div>
+    <div class="wrap small">
+      <!-- COMMENT: Додано примітку про неофіційну адаптацію -->
+      © 2025. Цей сайт є незалежною ініціативою та неофіційною адаптацією змісту рамки AILit для ознайомчих та освітніх цілей.
+    </div>
   </footer>
 
   <script>
