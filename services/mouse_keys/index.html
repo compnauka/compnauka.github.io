@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🖱️ Тренажер Кнопок Мишки</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 text-gray-800">
+
+    <h1 class="title text-5xl md:text-6xl text-white mb-4 text-center">Тренажер Мишки</h1>
+
+    <div id="difficulty-selector" class="flex space-x-2 mb-4 p-1 bg-white/30 rounded-full">
+        <button data-difficulty="easy" class="difficulty-btn px-4 py-2 rounded-full transition" aria-label="Легкий рівень складності">Легко</button>
+        <button data-difficulty="medium" class="difficulty-btn px-4 py-2 rounded-full transition active" aria-label="Середній рівень складності">Середнє</button>
+        <button data-difficulty="hard" class="difficulty-btn px-4 py-2 rounded-full transition" aria-label="Складний рівень складності">Складно</button>
+    </div>
+
+    <div class="game-card p-4 rounded-2xl mb-4 flex items-center justify-between w-full max-w-xl">
+        <div class="flex items-center space-x-4 text-center">
+            <div>
+                <div class="text-xs text-gray-500 font-semibold">ВЛУЧЕННЯ</div>
+                <div id="score" class="text-2xl font-bold text-green-600">0</div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-500 font-semibold">ХИБИ</div>
+                <div id="misses" class="text-2xl font-bold text-red-600">0</div>
+            </div>
+        </div>
+        <div class="flex-1 mx-4">
+            <div class="timer-bar-container w-full">
+                <div id="timer-bar-fill" class="timer-bar-fill" style="width: 100%"></div>
+            </div>
+        </div>
+        <button id="pauseBtn" class="bg-white/50 hover:bg-white/80 text-gray-700 text-xl w-12 h-12 rounded-full transition transform hover:scale-110 disabled:opacity-50 flex items-center justify-center" disabled aria-label="Пауза або продовжити гру">
+            <i class="fa-solid fa-pause"></i>
+        </button>
+    </div>
+
+    <div id="gameBoard" class="game-board game-card w-full max-w-4xl h-[60vh] rounded-2xl relative overflow-hidden">
+        <div id="startScreen" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Готові до тренування?</h2>
+            <p class="text-lg text-gray-600 mb-6">Натискайте ліву (Л) або праву (П) кнопку миші відповідно до інструкції на колі.</p>
+            <button id="startBtn" class="bg-gradient-to-r from-pink-500 to-orange-400 hover:opacity-90 text-white text-2xl font-bold py-4 px-8 rounded-full transform hover:scale-105 transition-transform shadow-lg" aria-label="Почати гру">
+                Старт
+            </button>
+        </div>
+        <div id="pauseScreen" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold z-50"><i class="fa-solid fa-pause mr-4"></i> ПАУЗА</div>
+        <div id="countdownScreen" class="hidden absolute inset-0 flex items-center justify-center">
+            <div id="countdownNumber" class="text-9xl"></div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40">
+        <div class="game-card p-8 rounded-3xl text-center max-w-md mx-4">
+            <div id="resultIcon" class="text-6xl mb-4"></div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Гру завершено!</h2>
+            <div class="text-lg space-y-2 mb-6">
+                <p>Влучення: <span id="finalScore" class="font-bold text-green-600">0</span></p>
+                <p>Хиби: <span id="finalMisses" class="font-bold text-red-600">0</span></p>
+                <p>Точність: <span id="accuracy" class="font-bold text-blue-600">0%</span></p>
+            </div>
+            <button id="playAgainBtn" class="bg-gradient-to-r from-green-400 to-blue-500 hover:opacity-90 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-105 transition-transform" aria-label="Спробувати гру ще раз">
+                🔄 Спробувати ще
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
