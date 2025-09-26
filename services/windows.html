@@ -433,9 +433,12 @@
                 document.getElementById('lang-uk').classList.toggle('active', lang === 'uk');
                 document.getElementById('lang-en').classList.toggle('active', lang === 'en');
                 
-                const btn = document.getElementById('startGameBtn');
                 if (this.isGameActive) {
-                    btn.textContent = this.translations[this.currentLanguage].gameInProgress;
+                    this.clearTimer(); // Clear timer and reset progress bar
+                    this.updateStats(); // Update stats in the new language
+                } else {
+                    const btn = document.getElementById('startGameBtn');
+                    btn.textContent = this.translations[this.currentLanguage].startGame;
                 }
             }
 
@@ -458,7 +461,7 @@
 
             stopGame() {
                 this.isGameActive = false;
-                clearTimeout(this.timer);
+                this.clearTimer(); // Call a new method to clear the timer and reset the progress bar
                 const existingWindows = document.querySelectorAll('.window');
                 existingWindows.forEach(w => w.remove());
                 document.getElementById('startGameBtn').style.display = 'block';
@@ -550,10 +553,17 @@
                 }, this.timeLimit);
             }
 
+            clearTimer() {
+                clearTimeout(this.timer);
+                const progressFill = document.getElementById('progressFill');
+                progressFill.style.transition = 'none';
+                progressFill.style.width = '100%'; // Reset to full to hide the bar
+            }
+
             handleAction(action) {
                 if (!this.isGameActive) return;
                 
-                clearTimeout(this.timer);
+                this.clearTimer(); // Clear timer when action is taken
                 
                 const windowEl = document.querySelector('.window');
                 if (!windowEl) return;
@@ -572,7 +582,7 @@
                 if (this.streak >= 5) {
                     this.level++;
                     this.streak = 0;
-                    this.timeLimit = Math.max(2500, this.timeLimit - 250);
+                    this.timeLimit = Math.max(4000, this.timeLimit - 150); // Змінено поріг та крок зменшення
                 }
                 
                 this.updateStats();
