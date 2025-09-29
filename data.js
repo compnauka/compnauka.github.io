@@ -18,7 +18,7 @@ const CATEGORIES = [
     services: [
       { name: "Мишачі перегони", description: "Тренажер для роботи з мишкою.", link: "services/click.html", image: "images/10.jpg", tags: ["1-2 класи"] },
       { name: "Швидкісні вікна", description: "Практичний тренажер для роботи з вікнами програм.", link: "services/windows/index.html", image: "images/48.jpg", tags: ["1-2 класи"] },
-      { name: "Права чи Ліва?", description: "Nренажер для роботи з кнопками миші.", link: "services/mouse_keys/index.html", image: "images/49.jpg", tags: ["1-2 класи"] },
+      { name: "Права чи Ліва?", description: "Тренажер для роботи з кнопками миші.", link: "services/mouse_keys/index.html", image: "images/49.jpg", tags: ["1-2 класи"] },
       { name: "Гарячі клавіши", description: "Інтерактивний урок про роботу з клавіатурою.", link: "services/typing.html", image: "images/18.jpg", tags: ["2-4 класи"] },
       { name: "Спритні пальчики", description: "Веселий тренажер для роботи з клавіатурою.", link: "services/keys.html", image: "images/11.jpg", tags: ["2-4 класи"] },
       { name: "Веселі адреси", description: "Практичний тренажер для введення URL-адрес.", link: "services/urls.html", image: "images/38.jpg", tags: ["3-5 класи"] },
