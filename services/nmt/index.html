@@ -75,7 +75,7 @@
 </head>
 <body class="text-gray-800">
 
-    <div id="app" class="app-container min-h-screen flex items-start justify-center p-4 pt-16 sm:pt-20">
+    <div id="app" class="app-container min-h-screen flex items-start justify-center p-4 pt-10 sm:pt-16">
     
         <!-- Головний екран -->
         <div id="welcome-container" class="w-full max-w-2xl text-center">
@@ -152,59 +152,74 @@
         </div>
 
         <!-- Головна панель (Dashboard) -->
-        <div id="dashboard-container" class="w-full max-w-4xl hidden">
-            <div class="bg-white p-8 rounded-2xl shadow-xl">
-                <div class="relative text-center mb-6">
-                    <h1 class="text-3xl font-bold text-blue-600">Привіт, юний генію!</h1>
-                    <p class="text-gray-500" id="user-email-display"></p>
-                    <button id="logout-btn" class="btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 text-sm absolute top-0 right-0">Вийти</button>
+        <div id="dashboard-container" class="w-full max-w-6xl hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-xl w-full">
+                <!-- Header with greeting and logout -->
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-blue-600">Привіт, юний генію!</h1>
+                        <p class="text-gray-500" id="user-email-display"></p>
+                    </div>
+                    <button id="logout-btn" class="btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 text-sm flex items-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Вийти</span>
+                    </button>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-blue-100 p-6 rounded-xl text-center">
-                        <p class="text-lg font-semibold text-blue-800">Загальний Рахунок</p>
-                        <p id="total-score" class="text-5xl font-bold text-blue-600">0</p>
-                        <p class="text-blue-500">балів</p>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Main content: Training selection (Left) -->
+                    <div class="md:col-span-2">
+                        <h2 class="text-2xl font-semibold mb-4">Обери тренування</h2>
+                        <!-- Mode selection -->
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <p class="text-center font-semibold mb-3">Обери режим:</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button id="practice-mode-btn" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
+                                    <i class="fas fa-book-open mr-2"></i>Навчання<br><span class="text-xs font-normal">Без таймера, з підказками</span>
+                                </button>
+                                <button id="exam-mode-btn" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
+                                    <i class="fas fa-stopwatch mr-2"></i>Іспит<br><span class="text-xs font-normal">З таймером, як на НМТ</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Subject selection -->
+                        <div class="grid sm:grid-cols-3 gap-6">
+                             <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-green-500 hover:to-blue-600">
+                                <i class="fas fa-calculator text-5xl mb-2"></i>
+                                <span>Математика</span>
+                            </button>
+                            <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-yellow-500 hover:to-orange-600">
+                                <i class="fas fa-book text-5xl mb-2"></i>
+                                <span>Українська<br>мова</span>
+                            </button>
+                            <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-purple-500 hover:to-pink-600">
+                                <i class="fas fa-globe-americas text-5xl mb-2"></i>
+                                <span>Англійська</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="bg-yellow-100 p-6 rounded-xl text-center col-span-2">
-                        <p class="text-lg font-semibold text-yellow-800 mb-2">Твої Нагороди</p>
-                        <div id="badges-container" class="flex flex-wrap justify-center items-center gap-4 min-h-[60px]">
-                            <!-- Нагороди -->
+
+                    <!-- Sidebar: Stats (Right) -->
+                    <div class="md:col-span-1 bg-gray-50 p-6 rounded-2xl">
+                        <h2 class="text-2xl font-semibold mb-6 text-center">Твій прогрес</h2>
+                        <!-- Total score -->
+                        <div class="bg-blue-100 p-6 rounded-xl text-center mb-6">
+                            <p class="text-lg font-semibold text-blue-800">Загальний Рахунок</p>
+                            <p id="total-score" class="text-5xl font-bold text-blue-600 my-2">0</p>
+                            <p class="text-blue-500">балів</p>
+                        </div>
+                        <!-- Awards -->
+                        <div class="bg-yellow-100 p-6 rounded-xl text-center">
+                            <p class="text-lg font-semibold text-yellow-800 mb-4">Твої Нагороди</p>
+                            <div id="badges-container" class="flex flex-wrap justify-center items-center gap-x-5 gap-y-4 min-h-[40px]">
+                                <!-- Нагороди -->
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <h2 class="text-2xl font-semibold text-center mb-4">Продовжити тренування</h2>
-                
-                <!-- Вибір режиму -->
-                <div class="bg-blue-50 p-4 rounded-lg mb-6">
-                    <p class="text-center font-semibold mb-3">Обери режим:</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="practice-mode-btn" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
-                            <i class="fas fa-book-open mr-2"></i>Навчання<br><span class="text-xs font-normal">Без таймера, з підказками</span>
-                        </button>
-                        <button id="exam-mode-btn" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
-                            <i class="fas fa-stopwatch mr-2"></i>Іспит<br><span class="text-xs font-normal">З таймером, як на НМТ</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid sm:grid-cols-3 gap-6">
-                    <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-green-500 hover:to-blue-600">
-                        <i class="fas fa-calculator text-5xl mb-2"></i>
-                        <span>Математика</span>
-                    </button>
-                    <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-yellow-500 hover:to-orange-600">
-                        <i class="fas fa-book text-5xl mb-2"></i>
-                        <span>Українська<br>мова</span>
-                    </button>
-                    <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg hover:from-purple-500 hover:to-pink-600">
-                        <i class="fas fa-globe-americas text-5xl mb-2"></i>
-                        <span>Англійська</span>
-                    </button>
-                </div>
             </div>
         </div>
+
 
         <!-- Секція тестування -->
         <div id="test-container" class="w-full max-w-2xl hidden">
@@ -724,3 +739,4 @@
     </script>
 </body>
 </html>
+
