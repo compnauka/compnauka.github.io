@@ -3,7 +3,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signOut, onAuthStateChanged, setPersistence, browserLocalPersistence,
-  GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously
+  GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously,
+  sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot
@@ -32,8 +33,7 @@ export {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signOut, onAuthStateChanged, setPersistence, browserLocalPersistence,
   GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously,
+  sendEmailVerification,
   // firestore exports
   doc, getDoc, setDoc, updateDoc, increment, onSnapshot
 };
-
-
