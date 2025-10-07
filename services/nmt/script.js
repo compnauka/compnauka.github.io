@@ -80,25 +80,54 @@ function setupAuthListener(){
 }
 
 function listenToUserData(userId){
-  const userDocRef = doc(db,'users',userId);
-  unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap)=>{
-    if(docSnap.exists()){
-      currentUserData = docSnap.data();
+  const userDocRef = doc(db, 'users', userId);
+  unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap) => {
+    if (docSnap.exists()) {
+      const newUserData = docSnap.data();
+      const oldBadges = currentUserData ? new Set(currentUserData.badges) : new Set();
+      currentUserData = newUserData;
       updateDashboard();
-    }else{
+
+      // Перевірка нагород
+      const awardedBadges = [];
+      for (const badgeId in badges) {
+        const badge = badges[badgeId];
+        if (!newUserData.badges.includes(badgeId)) {
+          const checkScore = badge.subject === 'total' ? newUserData.totalScore : (newUserData.scores[badge.subject] || 0);
+          if (checkScore >= badge.score) {
+            awardedBadges.push(badgeId);
+          }
+        }
+      }
+
+      if (awardedBadges.length > 0) {
+        const newlyAwarded = awardedBadges.filter(b => !oldBadges.has(b));
+        if (newlyAwarded.length > 0) {
+            const lastBadge = badges[newlyAwarded[newlyAwarded.length - 1]];
+            document.getElementById('new-badge').innerHTML = `<i class="${lastBadge.icon}"></i>`;
+            document.getElementById('new-badge-name').textContent = lastBadge.name;
+            document.getElementById('new-badge-container').classList.remove('hidden');
+        }
+        // Оновлюємо список бейджів у базі даних
+        const allBadges = [...newUserData.badges, ...awardedBadges];
+        await updateDoc(userDocRef, { badges: allBadges }).catch(e => console.error('Error awarding badges:', e));
+      }
+
+    } else {
       const newUserData = {
         email: currentUser.email, totalScore: 0, badges: [],
-        scores: { math:0, ukrainian:0, english:0 }
+        scores: { math: 0, ukrainian: 0, english: 0 }
       };
-      await setDoc(userDocRef,newUserData).catch(e=>console.error('Error creating user doc:',e));
+      await setDoc(userDocRef, newUserData).catch(e => console.error('Error creating user doc:', e));
       currentUserData = newUserData;
       updateDashboard();
     }
-  }, (error)=>{
-    console.error('Error listening to user data:',error);
+  }, (error) => {
+    console.error('Error listening to user data:', error);
     showToast('Помилка синхронізації профілю.');
   });
 }
+
 
 async function saveScore(score,subject,retries=3,delay=1000){
   if(!currentUser || !isFirebaseActive || score===0) return;
@@ -139,33 +168,6 @@ async function trySyncOfflineScores(){
   localStorage.setItem('offlineScores',JSON.stringify(pending));
   if(q.length>0 && pending.length===0) showToast('Синхронізацію завершено!','success');
   else if(pending.length>0) showToast(`Не вдалося синхронізувати ${pending.length} результат(и).`,'error');
-}
-
-async function checkForNewBadges(){
-  if(!currentUser || !currentUserData || !isFirebaseActive) return;
-  const userDocRef = doc(db,'users',currentUser.uid);
-  const updatedUserDoc = await getDoc(userDocRef);
-  if(!updatedUserDoc.exists()) return;
-  const latestUserData = updatedUserDoc.data();
-
-  const awardedBadges = [];
-  for(const badgeId in badges){
-    const badge = badges[badgeId];
-    if(!latestUserData.badges.includes(badgeId)){
-      const checkScore = badge.subject==='total' ? latestUserData.totalScore : (latestUserData.scores[badge.subject]||0);
-      if(checkScore>=badge.score) awardedBadges.push(badgeId);
-    }
-  }
-  if(awardedBadges.length>0){
-    const newBadgesList = [...latestUserData.badges,...awardedBadges];
-    try{
-      await updateDoc(userDocRef,{ badges:newBadgesList });
-      const lastBadge = badges[awardedBadges[awardedBadges.length-1]];
-      document.getElementById('new-badge').innerHTML = `<i class="${lastBadge.icon}"></i>`;
-      document.getElementById('new-badge-name').textContent = lastBadge.name;
-      document.getElementById('new-badge-container').classList.remove('hidden');
-    }catch(error){ console.error('Error awarding badges:',error); }
-  }
 }
 
 function updateDashboard(){
@@ -272,7 +274,6 @@ async function endTest(timedOut=false){
   if(currentUser && isFirebaseActive && !currentUser.isAnonymous){
     document.getElementById('guest-prompt').classList.add('hidden');
     await saveScore(currentTest.score,currentTest.subject);
-    await checkForNewBadges();
   }else{
     document.getElementById('guest-prompt').classList.remove('hidden');
     saveScoreOffline(currentTest.score,currentTest.subject);
@@ -344,8 +345,28 @@ function setupEventListeners(){
   };
 
   if(isFirebaseActive){
-    registerForm.addEventListener('submit',(e)=>handleAuthSubmit(e,createUserWithEmailAndPassword));
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const email = form.querySelector('input[type="email"]').value;
+        const password = form.querySelector('input[type="password"]').value;
+        const authError = document.getElementById('auth-error');
+        authError.textContent = '';
+
+        // Валідація
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            authError.textContent = 'Введіть коректну адресу пошти.';
+            return;
+        }
+        if (password.length < 6) {
+            authError.textContent = 'Пароль має містити щонайменше 6 символів.';
+            return;
+        }
+
+        handleAuthSubmit(e, createUserWithEmailAndPassword);
+    });
     loginForm.addEventListener('submit',(e)=>handleAuthSubmit(e,signInWithEmailAndPassword));
+
     googleSigninBtn.addEventListener('click', async ()=>{
       const provider = new GoogleAuthProvider();
       document.getElementById('auth-error').textContent = '';
@@ -378,11 +399,24 @@ function setupEventListeners(){
       btn.setAttribute('aria-checked', btn===button);
     });
 
-    button.classList.add(isCorrect?'correct':'incorrect');
-    if(currentTest.mode==='practice' && !isCorrect){
-      const right = optionsContainer.querySelector(`.option-btn[data-index="${q.correct}"]`);
-      if(right) right.classList.add('correct');
+    const feedbackIcon = document.createElement('span');
+    feedbackIcon.className = 'feedback-icon ml-auto text-2xl';
+    feedbackIcon.innerHTML = isCorrect ? '✓' : '✗';
+
+    button.classList.add(isCorrect ? 'correct' : 'incorrect');
+    button.appendChild(feedbackIcon);
+
+    if (currentTest.mode === 'practice' && !isCorrect) {
+        const rightButton = optionsContainer.querySelector(`.option-btn[data-index="${q.correct}"]`);
+        if (rightButton) {
+            const correctIcon = document.createElement('span');
+            correctIcon.className = 'feedback-icon ml-auto text-2xl';
+            correctIcon.innerHTML = '✓';
+            rightButton.classList.add('correct');
+            rightButton.appendChild(correctIcon);
+        }
     }
+
     if(currentTest.mode==='practice'){
       document.getElementById('explanation-text').textContent = q.explanation;
       document.getElementById('explanation-container').classList.remove('hidden');
@@ -509,4 +543,3 @@ function setupEventListeners(){
     getMode: ()=>currentTest.mode
   });
 })();
-
