@@ -10,6 +10,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
+        /* РЕФАКТОРИНГ: Впровадження дизайн-токенів для централізованого керування стилями */
+        :root {
+            --color-primary: #3b82f6; /* blue-500 */
+            --color-primary-dark: #2563eb; /* blue-600 */
+            --color-secondary: #22c55e; /* green-500 */
+            --color-danger: #ef4444; /* red-500 */
+            --color-warning: #f59e0b; /* yellow-500 */
+            --color-text-light: #ffffff;
+            --color-text-dark: #374151; /* gray-700 */
+            --border-radius: 0.75rem; /* rounded-lg */
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: #f0f9ff;
@@ -24,11 +37,11 @@
         .btn:disabled { cursor: not-allowed; opacity: 0.7; }
         .option-btn { transition: all 0.2s ease; }
         .option-btn.correct {
-            background-color: #22c55e !important; color: white !important;
+            background-color: var(--color-secondary) !important; color: var(--color-text-light) !important;
             transform: scale(1.05); border-color: #16a34a;
         }
         .option-btn.incorrect {
-            background-color: #ef4444 !important; color: white !important;
+            background-color: var(--color-danger) !important; color: var(--color-text-light) !important;
             border-color: #dc2626;
         }
         .badge { transition: transform 0.3s ease; }
@@ -54,9 +67,9 @@
         #toast-notification.show {
             opacity: 1; visibility: visible; transform: translate(-50%, -10px);
         }
-        #toast-notification.error { background-color: #ef4444; }
-        #toast-notification.success { background-color: #22c55e; }
-        #toast-notification.info { background-color: #3b82f6; }
+        #toast-notification.error { background-color: var(--color-danger); }
+        #toast-notification.success { background-color: var(--color-secondary); }
+        #toast-notification.info { background-color: var(--color-primary); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
@@ -214,7 +227,7 @@
     </div>
     
     <!-- Модальне вікно результатів -->
-    <div id="results-modal" class="modal" role="alertdialog" aria-labelledby="results-title">
+    <div id="results-modal" class="modal" role="alertdialog" aria-labelledby="results-title" tabindex="-1">
         <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg text-center mx-4">
             <h2 id="results-title" class="text-3xl font-bold text-blue-600 mb-4">Чудовий результат!</h2>
             <p class="text-lg mb-2">Ти відповів правильно на</p>
@@ -237,7 +250,7 @@
         </div>
     </div>
 
-    <div id="review-modal" class="modal" role="dialog" aria-labelledby="review-title">
+    <div id="review-modal" class="modal" role="dialog" aria-labelledby="review-title" tabindex="-1">
         <div class="modal-content bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl text-left mx-4 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                  <h2 id="review-title" class="text-2xl font-bold text-blue-600">Перегляд відповідей</h2>
@@ -249,7 +262,7 @@
         </div>
     </div>
     
-    <div id="confirmation-modal" class="modal" role="alertdialog" aria-labelledby="confirmation-title">
+    <div id="confirmation-modal" class="modal" role="alertdialog" aria-labelledby="confirmation-title" tabindex="-1">
         <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center mx-4">
             <h2 id="confirmation-title" class="text-2xl font-bold text-gray-800 mb-4">Ви впевнені?</h2>
             <p id="confirmation-text" class="text-gray-600 mb-8">Весь прогрес у поточному тесті буде втрачено.</p>
@@ -263,51 +276,36 @@
     <!-- Сповіщення -->
     <div id="toast-notification" role="status" aria-live="polite"></div>
 
-    <!-- 1. ДОДАЙТЕ ЦЕЙ БЛОК -->
+    <!-- ВСТАВТЕ ВАШУ КОНФІГУРАЦІЮ З ВЛАСНОГО ПРОЄКТУ FIREBASE -->
     <script>
-      // Замініть ці значення на ваші реальні дані з Firebase Console
-      const firebaseConfig = {
-          apiKey: "AIzaSyBgyNmD9ixU_vHOo-MM4_UARiHU35hlt6k",
-          authDomain: "tests4-2a91a.firebaseapp.com",
-          projectId: "tests4-2a91a",
-          storageBucket: "tests4-2a91a.firebasestorage.app",
-          messagingSenderId: "706201183615",
-          appId: "1:706201183615:web:7104601b8da69ee1ff664a"
-      };
-      // Створюємо глобальну змінну, яку очікує ваш основний скрипт
-      const __firebase_config = JSON.stringify(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgyNmD9ixU_vHOo-MM4_UARiHU35hlt6k",
+            authDomain: "tests4-2a91a.firebaseapp.com",
+            projectId: "tests4-2a91a",
+            storageBucket: "tests4-2a91a.firebasestorage.app",
+            messagingSenderId: "706201183615",
+            appId: "1:706201183615:web:7104601b8da69ee1ff664a"
+        };
+        // Створюємо глобальну змінну, яку очікує основний скрипт
+        const __firebase_config = JSON.stringify(firebaseConfig);
     </script>
+
+    <!-- ВИДАЛЕНО: Жорстко закодований firebaseConfig, щоб використовувати наданий середовищем -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
             signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, 
-            GoogleAuthProvider, signInWithPopup, signInWithCustomToken
+            GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // РЕФАКТОРИНГ: Додано відсутній імпорт getDoc
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Initialization (Graceful failure) ---
         let app, auth, db;
         let isFirebaseActive = false;
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-                    setPersistence(auth, browserLocalPersistence);
-                    isFirebaseActive = true;
-                } else {
-                     throw new Error("Firebase config is missing essential keys.");
-                }
-            }
-        } catch (error) {
-            console.warn("Firebase initialization failed:", error.message, "App will run in offline mode.");
-        }
-
-
+        
         // --- DOM Elements ---
         const welcomeContainer = document.getElementById('welcome-container');
         const authContainer = document.getElementById('auth-container');
@@ -344,9 +342,11 @@
         let unsubscribeUserDataListener = null;
         let currentTest = { questions: [], subject: '', currentIndex: 0, score: 0, mode: 'practice', reviewData: [] };
         let timer = null;
-        let timeLeft = 300;
+        let timerDeadline;
+        let timeLeftWhenPaused;
         const TEST_LENGTH = 5;
         let activeTestSessionId = null;
+        let previouslyFocusedElement = null; // for a11y
 
         // --- Questions & Badges Data ---
         const questions = {
@@ -445,7 +445,7 @@
         });
 
         // --- Authentication & Real-time Data ---
-        if (isFirebaseActive) {
+        function setupAuthListener() {
             onAuthStateChanged(auth, async (user) => {
                 if (unsubscribeUserDataListener) unsubscribeUserDataListener();
                 
@@ -460,7 +460,7 @@
                 }
             });
         }
-
+        
         function listenToUserData(userId) {
             const userDocRef = doc(db, 'users', userId);
             unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap) => {
@@ -512,7 +512,7 @@
 
         async function trySyncOfflineScores() {
              const offlineScores = JSON.parse(localStorage.getItem('offlineScores') || '[]');
-             if (offlineScores.length > 0 && isFirebaseActive) {
+             if (offlineScores.length > 0 && isFirebaseActive && currentUser) {
                  showToast(`Синхронізація ${offlineScores.length} незбережених результатів...`, 'info');
                  for (const item of offlineScores) {
                      await saveScore(item.score, item.subject);
@@ -525,7 +525,6 @@
         async function checkForNewBadges() {
             if (!currentUser || !currentUserData || !isFirebaseActive) return;
             
-            // Re-fetch the latest data to avoid race conditions
             const userDocRef = doc(db, 'users', currentUser.uid);
             const updatedUserDoc = await getDoc(userDocRef);
             if (!updatedUserDoc.exists()) return;
@@ -535,7 +534,7 @@
             for (const badgeId in badges) {
                 const badge = badges[badgeId];
                 if (!latestUserData.badges.includes(badgeId)) {
-                    const checkScore = badge.subject === 'total' ? latestUserData.totalScore : latestUserData.scores[badge.subject];
+                    const checkScore = badge.subject === 'total' ? latestUserData.totalScore : (latestUserData.scores[badge.subject] || 0);
                     if (checkScore >= badge.score) {
                         awardedBadges.push(badgeId);
                     }
@@ -558,7 +557,7 @@
 
         // --- Dashboard & Test Logic ---
         function updateDashboard() {
-            if (!currentUserData) return;
+            if (!currentUserData || !currentUser) return;
             userEmailDisplay.textContent = currentUser.email;
             totalScoreDisplay.textContent = currentUserData.totalScore || 0;
             badgesContainer.innerHTML = '';
@@ -578,8 +577,16 @@
             }
             setMode('practice');
         };
-
-        const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
+        
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex > 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
 
         function startTest(subject) {
             const testSessionId = Date.now();
@@ -589,7 +596,7 @@
             setLoadingState(startBtn, true);
             
             setTimeout(() => {
-                if (activeTestSessionId !== testSessionId) return; // Race condition protection
+                if (activeTestSessionId !== testSessionId) return; 
 
                 currentTest.subject = subject;
                 currentTest.questions = shuffleArray([...questions[subject]]).slice(0, TEST_LENGTH);
@@ -649,7 +656,7 @@
         async function endTest(timedOut = false) {
             activeTestSessionId = null;
             stopTimer();
-            resultsModal.style.display = 'flex';
+            showModal(resultsModal);
             document.getElementById('results-score').textContent = currentTest.score;
             document.getElementById('results-total').textContent = currentTest.questions.length;
             document.getElementById('time-up-message').classList.toggle('hidden', !timedOut);
@@ -667,7 +674,6 @@
             }
         }
         
-        // --- Timer Logic ---
         function stopTimer() {
             clearInterval(timer);
             timer = null;
@@ -675,39 +681,51 @@
 
         function startTimer() {
             stopTimer();
-            timeLeft = 300;
+            timerDeadline = Date.now() + 300 * 1000; // 5 хвилин
             const timerDisplay = document.getElementById('timer-display');
             timerDisplay.classList.remove('hidden');
             timerDisplay.classList.add('flex');
             updateTimerDisplay();
-            resumeTimer();
+            timer = setInterval(updateTimerDisplay, 1000);
         }
 
-        const pauseTimer = stopTimer;
+        function pauseTimer() {
+            if (!timer) return;
+            stopTimer();
+            timeLeftWhenPaused = timerDeadline - Date.now();
+        }
 
         function resumeTimer() {
-             if (currentTest.mode !== 'exam' || !activeTestSessionId) return;
-             if (timer) stopTimer(); // Clear any existing timer before starting a new one
-             timer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if (timeLeft <= 0) {
-                    endTest(true);
-                }
-            }, 1000);
+             if (currentTest.mode !== 'exam' || !activeTestSessionId || timer) return;
+             timerDeadline = Date.now() + timeLeftWhenPaused;
+             updateTimerDisplay();
+             timer = setInterval(updateTimerDisplay, 1000);
         }
+
         function updateTimerDisplay() {
-            if(!activeTestSessionId) return;
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
+            if(!activeTestSessionId) {
+                stopTimer();
+                return;
+            };
+            const timeLeftMs = timerDeadline - Date.now();
+            const timeLeftSec = Math.round(timeLeftMs / 1000);
+
+            if (timeLeftSec <= 0) {
+                document.getElementById('timer-minutes').textContent = '0';
+                document.getElementById('timer-seconds').textContent = '00';
+                endTest(true);
+                return;
+            }
+
+            const minutes = Math.floor(timeLeftSec / 60);
+            const seconds = timeLeftSec % 60;
             document.getElementById('timer-minutes').textContent = minutes;
             document.getElementById('timer-seconds').textContent = seconds.toString().padStart(2, '0');
         }
 
-        // --- Review Logic ---
         function showReview() {
-            resultsModal.style.display = 'none';
-            reviewModal.style.display = 'flex';
+            hideModal(resultsModal, false);
+            showModal(reviewModal);
             const reviewContent = document.getElementById('review-content');
             reviewContent.innerHTML = '';
             
@@ -745,7 +763,45 @@
             }
         }
 
-        // --- Event Listeners ---
+        const focusableElementsSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+        function handleFocusTrap(e, modal) {
+            if (e.key !== 'Tab') return;
+            
+            const focusableElements = modal.querySelectorAll(focusableElementsSelector);
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) { 
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else { 
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+
+        function showModal(modal) {
+            previouslyFocusedElement = document.activeElement;
+            modal.style.display = 'flex';
+            const firstFocusable = modal.querySelector(focusableElementsSelector);
+            if (firstFocusable) firstFocusable.focus();
+
+            modal.addEventListener('keydown', (e) => handleFocusTrap(e, modal));
+        }
+
+        function hideModal(modal, shouldRefocus = true) {
+            modal.style.display = 'none';
+            modal.removeEventListener('keydown', handleFocusTrap);
+            if (shouldRefocus && previouslyFocusedElement) {
+                previouslyFocusedElement.focus();
+            }
+        }
+
         const handleAuthSubmit = async (e, authFunction) => {
             e.preventDefault();
             const form = e.target;
@@ -761,103 +817,106 @@
             } finally { setLoadingState(submitButton, false); }
         };
 
-        if (isFirebaseActive) {
-            registerForm.addEventListener('submit', (e) => handleAuthSubmit(e, createUserWithEmailAndPassword));
-            loginForm.addEventListener('submit', (e) => handleAuthSubmit(e, signInWithEmailAndPassword));
-            googleSigninBtn.addEventListener('click', async () => {
-                const provider = new GoogleAuthProvider();
-                authError.textContent = '';
-                setLoadingState(googleSigninBtn, true);
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (error) { authError.textContent = getAuthErrorMessage(error.code);
-                } finally { setLoadingState(googleSigninBtn, false); }
+        function setupEventListeners() {
+            if (isFirebaseActive) {
+                registerForm.addEventListener('submit', (e) => handleAuthSubmit(e, createUserWithEmailAndPassword));
+                loginForm.addEventListener('submit', (e) => handleAuthSubmit(e, signInWithEmailAndPassword));
+                googleSigninBtn.addEventListener('click', async () => {
+                    const provider = new GoogleAuthProvider();
+                    authError.textContent = '';
+                    setLoadingState(googleSigninBtn, true);
+                    try {
+                        await signInWithPopup(auth, provider);
+                    } catch (error) { authError.textContent = getAuthErrorMessage(error.code);
+                    } finally { setLoadingState(googleSigninBtn, false); }
+                });
+                logoutBtn.addEventListener('click', () => {
+                    if (unsubscribeUserDataListener) unsubscribeUserDataListener();
+                    signOut(auth);
+                });
+            }
+            
+            optionsContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.option-btn');
+                if (!button || button.disabled) return;
+                
+                const selectedIndex = parseInt(button.dataset.index, 10);
+                const question = currentTest.questions[currentTest.currentIndex];
+                const isCorrect = selectedIndex === question.correct;
+                
+                if (isCorrect) currentTest.score++;
+                currentTest.reviewData.push({ question, selectedIndex });
+                
+                document.querySelectorAll('.option-btn').forEach((btn, idx) => {
+                    btn.disabled = true;
+                    btn.setAttribute('aria-checked', idx === selectedIndex);
+                });
+                
+                button.classList.add(isCorrect ? 'correct' : 'incorrect');
+                
+                if (currentTest.mode === 'practice' && !isCorrect) {
+                     document.querySelector('.option-btn[data-index="' + question.correct + '"]').classList.add('correct');
+                }
+
+                if (currentTest.mode === 'practice') {
+                    document.getElementById('explanation-text').textContent = question.explanation;
+                    document.getElementById('explanation-container').classList.remove('hidden');
+                }
+                
+                nextQuestionBtn.textContent = (currentTest.currentIndex === currentTest.questions.length - 1) ? 'Завершити тест' : 'Наступне питання';
+                nextQuestionBtn.classList.remove('hidden');
+                nextQuestionBtn.focus();
             });
-            logoutBtn.addEventListener('click', () => {
-                if (unsubscribeUserDataListener) unsubscribeUserDataListener();
-                signOut(auth);
+
+            document.querySelectorAll('.start-test-btn').forEach(btn => {
+                btn.addEventListener('click', () => startTest(btn.dataset.subject));
+            });
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => setMode(btn.dataset.mode));
+            });
+            backToMainBtn.addEventListener('click', () => {
+                hideModal(resultsModal);
+                if(currentUser && isFirebaseActive) showScreen('dashboard');
+                else showScreen('welcome');
+            });
+            saveProgressBtn.addEventListener('click', () => {
+                hideModal(resultsModal);
+                showScreen('auth');
+            });
+            toggleAuthLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.classList.toggle('hidden'); registerForm.classList.toggle('hidden');
+                toggleAuthLink.textContent = loginForm.classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
+                authError.textContent = '';
+            });
+            showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showScreen('auth'); });
+            backToWelcomeBtn.addEventListener('click', () => showScreen('welcome'));
+            nextQuestionBtn.addEventListener('click', nextQuestion);
+            
+            quitTestBtn.addEventListener('click', () => {
+                pauseTimer();
+                showModal(confirmationModal);
+            });
+            cancelActionBtn.addEventListener('click', () => {
+                hideModal(confirmationModal);
+                resumeTimer();
+            });
+             confirmActionBtn.addEventListener('click', () => {
+                hideModal(confirmationModal);
+                activeTestSessionId = null;
+                stopTimer();
+                if(currentUser && isFirebaseActive) showScreen('dashboard');
+                else showScreen('welcome');
+            });
+
+            reviewAnswersBtn.addEventListener('click', showReview);
+            closeReviewBtn.addEventListener('click', () => {
+                hideModal(reviewModal);
+                if (currentUser && isFirebaseActive) showScreen('dashboard');
+                else showScreen('welcome');
             });
         }
         
-        optionsContainer.addEventListener('click', (e) => {
-            const button = e.target.closest('.option-btn');
-            if (!button || button.disabled) return;
-            
-            const selectedIndex = parseInt(button.dataset.index, 10);
-            const question = currentTest.questions[currentTest.currentIndex];
-            const isCorrect = selectedIndex === question.correct;
-            
-            if (isCorrect) currentTest.score++;
-            currentTest.reviewData.push({ question, selectedIndex });
-            
-            document.querySelectorAll('.option-btn').forEach((btn, idx) => {
-                btn.disabled = true;
-                btn.setAttribute('aria-checked', idx === selectedIndex);
-            });
-            
-            button.classList.add(isCorrect ? 'correct' : 'incorrect');
-            
-            if (currentTest.mode === 'practice' && !isCorrect) {
-                 document.querySelector('.option-btn[data-index="' + question.correct + '"]').classList.add('correct');
-            }
-
-            if (currentTest.mode === 'practice') {
-                document.getElementById('explanation-text').textContent = question.explanation;
-                document.getElementById('explanation-container').classList.remove('hidden');
-            }
-            
-            nextQuestionBtn.textContent = (currentTest.currentIndex === currentTest.questions.length - 1) ? 'Завершити тест' : 'Наступне питання';
-            nextQuestionBtn.classList.remove('hidden');
-        });
-
-        document.querySelectorAll('.start-test-btn').forEach(btn => {
-            btn.addEventListener('click', () => startTest(btn.dataset.subject));
-        });
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => setMode(btn.dataset.mode));
-        });
-        backToMainBtn.addEventListener('click', () => {
-            resultsModal.style.display = 'none';
-            if(currentUser && isFirebaseActive) showScreen('dashboard');
-            else showScreen('welcome');
-        });
-        saveProgressBtn.addEventListener('click', () => {
-            resultsModal.style.display = 'none';
-            showScreen('auth');
-        });
-        toggleAuthLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginForm.classList.toggle('hidden'); registerForm.classList.toggle('hidden');
-            toggleAuthLink.textContent = loginForm.classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
-            authError.textContent = '';
-        });
-        showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showScreen('auth'); });
-        backToWelcomeBtn.addEventListener('click', () => showScreen('welcome'));
-        nextQuestionBtn.addEventListener('click', nextQuestion);
-        
-        quitTestBtn.addEventListener('click', () => {
-            pauseTimer();
-            confirmationModal.style.display = 'flex';
-        });
-        cancelActionBtn.addEventListener('click', () => {
-            confirmationModal.style.display = 'none';
-            resumeTimer();
-        });
-         confirmActionBtn.addEventListener('click', () => {
-            confirmationModal.style.display = 'none';
-            activeTestSessionId = null;
-            stopTimer();
-            if(currentUser && isFirebaseActive) showScreen('dashboard');
-            else showScreen('welcome');
-        });
-
-        reviewAnswersBtn.addEventListener('click', showReview);
-        closeReviewBtn.addEventListener('click', () => {
-            reviewModal.style.display = 'none';
-            if (currentUser && isFirebaseActive) showScreen('dashboard');
-            else showScreen('welcome');
-        });
-
         const getAuthErrorMessage = (code) => {
             switch (code) {
                 case 'auth/wrong-password': return 'Неправильний пароль.';
@@ -872,19 +931,46 @@
         // --- Initial setup ---
         (async () => {
             setMode('practice');
+            
+            // ВИПРАВЛЕНО: Ініціалізація Firebase з глобальної конфігурації
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+                        app = initializeApp(firebaseConfig);
+                        auth = getAuth(app);
+                        db = getFirestore(app);
+                        await setPersistence(auth, browserLocalPersistence);
+                        isFirebaseActive = true;
+                    } else { throw new Error("Firebase config is missing essential keys."); }
+                } else { throw new Error("__firebase_config is not defined."); }
+            } catch (error) {
+                console.warn("Firebase initialization failed:", error.message, "App will run in offline mode.");
+            }
+
             if (isFirebaseActive) {
+                setupAuthListener(); // Встановлюємо слухач стану автентифікації
                 document.addEventListener('visibilitychange', () => {
                      if (document.visibilityState === 'visible') {
                          trySyncOfflineScores();
                      }
                 });
-                await trySyncOfflineScores(); // Initial sync on load with await
+                
+                // ВИПРАВЛЕНО: Логіка входу з резервним варіантом
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try { await signInWithCustomToken(auth, __initial_auth_token); }
-                    catch (error) { console.error("Custom token sign-in failed:", error); }
+                    try { 
+                        await signInWithCustomToken(auth, __initial_auth_token); 
+                    }
+                    catch (error) { 
+                        console.error("Custom token sign-in failed:", error); 
+                        try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous sign-in fallback failed:", e); }
+                    }
+                } else {
+                    try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous sign-in failed:", e); }
                 }
+                
+                await trySyncOfflineScores();
             } else {
-                // Disable auth features
                 document.querySelectorAll('#show-login-btn, #google-signin-btn, #login-form, #register-form, #toggle-auth, #save-progress-btn, #logout-btn').forEach(el => {
                     el.style.opacity = '0.5';
                     el.style.pointerEvents = 'none';
@@ -894,6 +980,8 @@
                 if(authRelatedText) authRelatedText.innerHTML = 'Збереження прогресу недоступне.';
                 showScreen('welcome');
             }
+            
+            setupEventListeners();
         })();
     </script>
 </body>
