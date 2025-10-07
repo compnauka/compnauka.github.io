@@ -1,989 +1,1003 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Підготовка до НМТ для початківців</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        /* РЕФАКТОРИНГ: Впровадження дизайн-токенів для централізованого керування стилями */
-        :root {
-            --color-primary: #3b82f6; /* blue-500 */
-            --color-primary-dark: #2563eb; /* blue-600 */
-            --color-secondary: #22c55e; /* green-500 */
-            --color-danger: #ef4444; /* red-500 */
-            --color-warning: #f59e0b; /* yellow-500 */
-            --color-text-light: #ffffff;
-            --color-text-dark: #374151; /* gray-700 */
-            --border-radius: 0.75rem; /* rounded-lg */
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Підготовка до НМТ для початківців</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
 
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f0f9ff;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a3d5f7' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        .app-container { transition: all 0.3s ease-in-out; }
-        .btn { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .btn:disabled { cursor: not-allowed; opacity: 0.7; }
-        .option-btn { transition: all 0.2s ease; }
-        .option-btn.correct {
-            background-color: var(--color-secondary) !important; color: var(--color-text-light) !important;
-            transform: scale(1.05); border-color: #16a34a;
-        }
-        .option-btn.incorrect {
-            background-color: var(--color-danger) !important; color: var(--color-text-light) !important;
-            border-color: #dc2626;
-        }
-        .badge { transition: transform 0.3s ease; }
-        .badge:hover { transform: scale(1.1); }
-        .modal {
-            display: none; position: fixed; z-index: 100;
-            left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s;
-            align-items: center; justify-content: center;
-        }
-        .modal-content { animation: slideIn 0.3s; margin: auto; }
-        #toast-notification {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px; border-radius: 9999px;
-            color: white; font-weight: 600;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
-        }
-        #toast-notification.show {
-            opacity: 1; visibility: visible; transform: translate(-50%, -10px);
-        }
-        #toast-notification.error { background-color: var(--color-danger); }
-        #toast-notification.success { background-color: var(--color-secondary); }
-        #toast-notification.info { background-color: var(--color-primary); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    </style>
+  <style>
+    :root{
+      --color-primary:#3b82f6; --color-primary-dark:#2563eb; --color-secondary:#22c55e;
+      --color-danger:#ef4444; --color-warning:#f59e0b; --color-text-light:#fff;
+      --color-text-dark:#374151; --border-radius:.75rem;
+      --shadow-xl:0 20px 25px -5px rgb(0 0 0 / .1),0 8px 10px -6px rgb(0 0 0 / .1);
+    }
+    body{
+      font-family:'Montserrat',sans-serif;
+      background:#f0f9ff;
+      background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a3d5f7' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .app-container{transition:all .3s ease-in-out}
+    .btn{transition:transform .2s ease,box-shadow .2s ease}
+    .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+    .btn:disabled{cursor:not-allowed;opacity:.7}
+    .option-btn{transition:all .2s ease}
+    .option-btn.correct{background:var(--color-secondary)!important;color:var(--color-text-light)!important;transform:scale(1.05);border-color:#16a34a}
+    .option-btn.incorrect{background:var(--color-danger)!important;color:var(--color-text-light)!important;border-color:#dc2626}
+    .option-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.6)}
+    .badge{transition:transform .3s ease}
+    .badge:hover{transform:scale(1.1)}
+    .modal{
+      display:none;position:fixed;z-index:100;inset:0;width:100%;height:100%;
+      overflow:auto;background:rgba(0,0,0,.5);animation:fadeIn .3s;align-items:center;justify-content:center
+    }
+    .modal-content{animation:slideIn .3s;margin:auto}
+    #toast-notification{
+      position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      padding:12px 24px;border-radius:9999px;color:#fff;font-weight:600;z-index:9999;
+      opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s,transform .3s
+    }
+    #toast-notification.show{opacity:1;visibility:visible;transform:translate(-50%,-10px)}
+    #toast-notification.error{background:var(--color-danger)}
+    #toast-notification.success{background:var(--color-secondary)}
+    #toast-notification.info{background:var(--color-primary)}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideIn{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  </style>
 </head>
 <body class="text-gray-800">
 
-    <div id="app" class="app-container min-h-screen flex items-start justify-center p-4 pt-10 sm:pt-16">
-    
-        <!-- Головний екран -->
-        <div id="welcome-container" class="w-full max-w-2xl text-center">
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
-                <h1 class="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">Зірковий Старт!</h1>
-                <p class="text-gray-500 mb-8">Обери предмет, щоб почати тренування</p>
-                <div class="bg-blue-50 p-4 rounded-lg mb-6 max-w-md mx-auto">
-                    <p class="text-center font-semibold mb-3">Обери режим:</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button data-mode="practice" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition" aria-label="Обрати режим Навчання">
-                            <i class="fas fa-book-open mr-2"></i>Навчання<br><span class="text-xs font-normal">З підказками</span>
-                        </button>
-                        <button data-mode="exam" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition" aria-label="Обрати режим Іспит">
-                            <i class="fas fa-stopwatch mr-2"></i>Іспит<br><span class="text-xs font-normal">З таймером</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                    <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                        <i class="fas fa-calculator text-4xl sm:text-5xl mb-2"></i><span>Математика</span>
-                    </button>
-                    <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                        <i class="fas fa-book text-4xl sm:text-5xl mb-2"></i><span>Українська<br>мова</span>
-                    </button>
-                    <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                        <i class="fas fa-globe-americas text-4xl sm:text-5xl mb-2"></i><span>Англійська</span>
-                    </button>
-                </div>
-                <p class="text-gray-600">
-                    <a href="#" id="show-login-btn" class="text-blue-500 font-semibold hover:underline">Увійдіть в акаунт</a>, щоб зберігати свій прогрес!
-                </p>
-            </div>
+  <div id="app" class="app-container min-h-screen flex items-start justify-center p-4 pt-10 sm:pt-16">
+
+    <!-- Welcome -->
+    <div id="welcome-container" class="w-full max-w-2xl text-center">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">Зірковий Старт!</h1>
+        <p class="text-gray-500 mb-8">Обери предмет, щоб почати тренування</p>
+
+        <div class="bg-blue-50 p-4 rounded-lg mb-6 max-w-md mx-auto">
+          <p class="text-center font-semibold mb-3">Обери режим:</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button data-mode="practice" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition" aria-label="Обрати режим Навчання">
+              <i class="fas fa-book-open mr-2" aria-hidden="true"></i>Навчання<br><span class="text-xs font-normal">З підказками</span>
+            </button>
+            <button data-mode="exam" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition" aria-label="Обрати режим Іспит">
+              <i class="fas fa-stopwatch mr-2" aria-hidden="true"></i>Іспит<br><span class="text-xs font-normal">З таймером</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Секція входу та реєстрації -->
-        <div id="auth-container" class="w-full max-w-md hidden">
-            <div class="bg-white p-8 rounded-2xl shadow-xl text-center">
-                <h1 class="text-3xl font-bold text-blue-600 mb-6">Збереження прогресу</h1>
-                <button id="google-signin-btn" class="btn w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2">
-                    <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google logo" class="h-5">
-                    <span>Увійти через Google</span>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+            <i class="fas fa-calculator text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Математика</span>
+          </button>
+          <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+            <i class="fas fa-book text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Українська<br/>мова</span>
+          </button>
+          <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+            <i class="fas fa-globe-americas text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Англійська</span>
+          </button>
+        </div>
+
+        <p class="text-gray-600">
+          <a href="#" id="show-login-btn" class="text-blue-500 font-semibold hover:underline">Увійдіть в акаунт</a>, щоб зберігати свій прогрес!
+        </p>
+      </div>
+    </div>
+
+    <!-- Auth -->
+    <div id="auth-container" class="w-full max-w-md hidden">
+      <div class="bg-white p-8 rounded-2xl shadow-xl text-center">
+        <h1 class="text-3xl font-bold text-blue-600 mb-6">Збереження прогресу</h1>
+        <button id="google-signin-btn" class="btn w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2">
+          <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google" class="h-5"/>
+          <span>Увійти через Google</span>
+        </button>
+        <div class="my-4 flex items-center"><hr class="flex-grow"/><span class="px-2 text-gray-500 text-sm">або</span><hr class="flex-grow"/></div>
+        <form id="login-form" class="space-y-4">
+          <input type="email" id="login-email" placeholder="Електронна пошта" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required/>
+          <input type="password" id="login-password" placeholder="Пароль" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required/>
+          <button type="submit" class="btn w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg">Увійти</button>
+        </form>
+        <form id="register-form" class="space-y-4 hidden">
+          <input type="email" id="register-email" placeholder="Електронна пошта" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required/>
+          <input type="password" id="register-password" placeholder="Пароль (мінімум 6 символів)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required/>
+          <button type="submit" class="btn w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg">Створити акаунт</button>
+        </form>
+        <p class="mt-4">
+          <a href="#" id="toggle-auth" class="text-blue-500 hover:underline text-sm">Немає акаунта? Зареєструватися</a>
+        </p>
+        <p id="auth-error" class="text-red-500 mt-4 text-sm h-4"></p>
+        <button id="back-to-welcome-btn" class="mt-4 text-gray-500 hover:underline text-sm">Повернутись на головну</button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard-container" class="w-full max-w-6xl hidden">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-blue-600">Привіт, юний генію!</h1>
+            <p class="text-gray-500 text-sm sm:text-base" id="user-email-display"></p>
+          </div>
+          <button id="logout-btn" class="btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center gap-2 self-end sm:self-center">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Вийти</span>
+          </button>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="md:col-span-2">
+            <h2 class="text-2xl font-semibold mb-4">Обери тренування</h2>
+
+            <div class="bg-blue-50 p-4 rounded-lg mb-6">
+              <p class="text-center font-semibold mb-3">Обери режим:</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button data-mode="practice" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
+                  <i class="fas fa-book-open mr-2" aria-hidden="true"></i>Навчання<br/><span class="text-xs font-normal">З підказками</span>
                 </button>
-                <div class="my-4 flex items-center"><hr class="flex-grow"><span class="px-2 text-gray-500 text-sm">або</span><hr class="flex-grow"></div>
-                <form id="login-form" class="space-y-4">
-                    <input type="email" id="login-email" placeholder="Електронна пошта" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <input type="password" id="login-password" placeholder="Пароль" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <button type="submit" class="btn w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg">Увійти</button>
-                </form>
-                <form id="register-form" class="space-y-4 hidden">
-                    <input type="email" id="register-email" placeholder="Електронна пошта" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                    <input type="password" id="register-password" placeholder="Пароль (мінімум 6 символів)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                    <button type="submit" class="btn w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg">Створити акаунт</button>
-                </form>
-                <p class="mt-4"><a href="#" id="toggle-auth" class="text-blue-500 hover:underline text-sm">Немає акаунта? Зареєструватися</a></p>
-                <p id="auth-error" class="text-red-500 mt-4 text-sm h-4"></p>
-                <button id="back-to-welcome-btn" class="mt-4 text-gray-500 hover:underline text-sm">Повернутись на головну</button>
+                <button data-mode="exam" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
+                  <i class="fas fa-stopwatch mr-2" aria-hidden="true"></i>Іспит<br/><span class="text-xs font-normal">З таймером</span>
+                </button>
+              </div>
             </div>
-        </div>
 
-        <!-- Головна панель (Dashboard) -->
-        <div id="dashboard-container" class="w-full max-w-6xl hidden">
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                    <div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-blue-600">Привіт, юний генію!</h1>
-                        <p class="text-gray-500 text-sm sm:text-base" id="user-email-display"></p>
-                    </div>
-                    <button id="logout-btn" class="btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center gap-2 self-end sm:self-center">
-                        <i class="fas fa-sign-out-alt"></i><span>Вийти</span>
-                    </button>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="md:col-span-2">
-                        <h2 class="text-2xl font-semibold mb-4">Обери тренування</h2>
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
-                            <p class="text-center font-semibold mb-3">Обери режим:</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <button data-mode="practice" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
-                                    <i class="fas fa-book-open mr-2"></i>Навчання<br><span class="text-xs font-normal">З підказками</span>
-                                </button>
-                                <button data-mode="exam" class="mode-btn btn text-blue-700 font-semibold py-3 px-4 rounded-lg transition">
-                                    <i class="fas fa-stopwatch mr-2"></i>Іспит<br><span class="text-xs font-normal">З таймером</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                             <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                                <i class="fas fa-calculator text-4xl sm:text-5xl mb-2"></i><span>Математика</span>
-                            </button>
-                            <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                                <i class="fas fa-book text-4xl sm:text-5xl mb-2"></i><span>Українська<br>мова</span>
-                            </button>
-                            <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
-                                <i class="fas fa-globe-americas text-4xl sm:text-5xl mb-2"></i><span>Англійська</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="md:col-span-1 bg-gray-50 p-6 rounded-2xl">
-                        <h2 class="text-2xl font-semibold mb-6 text-center">Твій прогрес</h2>
-                        <div class="bg-blue-100 p-6 rounded-xl text-center mb-6">
-                            <p class="text-lg font-semibold text-blue-800">Загальний Рахунок</p>
-                            <p id="total-score" class="text-5xl font-bold text-blue-600 my-2">0</p>
-                            <p class="text-blue-500">балів</p>
-                        </div>
-                        <div class="bg-yellow-100 p-6 rounded-xl text-center">
-                            <p class="text-lg font-semibold text-yellow-800 mb-4">Твої Нагороди</p>
-                            <div id="badges-container" class="flex flex-wrap justify-center items-center gap-x-5 gap-y-4 min-h-[40px]"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <button data-subject="math" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-green-400 to-blue-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+                <i class="fas fa-calculator text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Математика</span>
+              </button>
+              <button data-subject="ukrainian" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+                <i class="fas fa-book text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Українська<br/>мова</span>
+              </button>
+              <button data-subject="english" class="start-test-btn btn flex flex-col items-center justify-center h-40 sm:h-48 bg-gradient-to-br from-purple-400 to-pink-500 text-white p-4 rounded-xl text-xl font-bold shadow-lg">
+                <i class="fas fa-globe-americas text-4xl sm:text-5xl mb-2" aria-hidden="true"></i><span>Англійська</span>
+              </button>
             </div>
-        </div>
+          </div>
 
-        <!-- Секція тестування -->
-        <div id="test-container" class="w-full max-w-2xl hidden">
-             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
-                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
-                    <div class="flex items-center">
-                        <h2 id="test-title" class="text-xl sm:text-2xl font-bold text-blue-600">Математика</h2>
-                        <span id="test-mode-indicator" class="text-xs sm:text-sm font-semibold bg-gray-200 text-gray-700 px-3 py-1 rounded-full ml-3"></span>
-                    </div>
-                    <div class="flex items-center gap-2 sm:gap-4">
-                        <div id="timer-display" class="hidden text-base sm:text-lg font-bold bg-orange-100 text-orange-700 px-3 py-2 rounded-lg items-center">
-                            <i class="fas fa-stopwatch mr-2"></i>
-                            <div><span id="timer-minutes">5</span>:<span id="timer-seconds">00</span></div>
-                        </div>
-                        <p class="text-base sm:text-lg font-semibold"><span id="current-question-num">1</span> / <span id="total-questions-num">5</span></p>
-                         <button id="quit-test-btn" class="btn bg-gray-200 text-gray-600 text-xs sm:text-sm font-bold py-2 px-3 rounded-lg hover:bg-gray-300" aria-label="Вийти з тесту">Вийти</button>
-                    </div>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                    <div id="progress-bar" class="bg-green-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-lg mb-6 min-h-[100px] flex items-center justify-center">
-                    <p id="question-text" class="text-lg sm:text-xl text-center font-medium">Завантаження питання...</p>
-                </div>
-                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4" role="radiogroup"></div>
-                <div class="text-center mt-6 min-h-[80px]">
-                    <p id="feedback-text" class="font-semibold h-6"></p>
-                    <button id="next-question-btn" class="btn bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hidden mt-2">Наступне питання</button>
-                </div>
-                <div id="explanation-container" class="hidden mt-6 bg-green-50 border-2 border-green-200 p-6 rounded-lg">
-                    <p class="font-semibold text-green-800 mb-2"><i class="fas fa-lightbulb mr-2"></i>Пояснення:</p>
-                    <p id="explanation-text" class="text-gray-700"></p>
-                </div>
+          <div class="md:col-span-1 bg-gray-50 p-6 rounded-2xl">
+            <h2 class="text-2xl font-semibold mb-6 text-center">Твій прогрес</h2>
+            <div class="bg-blue-100 p-6 rounded-xl text-center mb-6">
+              <p class="text-lg font-semibold text-blue-800">Загальний Рахунок</p>
+              <p id="total-score" class="text-5xl font-bold text-blue-600 my-2">0</p>
+              <p class="text-blue-500">балів</p>
             </div>
+            <div class="bg-yellow-100 p-6 rounded-xl text-center">
+              <p class="text-lg font-semibold text-yellow-800 mb-4">Твої Нагороди</p>
+              <div id="badges-container" class="flex flex-wrap justify-center items-center gap-x-5 gap-y-4 min-h-[40px]"></div>
+            </div>
+          </div>
         </div>
-    </div>
-    
-    <!-- Модальне вікно результатів -->
-    <div id="results-modal" class="modal" role="alertdialog" aria-labelledby="results-title" tabindex="-1">
-        <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg text-center mx-4">
-            <h2 id="results-title" class="text-3xl font-bold text-blue-600 mb-4">Чудовий результат!</h2>
-            <p class="text-lg mb-2">Ти відповів правильно на</p>
-            <p class="text-6xl font-extrabold text-green-500 mb-4"><span id="results-score">0</span> з <span id="results-total">0</span></p>
-            <p id="time-up-message" class="hidden text-orange-600 font-semibold mb-4">Час вийшов!</p>
-            <div id="new-badge-container" class="hidden my-6">
-                <p class="text-lg font-semibold text-yellow-600 mb-2"><i class="fas fa-trophy mr-2"></i>Нова нагорода! 🎉</p>
-                <div id="new-badge" class="inline-block text-5xl bg-yellow-100 p-4 rounded-full"></div>
-                <p id="new-badge-name" class="font-bold mt-2"></p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-4 mt-6">
-                <button id="review-answers-btn" class="btn w-full bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg">Переглянути відповіді</button>
-                <button id="back-to-main-btn" class="btn w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">На головну</button>
-            </div>
-            <div id="guest-prompt" class="hidden mt-6 bg-blue-50 p-6 rounded-lg">
-                <p class="font-semibold mb-3">Хочеш зберегти цей результат?</p>
-                <p class="text-sm text-gray-600 mb-4">Створи акаунт або увійди, щоб відстежувати свій прогрес!</p>
-                <button id="save-progress-btn" class="btn w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Увійти та зберегти</button>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <div id="review-modal" class="modal" role="dialog" aria-labelledby="review-title" tabindex="-1">
-        <div class="modal-content bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl text-left mx-4 max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                 <h2 id="review-title" class="text-2xl font-bold text-blue-600">Перегляд відповідей</h2>
-                 <button id="close-review-btn" class="text-gray-500 hover:text-gray-800 text-2xl" aria-label="Закрити вікно перегляду">&times;</button>
+    <!-- Test -->
+    <div id="test-container" class="w-full max-w-2xl hidden">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+        <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+          <div class="flex items-center">
+            <h2 id="test-title" class="text-xl sm:text-2xl font-bold text-blue-600">Математика</h2>
+            <span id="test-mode-indicator" class="text-xs sm:text-sm font-semibold bg-gray-200 text-gray-700 px-3 py-1 rounded-full ml-3"></span>
+          </div>
+          <div class="flex items-center gap-2 sm:gap-4">
+            <div id="timer-display" class="hidden text-base sm:text-lg font-bold bg-orange-100 text-orange-700 px-3 py-2 rounded-lg items-center">
+              <i class="fas fa-stopwatch mr-2" aria-hidden="true"></i>
+              <div><span id="timer-minutes">5</span>:<span id="timer-seconds">00</span></div>
             </div>
-            <div id="review-content" class="overflow-y-auto flex-grow pr-2">
-                <!-- Контент перегляду буде тут -->
-            </div>
+            <p class="text-base sm:text-lg font-semibold">
+              <span id="current-question-num">0</span> / <span id="total-questions-num">5</span>
+            </p>
+            <button id="quit-test-btn" class="btn bg-gray-200 text-gray-600 text-xs sm:text-sm font-bold py-2 px-3 rounded-lg hover:bg-gray-300" aria-label="Вийти з тесту">Вийти</button>
+          </div>
         </div>
-    </div>
-    
-    <div id="confirmation-modal" class="modal" role="alertdialog" aria-labelledby="confirmation-title" tabindex="-1">
-        <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center mx-4">
-            <h2 id="confirmation-title" class="text-2xl font-bold text-gray-800 mb-4">Ви впевнені?</h2>
-            <p id="confirmation-text" class="text-gray-600 mb-8">Весь прогрес у поточному тесті буде втрачено.</p>
-            <div class="grid grid-cols-2 gap-4">
-                <button id="confirm-action-btn" class="btn w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600">Так, вийти</button>
-                <button id="cancel-action-btn" class="btn w-full bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg hover:bg-gray-300">Скасувати</button>
-            </div>
+
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6" aria-hidden="true">
+          <div id="progress-bar" class="bg-green-500 h-2.5 rounded-full transition-all duration-300" style="width:0%"></div>
         </div>
+
+        <div class="bg-blue-50 p-6 rounded-lg mb-6 min-h-[100px] flex items-center justify-center">
+          <p id="question-text" class="text-lg sm:text-xl text-center font-medium">Завантаження питання...</p>
+        </div>
+
+        <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4" role="radiogroup" aria-labelledby="question-text"></div>
+
+        <div class="text-center mt-6 min-h-[80px]">
+          <p id="feedback-text" class="font-semibold h-6"></p>
+          <button id="next-question-btn" class="btn bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hidden mt-2">Наступне питання</button>
+        </div>
+
+        <div id="explanation-container" class="hidden mt-6 bg-green-50 border-2 border-green-200 p-6 rounded-lg">
+          <p class="font-semibold text-green-800 mb-2"><i class="fas fa-lightbulb mr-2" aria-hidden="true"></i>Пояснення:</p>
+          <p id="explanation-text" class="text-gray-700"></p>
+        </div>
+      </div>
     </div>
-    
-    <!-- Сповіщення -->
-    <div id="toast-notification" role="status" aria-live="polite"></div>
+  </div>
 
-    <!-- ВСТАВТЕ ВАШУ КОНФІГУРАЦІЮ З ВЛАСНОГО ПРОЄКТУ FIREBASE -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgyNmD9ixU_vHOo-MM4_UARiHU35hlt6k",
-            authDomain: "tests4-2a91a.firebaseapp.com",
-            projectId: "tests4-2a91a",
-            storageBucket: "tests4-2a91a.firebasestorage.app",
-            messagingSenderId: "706201183615",
-            appId: "1:706201183615:web:7104601b8da69ee1ff664a"
-        };
-        // Створюємо глобальну змінну, яку очікує основний скрипт
-        const __firebase_config = JSON.stringify(firebaseConfig);
-    </script>
+  <!-- Results Modal -->
+  <div id="results-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="results-title" tabindex="-1">
+    <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg text-center mx-4">
+      <h2 id="results-title" class="text-3xl font-bold text-blue-600 mb-4">Чудовий результат!</h2>
+      <p class="text-lg mb-2">Ти відповів правильно на</p>
+      <p class="text-6xl font-extrabold text-green-500 mb-4"><span id="results-score">0</span> з <span id="results-total">0</span></p>
+      <p id="time-up-message" class="hidden text-orange-600 font-semibold mb-4">Час вийшов!</p>
+      <div id="new-badge-container" class="hidden my-6">
+        <p class="text-lg font-semibold text-yellow-600 mb-2"><i class="fas fa-trophy mr-2" aria-hidden="true"></i>Нова нагорода! 🎉</p>
+        <div id="new-badge" class="inline-block text-5xl bg-yellow-100 p-4 rounded-full"></div>
+        <p id="new-badge-name" class="font-bold mt-2"></p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-4 mt-6">
+        <button id="review-answers-btn" class="btn w-full bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg">Переглянути відповіді</button>
+        <button id="back-to-main-btn" class="btn w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">На головну</button>
+      </div>
+      <div id="guest-prompt" class="hidden mt-6 bg-blue-50 p-6 rounded-lg">
+        <p class="font-semibold mb-3">Хочеш зберегти цей результат?</p>
+        <p class="text-sm text-gray-600 mb-4">Створи акаунт або увійди, щоб відстежувати свій прогрес!</p>
+        <button id="save-progress-btn" class="btn w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Увійти та зберегти</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- ВИДАЛЕНО: Жорстко закодований firebaseConfig, щоб використовувати наданий середовищем -->
+  <!-- Review Modal -->
+  <div id="review-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="review-title" tabindex="-1">
+    <div class="modal-content bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl text-left mx-4 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="review-title" class="text-2xl font-bold text-blue-600">Перегляд відповідей</h2>
+        <button id="close-review-btn" class="text-gray-500 hover:text-gray-800 text-2xl" aria-label="Закрити вікно перегляду">&times;</button>
+      </div>
+      <div id="review-content" class="overflow-y-auto flex-grow pr-2"></div>
+    </div>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-            signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, 
-            GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // РЕФАКТОРИНГ: Додано відсутній імпорт getDoc
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmation-title" tabindex="-1">
+    <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center mx-4">
+      <h2 id="confirmation-title" class="text-2xl font-bold text-gray-800 mb-4">Ви впевнені?</h2>
+      <p id="confirmation-text" class="text-gray-600 mb-8">Весь прогрес у поточному тесті буде втрачено.</p>
+      <div class="grid grid-cols-2 gap-4">
+        <button id="confirm-action-btn" class="btn w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600">Так, вийти</button>
+        <button id="cancel-action-btn" class="btn w-full bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg hover:bg-gray-300">Скасувати</button>
+      </div>
+    </div>
+  </div>
 
-        // --- Firebase Initialization (Graceful failure) ---
-        let app, auth, db;
-        let isFirebaseActive = false;
-        
-        // --- DOM Elements ---
-        const welcomeContainer = document.getElementById('welcome-container');
-        const authContainer = document.getElementById('auth-container');
-        const dashboardContainer = document.getElementById('dashboard-container');
-        const testContainer = document.getElementById('test-container');
-        const resultsModal = document.getElementById('results-modal');
-        const reviewModal = document.getElementById('review-modal');
-        const confirmationModal = document.getElementById('confirmation-modal');
-        const confirmActionBtn = document.getElementById('confirm-action-btn');
-        const cancelActionBtn = document.getElementById('cancel-action-btn');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const toggleAuthLink = document.getElementById('toggle-auth');
-        const authError = document.getElementById('auth-error');
-        const logoutBtn = document.getElementById('logout-btn');
-        const googleSigninBtn = document.getElementById('google-signin-btn');
-        const showLoginBtn = document.getElementById('show-login-btn');
-        const backToWelcomeBtn = document.getElementById('back-to-welcome-btn');
-        const userEmailDisplay = document.getElementById('user-email-display');
-        const totalScoreDisplay = document.getElementById('total-score');
-        const badgesContainer = document.getElementById('badges-container');
-        const backToMainBtn = document.getElementById('back-to-main-btn');
-        const guestPrompt = document.getElementById('guest-prompt');
-        const saveProgressBtn = document.getElementById('save-progress-btn');
-        const nextQuestionBtn = document.getElementById('next-question-btn');
-        const quitTestBtn = document.getElementById('quit-test-btn');
-        const reviewAnswersBtn = document.getElementById('review-answers-btn');
-        const closeReviewBtn = document.getElementById('close-review-btn');
-        const optionsContainer = document.getElementById('options-container');
+  <!-- Toast -->
+  <div id="toast-notification" role="status" aria-live="polite"></div>
 
-        // --- State variables ---
-        let currentUser = null;
-        let currentUserData = null;
-        let unsubscribeUserDataListener = null;
-        let currentTest = { questions: [], subject: '', currentIndex: 0, score: 0, mode: 'practice', reviewData: [] };
-        let timer = null;
-        let timerDeadline;
-        let timeLeftWhenPaused;
-        const TEST_LENGTH = 5;
-        let activeTestSessionId = null;
-        let previouslyFocusedElement = null; // for a11y
+  <!-- Firebase config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgyNmD9ixU_vHOo-MM4_UARiHU35hlt6k",
+      authDomain: "tests4-2a91a.firebaseapp.com",
+      projectId: "tests4-2a91a",
+      storageBucket: "tests4-2a91a.firebasestorage.app",
+      messagingSenderId: "706201183615",
+      appId: "1:706201183615:web:7104601b8da69ee1ff664a"
+    };
+    const __firebase_config = JSON.stringify(firebaseConfig);
+  </script>
 
-        // --- Questions & Badges Data ---
-        const questions = {
-             math: [
-                { q: "Площа прямокутника зі сторонами 8 см і 5 см дорівнює...", a: ["40 см", "26 см", "40 кв. см", "13 см"], correct: 2, explanation: "Щоб знайти площу прямокутника, потрібно помножити його довжину на ширину: 8 см * 5 см = 40 кв. см." },
-                { q: "Розв'яжи рівняння: x - 25 = 50", a: ["x = 25", "x = 75", "x = 50", "x = 100"], correct: 1, explanation: "Щоб знайти невідоме зменшуване, потрібно до різниці додати від'ємник: x = 50 + 25, отже x = 75." },
-                { q: "Знайди 1/5 від числа 100.", a: ["20", "25", "50", "10"], correct: 0, explanation: "Щоб знайти частину від числа, потрібно це число поділити на знаменник дробу: 100 / 5 = 20." },
-                { q: "Скільки грамів у 3 кілограмах?", a: ["300 г", "30 г", "3000 г", "1000 г"], correct: 2, explanation: "В одному кілограмі 1000 грамів, тому в трьох кілограмах: 3 * 1000 = 3000 грамів." },
-                { q: "Периметр квадрата 24 см. Яка довжина його сторони?", a: ["6 см", "4 см", "8 см", "12 см"], correct: 0, explanation: "У квадрата 4 однакові сторони. Щоб знайти довжину однієї сторони, потрібно периметр поділити на 4: 24 см / 4 = 6 см." },
-                { q: "В автобусі їхало 45 пасажирів. На зупинці вийшло 12, а зайшло 7. Скільки пасажирів стало в автобусі?", a: ["40", "33", "52", "43"], correct: 0, explanation: "Спочатку віднімаємо тих, хто вийшов: 45 - 12 = 33. Потім додаємо тих, хто зайшов: 33 + 7 = 40." },
-                { q: "Який з дробів найбільший: 1/3, 1/8, 1/2, 1/5?", a: ["1/3", "1/8", "1/2", "1/5"], correct: 2, explanation: "Якщо чисельники однакові, то більшим є той дріб, у якого знаменник менший. 1/2 (половина) - це найбільша частина." },
-                { q: "5 годин - це скільки хвилин?", a: ["500 хв", "250 хв", "300 хв", "360 хв"], correct: 2, explanation: "В одній годині 60 хвилин. Отже, 5 годин * 60 хвилин = 300 хвилин." },
-                { q: "Обчисли: 640 / 8 + 20", a: ["100", "80", "82", "660"], correct: 0, explanation: "Спочатку виконуємо ділення: 640 / 8 = 80. Потім додавання: 80 + 20 = 100." },
-                { q: "У книзі 120 сторінок. Оленка прочитала чверть. Скільки сторінок їй залишилося прочитати?", a: ["30", "90", "60", "80"], correct: 1, explanation: "Чверть - це 1/4. Спочатку знаходимо, скільки вона прочитала: 120 / 4 = 30 сторінок. Потім знаходимо залишок: 120 - 30 = 90 сторінок." }
-            ],
-            ukrainian: [
-                { q: "Визнач рід іменника 'собака'.", a: ["Чоловічий", "Жіночий", "Середній", "Спільний"], correct: 1, explanation: "Слово 'собака' жіночого роду (вона моя собака)." },
-                { q: "Яке слово є прикметником у реченні: 'Настала тепла весна.'?", a: ["Настала", "тепла", "весна", "На"], correct: 1, explanation: "Прикметник відповідає на питання 'яка?' і вказує на ознаку предмета. Весна (яка?) тепла." },
-                { q: "Знайди слово, у якому допущено помилку.", a: ["Свято", "буряк", "здоров'я", "морквяний"], correct: 2, explanation: "Слово 'здоров'я' пишеться з апострофом після 'р' перед 'я'." },
-                { q: "Добери антонім до слова 'радість'.", a: ["Щастя", "сміх", "сум", "веселість"], correct: 2, explanation: "Антоніми – це слова з протилежним значенням. Протилежністю до радості є сум." },
-                { q: "В якому слові на місці пропуску пишеться м'який знак?", a: ["Хар..ків", "біл..ці", "дон..чин", "мен..ший"], correct: 1, explanation: "У слові 'білці' пишемо м'який знак для пом'якшення попереднього приголосного [л']." },
-                { q: "Визнач головні члени речення: 'Діти весело гралися у дворі.'", a: ["Діти гралися", "весело гралися", "гралися у дворі", "діти у дворі"], correct: 0, explanation: "Головні члени речення – це підмет (хто? що?) і присудок (що робив?). Хто? – діти. Що робили? – гралися." },
-                { q: "Яка частина слова є змінною?", a: ["Корінь", "Префікс", "Суфікс", "Закінчення"], correct: 3, explanation: "Закінчення – це змінна частина слова, яка служить для зв'язку слів у реченні." },
-                { q: "Постав слово 'книга' в орудному відмінку.", a: ["книги", "книзі", "книгою", "на книзі"], correct: 2, explanation: "Орудний відмінок відповідає на питання 'ким? чим?'. Правильна форма – (чим?) книгою." },
-                { q: "В якому рядку всі слова є іменниками?", a: ["Стіл, бігти, зелений", "Сонце, хмара, дощ", "Гарний, високо, він", "Читати, писати, малювати"], correct: 1, explanation: "Іменники називають предмети і відповідають на питання 'хто? що?'. Сонце, хмара, дощ - все іменники." },
-                { q: "Яким є речення за метою висловлювання: 'Коли ти прийдеш додому?'", a: ["Розповідне", "Питальне", "Спонукальне", "Окличне"], correct: 1, explanation: "Речення, у якому про щось запитується, є питальним. В кінці ставимо знак питання." }
-            ],
-            english: [
-                { q: "What ___ you doing now?", a: ["is", "are", "am", "do"], correct: 1, explanation: "With the pronoun 'you', we use the verb 'are' in Present Continuous tense." },
-                { q: "She ___ to school yesterday.", a: ["go", "goes", "went", "is going"], correct: 2, explanation: "'Yesterday' indicates the past, so we use the past form of the verb 'go', which is 'went'." },
-                { q: "There are many ___ on the tree in autumn.", a: ["leaf", "leafs", "leafes", "leaves"], correct: 3, explanation: "The plural form of 'leaf' is irregular: 'leaves'." },
-                { q: "My birthday is ___ July.", a: ["on", "at", "in", "by"], correct: 2, explanation: "We use the preposition 'in' for months and years." },
-                { q: "He is ___ than his brother.", a: ["tall", "taller", "the tallest", "more tall"], correct: 1, explanation: "To compare two people or things, we use the comparative form of the adjective, which is 'taller'." },
-                { q: "___ is your name?", a: ["What", "Where", "Who", "When"], correct: 0, explanation: "'What' is the correct question word to ask for a name." },
-                { q: "Can you swim? - Yes, I ___.", a: ["can't", "can", "am", "is"], correct: 1, explanation: "The short answer should use the same modal verb as the question. 'Yes, I can.'" },
-                { q: "She has ___ nice dress.", a: ["a", "an", "the", "-"], correct: 0, explanation: "We use the article 'a' before a consonant sound ('nice')." },
-                { q: "They ___ football every Sunday.", a: ["plays", "play", "are playing", "played"], correct: 1, explanation: "'Every Sunday' indicates a regular action, so we use Present Simple. For 'they', the verb is 'play'." },
-                { q: "The book is ___ the table.", a: ["under", "on", "behind", "in front"], correct: 1, explanation: "'On' is the preposition used to show that something is on a surface, like a table." }
-            ]
-        };
-        const badges = {
-            math_rookie: { icon: 'fas fa-calculator', name: 'Математик-початківець', subject: 'math', score: 10 },
-            math_adept: { icon: 'fas fa-ruler-combined', name: 'Знавець формул', subject: 'math', score: 50 },
-            ukrainian_rookie: { icon: 'fas fa-pen-nib', name: 'Мовознавець-початківець', subject: 'ukrainian', score: 10 },
-            ukrainian_adept: { icon: 'fas fa-book-reader', name: 'Хранитель мови', subject: 'ukrainian', score: 50 },
-            english_rookie: { icon: 'fas fa-language', name: 'English Starter', subject: 'english', score: 10 },
-            english_adept: { icon: 'fas fa-graduation-cap', name: 'English Speaker', subject: 'english', score: 50 },
-            genius: { icon: 'fas fa-brain', name: 'Юний геній', subject: 'total', score: 100 },
-            mastermind: { icon: 'fas fa-trophy', name: 'Володар знань', subject: 'total', score: 200 }
-        };
-        
-        // --- UI Navigation & Helpers ---
-        function showScreen(screen) {
-            [welcomeContainer, authContainer, dashboardContainer, testContainer].forEach(c => c.classList.add('hidden'));
-            document.getElementById(`${screen}-container`).classList.remove('hidden');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      signOut, onAuthStateChanged, setPersistence, browserLocalPersistence,
+      GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Firebase Initialization
+    let app, auth, db;
+    let isFirebaseActive = false;
+
+    // DOM refs (static)
+    const welcomeContainer = document.getElementById('welcome-container');
+    const authContainer = document.getElementById('auth-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const testContainer = document.getElementById('test-container');
+    const resultsModal = document.getElementById('results-modal');
+    const reviewModal = document.getElementById('review-modal');
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const optionsContainer = document.getElementById('options-container');
+
+    // State
+    let currentUser = null;
+    let currentUserData = null;
+    let unsubscribeUserDataListener = null;
+    let currentTest = { questions: [], subject: '', currentIndex: 0, score: 0, mode: 'practice', reviewData: [] };
+    let timer = null;
+    let timerDeadline;
+    let timeLeftWhenPaused;
+    const TEST_LENGTH = 5;
+    let activeTestSessionId = null;
+    let previouslyFocusedElement = null;
+
+    // Data
+    const questions = {
+      math: [
+        { q:"Площа прямокутника зі сторонами 8 см і 5 см дорівнює...", a:["40 см","26 см","40 кв. см","13 см"], correct:2, explanation:"8×5 = 40 кв. см." },
+        { q:"Розв'яжи рівняння: x - 25 = 50", a:["x = 25","x = 75","x = 50","x = 100"], correct:1, explanation:"x = 50 + 25 = 75." },
+        { q:"Знайди 1/5 від числа 100.", a:["20","25","50","10"], correct:0, explanation:"100 / 5 = 20." },
+        { q:"Скільки грамів у 3 кілограмах?", a:["300 г","30 г","3000 г","1000 г"], correct:2, explanation:"3 × 1000 = 3000 г." },
+        { q:"Периметр квадрата 24 см. Яка довжина його сторони?", a:["6 см","4 см","8 см","12 см"], correct:0, explanation:"24 / 4 = 6 см." },
+        { q:"В автобусі їхало 45 пасажирів. На зупинці вийшло 12, а зайшло 7. Скільки пасажирів стало в автобусі?", a:["40","33","52","43"], correct:0, explanation:"45-12=33; 33+7=40." },
+        { q:"Який з дробів найбільший: 1/3, 1/8, 1/2, 1/5?", a:["1/3","1/8","1/2","1/5"], correct:2, explanation:"Більший дріб — з меншим знаменником (при однакових чисельниках)." },
+        { q:"5 годин — це скільки хвилин?", a:["500 хв","250 хв","300 хв","360 хв"], correct:2, explanation:"5×60=300 хв." },
+        { q:"Обчисли: 640 / 8 + 20", a:["100","80","82","660"], correct:0, explanation:"640/8=80; 80+20=100." },
+        { q:"У книзі 120 сторінок. Оленка прочитала чверть. Скільки залишилося?", a:["30","90","60","80"], correct:1, explanation:"120/4=30; 120-30=90." }
+      ],
+      ukrainian: [
+        { q:"Визнач рід іменника «собака».", a:["Чоловічий","Жіночий","Середній","Спільний"], correct:1, explanation:"«Собака» — жіночий рід." },
+        { q:"Яке слово є прикметником у реченні: «Настала тепла весна.»?", a:["Настала","тепла","весна","На"], correct:1, explanation:"Прикметник відповідає на «який/яка?» — тепла." },
+        { q:"Знайди слово, у якому допущено помилку.", a:["Свято","буряк","здоровя","морквяний"], correct:2, explanation:"Правильно: «здоров'я» з апострофом." },
+        { q:"Добери антонім до слова «радість».", a:["Щастя","сміх","сум","веселість"], correct:2, explanation:"Протилежність — «сум»." },
+        { q:"У якому слові потрібно написати м'який знак (ь)?", a:["бур..як","сіл..ський","дзв..якати","молод..ший"], correct:1, explanation:"Правильно: «сільський» (ь). Інші — без м'якого знака (тут або без нього, або вимагають апострофа)." },
+        { q:"Визнач головні члени речення: «Діти весело гралися у дворі.»", a:["Діти гралися","весело гралися","гралися у дворі","діти у дворі"], correct:0, explanation:"Підмет — діти, присудок — гралися." },
+        { q:"Яка частина слова є змінною?", a:["Корінь","Префікс","Суфікс","Закінчення"], correct:3, explanation:"Закінчення змінюється." },
+        { q:"Постав слово «книга» в орудному відмінку.", a:["книги","книзі","книгою","на книзі"], correct:2, explanation:"(Чим?) — книгою." },
+        { q:"У якому рядку всі слова — іменники?", a:["Стіл, бігти, зелений","Сонце, хмара, дощ","Гарний, високо, він","Читати, писати, малювати"], correct:1, explanation:"Сонце, хмара, дощ — іменники." },
+        { q:"Яким є речення за метою висловлювання: «Коли ти прийдеш додому?»", a:["Розповідне","Питальне","Спонукальне","Окличне"], correct:1, explanation:"Це питальне речення." }
+      ],
+      english: [
+        { q:"What ___ you doing now?", a:["is","are","am","do"], correct:1, explanation:"With «you» use «are» (Present Continuous)." },
+        { q:"She ___ to school yesterday.", a:["go","goes","went","is going"], correct:2, explanation:"Past marker «yesterday» → «went»." },
+        { q:"There are many ___ on the tree in autumn.", a:["leaf","leafs","leafes","leaves"], correct:3, explanation:"Plural of «leaf» is «leaves»." },
+        { q:"My birthday is ___ July.", a:["on","at","in","by"], correct:2, explanation:"Use «in» for months/years." },
+        { q:"He is ___ than his brother.", a:["tall","taller","the tallest","more tall"], correct:1, explanation:"Comparative: taller." },
+        { q:"___ is your name?", a:["What","Where","Who","When"], correct:0, explanation:"«What is your name?»" },
+        { q:"Can you swim? — Yes, I ___.", a:["can't","can","am","is"], correct:1, explanation:"Repeat the modal: can." },
+        { q:"She has ___ nice dress.", a:["a","an","the","-"], correct:0, explanation:"«a» before consonant sound." },
+        { q:"They ___ football every Sunday.", a:["plays","play","are playing","played"], correct:1, explanation:"Habitual → Present Simple: play." },
+        { q:"The book is ___ the table.", a:["under","on","behind","in front"], correct:1, explanation:"On the table." }
+      ]
+    };
+
+    const badges = {
+      math_rookie:{ icon:'fas fa-calculator', name:'Математик-початківець', subject:'math', score:10 },
+      math_adept:{ icon:'fas fa-ruler-combined', name:'Знавець формул', subject:'math', score:50 },
+      ukrainian_rookie:{ icon:'fas fa-pen-nib', name:'Мовознавець-початківець', subject:'ukrainian', score:10 },
+      ukrainian_adept:{ icon:'fas fa-book-reader', name:'Хранитель мови', subject:'ukrainian', score:50 },
+      english_rookie:{ icon:'fas fa-language', name:'English Starter', subject:'english', score:10 },
+      english_adept:{ icon:'fas fa-graduation-cap', name:'English Speaker', subject:'english', score:50 },
+      genius:{ icon:'fas fa-brain', name:'Юний геній', subject:'total', score:100 },
+      mastermind:{ icon:'fas fa-trophy', name:'Володар знань', subject:'total', score:200 }
+    };
+
+    // UI helpers
+    function showScreen(screen){
+      [welcomeContainer,authContainer,dashboardContainer,testContainer].forEach(c=>c.classList.add('hidden'));
+      document.getElementById(`${screen}-container`).classList.remove('hidden');
+    }
+
+    function setLoadingState(button,isLoading){
+      if(!button) return;
+      if(isLoading){
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i>';
+      }else{
+        button.disabled = false;
+        if(button.dataset.originalText) button.innerHTML = button.dataset.originalText;
+      }
+    }
+
+    function setMode(mode){
+      currentTest.mode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn=>{
+        const isActive = btn.dataset.mode === mode;
+        btn.classList.toggle('border-2',isActive);
+        btn.classList.toggle('border-blue-500',isActive);
+        btn.classList.toggle('bg-blue-100',isActive);
+        btn.classList.toggle('bg-white',!isActive);
+      });
+    }
+
+    function showToast(message,type='error'){
+      const toast = document.getElementById('toast-notification');
+      toast.textContent = message;
+      toast.classList.remove('error','success','info','show');
+      toast.classList.add(type,'show');
+      setTimeout(()=>toast.classList.remove('show'),3000);
+    }
+
+    window.addEventListener('beforeunload',(event)=>{
+      if(activeTestSessionId){
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    });
+
+    // Auth + RT data
+    function setupAuthListener(){
+      onAuthStateChanged(auth, async (user)=>{
+        if(unsubscribeUserDataListener) unsubscribeUserDataListener();
+        if(user && !user.isAnonymous){
+          currentUser = user;
+          listenToUserData(user.uid);
+          await trySyncOfflineScores();
+          showScreen('dashboard');
+        }else{
+          currentUser = null; currentUserData = null;
+          setMode('practice'); showScreen('welcome');
         }
+      });
+    }
 
-        function setLoadingState(button, isLoading) {
-            if (!button) return;
-            if (isLoading) {
-                button.disabled = true;
-                button.dataset.originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            } else {
-                button.disabled = false;
-                if(button.dataset.originalText) button.innerHTML = button.dataset.originalText;
-            }
+    function listenToUserData(userId){
+      const userDocRef = doc(db,'users',userId);
+      unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap)=>{
+        if(docSnap.exists()){
+          currentUserData = docSnap.data();
+          updateDashboard();
+        }else{
+          const newUserData = {
+            email: currentUser.email, totalScore: 0, badges: [],
+            scores: { math:0, ukrainian:0, english:0 }
+          };
+          await setDoc(userDocRef,newUserData).catch(e=>console.error('Error creating user doc:',e));
+          currentUserData = newUserData;
+          updateDashboard();
         }
+      }, (error)=>{
+        console.error('Error listening to user data:',error);
+        showToast('Помилка синхронізації профілю.');
+      });
+    }
 
-        function setMode(mode) {
-            currentTest.mode = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                const isActive = btn.dataset.mode === mode;
-                btn.classList.toggle('border-2', isActive);
-                btn.classList.toggle('border-blue-500', isActive);
-                btn.classList.toggle('bg-blue-100', isActive);
-                btn.classList.toggle('bg-white', !isActive);
-            });
+    async function saveScore(score,subject,retries=3,delay=1000){
+      if(!currentUser || !isFirebaseActive || score===0) return;
+      const userDocRef = doc(db,'users',currentUser.uid);
+      try{
+        await updateDoc(userDocRef,{
+          totalScore: increment(score),
+          [`scores.${subject}`]: increment(score)
+        });
+      }catch(error){
+        if(error.code==='unavailable' && retries>0){
+          console.warn(`Network error. Retrying in ${delay}ms... (${retries} left)`);
+          setTimeout(()=>saveScore(score,subject,retries-1,delay*2),delay);
+        }else{
+          console.error('Failed to save score:',error);
+          showToast('Помилка збереження. Результат збережено локально.');
+          saveScoreOffline(score,subject);
+          throw error;
         }
+      }
+    }
 
-        function showToast(message, type = 'error') {
-            const toast = document.getElementById('toast-notification');
-            toast.textContent = message;
-            toast.className = ``; // Reset
-            toast.classList.add(type, 'show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+    function saveScoreOffline(score,subject){
+      const offlineScores = JSON.parse(localStorage.getItem('offlineScores')||'[]');
+      offlineScores.push({ score, subject, timestamp: Date.now() });
+      localStorage.setItem('offlineScores',JSON.stringify(offlineScores));
+    }
+
+    async function trySyncOfflineScores(){
+      const q = JSON.parse(localStorage.getItem('offlineScores')||'[]');
+      if(q.length===0 || !isFirebaseActive || !currentUser) return;
+      showToast(`Синхронізація ${q.length} незбережених результатів...`,'info');
+      const pending = [];
+      for(const item of q){
+        try{ await saveScore(item.score,item.subject); }
+        catch{ pending.push(item); }
+      }
+      localStorage.setItem('offlineScores',JSON.stringify(pending));
+      if(q.length>0 && pending.length===0) showToast('Синхронізацію завершено!','success');
+      else if(pending.length>0) showToast(`Не вдалося синхронізувати ${pending.length} результат(и).`,'error');
+    }
+
+    async function checkForNewBadges(){
+      if(!currentUser || !currentUserData || !isFirebaseActive) return;
+      const userDocRef = doc(db,'users',currentUser.uid);
+      const updatedUserDoc = await getDoc(userDocRef);
+      if(!updatedUserDoc.exists()) return;
+      const latestUserData = updatedUserDoc.data();
+
+      const awardedBadges = [];
+      for(const badgeId in badges){
+        const badge = badges[badgeId];
+        if(!latestUserData.badges.includes(badgeId)){
+          const checkScore = badge.subject==='total' ? latestUserData.totalScore : (latestUserData.scores[badge.subject]||0);
+          if(checkScore>=badge.score) awardedBadges.push(badgeId);
         }
+      }
+      if(awardedBadges.length>0){
+        const newBadgesList = [...latestUserData.badges,...awardedBadges];
+        try{
+          await updateDoc(userDocRef,{ badges:newBadgesList });
+          const lastBadge = badges[awardedBadges[awardedBadges.length-1]];
+          document.getElementById('new-badge').innerHTML = `<i class="${lastBadge.icon}"></i>`;
+          document.getElementById('new-badge-name').textContent = lastBadge.name;
+          document.getElementById('new-badge-container').classList.remove('hidden');
+        }catch(error){ console.error('Error awarding badges:',error); }
+      }
+    }
 
-        window.addEventListener('beforeunload', (event) => {
-            if (activeTestSessionId) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
+    function updateDashboard(){
+      const userEmailDisplay = document.getElementById('user-email-display');
+      const totalScoreDisplay = document.getElementById('total-score');
+      const badgesContainer = document.getElementById('badges-container');
+      if(!currentUserData || !currentUser) return;
+      userEmailDisplay.textContent = currentUser.email;
+      totalScoreDisplay.textContent = currentUserData.totalScore||0;
+      badgesContainer.innerHTML = '';
+      if(currentUserData.badges && currentUserData.badges.length>0){
+        currentUserData.badges.forEach(badgeId=>{
+          const badge = badges[badgeId];
+          if(badge){
+            const el = document.createElement('div');
+            el.className = 'badge text-4xl cursor-pointer text-yellow-500';
+            el.title = badge.name;
+            el.innerHTML = `<i class="${badge.icon}" aria-hidden="true"></i>`;
+            badgesContainer.appendChild(el);
+          }
+        });
+      }else{
+        badgesContainer.innerHTML = '<p class="text-gray-500">Поки що немає нагород.</p>';
+      }
+      setMode('practice');
+    }
+
+    function shuffleArray(array){
+      let currentIndex = array.length, randomIndex;
+      while(currentIndex>0){
+        randomIndex = Math.floor(Math.random()*currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
+    }
+
+    function startTest(subject){
+      const testSessionId = Date.now();
+      activeTestSessionId = testSessionId;
+
+      const startBtn = document.querySelector(`.start-test-btn[data-subject="${subject}"]`);
+      setLoadingState(startBtn,true);
+
+      setTimeout(()=>{
+        if(activeTestSessionId!==testSessionId) return;
+
+        currentTest.subject = subject;
+        currentTest.questions = shuffleArray([...questions[subject]]).slice(0,TEST_LENGTH);
+        currentTest.currentIndex = 0;
+        currentTest.score = 0;
+        currentTest.reviewData = [];
+
+        document.getElementById('test-title').textContent = { math:'Математика', ukrainian:'Українська мова', english:'Англійська' }[subject];
+        document.getElementById('total-questions-num').textContent = currentTest.questions.length;
+        document.getElementById('current-question-num').textContent = 0;
+        document.getElementById('progress-bar').style.width = '0%';
+
+        const modeIndicator = document.getElementById('test-mode-indicator');
+        modeIndicator.textContent = currentTest.mode==='exam' ? 'Іспит' : 'Навчання';
+        modeIndicator.className = `text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ml-3 ${currentTest.mode==='exam' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`;
+
+        setLoadingState(startBtn,false);
+        showScreen('test');
+        displayQuestion();
+
+        if(currentTest.mode==='exam') startTimer();
+        else document.getElementById('timer-display').classList.add('hidden');
+      },300);
+    }
+
+    function displayQuestion(){
+      const q = currentTest.questions[currentTest.currentIndex];
+
+      // показуємо номер питання ТІЛЬКИ після відповіді (прогрес росте після кліку)
+      document.getElementById('question-text').textContent = q.q;
+      optionsContainer.innerHTML = '';
+      document.getElementById('feedback-text').textContent = '';
+      document.getElementById('explanation-container').classList.add('hidden');
+      const nextBtn = document.getElementById('next-question-btn');
+      nextBtn.classList.add('hidden');
+
+      q.a.forEach((answer,index)=>{
+        const button = document.createElement('button');
+        button.setAttribute('type','button');
+        button.setAttribute('role','radio');
+        button.setAttribute('aria-checked','false');
+        button.className = 'option-btn btn bg-white border-2 border-gray-300 text-gray-700 font-semibold p-4 rounded-lg text-left hover:border-blue-400 hover:bg-blue-50';
+        button.textContent = answer;
+        button.dataset.index = index;
+        button.tabIndex = 0;
+        optionsContainer.appendChild(button);
+      });
+
+      // клавіатурна навігація WAI-ARIA radio pattern
+      optionsContainer.addEventListener('keydown', radioKeyHandler);
+      // сфокусуємо першу опцію
+      const first = optionsContainer.querySelector('.option-btn');
+      if(first) first.focus();
+    }
+
+    function updateProgressUI(){
+      const total = currentTest.questions.length;
+      const done = currentTest.currentIndex + 1; // щойно відповіли
+      const width = Math.max(0, Math.min(100, (done/total)*100));
+      document.getElementById('progress-bar').style.width = `${width}%`;
+      document.getElementById('current-question-num').textContent = done;
+    }
+
+    function nextQuestion(){
+      currentTest.currentIndex++;
+      if(currentTest.currentIndex < currentTest.questions.length){
+        displayQuestion();
+      }else{
+        endTest();
+      }
+    }
+
+    async function endTest(timedOut=false){
+      activeTestSessionId = null;
+      stopTimer();
+
+      // скидання таймера
+      const timerMinutes = document.getElementById('timer-minutes');
+      const timerSeconds = document.getElementById('timer-seconds');
+      if(timerMinutes) timerMinutes.textContent = '5';
+      if(timerSeconds) timerSeconds.textContent = '00';
+
+      showModal(resultsModal);
+      document.getElementById('results-score').textContent = currentTest.score;
+      document.getElementById('results-total').textContent = currentTest.questions.length;
+      document.getElementById('time-up-message').classList.toggle('hidden', !timedOut);
+      document.getElementById('new-badge-container').classList.add('hidden');
+
+      // «Переглянути відповіді» — завжди доступно
+      document.getElementById('review-answers-btn').classList.remove('hidden');
+
+      if(currentUser && isFirebaseActive && !currentUser.isAnonymous){
+        document.getElementById('guest-prompt').classList.add('hidden');
+        await saveScore(currentTest.score,currentTest.subject);
+        await checkForNewBadges();
+      }else{
+        document.getElementById('guest-prompt').classList.remove('hidden');
+        saveScoreOffline(currentTest.score,currentTest.subject);
+      }
+    }
+
+    function stopTimer(){ clearInterval(timer); timer=null; }
+    function startTimer(){
+      stopTimer();
+      timerDeadline = Date.now() + 300*1000;
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.classList.remove('hidden'); timerDisplay.classList.add('flex');
+      updateTimerDisplay();
+      timer = setInterval(updateTimerDisplay,1000);
+    }
+    function pauseTimer(){ if(!timer) return; stopTimer(); timeLeftWhenPaused = timerDeadline - Date.now(); }
+    function resumeTimer(){
+      if(currentTest.mode!=='exam' || !activeTestSessionId || timer) return;
+      timerDeadline = Date.now() + timeLeftWhenPaused;
+      updateTimerDisplay();
+      timer = setInterval(updateTimerDisplay,1000);
+    }
+    function updateTimerDisplay(){
+      if(!activeTestSessionId){ stopTimer(); return; }
+      const timeLeftMs = timerDeadline - Date.now();
+      const timeLeftSec = Math.round(timeLeftMs/1000);
+      if(timeLeftSec<=0){
+        document.getElementById('timer-minutes').textContent = '0';
+        document.getElementById('timer-seconds').textContent = '00';
+        endTest(true); return;
+      }
+      const m = Math.floor(timeLeftSec/60);
+      const s = timeLeftSec%60;
+      document.getElementById('timer-minutes').textContent = m;
+      document.getElementById('timer-seconds').textContent = s.toString().padStart(2,'0');
+    }
+
+    function showReview(){
+      hideModal(resultsModal,false);
+      showModal(reviewModal);
+      const reviewContent = document.getElementById('review-content');
+      reviewContent.innerHTML = '';
+
+      currentTest.reviewData.forEach((item,index)=>{
+        const q = item.question;
+        const userChoice = item.selectedIndex;
+        const correctChoice = q.correct;
+
+        const questionBlock = document.createElement('div');
+        questionBlock.className = `p-4 mb-4 border rounded-lg ${userChoice===correctChoice ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
+
+        const title = document.createElement('p');
+        title.className = 'font-bold mb-2';
+        title.textContent = `${index+1}. ${q.q}`;
+        questionBlock.appendChild(title);
+
+        const ul = document.createElement('ul');
+        q.a.forEach((option,i)=>{
+          const li = document.createElement('li');
+          li.className = 'p-2 border rounded mt-2 border-gray-300';
+          if(i===correctChoice) li.className += ' border-green-500 font-bold text-green-800';
+          if(i===userChoice && userChoice!==correctChoice) li.className += ' border-red-500 text-red-800 line-through';
+          li.textContent = option;
+          ul.appendChild(li);
+        });
+        questionBlock.appendChild(ul);
+
+        const explWrap = document.createElement('div');
+        explWrap.className = 'mt-3 pt-3 border-t border-gray-200';
+        const explTitle = document.createElement('p');
+        explTitle.className = 'font-semibold text-sm text-gray-700';
+        explTitle.textContent = 'Пояснення:';
+        const expl = document.createElement('p');
+        expl.className = 'text-sm text-gray-600';
+        expl.textContent = q.explanation;
+        explWrap.appendChild(explTitle);
+        explWrap.appendChild(expl);
+        questionBlock.appendChild(explWrap);
+
+        reviewContent.appendChild(questionBlock);
+      });
+
+      const firstError = reviewContent.querySelector('.border-red-200');
+      if(firstError) firstError.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+
+    // A11y: radio keyboard handler
+    function radioKeyHandler(e){
+      const radios = [...optionsContainer.querySelectorAll('.option-btn[role="radio"]')];
+      if(radios.length===0) return;
+      let i = radios.indexOf(document.activeElement);
+      if(e.key==='ArrowDown' || e.key==='ArrowRight'){
+        i = (i+1+radios.length)%radios.length; radios[i].focus(); e.preventDefault();
+      }else if(e.key==='ArrowUp' || e.key==='ArrowLeft'){
+        i = (i-1+radios.length)%radios.length; radios[i].focus(); e.preventDefault();
+      }else if(e.key===' ' || e.key==='Enter'){
+        if(document.activeElement && document.activeElement.classList.contains('option-btn')){
+          document.activeElement.click(); e.preventDefault();
+        }
+      }
+    }
+
+    // Modal focus trap (with Escape) — attach to document with stored handler
+    const focusableElementsSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    function handleFocusTrap(e, modal){
+      if(e.key==='Escape'){
+        e.preventDefault();
+        const closeButton = modal.querySelector('#close-review-btn');
+        const cancelBtn = modal.querySelector('#cancel-action-btn');
+        if(closeButton) closeButton.click();
+        else if(cancelBtn) cancelBtn.click();
+        else hideModal(modal);
+        return;
+      }
+      if(e.key!=='Tab') return;
+      const focusable = modal.querySelectorAll(focusableElementsSelector);
+      if(focusable.length===0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length-1];
+      if(e.shiftKey){
+        if(document.activeElement===first){ last.focus(); e.preventDefault(); }
+      }else{
+        if(document.activeElement===last){ first.focus(); e.preventDefault(); }
+      }
+    }
+
+    function showModal(modal){
+      previouslyFocusedElement = document.activeElement;
+      modal.style.display = 'flex';
+      const handler = (e)=>handleFocusTrap(e,modal);
+      modal._trapHandler = handler;
+      document.addEventListener('keydown', handler);
+      const firstFocusable = modal.querySelector(focusableElementsSelector);
+      if(firstFocusable) firstFocusable.focus();
+    }
+
+    function hideModal(modal, shouldRefocus=true){
+      modal.style.display = 'none';
+      if(modal._trapHandler){
+        document.removeEventListener('keydown', modal._trapHandler);
+        modal._trapHandler = null;
+      }
+      if(shouldRefocus && previouslyFocusedElement){ previouslyFocusedElement.focus(); }
+    }
+
+    const getAuthErrorMessage = (code)=>{
+      switch(code){
+        case 'auth/wrong-password': return 'Неправильний пароль.';
+        case 'auth/user-not-found': return 'Користувача не знайдено.';
+        case 'auth/email-already-in-use': return 'Ця пошта вже зареєстрована.';
+        case 'auth/weak-password': return 'Пароль має містити > 5 символів.';
+        case 'auth/popup-closed-by-user': return 'Вікно входу було закрито.';
+        default: return 'Виникла помилка. Спробуйте пізніше.';
+      }
+    };
+
+    function setupEventListeners(){
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const googleSigninBtn = document.getElementById('google-signin-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const backToMainBtn = document.getElementById('back-to-main-btn');
+      const saveProgressBtn = document.getElementById('save-progress-btn');
+      const toggleAuthLink = document.getElementById('toggle-auth');
+      const showLoginBtn = document.getElementById('show-login-btn');
+      const backToWelcomeBtn = document.getElementById('back-to-welcome-btn');
+      const nextQuestionBtn = document.getElementById('next-question-btn');
+      const quitTestBtn = document.getElementById('quit-test-btn');
+      const cancelActionBtn = document.getElementById('cancel-action-btn');
+      const confirmActionBtn = document.getElementById('confirm-action-btn');
+      const reviewAnswersBtn = document.getElementById('review-answers-btn');
+      const closeReviewBtn = document.getElementById('close-review-btn');
+
+      // auth forms
+      const handleAuthSubmit = async (e, fn)=>{
+        e.preventDefault();
+        const form = e.target;
+        const email = form.querySelector('input[type="email"]').value;
+        const password = form.querySelector('input[type="password"]').value;
+        const submitButton = form.querySelector('button[type="submit"]');
+        document.getElementById('auth-error').textContent = '';
+        setLoadingState(submitButton,true);
+        try{ await fn(auth,email,password); }
+        catch(error){ document.getElementById('auth-error').textContent = getAuthErrorMessage(error.code); }
+        finally{ setLoadingState(submitButton,false); }
+      };
+
+      if(isFirebaseActive){
+        registerForm.addEventListener('submit',(e)=>handleAuthSubmit(e,createUserWithEmailAndPassword));
+        loginForm.addEventListener('submit',(e)=>handleAuthSubmit(e,signInWithEmailAndPassword));
+        googleSigninBtn.addEventListener('click', async ()=>{
+          const provider = new GoogleAuthProvider();
+          document.getElementById('auth-error').textContent = '';
+          setLoadingState(googleSigninBtn,true);
+          try{ await signInWithPopup(auth,provider); }
+          catch(error){ document.getElementById('auth-error').textContent = getAuthErrorMessage(error.code); }
+          finally{ setLoadingState(googleSigninBtn,false); }
+        });
+        logoutBtn.addEventListener('click', ()=>{
+          if(unsubscribeUserDataListener) unsubscribeUserDataListener();
+          signOut(auth);
+        });
+      }
+
+      // answer click
+      optionsContainer.addEventListener('click',(e)=>{
+        const button = e.target.closest('.option-btn');
+        if(!button || button.disabled) return;
+
+        const selectedIndex = parseInt(button.dataset.index,10);
+        const q = currentTest.questions[currentTest.currentIndex];
+        const isCorrect = selectedIndex===q.correct;
+
+        if(isCorrect) currentTest.score++;
+        currentTest.reviewData.push({ question:q, selectedIndex });
+
+        const all = optionsContainer.querySelectorAll('.option-btn');
+        all.forEach((btn, idx)=>{
+          btn.disabled = true;
+          btn.setAttribute('aria-checked', btn===button);
         });
 
-        // --- Authentication & Real-time Data ---
-        function setupAuthListener() {
-            onAuthStateChanged(auth, async (user) => {
-                if (unsubscribeUserDataListener) unsubscribeUserDataListener();
-                
-                if (user && !user.isAnonymous) {
-                    currentUser = user;
-                    listenToUserData(user.uid);
-                    await trySyncOfflineScores();
-                    showScreen('dashboard');
-                } else {
-                    currentUser = null; currentUserData = null;
-                    setMode('practice'); showScreen('welcome');
-                }
-            });
+        button.classList.add(isCorrect?'correct':'incorrect');
+        if(currentTest.mode==='practice' && !isCorrect){
+          const right = optionsContainer.querySelector(`.option-btn[data-index="${q.correct}"]`);
+          if(right) right.classList.add('correct');
         }
-        
-        function listenToUserData(userId) {
-            const userDocRef = doc(db, 'users', userId);
-            unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap) => {
-                if (docSnap.exists()) {
-                    currentUserData = docSnap.data();
-                    updateDashboard();
-                } else {
-                    const newUserData = {
-                        email: currentUser.email, totalScore: 0, badges: [],
-                        scores: { math: 0, ukrainian: 0, english: 0 }
-                    };
-                    await setDoc(userDocRef, newUserData).catch(e => console.error("Error creating user doc:", e));
-                    currentUserData = newUserData;
-                    updateDashboard();
-                }
-            }, (error) => {
-                console.error("Error listening to user data:", error);
-                showToast("Помилка синхронізації профілю.");
-            });
-        }
-        
-        // --- Firestore Logic with Retry & Offline Backup ---
-        async function saveScore(score, subject, retries = 3, delay = 1000) {
-            if (!currentUser || !isFirebaseActive || score === 0) return;
-            
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            try {
-                 await updateDoc(userDocRef, {
-                    totalScore: increment(score),
-                    [`scores.${subject}`]: increment(score)
-                });
-            } catch (error) {
-                if (error.code === 'unavailable' && retries > 0) {
-                    console.warn(`Network error. Retrying in ${delay}ms... (${retries} retries left)`);
-                    setTimeout(() => saveScore(score, subject, retries - 1, delay * 2), delay);
-                } else {
-                    console.error("Failed to save score after multiple retries:", error);
-                    showToast("Помилка збереження. Ваш результат збережено локально.");
-                    saveScoreOffline(score, subject);
-                }
-            }
+        if(currentTest.mode==='practice'){
+          document.getElementById('explanation-text').textContent = q.explanation;
+          document.getElementById('explanation-container').classList.remove('hidden');
         }
 
-        function saveScoreOffline(score, subject) {
-            const offlineScores = JSON.parse(localStorage.getItem('offlineScores') || '[]');
-            offlineScores.push({ score, subject, timestamp: Date.now() });
-            localStorage.setItem('offlineScores', JSON.stringify(offlineScores));
+        // оновлюємо прогрес після відповіді
+        updateProgressUI();
+
+        const nextBtn = document.getElementById('next-question-btn');
+        nextBtn.textContent = (currentTest.currentIndex===currentTest.questions.length-1) ? 'Завершити тест' : 'Наступне питання';
+        nextBtn.classList.remove('hidden');
+        nextBtn.focus();
+
+        // після вибору блокуємо навігаційні клавіші в цій групі
+        optionsContainer.removeEventListener('keydown', radioKeyHandler);
+      });
+
+      document.querySelectorAll('.start-test-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>startTest(btn.dataset.subject));
+      });
+      document.querySelectorAll('.mode-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>setMode(btn.dataset.mode));
+      });
+
+      backToMainBtn.addEventListener('click',()=>{
+        hideModal(resultsModal);
+        if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
+        else showScreen('welcome');
+      });
+
+      saveProgressBtn.addEventListener('click',()=>{
+        hideModal(resultsModal);
+        showScreen('auth');
+      });
+
+      toggleAuthLink.addEventListener('click',(e)=>{
+        e.preventDefault();
+        document.getElementById('login-form').classList.toggle('hidden');
+        document.getElementById('register-form').classList.toggle('hidden');
+        toggleAuthLink.textContent =
+          document.getElementById('login-form').classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
+        document.getElementById('auth-error').textContent = '';
+      });
+
+      document.getElementById('show-login-btn').addEventListener('click',(e)=>{ e.preventDefault(); showScreen('auth'); });
+      document.getElementById('back-to-welcome-btn').addEventListener('click',()=>showScreen('welcome'));
+      document.getElementById('next-question-btn').addEventListener('click',nextQuestion);
+
+      // quit flow
+      quitTestBtn.addEventListener('click',()=>{ pauseTimer(); showModal(confirmationModal); });
+      cancelActionBtn.addEventListener('click',()=>{ hideModal(confirmationModal); resumeTimer(); });
+      confirmActionBtn.addEventListener('click',()=>{
+        hideModal(confirmationModal);
+        activeTestSessionId = null;
+        stopTimer();
+        if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
+        else showScreen('welcome');
+      });
+
+      // review
+      reviewAnswersBtn.addEventListener('click',showReview);
+      closeReviewBtn.addEventListener('click',()=>{
+        hideModal(reviewModal);
+        if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
+        else showScreen('welcome');
+      });
+    }
+
+    // Initial setup
+    (async()=>{
+      setMode('practice');
+
+      try{
+        if(typeof __firebase_config!=='undefined' && __firebase_config){
+          const cfg = JSON.parse(__firebase_config);
+          if(cfg.apiKey && cfg.projectId){
+            app = initializeApp(cfg);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            await setPersistence(auth, browserLocalPersistence);
+            isFirebaseActive = true;
+          }else{ throw new Error('Firebase config is missing essential keys.'); }
+        }else{ throw new Error('__firebase_config is not defined.'); }
+      }catch(error){
+        console.warn('Firebase initialization failed:', error.message, 'App will run in offline mode.');
+      }
+
+      if(isFirebaseActive){
+        setupAuthListener();
+        document.addEventListener('visibilitychange',()=>{
+          if(document.visibilityState==='visible'){ trySyncOfflineScores(); }
+        });
+
+        if(typeof __initial_auth_token!=='undefined' && __initial_auth_token){
+          try{ await signInWithCustomToken(auth,__initial_auth_token); }
+          catch(error){
+            console.error('Custom token sign-in failed:',error);
+            try{ await signInAnonymously(auth); }catch(e){ console.error('Anonymous sign-in fallback failed:',e); }
+          }
+        }else{
+          try{ await signInAnonymously(auth); }catch(e){ console.error('Anonymous sign-in failed:',e); }
         }
 
-        async function trySyncOfflineScores() {
-             const offlineScores = JSON.parse(localStorage.getItem('offlineScores') || '[]');
-             if (offlineScores.length > 0 && isFirebaseActive && currentUser) {
-                 showToast(`Синхронізація ${offlineScores.length} незбережених результатів...`, 'info');
-                 for (const item of offlineScores) {
-                     await saveScore(item.score, item.subject);
-                 }
-                 localStorage.removeItem('offlineScores');
-                 showToast('Синхронізацію завершено!', 'success');
-             }
-        }
+        await trySyncOfflineScores();
+      }else{
+        document.querySelectorAll('#show-login-btn, #google-signin-btn, #login-form, #register-form, #toggle-auth, #save-progress-btn, #logout-btn').forEach(el=>{
+          el.style.opacity='.5'; el.style.pointerEvents='none'; if(el.tagName==='BUTTON') el.setAttribute('disabled',true);
+        });
+        const authText = document.querySelector('a#show-login-btn')?.parentElement;
+        if(authText) authText.innerHTML = 'Збереження прогресу недоступне.';
+        showScreen('welcome');
+      }
 
-        async function checkForNewBadges() {
-            if (!currentUser || !currentUserData || !isFirebaseActive) return;
-            
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const updatedUserDoc = await getDoc(userDocRef);
-            if (!updatedUserDoc.exists()) return;
-            const latestUserData = updatedUserDoc.data();
-
-            const awardedBadges = [];
-            for (const badgeId in badges) {
-                const badge = badges[badgeId];
-                if (!latestUserData.badges.includes(badgeId)) {
-                    const checkScore = badge.subject === 'total' ? latestUserData.totalScore : (latestUserData.scores[badge.subject] || 0);
-                    if (checkScore >= badge.score) {
-                        awardedBadges.push(badgeId);
-                    }
-                }
-            }
-
-            if (awardedBadges.length > 0) {
-                const newBadgesList = [...latestUserData.badges, ...awardedBadges];
-                try {
-                    await updateDoc(userDocRef, { badges: newBadgesList });
-                    const lastBadge = badges[awardedBadges[awardedBadges.length - 1]];
-                    document.getElementById('new-badge').innerHTML = `<i class="${lastBadge.icon}"></i>`;
-                    document.getElementById('new-badge-name').textContent = lastBadge.name;
-                    document.getElementById('new-badge-container').classList.remove('hidden');
-                } catch(error) {
-                    console.error("Error awarding badges:", error);
-                }
-            }
-        }
-
-        // --- Dashboard & Test Logic ---
-        function updateDashboard() {
-            if (!currentUserData || !currentUser) return;
-            userEmailDisplay.textContent = currentUser.email;
-            totalScoreDisplay.textContent = currentUserData.totalScore || 0;
-            badgesContainer.innerHTML = '';
-            if (currentUserData.badges && currentUserData.badges.length > 0) {
-                currentUserData.badges.forEach(badgeId => {
-                    const badge = badges[badgeId];
-                    if (badge) {
-                        const badgeEl = document.createElement('div');
-                        badgeEl.className = 'badge text-4xl cursor-pointer text-yellow-500';
-                        badgeEl.title = badge.name;
-                        badgeEl.innerHTML = `<i class="${badge.icon}"></i>`;
-                        badgesContainer.appendChild(badgeEl);
-                    }
-                });
-            } else {
-                badgesContainer.innerHTML = '<p class="text-gray-500">Поки що немає нагород.</p>';
-            }
-            setMode('practice');
-        };
-        
-        function shuffleArray(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex > 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-            }
-            return array;
-        }
-
-        function startTest(subject) {
-            const testSessionId = Date.now();
-            activeTestSessionId = testSessionId;
-            
-            const startBtn = document.querySelector(`.start-test-btn[data-subject="${subject}"]`);
-            setLoadingState(startBtn, true);
-            
-            setTimeout(() => {
-                if (activeTestSessionId !== testSessionId) return; 
-
-                currentTest.subject = subject;
-                currentTest.questions = shuffleArray([...questions[subject]]).slice(0, TEST_LENGTH);
-                currentTest.currentIndex = 0;
-                currentTest.score = 0;
-                currentTest.reviewData = [];
-                
-                document.getElementById('test-title').textContent = {
-                    math: 'Математика', ukrainian: 'Українська мова', english: 'Англійська'
-                }[subject];
-                document.getElementById('total-questions-num').textContent = currentTest.questions.length;
-                
-                const modeIndicator = document.getElementById('test-mode-indicator');
-                modeIndicator.textContent = currentTest.mode === 'exam' ? 'Іспит' : 'Навчання';
-                modeIndicator.className = `text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ml-3 ${currentTest.mode === 'exam' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`;
-
-                setLoadingState(startBtn, false);
-                showScreen('test');
-                displayQuestion();
-
-                if (currentTest.mode === 'exam') startTimer();
-                else document.getElementById('timer-display').classList.add('hidden');
-            }, 300);
-        }
-
-        function displayQuestion() {
-            const question = currentTest.questions[currentTest.currentIndex];
-            
-            document.getElementById('current-question-num').textContent = currentTest.currentIndex + 1;
-            document.getElementById('progress-bar').style.width = `${((currentTest.currentIndex + 1) / currentTest.questions.length) * 100}%`;
-            document.getElementById('question-text').textContent = question.q;
-            optionsContainer.innerHTML = '';
-            document.getElementById('feedback-text').innerHTML = '';
-            document.getElementById('explanation-container').classList.add('hidden');
-            nextQuestionBtn.classList.add('hidden');
-            
-            question.a.forEach((answer, index) => {
-                const button = document.createElement('button');
-                button.className = 'option-btn btn bg-white border-2 border-gray-300 text-gray-700 font-semibold p-4 rounded-lg text-left hover:border-blue-400 hover:bg-blue-50';
-                button.textContent = answer;
-                button.dataset.index = index;
-                button.setAttribute('role', 'radio');
-                button.setAttribute('aria-checked', 'false');
-                optionsContainer.appendChild(button);
-            });
-        }
-        
-        function nextQuestion() {
-            currentTest.currentIndex++;
-            if (currentTest.currentIndex < currentTest.questions.length) {
-                displayQuestion();
-            } else {
-                endTest();
-            }
-        }
-
-        async function endTest(timedOut = false) {
-            activeTestSessionId = null;
-            stopTimer();
-            showModal(resultsModal);
-            document.getElementById('results-score').textContent = currentTest.score;
-            document.getElementById('results-total').textContent = currentTest.questions.length;
-            document.getElementById('time-up-message').classList.toggle('hidden', !timedOut);
-            document.getElementById('new-badge-container').classList.add('hidden');
-            
-            reviewAnswersBtn.classList.toggle('hidden', currentTest.score === currentTest.questions.length);
-
-            if (currentUser && isFirebaseActive) {
-                guestPrompt.classList.add('hidden');
-                await saveScore(currentTest.score, currentTest.subject);
-                await checkForNewBadges();
-            } else {
-                guestPrompt.classList.remove('hidden');
-                saveScoreOffline(currentTest.score, currentTest.subject);
-            }
-        }
-        
-        function stopTimer() {
-            clearInterval(timer);
-            timer = null;
-        }
-
-        function startTimer() {
-            stopTimer();
-            timerDeadline = Date.now() + 300 * 1000; // 5 хвилин
-            const timerDisplay = document.getElementById('timer-display');
-            timerDisplay.classList.remove('hidden');
-            timerDisplay.classList.add('flex');
-            updateTimerDisplay();
-            timer = setInterval(updateTimerDisplay, 1000);
-        }
-
-        function pauseTimer() {
-            if (!timer) return;
-            stopTimer();
-            timeLeftWhenPaused = timerDeadline - Date.now();
-        }
-
-        function resumeTimer() {
-             if (currentTest.mode !== 'exam' || !activeTestSessionId || timer) return;
-             timerDeadline = Date.now() + timeLeftWhenPaused;
-             updateTimerDisplay();
-             timer = setInterval(updateTimerDisplay, 1000);
-        }
-
-        function updateTimerDisplay() {
-            if(!activeTestSessionId) {
-                stopTimer();
-                return;
-            };
-            const timeLeftMs = timerDeadline - Date.now();
-            const timeLeftSec = Math.round(timeLeftMs / 1000);
-
-            if (timeLeftSec <= 0) {
-                document.getElementById('timer-minutes').textContent = '0';
-                document.getElementById('timer-seconds').textContent = '00';
-                endTest(true);
-                return;
-            }
-
-            const minutes = Math.floor(timeLeftSec / 60);
-            const seconds = timeLeftSec % 60;
-            document.getElementById('timer-minutes').textContent = minutes;
-            document.getElementById('timer-seconds').textContent = seconds.toString().padStart(2, '0');
-        }
-
-        function showReview() {
-            hideModal(resultsModal, false);
-            showModal(reviewModal);
-            const reviewContent = document.getElementById('review-content');
-            reviewContent.innerHTML = '';
-            
-            currentTest.reviewData.forEach((item, index) => {
-                const q = item.question;
-                const userChoice = item.selectedIndex;
-                const correctChoice = q.correct;
-
-                const questionBlock = document.createElement('div');
-                questionBlock.className = `p-4 mb-4 border rounded-lg ${userChoice === correctChoice ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
-                
-                let optionsHTML = '';
-                q.a.forEach((option, i) => {
-                    let optionClass = 'border-gray-300';
-                    if (i === correctChoice) optionClass = 'border-green-500 font-bold text-green-800';
-                    if (i === userChoice && userChoice !== correctChoice) optionClass = 'border-red-500 text-red-800 line-through';
-                    
-                    optionsHTML += `<li class="p-2 border rounded mt-2 ${optionClass}">${option}</li>`;
-                });
-
-                questionBlock.innerHTML = `
-                    <p class="font-bold mb-2">${index + 1}. ${q.q}</p>
-                    <ul>${optionsHTML}</ul>
-                    <div class="mt-3 pt-3 border-t border-gray-200">
-                        <p class="font-semibold text-sm text-gray-700">Пояснення:</p>
-                        <p class="text-sm text-gray-600">${q.explanation}</p>
-                    </div>
-                `;
-                reviewContent.appendChild(questionBlock);
-            });
-            
-            const firstError = reviewContent.querySelector('.border-red-200');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        const focusableElementsSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-        function handleFocusTrap(e, modal) {
-            if (e.key !== 'Tab') return;
-            
-            const focusableElements = modal.querySelectorAll(focusableElementsSelector);
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (e.shiftKey) { 
-                if (document.activeElement === firstElement) {
-                    lastElement.focus();
-                    e.preventDefault();
-                }
-            } else { 
-                if (document.activeElement === lastElement) {
-                    firstElement.focus();
-                    e.preventDefault();
-                }
-            }
-        }
-
-        function showModal(modal) {
-            previouslyFocusedElement = document.activeElement;
-            modal.style.display = 'flex';
-            const firstFocusable = modal.querySelector(focusableElementsSelector);
-            if (firstFocusable) firstFocusable.focus();
-
-            modal.addEventListener('keydown', (e) => handleFocusTrap(e, modal));
-        }
-
-        function hideModal(modal, shouldRefocus = true) {
-            modal.style.display = 'none';
-            modal.removeEventListener('keydown', handleFocusTrap);
-            if (shouldRefocus && previouslyFocusedElement) {
-                previouslyFocusedElement.focus();
-            }
-        }
-
-        const handleAuthSubmit = async (e, authFunction) => {
-            e.preventDefault();
-            const form = e.target;
-            const email = form.querySelector('input[type="email"]').value;
-            const password = form.querySelector('input[type="password"]').value;
-            const submitButton = form.querySelector('button[type="submit"]');
-
-            authError.textContent = '';
-            setLoadingState(submitButton, true);
-            try {
-                await authFunction(auth, email, password);
-            } catch (error) { authError.textContent = getAuthErrorMessage(error.code);
-            } finally { setLoadingState(submitButton, false); }
-        };
-
-        function setupEventListeners() {
-            if (isFirebaseActive) {
-                registerForm.addEventListener('submit', (e) => handleAuthSubmit(e, createUserWithEmailAndPassword));
-                loginForm.addEventListener('submit', (e) => handleAuthSubmit(e, signInWithEmailAndPassword));
-                googleSigninBtn.addEventListener('click', async () => {
-                    const provider = new GoogleAuthProvider();
-                    authError.textContent = '';
-                    setLoadingState(googleSigninBtn, true);
-                    try {
-                        await signInWithPopup(auth, provider);
-                    } catch (error) { authError.textContent = getAuthErrorMessage(error.code);
-                    } finally { setLoadingState(googleSigninBtn, false); }
-                });
-                logoutBtn.addEventListener('click', () => {
-                    if (unsubscribeUserDataListener) unsubscribeUserDataListener();
-                    signOut(auth);
-                });
-            }
-            
-            optionsContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('.option-btn');
-                if (!button || button.disabled) return;
-                
-                const selectedIndex = parseInt(button.dataset.index, 10);
-                const question = currentTest.questions[currentTest.currentIndex];
-                const isCorrect = selectedIndex === question.correct;
-                
-                if (isCorrect) currentTest.score++;
-                currentTest.reviewData.push({ question, selectedIndex });
-                
-                document.querySelectorAll('.option-btn').forEach((btn, idx) => {
-                    btn.disabled = true;
-                    btn.setAttribute('aria-checked', idx === selectedIndex);
-                });
-                
-                button.classList.add(isCorrect ? 'correct' : 'incorrect');
-                
-                if (currentTest.mode === 'practice' && !isCorrect) {
-                     document.querySelector('.option-btn[data-index="' + question.correct + '"]').classList.add('correct');
-                }
-
-                if (currentTest.mode === 'practice') {
-                    document.getElementById('explanation-text').textContent = question.explanation;
-                    document.getElementById('explanation-container').classList.remove('hidden');
-                }
-                
-                nextQuestionBtn.textContent = (currentTest.currentIndex === currentTest.questions.length - 1) ? 'Завершити тест' : 'Наступне питання';
-                nextQuestionBtn.classList.remove('hidden');
-                nextQuestionBtn.focus();
-            });
-
-            document.querySelectorAll('.start-test-btn').forEach(btn => {
-                btn.addEventListener('click', () => startTest(btn.dataset.subject));
-            });
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', () => setMode(btn.dataset.mode));
-            });
-            backToMainBtn.addEventListener('click', () => {
-                hideModal(resultsModal);
-                if(currentUser && isFirebaseActive) showScreen('dashboard');
-                else showScreen('welcome');
-            });
-            saveProgressBtn.addEventListener('click', () => {
-                hideModal(resultsModal);
-                showScreen('auth');
-            });
-            toggleAuthLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                loginForm.classList.toggle('hidden'); registerForm.classList.toggle('hidden');
-                toggleAuthLink.textContent = loginForm.classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
-                authError.textContent = '';
-            });
-            showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); showScreen('auth'); });
-            backToWelcomeBtn.addEventListener('click', () => showScreen('welcome'));
-            nextQuestionBtn.addEventListener('click', nextQuestion);
-            
-            quitTestBtn.addEventListener('click', () => {
-                pauseTimer();
-                showModal(confirmationModal);
-            });
-            cancelActionBtn.addEventListener('click', () => {
-                hideModal(confirmationModal);
-                resumeTimer();
-            });
-             confirmActionBtn.addEventListener('click', () => {
-                hideModal(confirmationModal);
-                activeTestSessionId = null;
-                stopTimer();
-                if(currentUser && isFirebaseActive) showScreen('dashboard');
-                else showScreen('welcome');
-            });
-
-            reviewAnswersBtn.addEventListener('click', showReview);
-            closeReviewBtn.addEventListener('click', () => {
-                hideModal(reviewModal);
-                if (currentUser && isFirebaseActive) showScreen('dashboard');
-                else showScreen('welcome');
-            });
-        }
-        
-        const getAuthErrorMessage = (code) => {
-            switch (code) {
-                case 'auth/wrong-password': return 'Неправильний пароль.';
-                case 'auth/user-not-found': return 'Користувача не знайдено.';
-                case 'auth/email-already-in-use': return 'Ця пошта вже зареєстрована.';
-                case 'auth/weak-password': return 'Пароль має містити > 5 символів.';
-                case 'auth/popup-closed-by-user': return 'Вікно входу було закрито.';
-                default: return 'Виникла помилка. Спробуйте пізніше.';
-            }
-        };
-        
-        // --- Initial setup ---
-        (async () => {
-            setMode('practice');
-            
-            // ВИПРАВЛЕНО: Ініціалізація Firebase з глобальної конфігурації
-            try {
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    const firebaseConfig = JSON.parse(__firebase_config);
-                    if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-                        app = initializeApp(firebaseConfig);
-                        auth = getAuth(app);
-                        db = getFirestore(app);
-                        await setPersistence(auth, browserLocalPersistence);
-                        isFirebaseActive = true;
-                    } else { throw new Error("Firebase config is missing essential keys."); }
-                } else { throw new Error("__firebase_config is not defined."); }
-            } catch (error) {
-                console.warn("Firebase initialization failed:", error.message, "App will run in offline mode.");
-            }
-
-            if (isFirebaseActive) {
-                setupAuthListener(); // Встановлюємо слухач стану автентифікації
-                document.addEventListener('visibilitychange', () => {
-                     if (document.visibilityState === 'visible') {
-                         trySyncOfflineScores();
-                     }
-                });
-                
-                // ВИПРАВЛЕНО: Логіка входу з резервним варіантом
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try { 
-                        await signInWithCustomToken(auth, __initial_auth_token); 
-                    }
-                    catch (error) { 
-                        console.error("Custom token sign-in failed:", error); 
-                        try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous sign-in fallback failed:", e); }
-                    }
-                } else {
-                    try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous sign-in failed:", e); }
-                }
-                
-                await trySyncOfflineScores();
-            } else {
-                document.querySelectorAll('#show-login-btn, #google-signin-btn, #login-form, #register-form, #toggle-auth, #save-progress-btn, #logout-btn').forEach(el => {
-                    el.style.opacity = '0.5';
-                    el.style.pointerEvents = 'none';
-                    if (el.tagName === 'BUTTON') el.setAttribute('disabled', true);
-                });
-                const authRelatedText = document.querySelector('a#show-login-btn').parentElement;
-                if(authRelatedText) authRelatedText.innerHTML = 'Збереження прогресу недоступне.';
-                showScreen('welcome');
-            }
-            
-            setupEventListeners();
-        })();
-    </script>
+      setupEventListeners();
+    })();
+  </script>
 </body>
 </html>
-
