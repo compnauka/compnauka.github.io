@@ -24,16 +24,16 @@ export const questions = {
     { q:"Яким є речення за метою висловлювання: «Коли ти прийдеш додому?»", a:["Розповідне","Питальне","Спонукальне","Окличне"], correct:1, explanation:"Це питальне речення." }
   ],
   english: [
-    { q:"What ___ you doing now?", a:["is","are","am","do"], correct:1, explanation:"With «you» use «are» (Present Continuous)." },
-    { q:"She ___ to school yesterday.", a:["go","goes","went","is going"], correct:2, explanation:"Past marker «yesterday» → «went»." },
-    { q:"There are many ___ on the tree in autumn.", a:["leaf","leafs","leafes","leaves"], correct:3, explanation:"Plural of «leaf» is «leaves»." },
-    { q:"My birthday is ___ July.", a:["on","at","in","by"], correct:2, explanation:"Use «in» for months/years." },
-    { q:"He is ___ than his brother.", a:["tall","taller","the tallest","more tall"], correct:1, explanation:"Comparative: taller." },
-    { q:"___ is your name?", a:["What","Where","Who","When"], correct:0, explanation:"«What is your name?»" },
-    { q:"Can you swim? — Yes, I ___.", a:["can't","can","am","is"], correct:1, explanation:"Repeat the modal: can." },
-    { q:"She has ___ nice dress.", a:["a","an","the","-"], correct:0, explanation:"«a» before consonant sound." },
-    { q:"They ___ football every Sunday.", a:["plays","play","are playing","played"], correct:1, explanation:"Habitual → Present Simple: play." },
-    { q:"The book is ___ the table.", a:["under","on","behind","in front"], correct:1, explanation:"On the table." }
+    { q:"What ___ you doing now?", a:["is","are","am","do"], correct:1, explanation:"З «you» використовується «are» (Present Continuous)." },
+    { q:"She ___ to school yesterday.", a:["go","goes","went","is going"], correct:2, explanation:"Маркер минулого часу «yesterday» вимагає дієслова «went»." },
+    { q:"There are many ___ on the tree in autumn.", a:["leaf","leafs","leafes","leaves"], correct:3, explanation:"Множина від «leaf» — «leaves»." },
+    { q:"My birthday is ___ July.", a:["on","at","in","by"], correct:2, explanation:"Для місяців та років використовується прийменник «in»." },
+    { q:"He is ___ than his brother.", a:["tall","taller","the tallest","more tall"], correct:1, explanation:"Вищий ступінь порівняння: «taller»." },
+    { q:"___ is your name?", a:["What","Where","Who","When"], correct:0, explanation:"Правильно: «What is your name?»" },
+    { q:"Can you swim? — Yes, I ___.", a:["can't","can","am","is"], correct:1, explanation:"У відповіді повторюється модальне дієслово: «can»." },
+    { q:"She has ___ nice dress.", a:["a","an","the","-"], correct:0, explanation:"Артикль «a» ставиться перед приголосним звуком." },
+    { q:"They ___ football every Sunday.", a:["plays","play","are playing","played"], correct:1, explanation:"Регулярна дія вимагає Present Simple: «play»." },
+    { q:"The book is ___ the table.", a:["under","on","behind","in front"], correct:1, explanation:"Книга знаходиться на столі: «on the table»." }
   ]
 };
 
@@ -47,5 +47,3 @@ export const badges = {
   genius:{ icon:'fas fa-brain', name:'Юний геній', subject:'total', score:100 },
   mastermind:{ icon:'fas fa-trophy', name:'Володар знань', subject:'total', score:200 }
 };
-
-
