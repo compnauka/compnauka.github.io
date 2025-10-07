@@ -15,7 +15,7 @@ const firebaseConfig = {
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     signOut, onAuthStateChanged,
     GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously,
-    sendEmailVerification, // <-- ЗМІНА: Імпортовано
+    sendEmailVerification,
     doc, getDoc, setDoc, updateDoc, increment, onSnapshot
   } from './services/firebase.js';
   
@@ -42,7 +42,8 @@ const firebaseConfig = {
   
   // DOM and UI helpers
   import { getRefs, showScreen, setLoadingState, showToast, showModal, hideModal, focusableElementsSelector } from './ui/dom.js';
-  const { welcomeContainer, authContainer, dashboardContainer, testContainer, resultsModal, reviewModal, confirmationModal, optionsContainer } = getRefs();
+  // ЗМІНА: Додано infoModal
+  const { welcomeContainer, authContainer, dashboardContainer, testContainer, resultsModal, reviewModal, confirmationModal, infoModal, optionsContainer } = getRefs();
   
   // State
   let currentUser = null;
@@ -74,7 +75,14 @@ const firebaseConfig = {
     });
   }
   
-  // moved to ui/dom.js
+  // ЗМІНА: Нова функція для показу інформаційного модального вікна
+  function showInfoModal(title, text) {
+    const titleEl = document.getElementById('info-title');
+    const textEl = document.getElementById('info-text');
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = text;
+    showModal(infoModal);
+  }
   
   window.addEventListener('beforeunload',(event)=>{
     if(activeTestSessionId){
@@ -84,16 +92,17 @@ const firebaseConfig = {
   });
   
   // Auth + RT data
-  // ============================================
-  // ЗМІНА: ОНОВЛЕНИЙ setupAuthListener З ПЕРЕВІРКОЮ ВЕРИФІКАЦІЇ
-  // ============================================
   function setupAuthListener(){
     onAuthStateChanged(auth, async (user)=>{
       if(unsubscribeUserDataListener) unsubscribeUserDataListener();
       if(user && !user.isAnonymous){
         if (!user.emailVerified) {
           showScreen('welcome');
-          alert('Ваш акаунт не активовано. Будь ласка, перевірте свою пошту та перейдіть за посиланням для підтвердження.');
+          // ЗМІНА: Замінено alert на модальне вікно
+          showInfoModal(
+            'Акаунт не активовано',
+            'Будь ласка, перевірте свою пошту та перейдіть за посиланням для підтвердження.'
+          );
           signOut(auth);
           currentUser = null;
           currentUserData = null;
@@ -360,12 +369,12 @@ const firebaseConfig = {
     const confirmActionBtn = document.getElementById('confirm-action-btn');
     const reviewAnswersBtn = document.getElementById('review-answers-btn');
     const closeReviewBtn = document.getElementById('close-review-btn');
+    const infoOkBtn = document.getElementById('info-ok-btn'); // <-- ЗМІНА: Додано
   
     // ============================================
     // ВАЛІДАЦІЯ В РЕАЛЬНОМУ ЧАСІ
     // ============================================
     
-    // Перевірка пароля в реальному часі для реєстрації
     const registerPasswordInput = document.getElementById('register-password');
     if (registerPasswordInput) {
       registerPasswordInput.addEventListener('input', (e) => {
@@ -374,7 +383,7 @@ const firebaseConfig = {
     }
   
     // ============================================
-    // ЗМІНА: ОНОВЛЕНА ФОРМА РЕЄСТРАЦІЇ З ВІДПРАВКОЮ ПІДТВЕРДЖЕННЯ
+    // ФОРМА РЕЄСТРАЦІЇ З ВАЛІДАЦІЄЮ
     // ============================================
     
     if (isFirebaseActive && registerForm) {
@@ -417,14 +426,15 @@ const firebaseConfig = {
           const recaptchaToken = await recaptchaService.getToken('register');
           console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
           
-          // Створити користувача
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           
-          // Відправити лист для верифікації
           await sendEmailVerification(userCredential.user);
 
-          showToast('Акаунт створено! Перевірте пошту для підтвердження.', 'success');
-          alert('Ми відправили вам лист для підтвердження. Будь ласка, перейдіть за посиланням у ньому, щоб активувати акаунт.');
+          // ЗМІНА: Замінено alert на модальне вікно
+          showInfoModal(
+            'Підтвердження реєстрації',
+            'Ми відправили вам лист для підтвердження. Будь ласка, перейдіть за посиланням у ньому, щоб активувати акаунт.'
+          );
           
         } catch (error) {
           console.error('Помилка реєстрації:', error);
@@ -624,6 +634,11 @@ const firebaseConfig = {
       if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
       else showScreen('welcome');
     });
+
+    // ЗМІНА: Додано обробник для кнопки "OK"
+    if (infoOkBtn) {
+      infoOkBtn.addEventListener('click', () => hideModal(infoModal));
+    }
   
     // Safety: global delegated handler to ensure clicks always work
     document.addEventListener('click',(e)=>{
