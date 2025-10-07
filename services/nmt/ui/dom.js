@@ -8,6 +8,7 @@ export function getRefs(){
     resultsModal: document.getElementById('results-modal'),
     reviewModal: document.getElementById('review-modal'),
     confirmationModal: document.getElementById('confirmation-modal'),
+    infoModal: document.getElementById('info-modal'), // <-- ЗМІНА: Додано
     optionsContainer: document.getElementById('options-container')
   };
 }
@@ -81,5 +82,3 @@ export function hideModal(modal, shouldRefocus=true){
   }
   if(shouldRefocus && previouslyFocusedElement){ previouslyFocusedElement.focus(); }
 }
-
-
