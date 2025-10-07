@@ -15,6 +15,7 @@ const firebaseConfig = {
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     signOut, onAuthStateChanged,
     GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously,
+    sendEmailVerification, // <-- ЗМІНА: Імпортовано
     doc, getDoc, setDoc, updateDoc, increment, onSnapshot
   } from './services/firebase.js';
   
@@ -83,14 +84,25 @@ const firebaseConfig = {
   });
   
   // Auth + RT data
+  // ============================================
+  // ЗМІНА: ОНОВЛЕНИЙ setupAuthListener З ПЕРЕВІРКОЮ ВЕРИФІКАЦІЇ
+  // ============================================
   function setupAuthListener(){
     onAuthStateChanged(auth, async (user)=>{
       if(unsubscribeUserDataListener) unsubscribeUserDataListener();
       if(user && !user.isAnonymous){
-        currentUser = user;
-        listenToUserData(user.uid);
-        await trySyncOfflineScores();
-        showScreen('dashboard');
+        if (!user.emailVerified) {
+          showScreen('welcome');
+          alert('Ваш акаунт не активовано. Будь ласка, перевірте свою пошту та перейдіть за посиланням для підтвердження.');
+          signOut(auth);
+          currentUser = null;
+          currentUserData = null;
+        } else {
+          currentUser = user;
+          listenToUserData(user.uid);
+          await trySyncOfflineScores();
+          showScreen('dashboard');
+        }
       }else{
         currentUser = null; currentUserData = null;
         setMode('practice'); showScreen('welcome');
@@ -362,7 +374,7 @@ const firebaseConfig = {
     }
   
     // ============================================
-    // ФОРМА РЕЄСТРАЦІЇ З ВАЛІДАЦІЄЮ
+    // ЗМІНА: ОНОВЛЕНА ФОРМА РЕЄСТРАЦІЇ З ВІДПРАВКОЮ ПІДТВЕРДЖЕННЯ
     // ============================================
     
     if (isFirebaseActive && registerForm) {
@@ -374,25 +386,21 @@ const firebaseConfig = {
         const password = form.querySelector('#register-password').value;
         const submitButton = form.querySelector('button[type="submit"]');
         
-        // Очистити попередні помилки
         showValidationErrors([], 'register-validation-errors');
         document.getElementById('auth-error').textContent = '';
         
-        // Валідація email
         const emailValidation = validateEmail(email);
         if (!emailValidation.isValid) {
           showValidationErrors(emailValidation.errors, 'register-validation-errors');
           return;
         }
         
-        // Валідація пароля
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.isValid) {
           showValidationErrors(passwordValidation.errors, 'register-validation-errors');
           return;
         }
         
-        // Попередження про слабкий пароль
         if (passwordValidation.strength < 3) {
           const confirmWeak = confirm(
             'Ваш пароль має низьку надійність. Рекомендуємо використати надійніший пароль.\n\n' +
@@ -406,26 +414,23 @@ const firebaseConfig = {
         setLoadingState(submitButton, true);
         
         try {
-          // Отримати токен reCAPTCHA
           const recaptchaToken = await recaptchaService.getToken('register');
           console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
           
           // Створити користувача
-          await createUserWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           
-          // Успішна реєстрація
-          showToast('Акаунт успішно створено!', 'success');
+          // Відправити лист для верифікації
+          await sendEmailVerification(userCredential.user);
+
+          showToast('Акаунт створено! Перевірте пошту для підтвердження.', 'success');
+          alert('Ми відправили вам лист для підтвердження. Будь ласка, перейдіть за посиланням у ньому, щоб активувати акаунт.');
           
         } catch (error) {
           console.error('Помилка реєстрації:', error);
-          
-          // Показати помилку Firebase
           const errorMessage = getAuthErrorMessage(error.code);
           document.getElementById('auth-error').textContent = errorMessage;
-          
-          // Скинути reCAPTCHA
           recaptchaService.reset();
-          
         } finally {
           setLoadingState(submitButton, false);
         }
@@ -445,18 +450,15 @@ const firebaseConfig = {
         const password = form.querySelector('#login-password').value;
         const submitButton = form.querySelector('button[type="submit"]');
         
-        // Очистити попередні помилки
         showValidationErrors([], 'login-validation-errors');
         document.getElementById('auth-error').textContent = '';
         
-        // Базова валідація email
         const emailValidation = validateEmail(email);
         if (!emailValidation.isValid) {
           showValidationErrors(emailValidation.errors, 'login-validation-errors');
           return;
         }
         
-        // Базова перевірка пароля (не показуємо надійність при логіні)
         if (!password || password.length < 6) {
           showValidationErrors(['Пароль має містити щонайменше 6 символів'], 'login-validation-errors');
           return;
@@ -465,26 +467,17 @@ const firebaseConfig = {
         setLoadingState(submitButton, true);
         
         try {
-          // Отримати токен reCAPTCHA
           const recaptchaToken = await recaptchaService.getToken('login');
           console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
           
-          // Увійти
           await signInWithEmailAndPassword(auth, email, password);
-          
-          // Успішний вхід
           showToast('Ви успішно увійшли!', 'success');
           
         } catch (error) {
           console.error('Помилка входу:', error);
-          
-          // Показати помилку Firebase
           const errorMessage = getAuthErrorMessage(error.code);
           document.getElementById('auth-error').textContent = errorMessage;
-          
-          // Скинути reCAPTCHA
           recaptchaService.reset();
-          
         } finally {
           setLoadingState(submitButton, false);
         }
@@ -502,7 +495,6 @@ const firebaseConfig = {
         setLoadingState(googleSigninBtn, true);
         
         try {
-          // Отримати токен reCAPTCHA
           const recaptchaToken = await recaptchaService.getToken('google_signin');
           console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
           
@@ -573,7 +565,6 @@ const firebaseConfig = {
         document.getElementById('explanation-container').classList.remove('hidden');
       }
   
-      // оновлюємо прогрес після відповіді
       updateProgressUI();
   
       const nextBtn = document.getElementById('next-question-btn');
@@ -581,7 +572,6 @@ const firebaseConfig = {
       nextBtn.classList.remove('hidden');
       nextBtn.focus();
   
-      // після вибору блокуємо навігаційні клавіші в цій групі
       optionsContainer.removeEventListener('keydown', radioKeyHandler);
     });
   
