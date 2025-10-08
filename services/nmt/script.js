@@ -388,9 +388,27 @@ function handleVisibilityChange() {
     return;
   }
   if (!document.fullscreenElement || document.hidden) {
+    // Якщо питання ще не було оштрафовано, застосовуємо штраф
     if (!penalizedQuestions.has(currentTest.currentIndex)) {
         penalizedQuestions.add(currentTest.currentIndex);
         showToast('Питання не буде зараховано через вихід з режиму іспиту.', 'error');
+
+        // --- ВИПРАВЛЕННЯ ---
+        // Перевіряємо, чи була щойно надана відповідь на це питання
+        const lastAnswered = currentTest.reviewData[currentTest.reviewData.length - 1];
+        
+        // Якщо остання відповідь стосується саме поточного питання
+        if (lastAnswered && lastAnswered.question === currentTest.questions[currentTest.currentIndex]) {
+            const isCorrect = lastAnswered.selectedIndex === lastAnswered.question.correct;
+            
+            // Якщо відповідь була правильною і ще не оштрафованою, віднімаємо бал
+            if (isCorrect && !lastAnswered.isPenalized) {
+                currentTest.score--;
+            }
+            // Оновлюємо дані для огляду, щоб позначити питання як оштрафоване
+            lastAnswered.isPenalized = true;
+        }
+        // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
     }
     isLockdownWarningActive = true;
     if (timerApi) timerApi.pause();
