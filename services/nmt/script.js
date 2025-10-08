@@ -19,19 +19,16 @@ import {
   doc, getDoc, setDoc, updateDoc, increment, onSnapshot
 } from './services/firebase.js';
 
-// Firebase state now comes from service
-
-
-// Імпорт функцій валідації (додайте на початок файлу)
-import { 
-  validateEmail, 
-  validatePassword, 
+// Імпорт функцій валідації
+import {
+  validateEmail,
+  validatePassword,
   RecaptchaService,
   showPasswordStrength,
-  showValidationErrors 
+  showValidationErrors
 } from './utils/validation.js';
 
-// Ініціалізація reCAPTCHA (замініть YOUR_SITE_KEY на ваш ключ)
+// Ініціалізація reCAPTCHA
 const RECAPTCHA_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Тестовий ключ
 const recaptchaService = new RecaptchaService(RECAPTCHA_SITE_KEY);
 
@@ -41,8 +38,7 @@ recaptchaService.load().catch(error => {
 });
 
 // DOM and UI helpers
-import { getRefs, showScreen, setLoadingState, showToast, showModal, hideModal, focusableElementsSelector } from './ui/dom.js';
-// ЗМІНА: Додано infoModal
+import { getRefs, showScreen, setLoadingState, showToast, showModal, hideModal } from './ui/dom.js';
 const { welcomeContainer, authContainer, dashboardContainer, testContainer, resultsModal, reviewModal, confirmationModal, infoModal, optionsContainer } = getRefs();
 
 // State
@@ -55,11 +51,10 @@ import { displayQuestion as renderQuestion, updateProgressUI as renderProgress, 
 let timerApi = null;
 const TEST_LENGTH = 5;
 let activeTestSessionId = null;
-let previouslyFocusedElement = null;
 let isLockdownWarningActive = false;
 let penalizedQuestions = new Set(); // Зберігає індекси питань, де був штраф
 
-// Data moved to module
+// Data
 import { questions, badges } from './data/questions.js';
 
 function setMode(mode){
@@ -78,7 +73,7 @@ function showInfoModal(title, text) {
   const titleEl = document.getElementById('info-title');
   const textEl = document.getElementById('info-text');
   if (titleEl) titleEl.textContent = title;
-  if (textEl) textEl.innerHTML = text; // Дозволяємо HTML для форматування
+  if (textEl) textEl.innerHTML = text;
   showModal(infoModal);
 }
 
@@ -121,33 +116,8 @@ function listenToUserData(userId){
   unsubscribeUserDataListener = onSnapshot(userDocRef, async (docSnap) => {
     if (docSnap.exists()) {
       const newUserData = docSnap.data();
-      const oldBadges = currentUserData ? new Set(currentUserData.badges) : new Set();
       currentUserData = newUserData;
       updateDashboard();
-
-      const awardedBadges = [];
-      for (const badgeId in badges) {
-        const badge = badges[badgeId];
-        if (!newUserData.badges.includes(badgeId)) {
-          const checkScore = badge.subject === 'total' ? newUserData.totalScore : (newUserData.scores[badge.subject] || 0);
-          if (checkScore >= badge.score) {
-            awardedBadges.push(badgeId);
-          }
-        }
-      }
-
-      if (awardedBadges.length > 0) {
-        const newlyAwarded = awardedBadges.filter(b => !oldBadges.has(b));
-        if (newlyAwarded.length > 0) {
-            const lastBadge = badges[newlyAwarded[newlyAwarded.length - 1]];
-            document.getElementById('new-badge').innerHTML = `<i class="${lastBadge.icon}"></i>`;
-            document.getElementById('new-badge-name').textContent = lastBadge.name;
-            document.getElementById('new-badge-container').classList.remove('hidden');
-        }
-        const allBadges = [...newUserData.badges, ...awardedBadges];
-        await updateDoc(userDocRef, { badges: allBadges }).catch(e => console.error('Error awarding badges:', e));
-      }
-
     } else {
       const newUserData = {
         email: currentUser.email, totalScore: 0, badges: [],
@@ -364,7 +334,7 @@ function radioKeyHandler(e){
 }
 
 function enterExamLockdown() {
-  const element = document.documentElement; 
+  const element = document.documentElement;
   if (element.requestFullscreen) {
     element.requestFullscreen().catch(err => {
       console.warn(`Помилка входу в повноекранний режим: ${err.message}`);
@@ -383,33 +353,23 @@ function exitExamLockdown(forceExitFullscreen = false) {
   }
 }
 
+// ✅ ОНОВЛЕНА ФУНКЦІЯ
 function handleVisibilityChange() {
   if (!activeTestSessionId || currentTest.mode !== 'exam' || isLockdownWarningActive) {
     return;
   }
   if (!document.fullscreenElement || document.hidden) {
-    // Якщо питання ще не було оштрафовано, застосовуємо штраф
-    if (!penalizedQuestions.has(currentTest.currentIndex)) {
-        penalizedQuestions.add(currentTest.currentIndex);
-        showToast('Питання не буде зараховано через вихід з режиму іспиту.', 'error');
+    // Перевіряємо, чи на поточне питання вже дали відповідь
+    const questionAnswered = currentTest.reviewData.some(item => item.question === currentTest.questions[currentTest.currentIndex]);
 
-        // --- ВИПРАВЛЕННЯ ---
-        // Перевіряємо, чи була щойно надана відповідь на це питання
-        const lastAnswered = currentTest.reviewData[currentTest.reviewData.length - 1];
-        
-        // Якщо остання відповідь стосується саме поточного питання
-        if (lastAnswered && lastAnswered.question === currentTest.questions[currentTest.currentIndex]) {
-            const isCorrect = lastAnswered.selectedIndex === lastAnswered.question.correct;
-            
-            // Якщо відповідь була правильною і ще не оштрафованою, віднімаємо бал
-            if (isCorrect && !lastAnswered.isPenalized) {
-                currentTest.score--;
-            }
-            // Оновлюємо дані для огляду, щоб позначити питання як оштрафоване
-            lastAnswered.isPenalized = true;
-        }
-        // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
+    // Штрафуємо, тільки якщо відповіді ще не було
+    if (!questionAnswered) {
+      if (!penalizedQuestions.has(currentTest.currentIndex)) {
+          penalizedQuestions.add(currentTest.currentIndex);
+          showToast('Питання не буде зараховано через вихід з режиму іспиту.', 'error');
+      }
     }
+
     isLockdownWarningActive = true;
     if (timerApi) timerApi.pause();
     showLockdownWarning();
@@ -421,7 +381,7 @@ function showLockdownWarning() {
   const text = document.getElementById('confirmation-text');
   const confirmBtn = document.getElementById('confirm-action-btn');
   const cancelBtn = document.getElementById('cancel-action-btn');
-  
+
   title.textContent = "Тест призупинено!";
   text.innerHTML = "Ви вийшли з режиму тестування. Щоб продовжити, поверніться до повноекранного режиму.<br><br><b>Якщо ви не повернетесь, тест буде завершено.</b>";
   confirmBtn.textContent = "Завершити тест";
@@ -432,9 +392,9 @@ function showLockdownWarning() {
   confirmBtn.onclick = () => {
     hideModal(confirmationModal);
     exitExamLockdown();
-    endTest(false); 
+    endTest(false);
   };
-  
+
   cancelBtn.onclick = () => {
     hideModal(confirmationModal);
     isLockdownWarningActive = false;
@@ -474,14 +434,14 @@ function setupEventListeners(){
   const reviewAnswersBtn = document.getElementById('review-answers-btn');
   const closeReviewBtn = document.getElementById('close-review-btn');
   const infoOkBtn = document.getElementById('info-ok-btn');
-  
+
   const registerPasswordInput = document.getElementById('register-password');
   if (registerPasswordInput) {
     registerPasswordInput.addEventListener('input', (e) => {
       showPasswordStrength(e.target.value, 'register-password-strength');
     });
   }
-  
+
   if (isFirebaseActive && registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -520,7 +480,7 @@ function setupEventListeners(){
       }
     });
   }
-  
+
   if (isFirebaseActive && loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -553,7 +513,7 @@ function setupEventListeners(){
       }
     });
   }
-  
+
   if (isFirebaseActive && googleSigninBtn) {
     googleSigninBtn.addEventListener('click', async () => {
       const provider = new GoogleAuthProvider();
@@ -572,7 +532,7 @@ function setupEventListeners(){
       }
     });
   }
-  
+
   if (isFirebaseActive && logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       if (unsubscribeUserDataListener) unsubscribeUserDataListener();
@@ -581,6 +541,7 @@ function setupEventListeners(){
     });
   }
 
+  // ✅ ОНОВЛЕНИЙ ОБРОБНИК КЛІКУ
   optionsContainer.addEventListener('click',(e)=>{
     const button = e.target.closest('.option-btn');
     if(!button || button.disabled) return;
@@ -588,12 +549,16 @@ function setupEventListeners(){
     const selectedIndex = parseInt(button.dataset.index,10);
     const q = currentTest.questions[currentTest.currentIndex];
     const isCorrect = selectedIndex===q.correct;
+    
+    // Перевіряємо, чи було зафіксовано порушення для цього питання
     const isPenalized = penalizedQuestions.has(currentTest.currentIndex);
 
+    // Нараховуємо бал, тільки якщо відповідь правильна І порушення не було
     if (isCorrect && !isPenalized) {
         currentTest.score++;
     }
     
+    // Зберігаємо результат для огляду, включаючи статус штрафу
     currentTest.reviewData.push({ question:q, selectedIndex, isPenalized });
 
     const all = optionsContainer.querySelectorAll('.option-btn');
@@ -660,8 +625,8 @@ function setupEventListeners(){
   document.getElementById('back-to-welcome-btn').addEventListener('click',()=>showScreen('welcome'));
   document.getElementById('next-question-btn').addEventListener('click',nextQuestion);
 
-  quitTestBtn.addEventListener('click',()=>{ 
-    if(timerApi) timerApi.pause(); 
+  quitTestBtn.addEventListener('click',()=>{
+    if(timerApi) timerApi.pause();
     const title = document.getElementById('confirmation-title');
     const text = document.getElementById('confirmation-text');
     const confirmBtn = document.getElementById('confirm-action-btn');
@@ -670,7 +635,7 @@ function setupEventListeners(){
     text.innerHTML = "Весь прогрес у поточному тесті буде втрачено.";
     confirmBtn.textContent = "Так, вийти";
     cancelBtn.textContent = "Скасувати";
-    confirmBtn.onclick = () => { // Reset to default behavior
+    confirmBtn.onclick = () => {
         hideModal(confirmationModal);
         exitExamLockdown();
         activeTestSessionId = null;
@@ -679,12 +644,12 @@ function setupEventListeners(){
         else showScreen('welcome');
     };
     cancelBtn.onclick = () => {
-        hideModal(confirmationModal); 
+        hideModal(confirmationModal);
         if(timerApi && !isLockdownWarningActive) timerApi.resume();
     };
-    showModal(confirmationModal); 
+    showModal(confirmationModal);
   });
-  
+
   reviewAnswersBtn.addEventListener('click',showReview);
   closeReviewBtn.addEventListener('click',()=>{
     hideModal(reviewModal);
@@ -715,6 +680,7 @@ function setupEventListeners(){
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){ trySyncOfflineScores(); }
     });
+    // Тут була відсутня частина логіки анонімного входу
     if(typeof __initial_auth_token!=='undefined' && __initial_auth_token){
       try{ await signInWithCustomToken(auth,__initial_auth_token); }
       catch(error){
@@ -734,8 +700,13 @@ function setupEventListeners(){
     showScreen('welcome');
   }
   setupEventListeners();
+  // ✅ ОНОВЛЕНА ІНІЦІАЛІЗАЦІЯ ТАЙМЕРА
   timerApi = createTimer({
-    onTimeout: ()=>endTest(true),
+    onTimeout: ()=>{
+      if (!isLockdownWarningActive) {
+        endTest(true)
+      }
+    },
     getActiveTestSessionId: ()=>activeTestSessionId,
     getMode: ()=>currentTest.mode
   });
