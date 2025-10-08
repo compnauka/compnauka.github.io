@@ -353,14 +353,14 @@ function exitExamLockdown(forceExitFullscreen = false) {
   }
 }
 
-// ✅ ОНОВЛЕНА ФУНКЦІЯ
+// ✅ ФІНАЛЬНА ВЕРСІЯ ФУНКЦІЇ
 function handleVisibilityChange() {
   if (!activeTestSessionId || currentTest.mode !== 'exam' || isLockdownWarningActive) {
     return;
   }
   if (!document.fullscreenElement || document.hidden) {
-    // Перевіряємо, чи на поточне питання вже дали відповідь
-    const questionAnswered = currentTest.reviewData.some(item => item.question === currentTest.questions[currentTest.currentIndex]);
+    // ⚠️ ВИПРАВЛЕННЯ: Більш надійна перевірка того, чи була надана відповідь.
+    const questionAnswered = currentTest.reviewData.length > currentTest.currentIndex;
 
     // Штрафуємо, тільки якщо відповіді ще не було
     if (!questionAnswered) {
@@ -541,7 +541,7 @@ function setupEventListeners(){
     });
   }
 
-  // ✅ ОНОВЛЕНИЙ ОБРОБНИК КЛІКУ
+  // ✅ ФІНАЛЬНА ВЕРСІЯ ОБРОБНИКА
   optionsContainer.addEventListener('click',(e)=>{
     const button = e.target.closest('.option-btn');
     if(!button || button.disabled) return;
@@ -549,16 +549,13 @@ function setupEventListeners(){
     const selectedIndex = parseInt(button.dataset.index,10);
     const q = currentTest.questions[currentTest.currentIndex];
     const isCorrect = selectedIndex===q.correct;
-    
-    // Перевіряємо, чи було зафіксовано порушення для цього питання
+
     const isPenalized = penalizedQuestions.has(currentTest.currentIndex);
 
-    // Нараховуємо бал, тільки якщо відповідь правильна І порушення не було
     if (isCorrect && !isPenalized) {
         currentTest.score++;
     }
-    
-    // Зберігаємо результат для огляду, включаючи статус штрафу
+
     currentTest.reviewData.push({ question:q, selectedIndex, isPenalized });
 
     const all = optionsContainer.querySelectorAll('.option-btn');
@@ -680,7 +677,6 @@ function setupEventListeners(){
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){ trySyncOfflineScores(); }
     });
-    // Тут була відсутня частина логіки анонімного входу
     if(typeof __initial_auth_token!=='undefined' && __initial_auth_token){
       try{ await signInWithCustomToken(auth,__initial_auth_token); }
       catch(error){
@@ -700,7 +696,7 @@ function setupEventListeners(){
     showScreen('welcome');
   }
   setupEventListeners();
-  // ✅ ОНОВЛЕНА ІНІЦІАЛІЗАЦІЯ ТАЙМЕРА
+  // ✅ ФІНАЛЬНА ВЕРСІЯ ІНІЦІАЛІЗАЦІЇ
   timerApi = createTimer({
     onTimeout: ()=>{
       if (!isLockdownWarningActive) {
