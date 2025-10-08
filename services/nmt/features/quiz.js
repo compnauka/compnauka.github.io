@@ -46,6 +46,15 @@ export function showReview(currentTest, { resultsModal, reviewModal, showModal, 
     const questionBlock = document.createElement('div');
     questionBlock.className = `p-4 mb-4 border rounded-lg ${userChoice===correctChoice ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
 
+    // ===> ДОДАНО БЛОК ДЛЯ ВІДОБРАЖЕННЯ ШТРАФУ
+    if (item.isPenalized) {
+        const penaltyNotice = document.createElement('div');
+        penaltyNotice.className = 'mb-3 p-2 bg-red-100 border border-red-200 rounded-md text-sm text-red-700 font-bold';
+        penaltyNotice.textContent = '❗ Це питання не було зараховано через вихід з режиму іспиту.';
+        questionBlock.appendChild(penaltyNotice);
+    }
+    // <=== КІНЕЦЬ БЛОКУ
+
     const title = document.createElement('p');
     title.className = 'font-bold mb-2';
     title.textContent = `${index+1}. ${q.q}`;
@@ -80,5 +89,3 @@ export function showReview(currentTest, { resultsModal, reviewModal, showModal, 
   const firstError = reviewContent.querySelector('.border-red-200');
   if(firstError) firstError.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
-
-
