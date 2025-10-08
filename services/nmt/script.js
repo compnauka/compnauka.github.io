@@ -56,13 +56,11 @@ let timerApi = null;
 const TEST_LENGTH = 5;
 let activeTestSessionId = null;
 let previouslyFocusedElement = null;
-let isLockdownWarningActive = false; // Прапорець, щоб уникнути кількох попереджень
+let isLockdownWarningActive = false;
+let penalizedQuestions = new Set(); // Зберігає індекси питань, де був штраф
 
 // Data moved to module
 import { questions, badges } from './data/questions.js';
-
-// UI helpers
-// moved to ui/dom.js
 
 function setMode(mode){
   currentTest.mode = mode;
@@ -76,12 +74,11 @@ function setMode(mode){
   });
 }
 
-// ЗМІНА: Нова функція для показу інформаційного модального вікна
 function showInfoModal(title, text) {
   const titleEl = document.getElementById('info-title');
   const textEl = document.getElementById('info-text');
   if (titleEl) titleEl.textContent = title;
-  if (textEl) textEl.textContent = text;
+  if (textEl) textEl.innerHTML = text; // Дозволяємо HTML для форматування
   showModal(infoModal);
 }
 
@@ -99,7 +96,6 @@ function setupAuthListener(){
     if(user && !user.isAnonymous){
       if (!user.emailVerified) {
         showScreen('welcome');
-        // ЗМІНА: Замінено alert на модальне вікно
         showInfoModal(
           'Акаунт не активовано',
           'Будь ласка, перевірте свою пошту та перейдіть за посиланням для підтвердження.'
@@ -129,7 +125,6 @@ function listenToUserData(userId){
       currentUserData = newUserData;
       updateDashboard();
 
-      // Перевірка нагород
       const awardedBadges = [];
       for (const badgeId in badges) {
         const badge = badges[badgeId];
@@ -149,7 +144,6 @@ function listenToUserData(userId){
             document.getElementById('new-badge-name').textContent = lastBadge.name;
             document.getElementById('new-badge-container').classList.remove('hidden');
         }
-        // Оновлюємо список бейджів у базі даних
         const allBadges = [...newUserData.badges, ...awardedBadges];
         await updateDoc(userDocRef, { badges: allBadges }).catch(e => console.error('Error awarding badges:', e));
       }
@@ -180,7 +174,6 @@ async function saveScore(score,subject,retries=3,delay=1000){
     });
   }catch(error){
     if(error.code==='unavailable' && retries>0){
-      console.warn(`Network error. Retrying in ${delay}ms... (${retries} left)`);
       setTimeout(()=>saveScore(score,subject,retries-1,delay*2),delay);
     }else{
       console.error('Failed to save score:',error);
@@ -246,43 +239,72 @@ function shuffleArray(array){
   return array;
 }
 
-function startTest(subject){
-  const testSessionId = Date.now();
-  activeTestSessionId = testSessionId;
+function startTest(subject) {
+    const testSessionId = Date.now();
+    activeTestSessionId = testSessionId;
+    penalizedQuestions.clear();
 
-  const startBtn = document.querySelector(`.start-test-btn[data-subject="${subject}"]`);
-  setLoadingState(startBtn,true);
+    const startLogic = () => {
+        const startBtn = document.querySelector(`.start-test-btn[data-subject="${subject}"]`);
+        setLoadingState(startBtn, true);
 
-  setTimeout(()=>{
-    if(activeTestSessionId!==testSessionId) return;
+        setTimeout(() => {
+            if (activeTestSessionId !== testSessionId) return;
 
-    currentTest.subject = subject;
-    currentTest.questions = shuffleArray([...questions[subject]]).slice(0,TEST_LENGTH);
-    currentTest.currentIndex = 0;
-    currentTest.score = 0;
-    currentTest.reviewData = [];
+            currentTest.subject = subject;
+            currentTest.questions = shuffleArray([...questions[subject]]).slice(0, TEST_LENGTH);
+            currentTest.currentIndex = 0;
+            currentTest.score = 0;
+            currentTest.reviewData = [];
 
-    document.getElementById('test-title').textContent = { math:'Математика', ukrainian:'Українська мова', english:'Англійська' }[subject];
-    document.getElementById('total-questions-num').textContent = currentTest.questions.length;
-    document.getElementById('current-question-num').textContent = 0;
-    document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('test-title').textContent = { math: 'Математика', ukrainian: 'Українська мова', english: 'Англійська' }[subject];
+            document.getElementById('total-questions-num').textContent = currentTest.questions.length;
+            document.getElementById('current-question-num').textContent = 0;
+            document.getElementById('progress-bar').style.width = '0%';
 
-    const modeIndicator = document.getElementById('test-mode-indicator');
-    modeIndicator.textContent = currentTest.mode==='exam' ? 'Іспит' : 'Навчання';
-    modeIndicator.className = `text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ml-3 ${currentTest.mode==='exam' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`;
+            const modeIndicator = document.getElementById('test-mode-indicator');
+            modeIndicator.textContent = currentTest.mode === 'exam' ? 'Іспит' : 'Навчання';
+            modeIndicator.className = `text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ml-3 ${currentTest.mode === 'exam' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`;
 
-    setLoadingState(startBtn,false);
-    showScreen('test');
-    displayQuestion();
+            setLoadingState(startBtn, false);
+            showScreen('test');
+            displayQuestion();
 
-    if(currentTest.mode==='exam'){
-      if (timerApi) timerApi.start();
-      enterExamLockdown();
+            if (currentTest.mode === 'exam') {
+                if (timerApi) timerApi.start();
+                enterExamLockdown();
+            } else {
+                document.getElementById('timer-display').classList.add('hidden');
+            }
+        }, 300);
+    };
+
+    if (currentTest.mode === 'exam') {
+        showExamWarningModal(startLogic);
     } else {
-      document.getElementById('timer-display').classList.add('hidden');
+        startLogic();
     }
-  },300);
 }
+
+function showExamWarningModal(onConfirm) {
+    const okBtn = document.getElementById('info-ok-btn');
+
+    showInfoModal(
+        'Увага! Правила іспиту',
+        `<p class="mb-4">Тест проходитиме в повноекранному режимі для концентрації.</p>
+         <p class="font-bold text-red-600">Заборонено виходити з повноекранного режиму або перемикати вкладки. Якщо ви це зробите, поточне питання не буде зараховано.</p>`
+    );
+
+    okBtn.textContent = 'Я зрозумів, почати іспит';
+
+    const handler = () => {
+        hideModal(infoModal);
+        okBtn.removeEventListener('click', handler);
+        onConfirm();
+    };
+    okBtn.addEventListener('click', handler, { once: true });
+}
+
 
 function displayQuestion(){ renderQuestion(currentTest, optionsContainer, radioKeyHandler); }
 
@@ -298,11 +320,10 @@ function nextQuestion(){
 }
 
 async function endTest(timedOut=false){
-  exitExamLockdown(true); // Видаляємо слухачів і виходимо з повноекранного режиму
+  exitExamLockdown(true);
   activeTestSessionId = null;
   if(timerApi) timerApi.stop();
 
-  // скидання таймера
   const timerMinutes = document.getElementById('timer-minutes');
   const timerSeconds = document.getElementById('timer-seconds');
   if(timerMinutes) timerMinutes.textContent = '5';
@@ -314,7 +335,6 @@ async function endTest(timedOut=false){
   document.getElementById('time-up-message').classList.toggle('hidden', !timedOut);
   document.getElementById('new-badge-container').classList.add('hidden');
 
-  // «Переглянути відповіді» — завжди доступно
   document.getElementById('review-answers-btn').classList.remove('hidden');
 
   if(currentUser && isFirebaseActive && !currentUser.isAnonymous){
@@ -326,11 +346,8 @@ async function endTest(timedOut=false){
   }
 }
 
-// timer moved to features/timer
-
 function showReview(){ renderReview(currentTest, { resultsModal, reviewModal, showModal, hideModal }); }
 
-// A11y: radio keyboard handler
 function radioKeyHandler(e){
   const radios = [...optionsContainer.querySelectorAll('.option-btn[role="radio"]')];
   if(radios.length===0) return;
@@ -346,18 +363,13 @@ function radioKeyHandler(e){
   }
 }
 
-// moved to ui/dom.js
-
-// ====== БЛОКУВАННЯ ВИХОДУ З ІСПИТУ ======
 function enterExamLockdown() {
   const element = document.documentElement; 
-
   if (element.requestFullscreen) {
     element.requestFullscreen().catch(err => {
       console.warn(`Помилка входу в повноекранний режим: ${err.message}`);
     });
   }
-
   window.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('fullscreenchange', handleVisibilityChange);
 }
@@ -365,9 +377,7 @@ function enterExamLockdown() {
 function exitExamLockdown(forceExitFullscreen = false) {
   window.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('fullscreenchange', handleVisibilityChange);
-  
   isLockdownWarningActive = false;
-
   if (forceExitFullscreen && document.fullscreenElement) {
     document.exitFullscreen();
   }
@@ -377,11 +387,13 @@ function handleVisibilityChange() {
   if (!activeTestSessionId || currentTest.mode !== 'exam' || isLockdownWarningActive) {
     return;
   }
-
   if (!document.fullscreenElement || document.hidden) {
+    if (!penalizedQuestions.has(currentTest.currentIndex)) {
+        penalizedQuestions.add(currentTest.currentIndex);
+        showToast('Питання не буде зараховано через вихід з режиму іспиту.', 'error');
+    }
     isLockdownWarningActive = true;
     if (timerApi) timerApi.pause();
-
     showLockdownWarning();
   }
 }
@@ -415,7 +427,6 @@ function showLockdownWarning() {
     });
   };
 }
-// ============================================
 
 const getAuthErrorMessage = (code)=>{
   switch(code){
@@ -444,11 +455,7 @@ function setupEventListeners(){
   const confirmActionBtn = document.getElementById('confirm-action-btn');
   const reviewAnswersBtn = document.getElementById('review-answers-btn');
   const closeReviewBtn = document.getElementById('close-review-btn');
-  const infoOkBtn = document.getElementById('info-ok-btn'); // <-- ЗМІНА: Додано
-
-  // ============================================
-  // ВАЛІДАЦІЯ В РЕАЛЬНОМУ ЧАСІ
-  // ============================================
+  const infoOkBtn = document.getElementById('info-ok-btn');
   
   const registerPasswordInput = document.getElementById('register-password');
   if (registerPasswordInput) {
@@ -456,150 +463,97 @@ function setupEventListeners(){
       showPasswordStrength(e.target.value, 'register-password-strength');
     });
   }
-
-  // ============================================
-  // ФОРМА РЕЄСТРАЦІЇ З ВАЛІДАЦІЄЮ
-  // ============================================
   
   if (isFirebaseActive && registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const form = e.target;
       const email = form.querySelector('#register-email').value;
       const password = form.querySelector('#register-password').value;
       const submitButton = form.querySelector('button[type="submit"]');
-      
       showValidationErrors([], 'register-validation-errors');
       document.getElementById('auth-error').textContent = '';
-      
       const emailValidation = validateEmail(email);
       if (!emailValidation.isValid) {
         showValidationErrors(emailValidation.errors, 'register-validation-errors');
         return;
       }
-      
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.isValid) {
         showValidationErrors(passwordValidation.errors, 'register-validation-errors');
         return;
       }
-      
       if (passwordValidation.strength < 3) {
-        const confirmWeak = confirm(
-          'Ваш пароль має низьку надійність. Рекомендуємо використати надійніший пароль.\n\n' +
-          'Поради:\n' +
-          passwordValidation.warnings.join('\n') +
-          '\n\nПродовжити з поточним паролем?'
-        );
+        const confirmWeak = confirm('Ваш пароль має низьку надійність. Рекомендуємо використати надійніший пароль.\n\nПоради:\n' + passwordValidation.warnings.join('\n') + '\n\nПродовжити з поточним паролем?');
         if (!confirmWeak) return;
       }
-      
       setLoadingState(submitButton, true);
-      
       try {
         const recaptchaToken = await recaptchaService.getToken('register');
-        console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
-        
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
         await sendEmailVerification(userCredential.user);
-
-        // ЗМІНА: Замінено alert на модальне вікно
-        showInfoModal(
-          'Підтвердження реєстрації',
-          'Ми відправили вам лист для підтвердження. Будь ласка, перейдіть за посиланням у ньому, щоб активувати акаунт.'
-        );
-        
+        showInfoModal('Підтвердження реєстрації', 'Ми відправили вам лист для підтвердження. Будь ласка, перейдіть за посиланням у ньому, щоб активувати акаунт.');
       } catch (error) {
         console.error('Помилка реєстрації:', error);
-        const errorMessage = getAuthErrorMessage(error.code);
-        document.getElementById('auth-error').textContent = errorMessage;
+        document.getElementById('auth-error').textContent = getAuthErrorMessage(error.code);
         recaptchaService.reset();
       } finally {
         setLoadingState(submitButton, false);
       }
     });
   }
-
-  // ============================================
-  // ФОРМА ЛОГІНУ З ВАЛІДАЦІЄЮ
-  // ============================================
   
   if (isFirebaseActive && loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const form = e.target;
       const email = form.querySelector('#login-email').value;
       const password = form.querySelector('#login-password').value;
       const submitButton = form.querySelector('button[type="submit"]');
-      
       showValidationErrors([], 'login-validation-errors');
       document.getElementById('auth-error').textContent = '';
-      
       const emailValidation = validateEmail(email);
       if (!emailValidation.isValid) {
         showValidationErrors(emailValidation.errors, 'login-validation-errors');
         return;
       }
-      
       if (!password || password.length < 6) {
         showValidationErrors(['Пароль має містити щонайменше 6 символів'], 'login-validation-errors');
         return;
       }
-      
       setLoadingState(submitButton, true);
-      
       try {
         const recaptchaToken = await recaptchaService.getToken('login');
-        console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
-        
         await signInWithEmailAndPassword(auth, email, password);
         showToast('Ви успішно увійшли!', 'success');
-        
       } catch (error) {
         console.error('Помилка входу:', error);
-        const errorMessage = getAuthErrorMessage(error.code);
-        document.getElementById('auth-error').textContent = errorMessage;
+        document.getElementById('auth-error').textContent = getAuthErrorMessage(error.code);
         recaptchaService.reset();
       } finally {
         setLoadingState(submitButton, false);
       }
     });
   }
-
-  // ============================================
-  // ВХІД ЧЕРЕЗ GOOGLE
-  // ============================================
   
   if (isFirebaseActive && googleSigninBtn) {
     googleSigninBtn.addEventListener('click', async () => {
       const provider = new GoogleAuthProvider();
       document.getElementById('auth-error').textContent = '';
       setLoadingState(googleSigninBtn, true);
-      
       try {
         const recaptchaToken = await recaptchaService.getToken('google_signin');
-        console.log('reCAPTCHA token отримано:', recaptchaToken ? 'OK' : 'Failed');
-        
         await signInWithPopup(auth, provider);
         showToast('Ви успішно увійшли через Google!', 'success');
-        
       } catch (error) {
         console.error('Помилка входу через Google:', error);
         document.getElementById('auth-error').textContent = getAuthErrorMessage(error.code);
         recaptchaService.reset();
-        
       } finally {
         setLoadingState(googleSigninBtn, false);
       }
     });
   }
-
-  // ============================================
-  // ВИХІД З АКАУНТА
-  // ============================================
   
   if (isFirebaseActive && logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -609,7 +563,6 @@ function setupEventListeners(){
     });
   }
 
-  // answer click
   optionsContainer.addEventListener('click',(e)=>{
     const button = e.target.closest('.option-btn');
     if(!button || button.disabled) return;
@@ -617,9 +570,13 @@ function setupEventListeners(){
     const selectedIndex = parseInt(button.dataset.index,10);
     const q = currentTest.questions[currentTest.currentIndex];
     const isCorrect = selectedIndex===q.correct;
+    const isPenalized = penalizedQuestions.has(currentTest.currentIndex);
 
-    if(isCorrect) currentTest.score++;
-    currentTest.reviewData.push({ question:q, selectedIndex });
+    if (isCorrect && !isPenalized) {
+        currentTest.score++;
+    }
+    
+    currentTest.reviewData.push({ question:q, selectedIndex, isPenalized });
 
     const all = optionsContainer.querySelectorAll('.option-btn');
     all.forEach((btn, idx)=>{
@@ -630,7 +587,6 @@ function setupEventListeners(){
     const feedbackIcon = document.createElement('span');
     feedbackIcon.className = 'feedback-icon ml-auto text-2xl';
     feedbackIcon.innerHTML = isCorrect ? '✓' : '✗';
-
     button.classList.add(isCorrect ? 'correct' : 'incorrect');
     button.appendChild(feedbackIcon);
 
@@ -644,19 +600,15 @@ function setupEventListeners(){
             rightButton.appendChild(correctIcon);
         }
     }
-
     if(currentTest.mode==='practice'){
       document.getElementById('explanation-text').textContent = q.explanation;
       document.getElementById('explanation-container').classList.remove('hidden');
     }
-
     updateProgressUI();
-
     const nextBtn = document.getElementById('next-question-btn');
     nextBtn.textContent = (currentTest.currentIndex===currentTest.questions.length-1) ? 'Завершити тест' : 'Наступне питання';
     nextBtn.classList.remove('hidden');
     nextBtn.focus();
-
     optionsContainer.removeEventListener('keydown', radioKeyHandler);
   });
 
@@ -682,8 +634,7 @@ function setupEventListeners(){
     e.preventDefault();
     document.getElementById('login-form').classList.toggle('hidden');
     document.getElementById('register-form').classList.toggle('hidden');
-    toggleAuthLink.textContent =
-      document.getElementById('login-form').classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
+    toggleAuthLink.textContent = document.getElementById('login-form').classList.contains('hidden') ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватися';
     document.getElementById('auth-error').textContent = '';
   });
 
@@ -691,24 +642,31 @@ function setupEventListeners(){
   document.getElementById('back-to-welcome-btn').addEventListener('click',()=>showScreen('welcome'));
   document.getElementById('next-question-btn').addEventListener('click',nextQuestion);
 
-  // quit flow
-  quitTestBtn.addEventListener('click',()=>{ if(timerApi) timerApi.pause(); showModal(confirmationModal); });
+  quitTestBtn.addEventListener('click',()=>{ 
+    if(timerApi) timerApi.pause(); 
+    const title = document.getElementById('confirmation-title');
+    const text = document.getElementById('confirmation-text');
+    const confirmBtn = document.getElementById('confirm-action-btn');
+    const cancelBtn = document.getElementById('cancel-action-btn');
+    title.textContent = "Ви впевнені?";
+    text.innerHTML = "Весь прогрес у поточному тесті буде втрачено.";
+    confirmBtn.textContent = "Так, вийти";
+    cancelBtn.textContent = "Скасувати";
+    confirmBtn.onclick = () => { // Reset to default behavior
+        hideModal(confirmationModal);
+        exitExamLockdown();
+        activeTestSessionId = null;
+        if(timerApi) timerApi.stop();
+        if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
+        else showScreen('welcome');
+    };
+    cancelBtn.onclick = () => {
+        hideModal(confirmationModal); 
+        if(timerApi && !isLockdownWarningActive) timerApi.resume();
+    };
+    showModal(confirmationModal); 
+  });
   
-  cancelActionBtn.addEventListener('click',()=>{ 
-    hideModal(confirmationModal); 
-    if(timerApi && !isLockdownWarningActive) timerApi.resume();
-  });
-
-  confirmActionBtn.addEventListener('click',()=>{
-    hideModal(confirmationModal);
-    exitExamLockdown();
-    activeTestSessionId = null;
-    if(timerApi) timerApi.stop();
-    if(currentUser && isFirebaseActive && !currentUser.isAnonymous) showScreen('dashboard');
-    else showScreen('welcome');
-  });
-
-  // review
   reviewAnswersBtn.addEventListener('click',showReview);
   closeReviewBtn.addEventListener('click',()=>{
     hideModal(reviewModal);
@@ -716,24 +674,14 @@ function setupEventListeners(){
     else showScreen('welcome');
   });
 
-  // ЗМІНА: Додано обробник для кнопки "OK"
   if (infoOkBtn) {
     infoOkBtn.addEventListener('click', () => hideModal(infoModal));
   }
-
-  // Safety: global delegated handler to ensure clicks always work
-  document.addEventListener('click',(e)=>{
-    const startBtn = e.target.closest('.start-test-btn');
-    if(startBtn){ startTest(startBtn.dataset.subject); return; }
-    const modeBtn = e.target.closest('.mode-btn');
-    if(modeBtn){ setMode(modeBtn.dataset.mode); }
-  });
 }
 
 // Initial setup
 (async()=>{
   setMode('practice');
-
   try{
     if(typeof __firebase_config!=='undefined' && __firebase_config){
       const cfg = JSON.parse(__firebase_config);
@@ -744,13 +692,11 @@ function setupEventListeners(){
   }catch(error){
     console.warn('Firebase initialization failed:', error.message, 'App will run in offline mode.');
   }
-
   if(isFirebaseActive){
     setupAuthListener();
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){ trySyncOfflineScores(); }
     });
-
     if(typeof __initial_auth_token!=='undefined' && __initial_auth_token){
       try{ await signInWithCustomToken(auth,__initial_auth_token); }
       catch(error){
@@ -760,7 +706,6 @@ function setupEventListeners(){
     }else{
       try{ await signInAnonymously(auth); }catch(e){ console.error('Anonymous sign-in failed:',e); }
     }
-
     await trySyncOfflineScores();
   }else{
     document.querySelectorAll('#show-login-btn, #google-signin-btn, #login-form, #register-form, #toggle-auth, #save-progress-btn, #logout-btn').forEach(el=>{
@@ -770,10 +715,7 @@ function setupEventListeners(){
     if(authText) authText.innerHTML = 'Збереження прогресу недоступне.';
     showScreen('welcome');
   }
-
   setupEventListeners();
-
-  // init timer API after DOM is ready and state is set
   timerApi = createTimer({
     onTimeout: ()=>endTest(true),
     getActiveTestSessionId: ()=>activeTestSessionId,
