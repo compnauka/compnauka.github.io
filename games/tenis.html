@@ -19,47 +19,63 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             font-family: 'Courier New', monospace;
             overflow: hidden;
+            padding: 10px;
         }
 
         .game-container {
             text-align: center;
-            padding: 20px;
+            width: 100%;
+            max-width: 900px;
         }
 
         .score-board {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
             color: #f0f0f0;
-            font-size: 32px;
+            font-size: clamp(18px, 4vw, 32px);
             text-shadow: 0 0 10px rgba(255, 200, 100, 0.5);
+            flex-wrap: wrap;
         }
 
         .player-score {
-            padding: 10px 30px;
+            padding: 8px 20px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             backdrop-filter: blur(10px);
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         canvas {
+            width: 100%;
+            height: auto;
             border: 3px solid #ffc857;
             border-radius: 10px;
             background: #0a0a1a;
             box-shadow: 0 0 30px rgba(255, 200, 100, 0.3);
+            display: block;
         }
 
         .controls {
-            margin-top: 20px;
+            margin-top: 15px;
             color: #ffc857;
-            font-size: 14px;
+            font-size: clamp(11px, 2vw, 14px);
             line-height: 1.8;
         }
 
         .btn {
             margin-top: 15px;
             padding: 12px 30px;
-            font-size: 16px;
+            font-size: clamp(14px, 2.5vw, 16px);
             font-family: 'Courier New', monospace;
             background: #ffc857;
             color: #1a1a2e;
@@ -76,31 +92,80 @@
             box-shadow: 0 5px 15px rgba(255, 200, 100, 0.4);
         }
 
+        .btn:active {
+            transform: translateY(0);
+        }
+
         .game-over {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(26, 26, 46, 0.95);
-            padding: 40px;
+            background: rgba(26, 26, 46, 0.98);
+            padding: clamp(20px, 5vw, 40px);
             border-radius: 15px;
             border: 3px solid #ffc857;
             display: none;
             text-align: center;
             box-shadow: 0 0 50px rgba(255, 200, 100, 0.5);
+            z-index: 1000;
+            max-width: 90%;
         }
 
         .game-over h2 {
             color: #ffc857;
-            font-size: 36px;
-            margin-bottom: 20px;
+            font-size: clamp(24px, 5vw, 36px);
+            margin-bottom: 15px;
             text-shadow: 0 0 15px rgba(255, 200, 100, 0.7);
         }
 
         .game-over p {
             color: #f0f0f0;
-            font-size: 20px;
-            margin-bottom: 25px;
+            font-size: clamp(16px, 3vw, 20px);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .score-board {
+                font-size: 20px;
+            }
+
+            .player-score {
+                padding: 6px 15px;
+                min-width: 120px;
+            }
+
+            canvas {
+                border-width: 2px;
+            }
+
+            .controls {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .score-board {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .player-score {
+                padding: 5px 12px;
+                min-width: 100px;
+            }
+
+            .controls {
+                font-size: 11px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+            }
         }
     </style>
 </head>
@@ -115,93 +180,181 @@
             </div>
         </div>
         
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
         
         <div class="controls">
             <div>🎮 Керування 🎮</div>
             <div>Гравець 1: W / S | Гравець 2: ↑ / ↓</div>
         </div>
         
-        <button class="btn" onclick="startGame()">Почати гру</button>
+        <button class="btn" id="startBtn">Почати гру</button>
     </div>
 
     <div class="game-over" id="gameOver">
         <h2>Гра завершена!</h2>
         <p id="winner"></p>
-        <button class="btn" onclick="resetGame()">Грати знову</button>
+        <button class="btn" id="restartBtn">Грати знову</button>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        let gameRunning = false;
-        let animationId;
-
-        const game = {
-            player1: {
-                x: 20,
-                y: canvas.height / 2 - 50,
-                width: 15,
-                height: 100,
-                speed: 6,
-                score: 0,
-                upKey: false,
-                downKey: false
-            },
-            player2: {
-                x: canvas.width - 35,
-                y: canvas.height / 2 - 50,
-                width: 15,
-                height: 100,
-                speed: 6,
-                score: 0,
-                upKey: false,
-                downKey: false
-            },
-            ball: {
-                x: canvas.width / 2,
-                y: canvas.height / 2,
-                radius: 8,
-                speedX: 5,
-                speedY: 5,
-                maxSpeed: 12
-            }
+        // Константи гри
+        const CONSTANTS = {
+            WINNING_SCORE: 5,
+            INITIAL_BALL_SPEED: 5,
+            MAX_BALL_SPEED: 12,
+            PADDLE_SPEED: 6,
+            BALL_SPEED_INCREASE: 1.05,
+            PADDLE_WIDTH: 15,
+            PADDLE_HEIGHT: 100,
+            BALL_RADIUS: 8,
+            NET_SEGMENT_HEIGHT: 10,
+            NET_SEGMENT_GAP: 20
         };
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
-                game.player1.upKey = true;
-            }
-            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') {
-                game.player1.downKey = true;
-            }
-            if (e.key === 'ArrowUp') {
-                game.player2.upKey = true;
-            }
-            if (e.key === 'ArrowDown') {
-                game.player2.downKey = true;
-            }
-        });
+        // Отримання елементів DOM
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameOverDiv = document.getElementById('gameOver');
+        const winnerText = document.getElementById('winner');
+        const score1El = document.getElementById('score1');
+        const score2El = document.getElementById('score2');
 
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
-                game.player1.upKey = false;
-            }
-            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') {
-                game.player1.downKey = false;
-            }
-            if (e.key === 'ArrowUp') {
-                game.player2.upKey = false;
-            }
-            if (e.key === 'ArrowDown') {
-                game.player2.downKey = false;
-            }
-        });
+        // Стан гри
+        let gameRunning = false;
+        let animationId = null;
 
+        // Ініціалізація canvas з урахуванням DPI
+        function initCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            // Базові розміри
+            const baseWidth = 800;
+            const baseHeight = 500;
+            
+            // Адаптивні розміри
+            const containerWidth = canvas.parentElement.clientWidth;
+            const scale = Math.min(1, containerWidth / baseWidth);
+            
+            canvas.width = baseWidth * dpr;
+            canvas.height = baseHeight * dpr;
+            canvas.style.width = `${baseWidth * scale}px`;
+            canvas.style.height = `${baseHeight * scale}px`;
+            
+            ctx.scale(dpr, dpr);
+            
+            return { width: baseWidth, height: baseHeight };
+        }
+
+        const canvasSize = initCanvas();
+
+        // Клас гравця
+        class Player {
+            constructor(isLeft) {
+                this.width = CONSTANTS.PADDLE_WIDTH;
+                this.height = CONSTANTS.PADDLE_HEIGHT;
+                this.speed = CONSTANTS.PADDLE_SPEED;
+                this.score = 0;
+                this.upKey = false;
+                this.downKey = false;
+                
+                if (isLeft) {
+                    this.x = 20;
+                } else {
+                    this.x = canvasSize.width - 35;
+                }
+                
+                this.reset();
+            }
+
+            reset() {
+                this.y = canvasSize.height / 2 - this.height / 2;
+            }
+
+            move() {
+                if (this.upKey && this.y > 0) {
+                    this.y -= this.speed;
+                }
+                if (this.downKey && this.y < canvasSize.height - this.height) {
+                    this.y += this.speed;
+                }
+            }
+
+            draw() {
+                drawRect(this.x, this.y, this.width, this.height, '#ffc857');
+            }
+        }
+
+        // Клас м'яча
+        class Ball {
+            constructor() {
+                this.radius = CONSTANTS.BALL_RADIUS;
+                this.maxSpeed = CONSTANTS.MAX_BALL_SPEED;
+                this.reset();
+            }
+
+            reset() {
+                this.x = canvasSize.width / 2;
+                this.y = canvasSize.height / 2;
+                const angle = (Math.random() * Math.PI / 2) - Math.PI / 4;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                this.speedX = direction * CONSTANTS.INITIAL_BALL_SPEED;
+                this.speedY = CONSTANTS.INITIAL_BALL_SPEED * Math.sin(angle);
+            }
+
+            move() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Відбиття від верхньої та нижньої стінок
+                if (this.y + this.radius > canvasSize.height || this.y - this.radius < 0) {
+                    this.speedY = -this.speedY;
+                }
+            }
+
+            checkPaddleCollision(player) {
+                const collides = this.x - this.radius < player.x + player.width &&
+                               this.x + this.radius > player.x &&
+                               this.y - this.radius < player.y + player.height &&
+                               this.y + this.radius > player.y;
+
+                if (collides) {
+                    // Розрахунок кута відбиття
+                    const collidePoint = (this.y - (player.y + player.height / 2)) / (player.height / 2);
+                    const angleRad = collidePoint * Math.PI / 4;
+                    const direction = this.speedX < 0 ? 1 : -1;
+                    
+                    // Збільшення швидкості
+                    this.speedX = direction * Math.abs(this.speedX) * CONSTANTS.BALL_SPEED_INCREASE;
+                    this.speedY = Math.abs(this.speedX) * Math.sin(angleRad);
+                    
+                    // Обмеження максимальної швидкості
+                    if (Math.abs(this.speedX) > this.maxSpeed) {
+                        this.speedX = direction * this.maxSpeed;
+                        this.speedY = this.maxSpeed * Math.sin(angleRad);
+                    }
+                }
+
+                return collides;
+            }
+
+            draw() {
+                drawCircle(this.x, this.y, this.radius, '#ff6b6b');
+            }
+        }
+
+        // Ініціалізація гравців та м'яча
+        const player1 = new Player(true);
+        const player2 = new Player(false);
+        const ball = new Ball();
+
+        // Функції малювання
         function drawRect(x, y, w, h, color) {
             ctx.fillStyle = color;
-            ctx.fillRect(x, y, w, h);
             ctx.shadowBlur = 15;
             ctx.shadowColor = color;
             ctx.fillRect(x, y, w, h);
@@ -210,9 +363,6 @@
 
         function drawCircle(x, y, r, color) {
             ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, Math.PI * 2);
-            ctx.fill();
             ctx.shadowBlur = 20;
             ctx.shadowColor = color;
             ctx.beginPath();
@@ -222,129 +372,176 @@
         }
 
         function drawNet() {
-            for (let i = 0; i < canvas.height; i += 20) {
-                drawRect(canvas.width / 2 - 2, i, 4, 10, 'rgba(255, 200, 100, 0.3)');
+            const centerX = canvasSize.width / 2;
+            for (let i = 0; i < canvasSize.height; i += CONSTANTS.NET_SEGMENT_GAP) {
+                drawRect(centerX - 2, i, 4, CONSTANTS.NET_SEGMENT_HEIGHT, 'rgba(255, 200, 100, 0.3)');
             }
-        }
-
-        function movePaddles() {
-            if (game.player1.upKey && game.player1.y > 0) {
-                game.player1.y -= game.player1.speed;
-            }
-            if (game.player1.downKey && game.player1.y < canvas.height - game.player1.height) {
-                game.player1.y += game.player1.speed;
-            }
-            if (game.player2.upKey && game.player2.y > 0) {
-                game.player2.y -= game.player2.speed;
-            }
-            if (game.player2.downKey && game.player2.y < canvas.height - game.player2.height) {
-                game.player2.y += game.player2.speed;
-            }
-        }
-
-        function moveBall() {
-            game.ball.x += game.ball.speedX;
-            game.ball.y += game.ball.speedY;
-
-            if (game.ball.y + game.ball.radius > canvas.height || game.ball.y - game.ball.radius < 0) {
-                game.ball.speedY = -game.ball.speedY;
-            }
-
-            const player = (game.ball.speedX < 0) ? game.player1 : game.player2;
-            
-            if (collision(game.ball, player)) {
-                let collidePoint = game.ball.y - (player.y + player.height / 2);
-                collidePoint = collidePoint / (player.height / 2);
-                
-                let angleRad = collidePoint * Math.PI / 4;
-                let direction = (game.ball.speedX < 0) ? 1 : -1;
-                
-                game.ball.speedX = direction * Math.abs(game.ball.speedX) * 1.05;
-                game.ball.speedY = Math.abs(game.ball.speedX) * Math.sin(angleRad);
-                
-                if (Math.abs(game.ball.speedX) > game.ball.maxSpeed) {
-                    game.ball.speedX = direction * game.ball.maxSpeed;
-                }
-            }
-
-            if (game.ball.x - game.ball.radius < 0) {
-                game.player2.score++;
-                updateScore();
-                resetBall();
-            } else if (game.ball.x + game.ball.radius > canvas.width) {
-                game.player1.score++;
-                updateScore();
-                resetBall();
-            }
-        }
-
-        function collision(ball, player) {
-            return ball.x - ball.radius < player.x + player.width &&
-                   ball.x + ball.radius > player.x &&
-                   ball.y - ball.radius < player.y + player.height &&
-                   ball.y + ball.radius > player.y;
-        }
-
-        function resetBall() {
-            game.ball.x = canvas.width / 2;
-            game.ball.y = canvas.height / 2;
-            game.ball.speedX = (Math.random() > 0.5 ? 1 : -1) * 5;
-            game.ball.speedY = (Math.random() * 2 - 1) * 5;
-            
-            if (game.player1.score >= 5 || game.player2.score >= 5) {
-                endGame();
-            }
-        }
-
-        function updateScore() {
-            document.getElementById('score1').textContent = game.player1.score;
-            document.getElementById('score2').textContent = game.player2.score;
         }
 
         function render() {
-            drawRect(0, 0, canvas.width, canvas.height, '#0a0a1a');
+            // Очищення canvas
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+            
             drawNet();
-            drawRect(game.player1.x, game.player1.y, game.player1.width, game.player1.height, '#ffc857');
-            drawRect(game.player2.x, game.player2.y, game.player2.width, game.player2.height, '#ffc857');
-            drawCircle(game.ball.x, game.ball.y, game.ball.radius, '#ff6b6b');
+            player1.draw();
+            player2.draw();
+            ball.draw();
         }
 
+        // Оновлення рахунку
+        function updateScore() {
+            score1El.textContent = player1.score;
+            score2El.textContent = player2.score;
+        }
+
+        // Перевірка голу
+        function checkGoal() {
+            if (ball.x - ball.radius < 0) {
+                player2.score++;
+                updateScore();
+                ball.reset();
+                
+                if (player2.score >= CONSTANTS.WINNING_SCORE) {
+                    endGame(2);
+                }
+            } else if (ball.x + ball.radius > canvasSize.width) {
+                player1.score++;
+                updateScore();
+                ball.reset();
+                
+                if (player1.score >= CONSTANTS.WINNING_SCORE) {
+                    endGame(1);
+                }
+            }
+        }
+
+        // Головний ігровий цикл
         function gameLoop() {
             if (!gameRunning) return;
             
-            movePaddles();
-            moveBall();
+            player1.move();
+            player2.move();
+            ball.move();
+            ball.checkPaddleCollision(player1);
+            ball.checkPaddleCollision(player2);
+            checkGoal();
             render();
             
             animationId = requestAnimationFrame(gameLoop);
         }
 
+        // Управління грою
         function startGame() {
             if (gameRunning) return;
             gameRunning = true;
+            startBtn.textContent = 'Гра йде...';
+            startBtn.disabled = true;
             gameLoop();
         }
 
-        function endGame() {
+        function endGame(winner) {
             gameRunning = false;
-            cancelAnimationFrame(animationId);
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
             
-            const winner = game.player1.score >= 5 ? 'Гравець 1' : 'Гравець 2';
-            document.getElementById('winner').textContent = `${winner} переміг! 🏆`;
-            document.getElementById('gameOver').style.display = 'block';
+            winnerText.textContent = `Гравець ${winner} переміг! 🏆`;
+            gameOverDiv.style.display = 'block';
+            startBtn.disabled = false;
+            startBtn.textContent = 'Почати гру';
         }
 
         function resetGame() {
-            game.player1.score = 0;
-            game.player2.score = 0;
-            game.player1.y = canvas.height / 2 - 50;
-            game.player2.y = canvas.height / 2 - 50;
+            player1.score = 0;
+            player2.score = 0;
+            player1.reset();
+            player2.reset();
+            ball.reset();
             updateScore();
-            resetBall();
-            document.getElementById('gameOver').style.display = 'none';
+            gameOverDiv.style.display = 'none';
             startGame();
         }
 
+        // Обробка клавіатури
+        const keyMap = {
+            'w': () => player1.upKey = true,
+            'W': () => player1.upKey = true,
+            'ц': () => player1.upKey = true,
+            'Ц': () => player1.upKey = true,
+            's': () => player1.downKey = true,
+            'S': () => player1.downKey = true,
+            'і': () => player1.downKey = true,
+            'І': () => player1.downKey = true,
+            'ArrowUp': () => player2.upKey = true,
+            'ArrowDown': () => player2.downKey = true
+        };
+
+        const keyUpMap = {
+            'w': () => player1.upKey = false,
+            'W': () => player1.upKey = false,
+            'ц': () => player1.upKey = false,
+            'Ц': () => player1.upKey = false,
+            's': () => player1.downKey = false,
+            'S': () => player1.downKey = false,
+            'і': () => player1.downKey = false,
+            'І': () => player1.downKey = false,
+            'ArrowUp': () => player2.upKey = false,
+            'ArrowDown': () => player2.downKey = false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                keyMap[e.key]();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (keyUpMap[e.key]) {
+                e.preventDefault();
+                keyUpMap[e.key]();
+            }
+        });
+
+        // Обробка зміни розміру вікна
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const wasRunning = gameRunning;
+                if (wasRunning) {
+                    gameRunning = false;
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                }
+                
+                const newSize = initCanvas();
+                Object.assign(canvasSize, newSize);
+                
+                // Перерахунок позицій
+                player1.x = 20;
+                player2.x = canvasSize.width - 35;
+                player1.y = Math.min(player1.y, canvasSize.height - player1.height);
+                player2.y = Math.min(player2.y, canvasSize.height - player2.height);
+                ball.x = Math.min(Math.max(ball.x, ball.radius), canvasSize.width - ball.radius);
+                ball.y = Math.min(Math.max(ball.y, ball.radius), canvasSize.height - ball.radius);
+                
+                render();
+                
+                if (wasRunning) {
+                    gameRunning = true;
+                    gameLoop();
+                }
+            }, 250);
+        });
+
+        // Слухачі подій
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', resetGame);
+
+        // Початковий рендер
         render();
     </script>
 </body>
