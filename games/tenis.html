@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Теніс - Гра на двох</title>
     <style>
         * {
@@ -11,39 +11,32 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Запобігаємо прокрутці на мобільних */
-        }
-
         body {
             display: flex;
-            flex-direction: column; /* Додано: Змінює напрямок flex-контейнера */
-            align-items: center; /* Змінено: Надійніше центрує елементи по горизонталі */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             font-family: 'Courier New', monospace;
-            padding: 1rem;
+            overflow: hidden;
         }
 
         .game-container {
             text-align: center;
             padding: 20px;
-            max-width: 1000px;
-            width: 100%;
         }
 
         .score-board {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #f0f0f0;
-            font-size: clamp(20px, 4vw, 32px); /* Адаптивний розмір шрифту */
+            font-size: 32px;
             text-shadow: 0 0 10px rgba(255, 200, 100, 0.5);
         }
 
         .player-score {
-            padding: 10px 20px;
+            padding: 10px 30px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             backdrop-filter: blur(10px);
@@ -54,17 +47,13 @@
             border-radius: 10px;
             background: #0a0a1a;
             box-shadow: 0 0 30px rgba(255, 200, 100, 0.3);
-            width: 100%; /* Займає всю ширину контейнера */
-            height: auto;
-            aspect-ratio: 800 / 500; /* Зберігаємо пропорції */
-            display: block;
         }
 
         .controls {
-            margin-top: 15px;
+            margin-top: 20px;
             color: #ffc857;
-            font-size: clamp(12px, 2.5vw, 14px);
-            line-height: 1.6;
+            font-size: 14px;
+            line-height: 1.8;
         }
 
         .btn {
@@ -99,7 +88,6 @@
             display: none;
             text-align: center;
             box-shadow: 0 0 50px rgba(255, 200, 100, 0.5);
-            z-index: 10;
         }
 
         .game-over h2 {
@@ -127,14 +115,14 @@
             </div>
         </div>
         
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
         
         <div class="controls">
             <div>🎮 Керування 🎮</div>
-            <div>ПК: Гравець 1 (W/S) | Гравець 2 (↑/↓)</div>
-            <div>Мобільні: Ліва/Права частина екрана</div>
-            <button class="btn" onclick="startGame()">Почати гру</button>
+            <div>Гравець 1: W / S | Гравець 2: ↑ / ↓</div>
         </div>
+        
+        <button class="btn" onclick="startGame()">Почати гру</button>
     </div>
 
     <div class="game-over" id="gameOver">
@@ -144,253 +132,168 @@
     </div>
 
     <script>
-        // Ініціалізація canvas
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        if (!canvas || !ctx) {
-            console.error('Canvas не знайдено');
-        }
+        let gameRunning = false;
+        let animationId;
 
-        // Оригінальні пропорції для розрахунків
-        const BASE_WIDTH = 800;
-        const BASE_HEIGHT = 500;
-        let scaleFactor = 1;
-
-        // Константи гри
-        const CONSTANTS = {
-            PADDLE_WIDTH: 15,
-            PADDLE_HEIGHT: 100,
-            PADDLE_SPEED: 8, // Збільшено швидкість для кращого відчуття
-            BALL_RADIUS: 8,
-            BALL_INITIAL_SPEED: 6,
-            BALL_MAX_SPEED: 15,
-            BALL_SPEED_INCREMENT: 1.05,
-            WINNING_SCORE: 5,
-            NET_SEGMENT_HEIGHT: 10,
-            NET_SEGMENT_GAP: 20
+        const game = {
+            player1: {
+                x: 20,
+                y: canvas.height / 2 - 50,
+                width: 15,
+                height: 100,
+                speed: 6,
+                score: 0,
+                upKey: false,
+                downKey: false
+            },
+            player2: {
+                x: canvas.width - 35,
+                y: canvas.height / 2 - 50,
+                width: 15,
+                height: 100,
+                speed: 6,
+                score: 0,
+                upKey: false,
+                downKey: false
+            },
+            ball: {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 8,
+                speedX: 5,
+                speedY: 5,
+                maxSpeed: 12
+            }
         };
 
-        // Стан гри
-        let gameState = {
-            running: false,
-            animationId: null,
-            lastCollisionTime: 0,
-            pointInProgress: false
-        };
-
-        // Ініціалізація об'єктів гри
-        let game = { player1: {}, player2: {}, ball: {} };
-        
-        function createPlayer(x, y) {
-            return { x, y, width: CONSTANTS.PADDLE_WIDTH, height: CONSTANTS.PADDLE_HEIGHT, speed: CONSTANTS.PADDLE_SPEED, score: 0, upKey: false, downKey: false };
-        }
-
-        function createBall() {
-            return { x: canvas.width / 2, y: canvas.height / 2, radius: CONSTANTS.BALL_RADIUS, speedX: CONSTANTS.BALL_INITIAL_SPEED, speedY: CONSTANTS.BALL_INITIAL_SPEED, maxSpeed: CONSTANTS.BALL_MAX_SPEED };
-        }
-        
-        function initializeGameObjects() {
-            game.player1 = createPlayer(20 * scaleFactor, canvas.height / 2 - (CONSTANTS.PADDLE_HEIGHT * scaleFactor) / 2);
-            game.player2 = createPlayer(canvas.width - (20 + CONSTANTS.PADDLE_WIDTH) * scaleFactor, canvas.height / 2 - (CONSTANTS.PADDLE_HEIGHT * scaleFactor) / 2);
-            game.ball = createBall();
-        }
-
-        // --- АДАПТИВНІСТЬ CANVAS ---
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            const aspectRatio = BASE_WIDTH / BASE_HEIGHT;
-            const containerWidth = container.clientWidth;
-            
-            canvas.width = containerWidth;
-            canvas.height = containerWidth / aspectRatio;
-            
-            scaleFactor = canvas.width / BASE_WIDTH;
-
-            initializeGameObjects();
-            updateScore();
-            render(); // Перемалювати після зміни розміру
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        // --- КІНЕЦЬ БЛОКУ АДАПТИВНОСТІ ---
-
-        // --- КЕРУВАННЯ ---
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') { e.preventDefault(); game.player1.upKey = true; }
-            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') { e.preventDefault(); game.player1.downKey = true; }
-            if (e.key === 'ArrowUp') { e.preventDefault(); game.player2.upKey = true; }
-            if (e.key === 'ArrowDown') { e.preventDefault(); game.player2.downKey = true; }
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
+                game.player1.upKey = true;
+            }
+            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') {
+                game.player1.downKey = true;
+            }
+            if (e.key === 'ArrowUp') {
+                game.player2.upKey = true;
+            }
+            if (e.key === 'ArrowDown') {
+                game.player2.downKey = true;
+            }
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') { game.player1.upKey = false; }
-            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') { game.player1.downKey = false; }
-            if (e.key === 'ArrowUp') { game.player2.upKey = false; }
-            if (e.key === 'ArrowDown') { game.player2.downKey = false; }
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
+                game.player1.upKey = false;
+            }
+            if (e.key === 's' || e.key === 'S' || e.key === 'і' || e.key === 'І') {
+                game.player1.downKey = false;
+            }
+            if (e.key === 'ArrowUp') {
+                game.player2.upKey = false;
+            }
+            if (e.key === 'ArrowDown') {
+                game.player2.downKey = false;
+            }
         });
 
-        // --- МОБІЛЬНЕ КЕРУВАННЯ ---
-        function handleTouch(e) {
-            e.preventDefault();
-            for (let i = 0; i < e.touches.length; i++) {
-                const touch = e.touches[i];
-                const rect = canvas.getBoundingClientRect();
-                const touchY = touch.clientY - rect.top;
-
-                if (touch.clientX < window.innerWidth / 2) {
-                    // Ліва частина екрана для гравця 1
-                    game.player1.y = touchY - (game.player1.height * scaleFactor) / 2;
-                } else {
-                    // Права частина екрана для гравця 2
-                    game.player2.y = touchY - (game.player2.height * scaleFactor) / 2;
-                }
-            }
-        }
-        canvas.addEventListener('touchstart', handleTouch, { passive: false });
-        canvas.addEventListener('touchmove', handleTouch, { passive: false });
-        // --- КІНЕЦЬ БЛОКУ МОБІЛЬНОГО КЕРУВАННЯ ---
-
-        // Функції малювання
         function drawRect(x, y, w, h, color) {
-            if (!ctx) return;
-            ctx.save();
             ctx.fillStyle = color;
-            ctx.shadowBlur = 15 * scaleFactor;
+            ctx.fillRect(x, y, w, h);
+            ctx.shadowBlur = 15;
             ctx.shadowColor = color;
-            ctx.fillRect(x, y, w * scaleFactor, h * scaleFactor);
-            ctx.restore();
+            ctx.fillRect(x, y, w, h);
+            ctx.shadowBlur = 0;
         }
 
         function drawCircle(x, y, r, color) {
-            if (!ctx) return;
-            ctx.save();
             ctx.fillStyle = color;
-            ctx.shadowBlur = 20 * scaleFactor;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 20;
             ctx.shadowColor = color;
             ctx.beginPath();
-            ctx.arc(x, y, r * scaleFactor, 0, Math.PI * 2);
+            ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
+            ctx.shadowBlur = 0;
         }
 
         function drawNet() {
-            const centerX = canvas.width / 2 - (2 * scaleFactor);
-            for (let i = 0; i < canvas.height; i += CONSTANTS.NET_SEGMENT_GAP * scaleFactor) {
-                drawRect(centerX / scaleFactor, i / scaleFactor, 4, CONSTANTS.NET_SEGMENT_HEIGHT, 'rgba(255, 200, 100, 0.3)');
+            for (let i = 0; i < canvas.height; i += 20) {
+                drawRect(canvas.width / 2 - 2, i, 4, 10, 'rgba(255, 200, 100, 0.3)');
             }
-        }
-
-        // Логіка руху
-        function movePaddle(player) {
-            const scaledPaddleHeight = player.height * scaleFactor;
-            const scaledSpeed = player.speed * scaleFactor;
-
-            if (player.upKey && player.y > 0) {
-                player.y = Math.max(0, player.y - scaledSpeed);
-            }
-            if (player.downKey && player.y < canvas.height - scaledPaddleHeight) {
-                player.y = Math.min(canvas.height - scaledPaddleHeight, player.y + scaledSpeed);
-            }
-             // Обмеження виходу за межі поля для тач-керування
-            player.y = Math.max(0, Math.min(player.y, canvas.height - scaledPaddleHeight));
         }
 
         function movePaddles() {
-            movePaddle(game.player1);
-            movePaddle(game.player2);
-        }
-        
-        function checkCollision(ball, player) {
-            const scaledRadius = ball.radius * scaleFactor;
-            const scaledPlayerWidth = player.width * scaleFactor;
-            const scaledPlayerHeight = player.height * scaleFactor;
-
-            return ball.x - scaledRadius < player.x + scaledPlayerWidth &&
-                   ball.x + scaledRadius > player.x &&
-                   ball.y - scaledRadius < player.y + scaledPlayerHeight &&
-                   ball.y + scaledRadius > player.y;
-        }
-
-
-        function handleBallPaddleCollision(player) {
-            const now = Date.now();
-            if (now - gameState.lastCollisionTime < 100) return;
-            gameState.lastCollisionTime = now;
-            
-            const scaledPlayerHeight = player.height * scaleFactor;
-            const collidePoint = (game.ball.y - (player.y + scaledPlayerHeight / 2)) / (scaledPlayerHeight / 2);
-            const angleRad = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, collidePoint * Math.PI / 4));
-            
-            const direction = (game.ball.x < canvas.width / 2) ? 1 : -1;
-            
-            let newSpeedX = Math.abs(game.ball.speedX) * CONSTANTS.BALL_SPEED_INCREMENT;
-            game.ball.speedX = direction * Math.min(newSpeedX, game.ball.maxSpeed * scaleFactor);
-            game.ball.speedY = Math.abs(newSpeedX) * Math.sin(angleRad);
-            
-            const scaledRadius = game.ball.radius * scaleFactor;
-            if (direction > 0) {
-                game.ball.x = player.x + player.width * scaleFactor + scaledRadius;
-            } else {
-                game.ball.x = player.x - scaledRadius;
+            if (game.player1.upKey && game.player1.y > 0) {
+                game.player1.y -= game.player1.speed;
+            }
+            if (game.player1.downKey && game.player1.y < canvas.height - game.player1.height) {
+                game.player1.y += game.player1.speed;
+            }
+            if (game.player2.upKey && game.player2.y > 0) {
+                game.player2.y -= game.player2.speed;
+            }
+            if (game.player2.downKey && game.player2.y < canvas.height - game.player2.height) {
+                game.player2.y += game.player2.speed;
             }
         }
-
 
         function moveBall() {
-            if (gameState.pointInProgress) return;
-
             game.ball.x += game.ball.speedX;
             game.ball.y += game.ball.speedY;
+
+            if (game.ball.y + game.ball.radius > canvas.height || game.ball.y - game.ball.radius < 0) {
+                game.ball.speedY = -game.ball.speedY;
+            }
+
+            const player = (game.ball.speedX < 0) ? game.player1 : game.player2;
             
-            const scaledRadius = game.ball.radius * scaleFactor;
-
-            if (game.ball.y + scaledRadius >= canvas.height) {
-                game.ball.y = canvas.height - scaledRadius;
-                game.ball.speedY *= -1;
-            } else if (game.ball.y - scaledRadius <= 0) {
-                game.ball.y = scaledRadius;
-                game.ball.speedY *= -1;
+            if (collision(game.ball, player)) {
+                let collidePoint = game.ball.y - (player.y + player.height / 2);
+                collidePoint = collidePoint / (player.height / 2);
+                
+                let angleRad = collidePoint * Math.PI / 4;
+                let direction = (game.ball.speedX < 0) ? 1 : -1;
+                
+                game.ball.speedX = direction * Math.abs(game.ball.speedX) * 1.05;
+                game.ball.speedY = Math.abs(game.ball.speedX) * Math.sin(angleRad);
+                
+                if (Math.abs(game.ball.speedX) > game.ball.maxSpeed) {
+                    game.ball.speedX = direction * game.ball.maxSpeed;
+                }
             }
 
-            const player = game.ball.x < canvas.width / 2 ? game.player1 : game.player2;
-            if (checkCollision(game.ball, player)) {
-                handleBallPaddleCollision(player);
-            }
-
-            if (game.ball.x + scaledRadius < 0) {
+            if (game.ball.x - game.ball.radius < 0) {
                 game.player2.score++;
                 updateScore();
-                gameState.pointInProgress = true;
-                checkWinner();
-            } else if (game.ball.x - scaledRadius > canvas.width) {
+                resetBall();
+            } else if (game.ball.x + game.ball.radius > canvas.width) {
                 game.player1.score++;
                 updateScore();
-                gameState.pointInProgress = true;
-                checkWinner();
+                resetBall();
             }
         }
 
-        function checkWinner() {
-            if (game.player1.score >= CONSTANTS.WINNING_SCORE || game.player2.score >= CONSTANTS.WINNING_SCORE) {
-                endGame();
-            } else {
-                setTimeout(() => {
-                    if (gameState.running) {
-                        resetBall();
-                        gameState.pointInProgress = false;
-                    }
-                }, 1000);
-            }
+        function collision(ball, player) {
+            return ball.x - ball.radius < player.x + player.width &&
+                   ball.x + ball.radius > player.x &&
+                   ball.y - ball.radius < player.y + player.height &&
+                   ball.y + ball.radius > player.y;
         }
 
         function resetBall() {
             game.ball.x = canvas.width / 2;
             game.ball.y = canvas.height / 2;
-            const scaledInitialSpeed = CONSTANTS.BALL_INITIAL_SPEED * scaleFactor;
-            game.ball.speedX = (Math.random() > 0.5 ? 1 : -1) * scaledInitialSpeed;
-            game.ball.speedY = (Math.random() * 2 - 1) * scaledInitialSpeed * 0.5;
-            gameState.lastCollisionTime = 0;
+            game.ball.speedX = (Math.random() > 0.5 ? 1 : -1) * 5;
+            game.ball.speedY = (Math.random() * 2 - 1) * 5;
+            
+            if (game.player1.score >= 5 || game.player2.score >= 5) {
+                endGame();
+            }
         }
 
         function updateScore() {
@@ -399,59 +302,50 @@
         }
 
         function render() {
-            if (!ctx) return;
-            ctx.fillStyle = 'rgba(10, 10, 26, 0.9)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+            drawRect(0, 0, canvas.width, canvas.height, '#0a0a1a');
             drawNet();
-            drawRect(game.player1.x / scaleFactor, game.player1.y / scaleFactor, game.player1.width, game.player1.height, '#ffc857');
-            drawRect(game.player2.x / scaleFactor, game.player2.y / scaleFactor, game.player2.width, game.player2.height, '#ffc857');
+            drawRect(game.player1.x, game.player1.y, game.player1.width, game.player1.height, '#ffc857');
+            drawRect(game.player2.x, game.player2.y, game.player2.width, game.player2.height, '#ffc857');
             drawCircle(game.ball.x, game.ball.y, game.ball.radius, '#ff6b6b');
         }
 
         function gameLoop() {
-            if (!gameState.running) return;
+            if (!gameRunning) return;
+            
             movePaddles();
             moveBall();
             render();
-            gameState.animationId = requestAnimationFrame(gameLoop);
+            
+            animationId = requestAnimationFrame(gameLoop);
         }
 
         function startGame() {
-            const startButton = document.querySelector('.btn');
-            if(startButton) startButton.style.display = 'none';
-
-            if (gameState.running) return;
-            gameState.running = true;
-            resetBall();
+            if (gameRunning) return;
+            gameRunning = true;
             gameLoop();
         }
 
         function endGame() {
-            gameState.running = false;
-            if (gameState.animationId) {
-                cancelAnimationFrame(gameState.animationId);
-                gameState.animationId = null;
-            }
-            const winner = game.player1.score >= CONSTANTS.WINNING_SCORE ? 'Гравець 1' : 'Гравець 2';
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            
+            const winner = game.player1.score >= 5 ? 'Гравець 1' : 'Гравець 2';
             document.getElementById('winner').textContent = `${winner} переміг! 🏆`;
             document.getElementById('gameOver').style.display = 'block';
         }
 
         function resetGame() {
-            document.getElementById('gameOver').style.display = 'none';
-            gameState.pointInProgress = false;
-            
-            initializeGameObjects();
+            game.player1.score = 0;
+            game.player2.score = 0;
+            game.player1.y = canvas.height / 2 - 50;
+            game.player2.y = canvas.height / 2 - 50;
             updateScore();
-            
+            resetBall();
+            document.getElementById('gameOver').style.display = 'none';
             startGame();
         }
 
-        // Перший запуск
-        resizeCanvas();
+        render();
     </script>
 </body>
 </html>
-
-
