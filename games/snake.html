@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Змійка - Класична гра</title>
+    <meta name="description" content="Класична гра Змійка з керуванням стрілками та свайпами">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            /* Запобігання "стрибкам" екрану на мобільних пристроях при дотику */
+            touch-action: none;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .score-item {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .score-label {
+            color: #666;
+            font-size: 0.9em;
+            display: block;
+        }
+
+        .score-value {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        canvas {
+            border: 4px solid #667eea;
+            border-radius: 10px;
+            background: #f0f0f0;
+            display: block;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:focus {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start-btn {
+            background: #48bb78;
+            color: white;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .pause-btn {
+            background: #ed8936;
+            color: white;
+        }
+
+        .pause-btn:hover:not(:disabled) {
+            background: #dd6b20;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .info {
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .game-over {
+            display: none;
+            color: #e53e3e;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 20px 0;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 Змійка</h1>
+        <div class="score-container">
+            <div class="score-item">
+                <span class="score-label">Рахунок</span>
+                <div class="score-value" id="score" aria-live="polite">0</div>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Рекорд</span>
+                <div class="score-value" id="highScore" aria-live="polite">0</div>
+            </div>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400" role="img" aria-label="Ігрове поле змійки"></canvas>
+        <div class="game-over" id="gameOver" role="alert">Гра закінчена!</div>
+        <div class="controls">
+            <button class="start-btn" id="startBtn" onclick="game.start()">Нова гра</button>
+            <button class="pause-btn" id="pauseBtn" onclick="game.togglePause()" disabled>Пауза</button>
+        </div>
+        <div class="info">Керування: стрілки ← ↑ → ↓ або свайпи</div>
+    </div>
+
+    <script>
+        'use strict';
+
+        // Константи гри
+        const CONFIG = {
+            GRID_SIZE: 20,
+            CANVAS_SIZE: 400,
+            INITIAL_SPEED_MS: 200, // Початковий інтервал оновлення в мс
+            MIN_SPEED_MS: 70,       // Мінімальний інтервал
+            SPEED_INCREASE_MS: 5,   // Зменшення інтервалу при прискоренні
+            SCORE_FOR_SPEED_INCREASE: 5, // К-ть очок для прискорення
+            INITIAL_POSITION: { x: 10, y: 10 },
+            COLORS: {
+                BACKGROUND: '#f0f0f0',
+                SNAKE_HEAD: '#48bb78',
+                SNAKE_BODY: '#68d391',
+                SNAKE_BORDER: '#2f855a',
+                FOOD: '#e53e3e'
+            },
+            DIRECTIONS: {
+                LEFT: { x: -1, y: 0 },
+                RIGHT: { x: 1, y: 0 },
+                UP: { x: 0, y: -1 },
+                DOWN: { x: 0, y: 1 }
+            }
+        };
+
+        // Клас для управління грою
+        class SnakeGame {
+            constructor() {
+                // UI елементи
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.scoreElement = document.getElementById('score');
+                this.highScoreElement = document.getElementById('highScore');
+                this.gameOverElement = document.getElementById('gameOver');
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                
+                this.tileCount = CONFIG.CANVAS_SIZE / CONFIG.GRID_SIZE;
+                this.loadHighScore();
+                this.setupEventListeners();
+                this.reset();
+                this.drawWelcomeScreen();
+            }
+
+            reset() {
+                this.snake = [{ ...CONFIG.INITIAL_POSITION }];
+                this.direction = { ...CONFIG.DIRECTIONS.RIGHT };
+                this.nextDirection = { ...CONFIG.DIRECTIONS.RIGHT };
+                this.food = null;
+                this.score = 0;
+                this.gameSpeed = CONFIG.INITIAL_SPEED_MS;
+                
+                // Стан гри
+                this.isRunning = false;
+                this.isPaused = false;
+                this.directionChangedInTick = false; // NEW: Запобігає кільком змінам напрямку за один тік
+
+                // NEW: Для requestAnimationFrame
+                this.gameLoopId = null;
+                this.lastTickTime = 0;
+
+                // NEW: Для свайпів
+                this.touchStartX = 0;
+                this.touchStartY = 0;
+            }
+
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                
+                // NEW: Обробники для свайпів
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: true });
+
+                window.addEventListener('keydown', (e) => {
+                    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            // NEW: Логіка зміни напрямку винесена в окремий метод
+            changeDirection(newDirection) {
+                if (this.directionChangedInTick) return;
+
+                const currentDir = this.direction;
+                // Заборона розвороту на 180 градусів
+                if (newDirection.x === -currentDir.x && newDirection.y === -currentDir.y) {
+                    return;
+                }
+                
+                this.nextDirection = newDirection;
+                this.directionChangedInTick = true;
+            }
+
+            handleKeyPress(e) {
+                if (!this.isRunning || this.isPaused) return;
+
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        this.changeDirection({ ...CONFIG.DIRECTIONS.LEFT });
+                        break;
+                    case 'ArrowRight':
+                        this.changeDirection({ ...CONFIG.DIRECTIONS.RIGHT });
+                        break;
+                    case 'ArrowUp':
+                        this.changeDirection({ ...CONFIG.DIRECTIONS.UP });
+                        break;
+                    case 'ArrowDown':
+                        this.changeDirection({ ...CONFIG.DIRECTIONS.DOWN });
+                        break;
+                }
+            }
+            
+            // NEW: Обробники свайпів
+            handleTouchStart(e) {
+                this.touchStartX = e.touches[0].clientX;
+                this.touchStartY = e.touches[0].clientY;
+            }
+            
+            handleTouchMove(e) {
+                e.preventDefault(); // Запобігаємо скролу сторінки під час свайпу по canvas
+            }
+
+            handleTouchEnd(e) {
+                if (!this.isRunning || this.isPaused) return;
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+
+                const deltaX = touchEndX - this.touchStartX;
+                const deltaY = touchEndY - this.touchStartY;
+                
+                // Визначаємо, свайп був більше горизонтальним чи вертикальним
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Горизонтальний свайп
+                    if (deltaX > 50) this.changeDirection({ ...CONFIG.DIRECTIONS.RIGHT });
+                    else if (deltaX < -50) this.changeDirection({ ...CONFIG.DIRECTIONS.LEFT });
+                } else {
+                    // Вертикальний свайп
+                    if (deltaY > 50) this.changeDirection({ ...CONFIG.DIRECTIONS.DOWN });
+                    else if (deltaY < -50) this.changeDirection({ ...CONFIG.DIRECTIONS.UP });
+                }
+            }
+
+            start() {
+                if (this.gameLoopId) {
+                    cancelAnimationFrame(this.gameLoopId);
+                }
+                
+                this.reset();
+                this.generateFood();
+                this.updateScoreUI();
+                this.gameOverElement.style.display = 'none';
+                this.isRunning = true;
+                this.isPaused = false;
+                this.pauseBtn.disabled = false;
+                this.startBtn.textContent = 'Нова гра';
+                this.pauseBtn.textContent = 'Пауза';
+
+                // Запуск ігрового циклу
+                this.gameLoopId = requestAnimationFrame(this.mainLoop.bind(this));
+            }
+
+            togglePause() {
+                if (!this.isRunning) return;
+                
+                this.isPaused = !this.isPaused;
+                this.pauseBtn.textContent = this.isPaused ? 'Продовжити' : 'Пауза';
+
+                if (!this.isPaused) {
+                    // Якщо гра продовжується, перезапускаємо цикл
+                    this.lastTickTime = performance.now(); // Скидаємо час, щоб уникнути ривка
+                    this.gameLoopId = requestAnimationFrame(this.mainLoop.bind(this));
+                } else {
+                    // Якщо гра на паузі, зупиняємо цикл
+                    cancelAnimationFrame(this.gameLoopId);
+                }
+            }
+
+            // NEW: Основний ігровий цикл на requestAnimationFrame
+            mainLoop(currentTime) {
+                if (this.isPaused || !this.isRunning) return;
+
+                this.gameLoopId = requestAnimationFrame(this.mainLoop.bind(this));
+
+                const timeSinceLastTick = currentTime - this.lastTickTime;
+                
+                if (timeSinceLastTick > this.gameSpeed) {
+                    this.lastTickTime = currentTime;
+                    this.update();
+                }
+            }
+
+            update() {
+                this.direction = { ...this.nextDirection };
+                this.directionChangedInTick = false;
+
+                const head = {
+                    x: this.snake[0].x + this.direction.x,
+                    y: this.snake[0].y + this.direction.y
+                };
+
+                if (this.checkWallCollision(head) || this.checkSelfCollision(head)) {
+                    this.end();
+                    return;
+                }
+
+                this.snake.unshift(head);
+
+                if (this.checkFoodCollision(head)) {
+                    this.score++;
+                    this.updateScoreUI();
+                    this.generateFood();
+                    
+                    if (this.score % CONFIG.SCORE_FOR_SPEED_INCREASE === 0 && this.score > 0) {
+                        this.increaseSpeed();
+                    }
+                } else {
+                    this.snake.pop();
+                }
+
+                this.draw();
+            }
+
+            checkWallCollision(pos) {
+                return pos.x < 0 || pos.x >= this.tileCount || pos.y < 0 || pos.y >= this.tileCount;
+            }
+
+            checkSelfCollision(pos) {
+                // Перевіряємо з другого елемента, оскільки голова завжди буде на своїй позиції
+                return this.snake.slice(1).some(segment => segment.x === pos.x && segment.y === pos.y);
+            }
+
+            checkFoodCollision(pos) {
+                return this.food && pos.x === this.food.x && pos.y === this.food.y;
+            }
+
+            generateFood() {
+                let newFood;
+                do {
+                    newFood = {
+                        x: Math.floor(Math.random() * this.tileCount),
+                        y: Math.floor(Math.random() * this.tileCount)
+                    };
+                } while (this.snake.some(seg => seg.x === newFood.x && seg.y === newFood.y));
+                this.food = newFood;
+            }
+
+            increaseSpeed() {
+                this.gameSpeed = Math.max(CONFIG.MIN_SPEED_MS, this.gameSpeed - CONFIG.SPEED_INCREASE_MS);
+            }
+
+            draw() {
+                this.ctx.fillStyle = CONFIG.COLORS.BACKGROUND;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (this.food) {
+                    this.ctx.fillStyle = CONFIG.COLORS.FOOD;
+                    this.ctx.beginPath();
+                    this.ctx.arc(
+                        this.food.x * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE / 2,
+                        this.food.y * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE / 2,
+                        CONFIG.GRID_SIZE / 2 - 2, 0, Math.PI * 2
+                    );
+                    this.ctx.fill();
+                }
+
+                this.snake.forEach((segment, index) => {
+                    this.ctx.fillStyle = index === 0 ? CONFIG.COLORS.SNAKE_HEAD : CONFIG.COLORS.SNAKE_BODY;
+                    this.ctx.fillRect(
+                        segment.x * CONFIG.GRID_SIZE + 1, segment.y * CONFIG.GRID_SIZE + 1,
+                        CONFIG.GRID_SIZE - 2, CONFIG.GRID_SIZE - 2
+                    );
+                    this.ctx.strokeStyle = CONFIG.COLORS.SNAKE_BORDER;
+                    this.ctx.strokeRect(
+                        segment.x * CONFIG.GRID_SIZE + 1, segment.y * CONFIG.GRID_SIZE + 1,
+                        CONFIG.GRID_SIZE - 2, CONFIG.GRID_SIZE - 2
+                    );
+                });
+            }
+
+            drawWelcomeScreen() {
+                this.ctx.fillStyle = CONFIG.COLORS.BACKGROUND;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = '#999';
+                this.ctx.font = '20px Segoe UI';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(
+                    'Натисніть "Нова гра"',
+                    this.canvas.width / 2,
+                    this.canvas.height / 2
+                );
+            }
+
+            updateScoreUI() {
+                this.scoreElement.textContent = this.score;
+                if (this.score > this.getHighScore()) {
+                    this.saveHighScore(this.score);
+                    this.highScoreElement.textContent = this.score;
+                }
+            }
+
+            loadHighScore() {
+                this.highScoreElement.textContent = this.getHighScore();
+            }
+
+            getHighScore() {
+                try {
+                    return parseInt(localStorage.getItem('snakeHighScore') || '0', 10);
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            saveHighScore(score) {
+                try {
+                    localStorage.setItem('snakeHighScore', score.toString());
+                } catch (e) {
+                    console.warn('Не вдалося зберегти рекорд');
+                }
+            }
+
+            end() {
+                this.isRunning = false;
+                cancelAnimationFrame(this.gameLoopId);
+                this.gameOverElement.style.display = 'block';
+                this.pauseBtn.disabled = true;
+            }
+        }
+
+        // Ініціалізація гри
+        const game = new SnakeGame();
+    </script>
+</body>
+</html>
