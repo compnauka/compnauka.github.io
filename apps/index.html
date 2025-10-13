@@ -186,20 +186,21 @@
         document.addEventListener('DOMContentLoaded', function() {
             const grid = document.querySelector('.apps-grid');
             const cards = Array.from(grid.querySelectorAll('.app-card'));
-
+        
             cards.sort((a, b) => {
                 const ageA = parseInt(a.querySelector('.age-badge').textContent, 10);
                 const ageB = parseInt(b.querySelector('.age-badge').textContent, 10);
                 return ageA - ageB;
             });
-
-            // Remove existing cards from the grid
+        
+            // Очищаємо grid
             while (grid.firstChild) {
                 grid.removeChild(grid.firstChild);
             }
-
-            // Append sorted cards back to the grid
-            cards.forEach(card => {
+        
+            // Додаємо відсортовані картки з оновленими затримками анімації
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.05}s`;
                 grid.appendChild(card);
             });
         });
