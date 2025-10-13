@@ -105,5 +105,15 @@ const CATEGORIES = [
       { name: "Інструменти для вчителя інформатики", description: "Добірка корисних інструментів для вчителя інформатики.", link: "outer/", image: "images/44.jpg", tags: [] },
       { name: "Освітні застосунки для дітей", description: "Добірка перевірених освітніх застосунків для дітей.", link: "apps/", image: "images/43.jpg", tags: [] }
     ]
+  },
+    {
+    id: "useful-links",
+    name: "Ігри",
+    iconClass: "fas fa-gamepad", // Іконка для категорії
+    services: [
+      { name: "Змійка", description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.", link: "games/snake.html", image: "images/45.png", tags: [] },
+      { name: "Теніс", description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", link: "games/tanis.html", image: "images/44.jpg", tags: [] },
+      { name: "Космічні заарбники", description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", link: "games/spaceinviders.html", image: "images/43.jpg", tags: [] }
+    ]
   }
 ];
