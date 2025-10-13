@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Покращена версія</title>
+    <meta name="description" content="Класична гра Space Invaders з покращеною графікою, звуком та ігровою механікою!">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            color: #0f0;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5), inset 0 0 15px rgba(0, 255, 0, 0.3);
+            background: rgba(10, 20, 10, 0.1);
+        }
+        
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 10px;
+            max-width: 800px;
+            font-size: 16px;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        #header > div {
+            flex: 1;
+        }
+        #score { text-align: left; }
+        #highScore { text-align: center; }
+        #lives { text-align: right; }
+        
+        #invulnerableIndicator {
+            font-size: 12px;
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0;
+            min-height: 20px;
+            margin-top: 5px;
+        }
+        
+        canvas {
+            background: #000;
+            cursor: none;
+            display: block;
+            border-top: 2px solid #0f0;
+            border-bottom: 2px solid #0f0;
+        }
+        
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 3px solid #0f0;
+            text-align: center;
+            z-index: 10;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 0 30px #0f0;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #0f0;
+            animation: glow 2s ease-in-out infinite;
+            text-transform: uppercase;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 15px #0f0; }
+            50% { text-shadow: 0 0 30px #0f0, 0 0 40px #0f0; }
+        }
+        
+        .instructions {
+            font-size: 14px;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+        
+        button {
+            font-size: 18px;
+            background: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 15px 40px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        #finalScore {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>Space Invaders</h1>
+            <div class="instructions">
+                <p>Керування: Рух мишкою</p>
+                <p>Стрільба: Клік мишкою</p>
+                <p>Знищте всіх загарбників!</p>
+            </div>
+            <button id="startBtn">Почати гру</button>
+        </div>
+        
+        <div id="gameOverScreen" class="hidden">
+            <h1>Гра завершена</h1>
+            <div id="finalScore"></div>
+            <button id="restartBtn">Грати знову</button>
+        </div>
+        
+        <div id="header">
+            <div id="score">Рахунок: 0</div>
+            <div id="highScore">Рекорд: 0</div>
+            <div id="lives">Життя: 3</div>
+        </div>
+        <div id="invulnerableIndicator"></div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+    'use strict';
+
+    // --- DOM Елементи та ініціалізація ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const highScoreEl = document.getElementById('highScore');
+    const invulnerableIndicatorEl = document.getElementById('invulnerableIndicator');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreEl = document.getElementById('finalScore');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    let game;
+    let animationId;
+    let lastTime = 0;
+    
+    // --- Клас для аудіо ---
+    class AudioHandler {
+        constructor() {
+            this.audioContext = null;
+            this.enabled = false;
+        }
+
+        init() {
+            try {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.enabled = true;
+                }
+            } catch (e) {
+                console.warn('Web Audio API не підтримується:', e);
+                this.enabled = false;
+            }
+        }
+
+        playShoot() {
+            if (!this.audioContext || !this.enabled) return;
+            try {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.1);
+            } catch (e) {
+                console.warn('Помилка відтворення звуку:', e);
+            }
+        }
+
+        playExplosion() {
+            if (!this.audioContext || !this.enabled) return;
+            try {
+                // Створюємо шум через білий шум
+                const bufferSize = this.audioContext.sampleRate * 0.2;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = this.audioContext.createBufferSource();
+                noise.buffer = buffer;
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                
+                noise.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                noise.start(this.audioContext.currentTime);
+                noise.stop(this.audioContext.currentTime + 0.2);
+            } catch (e) {
+                console.warn('Помилка відтворення звуку вибуху:', e);
+            }
+        }
+    }
+    const audio = new AudioHandler();
+    
+    // --- Ігрові класи ---
+    class Player {
+        constructor(game) {
+            this.game = game;
+            this.width = 50;
+            this.height = 20;
+            this.x = (this.game.width / 2) - (this.width / 2);
+            this.y = this.game.height - this.height - 20;
+            this.color = '#0f0';
+            this.shotCooldown = 300;
+            this.lastShotTime = 0;
+        }
+
+        update() {
+            const targetX = this.game.mouseX - this.width / 2;
+            this.x += (targetX - this.x) * 0.1;
+
+            this.x = Math.max(0, Math.min(this.game.width - this.width, this.x));
+        }
+
+        draw(context) {
+            context.fillStyle = this.color;
+            context.fillRect(this.x, this.y, this.width, this.height);
+            context.fillRect(this.x + this.width / 2 - 5, this.y - 10, 10, 10);
+        }
+
+        shoot() {
+            const currentTime = Date.now();
+            if (currentTime - this.lastShotTime > this.shotCooldown) {
+                this.game.playerProjectiles.push(
+                    new Projectile(this.game, this.x + this.width / 2 - 2, this.y, '#0ff', -8)
+                );
+                this.lastShotTime = currentTime;
+                audio.playShoot();
+            }
+        }
+    }
+
+    class Projectile {
+        constructor(game, x, y, color, speed) {
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.width = 4;
+            this.height = 15;
+            this.color = color;
+            this.speed = speed;
+            this.markedForDeletion = false;
+        }
+        
+        update() {
+            this.y += this.speed;
+            if (this.y < 0 || this.y > this.game.height) {
+                this.markedForDeletion = true;
+            }
+        }
+        
+        draw(context) {
+            context.fillStyle = this.color;
+            context.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    class Invader {
+        constructor(game, x, y) {
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.width = 40;
+            this.height = 30;
+            this.markedForDeletion = false;
+        }
+        
+        draw(context) {
+            context.fillStyle = '#f00';
+            context.fillRect(this.x, this.y, this.width, this.height);
+            context.fillRect(this.x - 5, this.y + 10, 5, 10);
+            context.fillRect(this.x + this.width, this.y + 10, 5, 10);
+            context.fillRect(this.x + 10, this.y + this.height, 20, 10);
+        }
+    }
+
+    class Grid {
+        constructor(game) {
+            this.game = game;
+            this.invaders = [];
+            this.columns = 8;
+            this.rows = 4;
+            this.speed = 20;
+            this.direction = 1;
+            this.dropDistance = 20;
+            this.shootProbability = 0.01;
+            this.create();
+        }
+
+        create() {
+            const spacingX = 80;
+            const spacingY = 60;
+            const startX = 60;
+            const startY = 50;
+            
+            for (let r = 0; r < this.rows; r++) {
+                for (let c = 0; c < this.columns; c++) {
+                    this.invaders.push(
+                        new Invader(this.game, c * spacingX + startX, r * spacingY + startY)
+                    );
+                }
+            }
+        }
+
+        update(deltaTime) {
+            const scaledSpeed = (this.speed * deltaTime) / 1000;
+            let shouldMoveDown = false;
+            
+            this.invaders.forEach(invader => {
+                invader.x += scaledSpeed * this.direction;
+                if (invader.x <= 0 || invader.x + invader.width >= this.game.width) {
+                    shouldMoveDown = true;
+                }
+            });
+
+            if (shouldMoveDown) {
+                this.direction *= -1;
+                this.invaders.forEach(invader => {
+                    invader.y += this.dropDistance;
+                });
+            }
+
+            if (Math.random() < this.shootProbability && this.invaders.length > 0) {
+                const bottomInvaders = this.getBottomInvaders();
+                if (bottomInvaders.length > 0) {
+                    const shooter = bottomInvaders[Math.floor(Math.random() * bottomInvaders.length)];
+                    this.game.enemyProjectiles.push(
+                        new Projectile(this.game, shooter.x + shooter.width / 2 - 2, shooter.y + shooter.height, '#ff0', 5)
+                    );
+                }
+            }
+        }
+        
+        getBottomInvaders() {
+            const columns = {};
+            this.invaders.forEach(invader => {
+                const colIndex = Math.floor(invader.x / 80);
+                if (!columns[colIndex] || invader.y > columns[colIndex].y) {
+                    columns[colIndex] = invader;
+                }
+            });
+            return Object.values(columns);
+        }
+
+        draw(context) {
+            this.invaders.forEach(invader => invader.draw(context));
+        }
+    }
+
+    class Particle {
+        constructor(game, x, y) {
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 5 + 1;
+            this.speedX = Math.random() * 3 - 1.5;
+            this.speedY = Math.random() * 3 - 1.5;
+            this.color = `hsl(${Math.random() * 60 + 20}, 100%, 50%)`;
+            this.life = 100;
+            this.markedForDeletion = false;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life--;
+            if (this.life <= 0) {
+                this.markedForDeletion = true;
+            }
+        }
+        
+        draw(context) {
+            context.save();
+            context.fillStyle = this.color;
+            context.globalAlpha = this.life / 100;
+            context.beginPath();
+            context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            context.fill();
+            context.restore();
+        }
+    }
+    
+    class Barrier {
+        constructor(game, x) {
+            this.game = game;
+            this.x = x;
+            this.y = canvas.height - 120;
+            this.blockSize = 10;
+            this.grid = [];
+            this.create();
+        }
+
+        create() {
+            const rows = 5;
+            const cols = 10;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if ((c > 1 && c < 8) || r > 1) {
+                        this.grid.push({ x: c, y: r, alive: true });
+                    }
+                }
+            }
+        }
+
+        draw(context) {
+            context.fillStyle = '#0a0';
+            this.grid.forEach(block => {
+                if (block.alive) {
+                    context.fillRect(
+                        this.x + block.x * this.blockSize,
+                        this.y + block.y * this.blockSize,
+                        this.blockSize,
+                        this.blockSize
+                    );
+                }
+            });
+        }
+    }
+
+    // --- Основний клас гри ---
+    class Game {
+        constructor(width, height) {
+            this.width = width;
+            this.height = height;
+            this.mouseX = this.width / 2;
+            this.init();
+        }
+        
+        init() {
+            this.player = new Player(this);
+            this.grid = new Grid(this);
+            this.barriers = [
+                new Barrier(this, this.width * 0.15),
+                new Barrier(this, this.width * 0.40),
+                new Barrier(this, this.width * 0.65),
+            ];
+            this.playerProjectiles = [];
+            this.enemyProjectiles = [];
+            this.particles = [];
+
+            this.score = 0;
+            this.level = 1;
+            this.lives = 3;
+            this.highScore = parseInt(localStorage.getItem('spaceInvadersHighScore')) || 0;
+            this.gameOver = false;
+            
+            this.invulnerable = false;
+            this.invulnerableTimer = 0;
+            this.invulnerableDuration = 2000;
+            this.updateUI();
+        }
+
+        update(deltaTime) {
+            if (this.gameOver) return;
+
+            this.player.update();
+            this.grid.update(deltaTime);
+            this.grid.speed = 20 + (this.level - 1) * 10;
+
+            if (this.invulnerable) {
+                this.invulnerableTimer -= deltaTime;
+                if (this.invulnerableTimer <= 0) {
+                    this.invulnerable = false;
+                }
+            }
+
+            [this.playerProjectiles, this.enemyProjectiles, this.particles].forEach(arr => {
+                arr.forEach(item => item.update(deltaTime));
+            });
+
+            this.checkCollisions();
+
+            this.playerProjectiles = this.playerProjectiles.filter(p => !p.markedForDeletion);
+            this.enemyProjectiles = this.enemyProjectiles.filter(p => !p.markedForDeletion);
+            this.particles = this.particles.filter(p => !p.markedForDeletion);
+            this.grid.invaders = this.grid.invaders.filter(i => !i.markedForDeletion);
+
+            if (this.grid.invaders.length === 0) {
+                this.nextLevel();
+            }
+        }
+
+        draw(context) {
+            context.clearRect(0, 0, this.width, this.height);
+            this.barriers.forEach(b => b.draw(context));
+            
+            if (this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+                // Пропускаємо малювання гравця для ефекту мерехтіння
+            } else {
+                this.player.draw(context);
+            }
+
+            this.grid.draw(context);
+
+            [this.playerProjectiles, this.enemyProjectiles, this.particles].forEach(arr => {
+                arr.forEach(item => item.draw(context));
+            });
+        }
+        
+        checkCollisions() {
+            this.playerProjectiles.forEach(proj => {
+                this.grid.invaders.forEach(invader => {
+                    if (this.isColliding(proj, invader)) {
+                        proj.markedForDeletion = true;
+                        invader.markedForDeletion = true;
+                        this.score += 10;
+                        this.createExplosion(invader.x + invader.width / 2, invader.y + invader.height / 2);
+                        audio.playExplosion();
+                    }
+                });
+            });
+
+            if (!this.invulnerable) {
+                this.enemyProjectiles.forEach(proj => {
+                    if (this.isColliding(proj, this.player)) {
+                        proj.markedForDeletion = true;
+                        this.loseLife();
+                        this.createExplosion(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2);
+                        audio.playExplosion();
+                    }
+                });
+            }
+            
+            this.grid.invaders.forEach(invader => {
+                if (this.isColliding(invader, this.player) || invader.y + invader.height > this.height) {
+                    this.endGame();
+                }
+                
+                this.barriers.forEach(barrier => {
+                    barrier.grid.forEach(block => {
+                        if (block.alive) {
+                            const blockRect = { 
+                                x: barrier.x + block.x * barrier.blockSize, 
+                                y: barrier.y + block.y * barrier.blockSize,
+                                width: barrier.blockSize,
+                                height: barrier.blockSize
+                            };
+                            if (this.isColliding(invader, blockRect)) {
+                                block.alive = false;
+                            }
+                        }
+                    });
+                });
+            });
+
+            const allProjectiles = [...this.playerProjectiles, ...this.enemyProjectiles];
+            allProjectiles.forEach(proj => {
+                this.barriers.forEach(barrier => {
+                    barrier.grid.forEach(block => {
+                        if (block.alive) {
+                            const blockRect = { 
+                                x: barrier.x + block.x * barrier.blockSize, 
+                                y: barrier.y + block.y * barrier.blockSize,
+                                width: barrier.blockSize,
+                                height: barrier.blockSize
+                            };
+                            if (this.isColliding(proj, blockRect)) {
+                                proj.markedForDeletion = true;
+                                block.alive = false;
+                            }
+                        }
+                    });
+                });
+            });
+            
+            this.updateUI();
+        }
+
+        isColliding(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+
+        createExplosion(x, y) {
+            for (let i = 0; i < 15; i++) {
+                this.particles.push(new Particle(this, x, y));
+            }
+        }
+        
+        loseLife() {
+            if (this.invulnerable) return;
+            
+            this.lives--;
+            if (this.lives > 0) {
+                this.invulnerable = true;
+                this.invulnerableTimer = this.invulnerableDuration;
+            } else {
+                this.endGame();
+            }
+            this.updateUI();
+        }
+        
+        nextLevel() {
+            this.level++;
+            this.grid = new Grid(this);
+            this.playerProjectiles = [];
+            this.enemyProjectiles = [];
+            this.updateUI();
+        }
+
+        endGame() {
+            this.gameOver = true;
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                localStorage.setItem('spaceInvadersHighScore', this.highScore.toString());
+            }
+            finalScoreEl.textContent = `Ваш рахунок: ${this.score}`;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        updateUI() {
+            scoreEl.textContent = `Рахунок: ${this.score}`;
+            livesEl.textContent = `Життя: ${this.lives}`;
+            highScoreEl.textContent = `Рекорд: ${this.highScore}`;
+            
+            if (this.invulnerable) {
+                const timeLeft = Math.ceil(this.invulnerableTimer / 1000);
+                invulnerableIndicatorEl.textContent = `НЕВРАЗЛИВІСТЬ: ${timeLeft}с`;
+            } else {
+                invulnerableIndicatorEl.textContent = '';
+            }
+        }
+    }
+
+    // --- Головний ігровий цикл та обробники подій ---
+    function animate(timestamp) {
+        if (!game || game.gameOver) {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            return;
+        }
+        
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        game.update(deltaTime || 0);
+        game.draw(ctx);
+        
+        animationId = requestAnimationFrame(animate);
+    }
+    
+    function handleMouseMove(e) {
+        if (game) {
+            const rect = canvas.getBoundingClientRect();
+            game.mouseX = e.clientX - rect.left;
+        }
+    }
+
+    function handleMouseClick() {
+        if (game && !game.gameOver) {
+            game.player.shoot();
+        }
+    }
+
+    function setupEventListeners() {
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('click', handleMouseClick);
+        
+        startBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            audio.init();
+            game = new Game(canvas.width, canvas.height);
+            lastTime = 0;
+            animationId = requestAnimationFrame(animate);
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            game = new Game(canvas.width, canvas.height);
+            lastTime = 0;
+            animationId = requestAnimationFrame(animate);
+        });
+    }
+
+    // Ініціалізація
+    setupEventListeners();
+    
+    try {
+        const savedHighScore = localStorage.getItem('spaceInvadersHighScore');
+        highScoreEl.textContent = `Рекорд: ${savedHighScore || 0}`;
+    } catch (e) {
+        console.warn('localStorage недоступний:', e);
+        highScoreEl.textContent = 'Рекорд: 0';
+    }
+
+    </script>
+</body>
+</html>
