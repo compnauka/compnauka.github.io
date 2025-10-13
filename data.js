@@ -69,6 +69,7 @@ const CATEGORIES = [
     name: "Штучний інтелект",
     iconClass: "fas fa-robot", // Іконка для категорії
     services: [
+      { name: "ЕЛІЗА. Перший чат-бот", description: "Дізнайтесь, якими були чат-боти на початку розвитку ШІ.", link: "games/eliza.html", image: "images/32.jpg", tags: ["4-6 класи"] },
       { name: "Штучний інтелект", description: "Інтерактивний сайт про те, як працює ШІ.", link: "services/ai.html", image: "images/32.jpg", tags: ["4-6 класи"] },
       { name: "Привіт, ШІ!", description: "Інтерактивна книга для дітей про штучний інтелект.", link: "https://pryvitshi.github.io/", image: "images/4.jpg", tags: ["3-4 класи"] }
     ]
