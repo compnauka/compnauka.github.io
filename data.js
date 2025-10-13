@@ -107,7 +107,7 @@ const CATEGORIES = [
     ]
   },
     {
-    id: "useful-links",
+    id: "games",
     name: "Ігри",
     iconClass: "fas fa-gamepad", // Іконка для категорії
     services: [
