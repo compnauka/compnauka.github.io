@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Морський бій</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+            min-width: 200px;
+        }
+
+        .game-area {
+            display: none;
+        }
+
+        .game-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-code {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            display: inline-block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .game-code .tooltip {
+            visibility: hidden;
+            width: 140px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -70px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .game-code .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        .game-code:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+        .timer {
+            font-size: 20px;
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            min-height: 27px;
+        }
+
+        .boards {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .board-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 35px);
+            grid-template-rows: repeat(10, 35px);
+            gap: 2px;
+            background: #ddd;
+            padding: 2px;
+            border-radius: 5px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        
+        .board.active-turn {
+            border-color: #27ae60;
+            box-shadow: 0 0 15px #27ae60;
+        }
+
+        .cell {
+            background: #e3f2fd;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border-radius: 2px;
+        }
+
+        #myBoard .cell:hover {
+            background: #bbdefb;
+        }
+        
+        #enemyBoard .cell.valid-shot:hover {
+             background: #a5d6a7;
+        }
+
+        .cell.ship {
+            background: #64b5f6;
+        }
+        
+        .cell.preview-ok {
+            background: #81c784 !important;
+        }
+        .cell.preview-bad {
+            background: #e57373 !important;
+        }
+
+
+        .cell.hit {
+            background: #e57373;
+            cursor: not-allowed;
+        }
+
+        .cell.hit::after {
+            content: '💥';
+        }
+
+        .cell.miss {
+            background: #90a4ae;
+            cursor: not-allowed;
+        }
+
+        .cell.miss::after {
+            content: '•';
+            color: white;
+            font-size: 24px;
+        }
+
+        .cell.sunk {
+            background: #c62828;
+        }
+
+        .ships-list {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .ships-list div {
+            padding: 5px 0;
+        }
+
+        .rotate-btn {
+            margin: 10px 0;
+            padding: 8px 20px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .rotate-btn:hover {
+            background: #27ae60;
+        }
+        
+        .message-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .message-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .message-box h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚓ Морський бій ⚓</h1>
+        
+        <div class="menu" id="menu">
+            <button class="button" onclick="createGame()">Створити гру</button>
+            <div class="input-group">
+                <input type="text" id="joinCode" placeholder="Введіть код гри" maxlength="6">
+                <button class="button" onclick="joinGame()">Приєднатись</button>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="game-info">
+                 <div class="game-code" id="gameCodeDisplay" title="Натисніть, щоб скопіювати">Код гри: <span id="displayCode"></span></div>
+                <div class="timer" id="timer"></div>
+                <div class="status" id="status">Очікування суперника...</div>
+            </div>
+
+            <div class="boards">
+                <div class="board-container">
+                    <div class="board-title">Ваше поле</div>
+                    <button class="rotate-btn" id="rotateBtn" onclick="rotateShip()">🔄 Повернути (Горизонтально)</button>
+                    <div class="board" id="myBoard"></div>
+                    <div class="ships-list" id="shipsList"></div>
+                </div>
+
+                <div class="board-container">
+                    <div class="board-title">Поле суперника</div>
+                    <div class="board" id="enemyBoard"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="message-overlay" id="messageOverlay">
+        <div class="message-box">
+            <h2 id="messageText"></h2>
+            <button class="button" onclick="location.reload()">Грати знову</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, get, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+        // Конфігурація Firebase, надана вами
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0OEvx1SaXXClGRYeFt40P5RFTf1aantE",
+            authDomain: "sea-battle-bf3c9.firebaseapp.com",
+            databaseURL: "https://sea-battle-bf3c9-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "sea-battle-bf3c9",
+            storageBucket: "sea-battle-bf3c9.firebasestorage.app",
+            messagingSenderId: "514029502541",
+            appId: "1:514029502541:web:70fa166ba97c2bc1fedc04"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Глобальні змінні стану гри
+        let gameCode = '';
+        let playerId = localStorage.getItem('battleshipPlayerId') || crypto.randomUUID();
+        localStorage.setItem('battleshipPlayerId', playerId);
+        let playerNumber = 0;
+        let localGameData = null; // Локальна копія стану гри
+        
+        let isHorizontal = true;
+        const ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+        let currentShipIndex = 0;
+        let myBoardData = Array(10).fill().map(() => Array(10).fill(0));
+        let setupPhase = true;
+        let timerInterval;
+
+        const myBoardEl = document.getElementById('myBoard');
+        const enemyBoardEl = document.getElementById('enemyBoard');
+        const statusEl = document.getElementById('status');
+
+        // Ініціалізація UI
+        createBoardDOM('myBoard', handleMyBoardClick);
+        createBoardDOM('enemyBoard', handleEnemyBoardClick);
+        updateShipsList();
+
+
+        // Функції створення та приєднання до гри
+        window.createGame = async function() {
+            gameCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            playerNumber = 1;
+
+            const initialGameState = {
+                player1: { id: playerId, ready: false, board: null },
+                player2: { id: null, ready: false, board: null },
+                currentTurn: 1,
+                gameStarted: false,
+                moves: [],
+                winner: null,
+                createdAt: serverTimestamp()
+            };
+
+            await set(ref(db, `games/${gameCode}`), initialGameState);
+            showGameArea();
+            listenToGame();
+        };
+
+        window.joinGame = async function() {
+            const code = document.getElementById('joinCode').value.toUpperCase();
+            if (!code) return showMessage("Введіть код гри!");
+
+            const gameRef = ref(db, `games/${code}`);
+            const snapshot = await get(gameRef);
+
+            if (!snapshot.exists()) return showMessage('Гра не знайдена!');
+            
+            const gameData = snapshot.val();
+            if (gameData.player2.id && gameData.player2.id !== playerId) return showMessage('Кімната вже зайнята!');
+            
+            gameCode = code;
+            playerNumber = 2;
+            await update(ref(db, `games/${gameCode}/player2`), { id: playerId });
+            
+            showGameArea();
+            listenToGame();
+        };
+
+        function listenToGame() {
+            const gameRef = ref(db, `games/${gameCode}`);
+            onValue(gameRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    showMessage("Гру було видалено або завершено.");
+                    setTimeout(() => location.reload(), 3000);
+                    return;
+                }
+                localGameData = snapshot.val();
+                updateUI();
+            });
+        }
+        
+        // Оновлення всього інтерфейсу на основі даних з Firebase
+        function updateUI() {
+            if (!localGameData) return;
+            
+            const isMyTurn = localGameData.currentTurn === playerNumber;
+            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
+
+            if (localGameData.winner) {
+                setupPhase = false;
+                if (localGameData.winner === playerNumber) {
+                    showMessage("🎉 Перемога! 🎉");
+                } else {
+                    showMessage("😥 Ви програли 😥");
+                }
+                 enemyBoardEl.classList.remove('active-turn');
+                 myBoardEl.classList.remove('active-turn');
+                 statusEl.textContent = "Гру завершено!";
+            } else if (localGameData.gameStarted) {
+                setupPhase = false;
+                document.getElementById('rotateBtn').classList.add('hidden');
+                document.getElementById('shipsList').classList.add('hidden');
+                
+                statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
+                enemyBoardEl.classList.toggle('active-turn', isMyTurn);
+                myBoardEl.classList.toggle('active-turn', !isMyTurn);
+            } else {
+                const me = localGameData[`player${playerNumber}`];
+                const enemy = localGameData[`player${enemyPlayerNum}`];
+                
+                if (!enemy.id) {
+                    statusEl.textContent = "Очікування суперника...";
+                } else if (me.ready && enemy.ready) {
+                     // Гра почнеться автоматично
+                } else if (me.ready) {
+                    statusEl.textContent = "Очікуємо готовності суперника...";
+                } else {
+                    statusEl.textContent = "Розставте свої кораблі!";
+                }
+            }
+            
+            renderBoards();
+        }
+        
+        // Рендеринг обох ігрових полів
+        function renderBoards() {
+            const myPlayerData = localGameData[`player${playerNumber}`];
+            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
+            
+            const myBoardToRender = myPlayerData.board || myBoardData;
+            
+            // Рендер мого поля
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const cell = myBoardEl.children[r * 10 + c];
+                    cell.className = 'cell';
+                    if (myBoardToRender[r][c] > 0) {
+                        cell.classList.add('ship');
+                    }
+                }
+            }
+            
+            // Рендер ворожого поля та пострілів на обох
+            const moves = localGameData.moves ? Object.values(localGameData.moves) : [];
+            const { myHits, enemyHits, sunkShips } = processMoves(moves);
+
+            moves.forEach(move => {
+                const boardEl = move.player === playerNumber ? enemyBoardEl : myBoardEl;
+                const cell = boardEl.children[move.row * 10 + move.col];
+                cell.classList.add(move.result);
+            });
+            
+            // Позначення потоплених кораблів
+            sunkShips.forEach(ship => {
+                const boardEl = ship.player === playerNumber ? myBoardEl : enemyBoardEl;
+                ship.cells.forEach(pos => {
+                    const cell = boardEl.children[pos.row * 10 + pos.col];
+                    cell.classList.add('sunk');
+                });
+            });
+        }
+        
+        // Логіка обробки ходів для рендерингу
+        function processMoves(moves) {
+            let sunkShips = [];
+            
+            const p1Board = localGameData.player1.board;
+            const p2Board = localGameData.player2.board;
+
+            if (!p1Board || !p2Board) return { sunkShips };
+            
+            const shipIdsOnBoard1 = getShipIds(p1Board);
+            const shipIdsOnBoard2 = getShipIds(p2Board);
+            
+            // Постріли гравця 2 по гравцю 1
+            const p2_moves = moves.filter(m => m.player === 2 && m.result === 'hit');
+            // Постріли гравця 1 по гравцю 2
+            const p1_moves = moves.filter(m => m.player === 1 && m.result === 'hit');
+
+            shipIdsOnBoard1.forEach(shipId => {
+                if (isShipSunk(shipId, p1Board, p2_moves)) {
+                    sunkShips.push({ player: 1, cells: getShipCells(shipId, p1Board) });
+                }
+            });
+            
+             shipIdsOnBoard2.forEach(shipId => {
+                if (isShipSunk(shipId, p2Board, p1_moves)) {
+                    sunkShips.push({ player: 2, cells: getShipCells(shipId, p2Board) });
+                }
+            });
+
+            return { sunkShips };
+        }
+
+
+        // UI / DOM функції
+        function showGameArea() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('displayCode').textContent = gameCode;
+        }
+        
+        function createBoardDOM(boardId, clickHandler) {
+            const boardEl = document.getElementById(boardId);
+            boardEl.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => clickHandler(i, j));
+                    if (boardId === 'myBoard') {
+                         cell.addEventListener('mouseenter', () => previewShip(i, j));
+                         cell.addEventListener('mouseleave', clearPreview);
+                    }
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+        
+        function showMessage(msg) {
+             const overlay = document.getElementById('messageOverlay');
+             if (overlay.style.display === 'flex') return; // Не показувати нове повідомлення, якщо одне вже є
+             
+             document.getElementById('messageText').textContent = msg;
+             overlay.style.display = 'flex';
+        }
+
+        // Логіка розстановки кораблів
+        function handleMyBoardClick(row, col) {
+            if (!setupPhase || currentShipIndex >= ships.length) return;
+            const size = ships[currentShipIndex];
+            
+            if (canPlaceShip(row, col, size, isHorizontal, myBoardData)) {
+                for (let i = 0; i < size; i++) {
+                    const r = isHorizontal ? row : row + i;
+                    const c = isHorizontal ? col + i : col;
+                    myBoardData[r][c] = currentShipIndex + 1; // ID корабля
+                }
+                currentShipIndex++;
+                updateShipsList();
+                renderMyPlacement();
+                if (currentShipIndex >= ships.length) {
+                    finishSetup();
+                }
+            }
+        }
+        
+        function renderMyPlacement() {
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const cell = myBoardEl.children[r * 10 + c];
+                    cell.classList.toggle('ship', myBoardData[r][c] > 0);
+                }
+            }
+        }
+
+        function previewShip(row, col) {
+            if (!setupPhase || currentShipIndex >= ships.length) return;
+            
+            clearPreview();
+            const size = ships[currentShipIndex];
+            const canPlace = canPlaceShip(row, col, size, isHorizontal, myBoardData);
+            
+            for (let i = 0; i < size; i++) {
+                const r = isHorizontal ? row : row + i;
+                const c = isHorizontal ? col + i : col;
+                if (r < 10 && c < 10) {
+                    const cell = myBoardEl.children[r * 10 + c];
+                    if (!cell.classList.contains('ship')) {
+                       cell.classList.add(canPlace ? 'preview-ok' : 'preview-bad');
+                    }
+                }
+            }
+        }
+
+        function clearPreview() {
+             const cells = myBoardEl.querySelectorAll('.preview-ok, .preview-bad');
+             cells.forEach(cell => cell.classList.remove('preview-ok', 'preview-bad'));
+        }
+        
+        window.rotateShip = function() {
+            isHorizontal = !isHorizontal;
+            document.getElementById('rotateBtn').textContent = 
+                isHorizontal ? '🔄 Повернути (Горизонтально)' : '🔄 Повернути (Вертикально)';
+        };
+
+        function canPlaceShip(row, col, size, horizontal, board) {
+            for (let i = 0; i < size; i++) {
+                const r = horizontal ? row : row + i;
+                const c = horizontal ? col + i : col;
+                
+                if (r >= 10 || c >= 10) return false;
+                
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && board[nr][nc] !== 0) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        
+        function updateShipsList() {
+            const counts = { 4: 0, 3: 0, 2: 0, 1: 0 };
+            let shipsToPlace = ships.slice(currentShipIndex);
+            if (shipsToPlace.length === 0) {
+                 document.getElementById('shipsList').innerHTML = "✅ Всі кораблі розставлено!";
+                 return;
+            }
+            shipsToPlace.forEach(size => counts[size]++);
+            
+            document.getElementById('shipsList').innerHTML = `
+                <div>🚢 Чотирипалубний: ${counts[4] || 0}</div>
+                <div>🚢 Трипалубні: ${counts[3] || 0}</div>
+                <div>🚢 Двопалубні: ${counts[2] || 0}</div>
+                <div>🚢 Однопалубні: ${counts[1] || 0}</div>
+            `;
+        }
+
+        async function finishSetup() {
+            setupPhase = false;
+            document.getElementById('rotateBtn').classList.add('hidden');
+            const updateData = {};
+            updateData[`player${playerNumber}/board`] = myBoardData;
+            updateData[`player${playerNumber}/ready`] = true;
+            await update(ref(db, `games/${gameCode}`), updateData);
+        }
+
+        // Логіка атаки
+        async function handleEnemyBoardClick(row, col) {
+            if (!localGameData || localGameData.winner || !localGameData.gameStarted || setupPhase) return;
+            if (localGameData.currentTurn !== playerNumber) return;
+
+            const moves = localGameData.moves ? Object.values(localGameData.moves) : [];
+            const alreadyShot = moves.some(move => move.row === row && move.col === col && move.player === playerNumber);
+            if (alreadyShot) return;
+
+            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
+            const enemyBoard = localGameData[`player${enemyPlayerNum}`].board;
+            const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
+            
+            const newMove = { player: playerNumber, row, col, result };
+            const nextTurn = result === 'miss' ? enemyPlayerNum : playerNumber;
+            
+            const newMoves = [...moves, newMove];
+
+            const updatedData = {
+                currentTurn: nextTurn,
+                moves: newMoves
+            };
+            
+            // Перевірка на перемогу
+            const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
+            const hitsOnEnemy = newMoves.filter(m => m.player === playerNumber && m.result === 'hit').length;
+            
+            if (hitsOnEnemy === totalShipCells) {
+                updatedData.winner = playerNumber;
+            }
+
+            await update(ref(db, `games/${gameCode}`), updatedData);
+        }
+        
+        // Допоміжні функції для логіки гри
+        function getShipIds(board) {
+            const ids = new Set(board.flat());
+            ids.delete(0);
+            return [...ids];
+        }
+        
+        function getShipCells(shipId, board) {
+            const cells = [];
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    if (board[r][c] === shipId) {
+                        cells.push({ row: r, col: c });
+                    }
+                }
+            }
+            return cells;
+        }
+        
+        function isShipSunk(shipId, board, hitMoves) {
+            const shipCells = getShipCells(shipId, board);
+            return shipCells.every(shipCell => 
+                hitMoves.some(hit => hit.row === shipCell.row && hit.col === shipCell.col)
+            );
+        }
+
+        // Копіювання коду гри
+        document.getElementById('gameCodeDisplay').onclick = function() {
+            navigator.clipboard.writeText(gameCode).then(() => {
+                const display = document.getElementById('gameCodeDisplay');
+                const originalText = display.innerHTML;
+                display.innerHTML = 'Скопійовано!';
+                setTimeout(() => { display.innerHTML = originalText; }, 1500);
+            }).catch(err => console.error('Не вдалося скопіювати код: ', err));
+        };
+        
+        // Додавання "valid-shot" класу при наведенні
+        enemyBoardEl.addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('cell')) {
+                const cell = e.target;
+                if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
+                    cell.classList.add('valid-shot');
+                }
+            }
+        });
+
+        enemyBoardEl.addEventListener('mouseout', (e) => {
+             if (e.target.classList.contains('cell')) {
+                e.target.classList.remove('valid-shot');
+            }
+        });
+
+    </script>
+</body>
+</html>
