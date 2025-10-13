@@ -440,7 +440,22 @@
                     setTimeout(() => location.reload(), 3000);
                     return;
                 }
-                localGameData = snapshot.val();
+                const gameData = snapshot.val();
+                localGameData = gameData;
+
+                // ВИПРАВЛЕННЯ: Логіка для автоматичного старту гри, коли обидва гравці готові
+                const p1 = gameData.player1;
+                const p2 = gameData.player2;
+
+                if (p1 && p2 && p1.id && p2.id && !gameData.gameStarted) {
+                    if (p1.ready && p2.ready) {
+                        // Гравець 1 відповідає за оновлення стану гри, щоб уникнути конфліктів
+                        if (playerNumber === 1) {
+                            update(ref(db, `games/${gameCode}`), { gameStarted: true });
+                        }
+                    }
+                }
+
                 updateUI();
             });
         }
@@ -792,4 +807,5 @@
     </script>
 </body>
 </html>
+
 
