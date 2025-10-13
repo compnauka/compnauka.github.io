@@ -467,7 +467,9 @@
                 document.getElementById('rotateBtn').classList.add('hidden');
                 document.getElementById('shipsList').classList.add('hidden');
                 
+                // Встановлюємо статус на основі черги
                 statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
+                
                 enemyBoardEl.classList.toggle('active-turn', isMyTurn);
                 myBoardEl.classList.toggle('active-turn', !isMyTurn);
             } else {
@@ -477,7 +479,7 @@
                 if (!enemy.id) {
                     statusEl.textContent = "Очікування суперника...";
                 } else if (me.ready && enemy.ready) {
-                     // Гра почнеться автоматично
+                     // Гра почнеться автоматично, listener оновить UI
                 } else if (me.ready) {
                     statusEl.textContent = "Очікуємо готовності суперника...";
                 } else {
@@ -491,8 +493,6 @@
         // Рендеринг обох ігрових полів
         function renderBoards() {
             const myPlayerData = localGameData[`player${playerNumber}`];
-            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
-            
             const myBoardToRender = myPlayerData.board || myBoardData;
             
             // Рендер мого поля
@@ -508,7 +508,7 @@
             
             // Рендер ворожого поля та пострілів на обох
             const moves = localGameData.moves ? Object.values(localGameData.moves) : [];
-            const { myHits, enemyHits, sunkShips } = processMoves(moves);
+            const { sunkShips } = processMoves(moves);
 
             moves.forEach(move => {
                 const boardEl = move.player === playerNumber ? enemyBoardEl : myBoardEl;
@@ -538,9 +538,7 @@
             const shipIdsOnBoard1 = getShipIds(p1Board);
             const shipIdsOnBoard2 = getShipIds(p2Board);
             
-            // Постріли гравця 2 по гравцю 1
             const p2_moves = moves.filter(m => m.player === 2 && m.result === 'hit');
-            // Постріли гравця 1 по гравцю 2
             const p1_moves = moves.filter(m => m.player === 1 && m.result === 'hit');
 
             shipIdsOnBoard1.forEach(shipId => {
@@ -587,7 +585,7 @@
         
         function showMessage(msg) {
              const overlay = document.getElementById('messageOverlay');
-             if (overlay.style.display === 'flex') return; // Не показувати нове повідомлення, якщо одне вже є
+             if (overlay.style.display === 'flex') return;
              
              document.getElementById('messageText').textContent = msg;
              overlay.style.display = 'flex';
@@ -711,6 +709,13 @@
             const enemyBoard = localGameData[`player${enemyPlayerNum}`].board;
             const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
             
+            // Ваша ідея: показуємо миттєвий результат пострілу
+            if (result === 'hit') {
+                statusEl.textContent = '🎯 Влучив! Стріляйте ще!';
+            } else {
+                statusEl.textContent = '❌ Промах!';
+            }
+            
             const newMove = { player: playerNumber, row, col, result };
             const nextTurn = result === 'miss' ? enemyPlayerNum : playerNumber;
             
@@ -787,3 +792,4 @@
     </script>
 </body>
 </html>
+
