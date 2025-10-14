@@ -159,6 +159,13 @@
             outline: none;
             min-width: 250px;
             background: transparent;
+            text-align: center;
+        }
+        
+        #menuMessage {
+            color: var(--red-pen);
+            font-size: 18px;
+            min-height: 27px;
         }
 
         .game-area { display: none; }
@@ -187,6 +194,12 @@
             color: var(--pen-color);
         }
 
+        #timer {
+            font-size: 20px;
+            color: var(--pen-color);
+            min-height: 24px;
+        }
+
         .boards {
             display: flex;
             gap: 40px;
@@ -208,7 +221,7 @@
         }
         
         .rotate-btn {
-            margin-bottom: 10px; /* Виправлення позиції кнопки */
+            margin-bottom: 10px;
         }
 
         .board {
@@ -222,6 +235,10 @@
         
         .board.active-turn {
             box-shadow: 0 0 15px 5px var(--blue-pen);
+        }
+        .board.disabled {
+            pointer-events: none;
+            opacity: 0.7;
         }
 
         .cell {
@@ -240,7 +257,7 @@
 
 
         #enemyBoard .cell.valid-shot:hover {
-             background: #e0f7fa;
+            background: #e0f7fa;
         }
         
         .cell.ship {
@@ -322,6 +339,49 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Індикатор завантаження */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--paper-color);
+            padding: 20px 30px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1001;
+            font-size: 20px;
+        }
+        .loading.show { display: block; }
+        .loading i { margin-right: 10px; }
+
+        /* Мобільна оптимізація */
+        @media (max-width: 820px) {
+            .container { padding: 15px; }
+            h1 { font-size: 2.2em; }
+            .board {
+                grid-template-columns: repeat(10, 30px);
+                grid-template-rows: repeat(10, 30px);
+            }
+            .boards { gap: 20px; flex-direction: column; align-items: center;}
+            .button { padding: 10px 25px; font-size: 18px; }
+            .board-container:last-child { margin-top: 20px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.8em; }
+            .board {
+                grid-template-columns: repeat(10, 25px);
+                grid-template-rows: repeat(10, 25px);
+            }
+            .cell { font-size: 20px; }
+            .input-group { flex-direction: column; width: 100%; }
+            .input-group input { min-width: 0; width: 100%;}
+            .input-group button { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -330,6 +390,11 @@
         <div class="wave"></div>
         <div class="wave"></div>
     </div>
+
+    <div class="loading" id="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Завантаження...
+    </div>
+
     <div class="container">
         <h1>
             <i class="fa-solid fa-anchor"></i> Морський бій <i class="fa-solid fa-anchor"></i>
@@ -339,15 +404,16 @@
         <div class="menu" id="menu">
             <button class="button" onclick="createGame()">Створити гру</button>
             <div class="input-group">
-                <input type="text" id="joinCode" placeholder="Введіть код гри" maxlength="6">
+                <input type="tel" id="joinCode" placeholder="Введіть 6-значний код" maxlength="6" pattern="[0-9]*" inputmode="numeric">
                 <button class="button" onclick="joinGame()">Приєднатись</button>
             </div>
+            <div id="menuMessage"></div>
         </div>
 
         <div class="game-area" id="gameArea">
             <div class="game-info">
                  <div class="game-code" id="gameCodeDisplay" title="Натисніть, щоб скопіювати">Код гри: <span id="displayCode"></span></div>
-                <div class="timer" id="timer"></div>
+                <div id="timer"></div>
                 <div class="status" id="status">Очікування суперника...</div>
             </div>
 
@@ -377,9 +443,10 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getDatabase, ref, set, onValue, update, get, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+        import { getDatabase, ref, set, onValue, update, get, serverTimestamp, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-        // Конфігурація Firebase, надана вами
+        // 🔴 КРИТИЧНО: Ваша конфігурація Firebase видима на клієнті.
+        // Обов'язково налаштуйте Firebase Security Rules у вашій консолі Firebase.
         const firebaseConfig = {
             apiKey: "AIzaSyB0OEvx1SaXXClGRYeFt40P5RFTf1aantE",
             authDomain: "sea-battle-bf3c9.firebaseapp.com",
@@ -393,104 +460,464 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- Звукові ефекти ---
+        // --- Звукові ефекти (без змін) ---
         let audioCtx;
         let isMuted = localStorage.getItem('battleshipMuted') === 'true';
         let lastSunkCount = 0;
 
         const sounds = {
-            play: (type, ...args) => {
+            play: (type) => {
                 if (isMuted || !audioCtx) return;
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
                 const soundGenerators = {
-                    miss: () => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2);
-                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-                        osc.connect(gain).connect(audioCtx.destination);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.2);
-                    },
-                    hit: () => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-                        osc.connect(gain).connect(audioCtx.destination);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.15);
-                    },
-                    sunk: () => {
-                         for (let i = 0; i < 3; i++) {
-                            const osc = audioCtx.createOscillator();
-                            const gain = audioCtx.createGain();
-                            osc.type = 'square';
-                            osc.frequency.setValueAtTime(300 - i * 40, audioCtx.currentTime + i * 0.1);
-                            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.1);
-                            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.1);
-                            osc.connect(gain).connect(audioCtx.destination);
-                            osc.start(audioCtx.currentTime + i * 0.1);
-                            osc.stop(audioCtx.currentTime + i * 0.1 + 0.1);
-                        }
-                    },
-                    win: () => {
-                        const notes = [261, 329, 392, 523];
-                        notes.forEach((freq, i) => {
-                            const osc = audioCtx.createOscillator();
-                            const gain = audioCtx.createGain();
-                            osc.type = 'triangle';
-                            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.15);
-                            gain.gain.setValueAtTime(0.4, audioCtx.currentTime + i * 0.15);
-                            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.15 + 0.1);
-                            osc.connect(gain).connect(audioCtx.destination);
-                            osc.start(audioCtx.currentTime + i * 0.15);
-                            osc.stop(audioCtx.currentTime + i * 0.15 + 0.1);
-                        });
-                    }
+                    miss: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(150,audioCtx.currentTime),o.frequency.linearRampToValueAtTime(80,audioCtx.currentTime+.2),g.gain.setValueAtTime(.3,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.2),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.2) },
+                    hit: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine",o.frequency.setValueAtTime(440,audioCtx.currentTime),g.gain.setValueAtTime(.5,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.15) },
+                    sunk: () => { for(let i=0;i<3;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="square",o.frequency.setValueAtTime(300-40*i,audioCtx.currentTime+.1*i),g.gain.setValueAtTime(.3,audioCtx.currentTime+.1*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.1*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.1*i),o.stop(audioCtx.currentTime+.1*i+.1)} },
+                    win: () => { [261,329,392,523].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(f,audioCtx.currentTime+.15*i),g.gain.setValueAtTime(.4,audioCtx.currentTime+.15*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.15*i),o.stop(audioCtx.currentTime+.15*i+.1)}) }
                 };
-                if(soundGenerators[type]) soundGenerators[type](...args);
+                if(soundGenerators[type]) soundGenerators[type]();
             }
         };
         
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         // ----------------------
 
-        // Глобальні змінні стану гри
-        let gameCode = '';
-        let playerId = localStorage.getItem('battleshipPlayerId') || crypto.randomUUID();
+        // --- Константи та DOM-елементи ---
+        const GAME_DURATION = 15 * 60 * 1000;
+        const SHIPS_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+        const playerId = localStorage.getItem('battleshipPlayerId') || crypto.randomUUID();
         localStorage.setItem('battleshipPlayerId', playerId);
-        let playerNumber = 0;
-        let localGameData = null; // Локальна копія стану гри
-        
-        let isHorizontal = true;
-        const ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
-        let currentShipIndex = 0;
-        let myBoardData = Array(10).fill().map(() => Array(10).fill(0));
-        let setupPhase = true;
 
         const myBoardEl = document.getElementById('myBoard');
         const enemyBoardEl = document.getElementById('enemyBoard');
         const statusEl = document.getElementById('status');
         const rotateBtn = document.getElementById('rotateBtn');
         const soundToggle = document.getElementById('soundToggle');
+        const timerEl = document.getElementById('timer');
 
-        // Ініціалізація UI
-        createBoardDOM('myBoard', handleMyBoardClick);
-        createBoardDOM('enemyBoard', handleEnemyBoardClick);
-        updateShipsList();
+        // --- Рефакторинг: Єдиний об'єкт стану гри ---
+        const gameState = {
+            code: '', playerNumber: 0, localData: null, isHorizontal: true, currentShipIndex: 0,
+            myBoard: Array(10).fill(null).map(() => Array(10).fill(0)),
+            isSetupPhase: true, unsubscribeListener: null, sessionTimer: null, visualTimer: null,
+        };
         
-        // Ініціалізація звуку
+        // --- Допоміжні функції ---
+        const getEnemyPlayerNum = () => gameState.playerNumber === 1 ? 2 : 1;
+        const getMyPlayerData = () => gameState.localData?.[`player${gameState.playerNumber}`];
+        const showLoading = () => document.getElementById('loading').classList.add('show');
+        const hideLoading = () => document.getElementById('loading').classList.remove('show');
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        };
+
+        // --- Основна логіка ---
+        
+        function cleanupGame(message) {
+            if (gameState.unsubscribeListener) {
+                gameState.unsubscribeListener();
+                gameState.unsubscribeListener = null;
+            }
+            if (gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+            if (gameState.visualTimer) clearInterval(gameState.visualTimer);
+            
+            if(gameState.playerNumber === 1 && gameState.code) {
+                remove(ref(db, `games/${gameState.code}`));
+            }
+
+            showMessage(message || "Гру завершено.");
+            enemyBoardEl.classList.add('disabled');
+            myBoardEl.classList.add('disabled');
+            statusEl.textContent = "Гру завершено!";
+            timerEl.textContent = '';
+        }
+
+        window.addEventListener('beforeunload', (e) => {
+            if (gameState.localData && !gameState.localData.winner && gameState.localData.gameStarted) {
+                e.preventDefault();
+                e.returnValue = 'Гра ще не завершена. Ви впевнені, що хочете вийти?';
+                return e.returnValue;
+            }
+            if (gameState.unsubscribeListener) gameState.unsubscribeListener();
+        });
+        
+        function showMenuMessage(message) {
+            const msgEl = document.getElementById('menuMessage');
+            msgEl.textContent = message;
+            setTimeout(() => { msgEl.textContent = ''; }, 3000);
+        }
+
+        window.createGame = async function() {
+            showLoading();
+            try {
+                initAudio();
+                gameState.code = Math.floor(100000 + Math.random() * 900000).toString();
+                gameState.playerNumber = 1;
+
+                const initialGameState = {
+                    player1: { id: playerId, ready: false, board: null },
+                    player2: { id: null, ready: false, board: null },
+                    currentTurn: 1, gameStarted: false, moves: [], winner: null,
+                    createdAt: serverTimestamp() 
+                };
+
+                await set(ref(db, `games/${gameState.code}`), initialGameState);
+                showGameArea();
+                listenToGame();
+                
+                if (gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+                gameState.sessionTimer = setTimeout(() => cleanupGame("Час гри вичерпано!"), GAME_DURATION);
+            } catch (error) {
+                console.error("Помилка створення гри:", error);
+                showMenuMessage("Не вдалося створити гру. Перевірте з'єднання.");
+            } finally {
+                hideLoading();
+            }
+        };
+
+        window.joinGame = async function() {
+            showLoading();
+            try {
+                initAudio();
+                const codeInput = document.getElementById('joinCode').value;
+                const sanitizedCode = codeInput.replace(/[^0-9]/g, '');
+
+                if (sanitizedCode.length !== 6) return showMenuMessage("Код має складатися з 6 цифр!");
+                
+                const gameRef = ref(db, `games/${sanitizedCode}`);
+                const snapshot = await get(gameRef);
+
+                if (!snapshot.exists()) return showMenuMessage('Гра не знайдена!');
+                
+                const gameData = snapshot.val();
+                
+                if (Date.now() - gameData.createdAt > GAME_DURATION) return showMenuMessage('Термін дії гри минув!');
+                if (gameData.player1.id === playerId) return showMenuMessage("Ви не можете приєднатись до власної гри!");
+                if (gameData.player2.id && gameData.player2.id !== playerId) return showMenuMessage('Кімната вже зайнята!');
+                
+                gameState.code = sanitizedCode;
+                gameState.playerNumber = 2;
+                await update(ref(db, `games/${gameState.code}/player2`), { id: playerId });
+                showGameArea();
+                listenToGame();
+            } catch(error) {
+                console.error("Помилка приєднання до гри:", error);
+                showMenuMessage("Помилка приєднання. Перевірте код та з'єднання.");
+            } finally {
+                hideLoading();
+            }
+        };
+
+        function listenToGame() {
+            if (gameState.unsubscribeListener) gameState.unsubscribeListener();
+
+            const gameRef = ref(db, `games/${gameState.code}`);
+            gameState.unsubscribeListener = onValue(gameRef, (snapshot) => {
+                if (!snapshot.exists()) return cleanupGame("Гру було видалено або вона завершилась.");
+                
+                const gameData = snapshot.val();
+                if (gameData.createdAt && (Date.now() - gameData.createdAt > GAME_DURATION)) return cleanupGame("Час гри вичерпано!");
+                
+                gameState.localData = gameData;
+
+                const { player1: p1, player2: p2, gameStarted } = gameData;
+                if (p1?.id && p2?.id && !gameStarted && p1.ready && p2.ready && gameState.playerNumber === 1) {
+                    update(ref(db, `games/${gameState.code}`), { gameStarted: true });
+                }
+                updateUI();
+            });
+        }
+        
+        function updateTimer() {
+            if (!gameState.localData?.createdAt) return;
+            const elapsed = Date.now() - gameState.localData.createdAt;
+            const remaining = Math.max(0, GAME_DURATION - elapsed);
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateUI() {
+            if (!gameState.localData) return;
+            
+            if (gameState.localData.createdAt && !gameState.visualTimer) {
+                gameState.visualTimer = setInterval(updateTimer, 1000);
+                updateTimer();
+            }
+
+            const isMyTurn = gameState.localData.currentTurn === gameState.playerNumber;
+            const myData = getMyPlayerData();
+            const enemyData = gameState.localData?.[`player${getEnemyPlayerNum()}`];
+            
+            if (gameState.localData.winner) {
+                if(gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+                if(gameState.visualTimer) clearInterval(gameState.visualTimer);
+
+                if(!document.getElementById('messageOverlay').style.display || document.getElementById('messageOverlay').style.display === 'none') {
+                    sounds.play(gameState.localData.winner === gameState.playerNumber ? 'win' : 'sunk');
+                }
+                gameState.isSetupPhase = false;
+                showMessage(gameState.localData.winner === gameState.playerNumber ? "🎉 Перемога! 🎉" : "😥 Ви програли 😥");
+
+                 enemyBoardEl.classList.remove('active-turn');
+                 myBoardEl.classList.remove('active-turn');
+                 statusEl.textContent = "Гру завершено!";
+            } else if (gameState.localData.gameStarted) {
+                gameState.isSetupPhase = false;
+                rotateBtn.classList.add('hidden');
+                document.getElementById('shipsList').classList.add('hidden');
+                statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
+                enemyBoardEl.classList.toggle('active-turn', isMyTurn);
+                myBoardEl.classList.toggle('active-turn', !isMyTurn);
+            } else {
+                if (!enemyData?.id) statusEl.textContent = "Очікування суперника...";
+                else if (myData?.ready) statusEl.textContent = "Очікуємо готовності суперника...";
+                else statusEl.textContent = "Розставте свої кораблі!";
+            }
+            renderBoards();
+        }
+        
+        function renderBoards() {
+            const myBoardToRender = getMyPlayerData()?.board || gameState.myBoard;
+            
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    myBoardEl.children[r * 10 + c].className = `cell ${myBoardToRender[r][c] > 0 ? 'ship' : ''}`;
+                }
+            }
+            
+            const moves = gameState.localData.moves ? Object.values(gameState.localData.moves) : [];
+            const { sunkShips } = processMoves(moves);
+
+            moves.forEach(move => {
+                const boardEl = move.player === gameState.playerNumber ? enemyBoardEl : myBoardEl;
+                boardEl.children[move.row * 10 + move.col].classList.add(move.result);
+            });
+            
+            if (sunkShips.length > lastSunkCount) {
+                sounds.play('sunk');
+                lastSunkCount = sunkShips.length;
+            }
+            
+            sunkShips.forEach(ship => {
+                const boardEl = ship.playerNum === gameState.playerNumber ? myBoardEl : enemyBoardEl;
+                ship.cells.forEach(pos => {
+                    boardEl.children[pos.row * 10 + pos.col].classList.add('sunk');
+                });
+            });
+        }
+        
+        function processMoves(moves) {
+            let sunkShips = [];
+            const { player1, player2 } = gameState.localData;
+            if (!player1?.board || !player2?.board) return { sunkShips };
+            
+            const p1_hits = moves.filter(m => m.player === 1 && m.result === 'hit');
+            const p2_hits = moves.filter(m => m.player === 2 && m.result === 'hit');
+
+            const shipIdsOnBoard1 = new Set(player1.board.flat().filter(id => id > 0));
+            shipIdsOnBoard1.forEach(id => {
+                if (isShipSunk(id, player1.board, p2_hits)) {
+                    sunkShips.push({ playerNum: 1, cells: getShipCells(id, player1.board) });
+                }
+            });
+
+            const shipIdsOnBoard2 = new Set(player2.board.flat().filter(id => id > 0));
+            shipIdsOnBoard2.forEach(id => {
+                if (isShipSunk(id, player2.board, p1_hits)) {
+                    sunkShips.push({ playerNum: 2, cells: getShipCells(id, player2.board) });
+                }
+            });
+            return { sunkShips };
+        }
+
+        function showGameArea() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('displayCode').textContent = gameState.code;
+        }
+        
+        const debouncedHandleEnemyClick = debounce(handleEnemyBoardClick, 300);
+
+        function createBoardDOM(boardId, clickHandler) {
+            const boardEl = document.getElementById(boardId);
+            boardEl.innerHTML = '';
+            for (let i = 0; i < 100; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const row = Math.floor(i / 10);
+                const col = i % 10;
+                
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('aria-label', `Клітинка ${String.fromCharCode(65 + col)}${row + 1}`);
+                cell.tabIndex = boardId === 'enemyBoard' ? 0 : -1;
+                
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                const currentClickHandler = boardId === 'enemyBoard' ? debouncedHandleEnemyClick : clickHandler;
+                cell.addEventListener('click', () => currentClickHandler(row, col));
+                
+                cell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        currentClickHandler(row, col);
+                    }
+                });
+                
+                if (boardId === 'myBoard') {
+                    cell.addEventListener('mouseenter', () => previewShip(row, col));
+                    cell.addEventListener('mouseleave', clearPreview);
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+        
+        function showMessage(msg) {
+             const overlay = document.getElementById('messageOverlay');
+             if (overlay.style.display === 'flex') return;
+             document.getElementById('messageText').innerHTML = msg;
+             overlay.style.display = 'flex';
+        }
+
+        function handleMyBoardClick(row, col) {
+            if (!gameState.isSetupPhase || gameState.currentShipIndex >= SHIPS_CONFIG.length) return;
+            const size = SHIPS_CONFIG[gameState.currentShipIndex];
+            if (canPlaceShip(row, col, size, gameState.isHorizontal, gameState.myBoard)) {
+                for (let i = 0; i < size; i++) {
+                    const r = gameState.isHorizontal ? row : row + i;
+                    const c = gameState.isHorizontal ? col + i : col;
+                    gameState.myBoard[r][c] = gameState.currentShipIndex + 1;
+                }
+                gameState.currentShipIndex++;
+                updateShipsList();
+                renderMyPlacement();
+                if (gameState.currentShipIndex >= SHIPS_CONFIG.length) finishSetup();
+            }
+        }
+        
+        function renderMyPlacement() {
+            for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+                myBoardEl.children[r * 10 + c].classList.toggle('ship', gameState.myBoard[r][c] > 0);
+            }
+        }
+
+        function previewShip(row, col) {
+            if (!gameState.isSetupPhase || gameState.currentShipIndex >= SHIPS_CONFIG.length) return;
+            clearPreview();
+            const size = SHIPS_CONFIG[gameState.currentShipIndex];
+            const canPlace = canPlaceShip(row, col, size, gameState.isHorizontal, gameState.myBoard);
+            for (let i = 0; i < size; i++) {
+                const r = gameState.isHorizontal ? row : row + i;
+                const c = gameState.isHorizontal ? col + i : col;
+                if (r < 10 && c < 10) {
+                    const cell = myBoardEl.children[r * 10 + c];
+                    if (!cell.classList.contains('ship')) cell.classList.add(canPlace ? 'preview-ok' : 'preview-bad');
+                }
+            }
+        }
+
+        function clearPreview() {
+            myBoardEl.querySelectorAll('.preview-ok, .preview-bad').forEach(c => c.classList.remove('preview-ok', 'preview-bad'));
+        }
+        
+        window.rotateShip = () => { gameState.isHorizontal = !gameState.isHorizontal; };
+
+        function canPlaceShip(row, col, size, horizontal, board) {
+            for (let i = 0; i < size; i++) {
+                const r = horizontal ? row : row + i;
+                const c = horizontal ? col + i : col;
+                if (r >= 10 || c >= 10) return false;
+                for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && board[nr][nc] !== 0) return false;
+                }
+            }
+            return true;
+        }
+        
+        function updateShipsList() {
+            let shipsToPlace = SHIPS_CONFIG.slice(gameState.currentShipIndex);
+            if (shipsToPlace.length === 0) {
+                 document.getElementById('shipsList').innerHTML = "✅ Всі кораблі розставлено!";
+                 return;
+            }
+            const counts = shipsToPlace.reduce((acc, size) => ({...acc, [size]: (acc[size] || 0) + 1 }), {});
+            document.getElementById('shipsList').innerHTML = [4,3,2,1].map(s => `<div><i class="fa-solid fa-ship"></i> x${s}: ${counts[s] || 0}</div>`).join('');
+        }
+
+        async function finishSetup() {
+            gameState.isSetupPhase = false;
+            rotateBtn.classList.add('hidden');
+            await update(ref(db, `games/${gameState.code}/player${gameState.playerNumber}`), {
+                board: gameState.myBoard,
+                ready: true
+            });
+        }
+
+        async function handleEnemyBoardClick(row, col) {
+            if (!gameState.localData || gameState.localData.winner || !gameState.localData.gameStarted || gameState.isSetupPhase || gameState.localData.currentTurn !== gameState.playerNumber) return;
+
+            const moves = gameState.localData.moves ? Object.values(gameState.localData.moves) : [];
+            if (moves.some(m => m.row === row && m.col === col && m.player === gameState.playerNumber)) return;
+
+            const enemyBoard = gameState.localData[`player${getEnemyPlayerNum()}`].board;
+            const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
+            
+            sounds.play(result);
+            statusEl.textContent = result === 'hit' ? '🎯 Влучив! Стріляйте ще!' : '❌ Промах!';
+            
+            const newMove = { player: gameState.playerNumber, row, col, result };
+            const nextTurn = result === 'miss' ? getEnemyPlayerNum() : gameState.playerNumber;
+            const newMoves = [...moves, newMove];
+
+            const updatedData = { currentTurn: nextTurn, moves: newMoves };
+            
+            const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
+            const hitsOnEnemy = newMoves.filter(m => m.player === gameState.playerNumber && m.result === 'hit').length;
+            if (hitsOnEnemy === totalShipCells) updatedData.winner = gameState.playerNumber;
+
+            await update(ref(db, `games/${gameState.code}`), updatedData);
+        }
+        
+        function getShipCells(shipId, board) {
+            const cells = [];
+            for (let r=0; r<10; r++) for (let c=0; c<10; c++) if (board[r][c] === shipId) cells.push({row:r, col:c});
+            return cells;
+        }
+        
+        function isShipSunk(shipId, board, hitMoves) {
+            const shipCells = getShipCells(shipId, board);
+            return shipCells.every(sc => hitMoves.some(h => h.row === sc.row && h.col === sc.col));
+        }
+        
+        // --- Ініціалізація ---
+        document.getElementById('gameCodeDisplay').onclick = () => {
+            navigator.clipboard.writeText(gameState.code).then(() => {
+                const el = document.getElementById('gameCodeDisplay');
+                const originalText = el.innerHTML;
+                el.innerHTML = 'Скопійовано!';
+                setTimeout(() => { el.innerHTML = originalText; }, 1500);
+            });
+        };
+        
+        enemyBoardEl.addEventListener('mouseover', e => {
+            if (e.target.classList.contains('cell')) {
+                const cell = e.target;
+                if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) cell.classList.add('valid-shot');
+            }
+        });
+        enemyBoardEl.addEventListener('mouseout', e => {
+             if (e.target.classList.contains('cell')) e.target.classList.remove('valid-shot');
+        });
+        
         soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
         soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
         soundToggle.addEventListener('click', () => {
@@ -501,338 +928,9 @@
             if(!isMuted) initAudio();
         });
 
-        window.createGame = async function() {
-            initAudio();
-            gameCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            playerNumber = 1;
-            const initialGameState = {
-                player1: { id: playerId, ready: false, board: null },
-                player2: { id: null, ready: false, board: null },
-                currentTurn: 1, gameStarted: false, moves: [], winner: null, createdAt: serverTimestamp()
-            };
-            await set(ref(db, `games/${gameCode}`), initialGameState);
-            showGameArea();
-            listenToGame();
-        };
-
-        window.joinGame = async function() {
-            initAudio();
-            const code = document.getElementById('joinCode').value.toUpperCase();
-            if (!code) return showMessage("Введіть код гри!");
-
-            const gameRef = ref(db, `games/${code}`);
-            const snapshot = await get(gameRef);
-
-            if (!snapshot.exists()) return showMessage('Гра не знайдена!');
-            const gameData = snapshot.val();
-            if (gameData.player2.id && gameData.player2.id !== playerId) return showMessage('Кімната вже зайнята!');
-            
-            gameCode = code;
-            playerNumber = 2;
-            await update(ref(db, `games/${gameCode}/player2`), { id: playerId });
-            showGameArea();
-            listenToGame();
-        };
-
-        function listenToGame() {
-            const gameRef = ref(db, `games/${gameCode}`);
-            onValue(gameRef, (snapshot) => {
-                if (!snapshot.exists()) {
-                    showMessage("Гру було видалено або завершено.");
-                    setTimeout(() => location.reload(), 3000);
-                    return;
-                }
-                const gameData = snapshot.val();
-                localGameData = gameData;
-
-                const p1 = gameData.player1;
-                const p2 = gameData.player2;
-                if (p1 && p2 && p1.id && p2.id && !gameData.gameStarted && p1.ready && p2.ready) {
-                    if (playerNumber === 1) {
-                        update(ref(db, `games/${gameCode}`), { gameStarted: true });
-                    }
-                }
-                updateUI();
-            });
-        }
-        
-        function updateUI() {
-            if (!localGameData) return;
-            
-            const isMyTurn = localGameData.currentTurn === playerNumber;
-            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
-
-            if (localGameData.winner) {
-                if(!document.getElementById('messageOverlay').style.display || document.getElementById('messageOverlay').style.display === 'none') {
-                    sounds.play(localGameData.winner === playerNumber ? 'win' : 'sunk');
-                }
-                setupPhase = false;
-                if (localGameData.winner === playerNumber) showMessage("🎉 Перемога! 🎉");
-                else showMessage("😥 Ви програли 😥");
-
-                 enemyBoardEl.classList.remove('active-turn');
-                 myBoardEl.classList.remove('active-turn');
-                 statusEl.textContent = "Гру завершено!";
-            } else if (localGameData.gameStarted) {
-                setupPhase = false;
-                rotateBtn.classList.add('hidden');
-                document.getElementById('shipsList').classList.add('hidden');
-                statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
-                enemyBoardEl.classList.toggle('active-turn', isMyTurn);
-                myBoardEl.classList.toggle('active-turn', !isMyTurn);
-            } else {
-                const me = localGameData[`player${playerNumber}`];
-                const enemy = localGameData[`player${enemyPlayerNum}`];
-                if (!enemy.id) statusEl.textContent = "Очікування суперника...";
-                else if (me.ready) statusEl.textContent = "Очікуємо готовності суперника...";
-                else statusEl.textContent = "Розставте свої кораблі!";
-            }
-            renderBoards();
-        }
-        
-        function renderBoards() {
-            const myPlayerData = localGameData[`player${playerNumber}`];
-            const myBoardToRender = myPlayerData.board || myBoardData;
-            
-            for (let r = 0; r < 10; r++) {
-                for (let c = 0; c < 10; c++) {
-                    const cell = myBoardEl.children[r * 10 + c];
-                    cell.className = 'cell';
-                    if (myBoardToRender[r][c] > 0) cell.classList.add('ship');
-                }
-            }
-            
-            const moves = localGameData.moves ? Object.values(localGameData.moves) : [];
-            const { sunkShips } = processMoves(moves);
-
-            moves.forEach(move => {
-                const boardEl = move.player === playerNumber ? enemyBoardEl : myBoardEl;
-                const cell = boardEl.children[move.row * 10 + move.col];
-                cell.classList.add(move.result);
-            });
-            
-            if (sunkShips.length > lastSunkCount) {
-                sounds.play('sunk');
-                lastSunkCount = sunkShips.length;
-            }
-            
-            sunkShips.forEach(ship => {
-                const boardEl = ship.player === playerNumber ? myBoardEl : enemyBoardEl;
-                ship.cells.forEach(pos => {
-                    const cell = boardEl.children[pos.row * 10 + pos.col];
-                    cell.classList.add('sunk');
-                });
-            });
-        }
-        
-        function processMoves(moves) {
-            let sunkShips = [];
-            const p1Board = localGameData.player1.board;
-            const p2Board = localGameData.player2.board;
-            if (!p1Board || !p2Board) return { sunkShips };
-            
-            const shipIdsOnBoard1 = getShipIds(p1Board);
-            const shipIdsOnBoard2 = getShipIds(p2Board);
-            const p2_moves = moves.filter(m => m.player === 2 && m.result === 'hit');
-            const p1_moves = moves.filter(m => m.player === 1 && m.result === 'hit');
-
-            shipIdsOnBoard1.forEach(shipId => {
-                if (isShipSunk(shipId, p1Board, p2_moves)) {
-                    sunkShips.push({ player: 1, cells: getShipCells(shipId, p1Board) });
-                }
-            });
-             shipIdsOnBoard2.forEach(shipId => {
-                if (isShipSunk(shipId, p2Board, p1_moves)) {
-                    sunkShips.push({ player: 2, cells: getShipCells(shipId, p2Board) });
-                }
-            });
-            return { sunkShips };
-        }
-
-        function showGameArea() {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('gameArea').style.display = 'block';
-            document.getElementById('displayCode').textContent = gameCode;
-        }
-        
-        function createBoardDOM(boardId, clickHandler) {
-            const boardEl = document.getElementById(boardId);
-            boardEl.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 10; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.addEventListener('click', () => clickHandler(i, j));
-                    if (boardId === 'myBoard') {
-                         cell.addEventListener('mouseenter', () => previewShip(i, j));
-                         cell.addEventListener('mouseleave', clearPreview);
-                    }
-                    boardEl.appendChild(cell);
-                }
-            }
-        }
-        
-        function showMessage(msg) {
-             const overlay = document.getElementById('messageOverlay');
-             if (overlay.style.display === 'flex') return;
-             document.getElementById('messageText').textContent = msg;
-             overlay.style.display = 'flex';
-        }
-
-        function handleMyBoardClick(row, col) {
-            if (!setupPhase || currentShipIndex >= ships.length) return;
-            const size = ships[currentShipIndex];
-            if (canPlaceShip(row, col, size, isHorizontal, myBoardData)) {
-                for (let i = 0; i < size; i++) {
-                    const r = isHorizontal ? row : row + i;
-                    const c = isHorizontal ? col + i : col;
-                    myBoardData[r][c] = currentShipIndex + 1;
-                }
-                currentShipIndex++;
-                updateShipsList();
-                renderMyPlacement();
-                if (currentShipIndex >= ships.length) finishSetup();
-            }
-        }
-        
-        function renderMyPlacement() {
-            for (let r = 0; r < 10; r++) {
-                for (let c = 0; c < 10; c++) {
-                    const cell = myBoardEl.children[r * 10 + c];
-                    cell.classList.toggle('ship', myBoardData[r][c] > 0);
-                }
-            }
-        }
-
-        function previewShip(row, col) {
-            if (!setupPhase || currentShipIndex >= ships.length) return;
-            clearPreview();
-            const size = ships[currentShipIndex];
-            const canPlace = canPlaceShip(row, col, size, isHorizontal, myBoardData);
-            for (let i = 0; i < size; i++) {
-                const r = isHorizontal ? row : row + i;
-                const c = isHorizontal ? col + i : col;
-                if (r < 10 && c < 10) {
-                    const cell = myBoardEl.children[r * 10 + c];
-                    if (!cell.classList.contains('ship')) {
-                       cell.classList.add(canPlace ? 'preview-ok' : 'preview-bad');
-                    }
-                }
-            }
-        }
-
-        function clearPreview() {
-             const cells = myBoardEl.querySelectorAll('.preview-ok, .preview-bad');
-             cells.forEach(cell => cell.classList.remove('preview-ok', 'preview-bad'));
-        }
-        
-        window.rotateShip = function() { isHorizontal = !isHorizontal; };
-
-        function canPlaceShip(row, col, size, horizontal, board) {
-            for (let i = 0; i < size; i++) {
-                const r = horizontal ? row : row + i;
-                const c = horizontal ? col + i : col;
-                if (r >= 10 || c >= 10) return false;
-                for (let dr = -1; dr <= 1; dr++) {
-                    for (let dc = -1; dc <= 1; dc++) {
-                        const nr = r + dr;
-                        const nc = c + dc;
-                        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && board[nr][nc] !== 0) return false;
-                    }
-                }
-            }
-            return true;
-        }
-        
-        function updateShipsList() {
-            const counts = { 4: 0, 3: 0, 2: 0, 1: 0 };
-            let shipsToPlace = ships.slice(currentShipIndex);
-            if (shipsToPlace.length === 0) {
-                 document.getElementById('shipsList').innerHTML = "✅ Всі кораблі розставлено!";
-                 return;
-            }
-            shipsToPlace.forEach(size => counts[size]++);
-            document.getElementById('shipsList').innerHTML = `
-                <div><i class="fa-solid fa-ship"></i> x4: ${counts[4] || 0}</div>
-                <div><i class="fa-solid fa-ship"></i> x3: ${counts[3] || 0}</div>
-                <div><i class="fa-solid fa-ship"></i> x2: ${counts[2] || 0}</div>
-                <div><i class="fa-solid fa-ship"></i> x1: ${counts[1] || 0}</div>
-            `;
-        }
-
-        async function finishSetup() {
-            setupPhase = false;
-            rotateBtn.classList.add('hidden');
-            const updateData = {};
-            updateData[`player${playerNumber}/board`] = myBoardData;
-            updateData[`player${playerNumber}/ready`] = true;
-            await update(ref(db, `games/${gameCode}`), updateData);
-        }
-
-        async function handleEnemyBoardClick(row, col) {
-            if (!localGameData || localGameData.winner || !localGameData.gameStarted || setupPhase || localGameData.currentTurn !== playerNumber) return;
-
-            const moves = localGameData.moves ? Object.values(localGameData.moves) : [];
-            if (moves.some(m => m.row === row && m.col === col && m.player === playerNumber)) return;
-
-            const enemyPlayerNum = playerNumber === 1 ? 2 : 1;
-            const enemyBoard = localGameData[`player${enemyPlayerNum}`].board;
-            const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
-            
-            sounds.play(result);
-            statusEl.textContent = result === 'hit' ? '🎯 Влучив! Стріляйте ще!' : '❌ Промах!';
-            
-            const newMove = { player: playerNumber, row, col, result };
-            const nextTurn = result === 'miss' ? enemyPlayerNum : playerNumber;
-            const newMoves = [...moves, newMove];
-
-            const updatedData = { currentTurn: nextTurn, moves: newMoves };
-            
-            const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
-            const hitsOnEnemy = newMoves.filter(m => m.player === playerNumber && m.result === 'hit').length;
-            if (hitsOnEnemy === totalShipCells) updatedData.winner = playerNumber;
-
-            await update(ref(db, `games/${gameCode}`), updatedData);
-        }
-        
-        function getShipIds(board) {
-            const ids = new Set(board.flat());
-            ids.delete(0);
-            return [...ids];
-        }
-        
-        function getShipCells(shipId, board) {
-            const cells = [];
-            for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) if (board[r][c] === shipId) cells.push({ row: r, col: c });
-            return cells;
-        }
-        
-        function isShipSunk(shipId, board, hitMoves) {
-            const shipCells = getShipCells(shipId, board);
-            return shipCells.every(sc => hitMoves.some(h => h.row === sc.row && h.col === sc.col));
-        }
-
-        document.getElementById('gameCodeDisplay').onclick = function() {
-            navigator.clipboard.writeText(gameCode).then(() => {
-                const d = document.getElementById('gameCodeDisplay');
-                const t = d.innerHTML;
-                d.innerHTML = 'Скопійовано!';
-                setTimeout(() => { d.innerHTML = t; }, 1500);
-            }).catch(err => console.error('Не вдалося скопіювати код: ', err));
-        };
-        
-        enemyBoardEl.addEventListener('mouseover', e => {
-            if (e.target.classList.contains('cell')) {
-                const cell = e.target;
-                if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) cell.classList.add('valid-shot');
-            }
-        });
-
-        enemyBoardEl.addEventListener('mouseout', e => {
-             if (e.target.classList.contains('cell')) e.target.classList.remove('valid-shot');
-        });
+        createBoardDOM('myBoard', handleMyBoardClick);
+        createBoardDOM('enemyBoard', handleEnemyBoardClick);
+        updateShipsList();
 
     </script>
 </body>
