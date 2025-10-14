@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Арканоїд</title>
+  <meta name="description" content="Класична гра Арканоїд з адаптивним дизайном, покращеним керуванням та фізикою.">
+  <style>
+    :root{
+      --bg-primary:#1a1a2e;--bg-secondary:#16213e;--bg-canvas:#0f3460;
+      --accent-primary:#e94560;--accent-secondary:#00ff88;
+      --text-light:#eee;--text-dark:#aaa
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      display:flex;justify-content:center;align-items:center;min-height:100vh;
+      background:var(--bg-primary);
+      font-family:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:var(--text-light);
+      padding:10px;-webkit-tap-highlight-color:transparent
+    }
+    .container{display:flex;flex-direction:column;align-items:center;width:100%;max-width:800px}
+    #gameCanvas{
+      border:3px solid var(--bg-secondary);display:block;margin:15px auto;box-shadow:0 0 25px rgba(0,0,0,.6);
+      border-radius:10px;width:100%;height:auto;background:var(--bg-canvas);touch-action:none
+    }
+    .info{
+      display:flex;justify-content:space-between;width:100%;
+      font-size:clamp(.9rem,3vw,1.1rem);gap:10px;flex-wrap:wrap
+    }
+    .score,.lives,.high-score{padding:10px 15px;background:var(--bg-secondary);border-radius:8px;flex-grow:1;text-align:center}
+    .controls{
+      margin-top:15px;font-size:clamp(.75rem,3vw,.875rem);color:var(--text-dark);line-height:1.6;text-align:center
+    }
+    .controls strong{color:var(--text-light)}
+    .message-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;
+      z-index:1000;opacity:0;transition:opacity .3s ease
+    }
+    .message-overlay.visible{display:flex;opacity:1}
+    .message-content{
+      text-align:center;padding:30px 40px;background:var(--bg-secondary);border-radius:15px;box-shadow:0 0 30px rgba(0,0,0,.8);
+      transform:scale(.9);transition:transform .3s ease
+    }
+    .message-overlay.visible .message-content{transform:scale(1)}
+    .message-title{font-size:clamp(2rem,10vw,3rem);font-weight:bold;margin-bottom:15px;text-transform:uppercase}
+    .game-over-title{color:var(--accent-primary)}
+    .victory-title{color:var(--accent-secondary)}
+    .message-score-container{font-size:clamp(1rem,4vw,1.25rem);margin-bottom:25px;color:var(--text-dark)}
+    button#restartBtn{
+      padding:12px 30px;font-size:clamp(.9rem,4vw,1rem);background:var(--accent-primary);color:#fff;border:none;border-radius:8px;cursor:pointer;
+      transition:all .2s ease;box-shadow:0 4px 15px rgba(233,69,96,.4)
+    }
+    button#restartBtn:hover{background:#c93551;transform:translateY(-2px);box-shadow:0 6px 20px rgba(233,69,96,.5)}
+    button#restartBtn:active{transform:translateY(1px) scale(.98)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="info" aria-live="polite">
+      <div class="score">Рахунок: <span id="score">0</span></div>
+      <div class="high-score">Найкращий: <span id="highScore">0</span></div>
+      <div class="lives">Життя: <span id="lives">3</span></div>
+    </div>
+    <canvas id="gameCanvas" role="application" aria-label="Ігрове поле гри Арканоїд"></canvas>
+    <div class="controls">
+      <strong>Керування:</strong> ← → або A/D | <strong>Дотик:</strong> перетягування платформи<br>
+      <strong>Пауза:</strong> Пробіл або Esc | <strong>Запуск м'яча:</strong> Клік / Пробіл
+    </div>
+  </div>
+
+  <div class="message-overlay" id="messageOverlay" aria-modal="true" role="dialog">
+    <div class="message-content">
+      <div class="message-title" id="messageTitle"></div>
+      <div class="message-score-container" id="messageScoreContainer"></div>
+      <button id="restartBtn">Грати знову</button>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  // --- КОНФІГУРАЦІЯ ---
+  const CONFIG = {
+    REFERENCE_WIDTH: 800,
+    REFERENCE_HEIGHT: 600,
+    PADDLE: { WIDTH: 120, HEIGHT: 15, SPEED: 10, Y_OFFSET: 30, COLOR: '#00ff88' },
+    BALL: { RADIUS: 10, BASE_SPEED: 4, MAX_SPEED: 8, SPEED_INCREMENT: 0.12, COLOR: '#fff' },
+    BRICK: {
+      ROWS: 6, COLS: 10, WIDTH: 70, HEIGHT: 25, PADDING: 5, OFFSET_X: 30, OFFSET_Y: 50,
+      COLORS: ['#e94560','#f39c12','#f1c40f','#2ecc71','#3498db','#9b59b6'], POINTS: 10
+    },
+    PARTICLE: { COUNT: 8, MIN_SPEED: 1, MAX_SPEED: 3, GRAVITY: 0.05, MIN_LIFE: 30, MAX_LIFE: 60 },
+    INITIAL_LIVES: 3
+  };
+
+  // --- DOM ---
+  const canvas = document.getElementById('gameCanvas');
+  const scoreEl = document.getElementById('score');
+  const highScoreEl = document.getElementById('highScore');
+  const livesEl = document.getElementById('lives');
+  const messageOverlay = document.getElementById('messageOverlay');
+  const messageTitle = document.getElementById('messageTitle');
+  const messageScoreContainer = document.getElementById('messageScoreContainer');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let ctx; // ініціалізується в resizeCanvas (після DPR масштабування)
+
+  // --- ЗВУК ---
+  class SoundManager {
+    constructor(){ this.audioContext = null; }
+    init(){ if(!this.audioContext){ this.audioContext = new (window.AudioContext||window.webkitAudioContext)(); } }
+    _playSound(freq,duration,type){
+      if(!this.audioContext) return;
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+      oscillator.connect(gainNode); gainNode.connect(this.audioContext.destination);
+      oscillator.start(); oscillator.stop(this.audioContext.currentTime + duration);
+    }
+    playBrickHit(){ this._playSound(350, .1, 'square'); }
+    playPaddleHit(){ this._playSound(200, .1, 'sine'); }
+    playLoseLife(){ this._playSound(100, .3, 'sawtooth'); }
+  }
+
+  // --- ЧАСТИНКА ---
+  class Particle {
+    constructor(x,y,color,scale){
+      this.x=x; this.y=y; this.color=color;
+      this.radius=(Math.random()*2+1)*scale;
+      this.life=Math.random()*CONFIG.PARTICLE.MAX_LIFE+CONFIG.PARTICLE.MIN_LIFE;
+      this.maxLife=this.life;
+      const angle=Math.random()*Math.PI*2;
+      const speed=(Math.random()*(CONFIG.PARTICLE.MAX_SPEED-CONFIG.PARTICLE.MIN_SPEED)+CONFIG.PARTICLE.MIN_SPEED)*scale;
+      this.dx=Math.cos(angle)*speed; this.dy=Math.sin(angle)*speed;
+      this.gravity=CONFIG.PARTICLE.GRAVITY*scale;
+    }
+    update(){ this.x+=this.dx; this.y+=this.dy; this.dy+=this.gravity; this.life--; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.life/this.maxLife;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+      ctx.fillStyle=this.color; ctx.fill(); ctx.restore();
+    }
+  }
+
+  // --- СТАН ГРИ ---
+  class GameState {
+    constructor(){
+      this.highScore = Number(localStorage.getItem('arkanoid_high_score')||0);
+      this.scale = 1; this.animationId = null;
+      this.reset(true);
+    }
+    reset(keepHigh=false){
+      this.score=0; this.lives=CONFIG.INITIAL_LIVES;
+      this.paused=false; this.gameState='READY';
+      if(!keepHigh) this.highScore = Number(localStorage.getItem('arkanoid_high_score')||0);
+      this.updateUI();
+    }
+    updateUI(){
+      scoreEl.textContent=this.score;
+      highScoreEl.textContent=this.highScore;
+      livesEl.textContent=this.lives;
+    }
+    addScore(points){
+      this.score+=points;
+      if(this.score>this.highScore){
+        this.highScore=this.score;
+        localStorage.setItem('arkanoid_high_score', String(this.highScore));
+      }
+      this.updateUI();
+    }
+    loseLife(){
+      this.lives--; this.updateUI();
+      if(this.lives>0){ this.gameState='READY'; return true; }
+      this.gameState='GAME_OVER'; return false;
+    }
+    stopAnimation(){
+      if(this.animationId) cancelAnimationFrame(this.animationId);
+      this.animationId=null;
+    }
+  }
+
+  // --- ІГРОВІ ОБ’ЄКТИ ---
+  class Paddle{
+    constructor(scale){ this.reset(scale); }
+    draw(){
+      ctx.fillStyle=CONFIG.PADDLE.COLOR; ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(this.x,this.y,this.width,this.height,this.height/2);
+      else ctx.rect(this.x,this.y,this.width,this.height);
+      ctx.fill();
+    }
+    move(){
+      const maxX = canvas.width - this.width;
+      this.x = Math.max(0, Math.min(this.x + this.dx, maxX));
+    }
+    clamp(){ this.x = Math.max(0, Math.min(this.x, canvas.width - this.width)); }
+    reset(scale){
+      this.width=CONFIG.PADDLE.WIDTH*scale; this.height=CONFIG.PADDLE.HEIGHT*scale;
+      this.speed=CONFIG.PADDLE.SPEED*scale;
+      this.x=(canvas.width - this.width)/2;
+      this.y=canvas.height - CONFIG.PADDLE.Y_OFFSET*scale - this.height;
+      this.dx=0;
+    }
+    rescale(f){ this.x*=f; this.y*=f; this.width*=f; this.height*=f; this.speed*=f; this.clamp(); }
+  }
+
+  class Ball{
+    constructor(scale){ this.reset(scale); }
+    draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fillStyle=CONFIG.BALL.COLOR; ctx.fill(); }
+    move(){ this.x+=this.dx; this.y+=this.dy; }
+    _clampToBounds(){
+      if(this.x+this.radius>canvas.width){ this.x=canvas.width-this.radius; this.dx*=-1; }
+      if(this.x-this.radius<0){ this.x=this.radius; this.dx*=-1; }
+      if(this.y-this.radius<0){ this.y=this.radius; this.dy*=-1; }
+    }
+    checkPaddleCollision(paddle,sound){
+      // перевірка
+      if(this.y+this.radius>paddle.y && this.y-this.radius<paddle.y+paddle.height &&
+         this.x>paddle.x && this.x<paddle.x+paddle.width && this.dy>0){
+        // куди влучили по платформі
+        const hitPos=(this.x-(paddle.x+paddle.width/2))/(paddle.width/2);
+        // нова горизонтальна швидкість — пропорційна hitPos
+        const newDx = hitPos * this.currentSpeed * 1.2;
+        // вертикальну підбираємо так, щоб сумарна швидкість = currentSpeed
+        const capped = Math.min(this.maxSpeed, this.currentSpeed);
+        const newDy = -Math.sqrt(Math.max(0, capped*capped - newDx*newDx)) || -capped*0.9;
+        this.dx=newDx; this.dy=newDy; this.y=paddle.y - this.radius;
+        sound.playPaddleHit();
+      }
+    }
+    checkWallCollision(){ this._clampToBounds(); }
+    isFallen(){ return this.y+this.radius>canvas.height; }
+    normalizeSpeed(){
+      const v = Math.hypot(this.dx,this.dy);
+      if(!v) return;
+      const capped = Math.min(this.maxSpeed, this.currentSpeed);
+      this.dx = this.dx/v * capped;
+      this.dy = this.dy/v * capped;
+    }
+    reset(scale,paddle){
+      this.radius=CONFIG.BALL.RADIUS*scale; this.baseSpeed=CONFIG.BALL.BASE_SPEED*scale;
+      this.maxSpeed=CONFIG.BALL.MAX_SPEED*scale; this.speedIncrement=CONFIG.BALL.SPEED_INCREMENT*scale;
+      this.currentSpeed=this.baseSpeed;
+      if(paddle){ this.x=paddle.x+paddle.width/2; this.y=paddle.y-this.radius; }
+      else { this.x=canvas.width/2; this.y=canvas.height/2; }
+      this.dx=0; this.dy=0;
+    }
+    rescale(f){
+      this.x*=f; this.y*=f; this.radius*=f;
+      this.baseSpeed*=f; this.maxSpeed*=f; this.speedIncrement*=f; this.currentSpeed*=f;
+      this.dx*=f; this.dy*=f; this._clampToBounds();
+    }
+  }
+
+  class Brick{
+    constructor(x,y,w,h,color){ this.x=x; this.y=y; this.width=w; this.height=h; this.color=color; this.active=true; }
+    draw(){ if(!this.active) return; ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.width,this.height); }
+  }
+
+  class BrickManager{
+    constructor(scale){ this.reset(scale); }
+    draw(){ this.bricks.forEach(b=>b.draw()); }
+    checkCollision(ball){
+      for(const brick of this.bricks){
+        if(!brick.active) continue;
+        const distX = Math.abs(ball.x - brick.x - brick.width/2);
+        const distY = Math.abs(ball.y - brick.y - brick.height/2);
+        if(distX > (brick.width/2 + ball.radius) || distY > (brick.height/2 + ball.radius)) continue;
+        if(distX <= (brick.width/2) || distY <= (brick.height/2)){
+          brick.active=false;
+          const overlapX=(brick.width/2 + ball.radius) - distX;
+          const overlapY=(brick.height/2 + ball.radius) - distY;
+          return { brick, direction: overlapX < overlapY ? 'x' : 'y' };
+        }
+      }
+      return null;
+    }
+    allDestroyed(){ return this.bricks.every(b=>!b.active); }
+    snapshotActives(){ return this.bricks.map(b=>b.active); }
+    reset(scale, activesSnapshot=null){
+      this.bricks=[];
+      const bw=CONFIG.BRICK.WIDTH*scale, bh=CONFIG.BRICK.HEIGHT*scale;
+      const pad=CONFIG.BRICK.PADDING*scale, offX=CONFIG.BRICK.OFFSET_X*scale, offY=CONFIG.BRICK.OFFSET_Y*scale;
+      for(let r=0;r<CONFIG.BRICK.ROWS;r++){
+        for(let c=0;c<CONFIG.BRICK.COLS;c++){
+          const x=c*(bw+pad)+offX, y=r*(bh+pad)+offY;
+          const color=CONFIG.BRICK.COLORS[r%CONFIG.BRICK.COLORS.length];
+          this.bricks.push(new Brick(x,y,bw,bh,color));
+        }
+      }
+      if(Array.isArray(activesSnapshot) && activesSnapshot.length===this.bricks.length){
+        for(let i=0;i<this.bricks.length;i++) this.bricks[i].active = !!activesSnapshot[i];
+      }
+    }
+  }
+
+  // --- ГРА ---
+  class Game{
+    constructor(){
+      this.state = new GameState();
+      this.soundManager = new SoundManager();
+      this.particles = [];
+      this.keys = {};
+      this.prevScale = 1;
+      this.resizeTimeout=null;
+      this.setupEventListeners();
+      this.resizeCanvas(true);
+    }
+
+    setupEventListeners(){
+      window.addEventListener('resize', ()=>{
+        clearTimeout(this.resizeTimeout);
+        this.resizeTimeout = setTimeout(()=>this.resizeCanvas(false), 120);
+      });
+      document.addEventListener('keydown', e=>this.handleKeyInput(e,true));
+      document.addEventListener('keyup',   e=>this.handleKeyInput(e,false));
+      canvas.addEventListener('mousemove', e=>this.handleMouseMove(e));
+      canvas.addEventListener('touchmove', e=>this.handleTouchMove(e), {passive:false});
+      canvas.addEventListener('click',     ()=>this.launchBall());
+      restartBtn.addEventListener('click', ()=>this.restart());
+    }
+
+    handleKeyInput(e,isPressed){
+      const key=e.key.toLowerCase();
+      this.keys[key]=isPressed;
+
+      // Пауза/старт
+      if(e.code==='Space'){
+        e.preventDefault();
+        if(!isPressed){
+          if(this.state.gameState==='RUNNING') this.togglePause();
+          else if(this.state.gameState==='READY') this.launchBall();
+        }
+      }
+      if(e.key==='Escape' && !isPressed){ this.togglePause(); }
+    }
+
+    handleMouseMove(e){
+      const rect=canvas.getBoundingClientRect();
+      const mouseX=e.clientX-rect.left;
+      this.paddle.x = mouseX - this.paddle.width/2;
+      this.paddle.clamp();
+    }
+
+    handleTouchMove(e){
+      e.preventDefault();
+      if(e.touches.length){
+        const rect=canvas.getBoundingClientRect();
+        const x=e.touches[0].clientX-rect.left;
+        this.paddle.x = x - this.paddle.width/2;
+        this.paddle.clamp();
+      }
+    }
+
+    // HiDPI масштабування + без втрати стану
+    resizeCanvas(initial=false){
+      const container=canvas.parentElement;
+      const aspect=CONFIG.REFERENCE_WIDTH/CONFIG.REFERENCE_HEIGHT;
+      const cssWidth = container.clientWidth;
+      const cssHeight = cssWidth/aspect;
+
+      const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+
+      ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0); // усе малюємо в CSS-пікселях
+
+      const newScale = cssWidth / CONFIG.REFERENCE_WIDTH;
+      const f = initial ? newScale : (newScale / (this.state.scale || newScale));
+      this.prevScale = this.state.scale || newScale;
+      this.state.scale = newScale;
+
+      // зберігаємо активні цеглинки (щоб не втратити прогрес)
+      const bricksSnapshot = this.brickManager ? this.brickManager.snapshotActives() : null;
+
+      if(!this.paddle){
+        this.paddle = new Paddle(this.state.scale);
+        this.ball   = new Ball(this.state.scale);
+        this.brickManager = new BrickManager(this.state.scale);
+      }else{
+        // рескейл без скидання гри
+        this.paddle.rescale(f);
+        this.ball.rescale(f);
+        this.brickManager.reset(this.state.scale, bricksSnapshot);
+      }
+
+      // перерисувати
+      this.draw();
+    }
+
+    launchBall(){
+      this.soundManager.init();
+      if(this.state.gameState==='READY'){
+        this.state.gameState='RUNNING';
+        this.ball.currentSpeed = Math.max(this.ball.baseSpeed, this.ball.currentSpeed);
+        this.ball.dy = -this.ball.currentSpeed;
+        this.ball.dx = (Math.random()-0.5) * this.ball.currentSpeed;
+        this.ball.normalizeSpeed();
+      }
+    }
+
+    togglePause(){
+      if(this.state.gameState!=='RUNNING') return;
+      this.state.paused = !this.state.paused;
+    }
+
+    createParticles(brick){
+      for(let i=0;i<CONFIG.PARTICLE.COUNT;i++){
+        const x=brick.x+brick.width/2, y=brick.y+brick.height/2;
+        this.particles.push(new Particle(x,y,brick.color,this.state.scale));
+      }
+    }
+
+    update(){
+      if(this.state.paused || (this.state.gameState!=='RUNNING' && this.state.gameState!=='READY')) return;
+
+      // клавіші
+      this.paddle.dx = 0;
+      if(this.keys['arrowleft']||this.keys['a']) this.paddle.dx -= this.paddle.speed;
+      if(this.keys['arrowright']||this.keys['d']) this.paddle.dx += this.paddle.speed;
+      this.paddle.move();
+
+      if(this.state.gameState==='READY'){
+        this.ball.x = this.paddle.x + this.paddle.width/2;
+        this.ball.y = this.paddle.y - this.ball.radius;
+      }else if(this.state.gameState==='RUNNING'){
+        this.ball.move();
+        this.ball.checkWallCollision();
+        this.ball.checkPaddleCollision(this.paddle, this.soundManager);
+
+        const hit=this.brickManager.checkCollision(this.ball);
+        if(hit){
+          // відбиття
+          if(hit.direction==='y') this.ball.dy*=-1;
+          else this.ball.dx*=-1;
+
+          this.soundManager.playBrickHit();
+          this.createParticles(hit.brick);
+          this.state.addScore(CONFIG.BRICK.POINTS);
+
+          // прискорення кулі з межами
+          this.ball.currentSpeed = Math.min(this.ball.maxSpeed, this.ball.currentSpeed + this.ball.speedIncrement);
+          this.ball.normalizeSpeed();
+
+          if(this.brickManager.allDestroyed()){
+            this.state.gameState='VICTORY'; this.victory();
+          }
+        }
+
+        if(this.ball.isFallen()){
+          this.soundManager.playLoseLife();
+          if(!this.state.loseLife()){ this.gameOver(); }
+          else { this.ball.reset(this.state.scale, this.paddle); }
+        }
+      }
+
+      // частинки
+      for(let i=this.particles.length-1;i>=0;i--){
+        this.particles[i].update();
+        if(this.particles[i].life<0) this.particles.splice(i,1);
+      }
+    }
+
+    draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height); // у CSS-пікселях ок, бо setTransform(dpr,..)
+      this.brickManager.draw(); this.paddle.draw(); this.ball.draw();
+      this.particles.forEach(p=>p.draw());
+
+      if(this.state.paused) this.drawOverlayMessage('ПАУЗА');
+      if(this.state.gameState==='READY' && this.state.lives===CONFIG.INITIAL_LIVES){
+        this.drawOverlayMessage('КЛІК АБО ПРОБІЛ ДЛЯ СТАРТУ');
+      }
+    }
+
+    drawOverlayMessage(text){
+      ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='#fff'; ctx.font=`${30*this.state.scale}px "Inter", sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(text, canvas.width/2, canvas.height/2);
+    }
+
+    gameLoop(){
+      this.update(); this.draw();
+      this.state.animationId = requestAnimationFrame(()=>this.gameLoop());
+    }
+
+    showMessage(title, titleClass){
+      messageTitle.textContent=title;
+      messageTitle.className=`message-title ${titleClass}`;
+      messageScoreContainer.innerHTML=`Ваш рахунок: ${this.state.score}<br>Найкращий: ${this.state.highScore}`;
+      messageOverlay.classList.add('visible');
+    }
+
+    gameOver(){
+      localStorage.setItem('arkanoid_high_score', String(this.state.highScore));
+      this.state.stopAnimation(); this.showMessage('ГРУ ЗАВЕРШЕНО', 'game-over-title');
+    }
+    victory(){
+      localStorage.setItem('arkanoid_high_score', String(this.state.highScore));
+      this.state.stopAnimation(); this.showMessage('ПЕРЕМОГА!', 'victory-title');
+    }
+
+    restart(){
+      messageOverlay.classList.remove('visible');
+      // не чіпаємо рекорд
+      const keepHigh = true;
+      const savedHigh = this.state.highScore;
+      this.state.reset(keepHigh);
+      this.state.highScore = savedHigh;
+      this.state.updateUI();
+      this.paddle.reset(this.state.scale);
+      this.ball.reset(this.state.scale, this.paddle);
+      this.brickManager.reset(this.state.scale);
+      this.start();
+    }
+
+    start(){ this.state.stopAnimation(); this.gameLoop(); }
+  }
+
+  // --- ЗАПУСК ---
+  const game = new Game();
+  game.start();
+  </script>
+</body>
+</html>
