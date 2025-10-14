@@ -139,6 +139,7 @@
         <div class="instructions">
             <p>Керування: Рух мишкою</p>
             <p>Стрільба: Клік мишкою</p>
+            <p>Пауза: <strong>Space</strong> або <strong>Esc</strong></p>
             <p>Знищте всіх загарбників!</p>
         </div>
         <button id="startBtn" type="button">Почати гру</button>
@@ -198,7 +199,6 @@ class AudioHandler {
             if (!this.audioContext) {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            // resume на випадок, якщо контекст був призупинений
             if (this.audioContext.state === 'suspended') {
                 this.audioContext.resume();
             }
@@ -300,7 +300,7 @@ class Projectile {
         this.speed = speed;
         this.markedForDeletion = false;
     }
-    update(deltaTime) {
+    update() {
         this.y += this.speed;
         if (this.y + this.height < 0 || this.y > this.game.height) {
             this.markedForDeletion = true;
@@ -341,7 +341,6 @@ class Grid {
         this.dropDistance = 20;
         this.shootProbability = 0.01;
 
-        // збережемо геометрію для коректного визначення «нижніх»
         this.spacingX = 80;
         this.spacingY = 60;
         this.startX = 60;
@@ -374,7 +373,6 @@ class Grid {
             this.invaders.forEach(invader => { invader.y += this.dropDistance; });
         }
 
-        // випадкова стрільба «нижніми» одиницями
         if (Math.random() < this.shootProbability && this.invaders.length > 0) {
             const bottomInvaders = this.getBottomInvaders();
             if (bottomInvaders.length > 0) {
@@ -386,7 +384,6 @@ class Grid {
         }
     }
     getBottomInvaders() {
-        // групуємо по колонках з урахуванням startX/spacingX
         const byCol = new Map();
         for (const inv of this.invaders) {
             const colIdx = Math.max(0, Math.min(
@@ -466,13 +463,16 @@ class Barrier {
 }
 
 /* ===========================
-   Основний клас гри
+   Основний клас гри + ПАУЗА
 =========================== */
 class Game {
     constructor(width, height) {
         this.width = width;
         this.height = height;
         this.mouseX = this.width / 2;
+
+        this.paused = false; // ← стан паузи
+
         this.init();
     }
     init() {
@@ -505,8 +505,17 @@ class Game {
 
         this.updateUI();
     }
-    update(deltaTime) {
+
+    /* ---- API паузи ---- */
+    togglePause() {
         if (this.gameOver) return;
+        this.paused = !this.paused;
+    }
+    pause()  { if (!this.gameOver) this.paused = true; }
+    resume() { if (!this.gameOver) this.paused = false; }
+
+    update(deltaTime) {
+        if (this.gameOver || this.paused) return;
 
         this.player.update();
         this.grid.update(deltaTime);
@@ -544,7 +553,26 @@ class Game {
         this.playerProjectiles.forEach(p => p.draw(context));
         this.enemyProjectiles.forEach(p => p.draw(context));
         this.particles.forEach(p => p.draw(context));
+
+        // Оверлей паузи
+        if (this.paused && !this.gameOver) {
+            context.save();
+            context.fillStyle = 'rgba(0,0,0,0.6)';
+            context.fillRect(0, 0, this.width, this.height);
+
+            context.fillStyle = '#0f0';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            context.font = '28px "Press Start 2P", monospace';
+            context.fillText('ПАУЗА', this.width / 2, this.height / 2 - 20);
+
+            context.font = '14px "Press Start 2P", monospace';
+            context.fillText('Натисніть Space або Esc, щоб продовжити', this.width / 2, this.height / 2 + 20);
+            context.restore();
+        }
     }
+
     checkCollisions() {
         // постріли гравця → загарбники
         this.playerProjectiles.forEach(proj => {
@@ -642,7 +670,7 @@ class Game {
         this.updateUI();
     }
     endGame() {
-        if (this.gameOver) return; // захист від повторних викликів
+        if (this.gameOver) return;
         this.gameOver = true;
         try {
             if (this.score > (this.highScore || 0)) {
@@ -670,10 +698,9 @@ class Game {
    Головний цикл анімації
 =========================== */
 function animate(timestamp) {
-    // Не скасовуємо кадр тут — це основне виправлення від race condition
     if (!game || game.gameOver) return;
 
-    if (!lastTime) lastTime = timestamp; // перший кадр
+    if (!lastTime) lastTime = timestamp;
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -692,42 +719,48 @@ function handleMouseMove(e) {
     game.mouseX = e.clientX - rect.left;
 }
 function handleMouseClick() {
-    if (game && !game.gameOver) game.player.shoot();
+    if (game && !game.gameOver && !game.paused) game.player.shoot();
+}
+
+function handleKeyDown(e) {
+    // Пауза на Space / Esc
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.key === 'Escape') {
+        e.preventDefault(); // щоб сторінка не скролилася пробілом
+        if (game && !game.gameOver) {
+            game.togglePause();
+        }
+    }
 }
 
 function setupEventListeners() {
-    // рух і клік по канвасу
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('click', handleMouseClick);
+    document.addEventListener('keydown', handleKeyDown);
 
-    // старт гри
     startBtn.addEventListener('click', () => {
-        // гарантуємо зупинку попередньої анімації
         if (animationId) {
             cancelAnimationFrame(animationId);
             animationId = null;
         }
         startScreen.classList.add('hidden');
-        audio.init(); // ініціалізація аудіо на жест користувача
+        audio.init();
         game = new Game(canvas.width, canvas.height);
         lastTime = 0;
         animationId = requestAnimationFrame(animate);
     });
 
-    // рестарт після Game Over
     restartBtn.addEventListener('click', () => {
         if (animationId) {
             cancelAnimationFrame(animationId);
             animationId = null;
         }
         gameOverScreen.classList.add('hidden');
-        audio.init(); // на випадок «suspended» стану
+        audio.init();
         game = new Game(canvas.width, canvas.height);
         lastTime = 0;
         animationId = requestAnimationFrame(animate);
     });
 
-    // захист від втрати курсора — при виході миші з канвасу тримаємо останню позицію
     canvas.addEventListener('mouseleave', () => {
         if (game) game.mouseX = game.width / 2;
     });
