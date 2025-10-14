@@ -1,846 +1,934 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Морський бій</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Морський бій</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Neucha&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Neucha&display=swap" rel="stylesheet"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <!-- Font Awesome (fixed SRI) -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"/>
+        :root {
+            --sea-color-1: #021027;
+            --sea-color-2: #03183a;
+            --paper-color: #fdfaf2;
+            --pen-color: #2c3e50;
+            --blue-pen: #3498db;
+            --red-pen: #e74c3c;
+        }
 
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    :root{
-      --sea-color-1:#021027; --sea-color-2:#03183a;
-      --paper-color:#fdfaf2; --pen-color:#2c3e50;
-      --blue-pen:#3498db; --red-pen:#e74c3c; --green:#2ecc71;
-    }
-    body{
-      font-family:'Neucha',cursive; background:var(--sea-color-1);
-      min-height:100vh; display:flex; justify-content:center; align-items:center;
-      padding:20px; overflow-x:hidden; color:var(--pen-color);
-    }
-    .container{
-      background:var(--paper-color); border-radius:8px; padding:24px;
-      box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 0 10px rgba(255,255,255,.08);
-      max-width:1200px; width:100%; border:1px solid #ddd;
-    }
-    h1{ text-align:center; color:var(--pen-color); margin-bottom:10px; font-size:2.6rem; position:relative; }
-    .sub{ text-align:center; margin-bottom:16px; opacity:.85; }
-    #soundToggle{
-      position:absolute; top:50%; right:0; transform:translateY(-50%);
-      font-size:.9em; cursor:pointer; color:var(--pen-color); transition:color .2s;
-    }
-    #soundToggle:hover{ color:var(--blue-pen); }
+        body {
+            font-family: 'Neucha', cursive;
+            background-color: var(--sea-color-1);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto; 
+            overflow-x: hidden; /* Заборонити горизонтальну прокрутку */
+            position: relative;
+        }
 
-    .menu{ display:flex; flex-direction:column; align-items:center; gap:16px; }
-    .button{
-      background:transparent; color:var(--pen-color); border:2px solid var(--pen-color);
-      padding:10px 24px; font-size:20px; font-family:'Neucha',cursive;
-      border-radius:6px; cursor:pointer; transition:.2s; font-weight:bold;
-    }
-    .button:hover{ background:var(--pen-color); color:var(--paper-color); transform:translateY(-2px); box-shadow:0 5px 10px rgba(0,0,0,.2); }
-    .button:disabled{ background:#aaa; color:#777; border-color:#999; cursor:not-allowed; transform:none; box-shadow:none; }
-    .small{ font-size:16px; padding:8px 14px; }
+        .container {
+            background: var(--paper-color);
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 0 10px rgba(255,255,255,0.1);
+            max-width: 1200px;
+            width: 100%;
+            border: 1px solid #ddd;
+        }
 
-    .input-group{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; }
-    input{
-      padding:10px 16px; font-size:18px; font-family:'Neucha',cursive; border:2px solid var(--pen-color);
-      border-radius:6px; outline:none; min-width:240px; background:transparent; text-align:center;
-    }
-    #menuMessage{ color:var(--red-pen); font-size:18px; min-height:24px; }
+        h1 {
+            text-align: center;
+            color: var(--pen-color);
+            margin-bottom: 25px;
+            font-size: 3em;
+            position: relative;
+        }
 
-    .game-area{ display:none; }
-    .game-info{ text-align:center; margin-bottom:12px; }
-    .game-meta{
-      display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:8px;
-    }
-    .game-code{
-      background:transparent; padding:6px 14px; border-radius:6px; font-size:22px; color:var(--blue-pen);
-      display:inline-block; cursor:pointer; border:2px dashed var(--blue-pen);
-    }
-    .status{ font-size:22px; margin:10px 0; min-height:32px; }
-    .status[aria-live]{ outline:none; }
-    #timer{ font-size:20px; min-height:24px; }
+        #soundToggle {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            cursor: pointer;
+            color: var(--pen-color);
+            transition: color 0.2s;
+        }
+        #soundToggle:hover {
+            color: var(--blue-pen);
+        }
 
-    .boards{ display:flex; gap:28px; justify-content:center; flex-wrap:wrap; }
-    .board-container{ display:flex; flex-direction:column; align-items:center; }
-    .board-title{ font-size:24px; margin-bottom:8px; }
-    .control-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:8px; }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
 
-    .board{
-      display:grid; grid-template-columns:repeat(10,34px); grid-template-rows:repeat(10,34px);
-      gap:0; background:var(--pen-color); border:2px solid var(--pen-color); border-radius:4px; outline:none;
-    }
-    .board.active-turn{ box-shadow:0 0 15px 5px var(--blue-pen); }
-    .board.disabled{ pointer-events:none; opacity:.8; filter:grayscale(.15); }
+        .button {
+            background: transparent;
+            color: var(--pen-color);
+            border: 2px solid var(--pen-color);
+            padding: 12px 35px;
+            font-size: 22px;
+            font-family: 'Neucha', cursive;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
 
-    .cell{
-      background:var(--paper-color); cursor:pointer; transition:.12s;
-      display:flex; align-items:center; justify-content:center; font-size:26px;
-      border-right:1px solid #ccc; border-bottom:1px solid #ccc;
-    }
-    .cell:nth-child(10n){ border-right:none; }
-    .cell:nth-last-child(-n+10){ border-bottom:none; }
-    #enemyBoard .cell.valid-shot:hover{ background:#e0f7fa; }
+        .button:hover {
+            background: var(--pen-color);
+            color: var(--paper-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .button:disabled {
+            background: #aaa;
+            color: #777;
+            border-color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-    .cell.ship{
-      background-image:linear-gradient(45deg, var(--blue-pen) 25%, transparent 25%, transparent 50%, var(--blue-pen) 50%, var(--blue-pen) 75%, transparent 75%, transparent);
-      background-size:5px 5px;
-    }
-    .cell.preview-ok{ background:rgba(46,204,113,.3)!important; }
-    .cell.preview-bad{ background:rgba(231,76,60,.3)!important; }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-    .cell.hit{ cursor:not-allowed; }
-    .cell.hit::after{
-      font-family:"Font Awesome 6 Free"; content:"\f00d"; font-weight:900; color:var(--red-pen);
-    }
-    .cell.miss{ cursor:not-allowed; }
-    .cell.miss::after{ content:'•'; color:var(--pen-color); font-size:28px; }
+        input {
+            padding: 12px 20px;
+            font-size: 18px;
+            font-family: 'Neucha', cursive;
+            border: 2px solid var(--pen-color);
+            border-radius: 5px;
+            outline: none;
+            min-width: 250px;
+            background: transparent;
+            text-align: center;
+        }
+        
+        #menuMessage {
+            color: var(--red-pen);
+            font-size: 18px;
+            min-height: 27px;
+        }
 
-    .cell.sunk{ background-color:rgba(198,40,40,.2); }
+        .game-area { display: none; }
+        .game-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .game-meta {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
 
-    .ships-list{
-      margin-top:12px; font-size:18px; width:100%;
-      display:flex; flex-wrap:wrap; justify-content:center; gap:16px;
-    }
-    .ships-list div{ display:flex; align-items:center; gap:8px; }
+        .game-code {
+            background: transparent;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 24px;
+            font-weight: normal;
+            color: var(--blue-pen);
+            display: inline-block;
+            cursor: pointer;
+            border: 2px dashed var(--blue-pen);
+        }
 
-    .message-overlay{
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
-      justify-content:center; align-items:center; z-index:1000;
-    }
-    .message-box{
-      background:var(--paper-color); padding:28px; border-radius:8px; text-align:center;
-      box-shadow:0 10px 40px rgba(0,0,0,.3); animation:fadeIn .25s ease-out; border:2px solid var(--pen-color);
-    }
-    @keyframes fadeIn{ from{opacity:0; transform:scale(.92)} to{opacity:1; transform:scale(1)} }
-    .message-box h2{ font-size:2.2rem; margin-bottom:16px; }
+        .status {
+            font-size: 24px;
+            margin: 10px 0;
+            min-height: 36px;
+            color: var(--pen-color);
+        }
 
-    .hidden{ display:none!important; }
+        #timer {
+            font-size: 24px;
+            color: var(--pen-color);
+            min-height: 24px;
+        }
 
-    .loading{
-      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:var(--paper-color); padding:14px 18px; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,.3);
-      display:none; z-index:1001; font-size:18px;
-    }
-    .loading.show{ display:block; }
-    .loading i{ margin-right:8px; }
+        .boards {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
 
-    @media (max-width: 820px){
-      .container{ padding:16px; }
-      h1{ font-size:2.2rem; }
-      .board{ grid-template-columns:repeat(10,32px); grid-template-rows:repeat(10,32px); }
-      .boards{ gap:18px; flex-direction:column; align-items:center; }
-      .button{ padding:9px 20px; font-size:18px; }
-    }
-    @media (max-width: 480px){
-      body{ padding:10px; }
-      h1{ font-size:1.8rem; }
-      .board{ grid-template-columns:repeat(10,30px); grid-template-rows:repeat(10,30px); }
-      .cell{ font-size:22px; }
-      .input-group{ flex-direction:column; width:100%; }
-      .input-group input{ min-width:0; width:100%; }
-      .input-group button{ width:100%; }
-    }
-  </style>
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .board-title {
+            font-size: 26px;
+            font-weight: normal;
+            margin-bottom: 10px;
+            color: var(--pen-color);
+        }
+        
+        .rotate-btn {
+            margin-bottom: 10px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 35px);
+            grid-template-rows: repeat(10, 35px);
+            gap: 0;
+            background: var(--pen-color);
+            border: 2px solid var(--pen-color);
+        }
+        
+        .board.active-turn {
+            box-shadow: 0 0 15px 5px var(--blue-pen);
+        }
+        .board.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .cell {
+            background: var(--paper-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+        .cell:nth-child(10n) { border-right: none; }
+        .cell:nth-last-child(-n+10) { border-bottom: none; }
+
+
+        #enemyBoard .cell.valid-shot:hover {
+            background: #e0f7fa;
+        }
+        
+        .cell.ship {
+            background-image: linear-gradient(45deg, var(--blue-pen) 25%, transparent 25%, transparent 50%, var(--blue-pen) 50%, var(--blue-pen) 75%, transparent 75%, transparent);
+            background-size: 5px 5px;
+        }
+        
+        .cell.preview-ok {
+            background: rgba(46, 204, 113, 0.3) !important;
+        }
+        .cell.preview-bad {
+            background: rgba(231, 76, 60, 0.3) !important;
+        }
+
+        .cell.hit {
+            cursor: not-allowed;
+        }
+
+        .cell.hit::after {
+            font-family: "Font Awesome 6 Free";
+            content: "\f00d"; /* fa-xmark */
+            font-weight: 900;
+            color: var(--red-pen);
+        }
+
+        .cell.miss {
+            cursor: not-allowed;
+        }
+
+        .cell.miss::after {
+            content: '•';
+            color: var(--pen-color);
+            font-size: 30px;
+        }
+
+        .cell.sunk {
+            background-color: rgba(198, 40, 40, 0.2);
+        }
+
+        .ships-list {
+            margin-top: 20px;
+            font-size: 20px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .ships-list div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .message-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .message-box {
+            background: var(--paper-color);
+            padding: 40px;
+            border-radius: 5px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+            border: 2px solid var(--pen-color);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .message-box h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--pen-color);
+        }
+
+        .hidden { display: none !important; }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--paper-color);
+            padding: 20px 30px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1001;
+            font-size: 20px;
+        }
+        .loading.show { display: block; }
+        .loading i { margin-right: 10px; }
+
+        @media (max-width: 820px) {
+            .container { padding: 15px; }
+            h1 { font-size: 2.2em; }
+            .board {
+                grid-template-columns: repeat(10, 30px);
+                grid-template-rows: repeat(10, 30px);
+            }
+            .boards { gap: 20px; flex-direction: column; align-items: center;}
+            .button { padding: 10px 25px; font-size: 18px; }
+            .board-container:last-child { margin-top: 20px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.8em; }
+            .board {
+                grid-template-columns: repeat(10, 25px);
+                grid-template-rows: repeat(10, 25px);
+            }
+            .cell { font-size: 20px; }
+            .input-group { flex-direction: column; width: 100%; }
+            .input-group input { min-width: 0; width: 100%;}
+            .input-group button { width: 100%; }
+        }
+    </style>
 </head>
 <body>
-  <div class="loading" id="loading">
-    <i class="fa-solid fa-spinner fa-spin"></i> Завантаження...
-  </div>
-
-  <div class="container">
-    <h1>
-      <i class="fa-solid fa-anchor"></i> Морський бій <i class="fa-solid fa-anchor"></i>
-      <i id="soundToggle" class="fa-solid fa-volume-high" title="Вимкнути звук" aria-label="Перемкнути звук"></i>
-    </h1>
-    <div class="sub">Клавіші: <strong>R</strong> — поворот, <strong>Enter/Space</strong> — дія, <strong>Стрілки</strong> — переміщення</div>
-
-    <div class="menu" id="menu" aria-live="polite">
-      <div class="input-group">
-        <button class="button" id="createBtn" onclick="createGame()">Створити гру</button>
-      </div>
-      <div class="input-group">
-        <input type="tel" id="joinCode" placeholder="Введіть 6-значний код" maxlength="6" pattern="[0-9]*" inputmode="numeric" aria-label="Код гри"/>
-        <button class="button" onclick="joinGame()">Приєднатись</button>
-      </div>
-      <div id="menuMessage"></div>
+    <div class="loading" id="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Завантаження...
     </div>
 
-    <div class="game-area" id="gameArea">
-      <div class="game-info">
-        <div class="game-meta">
-          <div class="game-code" id="gameCodeDisplay" title="Натисніть, щоб скопіювати" role="button" tabindex="0">
-            Код гри: <span id="displayCode"></span>
-          </div>
-          <div id="timer" aria-label="Таймер гри"></div>
-        </div>
-        <div class="status" id="status" aria-live="polite">Очікування суперника...</div>
-      </div>
-
-      <div class="boards">
-        <div class="board-container">
-          <div class="board-title">Ваше поле</div>
-          <div class="control-row">
-            <button class="button small" id="rotateBtn" onclick="rotateShip()"><i class="fa-solid fa-rotate"></i> Повернути</button>
-            <button class="button small" id="autoBtn" onclick="autoPlace()">Авторозстановка</button>
-            <button class="button small" id="clearBtn" onclick="clearPlacement()">Очистити</button>
-          </div>
-          <div class="board" id="myBoard" tabindex="0" aria-label="Ваше поле"></div>
-          <div class="ships-list" id="shipsList"></div>
+    <div class="container">
+        <h1>
+            <i class="fa-solid fa-anchor"></i> Морський бій <i class="fa-solid fa-anchor"></i>
+            <i id="soundToggle" class="fa-solid fa-volume-high" title="Вимкнути звук"></i>
+        </h1>
+        
+        <div class="menu" id="menu">
+            <button class="button" onclick="createGame()">Створити гру</button>
+            <div class="input-group">
+                <input type="tel" id="joinCode" placeholder="Введіть 6-значний код" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+                <button class="button" onclick="joinGame()">Приєднатись</button>
+            </div>
+            <div id="menuMessage"></div>
         </div>
 
-        <div class="board-container">
-          <div class="board-title">Поле суперника</div>
-          <div class="control-row">
-            <button class="button small" id="surrenderBtn" onclick="surrender()"><i class="fa-solid fa-flag"></i> Здатися</button>
-          </div>
-          <div class="board" id="enemyBoard" tabindex="0" aria-label="Поле суперника"></div>
+        <div class="game-area" id="gameArea">
+            <div class="game-info">
+                 <div class="game-meta">
+                    <div class="game-code" id="gameCodeDisplay" title="Натисніть, щоб скопіювати">Код гри: <span id="displayCode"></span></div>
+                    <div id="timer"></div>
+                 </div>
+                <div class="status" id="status">Очікування суперника...</div>
+            </div>
+
+            <div class="boards">
+                <div class="board-container">
+                    <div class="board-title">Ваше поле</div>
+                    <button class="button rotate-btn" id="rotateBtn" onclick="rotateShip()"><i class="fa-solid fa-rotate"></i> Повернути корабель</button>
+                    <div class="board" id="myBoard"></div>
+                    <div class="ships-list" id="shipsList"></div>
+                </div>
+
+                <div class="board-container">
+                    <div class="board-title">Поле суперника</div>
+                    <div class="board" id="enemyBoard"></div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <div class="message-overlay" id="messageOverlay" role="dialog" aria-modal="true" aria-labelledby="messageText">
-    <div class="message-box">
-      <h2 id="messageText"></h2>
-      <button class="button" onclick="location.reload()">Грати знову</button>
+    
+    <div class="message-overlay" id="messageOverlay">
+        <div class="message-box">
+            <h2 id="messageText"></h2>
+            <button class="button" onclick="location.reload()">Грати знову</button>
+        </div>
     </div>
-  </div>
 
-  <!-- ========================= S C R I P T ========================= -->
-  <script type="module">
-    // Firebase SDKs
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import {
-      getDatabase, ref, set, onValue, update, get, serverTimestamp,
-      remove, push, onChildAdded, runTransaction, child
-    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-    import {
-      getAuth, signInAnonymously, onAuthStateChanged
-    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    // ====================== CONFIG ======================
-    // ПЕРЕВІР (Project settings → General):
-    const firebaseConfig = {
-      apiKey: "AIzaSyB0OEvx1SaXXClGRYeFt40P5RFTf1aantE",
-      authDomain: "sea-battle-bf3c9.firebaseapp.com",
-      databaseURL: "https://sea-battle-bf3c9-default-rtdb.europe-west1.firebasedatabase.app/",
-      projectId: "sea-battle-bf3c9",
-      storageBucket: "sea-battle-bf3c9.appspot.com", /* ← виправлено */
-      messagingSenderId: "514029502541",
-      appId: "1:514029502541:web:70fa166ba97c2bc1fedc04"
-    };
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, get, serverTimestamp, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    /*
-    ===== RECOMMENDED REALTIME DATABASE SECURITY RULES (спрощено) =====
-    {
-      "rules": {
-        "games": {
-          "$code": {
-            "meta": {
-              ".read": true,
-              ".write": "auth != null"
-            },
-            "public": {
-              ".read": true,
-              ".write": "auth != null",
-              "moves": {
-                "$moveId": { ".read": true, ".write": "auth != null" }
-              }
-            },
-            "private": {
-              "player1": {
-                ".read": "auth.uid === root.child('games/'+$code+'/meta/player1Id').val()",
-                ".write": "auth.uid === root.child('games/'+$code+'/meta/player1Id').val()"
-              },
-              "player2": {
-                ".read": "auth.uid === root.child('games/'+$code+'/meta/player2Id').val()",
-                ".write": "auth.uid === root.child('games/'+$code+'/meta/player2Id').val()"
-              }
-            },
-            "shotRequests": {
-              "$reqId": { ".read": true, ".write": "auth != null" }
+        // 🔴 КРИТИЧНО: Ваша конфігурація Firebase видима на клієнті.
+        // Обов'язково налаштуйте Firebase Security Rules у вашій консолі Firebase.
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0OEvx1SaXXClGRYeFt40P5RFTf1aantE",
+            authDomain: "sea-battle-bf3c9.firebaseapp.com",
+            databaseURL: "https://sea-battle-bf3c9-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "sea-battle-bf3c9",
+            storageBucket: "sea-battle-bf3c9.firebasestorage.app",
+            messagingSenderId: "514029502541",
+            appId: "1:514029502541:web:70fa166ba97c2bc1fedc04"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // --- Звукові ефекти (без змін) ---
+        let audioCtx;
+        let isMuted = localStorage.getItem('battleshipMuted') === 'true';
+        let lastSunkCount = 0;
+
+        const sounds = {
+            play: (type) => {
+                if (isMuted || !audioCtx) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const soundGenerators = {
+                    miss: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(150,audioCtx.currentTime),o.frequency.linearRampToValueAtTime(80,audioCtx.currentTime+.2),g.gain.setValueAtTime(.3,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.2),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.2) },
+                    hit: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine",o.frequency.setValueAtTime(440,audioCtx.currentTime),g.gain.setValueAtTime(.5,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.15) },
+                    sunk: () => { for(let i=0;i<3;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="square",o.frequency.setValueAtTime(300-40*i,audioCtx.currentTime+.1*i),g.gain.setValueAtTime(.3,audioCtx.currentTime+.1*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.1*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.1*i),o.stop(audioCtx.currentTime+.1*i+.1)} },
+                    win: () => { [261,329,32,523].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(f,audioCtx.currentTime+.15*i),g.gain.setValueAtTime(.4,audioCtx.currentTime+.15*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.15*i),o.stop(audioCtx.currentTime+.15*i+.1)}) }
+                };
+                if(soundGenerators[type]) soundGenerators[type]();
             }
-          }
-        }
-      }
-    }
-    — ввімкни Anonymous Auth в консолі Firebase.
-    — у проді логіку пострілу варто перенести в Cloud Function.
-    */
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
-    const auth = getAuth(app);
-
-    // ------------------- Audio -------------------
-    let audioCtx;
-    let isMuted = localStorage.getItem('battleshipMuted') === 'true';
-    let lastSunkPainted = 0;
-
-    const sounds = {
-      play: (type) => {
-        if (isMuted || !audioCtx) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const gen = {
-          miss: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(150,audioCtx.currentTime),o.frequency.linearRampToValueAtTime(80,audioCtx.currentTime+.2),g.gain.setValueAtTime(.3,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.2),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.2)},
-          hit:  () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine",    o.frequency.setValueAtTime(440,audioCtx.currentTime),g.gain.setValueAtTime(.5,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.15)},
-          sunk: () => { for(let i=0;i<3;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="square",  o.frequency.setValueAtTime(300-40*i,audioCtx.currentTime+.1*i),g.gain.setValueAtTime(.3,audioCtx.currentTime+.1*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.1*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.1*i),o.stop(audioCtx.currentTime+.1*i+.1)}},
-          win:  () => { [261,329,392,523].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(f,audioCtx.currentTime+.15*i),g.gain.setValueAtTime(.4,audioCtx.currentTime+.15*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.15*i),o.stop(audioCtx.currentTime+.15*i+.1)})}
         };
-        gen[type]?.();
-      }
-    };
-    function initAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
-
-    // ------------------- Constants & State -------------------
-    const GAME_DURATION = 15 * 60 * 1000;
-    const SHIPS_CONFIG  = [4,3,3,2,2,2,1,1,1,1];
-
-    // DOM
-    const myBoardEl   = document.getElementById('myBoard');
-    const enemyBoardEl= document.getElementById('enemyBoard');
-    const statusEl    = document.getElementById('status');
-    const rotateBtn   = document.getElementById('rotateBtn');
-    const timerEl     = document.getElementById('timer');
-
-    // Game state
-    const state = {
-      code: '', myNum: 0, uid: null,
-      isHorizontal:true, currentShipIndex:0, isSetupPhase:true,
-      myBoard: Array.from({length:10},()=>Array(10).fill(0)),
-      unsub: { meta:null, moves:null, myPrivate:null, shotReq:null },
-      sessionTimer:null, visualTimer:null,
-      meta:null,
-      publicMoves:[],   // [{player,row,col,result,createdAt, sunkCells?, targetPlayer?}]
-    };
-
-    // Utilities
-    const getEnemyNum = ()=> state.myNum===1?2:1;
-    const showLoading = ()=> document.getElementById('loading').classList.add('show');
-    const hideLoading = ()=> document.getElementById('loading').classList.remove('show');
-    function showMenuMessage(msg){ const el=document.getElementById('menuMessage'); el.textContent=msg; setTimeout(()=>el.textContent='',3000); }
-    function showGameArea(){ document.getElementById('menu').style.display='none'; document.getElementById('gameArea').style.display='block'; document.getElementById('displayCode').textContent=state.code; }
-    function showMessage(msg){
-      const overlay=document.getElementById('messageOverlay');
-      if(overlay.style.display==='flex') return;
-      document.getElementById('messageText').innerHTML=msg;
-      overlay.style.display='flex';
-    }
-
-    // ------------------- Boards DOM -------------------
-    function createBoardDOM(boardId, clickHandler){
-      const boardEl = document.getElementById(boardId);
-      boardEl.innerHTML='';
-      for(let i=0;i<100;i++){
-        const cell=document.createElement('div');
-        cell.className='cell';
-        const r = Math.floor(i/10), c = i%10;
-        cell.dataset.row=r; cell.dataset.col=c;
-        cell.setAttribute('role','button');
-        cell.setAttribute('aria-label', `Клітинка ${String.fromCharCode(65+c)}${r+1}`);
-        cell.tabIndex = 0;
-
-        cell.addEventListener('click', ()=> clickHandler(r,c));
-        cell.addEventListener('keydown', (e)=>{
-          if(e.key==='Enter' || e.key===' '){ e.preventDefault(); clickHandler(r,c); }
-        });
-        if(boardId==='myBoard'){
-          cell.addEventListener('mouseenter',()=> previewShip(r,c));
-          cell.addEventListener('mouseleave', clearPreview);
+        
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        boardEl.appendChild(cell);
-      }
-      // keyboard navigation
-      boardEl.addEventListener('keydown', (e)=>{
-        const active = document.activeElement;
-        if(!active || !active.classList.contains('cell')) return;
-        const r = +active.dataset.row, c = +active.dataset.col;
-        const idx = (nr,nc)=> nr>=0&&nr<10&&nc>=0&&nc<10 ? boardEl.children[nr*10+nc] : null;
-        if(e.key==='ArrowUp'){ idx(r-1,c)?.focus(); e.preventDefault(); }
-        else if(e.key==='ArrowDown'){ idx(r+1,c)?.focus(); e.preventDefault(); }
-        else if(e.key==='ArrowLeft'){ idx(r,c-1)?.focus(); e.preventDefault(); }
-        else if(e.key==='ArrowRight'){ idx(r,c+1)?.focus(); e.preventDefault(); }
-        else if(e.key.toLowerCase()==='r'){ rotateShip(); e.preventDefault(); }
-      });
-    }
+        // ----------------------
 
-    // ------------------- Placement helpers -------------------
-    function rotateShip(){ state.isHorizontal=!state.isHorizontal; }
-    function canPlaceShip(row,col,size,horizontal,board){
-      for(let i=0;i<size;i++){
-        const r=horizontal?row:row+i, c=horizontal?col+i:col;
-        if(r>=10||c>=10) return false;
-        for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++){
-          const nr=r+dr, nc=c+dc;
-          if(nr>=0&&nr<10&&nc>=0&&nc<10 && board[nr][nc]!==0) return false;
-        }
-      }
-      return true;
-    }
-    function previewShip(row,col){
-      if(!state.isSetupPhase || state.currentShipIndex>=SHIPS_CONFIG.length) return;
-      clearPreview();
-      const size = SHIPS_CONFIG[state.currentShipIndex];
-      const ok = canPlaceShip(row,col,size,state.isHorizontal,state.myBoard);
-      for(let i=0;i<size;i++){
-        const r=state.isHorizontal?row:row+i, c=state.isHorizontal?col+i:col;
-        if(r<10 && c<10){
-          const cell=myBoardEl.children[r*10+c];
-          if(!cell.classList.contains('ship')) cell.classList.add(ok?'preview-ok':'preview-bad');
-        }
-      }
-    }
-    function clearPreview(){
-      myBoardEl.querySelectorAll('.preview-ok,.preview-bad').forEach(el=> el.classList.remove('preview-ok','preview-bad'));
-    }
-    function renderMyPlacement(){
-      for(let r=0;r<10;r++) for(let c=0;c<10;c++){
-        const cell = myBoardEl.children[r*10+c];
-        cell.classList.toggle('ship', state.myBoard[r][c]>0);
-      }
-    }
-    function updateShipsList(){
-      const rest = SHIPS_CONFIG.slice(state.currentShipIndex);
-      if(rest.length===0){ document.getElementById('shipsList').innerHTML="✅ Всі кораблі розставлено!"; return; }
-      const cnt = rest.reduce((a,s)=> (a[s]=(a[s]||0)+1, a), {});
-      document.getElementById('shipsList').innerHTML = [4,3,2,1].map(s=> `<div><i class="fa-solid fa-ship"></i> x${s}: ${cnt[s]||0}</div>`).join('');
-    }
-    function placeShipAt(row,col){
-      if(!state.isSetupPhase || state.currentShipIndex>=SHIPS_CONFIG.length) return false;
-      const size=SHIPS_CONFIG[state.currentShipIndex];
-      if(!canPlaceShip(row,col,size,state.isHorizontal,state.myBoard)) return false;
-      for(let i=0;i<size;i++){
-        const r=state.isHorizontal?row:row+i, c=state.isHorizontal?col+i:col;
-        state.myBoard[r][c]=state.currentShipIndex+1;
-      }
-      state.currentShipIndex++;
-      renderMyPlacement(); updateShipsList();
-      if(state.currentShipIndex>=SHIPS_CONFIG.length) finishSetup();
-      return true;
-    }
-    function autoPlace(){
-      // reset first
-      state.myBoard = Array.from({length:10},()=>Array(10).fill(0));
-      state.currentShipIndex=0;
-      let attempts=0;
-      for(let idx=0; idx<SHIPS_CONFIG.length && attempts<5000; ){
-        const size=SHIPS_CONFIG[idx];
-        const horizontal = Math.random()<0.5;
-        const row = Math.floor(Math.random()*10);
-        const col = Math.floor(Math.random()*10);
-        if(canPlaceShip(row,col,size,horizontal,state.myBoard)){
-          for(let i=0;i<size;i++){
-            const r=horizontal?row:row+i, c=horizontal?col+i:col;
-            state.myBoard[r][c]=idx+1;
-          }
-          idx++;
-        }
-        attempts++;
-      }
-      state.currentShipIndex=SHIPS_CONFIG.length;
-      renderMyPlacement(); updateShipsList();
-      finishSetup();
-    }
-    function clearPlacement(){
-      state.myBoard = Array.from({length:10},()=>Array(10).fill(0));
-      state.currentShipIndex = 0;
-      state.isSetupPhase = true;
-      rotateBtn.classList.remove('hidden');
-      document.getElementById('shipsList').classList.remove('hidden');
-      renderMyPlacement(); updateShipsList();
-      // стерти приватну дошку на сервері (опціонально)
-    }
+        // --- Константи та DOM-елементи ---
+        const GAME_DURATION = 15 * 60 * 1000;
+        const SHIPS_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+        let playerId;
 
-    // ------------------- UI render (shots) -------------------
-    function paintBoards(){
-      // mine (ships are already painted)
-      // enemy: only hits/misses/sunk from public moves
-      // First clear hit/miss/sunk classes
-      [...myBoardEl.children, ...enemyBoardEl.children].forEach(c=>{
-        c.classList.remove('hit','miss','sunk');
-      });
-      // Apply moves
-      state.publicMoves.forEach(m=>{
-        // m.player зробив постріл у протилежне поле
-        const boardEl = (m.player===state.myNum) ? enemyBoardEl : myBoardEl;
-        const idx = m.row*10 + m.col;
-        boardEl.children[idx]?.classList.add(m.result);
-        if(m.sunkCells && Array.isArray(m.sunkCells)){
-          // sunkCells на полі захисника (targetPlayer)
-          const targetBoardEl = (m.targetPlayer===state.myNum) ? myBoardEl : enemyBoardEl;
-          m.sunkCells.forEach(pos=>{
-            const i = pos.row*10 + pos.col;
-            targetBoardEl.children[i]?.classList.add('sunk');
-          });
-        }
-      });
-    }
+        const myBoardEl = document.getElementById('myBoard');
+        const enemyBoardEl = document.getElementById('enemyBoard');
+        const statusEl = document.getElementById('status');
+        const rotateBtn = document.getElementById('rotateBtn');
+        const soundToggle = document.getElementById('soundToggle');
+        const timerEl = document.getElementById('timer');
 
-    function setTurnHighlights(){
-      const isMyTurn = state.meta?.currentTurn === state.myNum && state.meta?.gameStarted && !state.meta?.winner;
-      enemyBoardEl.classList.toggle('active-turn', !!isMyTurn);
-      myBoardEl.classList.toggle('active-turn', !!(!isMyTurn && state.meta?.gameStarted && !state.meta?.winner));
-      enemyBoardEl.classList.toggle('disabled', !isMyTurn);
-    }
-
-    function updateTimer(){
-      if(!state.meta?.createdAt) return;
-      const elapsed = Date.now() - state.meta.createdAt;
-      const remaining = Math.max(0, GAME_DURATION - elapsed);
-      const m = Math.floor(remaining/60000);
-      const s = Math.floor((remaining%60000)/1000).toString().padStart(2,'0');
-      timerEl.textContent = `⏱️ ${m}:${s}`;
-      if(remaining===0) cleanup("Час гри вичерпано!");
-    }
-
-    function updateStatus(){
-      if(state.meta?.winner){
-        statusEl.textContent = "Гру завершено!";
-        const isWin = state.meta.winner === state.myNum;
-        sounds.play(isWin? 'win' : 'sunk');
-        showMessage(isWin? "🎉 Перемога! 🎉" : "😥 Ви програли 😥");
-        return;
-      }
-      if(!state.meta?.gameStarted){
-        // Можемо показати готовність
-        const myReadyPath = `games/${state.code}/private/player${state.myNum}/ready`;
-        const enemyReadyPath = `games/${state.code}/private/player${getEnemyNum()}/ready`;
-        // Не читаємо ворожу приватну гілку — просто повідомлення:
-        const myReady = !!state._myReady;
-        statusEl.textContent = myReady ? "Очікуємо готовності суперника..." : "Розставте свої кораблі!";
-        return;
-      }
-      const myTurn = state.meta.currentTurn === state.myNum;
-      statusEl.textContent = myTurn ? "🎯 Ваш хід!" : "⏳ Хід суперника...";
-    }
-
-    // ------------------- Firebase wiring -------------------
-    async function authReady(){
-      if(auth.currentUser) return auth.currentUser;
-      await signInAnonymously(auth);
-      return new Promise(res=> onAuthStateChanged(auth, u=> u && res(u)));
-    }
-
-    function listenMeta(){
-      if(state.unsub.meta) state.unsub.meta();
-      const metaRef = ref(db, `games/${state.code}/meta`);
-      state.unsub.meta = onValue(metaRef, (snap)=>{
-        if(!snap.exists()){ cleanup("Гру було видалено або завершено."); return; }
-        const meta = snap.val();
-        if(typeof meta.createdAt === 'number' && (Date.now()-meta.createdAt>GAME_DURATION)) { cleanup("Час гри вичерпано!"); return; }
-        state.meta = meta;
-
-        // запустити/оновити таймер
-        if(state.meta?.createdAt && !state.visualTimer){
-          state.visualTimer = setInterval(updateTimer, 1000);
-          updateTimer();
-        }
-
-        if(meta.winner){
-          if(state.sessionTimer) clearTimeout(state.sessionTimer);
-          if(state.visualTimer) clearInterval(state.visualTimer);
-        }
-        setTurnHighlights(); updateStatus();
-      });
-    }
-
-    function listenMoves(){
-      if(state.unsub.moves) state.unsub.moves();
-      const movesRef = ref(db, `games/${state.code}/public/moves`);
-      state.publicMoves = [];
-      state.unsub.moves = onChildAdded(movesRef, (snap)=>{
-        const m = snap.val();
-        state.publicMoves.push({ id:snap.key, ...m });
-        // звуки
-        if(m.result==='hit') sounds.play('hit'); else if(m.result==='miss') sounds.play('miss');
-        if(m.sunkCells && lastSunkPainted < state.publicMoves.filter(x=>x.sunkCells).length){
-          sounds.play('sunk'); lastSunkPainted = state.publicMoves.filter(x=>x.sunkCells).length;
-        }
-        paintBoards(); setTurnHighlights();
-      });
-    }
-
-    function listenMyPrivate(){
-      if(state.unsub.myPrivate) state.unsub.myPrivate();
-      const myPrivRef = ref(db, `games/${state.code}/private/player${state.myNum}`);
-      state.unsub.myPrivate = onValue(myPrivRef, (snap)=>{
-        if(!snap.exists()) return;
-        const val = snap.val();
-        // збережемо ready локально для статусу
-        state._myReady = !!val.ready;
-      });
-    }
-
-    function listenShotRequests(){
-      // Захисник відповідає на постріли суперника (тимчасова схема без Cloud Functions)
-      if(state.unsub.shotReq) state.unsub.shotReq();
-      const reqRef = ref(db, `games/${state.code}/shotRequests`);
-      state.unsub.shotReq = onChildAdded(reqRef, async (snap)=>{
-        const req = snap.val(); const reqId = snap.key;
-        if(!req) return;
-        // Відповідає ЗАХИСНИК (target = this player), якщо shooter !== myNum і зараз хід стрільця
-        if(req.shooter === state.myNum) return;
-        // Чекаємо, поки meta підтягнеться
-        if(!state.meta || state.meta.currentTurn !== req.shooter || state.meta.winner) return;
-
-        // Прочитати власну приватну дошку
-        const myBoardSnap = await get(ref(db, `games/${state.code}/private/player${state.myNum}/board`));
-        const myBoard = myBoardSnap.val();
-        if(!myBoard) return;
-
-        const {row, col} = req;
-        const hit = myBoard[row]?.[col] > 0;
-        const result = hit ? 'hit' : 'miss';
-
-        // Перевірити "потоплено?"
-        let sunkCells=null;
-        if(hit){
-          const shipId = myBoard[row][col];
-          const allCells=[]; for(let r=0;r<10;r++) for(let c=0;c<10;c++) if(myBoard[r][c]===shipId) allCells.push({row:r,col:c});
-          // Чи всі влучання по цьому кораблю вже зроблені?
-          // Нам потрібні всі попередні попадання суперника по моєму полю:
-          const enemyHits = state.publicMoves.filter(m=> m.player===req.shooter && m.result==='hit' && m.targetPlayer===state.myNum);
-          const hitSet = new Set(enemyHits.map(m=> `${m.row},${m.col}`));
-          const allHit = allCells.every(p=> hitSet.has(`${p.row},${p.col}`) || (p.row===row && p.col===col));
-          if(allHit) sunkCells = allCells;
-        }
-
-        // Записати результат ходу в public/moves
-        const moveRef = push(ref(db, `games/${state.code}/public/moves`));
-        await set(moveRef, {
-          player: req.shooter, row, col, result,
-          targetPlayer: state.myNum,
-          sunkCells: sunkCells || null,
-          createdAt: Date.now()
-        });
-
-        // Перевірити перемогу (чи потоплено всі мої кораблі)
-        let winner = null;
-        if(hit){
-          // рахуємо всі клітини кораблів на моєму полі
-          const totalShipCells = myBoard.flat().filter(v=> v>0).length;
-          // усі попадання суперника по моєму полю (включно з поточним)
-          const enemyAllHits = state.publicMoves.filter(m=> m.player===req.shooter && m.result==='hit' && m.targetPlayer===state.myNum).length + 1;
-          if(enemyAllHits === totalShipCells) winner = req.shooter;
-        }
-
-        // Оновити чергу ходу/переможця (транзакційно мінімізовано)
-        await runTransaction(ref(db, `games/${state.code}/meta`), (meta)=>{
-          if(!meta || meta.winner) return meta;
-          if(meta.currentTurn !== req.shooter) return meta; // запобігання гонкам
-          meta.currentTurn = (result==='miss') ? state.myNum : req.shooter;
-          if(winner) meta.winner = winner;
-          return meta;
-        });
-
-        // Позначити запит обробленим (очищення)
-        await remove(ref(db, `games/${state.code}/shotRequests/${reqId}`));
-      });
-    }
-
-    // ------------------- Flow -------------------
-    function cleanup(msg){
-      Object.values(state.unsub).forEach(u=> u && u());
-      state.unsub = { meta:null, moves:null, myPrivate:null, shotReq:null };
-      if(state.sessionTimer) clearTimeout(state.sessionTimer);
-      if(state.visualTimer) clearInterval(state.visualTimer);
-      enemyBoardEl.classList.add('disabled'); myBoardEl.classList.add('disabled');
-      statusEl.textContent="Гру завершено!"; timerEl.textContent='';
-      if(msg) showMessage(msg);
-    }
-
-    window.addEventListener('beforeunload',(e)=>{
-      if(state.meta && !state.meta.winner && state.meta.gameStarted){
-        e.preventDefault(); e.returnValue='Гра ще не завершена. Вийти?'; return e.returnValue;
-      }
-    });
-
-    // Menu
-    window.createGame = async function(){
-      showLoading();
-      try{
-        initAudio();
-        const user = await authReady();
-        state.uid = user.uid;
-        state.code = Math.floor(100000 + Math.random()*900000).toString();
-        state.myNum = 1;
-
-        const initialGame = {
-          meta:{
-            player1Id: state.uid, player2Id: null,
-            currentTurn:1, gameStarted:false, winner:null, createdAt: serverTimestamp()
-          },
-          public:{ moves:{} },
-          private:{
-            player1:{ board:null, ready:false },
-            player2:{ board:null, ready:false }
-          },
-          shotRequests:{}
+        // --- Рефакторинг: Єдиний об'єкт стану гри ---
+        const gameState = {
+            code: '', playerNumber: 0, localData: null, isHorizontal: true, currentShipIndex: 0,
+            myBoard: Array(10).fill(null).map(() => Array(10).fill(0)),
+            isSetupPhase: true, unsubscribeListener: null, sessionTimer: null, visualTimer: null,
         };
-        await set(ref(db, `games/${state.code}`), initialGame);
+        
+        // --- Допоміжні функції ---
+        const getEnemyPlayerNum = () => gameState.playerNumber === 1 ? 2 : 1;
+        const getMyPlayerData = () => gameState.localData?.[`player${gameState.playerNumber}`];
+        const showLoading = () => document.getElementById('loading').classList.add('show');
+        const hideLoading = () => document.getElementById('loading').classList.remove('show');
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        };
 
-        // session timer
-        if(state.sessionTimer) clearTimeout(state.sessionTimer);
-        state.sessionTimer = setTimeout(()=> cleanup("Час гри вичерпано!"), GAME_DURATION);
+        // --- Основна логіка ---
+        
+        function cleanupGame(message) {
+            if (gameState.unsubscribeListener) {
+                gameState.unsubscribeListener();
+                gameState.unsubscribeListener = null;
+            }
+            if (gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+            if (gameState.visualTimer) clearInterval(gameState.visualTimer);
+            
+            if(gameState.playerNumber === 1 && gameState.code) {
+                remove(ref(db, `games/${gameState.code}`));
+            }
 
-        showGameArea(); attachCoreListeners();
-      }catch(err){
-        console.error(err); showMenuMessage("Не вдалося створити гру. Перевірте з'єднання.");
-      }finally{ hideLoading(); }
-    };
-
-    window.joinGame = async function(){
-      showLoading();
-      try{
-        initAudio();
-        const user = await authReady();
-        state.uid = user.uid;
-        const raw = document.getElementById('joinCode').value;
-        const code = raw.replace(/[^0-9]/g,'');
-        if(code.length!==6) return showMenuMessage("Код має складатися з 6 цифр!");
-
-        const gameRef = ref(db, `games/${code}`);
-        const snap = await get(gameRef);
-        if(!snap.exists()) return showMenuMessage('Гра не знайдена!');
-        const data = snap.val();
-        const createdAt = data?.meta?.createdAt;
-        if(typeof createdAt === 'number' && (Date.now()-createdAt>GAME_DURATION)) return showMenuMessage('Термін дії гри минув!');
-
-        const p1 = data?.meta?.player1Id, p2 = data?.meta?.player2Id;
-        if(p1 === state.uid) return showMenuMessage("Ви не можете приєднатись до власної гри!");
-        if(p2 && p2 !== state.uid) return showMenuMessage('Кімната вже зайнята!');
-
-        state.code = code; state.myNum = 2;
-        await update(ref(db, `games/${state.code}/meta`), { player2Id: state.uid });
-
-        showGameArea(); attachCoreListeners();
-      }catch(err){
-        console.error(err); showMenuMessage("Помилка приєднання. Перевірте код та з'єднання.");
-      }finally{ hideLoading(); }
-    };
-
-    function attachCoreListeners(){
-      listenMeta(); listenMoves(); listenMyPrivate(); listenShotRequests();
-      // запускаємо відлік після створення/приєднання
-      if(!state.visualTimer) { state.visualTimer = setInterval(updateTimer,1000); }
-      createBoardDOM('myBoard', handleMyBoardClick);
-      createBoardDOM('enemyBoard', handleEnemyBoardClick);
-      renderMyPlacement(); updateShipsList();
-    }
-
-    async function finishSetup(){
-      state.isSetupPhase=false;
-      rotateBtn.classList.add('hidden');
-      document.getElementById('shipsList').classList.add('hidden');
-      await update(ref(db, `games/${state.code}/private/player${state.myNum}`), {
-        board: state.myBoard, ready:true
-      });
-
-      // Якщо обидва готові — старт гри (робить Player1 транзакційно)
-      await runTransaction(ref(db, `games/${state.code}/meta`), (meta)=>{
-        if(!meta) return meta;
-        // Ми не читаємо приватні ready ворога. Ставимо gameStarted=true лише якщо:
-        //   - ми Player1 і player2Id вже встановлено
-        if(meta.gameStarted) return meta;
-        if(state.myNum===1 && meta.player2Id){
-          meta.gameStarted = true;
+            showMessage(message || "Гру завершено.");
+            enemyBoardEl.classList.add('disabled');
+            myBoardEl.classList.add('disabled');
+            statusEl.textContent = "Гру завершено!";
+            timerEl.textContent = '';
         }
-        return meta;
-      });
-      setTurnHighlights(); updateStatus();
-    }
 
-    function handleMyBoardClick(row,col){
-      if(state.currentShipIndex>=SHIPS_CONFIG.length) return;
-      placeShipAt(row,col);
-    }
+        window.addEventListener('beforeunload', (e) => {
+            if (gameState.localData && !gameState.localData.winner && gameState.localData.gameStarted) {
+                e.preventDefault();
+                e.returnValue = 'Гра ще не завершена. Ви впевнені, що хочете вийти?';
+                return e.returnValue;
+            }
+            if (gameState.unsubscribeListener) gameState.unsubscribeListener();
+        });
+        
+        function showMenuMessage(message) {
+            const msgEl = document.getElementById('menuMessage');
+            msgEl.textContent = message;
+            setTimeout(() => { msgEl.textContent = ''; }, 3000);
+        }
 
-    async function handleEnemyBoardClick(row,col){
-      // Стріляє ТІЛЬКИ той, чий хід; установка завершена; гра стартувала
-      if(!state.meta || state.meta.winner || !state.meta.gameStarted || state.isSetupPhase) return;
-      if(state.meta.currentTurn !== state.myNum) return;
+        window.createGame = async function() {
+            showLoading();
+            try {
+                initAudio();
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+                playerId = auth.currentUser.uid;
+                console.log("Успішно автентифіковано. UID:", playerId);
 
-      // Заборона ду́бля пострілу в ту ж клітину: перевіримо по publicMoves
-      const dup = state.publicMoves.some(m=> m.player===state.myNum && m.row===row && m.col===col);
-      if(dup) return;
+                gameState.code = Math.floor(100000 + Math.random() * 900000).toString();
+                gameState.playerNumber = 1;
 
-      // Формуємо "запит пострілу", відповідь зробить захисник (його клієнт)
-      const reqRef = push(ref(db, `games/${state.code}/shotRequests`));
-      await set(reqRef, {
-        shooter: state.myNum, row, col, createdAt: Date.now()
-      });
+                const initialGameState = {
+                    player1: { id: playerId, ready: false, board: null },
+                    player2: { id: null, ready: false, board: null },
+                    currentTurn: 1, gameStarted: false, moves: [], winner: null,
+                    createdAt: serverTimestamp() 
+                };
+                
+                console.log(`Спроба створити гру з кодом ${gameState.code}...`);
+                await set(ref(db, `games/${gameState.code}`), initialGameState);
+                console.log("Гра успішно створена в базі даних.");
 
-      // UI підказка — результат оголосить listener moves
-      statusEl.textContent = 'Постріл надіслано...';
-    }
+                showGameArea();
+                listenToGame();
+                
+                if (gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+                gameState.sessionTimer = setTimeout(() => cleanupGame("Час гри вичерпано!"), GAME_DURATION);
+            } catch (error) {
+                console.error("Помилка створення гри:", error);
+                if (String(error).includes('PERMISSION_DENIED')) {
+                    showMenuMessage("Відмовлено в доступі. Налаштуйте правила безпеки Firebase.");
+                } else {
+                    showMenuMessage("Не вдалося створити гру. Перевірте з'єднання.");
+                }
+            } finally {
+                hideLoading();
+            }
+        };
 
-    // --------- Utility: Surrender ---------
-    async function surrender(){
-      if(!state.meta || state.meta.winner) return;
-      await update(ref(db, `games/${state.code}/meta`), { winner: getEnemyNum() });
-    }
+        window.joinGame = async function() {
+            showLoading();
+            try {
+                initAudio();
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+                playerId = auth.currentUser.uid;
+                console.log("Успішно автентифіковано. UID:", playerId);
 
-    // --------- Clipboard for code ----------
-    document.getElementById('gameCodeDisplay').onclick = copyCode;
-    document.getElementById('gameCodeDisplay').addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') { e.preventDefault(); copyCode(); } });
-    function copyCode(){
-      if(!state.code) return;
-      navigator.clipboard.writeText(state.code).then(()=>{
-        const el=document.getElementById('gameCodeDisplay');
-        const orig=el.innerHTML; el.innerHTML='Скопійовано!'; setTimeout(()=> el.innerHTML=orig,1200);
-      });
-    }
+                const codeInput = document.getElementById('joinCode').value;
+                const sanitizedCode = codeInput.replace(/[^0-9]/g, '');
 
-    // --------- Enemy hover UX ----------
-    enemyBoardEl.addEventListener('mouseover', e=>{
-      if(e.target.classList.contains('cell')){
-        const cell=e.target;
-        if(!cell.classList.contains('hit') && !cell.classList.contains('miss')) cell.classList.add('valid-shot');
-      }
-    });
-    enemyBoardEl.addEventListener('mouseout', e=>{
-      if(e.target.classList.contains('cell')) e.target.classList.remove('valid-shot');
-    });
+                if (sanitizedCode.length !== 6) return showMenuMessage("Код має складатися з 6 цифр!");
+                
+                const gameRef = ref(db, `games/${sanitizedCode}`);
+                const snapshot = await get(gameRef);
 
-    // --------- Sound toggle ----------
-    const soundToggle=document.getElementById('soundToggle');
-    function refreshSoundIcon(){
-      soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-      soundToggle.title     = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
-    }
-    refreshSoundIcon();
-    soundToggle.addEventListener('click', ()=>{
-      isMuted=!isMuted; localStorage.setItem('battleshipMuted', isMuted);
-      refreshSoundIcon(); if(!isMuted) initAudio();
-    });
+                if (!snapshot.exists()) return showMenuMessage('Гра не знайдена!');
+                
+                const gameData = snapshot.val();
+                
+                if (Date.now() - gameData.createdAt > GAME_DURATION) return showMenuMessage('Термін дії гри минув!');
+                if (gameData.player1.id === playerId) return showMenuMessage("Ви не можете приєднатись до власної гри!");
+                if (gameData.player2.id && gameData.player2.id !== playerId) return showMenuMessage('Кімната вже зайнята!');
+                
+                gameState.code = sanitizedCode;
+                gameState.playerNumber = 2;
+                await update(ref(db, `games/${gameState.code}/player2`), { id: playerId });
+                showGameArea();
+                listenToGame();
+            } catch(error) {
+                console.error("Помилка приєднання до гри:", error);
+                if (String(error).includes('PERMISSION_DENIED')) {
+                     showMenuMessage("Відмовлено в доступі. Перевірте правила безпеки.");
+                } else {
+                    showMenuMessage("Помилка приєднання. Перевірте код та з'єднання.");
+                }
+            } finally {
+                hideLoading();
+            }
+        };
 
-    // Init boards for menu view
-    createBoardDOM('myBoard', handleMyBoardClick);
-    createBoardDOM('enemyBoard', handleEnemyBoardClick);
-    updateShipsList();
+        function listenToGame() {
+            if (gameState.unsubscribeListener) gameState.unsubscribeListener();
 
-    // --------- Global hotkeys (R rotate) ---------
-    document.addEventListener('keydown', (e)=>{
-      if(e.key.toLowerCase()==='r'){ rotateShip(); }
-    });
+            const gameRef = ref(db, `games/${gameState.code}`);
+            gameState.unsubscribeListener = onValue(gameRef, (snapshot) => {
+                if (!snapshot.exists()) return cleanupGame("Гру було видалено або вона завершилась.");
+                
+                const gameData = snapshot.val();
+                if (gameData.createdAt && (Date.now() - gameData.createdAt > GAME_DURATION)) return cleanupGame("Час гри вичерпано!");
+                
+                gameState.localData = gameData;
 
-    // Expose helpers (needed by buttons)
-    window.rotateShip   = rotateShip;
-    window.autoPlace    = autoPlace;
-    window.clearPlacement = clearPlacement;
-    window.surrender    = surrender;
+                const { player1: p1, player2: p2, gameStarted } = gameData;
+                if (p1?.id && p2?.id && !gameStarted && p1.ready && p2.ready && gameState.playerNumber === 1) {
+                    update(ref(db, `games/${gameState.code}`), { gameStarted: true });
+                }
+                updateUI();
+            });
+        }
+        
+        function updateTimer() {
+            if (!gameState.localData?.createdAt) return;
+            const elapsed = Date.now() - gameState.localData.createdAt;
+            const remaining = Math.max(0, GAME_DURATION - elapsed);
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
-  </script>
+        function updateUI() {
+            if (!gameState.localData) return;
+            
+            if (gameState.localData.createdAt && !gameState.visualTimer) {
+                gameState.visualTimer = setInterval(updateTimer, 1000);
+                updateTimer();
+            }
+
+            const isMyTurn = gameState.localData.currentTurn === gameState.playerNumber;
+            const myData = getMyPlayerData();
+            const enemyData = gameState.localData?.[`player${getEnemyPlayerNum()}`];
+            
+            if (gameState.localData.winner) {
+                if(gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
+                if(gameState.visualTimer) clearInterval(gameState.visualTimer);
+
+                if(!document.getElementById('messageOverlay').style.display || document.getElementById('messageOverlay').style.display === 'none') {
+                    sounds.play(gameState.localData.winner === gameState.playerNumber ? 'win' : 'sunk');
+                }
+                gameState.isSetupPhase = false;
+                showMessage(gameState.localData.winner === gameState.playerNumber ? "🎉 Перемога! 🎉" : "😥 Ви програли 😥");
+
+                 enemyBoardEl.classList.remove('active-turn');
+                 myBoardEl.classList.remove('active-turn');
+                 statusEl.textContent = "Гру завершено!";
+            } else if (gameState.localData.gameStarted) {
+                gameState.isSetupPhase = false;
+                rotateBtn.classList.add('hidden');
+                document.getElementById('shipsList').classList.add('hidden');
+                statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
+                enemyBoardEl.classList.toggle('active-turn', isMyTurn);
+                myBoardEl.classList.toggle('active-turn', !isMyTurn);
+            } else {
+                if (!enemyData?.id) statusEl.textContent = "Очікування суперника...";
+                else if (myData?.ready) statusEl.textContent = "Очікуємо готовності суперника...";
+                else statusEl.textContent = "Розставте свої кораблі!";
+            }
+            renderBoards();
+        }
+        
+        function renderBoards() {
+            const myBoardToRender = getMyPlayerData()?.board || gameState.myBoard;
+            
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    myBoardEl.children[r * 10 + c].className = `cell ${myBoardToRender[r][c] > 0 ? 'ship' : ''}`;
+                }
+            }
+            
+            const moves = gameState.localData.moves ? Object.values(gameState.localData.moves) : [];
+            const { sunkShips } = processMoves(moves);
+
+            moves.forEach(move => {
+                const boardEl = move.player === gameState.playerNumber ? enemyBoardEl : myBoardEl;
+                boardEl.children[move.row * 10 + move.col].classList.add(move.result);
+            });
+            
+            if (sunkShips.length > lastSunkCount) {
+                sounds.play('sunk');
+                lastSunkCount = sunkShips.length;
+            }
+            
+            sunkShips.forEach(ship => {
+                const boardEl = ship.playerNum === gameState.playerNumber ? myBoardEl : enemyBoardEl;
+                ship.cells.forEach(pos => {
+                    boardEl.children[pos.row * 10 + pos.col].classList.add('sunk');
+                });
+            });
+        }
+        
+        function processMoves(moves) {
+            let sunkShips = [];
+            const { player1, player2 } = gameState.localData;
+            if (!player1?.board || !player2?.board) return { sunkShips };
+            
+            const p1_hits = moves.filter(m => m.player === 1 && m.result === 'hit');
+            const p2_hits = moves.filter(m => m.player === 2 && m.result === 'hit');
+
+            const shipIdsOnBoard1 = new Set(player1.board.flat().filter(id => id > 0));
+            shipIdsOnBoard1.forEach(id => {
+                if (isShipSunk(id, player1.board, p2_hits)) {
+                    sunkShips.push({ playerNum: 1, cells: getShipCells(id, player1.board) });
+                }
+            });
+
+            const shipIdsOnBoard2 = new Set(player2.board.flat().filter(id => id > 0));
+            shipIdsOnBoard2.forEach(id => {
+                if (isShipSunk(id, player2.board, p1_hits)) {
+                    sunkShips.push({ playerNum: 2, cells: getShipCells(id, player2.board) });
+                }
+            });
+            return { sunkShips };
+        }
+
+        function showGameArea() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('displayCode').textContent = gameState.code;
+        }
+        
+        const debouncedHandleEnemyClick = debounce(handleEnemyBoardClick, 300);
+
+        function createBoardDOM(boardId, clickHandler) {
+            const boardEl = document.getElementById(boardId);
+            boardEl.innerHTML = '';
+            for (let i = 0; i < 100; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const row = Math.floor(i / 10);
+                const col = i % 10;
+                
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('aria-label', `Клітинка ${String.fromCharCode(65 + col)}${row + 1}`);
+                cell.tabIndex = boardId === 'enemyBoard' ? 0 : -1;
+                
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                const currentClickHandler = boardId === 'enemyBoard' ? debouncedHandleEnemyClick : clickHandler;
+                cell.addEventListener('click', () => currentClickHandler(row, col));
+                
+                cell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        currentClickHandler(row, col);
+                    }
+                });
+                
+                if (boardId === 'myBoard') {
+                    cell.addEventListener('mouseenter', () => previewShip(row, col));
+                    cell.addEventListener('mouseleave', clearPreview);
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+        
+        function showMessage(msg) {
+             const overlay = document.getElementById('messageOverlay');
+             if (overlay.style.display === 'flex') return;
+             document.getElementById('messageText').innerHTML = msg;
+             overlay.style.display = 'flex';
+        }
+
+        function handleMyBoardClick(row, col) {
+            if (!gameState.isSetupPhase || gameState.currentShipIndex >= SHIPS_CONFIG.length) return;
+            const size = SHIPS_CONFIG[gameState.currentShipIndex];
+            if (canPlaceShip(row, col, size, gameState.isHorizontal, gameState.myBoard)) {
+                for (let i = 0; i < size; i++) {
+                    const r = gameState.isHorizontal ? row : row + i;
+                    const c = gameState.isHorizontal ? col + i : col;
+                    gameState.myBoard[r][c] = gameState.currentShipIndex + 1;
+                }
+                gameState.currentShipIndex++;
+                updateShipsList();
+                renderMyPlacement();
+                if (gameState.currentShipIndex >= SHIPS_CONFIG.length) finishSetup();
+            }
+        }
+        
+        function renderMyPlacement() {
+            for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+                myBoardEl.children[r * 10 + c].classList.toggle('ship', gameState.myBoard[r][c] > 0);
+            }
+        }
+
+        function previewShip(row, col) {
+            if (!gameState.isSetupPhase || gameState.currentShipIndex >= SHIPS_CONFIG.length) return;
+            clearPreview();
+            const size = SHIPS_CONFIG[gameState.currentShipIndex];
+            const canPlace = canPlaceShip(row, col, size, gameState.isHorizontal, gameState.myBoard);
+            for (let i = 0; i < size; i++) {
+                const r = gameState.isHorizontal ? row : row + i;
+                const c = gameState.isHorizontal ? col + i : col;
+                if (r < 10 && c < 10) {
+                    const cell = myBoardEl.children[r * 10 + c];
+                    if (!cell.classList.contains('ship')) cell.classList.add(canPlace ? 'preview-ok' : 'preview-bad');
+                }
+            }
+        }
+
+        function clearPreview() {
+            myBoardEl.querySelectorAll('.preview-ok, .preview-bad').forEach(c => c.classList.remove('preview-ok', 'preview-bad'));
+        }
+        
+        window.rotateShip = () => { gameState.isHorizontal = !gameState.isHorizontal; };
+
+        function canPlaceShip(row, col, size, horizontal, board) {
+            for (let i = 0; i < size; i++) {
+                const r = horizontal ? row : row + i;
+                const c = horizontal ? col + i : col;
+                if (r >= 10 || c >= 10) return false;
+                for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && board[nr][nc] !== 0) return false;
+                }
+            }
+            return true;
+        }
+        
+        function updateShipsList() {
+            let shipsToPlace = SHIPS_CONFIG.slice(gameState.currentShipIndex);
+            if (shipsToPlace.length === 0) {
+                 document.getElementById('shipsList').innerHTML = "✅ Всі кораблі розставлено!";
+                 return;
+            }
+            const counts = shipsToPlace.reduce((acc, size) => ({...acc, [size]: (acc[size] || 0) + 1 }), {});
+            document.getElementById('shipsList').innerHTML = [4,3,2,1].map(s => `<div><i class="fa-solid fa-ship"></i> x${s}: ${counts[s] || 0}</div>`).join('');
+        }
+
+        async function finishSetup() {
+            gameState.isSetupPhase = false;
+            rotateBtn.classList.add('hidden');
+            await update(ref(db, `games/${gameState.code}/player${gameState.playerNumber}`), {
+                board: gameState.myBoard,
+                ready: true
+            });
+        }
+
+        async function handleEnemyBoardClick(row, col) {
+            if (!gameState.localData || gameState.localData.winner || !gameState.localData.gameStarted || gameState.isSetupPhase || gameState.localData.currentTurn !== gameState.playerNumber) return;
+
+            const moves = gameState.localData.moves ? Object.values(gameState.localData.moves) : [];
+            if (moves.some(m => m.row === row && m.col === col && m.player === gameState.playerNumber)) return;
+
+            const enemyBoard = gameState.localData[`player${getEnemyPlayerNum()}`].board;
+            const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
+            
+            sounds.play(result);
+            statusEl.textContent = result === 'hit' ? '🎯 Влучив! Стріляйте ще!' : '❌ Промах!';
+            
+            const newMove = { player: gameState.playerNumber, row, col, result };
+            const nextTurn = result === 'miss' ? getEnemyPlayerNum() : gameState.playerNumber;
+            const newMoves = [...moves, newMove];
+
+            const updatedData = { currentTurn: nextTurn, moves: newMoves };
+            
+            const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
+            const hitsOnEnemy = newMoves.filter(m => m.player === gameState.playerNumber && m.result === 'hit').length;
+            if (hitsOnEnemy === totalShipCells) updatedData.winner = gameState.playerNumber;
+
+            await update(ref(db, `games/${gameState.code}`), updatedData);
+        }
+        
+        function getShipCells(shipId, board) {
+            const cells = [];
+            for (let r=0; r<10; r++) for (let c=0; c<10; c++) if (board[r][c] === shipId) cells.push({row:r, col:c});
+            return cells;
+        }
+        
+        function isShipSunk(shipId, board, hitMoves) {
+            const shipCells = getShipCells(shipId, board);
+            return shipCells.every(sc => hitMoves.some(h => h.row === sc.row && h.col === sc.col));
+        }
+        
+        // --- Ініціалізація ---
+        document.getElementById('gameCodeDisplay').onclick = () => {
+            navigator.clipboard.writeText(gameState.code).then(() => {
+                const el = document.getElementById('gameCodeDisplay');
+                const originalText = el.innerHTML;
+                el.innerHTML = 'Скопійовано!';
+                setTimeout(() => { el.innerHTML = originalText; }, 1500);
+            });
+        };
+        
+        enemyBoardEl.addEventListener('mouseover', e => {
+            if (e.target.classList.contains('cell')) {
+                const cell = e.target;
+                if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) cell.classList.add('valid-shot');
+            }
+        });
+        enemyBoardEl.addEventListener('mouseout', e => {
+             if (e.target.classList.contains('cell')) e.target.classList.remove('valid-shot');
+        });
+        
+        soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+        soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
+        soundToggle.addEventListener('click', () => {
+            isMuted = !isMuted;
+            localStorage.setItem('battleshipMuted', isMuted);
+            soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
+            if(!isMuted) initAudio();
+        });
+
+        createBoardDOM('myBoard', handleMyBoardClick);
+        createBoardDOM('enemyBoard', handleEnemyBoardClick);
+        updateShipsList();
+
+    </script>
 </body>
 </html>
+
