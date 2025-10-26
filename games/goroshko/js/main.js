@@ -6,7 +6,10 @@
 import { Game } from './game.js';
 import { soundEngine } from './sound.js';
 import { authManager } from './auth.js';
-import { storage } from './storage.js'; // Імпортуємо storage
+
+const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+  ? (cb) => window.requestIdleCallback(cb)
+  : (cb) => setTimeout(() => cb(), 1200);
 
 const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
   ? (cb) => window.requestIdleCallback(cb)
