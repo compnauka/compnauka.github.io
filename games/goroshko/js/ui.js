@@ -46,6 +46,39 @@ export class UIManager {
       }
 
     }
+
+    /**
+     * Оновлення блоку досягнень
+     * @param {Object} stats - Статистика прогресу
+     */
+    updateAchievements(stats = {}) {
+      const mapping = [
+        ['achCompleted', 'totalCompleted'],
+        ['achAttempts', 'totalAttempts'],
+        ['achGold', 'goldMedals'],
+        ['achSilver', 'silverMedals'],
+        ['achBronze', 'bronzeMedals']
+      ];
+
+      let hasData = false;
+
+      mapping.forEach(([elementKey, statKey]) => {
+        const el = this.elements[elementKey];
+        if (!el) return;
+
+        const value = stats?.[statKey];
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          el.textContent = value;
+          hasData = true;
+        } else {
+          el.textContent = '0';
+        }
+      });
+
+      if (this.elements.achievementList) {
+        this.elements.achievementList.classList.toggle('opacity-60', !hasData);
+      }
+    }
   
     /**
      * Показ повідомлення

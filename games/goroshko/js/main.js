@@ -7,13 +7,9 @@ import { Game } from './game.js';
 import { soundEngine } from './sound.js';
 import { authManager } from './auth.js';
 
-const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+const scheduleIdleTask = (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function')
   ? (cb) => window.requestIdleCallback(cb)
-  : (cb) => setTimeout(() => cb(), 1200);
-
-const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
-  ? (cb) => window.requestIdleCallback(cb)
-  : (cb) => setTimeout(() => cb(), 1200);
+  : (cb) => setTimeout(cb, 1200);
 
 /**
  * Головна функція ініціалізації
@@ -40,6 +36,14 @@ async function init() {
     armor: document.getElementById('armor'),
     health: document.getElementById('health'),
     parGold: document.getElementById('parGold'),
+
+    // Досягнення
+    achievementList: document.getElementById('achievementList'),
+    achCompleted: document.getElementById('achCompleted'),
+    achAttempts: document.getElementById('achAttempts'),
+    achGold: document.getElementById('achGold'),
+    achSilver: document.getElementById('achSilver'),
+    achBronze: document.getElementById('achBronze'),
 
     // Бій
     battleScene: document.getElementById('battleScene'),
@@ -220,7 +224,7 @@ function scheduleWarmupTasks() {
 
   const connection = (typeof navigator !== 'undefined' && navigator.connection) || null;
 
-  idleScheduler(async () => {
+  scheduleIdleTask(async () => {
     const tasks = [];
 
     if (!connection || !connection.saveData) {

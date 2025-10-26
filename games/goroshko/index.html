@@ -35,7 +35,7 @@ tailwind.config = {
 <link rel="prefetch" href="algorithms.html" as="document" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen font-sans">
+<body class="bg-gradient-to-br from-sky-100 via-indigo-100 to-blue-100 min-h-screen font-sans text-slate-800">
 
 <div id="globalLoader" class="loading-screen" role="status" aria-live="polite">
   <div class="loading-spinner" aria-hidden="true"></div>
@@ -44,91 +44,113 @@ tailwind.config = {
 </div>
 
 <div class="game-shell flex flex-col min-h-screen w-full">
-  <header class="game-header w-full">
-    <div class="w-full px-3 sm:px-6">
-      <div class="bg-white/90 backdrop-blur rounded-2xl p-3 md:p-4 shadow-2xl w-full mt-2">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="flex-1 text-center lg:text-left">
-            <h1 class="font-display text-2xl xs:text-3xl md:text-4xl text-yellow-500 drop-shadow-lg leading-tight">🦸 Котигорошко 🐉</h1>
-            <p class="text-gray-700 text-xs xs:text-sm md:text-base mt-1">Створи алгоритм і здолай монстрів!</p>
-            <div class="flex gap-3 mt-2 justify-center lg:justify-start">
-              <a href="story.html" class="text-blue-600 hover:text-blue-800 text-sm underline">📖 Легенда</a>
-              <a href="algorithms.html" class="text-blue-600 hover:text-blue-800 text-sm underline">🧠 Алгоритми</a>
+  <header class="game-header">
+    <div class="game-header__inner">
+      <div class="game-header__brand">
+        <span class="game-header__logo" aria-hidden="true">🐱</span>
+        <div>
+          <h1 class="game-header__title">Котигорошко</h1>
+          <p class="game-header__subtitle">Навчальна гра з алгоритмами</p>
+        </div>
+      </div>
+
+      <nav class="game-nav" aria-label="Основна навігація">
+        <a href="story.html" class="game-nav__link">Легенда</a>
+        <a href="algorithms.html" class="game-nav__link">Алгоритми</a>
+        <a href="leaderboard.html" class="game-nav__link">Рейтинг</a>
+      </nav>
+
+      <div class="game-header__actions">
+        <section class="level-info" aria-label="Поточний рівень">
+          <div class="level-info__top">
+            <div class="level-info__heading">
+              <span class="level-info__label">Рівень</span>
+              <span class="level-info__number" id="levelNum">1</span>
             </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-5">
-            <section class="level-info bg-gradient-to-br from-purple-600 to-indigo-700 p-2.5 md:p-3 rounded-2xl text-white shadow-lg">
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <h2 class="font-display text-lg md:text-2xl">🏰 Рівень <span id="levelNum">1</span></h2>
-                <div class="flex gap-1.5">
-                  <button id="soundToggle" class="btn-3d text-white rounded-lg p-1.5 text-base bg-white/20 hover:bg-white/30" aria-pressed="false" aria-label="Перемкнути звук" style="--shadow-color:rgba(0,0,0,.3)">
-                    <i class="fas fa-volume-up w-4 h-4" id="soundIcon" aria-hidden="true"></i>
-                  </button>
-                  <button id="fullscreenToggle" class="btn-3d text-white rounded-lg p-1.5 text-base bg-white/20 hover:bg-white/30" aria-label="Повноекранний режим" style="--shadow-color:rgba(0,0,0,.3)">
-                    <i class="fas fa-expand w-4 h-4" id="fullscreenIcon" aria-hidden="true"></i>
-                  </button>
-                </div>
-              </div>
-              <p class="level-desc text-xs md:text-sm mb-2 text-center" id="levelDesc"></p>
-              <div class="stats-bar flex gap-1.5 justify-center flex-wrap text-xs md:text-sm">
-                <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">⚔️ <span id="damage">0</span></div>
-                <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">🛡️ <span id="armor">0</span></div>
-                <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">❤️ <span id="health">100</span></div>
-                <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1 font-display">🎯 <span id="parGold">?</span>🥇</div>
-              </div>
-            </section>
-
-            <div class="flex flex-col items-center gap-y-2 w-full sm:w-auto">
-              <div id="userProfile" class="hidden bg-white/80 backdrop-blur rounded-xl p-2 shadow-md w-full">
-                <div class="flex items-center gap-2">
-                  <div id="userAvatar" class="text-2xl">👨‍💻</div>
-                  <div>
-                    <p id="userName" class="font-bold text-gray-800 text-sm leading-tight">Гравець</p>
-                    <div class="flex gap-2 text-xs">
-                      <a href="leaderboard.html" class="text-blue-600 hover:underline">🏆 Рейтинг</a>
-                      <button id="logoutBtn" class="text-red-600 hover:underline hidden">Вийти</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button id="loginBtn" class="btn-3d bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm w-full [--shadow-color:theme(colors.green.700)] hover:bg-green-400">
-                <i class="fas fa-sign-in-alt mr-1"></i>Увійти
+            <div class="level-info__toggles">
+              <button id="soundToggle" class="level-info__toggle btn-3d" aria-pressed="false" aria-label="Перемкнути звук" style="--shadow-color:rgba(25,27,86,.5)">
+                <i class="fas fa-volume-up" id="soundIcon" aria-hidden="true"></i>
+              </button>
+              <button id="fullscreenToggle" class="level-info__toggle btn-3d" aria-label="Повноекранний режим" style="--shadow-color:rgba(25,27,86,.5)">
+                <i class="fas fa-expand" id="fullscreenIcon" aria-hidden="true"></i>
               </button>
             </div>
           </div>
+          <dl class="level-info__stats">
+            <div class="level-info__stat">
+              <dt aria-hidden="true">⚔️</dt>
+              <dd id="damage">0</dd>
+            </div>
+            <div class="level-info__stat">
+              <dt aria-hidden="true">🛡️</dt>
+              <dd id="armor">0</dd>
+            </div>
+            <div class="level-info__stat">
+              <dt aria-hidden="true">❤️</dt>
+              <dd id="health">100</dd>
+            </div>
+            <div class="level-info__stat">
+              <dt aria-hidden="true">🎯</dt>
+              <dd id="parGold">?</dd>
+            </div>
+          </dl>
+        </section>
+
+        <div class="game-header__profile">
+          <div id="userProfile" class="game-header__user hidden">
+            <div class="game-header__user-avatar" id="userAvatar" aria-hidden="true">👨‍💻</div>
+            <div>
+              <p id="userName" class="game-header__user-name">Гравець</p>
+              <button id="logoutBtn" class="game-header__logout hidden">Вийти</button>
+            </div>
+          </div>
+
+          <button id="loginBtn" class="game-header__login btn-3d">
+            <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+            <span>Увійти</span>
+          </button>
         </div>
-        <nav class="header-links" aria-label="Додаткові сторінки">
-          <a href="story.html" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-semibold">📖 Легенда</a>
-          <a href="algorithms.html" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-semibold">🧠 Алгоритми</a>
-        </nav>
       </div>
     </div>
   </header>
 
   <main class="game-main flex-1 w-full">
-    <div class="w-full px-2 sm:px-4 py-3 md:py-5">
-      <div class="editor-grid grid grid-cols-1 gap-3 md:gap-4 xl:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,1.05fr)]">
+    <div class="w-full px-2 sm:px-4 py-4 md:py-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="editor-grid grid grid-cols-1 gap-4 md:gap-5 xl:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,1.05fr)]">
         <section class="panel panel--map" aria-label="Карта пригод">
           <h3 class="font-display text-xl md:text-2xl text-center text-indigo-600 mb-3">🗺️ Карта пригод</h3>
           <div class="map-wrapper">
             <div class="mx-auto" id="grid" role="grid" aria-label="Сітка карти"></div>
           </div>
           <div class="legend grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs mt-3">
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🦸 Котигорошко</div>
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">💀 Монстр</div>
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">⚔️ Зброя</div>
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🛡️ Броня</div>
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🧪 Зілля</div>
-            <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🌲 Перешкода</div>
+            <div class="legend-item flex items-center gap-1">🦸 Котигорошко</div>
+            <div class="legend-item flex items-center gap-1">💀 Монстр</div>
+            <div class="legend-item flex items-center gap-1">⚔️ Зброя</div>
+            <div class="legend-item flex items-center gap-1">🛡️ Броня</div>
+            <div class="legend-item flex items-center gap-1">🧪 Зілля</div>
+            <div class="legend-item flex items-center gap-1">🌲 Перешкода</div>
+          </div>
+          <div class="progress-card mt-4">
+            <h4 class="progress-card__title font-display text-lg text-indigo-600 text-center mb-2">🏅 Досягнення</h4>
+            <ul class="progress-list" id="achievementList">
+              <li class="progress-item"><span>Пройдено рівнів</span><span id="achCompleted">0</span></li>
+              <li class="progress-item"><span>Спроб зроблено</span><span id="achAttempts">0</span></li>
+              <li class="progress-item"><span>Золотих медалей</span><span id="achGold">0</span></li>
+              <li class="progress-item"><span>Срібних медалей</span><span id="achSilver">0</span></li>
+              <li class="progress-item"><span>Бронзових медалей</span><span id="achBronze">0</span></li>
+            </ul>
           </div>
         </section>
 
         <section class="panel panel--palette" aria-label="Команди">
           <h3 class="font-display text-xl md:text-2xl text-center text-indigo-600 mb-3">🧱 Команди</h3>
-          <p class="palette-hint text-xs sm:text-sm text-slate-600 mb-3 text-center">
-            Перетягни блок у поле алгоритму або просто натисни, щоб додати його в кінець.
+          <div class="task-card bg-white/90 backdrop-blur rounded-2xl shadow-md px-3 py-2.5 mb-3 text-slate-700">
+            <h4 class="font-display text-lg text-indigo-600 mb-1.5 text-center">🎯 Завдання</h4>
+            <p class="text-xs sm:text-sm leading-relaxed text-center" id="levelDesc"></p>
+          </div>
+          <p class="palette-hint text-xs sm:text-sm mb-3 text-center">
+            Перетягни блок або натисни на нього, щоб додати до алгоритму.
           </p>
           <div id="commandPalette" class="command-palette" role="listbox">
             <div class="palette-section" aria-hidden="true">Кроки руху</div>
@@ -159,8 +181,8 @@ tailwind.config = {
 
         <section class="panel panel--program" aria-label="Твій алгоритм">
           <h3 class="font-display text-xl md:text-2xl text-center text-indigo-600 mb-3">💻 Твій алгоритм</h3>
-          <div class="workspace-intro text-xs sm:text-sm text-slate-600 mb-2 text-center">
-            Починай з порожнього поля, додавай кроки й перетягуй їх, щоби змінювати порядок.
+          <div class="workspace-intro text-xs sm:text-sm mb-2 text-center">
+            Перетягни свої блоки або натисни на них у панелі.
           </div>
           <div class="workspace-board" id="commandList" aria-live="polite"></div>
           <div class="workspace-controls grid grid-cols-2 gap-2 mt-3">
@@ -173,9 +195,10 @@ tailwind.config = {
           </div>
           <div class="message hidden text-center p-2.5 rounded-lg mt-3 text-sm md:text-lg font-bold" id="message" role="status" aria-live="polite"></div>
         </section>
+        </div>
       </div>
 
-      <section class="battle-scene hidden bg-gradient-to-br from-gray-800 to-black text-white rounded-2xl p-4 mt-4 md:mt-6" id="battleScene" aria-label="Сцена бою">
+      <section class="battle-scene hidden bg-gradient-to-br from-gray-800 to-black text-white rounded-2xl p-4 mt-4 md:mt-6 max-w-6xl mx-auto" id="battleScene" aria-label="Сцена бою">
         <h2 class="font-display text-2xl md:text-3xl text-center text-yellow-400 mb-4">💥 БІЙ! 💥</h2>
         <div class="battle-characters flex justify-around items-center flex-wrap gap-4 mb-4">
           <div class="character text-center w-32 md:w-36">
