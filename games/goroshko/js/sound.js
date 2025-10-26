@@ -89,6 +89,42 @@ export class SoundEngine {
     audio.volume = volume;
     audio.play().catch(() => {});
   }
+
+  /**
+   * Попереднє завантаження звуків у фоні
+   * Викликається після основної ініціалізації, щоб зменшити затримки під час бою
+   * @returns {Promise<void>}
+   */
+  async prime() {
+    if (typeof Audio === 'undefined') return;
+
+    const urls = Object.values(this.urls);
+    if (!urls.length) return;
+
+    await Promise.allSettled(
+      urls.map((url) => new Promise((resolve) => {
+        try {
+          const audio = new Audio();
+          audio.preload = 'auto';
+          audio.src = url;
+
+          const finalize = () => {
+            audio.removeEventListener('canplaythrough', finalize);
+            audio.removeEventListener('loadeddata', finalize);
+            audio.removeEventListener('error', finalize);
+            resolve();
+          };
+
+          audio.addEventListener('canplaythrough', finalize, { once: true });
+          audio.addEventListener('loadeddata', finalize, { once: true });
+          audio.addEventListener('error', finalize, { once: true });
+          audio.load();
+        } catch (e) {
+          resolve();
+        }
+      }))
+    );
+  }
 }
 
 // Створення глобального екземпляру
