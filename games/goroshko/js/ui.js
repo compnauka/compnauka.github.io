@@ -12,7 +12,47 @@ export class UIManager {
       this.elements = {};
       this.tutorialShown = false;
     }
-  
+
+
+    /**
+     * Оновлення візуального стану циклу
+     * @param {{active: boolean, stepCount: number}} state
+     */
+    updateLoopMode({ active = false, stepCount = 0 } = {}) {
+      const { btnLoop, btnRoot, commandList } = this.elements;
+
+      if (btnLoop) {
+        const textEl = btnLoop.querySelector('.btn-text');
+        if (textEl) {
+          textEl.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
+        } else {
+          btnLoop.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
+        }
+        btnLoop.disabled = active;
+        btnLoop.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
+
+      if (btnRoot) {
+        const textEl = btnRoot.querySelector('.btn-text');
+        if (textEl) {
+          textEl.textContent = active
+            ? `Закрити цикл (${stepCount || 0})`
+            : 'Закрити цикл';
+        }
+
+        btnRoot.disabled = !active;
+        btnRoot.classList.toggle('bg-red-500', active);
+        btnRoot.classList.toggle('[--shadow-color:theme(colors.red.700)]', active);
+        btnRoot.classList.toggle('hover:bg-red-400', active);
+        btnRoot.classList.toggle('bg-gray-400', !active);
+        btnRoot.classList.toggle('[--shadow-color:theme(colors.gray.600)]', !active);
+      }
+
+      if (commandList) {
+        commandList.setAttribute('data-loop-active', active ? 'true' : 'false');
+      }
+    }
+
     /**
      * Ініціалізація UI-менеджера
      * @param {Object} elements - Об'єкт з DOM-елементами
@@ -44,6 +84,7 @@ export class UIManager {
       if (this.elements.parGold) {
         this.elements.parGold.textContent = data.parGold;
       }
+
     }
   
     /**
@@ -190,6 +231,10 @@ export class UIManager {
         Object.values(buttons).forEach(btn => {
           if (btn) btn.classList.remove('hidden-by-level');
         });
+      }
+
+      if (level < 4) {
+        this.updateLoopMode({ active: false, stepCount: 0 });
       }
     }
   

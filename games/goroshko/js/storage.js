@@ -4,13 +4,11 @@
  */
 
 import { 
-    doc, 
-    setDoc, 
+    doc,
+    setDoc,
     getDoc,
-    updateDoc,
     collection,
     query,
-    where,
     orderBy,
     limit,
     getDocs,
@@ -97,11 +95,12 @@ import {
       // Оновлюємо максимальний рівень
       const userSnap = await getDoc(userRef);
       const currentMaxLevel = userSnap.data()?.stats?.maxLevel || 0;
-      if (levelIndex > currentMaxLevel) {
-        statsUpdate['stats.maxLevel'] = levelIndex;
+      const unlockedLevel = levelIndex + 1;
+      if (unlockedLevel > currentMaxLevel) {
+        statsUpdate['stats.maxLevel'] = unlockedLevel;
       }
   
-      await updateDoc(userRef, statsUpdate);
+      await setDoc(userRef, statsUpdate, { merge: true });
   
       // Додаємо запис у турнірну таблицю
       if (isNewBest) {
@@ -173,11 +172,21 @@ import {
         levels[data.levelIndex] = data;
       });
   
+      const levelIndices = Object.keys(levels).map(index => Number(index));
+      const highestCompletedLevel = levelIndices.length
+        ? Math.max(...levelIndices) + 1
+        : 0;
+      const storedMaxLevel = userData.stats?.maxLevel || 0;
+      const normalizedMaxLevel = Math.max(storedMaxLevel, highestCompletedLevel);
+
       return {
         version: '1.0',
-        maxLevel: userData.stats?.maxLevel || 0,
+        maxLevel: normalizedMaxLevel,
         levels,
-        stats: userData.stats,
+        stats: {
+          ...(userData.stats || {}),
+          maxLevel: normalizedMaxLevel
+        },
         settings: {
           soundEnabled: true
         },
@@ -200,33 +209,75 @@ import {
           const q = query(
             scoresRef,
             orderBy('blocks', 'asc'),
-            orderBy('completedAt', 'asc'),
-            limit(limitCount)
+            limit(limitCount * 2)
           );
-  
+
           const snapshot = await getDocs(q);
-          return snapshot.docs.map((doc, index) => ({
+
+          const sorted = snapshot.docs
+            .map(doc => doc.data())
+            .sort((a, b) => {
+              if (a.blocks !== b.blocks) {
+                return a.blocks - b.blocks;
+              }
+
+              const aTime = a.completedAt?.toMillis?.() ?? 0;
+              const bTime = b.completedAt?.toMillis?.() ?? 0;
+              return aTime - bTime;
+            })
+            .slice(0, limitCount);
+
+          return sorted.map((data, index) => ({
             rank: index + 1,
-            ...doc.data()
+            ...data
           }));
         } else {
           // Загальна турнірна таблиця
           const usersRef = collection(db, 'users');
           const q = query(
             usersRef,
-            where('isAnonymous', '==', false),
             orderBy('stats.totalCompleted', 'desc'),
-            orderBy('stats.goldMedals', 'desc'),
-            limit(limitCount)
+            limit(limitCount * 3)
           );
-  
+
           const snapshot = await getDocs(q);
-          return snapshot.docs.map((doc, index) => ({
-            rank: index + 1,
-            userId: doc.id,
-            displayName: doc.data().displayName,
-            ...doc.data().stats
-          }));
+
+          const players = snapshot.docs
+            .map(doc => ({
+              userId: doc.id,
+              displayName: doc.data().displayName,
+              isAnonymous: doc.data().isAnonymous,
+              stats: doc.data().stats || {}
+            }))
+            .filter(player => !player.isAnonymous);
+
+          players.sort((a, b) => {
+            const statsA = a.stats;
+            const statsB = b.stats;
+
+            if ((statsB.totalCompleted || 0) !== (statsA.totalCompleted || 0)) {
+              return (statsB.totalCompleted || 0) - (statsA.totalCompleted || 0);
+            }
+
+            if ((statsB.goldMedals || 0) !== (statsA.goldMedals || 0)) {
+              return (statsB.goldMedals || 0) - (statsA.goldMedals || 0);
+            }
+
+            if ((statsB.silverMedals || 0) !== (statsA.silverMedals || 0)) {
+              return (statsB.silverMedals || 0) - (statsA.silverMedals || 0);
+            }
+
+            return (statsB.bronzeMedals || 0) - (statsA.bronzeMedals || 0);
+          });
+
+          return players
+            .slice(0, limitCount)
+            .map((player, index) => ({
+              rank: index + 1,
+              userId: player.userId,
+              displayName: player.displayName,
+              ...player.stats
+            }));
         }
       } catch (error) {
         console.error('Failed to load leaderboard:', error);
@@ -245,18 +296,26 @@ import {
   
       try {
         const scoresRef = collection(db, 'leaderboards', `level_${levelIndex}`, 'scores');
-        const userRef = doc(db, 'leaderboards', `level_${levelIndex}`, 'scores', userId);
-        
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) return null;
-  
-        const userBlocks = userSnap.data().blocks;
-  
-        // Підраховуємо скільки гравців мають кращий результат
-        const q = query(scoresRef, where('blocks', '<', userBlocks));
-        const snapshot = await getDocs(q);
-  
-        return snapshot.size + 1;
+        const snapshot = await getDocs(scoresRef);
+
+        const players = snapshot.docs
+          .map(doc => ({ userId: doc.id, ...doc.data() }))
+          .sort((a, b) => {
+            if (a.blocks !== b.blocks) {
+              return a.blocks - b.blocks;
+            }
+
+            const aTime = a.completedAt?.toMillis?.() ?? 0;
+            const bTime = b.completedAt?.toMillis?.() ?? 0;
+            return aTime - bTime;
+          });
+
+        const index = players.findIndex(player => player.userId === userId);
+        if (index === -1) {
+          return null;
+        }
+
+        return index + 1;
       } catch (error) {
         console.error('Failed to get user rank:', error);
         return null;
@@ -291,8 +350,9 @@ import {
           progress.levels[levelIndex].attempts = (existing.attempts || 0) + 1;
         }
   
-        if (!progress.maxLevel || levelIndex > progress.maxLevel) {
-          progress.maxLevel = levelIndex;
+        const unlockedLevel = levelIndex + 1;
+        if (!progress.maxLevel || unlockedLevel > progress.maxLevel) {
+          progress.maxLevel = unlockedLevel;
         }
   
         progress.updatedAt = Date.now();
@@ -308,7 +368,18 @@ import {
     _loadLocalProgress() {
       try {
         const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : this._getDefaultProgress();
+        const progress = data ? JSON.parse(data) : this._getDefaultProgress();
+
+        const levelIndices = Object.keys(progress.levels || {}).map(index => Number(index));
+        const highestCompletedLevel = levelIndices.length
+          ? Math.max(...levelIndices) + 1
+          : 0;
+
+        if (!progress.maxLevel || highestCompletedLevel > progress.maxLevel) {
+          progress.maxLevel = highestCompletedLevel;
+        }
+
+        return progress;
       } catch (e) {
         console.error('Failed to load locally:', e);
         return this._getDefaultProgress();

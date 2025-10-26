@@ -1,414 +1,314 @@
 /**
- * Модуль управління командами та алгоритмом
- * Відповідає за створення, виконання та відображення команд
+ * Простий менеджер команд для побудови алгоритму
+ * Орієнтований на зрозумілий досвід для дітей 7-9 років
  */
 
 import { COMMAND_TYPES, DIRECTIONS, GAME_CONFIG } from './config.js';
 
-/**
- * Клас Command
- * Представляє окрему команду в алгоритмі
- */
-export class Command {
-  constructor(type, direction = null, children = [], loopCount = 2) {
-    this.type = type; // 'move' або 'loop'
-    this.direction = direction; // 'up', 'down', 'left', 'right'
-    this.children = children; // Вкладені команди для циклу
-    this.loopCount = loopCount; // Кількість повторень циклу
-  }
+const MOVE_ICONS = {
+  [DIRECTIONS.UP]: '<i class="fas fa-arrow-up"></i>',
+  [DIRECTIONS.DOWN]: '<i class="fas fa-arrow-down"></i>',
+  [DIRECTIONS.LEFT]: '<i class="fas fa-arrow-left"></i>',
+  [DIRECTIONS.RIGHT]: '<i class="fas fa-arrow-right"></i>'
+};
 
-  /**
-   * Отримання іконки команди
-   * @returns {string} - HTML-рядок з іконкою
-   */
-  getIcon() {
-    if (this.type === COMMAND_TYPES.MOVE) {
-      const icons = {
-        [DIRECTIONS.UP]: '<i class="fas fa-arrow-up"></i>',
-        [DIRECTIONS.DOWN]: '<i class="fas fa-arrow-down"></i>',
-        [DIRECTIONS.LEFT]: '<i class="fas fa-arrow-left"></i>',
-        [DIRECTIONS.RIGHT]: '<i class="fas fa-arrow-right"></i>'
-      };
-      return icons[this.direction] || '';
-    }
-    return '<i class="fas fa-redo"></i>';
-  }
+const MOVE_NAMES = {
+  [DIRECTIONS.UP]: 'Вгору',
+  [DIRECTIONS.DOWN]: 'Вниз',
+  [DIRECTIONS.LEFT]: 'Ліворуч',
+  [DIRECTIONS.RIGHT]: 'Праворуч'
+};
 
-  /**
-   * Отримання назви команди
-   * @returns {string}
-   */
-  getName() {
-    if (this.type === COMMAND_TYPES.MOVE) {
-      const names = {
-        [DIRECTIONS.UP]: 'Вгору',
-        [DIRECTIONS.DOWN]: 'Вниз',
-        [DIRECTIONS.LEFT]: 'Ліворуч',
-        [DIRECTIONS.RIGHT]: 'Праворуч'
-      };
-      return names[this.direction] || 'Рух';
-    }
-    return `Цикл (×${this.loopCount})`;
-  }
+const DEFAULT_LOOP_COUNT = 2;
+
+function createMove(direction) {
+  return { type: COMMAND_TYPES.MOVE, direction };
 }
 
-/**
- * Клас CommandManager
- * Керує списком команд та їх виконанням
- */
+function createLoop(count = DEFAULT_LOOP_COUNT) {
+  return { type: COMMAND_TYPES.LOOP, loopCount: count, children: [] };
+}
+
 export class CommandManager {
   constructor() {
     this.commands = [];
-    this.inLoop = false;
-    this.loopStartIndex = -1;
-    this.loopCount = 2;
     this.listEl = null;
+    this.activeLoop = null;
+    this.loopStateListener = null;
   }
 
   /**
-   * Ініціалізація менеджера команд
-   * @param {HTMLElement} listElement - DOM-елемент списку команд
+   * Підписка на зміну стану циклу
+   * @param {(state: {active:boolean, stepCount:number}) => void} callback
+   */
+  setLoopStateListener(callback) {
+    this.loopStateListener = typeof callback === 'function' ? callback : null;
+  }
+
+  /**
+   * Ініціалізація DOM-списку команд
+   * @param {HTMLElement} listElement
    */
   init(listElement) {
     this.listEl = listElement;
     this.render();
+    this._notifyLoopState();
+  }
+
+  /**
+   * Скидання алгоритму
+   */
+  clear() {
+    this.commands = [];
+    this.activeLoop = null;
+    this.render();
+    this._notifyLoopState();
   }
 
   /**
    * Додавання команди руху
-   * @param {string} direction - Напрямок руху
+   * @param {string} direction
    */
   addMove(direction) {
-    const cmd = new Command(COMMAND_TYPES.MOVE, direction);
-    
-    if (this.inLoop) {
-      // Додаємо команду до поточного циклу
-      const loopCmd = this.commands[this.loopStartIndex];
-      loopCmd.children.push(cmd);
-    } else {
-      this.commands.push(cmd);
-    }
-    
+    if (!Object.values(DIRECTIONS).includes(direction)) return;
+
+    const target = this.activeLoop ? this.activeLoop.children : this.commands;
+    target.push(createMove(direction));
+
     this.render();
+    this._notifyLoopState();
   }
 
   /**
    * Початок циклу
    */
   startLoop() {
-    if (this.inLoop) return; // Не дозволяємо вкладені цикли
-    
-    const loopCmd = new Command(COMMAND_TYPES.LOOP, null, [], this.loopCount);
-    this.commands.push(loopCmd);
-    this.loopStartIndex = this.commands.length - 1;
-    this.inLoop = true;
+    if (this.activeLoop) return;
+
+    const loopCommand = createLoop(DEFAULT_LOOP_COUNT);
+    this.commands.push(loopCommand);
+    this.activeLoop = loopCommand;
+
     this.render();
+    this._notifyLoopState();
   }
 
   /**
-   * Завершення циклу
+   * Завершення поточного циклу
    */
   endLoop() {
-    if (!this.inLoop) return;
-    
-    this.inLoop = false;
-    this.loopStartIndex = -1;
+    if (!this.activeLoop) return;
+
+    this.activeLoop = null;
     this.render();
+    this._notifyLoopState();
   }
 
   /**
-   * Видалення команди
-   * @param {number} index - Індекс команди
+   * Видалення команди верхнього рівня
+   * @param {number} index
    */
   removeCommand(index) {
-    if (this.inLoop && index === this.loopStartIndex) {
-      // Видаляємо цикл - також скасовуємо режим редагування циклу
-      this.inLoop = false;
-      this.loopStartIndex = -1;
+    if (index < 0 || index >= this.commands.length) return;
+
+    const [removed] = this.commands.splice(index, 1);
+    if (removed === this.activeLoop) {
+      this.activeLoop = null;
     }
-    
-    this.commands.splice(index, 1);
-    
-    // Коригуємо індекс циклу
-    if (this.inLoop && index < this.loopStartIndex) {
-      this.loopStartIndex--;
-    }
-    
+
     this.render();
+    this._notifyLoopState();
   }
 
   /**
-   * Видалення вкладеної команди з циклу
-   * @param {number} loopIndex - Індекс циклу
-   * @param {number} childIndex - Індекс вкладеної команди
+   * Видалення команди всередині циклу
+   * @param {number} loopIndex
+   * @param {number} childIndex
    */
-  removeChildCommand(loopIndex, childIndex) {
-    if (loopIndex < 0 || loopIndex >= this.commands.length) return;
-    
-    const loopCmd = this.commands[loopIndex];
-    if (loopCmd.type !== COMMAND_TYPES.LOOP) return;
-    
-    loopCmd.children.splice(childIndex, 1);
-    this.render();
-  }
+  removeChild(loopIndex, childIndex) {
+    const loopCommand = this.commands[loopIndex];
+    if (!loopCommand || loopCommand.type !== COMMAND_TYPES.LOOP) return;
+    if (childIndex < 0 || childIndex >= loopCommand.children.length) return;
 
-  /**
-   * Переміщення команди вгору
-   * @param {number} index - Індекс команди
-   */
-  moveUp(index) {
-    if (index === 0) return;
-    [this.commands[index], this.commands[index - 1]] = 
-    [this.commands[index - 1], this.commands[index]];
-    
-    // Коригуємо індекс циклу
-    if (this.inLoop) {
-      if (index === this.loopStartIndex) this.loopStartIndex--;
-      else if (index - 1 === this.loopStartIndex) this.loopStartIndex++;
-    }
-    
+    loopCommand.children.splice(childIndex, 1);
     this.render();
-  }
-
-  /**
-   * Переміщення команди вниз
-   * @param {number} index - Індекс команди
-   */
-  moveDown(index) {
-    if (index === this.commands.length - 1) return;
-    [this.commands[index], this.commands[index + 1]] = 
-    [this.commands[index + 1], this.commands[index]];
-    
-    // Коригуємо індекс циклу
-    if (this.inLoop) {
-      if (index === this.loopStartIndex) this.loopStartIndex++;
-      else if (index + 1 === this.loopStartIndex) this.loopStartIndex--;
-    }
-    
-    this.render();
+    this._notifyLoopState();
   }
 
   /**
    * Зміна кількості повторень циклу
-   * @param {number} loopIndex - Індекс циклу
-   * @param {number} count - Кількість повторень
+   * @param {number} loopIndex
+   * @param {number} value
    */
-  setLoopCount(loopIndex, count) {
-    if (loopIndex < 0 || loopIndex >= this.commands.length) return;
-    
-    const loopCmd = this.commands[loopIndex];
-    if (loopCmd.type !== COMMAND_TYPES.LOOP) return;
-    
-    loopCmd.loopCount = Math.max(
-      GAME_CONFIG.minLoopCount, 
-      Math.min(GAME_CONFIG.maxLoopCount, count)
+  setLoopCount(loopIndex, value) {
+    const loopCommand = this.commands[loopIndex];
+    if (!loopCommand || loopCommand.type !== COMMAND_TYPES.LOOP) return;
+
+    const sanitized = Math.max(
+      GAME_CONFIG.minLoopCount,
+      Math.min(GAME_CONFIG.maxLoopCount, Number(value) || GAME_CONFIG.minLoopCount)
     );
-    
-    // Оновлюємо поточну кількість повторень, якщо це активний цикл
-    if (this.inLoop && loopIndex === this.loopStartIndex) {
-      this.loopCount = loopCmd.loopCount;
+
+    loopCommand.loopCount = sanitized;
+    if (this.listEl) {
+      const input = this.listEl.querySelector(`input[data-index="${loopIndex}"]`);
+      if (input) {
+        input.value = String(sanitized);
+      }
     }
-    
-    this.render();
+    this._notifyLoopState();
   }
 
   /**
-   * Очищення всіх команд
-   */
-  clear() {
-    this.commands = [];
-    this.inLoop = false;
-    this.loopStartIndex = -1;
-    this.loopCount = 2;
-    this.render();
-  }
-
-  /**
-   * Розгортання команд у плоский список
-   * Розгортає цикли для виконання
-   * @returns {Array} - Масив команд руху
+   * Перетворення алгоритму на послідовність кроків
+   * @returns {Array<{type:string, direction:string}>}
    */
   flatten() {
     const result = [];
-    
-    for (const cmd of this.commands) {
-      if (cmd.type === COMMAND_TYPES.MOVE) {
-        result.push(cmd);
-      } else if (cmd.type === COMMAND_TYPES.LOOP) {
-        // Повторюємо вкладені команди
-        for (let i = 0; i < cmd.loopCount; i++) {
-          result.push(...cmd.children);
+
+    for (const command of this.commands) {
+      if (command.type === COMMAND_TYPES.MOVE) {
+        result.push({ ...command });
+      } else if (command.type === COMMAND_TYPES.LOOP) {
+        for (let i = 0; i < command.loopCount; i += 1) {
+          for (const child of command.children) {
+            result.push({ ...child });
+          }
         }
       }
     }
-    
+
     return result;
   }
 
   /**
-   * Підрахунок загальної кількості блоків
-   * Для підрахунку очок (кожен цикл = 1 блок + його вміст)
+   * Підрахунок використаних блоків
    * @returns {number}
    */
   countBlocks() {
-    let count = 0;
-    
-    for (const cmd of this.commands) {
-      if (cmd.type === COMMAND_TYPES.MOVE) {
-        count++;
-      } else if (cmd.type === COMMAND_TYPES.LOOP) {
-        count++; // Сам цикл
-        count += cmd.children.length; // Команди всередині
+    let total = 0;
+    for (const command of this.commands) {
+      if (command.type === COMMAND_TYPES.MOVE) {
+        total += 1;
+      } else if (command.type === COMMAND_TYPES.LOOP) {
+        total += 1 + command.children.length;
       }
     }
-    
-    return count;
+    return total;
   }
 
   /**
-   * Відображення списку команд
+   * Відмалювання списку команд
    */
   render() {
     if (!this.listEl) return;
 
     this.listEl.innerHTML = '';
+    this.listEl.setAttribute('data-loop-active', this.activeLoop ? 'true' : 'false');
 
     if (this.commands.length === 0) {
-      this.listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-3">Додай команди, щоб створити алгоритм</p>';
+      this.listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-3">Додай команди, щоб скласти алгоритм</p>';
       return;
     }
 
-    this.commands.forEach((cmd, index) => {
-      const item = this._createCommandElement(cmd, index);
-      this.listEl.appendChild(item);
+    this.commands.forEach((command, index) => {
+      const element = command.type === COMMAND_TYPES.MOVE
+        ? this._renderMove(command, index)
+        : this._renderLoop(command, index);
+      this.listEl.appendChild(element);
     });
   }
 
-  /**
-   * Створення DOM-елементу команди
-   * @param {Command} cmd - Об'єкт команди
-   * @param {number} index - Індекс команди
-   * @returns {HTMLElement}
-   */
-  _createCommandElement(cmd, index) {
+  _renderMove(command, index) {
     const item = document.createElement('div');
-    item.className = 'command-item mb-2';
+    item.className = 'command-chip';
+    item.innerHTML = `
+      <div class="command-chip__label">
+        <span class="command-chip__icon">${MOVE_ICONS[command.direction] || ''}</span>
+        <span>${MOVE_NAMES[command.direction] || 'Рух'}</span>
+      </div>
+      <div class="command-chip__actions">
+        <button type="button" class="command-chip__button command-chip__button--delete" data-action="delete" data-index="${index}" aria-label="Видалити команду">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
 
-    if (cmd.type === COMMAND_TYPES.MOVE) {
-      // Проста команда руху
-      item.innerHTML = `
-        <div class="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg p-2">
-          <span class="text-blue-600 text-lg">${cmd.getIcon()}</span>
-          <span class="flex-1 text-gray-800 font-medium text-sm">${cmd.getName()}</span>
-          <div class="flex gap-1">
-            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]" 
-                    data-action="up" data-index="${index}" 
-                    ${index === 0 ? 'disabled' : ''}>
-              <i class="fas fa-chevron-up text-xs"></i>
-            </button>
-            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]" 
-                    data-action="down" data-index="${index}"
-                    ${index === this.commands.length - 1 ? 'disabled' : ''}>
-              <i class="fas fa-chevron-down text-xs"></i>
-            </button>
-            <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]" 
-                    data-action="delete" data-index="${index}">
-              <i class="fas fa-times text-xs"></i>
-            </button>
-          </div>
-        </div>
-      `;
-    } else if (cmd.type === COMMAND_TYPES.LOOP) {
-      // Цикл
-      const isActive = this.inLoop && index === this.loopStartIndex;
-      const borderColor = isActive ? 'border-yellow-400' : 'border-yellow-300';
-      
-      item.innerHTML = `
-        <div class="bg-yellow-50 border-2 ${borderColor} rounded-lg p-2">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-yellow-600 text-lg">${cmd.getIcon()}</span>
-            <span class="flex-1 text-gray-800 font-bold text-sm">${cmd.getName()}</span>
-            <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}" 
-                   value="${cmd.loopCount}" 
-                   class="w-12 text-center border border-yellow-400 rounded px-1 py-0.5 text-sm"
-                   data-action="loop-count" data-index="${index}">
-            <div class="flex gap-1">
-              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]" 
-                      data-action="up" data-index="${index}"
-                      ${index === 0 ? 'disabled' : ''}>
-                <i class="fas fa-chevron-up text-xs"></i>
-              </button>
-              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]" 
-                      data-action="down" data-index="${index}"
-                      ${index === this.commands.length - 1 ? 'disabled' : ''}>
-                <i class="fas fa-chevron-down text-xs"></i>
-              </button>
-              <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]" 
-                      data-action="delete" data-index="${index}">
-                <i class="fas fa-times text-xs"></i>
-              </button>
-            </div>
-          </div>
-          <div class="ml-4 space-y-1">
-            ${cmd.children.length === 0 
-              ? '<p class="text-gray-400 text-xs italic py-1">Додай команди в цикл</p>' 
-              : cmd.children.map((child, childIndex) => `
-                <div class="flex items-center gap-2 bg-white border border-yellow-200 rounded p-1.5">
-                  <span class="text-blue-600">${child.getIcon()}</span>
-                  <span class="flex-1 text-gray-700 text-xs">${child.getName()}</span>
-                  <button class="btn-sort bg-red-400 text-white rounded [--shadow-color:theme(colors.red.600)] !w-7 !h-7" 
-                          data-action="delete-child" data-index="${index}" data-child-index="${childIndex}">
-                    <i class="fas fa-times text-xs"></i>
-                  </button>
-                </div>
-              `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Додаємо обробники подій
-    this._attachEventListeners(item);
+    item.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      this.removeCommand(index);
+    });
 
     return item;
   }
 
-  /**
-   * Прив'язка обробників подій до елементу команди
-   * @param {HTMLElement} element - DOM-елемент
-   */
-  _attachEventListeners(element) {
-    element.querySelectorAll('button[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const action = e.currentTarget.dataset.action;
-        const index = parseInt(e.currentTarget.dataset.index);
-        const childIndex = e.currentTarget.dataset.childIndex 
-          ? parseInt(e.currentTarget.dataset.childIndex) 
-          : null;
+  _renderLoop(command, index) {
+    const item = document.createElement('div');
+    item.className = 'command-chip command-chip--loop';
+    if (command === this.activeLoop) {
+      item.classList.add('command-chip--active');
+    }
 
-        switch (action) {
-          case 'up':
-            this.moveUp(index);
-            break;
-          case 'down':
-            this.moveDown(index);
-            break;
-          case 'delete':
-            this.removeCommand(index);
-            break;
-          case 'delete-child':
-            this.removeChildCommand(index, childIndex);
-            break;
-        }
+    const childrenHtml = command.children.map((child, childIndex) => `
+      <div class="command-chip__child">
+        <div class="command-chip__label">
+          <span class="command-chip__icon">${MOVE_ICONS[child.direction] || ''}</span>
+          <span>${MOVE_NAMES[child.direction] || 'Рух'}</span>
+        </div>
+        <div class="command-chip__actions">
+          <button type="button" class="command-chip__button command-chip__button--delete command-chip__button--small" data-action="delete-child" data-loop="${index}" data-child="${childIndex}" aria-label="Видалити крок циклу">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    item.innerHTML = `
+      <div class="command-chip__header">
+        <div class="command-chip__title">
+          <span class="command-chip__icon"><i class="fas fa-redo"></i></span>
+          <span>Цикл</span>
+        </div>
+        <label class="command-chip__repeat">
+          Повторити
+          <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}" value="${command.loopCount}" data-action="loop-count" data-index="${index}">
+          раз(и)
+        </label>
+        <div class="command-chip__actions">
+          <button type="button" class="command-chip__button command-chip__button--delete" data-action="delete" data-index="${index}" aria-label="Видалити цикл">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <div class="command-chip__children">
+        ${childrenHtml || '<div class="command-chip__empty">Додай команди всередину циклу</div>'}
+      </div>
+    `;
+
+    item.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      this.removeCommand(index);
+    });
+
+    item.querySelectorAll('[data-action="delete-child"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const loopIndex = Number(btn.dataset.loop);
+        const childIndex = Number(btn.dataset.child);
+        this.removeChild(loopIndex, childIndex);
       });
     });
 
-    element.querySelectorAll('input[data-action="loop-count"]').forEach(input => {
-      input.addEventListener('change', (e) => {
-        const index = parseInt(e.target.dataset.index);
-        const count = parseInt(e.target.value);
-        this.setLoopCount(index, count);
-      });
+    const input = item.querySelector('input[data-action="loop-count"]');
+    input.addEventListener('change', (event) => {
+      this.setLoopCount(index, event.target.value);
     });
+
+    return item;
+  }
+
+  _notifyLoopState() {
+    if (!this.loopStateListener) return;
+
+    const active = Boolean(this.activeLoop);
+    const stepCount = active ? this.activeLoop.children.length : 0;
+    this.loopStateListener({ active, stepCount });
   }
 }
