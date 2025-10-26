@@ -60,9 +60,17 @@ export class Game {
       const progress = await storage.loadProgress();
       const startingLevel = progress.maxLevel || 0;
       this.loadLevel(startingLevel);
+
+      try {
+        const stats = await storage.getStats();
+        this.ui.updateAchievements(stats);
+      } catch (statsError) {
+        console.warn('Не вдалося оновити досягнення:', statsError);
+      }
     } catch (error) {
       console.error("Failed to load progress, starting from level 0.", error);
       this.loadLevel(0);
+      this.ui.updateAchievements();
     }
 
     // Прив'язка обробників подій
@@ -235,6 +243,13 @@ export class Game {
       medal,
       time: Date.now()
     });
+
+    try {
+      const stats = await storage.getStats();
+      this.ui.updateAchievements(stats);
+    } catch (statsError) {
+      console.warn('Не вдалося оновити статистику досягнень після перемоги:', statsError);
+    }
 
     // Показ модального вікна
     this.ui.showVictoryModal({

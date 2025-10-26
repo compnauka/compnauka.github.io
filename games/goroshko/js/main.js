@@ -37,6 +37,14 @@ async function init() {
     health: document.getElementById('health'),
     parGold: document.getElementById('parGold'),
 
+    // Досягнення
+    achievementList: document.getElementById('achievementList'),
+    achCompleted: document.getElementById('achCompleted'),
+    achAttempts: document.getElementById('achAttempts'),
+    achGold: document.getElementById('achGold'),
+    achSilver: document.getElementById('achSilver'),
+    achBronze: document.getElementById('achBronze'),
+
     // Бій
     battleScene: document.getElementById('battleScene'),
     battleLog: document.getElementById('battleLog'),
