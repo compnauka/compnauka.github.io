@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Змінено назву на "Котигорошко" згідно з файлом -->
+    <title>Котигорошко - Алгоритмічна RPG</title>
+    <!-- Підключення Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Підключення шрифтів з підтримкою кирилиці з Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Підключення Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Конфігурація Tailwind для нового шрифту та стилів -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Roboto', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif'],
+                        'display': ['Open Sans', 'Roboto', 'sans-serif'], // Шрифти з підтримкою кирилиці для заголовків
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Додаткові стилі для 3D-кнопок, які складно реалізувати чистим Tailwind -->
+    <style>
+        .btn-3d {
+            transition: all 0.1s ease-in-out;
+            /* Створення 3D-ефекту за допомогою тіні */
+            box-shadow: 0 4px 0 0 var(--shadow-color);
+        }
+        .btn-3d:disabled {
+            box-shadow: 0 4px 0 0 var(--shadow-color);
+            /* Додано для кращого візуального відключення */
+            filter: grayscale(0.6);
+            opacity: 0.7;
+        }
+        .btn-3d:not(:disabled):active {
+            /* Ефект натискання */
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 0 var(--shadow-color);
+        }
+         /* Стиль для маленьких кнопок сортування/видалення */
+        .btn-sort {
+            transition: all 0.1s ease-in-out;
+            box-shadow: 0 3px 0 0 var(--shadow-color);
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-sort:not(:disabled):active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 0 var(--shadow-color);
+        }
+        /* Анімація пульсації для монстра */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .monster-pulse {
+            animation: pulse 1.5s infinite;
+        }
+        /* Анімація появи */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .slide-in {
+            animation: slideIn 0.3s;
+        }
+        
+        /* Стилі для прихованих кнопок */
+        .hidden-by-level {
+            display: none !important;
+        }
+        
+        /* Покращення відображення кирилиці */
+        body, h1, h2, h3, p, span, div, button {
+            font-family: 'Roboto', 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-feature-settings: 'liga' 1, 'kern' 1;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Додаткові стилі для заголовків з кирилицею */
+        .font-display {
+            font-family: 'Open Sans', 'Roboto', sans-serif !important;
+            font-weight: 700;
+            letter-spacing: 0.025em;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen p-2.5 flex justify-center items-start font-sans">
+    
+    <!-- Основний контейнер гри -->
+    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-2xl max-w-6xl w-full my-4">
+        
+        <!-- Заголовок та інфо-панель рівня в одному рядку -->
+        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center mb-4 md:mb-6">
+            <!-- Заголовок -->
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="font-display text-4xl md:text-5xl text-yellow-500 drop-shadow-lg mb-3">🦸 Котигорошко 🐉</h1>
+                <p class="text-gray-600 text-base md:text-lg">Створи алгоритм, збери спорядження і здолай монстрів!</p>
+            </div>
+
+            <!-- Інфо-панель рівня -->
+            <div class="level-info bg-gradient-to-br from-purple-600 to-indigo-700 p-3 md:p-4 rounded-2xl text-white shadow-lg flex-shrink-0 w-full md:w-auto">
+                <h2 class="font-display text-2xl md:text-3xl mb-2 text-center">🏰 Рівень <span id="levelNum">1</span></h2>
+                <p class="level-desc text-sm md:text-base mb-3 text-center" id="levelDesc"></p>
+                <div class="stats-bar flex gap-2 md:gap-3 justify-center flex-wrap">
+                    <div class="stat bg-white/20 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm md:text-base">⚔️ <span id="damage">0</span></div>
+                    <div class="stat bg-white/20 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm md:text-base">🛡️ <span id="armor">0</span></div>
+                    <div class="stat bg-white/20 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm md:text-base">❤️ <span id="health">100</span></div>
+                    <div class="stat bg-white/20 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm md:text-base font-display">🎯 Ціль: <span id="parGold">?</span> 🥇</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ігрова зона: Карта (ліворуч) і Команди (праворуч) на десктопі -->
+        <div class="game-area grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-4 md:gap-6">
+            
+            <!-- Ліва колонка (Карта) -->
+            <div class="grid-container bg-gray-100 rounded-2xl p-3 md:p-4 shadow-inner">
+                <h3 class="font-display text-2xl text-center text-indigo-600 mb-3">🗺️ Карта пригод</h3>
+                <div class="grid grid-cols-6 gap-0.5 md:gap-1 mb-3 max-w-md mx-auto" id="grid">
+                    <!-- JS генерує клітинки тут -->
+                </div>
+                <div class="legend grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs md:text-sm">
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">🦸 Котигорошко</div>
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">💀 Монстр</div>
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">⚔️ Зброя</div>
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">🛡️ Броня</div>
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">🧪 Зілля</div>
+                    <div class="legend-item flex items-center gap-1.5 bg-white p-1.5 rounded-md shadow-sm">🌲 Перешкода</div>
+                </div>
+            </div>
+
+            <!-- Права колонка (Команди) -->
+            <div class="commands-area bg-gray-100 rounded-2xl p-3 md:p-4 shadow-inner flex flex-col">
+                <h3 class="font-display text-2xl text-center text-indigo-600 mb-3">📜 Твої Команди</h3>
+                
+                <!-- Кнопки додавання команд -->
+                <div class="command-buttons grid grid-cols-2 gap-3 mb-4">
+                    <button class="cmd-btn btn-3d font-display text-white rounded-xl p-3 text-base md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level" onclick="game.addMove('up')" id="btnUp">
+                        <i class="fas fa-arrow-up mr-2"></i>Вгору
+                    </button>
+                    <button class="cmd-btn btn-3d font-display text-white rounded-xl p-3 text-base md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level" onclick="game.addMove('down')" id="btnDown">
+                        <i class="fas fa-arrow-down mr-2"></i>Вниз
+                    </button>
+                    <button class="cmd-btn btn-3d font-display text-white rounded-xl p-3 text-base md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level" onclick="game.addMove('left')" id="btnLeft">
+                        <i class="fas fa-arrow-left mr-2"></i>Ліворуч
+                    </button>
+                    <button class="cmd-btn btn-3d font-display text-white rounded-xl p-3 text-base md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level" onclick="game.addMove('right')" id="btnRight">
+                        <i class="fas fa-arrow-right mr-2"></i>Праворуч
+                    </button>
+                    <button class="cmd-btn btn-3d loop-btn font-display text-white rounded-xl p-3 text-base md:text-lg col-span-2 bg-yellow-500 [--shadow-color:theme(colors.yellow.700)] hover:bg-yellow-400 hidden-by-level" onclick="game.addLoop()" id="btnLoop">
+                        <i class="fas fa-redo mr-2"></i>Почати Цикл
+                    </button>
+                    <button class="cmd-btn btn-3d font-display text-white rounded-xl p-3 text-base md:text-lg col-span-2 hidden-by-level" onclick="game.addToRoot()" id="btnRoot">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Вийти з циклу
+                    </button>
+                </div>
+
+                <!-- Список алгоритму -->
+                <h3 class="font-display text-xl text-center text-indigo-600 mb-2">💻 Твій алгоритм:</h3>
+                <div class="command-list bg-white border-2 border-indigo-200 rounded-lg p-2 min-h-[150px] max-h-[400px] overflow-y-auto mb-4 flex-grow" id="commandList">
+                    <p class="text-gray-400 text-center p-4">Додай команди</p>
+                </div>
+
+                <!-- Кнопки "Старт" / "Очистити" -->
+                <div class="control-buttons grid grid-cols-2 md:flex gap-3">
+                    <button class="control-btn btn-3d font-display text-white rounded-xl p-3 text-lg md:text-xl md:flex-1 bg-green-500 [--shadow-color:theme(colors.green.700)] hover:bg-green-400" onclick="game.run()" id="btnRun">
+                        <i class="fas fa-play mr-2"></i>Старт
+                    </button>
+                    <button class="control-btn btn-3d font-display text-white rounded-xl p-3 text-lg md:text-xl md:flex-1 bg-red-500 [--shadow-color:theme(colors.red.700)] hover:bg-red-400" onclick="game.clear()" id="btnClear">
+                        <i class="fas fa-trash mr-2"></i>Очистити
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сцена бою (прихована) -->
+        <div class="battle-scene hidden bg-gradient-to-br from-gray-800 to-black text-white rounded-2xl p-4 mt-4 md:mt-6" id="battleScene">
+            <h2 class="font-display text-3xl text-center text-yellow-400 mb-4">💥 БІЙ! 💥</h2>
+            <div class="battle-characters flex justify-around items-center flex-wrap gap-4 mb-4">
+                <div class="character text-center w-36">
+                    <!-- Оновлено іконку Лицаря -->
+                    <div class="character-icon text-6xl md:text-7xl">🦸</div>
+                    <div class="font-bold text-lg"><strong>Котигорошко</strong></div>
+                    <div class="text-sm">❤️ <span id="heroHealthText">100</span></div>
+                    <div class="health-bar bg-gray-600 h-5 rounded-full overflow-hidden mt-1 shadow-inner">
+                        <div class="health-fill hero-health h-full rounded-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500" id="heroHealthBar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="text-4xl md:text-5xl font-display text-yellow-400">⚡</div>
+                <div class="character text-center w-36">
+                    <div class="character-icon text-6xl md:text-7xl" id="monsterIcon">💀</div>
+                    <div class="font-bold text-lg"><strong id="monsterName">Монстр</strong></div>
+                    <div class="text-sm">❤️ <span id="monsterHealthText">50</span></div>
+                    <div class="health-bar bg-gray-600 h-5 rounded-full overflow-hidden mt-1 shadow-inner">
+                        <div class="health-fill h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all duration-500" id="monsterHealthBar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="battle-log bg-white/10 rounded-lg p-3 min-h-[100px] max-h-[200px] overflow-y-auto text-sm text-left font-mono" id="battleLog"></div>
+        </div>
+
+        <!-- Повідомлення (Успіх/Помилка) -->
+        <div class="message hidden text-center p-3 rounded-lg mt-4 md:mt-6 text-base md:text-lg font-bold" id="message"></div>
+        
+        <!-- Кнопка "Наступний рівень" (прихована) -->
+        <div class="mt-4 md:mt-6">
+            <!-- Змінено: Видалено клас "control-buttons", додано "flex justify-center" -->
+            <div class="flex justify-center">
+                <!-- Змінено: Видалено клас "next-btn", додано "w-full max-w-xs" для кращого центрування -->
+                <button class="control-btn btn-3d hidden font-display text-gray-800 rounded-xl p-3 text-lg md:text-xl bg-yellow-400 [--shadow-color:theme(colors.yellow.600)] hover:bg-yellow-300 w-full max-w-xs" id="nextBtn" onclick="game.nextLevel()">
+                    <i class="fas fa-forward mr-2"></i>Наступний рівень
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== НОВИЙ ЕЛЕМЕНТ: Модальне вікно туторіалу ===== -->
+    <div id="tutorialModalBackdrop" class="fixed inset-0 bg-black/60 z-40 hidden"></div>
+    <div id="tutorialModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-5 md:p-6 rounded-2xl shadow-2xl z-50 w-11/12 max-w-md hidden">
+        <h2 class="font-display text-3xl text-yellow-500 text-center mb-4">🔁 Нова Сила: ЦИКЛИ! 🔁</h2>
+        <p class="text-gray-700 mb-4 text-center">Цикли дозволяють повторити команди декілька разів. Це економить блоки!</p>
+        <div class="bg-gray-100 rounded-lg p-3 mb-5 text-gray-800">
+            <p class="font-medium mb-1">1. Натисни <strong class="text-yellow-600">"Почати Цикл"</strong>.</p>
+            <p class="font-medium mb-1">2. Додай команди, які хочеш повторити.</p>
+            <p class="font-medium">3. Натисни <strong class="text-red-500">"Вийти з циклу"</strong>.</p>
+        </div>
+        <!-- ВИПРАВЛЕНО: "class_name" змінено на "class" -->
+        <button class="btn-3d w-full font-display text-white rounded-xl p-3 text-lg bg-green-500 [--shadow-color:theme(colors.green.700)] hover:bg-green-400" onclick="game.hideTutorialModal()">
+            Зрозуміло!
+        </button>
+    </div>
+    <!-- =============================================== -->
+
+
+    <script>
+        const GAME_CONFIG = {
+            baseDamage: 20,
+            baseArmor: 8,
+            potionHealth: 25,
+            animationDelay: 300
+        };
+
+        // ===== НОВИЙ МАСИВ РІВНІВ (Прогресивне ускладнення) =====
+        const levels = [
+            // --- Рівень 1: Тільки "Праворуч" ---
+            {
+                size: 6,
+                hero: [2, 0], // Герой по центру зліва
+                monster: [2, 5], // Монстр по центру справа
+                items: { weapons: [], armor: [], potions: [] }, // Немає предметів
+                monsterStats: { health: 10, damage: 0, name: "Опудало", icon: "👻" },
+                obstacles: [], // Немає перешкод
+                desc: "Дійди до Опудала, використовуючи лише кнопку 'Праворуч'!",
+                par: { gold: 5, silver: 5 } // Потрібно 5 кроків
+            },
+            // --- Рівень 2: Усі напрямки + Перешкоди ---
+            {
+                size: 6,
+                hero: [5, 0],
+                monster: [0, 5],
+                items: { weapons: [], armor: [], potions: [] },
+                monsterStats: { health: 20, damage: 5, name: "Гоблін", icon: "💀" },
+                obstacles: [[3, 1], [3, 2], [3, 3], [2, 3], [2, 4], [2, 5]],
+                desc: "Обійди перешкоди, щоб дістатися до Гобліна!",
+                par: { gold: 10, silver: 12 }
+            },
+            // --- Рівень 3: Додано Зброю та Броню ---
+            {
+                size: 6,
+                hero: [5, 0],
+                monster: [0, 5],
+                items: {
+                    weapons: [[3, 2]],
+                    armor: [[2, 4]],
+                    potions: []
+                },
+                monsterStats: { health: 50, damage: 12, name: "Орк", icon: "👹" },
+                obstacles: [[4, 1], [4, 2], [1, 3], [1, 4]],
+                desc: "Збери зброю (⚔️) та броню (🛡️) на шляху до Орка!",
+                par: { gold: 12, silver: 15 }
+            },
+            // --- Рівень 4: Додано Зілля ---
+            {
+                size: 6,
+                hero: [5, 0],
+                monster: [0, 5],
+                items: {
+                    weapons: [[4, 1], [1, 4]],
+                    armor: [[2, 3]],
+                    potions: [[3, 4]]
+                },
+                monsterStats: { health: 80, damage: 18, name: "Троль", icon: "👿" },
+                obstacles: [[1, 1], [1, 2], [3, 3], [4, 2]],
+                desc: "Збери все спорядження, включно з зіллям (🧪)!",
+                par: { gold: 14, silver: 18 }
+            },
+            // --- Рівень 5: Введення Циклів ---
+            {
+                size: 6,
+                hero: [5, 0],
+                monster: [5, 5],
+                items: {
+                    weapons: [[5, 2]],
+                    armor: [[5, 3]],
+                    potions: [[5, 4]]
+                },
+                monsterStats: { health: 50, damage: 10, name: "Скелет", icon: "💀" },
+                obstacles: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5]], // Стіна
+                desc: "Нова механіка! Використай ЦИКЛИ, щоб пройти!",
+                par: { gold: 5, silver: 8 } // Напр: Вправо, Цикл(3) [Вправо], Вправо.
+            },
+            // --- Рівень 6: Складний рівень з циклами ---
+            {
+                size: 6,
+                hero: [5, 0],
+                monster: [0, 5],
+                items: {
+                    weapons: [[4, 0], [3, 1], [2, 2], [1, 3]],
+                    armor: [[0, 4]],
+                    potions: [[5, 2], [5, 3]]
+                },
+                monsterStats: { health: 120, damage: 25, name: "Дракон", icon: "🐉" },
+                obstacles: [[4, 1], [4, 2], [4, 3], [4, 4], [2, 1], [2, 3], [2, 4], [0, 1], [1, 1]],
+                desc: "Фінальний виклик! Оптимізуй свій шлях за допомогою циклів.",
+                par: { gold: 10, silver: 15 }
+            }
+        ];
+        // ========================================================
+
+
+        // Глобальний ігровий об'єкт
+        const game = {
+            currentLevel: 0,
+            heroPos: [5, 0],
+            commands: [],
+            currentContext: null, 
+            nextId: 0,
+            isRunning: false,
+            playerStats: { damage: 0, armor: 0, health: 100 },
+            collectedItems: new Set(),
+            tutorialShown: false, // НОВИЙ прапорець для туторіалу
+
+            init() {
+                const level = levels[this.currentLevel];
+                this.heroPos = [...level.hero];
+                this.commands = [];
+                this.currentContext = null; 
+                this.nextId = 0;
+                this.playerStats = { damage: 0, armor: 0, health: 100 };
+                this.collectedItems.clear();
+                
+                document.getElementById('levelNum').textContent = this.currentLevel + 1;
+                document.getElementById('levelDesc').textContent = level.desc;
+                document.getElementById('parGold').textContent = level.par.gold;
+                document.getElementById('nextBtn').classList.add('hidden');
+                document.getElementById('message').className = 'message hidden'; 
+                document.getElementById('battleScene').classList.add('hidden');
+                // Додано: Переконуємося, що ігрова зона видима при ініціалізації
+                document.querySelector('.game-area').classList.remove('hidden');
+                
+                // Оновлено іконку Лицаря в сцені бою
+                document.querySelector('.battle-characters .character-icon').innerHTML = '🦸';
+
+                this.updateStats();
+                this.renderGrid();
+                this.renderCommands();
+                this.setButtonsState(false);
+                this.updateContextButton();
+                this.updateButtonVisibility(); // НОВА ФУНКЦІЯ: керує видимістю кнопок
+                
+                // НОВА ЛОГІКА: Показати туторіал на 5-му рівні (індекс 4)
+                if (this.currentLevel === 4 && !this.tutorialShown) {
+                    this.showTutorialModal();
+                    this.tutorialShown = true;
+                }
+            },
+
+            // НОВА ФУНКЦІЯ: Керує видимістю кнопок залежно від рівня
+            updateButtonVisibility() {
+                const levelIndex = this.currentLevel;
+                
+                const btnUp = document.getElementById('btnUp');
+                const btnDown = document.getElementById('btnDown');
+                const btnLeft = document.getElementById('btnLeft');
+                const btnRight = document.getElementById('btnRight');
+                const btnLoop = document.getElementById('btnLoop');
+                const btnRoot = document.getElementById('btnRoot');
+
+                // Спершу ховаємо всі, що можуть бути приховані
+                btnUp.classList.add('hidden-by-level');
+                btnDown.classList.add('hidden-by-level');
+                btnLeft.classList.add('hidden-by-level');
+                btnRight.classList.add('hidden-by-level');
+                btnLoop.classList.add('hidden-by-level');
+                btnRoot.classList.add('hidden-by-level');
+
+                if (levelIndex === 0) {
+                    // Рівень 1: Тільки "Праворуч"
+                    btnRight.classList.remove('hidden-by-level');
+                } else if (levelIndex >= 1) {
+                    // Рівень 2+: Усі напрямки
+                    btnUp.classList.remove('hidden-by-level');
+                    btnDown.classList.remove('hidden-by-level');
+                    btnLeft.classList.remove('hidden-by-level');
+                    btnRight.classList.remove('hidden-by-level');
+                }
+                
+                if (levelIndex >= 4) {
+                    // Рівень 5+: Додаємо Цикли
+                    btnLoop.classList.remove('hidden-by-level');
+                    btnRoot.classList.remove('hidden-by-level');
+                }
+            },
+
+            // НОВА ФУНКЦІЯ: Показ модального вікна
+            showTutorialModal() {
+                document.getElementById('tutorialModalBackdrop').classList.remove('hidden');
+                document.getElementById('tutorialModal').classList.remove('hidden');
+            },
+
+            // НОВА ФУНКЦІЯ: Приховування модального вікна
+            hideTutorialModal() {
+                document.getElementById('tutorialModalBackdrop').classList.add('hidden');
+                document.getElementById('tutorialModal').classList.add('hidden');
+            },
+
+            setButtonsState(disabled) {
+                ['btnUp', 'btnDown', 'btnLeft', 'btnRight', 'btnRun', 'btnClear', 'btnLoop', 'btnRoot'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.disabled = disabled;
+                });
+                 document.querySelectorAll('.command-list input, .command-list button').forEach(el => {
+                    el.disabled = disabled;
+                });
+                // Оновлюємо стан кнопки "Вийти з циклу" навіть якщо все заблоковано
+                this.updateContextButton(disabled); 
+            },
+
+            updateStats() {
+                document.getElementById('damage').textContent = this.playerStats.damage;
+                document.getElementById('armor').textContent = this.playerStats.armor;
+                document.getElementById('health').textContent = this.playerStats.health;
+            },
+
+            renderGrid() {
+                const level = levels[this.currentLevel];
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                
+                for (let row = 0; row < level.size; row++) {
+                    for (let col = 0; col < level.size; col++) {
+                        const cell = document.createElement('div');
+                        let classes = 'cell aspect-square flex items-center justify-center text-2xl md:text-3xl rounded border-2';
+                        const posKey = `${row},${col}`;
+                        
+                        if (row === this.heroPos[0] && col === this.heroPos[1]) {
+                            classes += ' bg-blue-200 border-blue-500 shadow-lg z-10'; 
+                            cell.innerHTML = '🦸';
+                        } else if (row === level.monster[0] && col === level.monster[1]) {
+                            classes += ' bg-red-200 border-red-500 monster-pulse'; 
+                            cell.innerHTML = level.monsterStats.icon;
+                        } else if (level.obstacles.some(o => o[0] === row && o[1] === col)) {
+                            classes += ' bg-gray-600 border-gray-800'; 
+                            cell.innerHTML = '🌲';
+                        } else if (level.items.weapons.some(w => w[0] === row && w[1] === col)) {
+                            classes += ' bg-green-100 border-green-300'; 
+                            cell.innerHTML = '⚔️';
+                            if (this.collectedItems.has(posKey)) classes += ' opacity-30';
+                        } else if (level.items.armor.some(a => a[0] === row && a[1] === col)) {
+                            classes += ' bg-green-100 border-green-300';
+                            cell.innerHTML = '🛡️';
+                            if (this.collectedItems.has(posKey)) classes += ' opacity-30';
+                        } else if (level.items.potions.some(p => p[0] === row && p[1] === col)) {
+                            classes += ' bg-green-100 border-green-300';
+                            cell.innerHTML = '🧪';
+                            if (this.collectedItems.has(posKey)) classes += ' opacity-30';
+                        } else {
+                            classes += ' bg-green-100 border-green-300'; // empty
+                        }
+                        
+                        cell.className = classes;
+                        grid.appendChild(cell);
+                    }
+                }
+            },
+
+            addMove(direction) {
+                if (this.isRunning) return;
+                const targetList = this.currentContext || this.commands;
+                targetList.push({ 
+                    type: 'move', 
+                    direction,
+                    id: this.nextId++
+                });
+                this.renderCommands();
+            },
+
+            addLoop() {
+                if (this.isRunning) return;
+                const targetList = this.currentContext || this.commands;
+                const newLoop = { 
+                    type: 'loop', 
+                    count: 2,
+                    children: [],
+                    id: this.nextId++
+                };
+                targetList.push(newLoop);
+                this.currentContext = newLoop.children;
+                this.renderCommands();
+                this.updateContextButton();
+            },
+
+            addToRoot() {
+                if (this.isRunning) return;
+                this.currentContext = null;
+                this.renderCommands();
+                this.updateContextButton();
+            },
+
+            updateContextButton(gameIsRunning = false) {
+                const btn = document.getElementById('btnRoot');
+                if (gameIsRunning) {
+                    btn.disabled = true;
+                    return;
+                }
+                
+                if (this.currentContext) {
+                    btn.disabled = false;
+                    btn.classList.add('bg-red-500', '[--shadow-color:theme(colors.red.700)]', 'hover:bg-red-400');
+                    btn.classList.remove('bg-gray-400', '[--shadow-color:theme(colors.gray.600)]', 'opacity-60', 'cursor-not-allowed');
+                } else {
+                    btn.disabled = true;
+                    btn.classList.remove('bg-red-500', '[--shadow-color:theme(colors.red.700)]', 'hover:bg-red-400');
+                    btn.classList.add('bg-gray-400', '[--shadow-color:theme(colors.gray.600)]', 'opacity-60', 'cursor-not-allowed');
+                }
+            },
+
+            findCommandById(id, list = this.commands) {
+                for (let i = 0; i < list.length; i++) {
+                    if (list[i].id === id) {
+                        return { parent: list, index: i, cmd: list[i] };
+                    }
+                    if (list[i].type === 'loop') {
+                        const found = this.findCommandById(id, list[i].children);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            },
+
+            removeCommand(id) {
+                if (this.isRunning) return;
+                const found = this.findCommandById(id);
+                if (found) {
+                    if (found.cmd.type === 'loop' && this.currentContext === found.cmd.children) {
+                        this.currentContext = null; 
+                        this.updateContextButton();
+                    }
+                    found.parent.splice(found.index, 1);
+                    this.renderCommands();
+                }
+            },
+
+            updateLoopCount(id, value) {
+                if (this.isRunning) return;
+                const found = this.findCommandById(id);
+                if (found && found.cmd.type === 'loop') {
+                    found.cmd.count = Math.max(1, Math.min(10, parseInt(value) || 1));
+                }
+            },
+
+            moveCommand(id, direction) {
+                if (this.isRunning) return;
+                const found = this.findCommandById(id);
+                if (!found) return;
+                
+                const { parent, index } = found;
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                
+                if (newIndex < 0 || newIndex >= parent.length) return;
+                
+                [parent[index], parent[newIndex]] = [parent[newIndex], parent[index]];
+                this.renderCommands();
+            },
+
+            renderCommands() {
+                const listEl = document.getElementById('commandList');
+                listEl.innerHTML = '';
+
+                if (this.commands.length === 0) {
+                    listEl.innerHTML = '<p class="text-gray-400 text-center p-4">Додай команди</p>';
+                    return;
+                }
+
+                this.renderCommandList(this.commands, listEl, 0);
+            },
+
+            renderCommandList(list, container, nestLevel) {
+                list.forEach((cmd, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'command-item slide-in flex justify-between items-center p-2.5 rounded-lg gap-2 mb-2'; // Додав mb-2
+                    if (nestLevel > 0) item.classList.add('nested', 'ml-5');
+                    
+                    // Контекст тепер підсвічує фон всього списку, а не окремі елементи
+                    // if (this.currentContext === list) {
+                    //     item.classList.add('bg-yellow-100', 'border-l-yellow-400');
+                    // }
+                    
+                    if (cmd.type === 'move') {
+                        const emoji = { up: '<i class="fas fa-arrow-up"></i>', down: '<i class="fas fa-arrow-down"></i>', left: '<i class="fas fa-arrow-left"></i>', right: '<i class="fas fa-arrow-right"></i>' }[cmd.direction];
+                        const name = { up: 'Вгору', down: 'Вниз', left: 'Ліворуч', right: 'Праворуч' }[cmd.direction];
+                        item.classList.add('bg-indigo-100', 'border-l-4', 'border-indigo-400'); // Зробив border-l-4
+                        
+                        item.innerHTML = `
+                            <div class="command-text font-medium text-gray-800 flex items-center gap-2">
+                                <span class="text-xl">${emoji}</span>
+                                <span>${name}</span>
+                            </div>
+                            <div class="flex gap-1.5 flex-shrink-0">
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white ${index === 0 ? 'opacity-0 cursor-default' : ''}" onclick="game.moveCommand(${cmd.id}, 'up')" style="--shadow-color:theme(colors.green.700); background: #4CAF50;" ${index === 0 ? 'disabled' : ''}><i class="fas fa-chevron-up"></i></button>
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white ${index === list.length - 1 ? 'opacity-0 cursor-default' : ''}" onclick="game.moveCommand(${cmd.id}, 'down')" style="--shadow-color:theme(colors.green.700); background: #4CAF50;" ${index === list.length - 1 ? 'disabled' : ''}><i class="fas fa-chevron-down"></i></button>
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white" onclick="game.removeCommand(${cmd.id})" style="--shadow-color:theme(colors.red.700); background: #f44336;"><i class="fas fa-times"></i></button>
+                            </div>
+                        `;
+                    } else if (cmd.type === 'loop') {
+                        item.classList.add('loop-item', 'bg-yellow-100', 'border-l-4', 'border-yellow-500'); // Зробив border-l-4
+                        item.innerHTML = `
+                            <div class="command-text font-medium text-gray-800 flex items-center gap-2 flex-wrap">
+                                <span class="text-xl"><i class="fas fa-redo"></i></span>
+                                <span>Повторити</span>
+                                <input type="number" 
+                                       class="loop-input w-12 p-1 rounded-md border-2 border-yellow-400 text-center font-bold" 
+                                       value="${cmd.count}" 
+                                       min="1" max="10"
+                                       onchange="game.updateLoopCount(${cmd.id}, this.value)"
+                                       onclick="event.stopPropagation()">
+                                <span>разів:</span>
+                            </div>
+                            <div class="flex gap-1.5 flex-shrink-0">
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white ${index === 0 ? 'opacity-0 cursor-default' : ''}" onclick="game.moveCommand(${cmd.id}, 'up')" style="--shadow-color:theme(colors.green.700); background: #4CAF50;" ${index === 0 ? 'disabled' : ''}><i class="fas fa-chevron-up"></i></button>
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white ${index === list.length - 1 ? 'opacity-0 cursor-default' : ''}" onclick="game.moveCommand(${cmd.id}, 'down')" style="--shadow-color:theme(colors.green.700); background: #4CAF50;" ${index === list.length - 1 ? 'disabled' : ''}><i class="fas fa-chevron-down"></i></button>
+                                <button class="btn-sort remove-btn p-1 rounded-md text-xs text-white" onclick="game.removeCommand(${cmd.id})" style="--shadow-color:theme(colors.red.700); background: #f44336;"><i class="fas fa-times"></i></button>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                        
+                        // Створюємо контейнер для вкладених елементів
+                        const childrenContainer = document.createElement('div');
+                        childrenContainer.className = 'nested-container ml-5 pl-3 border-l-2 border-yellow-500/50';
+                        
+                        if (cmd.children.length > 0) {
+                            this.renderCommandList(cmd.children, childrenContainer, nestLevel + 1);
+                        } else {
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'command-item bg-yellow-50/50 opacity-70 p-2.5 rounded-lg mb-2'; // Додав mb-2
+                            placeholder.innerHTML = `
+                                <div class="command-text italic text-gray-500">
+                                    <span><em>Додай команди в цикл</em></span>
+                                </div>
+                            `;
+                            childrenContainer.appendChild(placeholder);
+                        }
+                        container.appendChild(childrenContainer);
+
+                        // Підсвічуємо активний контекст
+                        if (this.currentContext === cmd.children) {
+                            childrenContainer.classList.add('bg-yellow-50');
+                            childrenContainer.classList.add('rounded-md');
+                        }
+                        
+                        // Прибираємо старий маркер кінця циклу
+                        // const endMarker = document.createElement('div');
+                        // endMarker.className = 'command-item loop-end nested ml-5 bg-gray-100 border-l-gray-400 p-2.5 rounded-lg';
+                        // endMarker.innerHTML = `
+                        //     <div class="command-text font-medium text-gray-600 flex items-center gap-2">
+                        //         <span>${'  '.repeat(nestLevel)}</span>
+                        //         <span class="text-xl">🔚</span>
+                        //         <span>Кінець циклу</span>
+                        //     </div>
+                        // `;
+                        // container.appendChild(endMarker);
+                        return;
+                    }
+                    
+                    container.appendChild(item);
+                });
+
+                // Підсвічуємо, якщо root-контекст активний
+                // ВИПРАВЛЕНО: 'listEl' змінено на 'container', оскільки 'listEl' тут не існує
+                if (this.currentContext === this.commands) {
+                    container.classList.add('bg-yellow-50');
+                } else {
+                    container.classList.remove('bg-yellow-50');
+                }
+            },
+
+            clear() {
+                if (this.isRunning) return;
+                // Додано: Показати ігрову зону при очищенні
+                document.querySelector('.game-area').classList.remove('hidden');
+                this.init(); 
+            },
+
+            async run() {
+                if (this.commands.length === 0 || this.isRunning) return;
+                
+                this.isRunning = true;
+                this.setButtonsState(true);
+                this.heroPos = [...levels[this.currentLevel].hero];
+                this.playerStats = { damage: 0, armor: 0, health: 100 };
+                this.collectedItems.clear();
+                document.getElementById('message').className = 'message hidden';
+                document.getElementById('battleScene').classList.add('hidden');
+                
+                this.renderGrid();
+                this.updateStats();
+                
+                await this.executeCommands(this.commands);
+                
+                const level = levels[this.currentLevel];
+                if (this.heroPos[0] === level.monster[0] && this.heroPos[1] === level.monster[1]) {
+                    await this.startBattle();
+                } else {
+                    this.showMessage('error', '😔 Ти не дійшов до монстра! Спробуй ще раз.');
+                }
+                
+                this.isRunning = false;
+                this.setButtonsState(false);
+            },
+
+            async executeCommands(list) {
+                const level = levels[this.currentLevel];
+                
+                for (const cmd of list) {
+                    if (!this.isRunning) return; 
+
+                    if (cmd.type === 'move') {
+                        const prevPos = [...this.heroPos];
+                        
+                        switch(cmd.direction) {
+                            case 'up': this.heroPos[0] = Math.max(0, this.heroPos[0] - 1); break;
+                            case 'down': this.heroPos[0] = Math.min(level.size - 1, this.heroPos[0] + 1); break;
+                            case 'left': this.heroPos[1] = Math.max(0, this.heroPos[1] - 1); break;
+                            case 'right': this.heroPos[1] = Math.min(level.size - 1, this.heroPos[1] + 1); break;
+                        }
+
+                        const isObstacle = level.obstacles.some(o => o[0] === this.heroPos[0] && o[1] === this.heroPos[1]);
+                        
+                        if (isObstacle) {
+                            this.heroPos = [...prevPos];
+                        } else {
+                            const posKey = `${this.heroPos[0]},${this.heroPos[1]}`;
+                            if (!this.collectedItems.has(posKey)) {
+                                if (level.items.weapons.some(w => w[0] === this.heroPos[0] && w[1] === this.heroPos[1])) {
+                                    this.playerStats.damage += GAME_CONFIG.baseDamage;
+                                    this.collectedItems.add(posKey);
+                                } else if (level.items.armor.some(a => a[0] === this.heroPos[0] && a[1] === this.heroPos[1])) {
+                                    this.playerStats.armor += GAME_CONFIG.baseArmor;
+                                    this.collectedItems.add(posKey);
+                                } else if (level.items.potions.some(p => p[0] === this.heroPos[0] && p[1] === this.heroPos[1])) {
+                                    this.playerStats.health = Math.min(100, this.playerStats.health + GAME_CONFIG.potionHealth);
+                                    this.collectedItems.add(posKey);
+                                }
+                            }
+                        }
+                        
+                        this.updateStats();
+                        this.renderGrid();
+                        await new Promise(resolve => setTimeout(resolve, GAME_CONFIG.animationDelay));
+                        
+                    } else if (cmd.type === 'loop') {
+                        for (let i = 0; i < cmd.count; i++) {
+                            if (!this.isRunning) return; 
+                            await this.executeCommands(cmd.children);
+                        }
+                    }
+                }
+            },
+
+            countBlocks(list = this.commands) {
+                let count = 0;
+                for (const cmd of list) {
+                    count++;
+                    if (cmd.type === 'loop') {
+                        count += this.countBlocks(cmd.children);
+                    }
+                }
+                return count;
+            },
+
+            async startBattle() {
+                const level = levels[this.currentLevel];
+                const monster = level.monsterStats;
+                
+                // Додано: Ховаємо ігрову зону під час бою
+                document.querySelector('.game-area').classList.add('hidden');
+                document.getElementById('battleScene').classList.remove('hidden');
+                document.getElementById('monsterIcon').innerHTML = monster.icon;
+                document.getElementById('monsterName').textContent = monster.name;
+                
+                let heroHealth = this.playerStats.health;
+                let monsterHealth = monster.health;
+                
+                document.getElementById('heroHealthText').textContent = heroHealth;
+                document.getElementById('monsterHealthText').textContent = monsterHealth;
+                document.getElementById('heroHealthBar').style.width = '100%';
+                document.getElementById('monsterHealthBar').style.width = '100%';
+                
+                const log = document.getElementById('battleLog');
+                log.innerHTML = '';
+                
+                const addLog = (text) => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    entry.textContent = text;
+                    log.appendChild(entry);
+                    log.scrollTop = log.scrollHeight;
+                };
+                
+                addLog('⚔️ Бій розпочався!');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                let roundNum = 1;
+                while (heroHealth > 0 && monsterHealth > 0) {
+                    addLog(`--- Раунд ${roundNum} ---`);
+                    
+                    const heroDamage = Math.max(5, this.playerStats.damage);
+                    monsterHealth = Math.max(0, monsterHealth - heroDamage);
+                    addLog(`🗡️ Котигорошко атакує! Завдано ${heroDamage} урону.`);
+                    document.getElementById('monsterHealthText').textContent = monsterHealth;
+                    document.getElementById('monsterHealthBar').style.width = `${(monsterHealth / monster.health) * 100}%`;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    if (monsterHealth <= 0) break;
+                    
+                    const actualDamage = Math.max(0, monster.damage - this.playerStats.armor); // Монстр на L1 не б'є
+                    heroHealth = Math.max(0, heroHealth - actualDamage);
+                    if (actualDamage > 0) {
+                        addLog(`💥 ${monster.name} атакує! Завдано ${actualDamage} урону (${this.playerStats.armor} заблоковано).`);
+                    } else {
+                         addLog(`💥 ${monster.name} намагається атакувати, але не завдає урону!`);
+                    }
+                    document.getElementById('heroHealthText').textContent = heroHealth;
+                    document.getElementById('heroHealthBar').style.width = `${(heroHealth / this.playerStats.health) * 100}%`;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    roundNum++;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (heroHealth > 0) {
+                    addLog('🎉 ПЕРЕМОГА! Монстр переможений!');
+                    
+                    const blockCount = this.countBlocks();
+                    const par = level.par;
+                    let stars = '🥉 (Бронза)';
+                    if (blockCount <= par.gold) {
+                        stars = '🥇 (Золото!)';
+                    } else if (blockCount <= par.silver) {
+                        stars = '🥈 (Срібло)';
+                    }
+
+                    this.showMessage('success', `🎉 Перемога! Блоків: ${blockCount}. ${stars}`);
+                    document.getElementById('nextBtn').classList.remove('hidden');
+                } else {
+                    addLog('💀 Поразка... Спробуй ще раз!');
+                    this.showMessage('error', '💀 Програв... Спробуй іншу стратегію!');
+                }
+            },
+
+            showMessage(type, text) {
+                const msg = document.getElementById('message');
+                msg.textContent = text;
+                msg.className = 'message text-center p-3 rounded-lg mt-4 md:mt-6 text-base md:text-lg font-bold';
+                if (type === 'success') {
+                    msg.classList.add('bg-green-100', 'text-green-800');
+                } else {
+                    msg.classList.add('bg-red-100', 'text-red-800');
+                }
+            },
+
+            nextLevel() {
+                if (this.currentLevel < levels.length - 1) {
+                    this.currentLevel++;
+                    this.init();
+                } else {
+                    this.showMessage('success', '🏆 Вітаю! Ти пройшов усі рівні! Ти справжній герой!');
+                    document.getElementById('nextBtn').classList.add('hidden');
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Робимо 'game' глобальним, щоб 'onclick' в HTML працював
+            window.game = game;
+            game.init();
+        });
+    </script>
+</body>
+</html>
+
+
