@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Легенда — Котигорошко</title>
+<title>Мій акаунт — Котигорошко</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -35,10 +35,10 @@
           </span>
         </a>
         <nav class="brawl-nav" aria-label="Основна навігація">
-          <a class="brawl-nav__link brawl-nav__link--accent" href="story.html" aria-current="page">📖 Легенда</a>
+          <a class="brawl-nav__link" href="story.html">📖 Легенда</a>
           <a class="brawl-nav__link" href="algorithms.html">🧠 Алгоритми</a>
           <a class="brawl-nav__link" href="leaderboard.html">🏆 Турніри</a>
-          <a class="brawl-nav__link hidden" href="account.html" id="accountLink">⭐ Акаунт</a>
+          <a class="brawl-nav__link brawl-nav__link--accent" href="account.html" aria-current="page">⭐ Акаунт</a>
         </nav>
         <div class="brawl-header__actions">
           <div class="profile-dock">
@@ -64,46 +64,77 @@
       <div class="game-main__container space-y-6">
         <section class="interface-panel interface-panel--map">
           <header class="interface-panel__header">
-            <span class="interface-panel__icon">🦸</span>
+            <span class="interface-panel__icon">🎖️</span>
             <div>
-              <h1 class="interface-panel__title">Легенда про Котигорошка</h1>
-              <p class="interface-panel__subtitle">Історія героя, який перемагає завдяки алгоритмам</p>
+              <h1 class="interface-panel__title">Моя статистика</h1>
+              <p class="interface-panel__subtitle">Досягнення, рівні та медалі</p>
             </div>
           </header>
           <a href="index.html" class="btn-hero btn-hero--compact" style="width:max-content">
             <span class="btn-hero__glow" aria-hidden="true"></span>
             <i class="fas fa-arrow-left"></i>
-            <span>Повернутися до гри</span>
+            <span>До гри</span>
           </a>
         </section>
 
-        <section class="interface-panel story-content">
-          <p class="text-lg">Давним-давно, коли світом блукала магія, у маленькому селі народився хлопчик. Він був крихітним, наче горошина, але хоробрим, як тигр. Так і з'явилося ім'я — <strong>Котигорошко</strong>.</p>
-          <p>Щойно Котигорошок підріс, він вирушив у мандри. Темні ліси, високі гори й покинуті замки — скрізь чекали монстри й загадки. Але наш герой мав особливий дар — він умів <strong>планувати</strong>.</p>
-          <div class="achievement-card">
-            <h3 class="achievement-card__title">Мудрість героя</h3>
-            <p class="panel-hint text-base">«Перемагає не найсильніший, а найрозумніший. Той, хто планує наперед».</p>
+        <section class="interface-panel" id="accountLoading">
+          <div class="text-center py-10">
+            <div class="loading-screen__spinner" aria-hidden="true"></div>
+            <p class="panel-hint mt-3">Завантажуємо твої досягнення...</p>
           </div>
-          <p>Перед кожною битвою Котигорошко створював <em>алгоритм</em> — опис кожного кроку. Він обирав шлях, збирав спорядження, обходив пастки та лише тоді вступав у бій. Так він навчився перетворювати складні задачі на послідовність простих дій.</p>
-          <h2 class="text-2xl font-display">🎯 Твоя місія</h2>
-          <p>Тепер черга за тобою. Допоможи Котигорошку подолати усі випробування, складаючи найкращі алгоритми. Чим точніше план, тим більше слави та медалей!</p>
-          <div class="text-center pt-4">
-            <a href="index.html" class="btn-hero">
-              <span class="btn-hero__glow" aria-hidden="true"></span>
-              🚀 Розпочати пригоду
-            </a>
+        </section>
+
+        <section class="interface-panel hidden" id="accountContent">
+          <div class="account-summary" id="accountSummary">
+            <div>
+              <span>🔥</span>
+              <p class="account-summary__label">Пройдено рівнів</p>
+              <p class="account-summary__value" id="summaryLevels">0</p>
+            </div>
+            <div>
+              <span>🥇</span>
+              <p class="account-summary__label">Золотих медалей</p>
+              <p class="account-summary__value" id="summaryGold">0</p>
+            </div>
+            <div>
+              <span>🥈</span>
+              <p class="account-summary__label">Срібних медалей</p>
+              <p class="account-summary__value" id="summarySilver">0</p>
+            </div>
+            <div>
+              <span>🥉</span>
+              <p class="account-summary__label">Бронзових медалей</p>
+              <p class="account-summary__value" id="summaryBronze">0</p>
+            </div>
+            <div>
+              <span>🔓</span>
+              <p class="account-summary__label">Максимальний рівень</p>
+              <p class="account-summary__value" id="summaryMaxLevel">1</p>
+            </div>
+            <div>
+              <span>🎯</span>
+              <p class="account-summary__label">Спроб зроблено</p>
+              <p class="account-summary__value" id="summaryAttempts">0</p>
+            </div>
           </div>
+
+          <h2 class="text-xl font-display mt-6 mb-3">📋 Рівні та результати</h2>
+          <div class="account-levels" id="levelsList"></div>
+        </section>
+
+        <section class="interface-panel hidden" id="accountEmpty">
+          <h2 class="text-xl font-display mb-2">Потрібно увійти</h2>
+          <p class="panel-hint">Збереження прогресу доступне після входу через Google. Це дозволяє синхронізувати досягнення на будь-якому пристрої.</p>
+          <a href="auth.html" class="btn-hero" style="width:max-content">
+            <span class="btn-hero__glow" aria-hidden="true"></span>
+            <i class="fab fa-google"></i>
+            <span>Увійти через Google</span>
+          </a>
         </section>
       </div>
     </main>
   </div>
 
-  <script type="module">
-    import { authManager } from './js/auth.js';
-    import { initHeader } from './js/header.js';
-
-    authManager.init();
-    initHeader();
-  </script>
+  <script type="module" src="js/account.js"></script>
 </body>
 </html>

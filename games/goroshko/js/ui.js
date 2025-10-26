@@ -87,14 +87,14 @@ export class UIManager {
      */
     showMessage(text, type = 'info') {
       if (!this.elements.message) return;
-  
-      const colors = {
-        success: 'bg-green-100 text-green-800 border-2 border-green-300',
-        error: 'bg-red-100 text-red-800 border-2 border-red-300',
-        info: 'bg-blue-100 text-blue-800 border-2 border-blue-300'
+
+      const states = {
+        success: 'message--success',
+        error: 'message--error',
+        info: 'message--info'
       };
-  
-      this.elements.message.className = `message text-center p-2.5 rounded-lg mt-3 md:mt-6 text-sm md:text-lg font-bold ${colors[type] || colors.info}`;
+
+      this.elements.message.className = `message ${states[type] || states.info}`;
       this.elements.message.textContent = text;
       this.elements.message.classList.remove('hidden');
   
@@ -185,7 +185,7 @@ export class UIManager {
       });
 
       if (this.elements.commandPalette) {
-        this.elements.commandPalette.querySelectorAll('.palette-block').forEach((btn) => {
+        this.elements.commandPalette.querySelectorAll('.command-tile').forEach((btn) => {
           btn.disabled = !enabled;
           btn.setAttribute('draggable', enabled ? 'true' : 'false');
         });

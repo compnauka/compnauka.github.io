@@ -3,16 +3,11 @@
  * Керує реєстрацією, входом та станом користувача
  */
 
-import { 
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
+import {
     signOut,
     onAuthStateChanged,
-    updateProfile,
-    sendPasswordResetEmail,
     GoogleAuthProvider,
-    signInWithPopup,
-    signInAnonymously
+    signInWithPopup
   } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
   
   import { 
@@ -32,6 +27,7 @@ import {
     constructor() {
       this.currentUser = null;
       this.onAuthChangeCallbacks = [];
+      this._localVariantKey = null;
     }
   
     /**
@@ -45,7 +41,10 @@ import {
           // Перевіряємо чи є профіль у Firestore
           await this._ensureUserProfile(user);
         }
-        
+
+        // Переконуємося, що існує локальний варіант для персоналізації рівнів
+        this._ensureLocalVariantKey();
+
         // Викликаємо всі зареєстровані колбеки
         this.onAuthChangeCallbacks.forEach(callback => callback(user));
       });
@@ -57,48 +56,6 @@ import {
      */
     onAuthChange(callback) {
       this.onAuthChangeCallbacks.push(callback);
-    }
-  
-    /**
-     * Реєстрація нового користувача
-     * @param {Object} data - {email, password, displayName}
-     * @returns {Promise<Object>} - User object
-     */
-    async register(data) {
-      try {
-        const { email, password, displayName } = data;
-  
-        // Створюємо користувача в Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-  
-        // Оновлюємо профіль
-        await updateProfile(user, { displayName });
-  
-        // Створюємо профіль у Firestore
-        await this._createUserProfile(user, { displayName });
-  
-        return { success: true, user };
-      } catch (error) {
-        console.error('Registration error:', error);
-        return { success: false, error: this._getErrorMessage(error) };
-      }
-    }
-  
-    /**
-     * Вхід користувача
-     * @param {string} email - Email
-     * @param {string} password - Пароль
-     * @returns {Promise<Object>}
-     */
-    async login(email, password) {
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        return { success: true, user: userCredential.user };
-      } catch (error) {
-        console.error('Login error:', error);
-        return { success: false, error: this._getErrorMessage(error) };
-      }
     }
   
     /**
@@ -120,21 +77,7 @@ import {
         return { success: false, error: this._getErrorMessage(error) };
       }
     }
-  
-    /**
-     * Анонімний вхід (для гостей)
-     * @returns {Promise<Object>}
-     */
-    async loginAnonymously() {
-      try {
-        const userCredential = await signInAnonymously(auth);
-        return { success: true, user: userCredential.user };
-      } catch (error) {
-        console.error('Anonymous login error:', error);
-        return { success: false, error: this._getErrorMessage(error) };
-      }
-    }
-  
+
     /**
      * Вихід користувача
      * @returns {Promise<Object>}
@@ -148,36 +91,21 @@ import {
         return { success: false, error: this._getErrorMessage(error) };
       }
     }
-  
-    /**
-     * Відновлення паролю
-     * @param {string} email - Email
-     * @returns {Promise<Object>}
-     */
-    async resetPassword(email) {
-      try {
-        await sendPasswordResetEmail(auth, email);
-        return { success: true };
-      } catch (error) {
-        console.error('Password reset error:', error);
-        return { success: false, error: this._getErrorMessage(error) };
-      }
-    }
-  
+
     /**
      * Перевірка чи користувач авторизований
      * @returns {boolean}
      */
     isAuthenticated() {
-      return this.currentUser !== null && !this.currentUser.isAnonymous;
+      return this.currentUser !== null;
     }
-  
+
     /**
      * Перевірка чи це гість
      * @returns {boolean}
      */
     isGuest() {
-      return this.currentUser?.isAnonymous || false;
+      return !this.currentUser;
     }
   
     /**
@@ -202,8 +130,49 @@ import {
      */
     getUserDisplayName() {
       if (!this.currentUser) return 'Гість';
-      if (this.currentUser.isAnonymous) return 'Анонімний гравець';
       return this.currentUser.displayName || 'Гравець';
+    }
+
+    /**
+     * Отримання ключа персоналізації рівнів
+     * Використовується для генерації варіацій рівнів для кожного гравця
+     * @returns {string}
+     */
+    getVariantKey() {
+      if (this.currentUser?.uid) {
+        return this.currentUser.uid;
+      }
+
+      return this._ensureLocalVariantKey();
+    }
+
+    /**
+     * Створення або завантаження локального ключа персоналізації
+     * @returns {string}
+     */
+    _ensureLocalVariantKey() {
+      if (this._localVariantKey) {
+        return this._localVariantKey;
+      }
+
+      try {
+        const storageKey = 'kotyhoroshko_variant_key';
+        const existing = localStorage.getItem(storageKey);
+
+        if (existing) {
+          this._localVariantKey = existing;
+          return existing;
+        }
+
+        const newKey = crypto.randomUUID ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random()}`;
+        localStorage.setItem(storageKey, newKey);
+        this._localVariantKey = newKey;
+        return newKey;
+      } catch (error) {
+        console.warn('Не вдалося створити локальний ключ варіанту, використовується запасний:', error);
+        this._localVariantKey = 'fallback';
+        return this._localVariantKey;
+      }
     }
   
     /**

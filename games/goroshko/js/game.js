@@ -17,11 +17,14 @@ import { soundEngine } from './sound.js';
  * Головний контролер гри
  */
 export class Game {
-  constructor() {
+  constructor(options = {}) {
     this.currentLevel = 0;
     this.levelData = null;
     this.isRunning = false;
     this.elements = null;
+    this.variantProvider = typeof options.variantProvider === 'function'
+      ? options.variantProvider
+      : () => 'default';
 
     // Статистика героя
     this.heroDamage = 0;
@@ -83,7 +86,8 @@ export class Game {
    */
   loadLevel(levelIndex) {
     this.currentLevel = levelIndex;
-    this.levelData = getLevel(levelIndex);
+    const variantKey = this.variantProvider();
+    this.levelData = getLevel(levelIndex, variantKey);
 
     if (!this.levelData) {
       throw new Error(`Level with index ${levelIndex} not found.`);
@@ -341,11 +345,11 @@ export class Game {
           event.dataTransfer.effectAllowed = 'copy';
           event.dataTransfer.setData('text/plain', 'command');
           event.dataTransfer.setData('application/x-new-command', JSON.stringify(descriptor));
-          item.classList.add('palette-block--dragging');
+          item.classList.add('command-tile--dragging');
         });
 
         item.addEventListener('dragend', () => {
-          item.classList.remove('palette-block--dragging');
+          item.classList.remove('command-tile--dragging');
         });
       });
     }

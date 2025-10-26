@@ -3,29 +3,38 @@
  * Підтримує локальне та хмарне збереження
  */
 
-import { 
-    doc,
-    setDoc,
-    getDoc,
-    collection,
-    query,
-    orderBy,
-    limit,
-    getDocs,
-    serverTimestamp,
-    increment
-  } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  serverTimestamp,
+  increment
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+import { db } from './firebase-config.js';
+import { authManager } from './auth.js';
+
+const STORAGE_KEY = 'kotyhoroshko_progress';
+const MEDAL_RANK = {
+  gold: 3,
+  silver: 2,
+  bronze: 1
+};
+
+function getMedalRank(medal) {
+  return MEDAL_RANK[medal] || 0;
+}
   
-  import { db } from './firebase-config.js';
-  import { authManager } from './auth.js';
-  
-  const STORAGE_KEY = 'kotyhoroshko_progress';
-  
-  /**
-   * Клас StorageManager
-   * Керує збереженням прогресу локально та в Firebase
-   */
-  export class StorageManager {
+/**
+ * Клас StorageManager
+ * Керує збереженням прогресу локально та в Firebase
+ */
+export class StorageManager {
     constructor() {
       this.localCache = null;
     }
@@ -62,49 +71,74 @@ import {
     async _saveToFirestore(userId, levelIndex, data) {
       const levelRef = doc(db, 'users', userId, 'levels', `level_${levelIndex}`);
       const userRef = doc(db, 'users', userId);
-  
-      // Перевіряємо чи це кращий результат
+
       const levelSnap = await getDoc(levelRef);
-      const isNewBest = !levelSnap.exists() || data.blocks < levelSnap.data()?.blocks;
-  
-      // Зберігаємо результат рівня
-      await setDoc(levelRef, {
+      const existingData = levelSnap.exists() ? levelSnap.data() : null;
+      const currentBestBlocks = typeof existingData?.blocks === 'number' ? existingData.blocks : Number.POSITIVE_INFINITY;
+      const newBlocks = typeof data.blocks === 'number' ? data.blocks : Number.POSITIVE_INFINITY;
+      const isNewBest = !existingData || newBlocks < currentBestBlocks;
+
+      let finalMedal = existingData?.medal || null;
+
+      const levelUpdate = {
         levelIndex,
         completed: true,
-        blocks: data.blocks,
-        medal: data.medal,
-        completedAt: serverTimestamp(),
         attempts: increment(1)
-      }, { merge: true });
-  
-      // Оновлюємо загальну статистику
+      };
+
+      if (isNewBest) {
+        const incomingMedal = data.medal || null;
+        finalMedal = getMedalRank(incomingMedal) >= getMedalRank(existingData?.medal)
+          ? incomingMedal
+          : existingData?.medal || incomingMedal;
+
+        levelUpdate.blocks = newBlocks;
+        if (finalMedal) {
+          levelUpdate.medal = finalMedal;
+        }
+        levelUpdate.completedAt = serverTimestamp();
+      }
+
+      await setDoc(levelRef, levelUpdate, { merge: true });
+
       const statsUpdate = {
         'stats.totalAttempts': increment(1),
         updatedAt: serverTimestamp()
       };
-  
-      // Якщо це новий кращий результат, оновлюємо медалі
+
       if (isNewBest) {
-        statsUpdate[`stats.${data.medal}Medals`] = increment(1);
-        
-        if (!levelSnap.exists()) {
+        if (!existingData) {
           statsUpdate['stats.totalCompleted'] = increment(1);
+          if (finalMedal) {
+            statsUpdate[`stats.${finalMedal}Medals`] = increment(1);
+          }
+        } else {
+          const previousMedal = existingData.medal || null;
+          if (getMedalRank(finalMedal) > getMedalRank(previousMedal)) {
+            if (previousMedal) {
+              statsUpdate[`stats.${previousMedal}Medals`] = increment(-1);
+            }
+            if (finalMedal) {
+              statsUpdate[`stats.${finalMedal}Medals`] = increment(1);
+            }
+          }
         }
       }
-  
-      // Оновлюємо максимальний рівень
+
       const userSnap = await getDoc(userRef);
       const currentMaxLevel = userSnap.data()?.stats?.maxLevel || 0;
       const unlockedLevel = levelIndex + 1;
       if (unlockedLevel > currentMaxLevel) {
         statsUpdate['stats.maxLevel'] = unlockedLevel;
       }
-  
+
       await setDoc(userRef, statsUpdate, { merge: true });
-  
-      // Додаємо запис у турнірну таблицю
+
       if (isNewBest) {
-        await this._updateLeaderboard(userId, levelIndex, data);
+        await this._updateLeaderboard(userId, levelIndex, {
+          ...data,
+          medal: finalMedal || data.medal
+        });
       }
     }
   
@@ -336,20 +370,26 @@ import {
         if (!progress.levels) {
           progress.levels = {};
         }
-  
+
         const existing = progress.levels[levelIndex];
-        if (!existing || data.blocks < existing.blocks) {
+        const isNewBest = !existing || data.blocks < existing.blocks;
+
+        if (isNewBest) {
+          const bestMedal = !existing || getMedalRank(data.medal) >= getMedalRank(existing.medal)
+            ? data.medal
+            : existing.medal;
+
           progress.levels[levelIndex] = {
             completed: true,
             blocks: data.blocks,
-            medal: data.medal,
+            medal: bestMedal,
             time: Date.now(),
             attempts: (existing?.attempts || 0) + 1
           };
-        } else {
+        } else if (existing) {
           progress.levels[levelIndex].attempts = (existing.attempts || 0) + 1;
         }
-  
+
         const unlockedLevel = levelIndex + 1;
         if (!progress.maxLevel || unlockedLevel > progress.maxLevel) {
           progress.maxLevel = unlockedLevel;
@@ -447,7 +487,6 @@ import {
       };
     }
   }
-  
-  // Глобальний екземпляр
-  export const storage = new StorageManager();
-  
+
+// Глобальний екземпляр
+export const storage = new StorageManager();
