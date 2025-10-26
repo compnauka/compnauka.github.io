@@ -6,6 +6,7 @@
 import { Game } from './game.js';
 import { soundEngine } from './sound.js';
 import { authManager } from './auth.js';
+import { initHeader } from './header.js';
 
 const scheduleIdleTask = (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function')
   ? (cb) => window.requestIdleCallback(cb)
@@ -75,13 +76,15 @@ async function init() {
     // Профіль користувача (нові елементи)
     userProfile: document.getElementById('userProfile'),
     userAvatar: document.getElementById('userAvatar'),
-    userName: document.getElementById('userName'),
-    loginBtn: document.getElementById('loginBtn'),
-    logoutBtn: document.getElementById('logoutBtn')
+    userName: document.getElementById('userName')
   };
 
+  initHeader();
+
   // Створення екземпляру гри
-  const game = new Game();
+  const game = new Game({
+    variantProvider: () => authManager.getVariantKey()
+  });
   let initError = null;
 
   try {
@@ -94,29 +97,8 @@ async function init() {
     scheduleWarmupTasks();
   }
 
-  // Обробка змін авторизації
-  authManager.onAuthChange((user) => {
-    updateUserUI(user, elements);
-  });
-
   // Розблокування звуку при першій взаємодії
   soundEngine.unlock();
-
-  // Додаємо обробники для профілю
-  if (elements.loginBtn) {
-    elements.loginBtn.addEventListener('click', () => {
-      window.location.href = 'auth.html';
-    });
-  }
-
-  if (elements.logoutBtn) {
-    elements.logoutBtn.addEventListener('click', async () => {
-      const result = await authManager.logout();
-      if (result.success) {
-        window.location.reload();
-      }
-    });
-  }
 
   // Глобальний доступ для відлагодження
   if (typeof window !== 'undefined') {
@@ -127,68 +109,6 @@ async function init() {
 
   if (initError) {
     displayBootstrapError();
-  }
-}
-
-/**
- * Оновлення UI профілю користувача
- * @param {Object} user - Firebase User або null
- * @param {Object} elements - DOM елементи
- */
-function updateUserUI(user, elements) {
-  if (!elements.userProfile) return;
-
-  // Спочатку видаляємо старе повідомлення для гостя, якщо воно є
-  const existingGuestMsg = document.getElementById('guestMessage');
-  if (existingGuestMsg) {
-    existingGuestMsg.remove();
-  }
-
-  if (user) {
-    // Користувач авторизований
-    if (elements.userAvatar) {
-      elements.userAvatar.textContent = user.isAnonymous ? '👤' : '👨‍💻';
-    }
-    
-    if (elements.userName) {
-      elements.userName.textContent = authManager.getUserDisplayName();
-    }
-
-    if (elements.loginBtn) {
-      elements.loginBtn.classList.add('hidden');
-    }
-
-    if (elements.logoutBtn && !user.isAnonymous) {
-      elements.logoutBtn.classList.remove('hidden');
-    } else if (elements.logoutBtn) {
-      elements.logoutBtn.classList.add('hidden');
-    }
-
-    elements.userProfile.classList.remove('hidden');
-    
-    // Змінено: Додаємо повідомлення, якщо користувач - гість
-    if (user.isAnonymous) {
-      const guestMsg = document.createElement('p');
-      guestMsg.id = 'guestMessage';
-      guestMsg.className = 'text-xs text-center text-orange-600 font-bold mt-2';
-      guestMsg.textContent = 'Прогрес зберігається лише на цьому пристрої.';
-      // Додаємо повідомлення після батьківського контейнера профілю, щоб не порушувати flex-верстку
-      elements.userProfile.parentElement.appendChild(guestMsg);
-    }
-
-  } else {
-    // Користувач не авторизований
-    if (elements.loginBtn) {
-      elements.loginBtn.classList.remove('hidden');
-    }
-
-    if (elements.logoutBtn) {
-      elements.logoutBtn.classList.add('hidden');
-    }
-
-    if (elements.userProfile) {
-      elements.userProfile.classList.add('hidden');
-    }
   }
 }
 
