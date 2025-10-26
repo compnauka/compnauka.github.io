@@ -19,16 +19,7 @@ export class UIManager {
      * @param {{active: boolean, stepCount: number}} state
      */
     updateLoopMode({ active = false, stepCount = 0 } = {}) {
-      const { btnLoop, btnRoot, loopStatus, loopStepCount, commandList } = this.elements;
-
-      if (loopStepCount) {
-        loopStepCount.textContent = stepCount;
-      }
-
-      if (loopStatus) {
-        loopStatus.classList.toggle('hidden', !active);
-        loopStatus.setAttribute('aria-hidden', active ? 'false' : 'true');
-      }
+      const { btnLoop, btnRoot, commandList } = this.elements;
 
       if (btnLoop) {
         const textEl = btnLoop.querySelector('.btn-text');
@@ -39,15 +30,22 @@ export class UIManager {
         }
         btnLoop.disabled = active;
         btnLoop.setAttribute('aria-pressed', active ? 'true' : 'false');
-        btnLoop.classList.toggle('loop-btn--active', active);
       }
 
       if (btnRoot) {
         const textEl = btnRoot.querySelector('.btn-text');
         if (textEl) {
-          textEl.textContent = 'Закрити цикл';
+          textEl.textContent = active
+            ? `Закрити цикл (${stepCount || 0})`
+            : 'Закрити цикл';
         }
+
         btnRoot.disabled = !active;
+        btnRoot.classList.toggle('bg-red-500', active);
+        btnRoot.classList.toggle('[--shadow-color:theme(colors.red.700)]', active);
+        btnRoot.classList.toggle('hover:bg-red-400', active);
+        btnRoot.classList.toggle('bg-gray-400', !active);
+        btnRoot.classList.toggle('[--shadow-color:theme(colors.gray.600)]', !active);
       }
 
       if (commandList) {
@@ -210,8 +208,7 @@ export class UIManager {
         left: this.elements.btnLeft,
         right: this.elements.btnRight,
         loop: this.elements.btnLoop,
-        endLoop: this.elements.btnRoot,
-        loopPanel: this.elements.loopStatus
+        endLoop: this.elements.btnRoot
       };
   
       // Спочатку ховаємо всі
