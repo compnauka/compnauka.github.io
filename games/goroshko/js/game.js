@@ -21,6 +21,7 @@ export class Game {
     this.currentLevel = 0;
     this.levelData = null;
     this.isRunning = false;
+    this.elements = null;
 
     // Статистика героя
     this.heroDamage = 0;
@@ -39,6 +40,7 @@ export class Game {
    * @param {Object} elements - Об'єкт з DOM-елементами
    */
   async init(elements) {
+    this.elements = elements;
     // Ініціалізація менеджерів
     this.ui.init(elements);
     this.commands.init(elements.commandList);
@@ -75,6 +77,10 @@ export class Game {
     this.currentLevel = levelIndex;
     this.levelData = getLevel(levelIndex);
 
+    if (!this.levelData) {
+      throw new Error(`Level with index ${levelIndex} not found.`);
+    }
+
     // Скидання стану
     this.heroDamage = 0;
     this.heroArmor = 0;
@@ -83,18 +89,16 @@ export class Game {
     this.battle.reset();
 
     // Оновлення сітки
-    this.grid.init(document.getElementById('grid'), this.levelData);
+    const gridElement = this.elements?.grid || document.getElementById('grid');
+    if (!gridElement) {
+      throw new Error('Grid element not found in the DOM.');
+    }
+
+    this.grid.init(gridElement, this.levelData);
     this.grid.monsterIcon = this.levelData.monsterStats.icon;
 
     // Оновлення UI
-    this.ui.updateLevelInfo({
-      levelNum: levelIndex + 1,
-      desc: this.levelData.desc,
-      damage: this.heroDamage,
-      armor: this.heroArmor,
-      health: this.heroHealth,
-      parGold: this.levelData.par.gold
-    });
+    this._updateStatsUI();
 
     this.ui.updateButtonsVisibility(levelIndex);
     this.ui.hideMessage();
@@ -132,14 +136,14 @@ export class Game {
 
       const newPos = this._getNextPosition(heroPos, cmd.direction);
 
-    // Перевірка можливості руху
-    if (!this.grid.canMoveTo(newPos)) {
+      // Перевірка можливості руху
+      if (!this.grid.canMoveTo(newPos)) {
         this.ui.showMessage('❌ Котигорошко врізався в перешкоду!', 'error');
-        this.grid.flashCell(newPos); // <--- Доданий рядок
+        this.grid.flashCell(newPos);
         this.isRunning = false;
         this.ui.setControlsEnabled(true);
         return;
-    }
+      }
 
       // Рух героя
       await this.grid.updateHeroPosition(newPos);
@@ -170,49 +174,20 @@ export class Game {
     const [row, col] = pos;
 
     // Зброя
-    if (this.levelData.items.weapons.some(w => w[0] === row && w[1] === col)) {
+    await this._collectItem(row, col, this.levelData.items.weapons, () => {
       this.heroDamage += GAME_CONFIG.baseDamage;
-      this.grid.animateCollect(row, col);
-      this.ui.updateLevelInfo({
-        levelNum: this.currentLevel + 1,
-        desc: this.levelData.desc,
-        damage: this.heroDamage,
-        armor: this.heroArmor,
-        health: this.heroHealth,
-        parGold: this.levelData.par.gold
-      });
-      await this._delay(GAME_CONFIG.collectAnimMs);
-    }
+    });
 
-    // Броня
-    if (this.levelData.items.armor.some(a => a[0] === row && a[1] === col)) {
+    await this._collectItem(row, col, this.levelData.items.armor, () => {
       this.heroArmor += GAME_CONFIG.baseArmor;
-      this.grid.animateCollect(row, col);
-      this.ui.updateLevelInfo({
-        levelNum: this.currentLevel + 1,
-        desc: this.levelData.desc,
-        damage: this.heroDamage,
-        armor: this.heroArmor,
-        health: this.heroHealth,
-        parGold: this.levelData.par.gold
-      });
-      await this._delay(GAME_CONFIG.collectAnimMs);
-    }
+    });
 
-    // Зілля
-    if (this.levelData.items.potions.some(p => p[0] === row && p[1] === col)) {
-      this.heroHealth = Math.min(GAME_CONFIG.baseHealth, this.heroHealth + GAME_CONFIG.potionHealth);
-      this.grid.animateCollect(row, col);
-      this.ui.updateLevelInfo({
-        levelNum: this.currentLevel + 1,
-        desc: this.levelData.desc,
-        damage: this.heroDamage,
-        armor: this.heroArmor,
-        health: this.heroHealth,
-        parGold: this.levelData.par.gold
-      });
-      await this._delay(GAME_CONFIG.collectAnimMs);
-    }
+    await this._collectItem(row, col, this.levelData.items.potions, () => {
+      this.heroHealth = Math.min(
+        GAME_CONFIG.baseHealth,
+        this.heroHealth + GAME_CONFIG.potionHealth
+      );
+    });
   }
 
   /**
@@ -254,7 +229,7 @@ export class Game {
     else if (blocks <= silver) medal = 'silver';
 
     // Збереження прогресу
-    storage.saveLevelProgress(this.currentLevel, {
+    await storage.saveLevelProgress(this.currentLevel, {
       completed: true,
       blocks,
       medal,
@@ -301,6 +276,29 @@ export class Game {
    */
   _delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  _updateStatsUI() {
+    this.ui.updateLevelInfo({
+      levelNum: this.currentLevel + 1,
+      desc: this.levelData.desc,
+      damage: this.heroDamage,
+      armor: this.heroArmor,
+      health: this.heroHealth,
+      parGold: this.levelData.par.gold
+    });
+  }
+
+  async _collectItem(row, col, items, onCollect) {
+    if (!Array.isArray(items)) return;
+
+    const hasItem = items.some(item => item[0] === row && item[1] === col);
+    if (!hasItem) return;
+
+    onCollect();
+    this.grid.animateCollect(row, col);
+    this._updateStatsUI();
+    await this._delay(GAME_CONFIG.collectAnimMs);
   }
 
   /**
