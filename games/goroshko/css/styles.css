@@ -1,0 +1,171 @@
+/**
+ * Стилі для гри "Котигорошко"
+ * Включає базові стилі, кнопки, анімації та адаптивність
+ */
+
+/* === БАЗОВІ СТИЛІ === */
+:root { 
+    --transition-ms: 240; 
+  }
+  
+  html { 
+    -webkit-text-size-adjust: 100%; 
+    overflow-x: hidden; 
+  }
+  
+  body { 
+    overflow-x: hidden; 
+  }
+  
+  body, h1, h2, h3, p, span, div, button { 
+    font-family: 'Roboto','Open Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; 
+    -webkit-font-smoothing: antialiased; 
+    -moz-osx-font-smoothing: grayscale; 
+  }
+  
+  /* === 3D КНОПКИ === */
+  .btn-3d { 
+    transition: transform .1s ease, box-shadow .1s ease, filter .1s; 
+    box-shadow: 0 4px 0 0 var(--shadow-color); 
+  }
+  
+  .btn-3d:disabled { 
+    box-shadow: 0 4px 0 0 var(--shadow-color); 
+    filter: grayscale(.6); 
+    opacity:.7; 
+  }
+  
+  .btn-3d:not(:disabled):active { 
+    transform: translateY(2px); 
+    box-shadow: 0 2px 0 0 var(--shadow-color); 
+  }
+  
+  /* === КНОПКИ СОРТУВАННЯ === */
+  .btn-sort { 
+    transition: transform .1s ease, box-shadow .1s ease; 
+    box-shadow: 0 3px 0 0 var(--shadow-color); 
+    width: 2.25rem; 
+    height: 2.25rem; 
+    display: inline-flex; 
+    align-items:center; 
+    justify-content:center; 
+  }
+  
+  .btn-sort:not(:disabled):active { 
+    transform: translateY(1px); 
+    box-shadow: 0 2px 0 0 var(--shadow-color); 
+  }
+  
+  /* === АНІМАЦІЇ === */
+  @keyframes pulse { 
+    0%,100%{transform:scale(1)} 
+    50%{transform:scale(1.05)} 
+  }
+  
+  .monster-pulse { 
+    animation: pulse 1.5s infinite; 
+  }
+  
+  @media (prefers-reduced-motion: reduce) { 
+    * { 
+      animation: none !important; 
+      transition: none !important; 
+    } 
+  }
+  
+  /* === ПРИХОВУВАННЯ ЕЛЕМЕНТІВ ЗА РІВНЕМ === */
+  .hidden-by-level { 
+    display: none !important; 
+  }
+  
+  /* === СЕНСОРНІ ОПТИМІЗАЦІЇ === */
+  body { 
+    touch-action: manipulation; 
+    -webkit-touch-callout: none; 
+    padding-left: env(safe-area-inset-left); 
+    padding-right: env(safe-area-inset-right); 
+    padding-bottom: env(safe-area-inset-bottom); 
+  }
+  
+  button, .cmd-btn, .control-btn, .btn-sort { 
+    user-select: none; 
+    -webkit-tap-highlight-color: transparent; 
+  }
+  
+  input, textarea { 
+    user-select: text; 
+  }
+  
+  /* === КЛІТИНКИ СІТКИ === */
+  .cell { 
+    transition: transform calc(var(--transition-ms)*1ms) ease, opacity calc(var(--transition-ms)*1ms) ease; 
+    font-size: clamp(0.7rem, 1.8vw, 1.9rem); 
+    will-change: transform, opacity;
+    line-height: 1;
+  }
+  
+  .cell.collecting { 
+    transform: scale(1.35); 
+    z-index: 20; 
+  }
+  
+  /* === АДАПТИВНА ШИРИНА СІТКИ === */
+  #grid { 
+    width: min(98vw, 26rem); 
+    max-width: 100%;
+  }
+  
+  /* === МЕДІА-ЗАПИТИ === */
+  @media (min-width: 640px) { 
+    #grid { width: min(88vw, 30rem); }
+    .cell { font-size: clamp(1rem, 2.2vw, 1.9rem); }
+  }
+  
+  @media (min-width: 768px) { 
+    #grid { width: min(72vw, 32rem); }
+    .cell { font-size: clamp(1.2rem, 2.4vw, 1.9rem); }
+  }
+  
+  @media (min-width: 1024px) { 
+    #grid { width: 34rem; }
+    .cell { font-size: 1.9rem; }
+  }
+  
+  /* === ГОРИЗОНТАЛЬНА ОРІЄНТАЦІЯ НА МОБІЛЬНИХ === */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .cmd-btn { 
+      min-height: 36px !important; 
+      padding: 0.4rem 0.6rem !important;
+      font-size: 0.75rem !important;
+    }
+    .cmd-btn i { font-size: 1rem !important; }
+    .cmd-btn span { font-size: 0.65rem !important; }
+    .control-btn { 
+      min-height: 36px !important; 
+      padding: 0.5rem !important;
+      font-size: 0.85rem !important;
+    }
+    .command-list { max-height: 25vh !important; min-height: 80px !important; }
+    h3.font-display { font-size: 1.1rem !important; }
+    .cell { font-size: clamp(0.6rem, 1.5vw, 1.2rem) !important; }
+  }
+  
+  /* === ДОДАТКОВІ СТИЛІ === */
+  .controls-sticky { 
+    position: sticky; 
+    bottom: 0; 
+    backdrop-filter: saturate(1.05) blur(3px); 
+  }
+  
+  .sr-only { 
+    position: absolute; 
+    width: 1px; 
+    height: 1px; 
+    padding: 0; 
+    margin: -1px; 
+    overflow: hidden; 
+    clip: rect(0, 0, 0, 0); 
+    white-space: nowrap; 
+    border: 0; 
+  }
+  
