@@ -3,8 +3,8 @@
  * Координує всі компоненти гри та керує ігровим процесом
  */
 
-import { GAME_CONFIG, DIRECTIONS } from './config.js';
-import { getLevel, getBaseLevelCount } from './levels.js';
+import { GAME_CONFIG, DIRECTIONS, COMMAND_TYPES } from './config.js';
+import { getLevel } from './levels.js';
 import { GridManager } from './grid.js';
 import { CommandManager } from './commands.js';
 import { BattleManager } from './battle.js';
@@ -38,11 +38,7 @@ export class Game {
    * Ініціалізація гри
    * @param {Object} elements - Об'єкт з DOM-елементами
    */
-/**
-   * Ініціалізація гри
-   * @param {Object} elements - Об'єкт з DOM-елементами
-   */
-async init(elements) {
+  async init(elements) {
     // Ініціалізація менеджерів
     this.ui.init(elements);
     this.commands.init(elements.commandList);
@@ -136,14 +132,14 @@ async init(elements) {
 
       const newPos = this._getNextPosition(heroPos, cmd.direction);
 
-    // Перевірка можливості руху
-    if (!this.grid.canMoveTo(newPos)) {
+      // Перевірка можливості руху
+      if (!this.grid.canMoveTo(newPos)) {
         this.ui.showMessage('❌ Котигорошко врізався в перешкоду!', 'error');
-        this.grid.flashCell(newPos); // <--- Доданий рядок
+        this.grid.flashCell(newPos);
         this.isRunning = false;
         this.ui.setControlsEnabled(true);
         return;
-    }
+      }
 
       // Рух героя
       await this.grid.updateHeroPosition(newPos);
@@ -258,7 +254,7 @@ async init(elements) {
     else if (blocks <= silver) medal = 'silver';
 
     // Збереження прогресу
-    storage.saveLevelProgress(this.currentLevel, {
+    await storage.saveLevelProgress(this.currentLevel, {
       completed: true,
       blocks,
       medal,
@@ -312,46 +308,32 @@ async init(elements) {
    */
   _attachEventListeners(elements) {
     // Кнопки команд
-    if (elements.btnUp) {
-      elements.btnUp.addEventListener('click', () => {
-        this.commands.addMove(DIRECTIONS.UP);
-        this.ui.animateButton(elements.btnUp);
-      });
-    }
+    if (elements.commandPalette) {
+      const paletteItems = elements.commandPalette.querySelectorAll('[data-command-type]');
+      paletteItems.forEach((item) => {
+        const descriptor = this._descriptorFromDataset(item.dataset);
+        if (!descriptor) return;
 
-    if (elements.btnDown) {
-      elements.btnDown.addEventListener('click', () => {
-        this.commands.addMove(DIRECTIONS.DOWN);
-        this.ui.animateButton(elements.btnDown);
-      });
-    }
+        item.addEventListener('click', () => {
+          this._applyPaletteCommand(descriptor);
+          this.ui.animateButton(item);
+        });
 
-    if (elements.btnLeft) {
-      elements.btnLeft.addEventListener('click', () => {
-        this.commands.addMove(DIRECTIONS.LEFT);
-        this.ui.animateButton(elements.btnLeft);
-      });
-    }
+        item.addEventListener('dragstart', (event) => {
+          if (item.disabled) {
+            event.preventDefault();
+            return;
+          }
 
-    if (elements.btnRight) {
-      elements.btnRight.addEventListener('click', () => {
-        this.commands.addMove(DIRECTIONS.RIGHT);
-        this.ui.animateButton(elements.btnRight);
-      });
-    }
+          event.dataTransfer.effectAllowed = 'copy';
+          event.dataTransfer.setData('text/plain', 'command');
+          event.dataTransfer.setData('application/x-new-command', JSON.stringify(descriptor));
+          item.classList.add('palette-block--dragging');
+        });
 
-    // Кнопки циклів
-    if (elements.btnLoop) {
-      elements.btnLoop.addEventListener('click', () => {
-        this.commands.startLoop();
-        this.ui.animateButton(elements.btnLoop);
-      });
-    }
-
-    if (elements.btnRoot) {
-      elements.btnRoot.addEventListener('click', () => {
-        this.commands.endLoop();
-        this.ui.animateButton(elements.btnRoot);
+        item.addEventListener('dragend', () => {
+          item.classList.remove('palette-block--dragging');
+        });
       });
     }
 
@@ -395,6 +377,40 @@ async init(elements) {
       elements.fullscreenToggle.addEventListener('click', () => {
         this.ui.toggleFullscreen();
       });
+    }
+  }
+
+  _descriptorFromDataset(dataset = {}) {
+    const type = dataset.commandType;
+    if (type === COMMAND_TYPES.MOVE) {
+      const direction = dataset.direction;
+      if (Object.values(DIRECTIONS).includes(direction)) {
+        return { type: COMMAND_TYPES.MOVE, direction };
+      }
+      return null;
+    }
+
+    if (type === COMMAND_TYPES.LOOP) {
+      const loopCount = Number(dataset.loopCount);
+      return Number.isFinite(loopCount) && loopCount > 0
+        ? { type: COMMAND_TYPES.LOOP, loopCount }
+        : { type: COMMAND_TYPES.LOOP };
+    }
+
+    return null;
+  }
+
+  _applyPaletteCommand(descriptor) {
+    if (!descriptor) return;
+
+    if (descriptor.type === COMMAND_TYPES.MOVE) {
+      this.commands.addMove(descriptor.direction);
+    } else if (descriptor.type === COMMAND_TYPES.LOOP) {
+      if (descriptor.loopCount) {
+        this.commands.insertCommand({ type: COMMAND_TYPES.LOOP, loopCount: descriptor.loopCount });
+      } else {
+        this.commands.addLoop();
+      }
     }
   }
 }
