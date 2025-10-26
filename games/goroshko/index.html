@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Котигорошко — Навчальна гра з алгоритмами</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { 
+  theme: { 
+    extend: { 
+      fontFamily: { 
+        sans: ['Roboto','-apple-system','BlinkMacSystemFont','Segoe UI','Helvetica','Arial','sans-serif'], 
+        display: ['Open Sans','Roboto','sans-serif'] 
+      }, 
+      screens: { xs: '380px' } 
+    } 
+  } 
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen p-2 xs:p-3 flex justify-center items-start font-sans">
+
+<div class="container mx-auto max-w-6xl w-full">
+  <!-- Хедер з інформацією про рівень -->
+  <header class="bg-white/90 backdrop-blur rounded-2xl p-3 md:p-4 shadow-2xl w-full mt-2">
+    <div class="flex justify-between items-center gap-x-4">
+      
+      <div class="flex-shrink-0">
+        <h1 class="font-display text-2xl xs:text-3xl md:text-4xl text-yellow-500 drop-shadow-lg leading-tight">🦸 Котигорошко 🐉</h1>
+        <p class="text-gray-700 text-xs xs:text-sm md:text-base mt-1 hidden sm:block">Створи алгоритм і здолай монстрів!</p>
+        <div class="flex gap-3 mt-2">
+          <a href="story.html" class="text-blue-600 hover:text-blue-800 text-sm underline">📖 Легенда</a>
+          <a href="algorithms.html" class="text-blue-600 hover:text-blue-800 text-sm underline">🧠 Алгоритми</a>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-x-2 sm:gap-x-4">
+        <section class="level-info bg-gradient-to-br from-purple-600 to-indigo-700 p-2.5 md:p-3 rounded-2xl text-white shadow-lg">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <h2 class="font-display text-lg md:text-2xl">🏰 Рівень <span id="levelNum">1</span></h2>
+            <div class="flex gap-1.5">
+              <button id="soundToggle" class="btn-3d text-white rounded-lg p-1.5 text-base bg-white/20 hover:bg-white/30" aria-pressed="false" aria-label="Перемкнути звук" style="--shadow-color:rgba(0,0,0,.3)">
+                <i class="fas fa-volume-up w-4 h-4" id="soundIcon" aria-hidden="true"></i>
+              </button>
+              <button id="fullscreenToggle" class="btn-3d text-white rounded-lg p-1.5 text-base bg-white/20 hover:bg-white/30" aria-label="Повноекранний режим" style="--shadow-color:rgba(0,0,0,.3)">
+                <i class="fas fa-expand w-4 h-4" id="fullscreenIcon" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <p class="level-desc text-xs md:text-sm mb-2 text-center" id="levelDesc"></p>
+          <div class="stats-bar flex gap-1.5 justify-center flex-wrap text-xs md:text-sm">
+            <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">⚔️ <span id="damage">0</span></div>
+            <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">🛡️ <span id="armor">0</span></div>
+            <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1">❤️ <span id="health">100</span></div>
+            <div class="stat bg-white/20 rounded-lg px-2 py-1 flex items-center gap-1 font-display">🎯 <span id="parGold">?</span>🥇</div>
+          </div>
+        </section>
+
+        <div class="flex flex-col items-center gap-y-2">
+            <div id="userProfile" class="hidden bg-white/80 backdrop-blur rounded-xl p-2 shadow-md w-full">
+                <div class="flex items-center gap-2">
+                    <div id="userAvatar" class="text-2xl">👨‍💻</div>
+                    <div>
+                        <p id="userName" class="font-bold text-gray-800 text-sm leading-tight">Гравець</p>
+                        <div class="flex gap-2 text-xs">
+                            <a href="leaderboard.html" class="text-blue-600 hover:underline">🏆 Рейтинг</a>
+                            <button id="logoutBtn" class="text-red-600 hover:underline hidden">Вийти</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="loginBtn" class="btn-3d bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm w-full [--shadow-color:theme(colors.green.700)] hover:bg-green-400">
+                <i class="fas fa-sign-in-alt mr-1"></i>Увійти
+            </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Основна ігрова зона -->
+  <main class="bg-white rounded-2xl p-3 md:p-6 shadow-2xl w-full my-3">
+    <div class="game-area grid grid-cols-1 md:grid-cols-[1.15fr_1fr] gap-3 md:gap-6">
+      
+      <!-- Карта гри -->
+      <section class="grid-container bg-gray-50 rounded-2xl p-2.5 md:p-4 shadow-inner" aria-label="Карта пригод">
+        <h3 class="font-display text-xl md:text-2xl text-center text-indigo-600 mb-2 md:mb-3">🗺️ Карта пригод</h3>
+        <div class="mx-auto" id="grid" role="grid" aria-label="Сітка карти"></div>
+        <div class="legend grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs mt-2 md:mt-3">
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🦸 Котигорошко</div>
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">💀 Монстр</div>
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">⚔️ Зброя</div>
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🛡️ Броня</div>
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🧪 Зілля</div>
+          <div class="legend-item flex items-center gap-1 bg-white p-1 rounded-md shadow-sm">🌲 Перешкода</div>
+        </div>
+      </section>
+
+      <!-- Конструктор алгоритму -->
+      <aside class="commands-area bg-gray-50 rounded-2xl p-2.5 md:p-4 shadow-inner flex flex-col" aria-label="Конструктор алгоритму">
+        <h3 class="font-display text-xl md:text-2xl text-center text-indigo-600 mb-2 md:mb-3">📜 Твої Команди</h3>
+        
+        <div class="command-buttons grid grid-cols-4 gap-1.5 sm:gap-2.5 mb-3">
+          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level min-h-[48px] flex flex-col items-center justify-center gap-0.5" id="btnUp">
+            <i class="fas fa-arrow-up text-lg md:text-xl"></i><span class="text-xs md:text-sm">Вгору</span>
+          </button>
+          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level min-h-[48px] flex flex-col items-center justify-center gap-0.5" id="btnDown">
+            <i class="fas fa-arrow-down text-lg md:text-xl"></i><span class="text-xs md:text-sm">Вниз</span>
+          </button>
+          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level min-h-[48px] flex flex-col items-center justify-center gap-0.5" id="btnLeft">
+            <i class="fas fa-arrow-left text-lg md:text-xl"></i><span class="text-xs md:text-sm">Ліворуч</span>
+          </button>
+          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level min-h-[48px] flex flex-col items-center justify-center gap-0.5" id="btnRight">
+            <i class="fas fa-arrow-right text-lg md:text-xl"></i><span class="text-xs md:text-sm">Праворуч</span>
+          </button>
+          <button class="cmd-btn btn-3d loop-btn font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg col-span-2 bg-yellow-500 [--shadow-color:theme(colors.yellow.700)] hover:bg-yellow-400 hidden-by-level min-h-[44px]" id="btnLoop">
+            <i class="fas fa-redo mr-1"></i>Почати Цикл
+          </button>
+          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg col-span-2 hidden-by-level min-h-[44px]" id="btnRoot">
+            <i class="fas fa-sign-out-alt mr-1"></i>Вийти з циклу
+          </button>
+        </div>
+
+        <h3 class="font-display text-base md:text-xl text-center text-indigo-600 mb-2">💻 Твій алгоритм:</h3>
+        <div class="command-list bg-white border-2 border-indigo-200 rounded-lg p-2 min-h-[120px] max-h-[35vh] overflow-y-auto mb-3 flex-grow" id="commandList" aria-live="polite"></div>
+
+        <div class="controls-sticky grid grid-cols-2 md:flex gap-2 sm:gap-2.5 pt-2">
+          <button class="control-btn btn-3d font-display text-white rounded-xl py-2.5 text-base md:text-xl md:flex-1 bg-green-500 [--shadow-color:theme(colors.green.700)] hover:bg-green-400 min-h-[44px]" id="btnRun">
+            <i class="fas fa-play mr-1 md:mr-2"></i>Старт
+          </button>
+          <button class="control-btn btn-3d font-display text-white rounded-xl py-2.5 text-base md:text-xl md:flex-1 bg-red-500 [--shadow-color:theme(colors.red.700)] hover:bg-red-400 min-h-[44px]" id="btnClear">
+            <i class="fas fa-trash mr-1 md:mr-2"></i>Очистити
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Сцена бою -->
+    <section class="battle-scene hidden bg-gradient-to-br from-gray-800 to-black text-white rounded-2xl p-4 mt-4 md:mt-6" id="battleScene" aria-label="Сцена бою">
+      <h2 class="font-display text-2xl md:text-3xl text-center text-yellow-400 mb-4">💥 БІЙ! 💥</h2>
+      <div class="battle-characters flex justify-around items-center flex-wrap gap-4 mb-4">
+        <div class="character text-center w-32 md:w-36">
+          <div class="character-icon text-5xl md:text-7xl">🦸</div>
+          <div class="font-bold text-base md:text-lg"><strong>Котигорошко</strong></div>
+          <div class="text-xs md:text-sm">❤️ <span id="heroHealthText">100</span></div>
+          <div class="health-bar bg-gray-600 h-4 md:h-5 rounded-full overflow-hidden mt-1 shadow-inner">
+            <div class="health-fill hero-health h-full rounded-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500" id="heroHealthBar" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="text-3xl md:text-5xl font-display text-yellow-400">⚡</div>
+        <div class="character text-center w-32 md:w-36">
+          <div class="character-icon text-5xl md:text-7xl" id="monsterIcon">💀</div>
+          <div class="font-bold text-base md:text-lg"><strong id="monsterName">Монстр</strong></div>
+          <div class="text-xs md:text-sm">❤️ <span id="monsterHealthText">50</span></div>
+          <div class="health-bar bg-gray-600 h-4 md:h-5 rounded-full overflow-hidden mt-1 shadow-inner">
+            <div class="health-fill h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all duration-500" id="monsterHealthBar" style="width:100%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="battle-log bg-white/10 rounded-lg p-3 min-h-[80px] max-h-[180px] overflow-y-auto text-xs md:text-sm text-left font-mono" id="battleLog" aria-live="polite"></div>
+    </section>
+
+    <div class="message hidden text-center p-2.5 rounded-lg mt-3 md:mt-6 text-sm md:text-lg font-bold" id="message" role="status" aria-live="polite"></div>
+  </main>
+</div>
+
+<!-- Модальні вікна -->
+<div id="tutorialModalBackdrop" class="fixed inset-0 bg-black/60 z-40 hidden" aria-hidden="true"></div>
+<div id="tutorialModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 md:p-6 rounded-2xl shadow-2xl z-50 w-11/12 max-w-md hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+  <h2 id="tutorialTitle" class="font-display text-2xl md:text-3xl text-yellow-500 text-center mb-3 md:mb-4">🔁 Нова Сила: ЦИКЛИ! 🔁</h2>
+  <p class="text-gray-700 mb-3 md:mb-4 text-center text-sm md:text-base">Цикли дозволяють повторити команди декілька разів. Це економить блоки!</p>
+  <div class="bg-gray-100 rounded-lg p-2.5 md:p-3 mb-4 md:mb-5 text-gray-800 text-sm md:text-base">
+    <p class="font-medium mb-1">1. Натисни <strong class="text-yellow-600">«Почати Цикл»</strong>.</p>
+    <p class="font-medium mb-1">2. Додай команди, які хочеш повторити.</p>
+    <p class="font-medium">3. Натисни <strong class="text-red-500">«Вийти з циклу»</strong>.</p>
+  </div>
+  <button class="btn-3d w-full font-display text-white rounded-xl p-2.5 md:p-3 text-base md:text-lg bg-green-500 [--shadow-color:theme(colors.green.700)] hover:bg-green-400" id="tutorialCloseBtn">Зрозуміло!</button>
+</div>
+
+<div id="victoryModalBackdrop" class="fixed inset-0 bg-black/60 z-40 hidden" aria-hidden="true"></div>
+<div id="victoryModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 md:p-8 rounded-2xl shadow-2xl z-50 w-11/12 max-w-lg hidden" role="dialog" aria-modal="true" aria-labelledby="victoryTitle">
+  <div class="bg-gradient-to-r from-green-400 to-green-500 text-white p-3 md:p-4 rounded-xl mb-4 md:mb-6 text-center">
+    <div class="flex items-center justify-center gap-2 md:gap-3 mb-2">
+      <span class="text-2xl md:text-3xl" aria-hidden="true">🎉</span>
+      <h2 id="victoryTitle" class="font-display text-xl md:text-3xl">Перемога!</h2>
+      <span class="text-2xl md:text-3xl" aria-hidden="true">🏆</span>
+    </div>
+    <div class="text-base md:text-xl font-bold" id="victoryStats">Блоків: <span id="victoryBlockCount">0</span></div>
+    <div class="text-sm md:text-base mt-1" id="victoryMedal">🥇 (Золото!)</div>
+  </div>
+  <div class="text-center">
+    <button class="btn-3d font-display text-gray-800 rounded-xl p-3 md:p-4 text-lg md:text-xl bg-yellow-400 [--shadow-color:theme(colors.yellow.600)] hover:bg-yellow-300 w-full" id="victoryNextBtn">
+      <i class="fas fa-forward mr-2" aria-hidden="true"></i>Наступний рівень
+    </button>
+  </div>
+</div>
+
+<!-- Підключення модулів JS -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
