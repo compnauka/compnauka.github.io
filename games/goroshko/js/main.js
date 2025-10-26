@@ -7,13 +7,9 @@ import { Game } from './game.js';
 import { soundEngine } from './sound.js';
 import { authManager } from './auth.js';
 
-const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+const scheduleIdleTask = (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function')
   ? (cb) => window.requestIdleCallback(cb)
-  : (cb) => setTimeout(() => cb(), 1200);
-
-const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
-  ? (cb) => window.requestIdleCallback(cb)
-  : (cb) => setTimeout(() => cb(), 1200);
+  : (cb) => setTimeout(cb, 1200);
 
 /**
  * Головна функція ініціалізації
@@ -220,7 +216,7 @@ function scheduleWarmupTasks() {
 
   const connection = (typeof navigator !== 'undefined' && navigator.connection) || null;
 
-  idleScheduler(async () => {
+  scheduleIdleTask(async () => {
     const tasks = [];
 
     if (!connection || !connection.saveData) {
