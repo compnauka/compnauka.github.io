@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Турнірна таблиця — Котигорошко</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-gradient-to-br from-purple-900 to-indigo-700 min-h-screen p-4 font-sans">
+
+<div class="container mx-auto max-w-5xl">
+  <!-- Хедер -->
+  <div class="bg-white rounded-2xl p-6 shadow-2xl mb-4">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl md:text-4xl text-yellow-500">🏆 Турнірна таблиця</h1>
+        <p class="text-gray-600 mt-1">Найкращі гравці та їхні досягнення</p>
+      </div>
+      <a href="index.html" class="btn-3d bg-blue-500 text-white px-6 py-2 rounded-lg font-bold [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400">
+        <i class="fas fa-arrow-left mr-2"></i>До гри
+      </a>
+    </div>
+  </div>
+
+  <!-- Фільтри -->
+  <div class="bg-white rounded-2xl p-4 shadow-2xl mb-4">
+    <div class="flex gap-3 flex-wrap">
+      <button class="filter-btn btn-3d bg-purple-500 text-white px-4 py-2 rounded-lg font-medium [--shadow-color:theme(colors.purple.700)]" data-view="global">
+        🌍 Загальний рейтинг
+      </button>
+      <button class="filter-btn btn-3d bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium [--shadow-color:theme(colors.gray.400)]" data-view="level">
+        🎯 За рівнем
+      </button>
+    </div>
+
+    <!-- Вибір рівня -->
+    <div id="levelSelector" class="mt-4 hidden">
+      <label class="block text-gray-700 font-medium mb-2">Виберіть рівень:</label>
+      <select id="levelSelect" class="w-full md:w-64 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
+        <option value="0">Рівень 1 — Опудало</option>
+        <option value="1">Рівень 2 — Гоблін</option>
+        <option value="2">Рівень 3 — Орк</option>
+        <option value="3">Рівень 4 — Троль</option>
+        <option value="4">Рівень 5 — Скелет</option>
+        <option value="5">Рівень 6 — Дракон</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Таблиця лідерів -->
+  <div class="bg-white rounded-2xl p-6 shadow-2xl">
+    <div id="loadingState" class="text-center py-12">
+      <div class="inline-block animate-spin text-4xl mb-4">⚡</div>
+      <p class="text-gray-600">Завантаження рейтингу...</p>
+    </div>
+
+    <div id="leaderboardContent" class="hidden">
+      <!-- Топ 3 -->
+      <div id="topThree" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"></div>
+
+      <!-- Решта таблиці -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b-2 border-gray-300">
+              <th class="text-left py-3 px-2 font-bold text-gray-700">Місце</th>
+              <th class="text-left py-3 px-2 font-bold text-gray-700">Гравець</th>
+              <th class="text-center py-3 px-2 font-bold text-gray-700" id="scoreHeader">Пройдено</th>
+              <th class="text-center py-3 px-2 font-bold text-gray-700">🥇</th>
+              <th class="text-center py-3 px-2 font-bold text-gray-700">🥈</th>
+              <th class="text-center py-3 px-2 font-bold text-gray-700">🥉</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Позиція поточного гравця -->
+      <div id="userRankCard" class="mt-6 p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl border-2 border-blue-300 hidden">
+        <p class="text-center font-bold text-gray-800">
+          <i class="fas fa-user text-blue-600 mr-2"></i>
+          Твоя позиція: <span id="userRankText" class="text-2xl text-blue-600">—</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Пустий стан -->
+    <div id="emptyState" class="hidden text-center py-12">
+      <div class="text-6xl mb-4">🏜️</div>
+      <p class="text-gray-600 text-lg">Поки що немає результатів</p>
+      <p class="text-gray-500 text-sm mt-2">Стань першим, хто пройде цей рівень!</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { authManager } from './js/auth.js';
+import { storage } from './js/storage.js';
+
+// Ініціалізація
+authManager.init();
+
+let currentView = 'global';
+let currentLevel = null;
+
+// Елементи
+const loadingState = document.getElementById('loadingState');
+const leaderboardContent = document.getElementById('leaderboardContent');
+const emptyState = document.getElementById('emptyState');
+const topThree = document.getElementById('topThree');
+const leaderboardBody = document.getElementById('leaderboardBody');
+const levelSelector = document.getElementById('levelSelector');
+const levelSelect = document.getElementById('levelSelect');
+const userRankCard = document.getElementById('userRankCard');
+const userRankText = document.getElementById('userRankText');
+const scoreHeader = document.getElementById('scoreHeader');
+
+// Фільтри
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Оновлення стилів кнопок
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('bg-purple-500', 'text-white');
+      b.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    btn.classList.remove('bg-gray-200', 'text-gray-700');
+    btn.classList.add('bg-purple-500', 'text-white');
+
+    currentView = btn.dataset.view;
+    
+    if (currentView === 'level') {
+      levelSelector.classList.remove('hidden');
+      currentLevel = parseInt(levelSelect.value);
+    } else {
+      levelSelector.classList.add('hidden');
+      currentLevel = null;
+    }
+
+    loadLeaderboard();
+  });
+});
+
+levelSelect.addEventListener('change', () => {
+  currentLevel = parseInt(levelSelect.value);
+  loadLeaderboard();
+});
+
+// Завантаження турнірної таблиці
+async function loadLeaderboard() {
+  showLoading();
+
+  try {
+    const data = await storage.getLeaderboard(currentLevel, 100);
+
+    if (data.length === 0) {
+      showEmpty();
+      return;
+    }
+
+    renderLeaderboard(data);
+
+    // Завантаження позиції користувача
+    if (authManager.isAuthenticated() && currentLevel !== null) {
+      const rank = await storage.getUserRank(currentLevel);
+      if (rank) {
+        userRankText.textContent = `#${rank}`;
+        userRankCard.classList.remove('hidden');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading leaderboard:', error);
+    showEmpty();
+  }
+}
+
+// Відображення таблиці
+function renderLeaderboard(data) {
+  loadingState.classList.add('hidden');
+  emptyState.classList.add('hidden');
+  leaderboardContent.classList.remove('hidden');
+
+  // Оновлення заголовка
+  if (currentView === 'level') {
+    scoreHeader.textContent = 'Блоків';
+  } else {
+    scoreHeader.textContent = 'Пройдено';
+  }
+
+  // Топ 3
+  topThree.innerHTML = '';
+  const top3 = data.slice(0, 3);
+  
+  top3.forEach((player, index) => {
+    const medals = ['🥇', '🥈', '🥉'];
+    const colors = ['from-yellow-400 to-yellow-500', 'from-gray-300 to-gray-400', 'from-orange-400 to-orange-500'];
+    
+    const card = document.createElement('div');
+    card.className = `bg-gradient-to-br ${colors[index]} text-white rounded-xl p-6 text-center shadow-lg transform hover:scale-105 transition`;
+    card.innerHTML = `
+      <div class="text-5xl mb-3">${medals[index]}</div>
+      <div class="font-bold text-xl mb-2">${escapeHtml(player.displayName || 'Гравець')}</div>
+      ${currentView === 'global' 
+        ? `<div class="text-sm opacity-90">Пройдено: ${player.totalCompleted || 0}</div>
+           <div class="text-sm opacity-90">🥇 ${player.goldMedals || 0} 🥈 ${player.silverMedals || 0} 🥉 ${player.bronzeMedals || 0}</div>`
+        : `<div class="text-2xl font-bold">${player.blocks} блоків</div>
+           <div class="text-sm opacity-90">${player.medal === 'gold' ? '🥇' : player.medal === 'silver' ? '🥈' : '🥉'}</div>`
+      }
+    `;
+    topThree.appendChild(card);
+  });
+
+  // Решта таблиці
+  leaderboardBody.innerHTML = '';
+  const rest = data.slice(3);
+
+  rest.forEach((player) => {
+    const row = document.createElement('tr');
+    row.className = 'border-b border-gray-200 hover:bg-gray-50 transition';
+    
+    const isCurrentUser = authManager.getUserId() === player.userId;
+    if (isCurrentUser) {
+      row.classList.add('bg-blue-50', 'font-bold');
+    }
+
+    row.innerHTML = `
+      <td class="py-3 px-2 text-gray-700">#${player.rank}</td>
+      <td class="py-3 px-2">
+        <span class="font-medium">${escapeHtml(player.displayName || 'Гравець')}</span>
+        ${isCurrentUser ? '<span class="ml-2 text-blue-600 text-sm">(ти)</span>' : ''}
+      </td>
+      ${currentView === 'global'
+        ? `<td class="py-3 px-2 text-center">${player.totalCompleted || 0}</td>
+           <td class="py-3 px-2 text-center">${player.goldMedals || 0}</td>
+           <td class="py-3 px-2 text-center">${player.silverMedals || 0}</td>
+           <td class="py-3 px-2 text-center">${player.bronzeMedals || 0}</td>`
+        : `<td class="py-3 px-2 text-center font-bold">${player.blocks}</td>
+           <td class="py-3 px-2 text-center">${player.medal === 'gold' ? '1' : '—'}</td>
+           <td class="py-3 px-2 text-center">${player.medal === 'silver' ? '1' : '—'}</td>
+           <td class="py-3 px-2 text-center">${player.medal === 'bronze' ? '1' : '—'}</td>`
+      }
+    `;
+    
+    leaderboardBody.appendChild(row);
+  });
+}
+
+function showLoading() {
+  loadingState.classList.remove('hidden');
+  leaderboardContent.classList.add('hidden');
+  emptyState.classList.add('hidden');
+  userRankCard.classList.add('hidden');
+}
+
+function showEmpty() {
+  loadingState.classList.add('hidden');
+  leaderboardContent.classList.add('hidden');
+  emptyState.classList.remove('hidden');
+  userRankCard.classList.add('hidden');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Початкове завантаження
+loadLeaderboard();
+</script>
+</body>
+</html>

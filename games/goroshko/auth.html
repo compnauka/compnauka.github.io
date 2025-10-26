@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Авторизація — Котигорошко</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-purple-700 min-h-screen p-4 font-sans flex items-center justify-center">
+
+<div class="container mx-auto max-w-md">
+  <!-- Форма входу/реєстрації -->
+  <div class="bg-white rounded-2xl p-6 md:p-8 shadow-2xl">
+    
+    <!-- Логотип -->
+    <div class="text-center mb-6">
+      <h1 class="font-display text-4xl text-yellow-500 mb-2">🦸 Котигорошко</h1>
+      <p class="text-gray-600">Увійди, щоб зберігати прогрес!</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6">
+      <button id="tabLogin" class="tab-btn flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold transition">
+        Вхід
+      </button>
+      <button id="tabRegister" class="tab-btn flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold transition">
+        Реєстрація
+      </button>
+    </div>
+
+    <!-- Форма входу -->
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Email</label>
+        <input type="email" id="loginEmail" required 
+               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+               placeholder="твій@email.com">
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Пароль</label>
+        <input type="password" id="loginPassword" required 
+               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+               placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="btn-3d w-full bg-blue-500 text-white py-3 rounded-lg font-bold text-lg [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400">
+        <i class="fas fa-sign-in-alt mr-2"></i>Увійти
+      </button>
+
+      <button type="button" id="forgotPassword" class="w-full text-blue-600 text-sm hover:underline">
+        Забули пароль?
+      </button>
+    </form>
+
+    <!-- Форма реєстрації -->
+    <form id="registerForm" class="space-y-4 hidden">
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Ім'я гравця</label>
+        <input type="text" id="registerName" required 
+               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+               placeholder="Котигорошок">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Email</label>
+        <input type="email" id="registerEmail" required 
+               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+               placeholder="твій@email.com">
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Пароль (мінімум 6 символів)</label>
+        <input type="password" id="registerPassword" required minlength="6"
+               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+               placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="btn-3d w-full bg-green-500 text-white py-3 rounded-lg font-bold text-lg [--shadow-color:theme(colors.green.700)] hover:bg-green-400">
+        <i class="fas fa-user-plus mr-2"></i>Зареєструватися
+      </button>
+    </form>
+
+    <!-- Альтернативні методи входу -->
+    <div class="mt-6">
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-gray-500">Або</span>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-3">
+        <button id="googleLogin" class="btn-3d w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-50 [--shadow-color:theme(colors.gray.400)]">
+          <i class="fab fa-google text-red-500 text-xl"></i>
+          Увійти через Google
+        </button>
+
+        <button id="guestLogin" class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition">
+          <i class="fas fa-user-secret mr-2"></i>Продовжити як гість
+        </button>
+      </div>
+    </div>
+
+    <!-- Повідомлення про помилку/успіх -->
+    <div id="authMessage" class="hidden mt-4 p-3 rounded-lg text-sm text-center"></div>
+
+    <!-- Посилання на гру -->
+    <div class="text-center mt-6">
+      <a href="index.html" class="text-blue-600 hover:underline text-sm">
+        <i class="fas fa-arrow-left mr-1"></i>Повернутися до гри
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { authManager } from './js/auth.js';
+
+// Ініціалізація
+authManager.init();
+
+// Перевірка чи користувач вже авторизований
+authManager.onAuthChange((user) => {
+  if (user && !user.isAnonymous) {
+    // Перенаправляємо на гру
+    window.location.href = 'index.html';
+  }
+});
+
+// Елементи
+const tabLogin = document.getElementById('tabLogin');
+const tabRegister = document.getElementById('tabRegister');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const authMessage = document.getElementById('authMessage');
+
+// Перемикання табів
+tabLogin.addEventListener('click', () => {
+  tabLogin.classList.add('bg-blue-500', 'text-white');
+  tabLogin.classList.remove('bg-gray-200', 'text-gray-700');
+  tabRegister.classList.add('bg-gray-200', 'text-gray-700');
+  tabRegister.classList.remove('bg-blue-500', 'text-white');
+  loginForm.classList.remove('hidden');
+  registerForm.classList.add('hidden');
+  hideMessage();
+});
+
+tabRegister.addEventListener('click', () => {
+  tabRegister.classList.add('bg-blue-500', 'text-white');
+  tabRegister.classList.remove('bg-gray-200', 'text-gray-700');
+  tabLogin.classList.add('bg-gray-200', 'text-gray-700');
+  tabLogin.classList.remove('bg-blue-500', 'text-white');
+  registerForm.classList.remove('hidden');
+  loginForm.classList.add('hidden');
+  hideMessage();
+});
+
+// Вхід
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+
+  showMessage('Вхід...', 'info');
+
+  const result = await authManager.login(email, password);
+  
+  if (result.success) {
+    showMessage('Успішний вхід! Перенаправлення...', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1000);
+  } else {
+    showMessage(result.error, 'error');
+  }
+});
+
+// Реєстрація
+registerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const displayName = document.getElementById('registerName').value;
+  const email = document.getElementById('registerEmail').value;
+  const password = document.getElementById('registerPassword').value;
+
+  showMessage('Реєстрація...', 'info');
+
+  const result = await authManager.register({ email, password, displayName });
+  
+  if (result.success) {
+    showMessage('Реєстрація успішна! Перенаправлення...', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1000);
+  } else {
+    showMessage(result.error, 'error');
+  }
+});
+
+// Google вхід
+document.getElementById('googleLogin').addEventListener('click', async () => {
+  showMessage('Відкриття Google авторизації...', 'info');
+  
+  const result = await authManager.loginWithGoogle();
+  
+  if (result.success) {
+    showMessage('Успішний вхід! Перенаправлення...', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1000);
+  } else {
+    showMessage(result.error, 'error');
+  }
+});
+
+// Гостьовий вхід
+document.getElementById('guestLogin').addEventListener('click', async () => {
+  showMessage('Вхід як гість...', 'info');
+  
+  const result = await authManager.loginAnonymously();
+  
+  if (result.success) {
+    window.location.href = 'index.html';
+  } else {
+    showMessage(result.error, 'error');
+  }
+});
+
+// Відновлення паролю
+document.getElementById('forgotPassword').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value;
+  
+  if (!email) {
+    showMessage('Введіть email для відновлення паролю', 'error');
+    return;
+  }
+
+  showMessage('Надсилання листа...', 'info');
+  
+  const result = await authManager.resetPassword(email);
+  
+  if (result.success) {
+    showMessage('Лист для відновлення паролю надіслано!', 'success');
+  } else {
+    showMessage(result.error, 'error');
+  }
+});
+
+// Показ повідомлення
+function showMessage(text, type) {
+  const colors = {
+    success: 'bg-green-100 text-green-800 border border-green-300',
+    error: 'bg-red-100 text-red-800 border border-red-300',
+    info: 'bg-blue-100 text-blue-800 border border-blue-300'
+  };
+
+  authMessage.className = `mt-4 p-3 rounded-lg text-sm text-center ${colors[type] || colors.info}`;
+  authMessage.textContent = text;
+  authMessage.classList.remove('hidden');
+}
+
+function hideMessage() {
+  authMessage.classList.add('hidden');
+}
+</script>
+</body>
+</html>
