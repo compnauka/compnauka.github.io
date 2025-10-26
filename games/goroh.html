@@ -103,9 +103,13 @@
         }
         
         /* Запобігання зуму при двійному торканні на планшетах */
-        * {
+        body {
             touch-action: manipulation;
             -webkit-touch-callout: none;
+        }
+        
+        /* Забороняємо виділення тексту для кнопок */
+        button, .cmd-btn, .control-btn, .btn-sort {
             -webkit-user-select: none;
             -khtml-user-select: none;
             -moz-user-select: none;
@@ -941,20 +945,7 @@
             window.game = game;
             game.init();
             
-            // Запобігання небажаним жестам на планшетах
-            document.addEventListener('touchstart', function(e) {
-                // Запобігаємо двійному торканню для зуму
-                if (e.touches.length > 1) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            document.addEventListener('touchend', function(e) {
-                // Запобігаємо контекстному меню при довгому натисканні
-                e.preventDefault();
-            }, { passive: false });
-            
-            // Запобігаємо зуму при двійному торканні
+            // Запобігаємо зуму при двійному торканні (тільки для зумування)
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function(e) {
                 const now = (new Date()).getTime();
