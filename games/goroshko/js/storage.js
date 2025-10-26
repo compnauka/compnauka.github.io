@@ -97,8 +97,9 @@ import {
       // Оновлюємо максимальний рівень
       const userSnap = await getDoc(userRef);
       const currentMaxLevel = userSnap.data()?.stats?.maxLevel || 0;
-      if (levelIndex > currentMaxLevel) {
-        statsUpdate['stats.maxLevel'] = levelIndex;
+      const unlockedLevel = levelIndex + 1;
+      if (unlockedLevel > currentMaxLevel) {
+        statsUpdate['stats.maxLevel'] = unlockedLevel;
       }
   
       await updateDoc(userRef, statsUpdate);
@@ -173,11 +174,21 @@ import {
         levels[data.levelIndex] = data;
       });
   
+      const levelIndices = Object.keys(levels).map(index => Number(index));
+      const highestCompletedLevel = levelIndices.length
+        ? Math.max(...levelIndices) + 1
+        : 0;
+      const storedMaxLevel = userData.stats?.maxLevel || 0;
+      const normalizedMaxLevel = Math.max(storedMaxLevel, highestCompletedLevel);
+
       return {
         version: '1.0',
-        maxLevel: userData.stats?.maxLevel || 0,
+        maxLevel: normalizedMaxLevel,
         levels,
-        stats: userData.stats,
+        stats: {
+          ...(userData.stats || {}),
+          maxLevel: normalizedMaxLevel
+        },
         settings: {
           soundEnabled: true
         },
@@ -291,8 +302,9 @@ import {
           progress.levels[levelIndex].attempts = (existing.attempts || 0) + 1;
         }
   
-        if (!progress.maxLevel || levelIndex > progress.maxLevel) {
-          progress.maxLevel = levelIndex;
+        const unlockedLevel = levelIndex + 1;
+        if (!progress.maxLevel || unlockedLevel > progress.maxLevel) {
+          progress.maxLevel = unlockedLevel;
         }
   
         progress.updatedAt = Date.now();
@@ -308,7 +320,18 @@ import {
     _loadLocalProgress() {
       try {
         const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : this._getDefaultProgress();
+        const progress = data ? JSON.parse(data) : this._getDefaultProgress();
+
+        const levelIndices = Object.keys(progress.levels || {}).map(index => Number(index));
+        const highestCompletedLevel = levelIndices.length
+          ? Math.max(...levelIndices) + 1
+          : 0;
+
+        if (!progress.maxLevel || highestCompletedLevel > progress.maxLevel) {
+          progress.maxLevel = highestCompletedLevel;
+        }
+
+        return progress;
       } catch (e) {
         console.error('Failed to load locally:', e);
         return this._getDefaultProgress();
