@@ -53,10 +53,6 @@ export class UIManager {
       if (commandList) {
         commandList.setAttribute('data-loop-active', active ? 'true' : 'false');
       }
-
-      if (level < 4) {
-        this.updateLoopMode({ active: false, stepCount: 0 });
-      }
     }
 
     /**
