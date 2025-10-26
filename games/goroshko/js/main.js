@@ -11,6 +11,10 @@ const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallba
   ? (cb) => window.requestIdleCallback(cb)
   : (cb) => setTimeout(() => cb(), 1200);
 
+const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+  ? (cb) => window.requestIdleCallback(cb)
+  : (cb) => setTimeout(() => cb(), 1200);
+
 /**
  * Головна функція ініціалізації
  */

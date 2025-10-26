@@ -4,7 +4,7 @@
  */
 
 import { GAME_CONFIG, DIRECTIONS, COMMAND_TYPES } from './config.js';
-import { getLevel } from './levels.js';
+import { getLevel, getBaseLevelCount } from './levels.js';
 import { GridManager } from './grid.js';
 import { CommandManager } from './commands.js';
 import { BattleManager } from './battle.js';
@@ -132,14 +132,14 @@ export class Game {
 
       const newPos = this._getNextPosition(heroPos, cmd.direction);
 
-      // Перевірка можливості руху
-      if (!this.grid.canMoveTo(newPos)) {
+    // Перевірка можливості руху
+    if (!this.grid.canMoveTo(newPos)) {
         this.ui.showMessage('❌ Котигорошко врізався в перешкоду!', 'error');
-        this.grid.flashCell(newPos);
+        this.grid.flashCell(newPos); // <--- Доданий рядок
         this.isRunning = false;
         this.ui.setControlsEnabled(true);
         return;
-      }
+    }
 
       // Рух героя
       await this.grid.updateHeroPosition(newPos);
@@ -254,7 +254,7 @@ export class Game {
     else if (blocks <= silver) medal = 'silver';
 
     // Збереження прогресу
-    await storage.saveLevelProgress(this.currentLevel, {
+    storage.saveLevelProgress(this.currentLevel, {
       completed: true,
       blocks,
       medal,
