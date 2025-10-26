@@ -12,7 +12,49 @@ export class UIManager {
       this.elements = {};
       this.tutorialShown = false;
     }
-  
+
+
+    /**
+     * Оновлення візуального стану циклу
+     * @param {{active: boolean, stepCount: number}} state
+     */
+    updateLoopMode({ active = false, stepCount = 0 } = {}) {
+      const { btnLoop, btnRoot, loopStatus, loopStepCount, commandList } = this.elements;
+
+      if (loopStepCount) {
+        loopStepCount.textContent = stepCount;
+      }
+
+      if (loopStatus) {
+        loopStatus.classList.toggle('hidden', !active);
+        loopStatus.setAttribute('aria-hidden', active ? 'false' : 'true');
+      }
+
+      if (btnLoop) {
+        const textEl = btnLoop.querySelector('.btn-text');
+        if (textEl) {
+          textEl.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
+        } else {
+          btnLoop.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
+        }
+        btnLoop.disabled = active;
+        btnLoop.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btnLoop.classList.toggle('loop-btn--active', active);
+      }
+
+      if (btnRoot) {
+        const textEl = btnRoot.querySelector('.btn-text');
+        if (textEl) {
+          textEl.textContent = 'Закрити цикл';
+        }
+        btnRoot.disabled = !active;
+      }
+
+      if (commandList) {
+        commandList.setAttribute('data-loop-active', active ? 'true' : 'false');
+      }
+    }
+
     /**
      * Ініціалізація UI-менеджера
      * @param {Object} elements - Об'єкт з DOM-елементами
@@ -44,6 +86,7 @@ export class UIManager {
       if (this.elements.parGold) {
         this.elements.parGold.textContent = data.parGold;
       }
+
     }
   
     /**
@@ -167,7 +210,8 @@ export class UIManager {
         left: this.elements.btnLeft,
         right: this.elements.btnRight,
         loop: this.elements.btnLoop,
-        endLoop: this.elements.btnRoot
+        endLoop: this.elements.btnRoot,
+        loopPanel: this.elements.loopStatus
       };
   
       // Спочатку ховаємо всі
@@ -190,6 +234,10 @@ export class UIManager {
         Object.values(buttons).forEach(btn => {
           if (btn) btn.classList.remove('hidden-by-level');
         });
+      }
+
+      if (level < 4) {
+        this.updateLoopMode({ active: false, stepCount: 0 });
       }
     }
   

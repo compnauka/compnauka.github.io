@@ -8,6 +8,10 @@ import { soundEngine } from './sound.js';
 import { authManager } from './auth.js';
 import { storage } from './storage.js'; // Імпортуємо storage
 
+const idleScheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+  ? (cb) => window.requestIdleCallback(cb)
+  : (cb) => setTimeout(() => cb(), 1200);
+
 /**
  * Головна функція ініціалізації
  */
@@ -22,6 +26,8 @@ async function init() {
 
     // Команди
     commandList: document.getElementById('commandList'),
+    loopStatus: document.getElementById('loopStatus'),
+    loopStepCount: document.getElementById('loopStepCount'),
     btnUp: document.getElementById('btnUp'),
     btnDown: document.getElementById('btnDown'),
     btnLeft: document.getElementById('btnLeft'),
@@ -76,7 +82,17 @@ async function init() {
 
   // Створення екземпляру гри
   const game = new Game();
-  await game.init(elements); // Змінено: додано await для асинхронної ініціалізації
+  let initError = null;
+
+  try {
+    await game.init(elements); // Змінено: додано await для асинхронної ініціалізації
+  } catch (error) {
+    initError = error;
+    console.error('Не вдалося ініціалізувати гру:', error);
+  } finally {
+    hideGlobalLoader();
+    scheduleWarmupTasks();
+  }
 
   // Обробка змін авторизації
   authManager.onAuthChange((user) => {
@@ -107,6 +123,10 @@ async function init() {
     window.game = game;
     window.auth = authManager;
     console.log('🎮 Гра ініціалізована! Використовуй window.game для відлагодження.');
+  }
+
+  if (initError) {
+    displayBootstrapError();
   }
 }
 
@@ -170,6 +190,62 @@ function updateUserUI(user, elements) {
       elements.userProfile.classList.add('hidden');
     }
   }
+}
+
+function hideGlobalLoader() {
+  const loader = document.getElementById('globalLoader');
+  if (!loader) return;
+
+  const hide = () => {
+    loader.classList.add('loading-screen--hidden');
+    const remove = () => loader.remove();
+    loader.addEventListener('transitionend', remove, { once: true });
+    setTimeout(remove, 600);
+  };
+
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(hide);
+  } else {
+    hide();
+  }
+}
+
+function displayBootstrapError() {
+  const message = document.getElementById('message');
+  if (!message) return;
+
+  message.textContent = 'На жаль, не вдалося завантажити гру. Оновіть сторінку та спробуйте ще раз.';
+  message.classList.remove('hidden');
+  message.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-300');
+}
+
+function scheduleWarmupTasks() {
+  if (typeof window === 'undefined') return;
+
+  const connection = (typeof navigator !== 'undefined' && navigator.connection) || null;
+
+  idleScheduler(async () => {
+    const tasks = [];
+
+    if (!connection || !connection.saveData) {
+      if (soundEngine && typeof soundEngine.prime === 'function') {
+        tasks.push(soundEngine.prime());
+      }
+
+      const documentsToPrefetch = ['leaderboard.html', 'story.html', 'algorithms.html'];
+      documentsToPrefetch.forEach((path) => {
+        tasks.push(
+          fetch(path, { cache: 'force-cache' }).catch(() => {})
+        );
+      });
+    }
+
+    try {
+      await Promise.allSettled(tasks);
+    } catch (error) {
+      console.debug('Warmup tasks failed:', error);
+    }
+  });
 }
 
 // Запуск після завантаження DOM

@@ -22,9 +22,26 @@ tailwind.config = {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="modulepreload" href="js/game.js" />
+<link rel="modulepreload" href="js/ui.js" />
+<link rel="modulepreload" href="js/grid.js" />
+<link rel="modulepreload" href="js/battle.js" />
+<link rel="modulepreload" href="js/commands.js" />
+<link rel="modulepreload" href="js/levels.js" />
+<link rel="modulepreload" href="js/storage.js" />
+<link rel="modulepreload" href="js/sound.js" />
+<link rel="prefetch" href="leaderboard.html" as="document" />
+<link rel="prefetch" href="story.html" as="document" />
+<link rel="prefetch" href="algorithms.html" as="document" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen p-2 xs:p-3 flex justify-center items-start font-sans">
+
+<div id="globalLoader" class="loading-screen" role="status" aria-live="polite">
+  <div class="loading-spinner" aria-hidden="true"></div>
+  <p class="loading-text">Завантаження гри...</p>
+  <p class="loading-subtext">Готуємо пригоди для Котигорошка</p>
+</div>
 
 <div class="container mx-auto max-w-6xl w-full">
   <!-- Хедер з інформацією про рівень -->
@@ -120,11 +137,20 @@ tailwind.config = {
           <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg bg-blue-500 [--shadow-color:theme(colors.blue.700)] hover:bg-blue-400 hidden-by-level min-h-[48px] flex flex-col items-center justify-center gap-0.5" id="btnRight">
             <i class="fas fa-arrow-right text-lg md:text-xl"></i><span class="text-xs md:text-sm">Праворуч</span>
           </button>
-          <button class="cmd-btn btn-3d loop-btn font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg col-span-2 bg-yellow-500 [--shadow-color:theme(colors.yellow.700)] hover:bg-yellow-400 hidden-by-level min-h-[44px]" id="btnLoop">
-            <i class="fas fa-redo mr-1"></i>Почати Цикл
+          <button class="cmd-btn btn-3d loop-btn font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg col-span-2 bg-yellow-500 [--shadow-color:theme(colors.yellow.700)] hover:bg-yellow-400 hidden-by-level min-h-[44px]" id="btnLoop" type="button" aria-pressed="false">
+            <i class="fas fa-redo mr-1"></i><span class="btn-text">Почати цикл</span>
           </button>
-          <button class="cmd-btn btn-3d font-display text-white rounded-xl px-2 py-2 text-sm md:text-lg col-span-2 hidden-by-level min-h-[44px]" id="btnRoot">
-            <i class="fas fa-sign-out-alt mr-1"></i>Вийти з циклу
+        </div>
+
+        <div id="loopStatus" class="loop-status hidden-by-level hidden" aria-live="polite" aria-hidden="true">
+          <div class="loop-status__icon">🔁</div>
+          <div class="loop-status__text">
+            <p class="loop-status__title">Цикл відкритий</p>
+            <p class="loop-status__subtitle">Додай команди — вони з'являться в жовтій рамці.</p>
+            <p class="loop-status__counter">Блоків у циклі: <span id="loopStepCount">0</span></p>
+          </div>
+          <button class="btn-3d loop-status__action bg-yellow-500 text-white px-3 py-2 rounded-lg font-bold text-sm [--shadow-color:theme(colors.yellow.700)] hover:bg-yellow-400" id="btnRoot" type="button" disabled>
+            <i class="fas fa-flag-checkered mr-1"></i><span class="btn-text">Закрити цикл</span>
           </button>
         </div>
 
@@ -177,9 +203,9 @@ tailwind.config = {
   <h2 id="tutorialTitle" class="font-display text-2xl md:text-3xl text-yellow-500 text-center mb-3 md:mb-4">🔁 Нова Сила: ЦИКЛИ! 🔁</h2>
   <p class="text-gray-700 mb-3 md:mb-4 text-center text-sm md:text-base">Цикли дозволяють повторити команди декілька разів. Це економить блоки!</p>
   <div class="bg-gray-100 rounded-lg p-2.5 md:p-3 mb-4 md:mb-5 text-gray-800 text-sm md:text-base">
-    <p class="font-medium mb-1">1. Натисни <strong class="text-yellow-600">«Почати Цикл»</strong>.</p>
+    <p class="font-medium mb-1">1. Натисни <strong class="text-yellow-600">«Почати цикл»</strong>.</p>
     <p class="font-medium mb-1">2. Додай команди, які хочеш повторити.</p>
-    <p class="font-medium">3. Натисни <strong class="text-red-500">«Вийти з циклу»</strong>.</p>
+    <p class="font-medium">3. Натисни <strong class="text-red-500">«Закрити цикл»</strong>.</p>
   </div>
   <button class="btn-3d w-full font-display text-white rounded-xl p-2.5 md:p-3 text-base md:text-lg bg-green-500 [--shadow-color:theme(colors.green.700)] hover:bg-green-400" id="tutorialCloseBtn">Зрозуміло!</button>
 </div>
