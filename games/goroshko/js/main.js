@@ -26,6 +26,8 @@ async function init() {
 
     // Команди
     commandList: document.getElementById('commandList'),
+    loopStatus: document.getElementById('loopStatus'),
+    loopStepCount: document.getElementById('loopStepCount'),
     btnUp: document.getElementById('btnUp'),
     btnDown: document.getElementById('btnDown'),
     btnLeft: document.getElementById('btnLeft'),
