@@ -38,14 +38,14 @@ export class Game {
    * Ініціалізація гри
    * @param {Object} elements - Об'єкт з DOM-елементами
    */
-/**
-   * Ініціалізація гри
-   * @param {Object} elements - Об'єкт з DOM-елементами
-   */
-async init(elements) {
+  async init(elements) {
     // Ініціалізація менеджерів
     this.ui.init(elements);
     this.commands.init(elements.commandList);
+    this.commands.setLoopStateListener((state) => {
+      this.ui.updateLoopMode(state);
+    });
+    this.ui.updateLoopMode({ active: false, stepCount: 0 });
     this.battle.init({
       scene: elements.battleScene,
       log: elements.battleLog,

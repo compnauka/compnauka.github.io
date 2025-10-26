@@ -63,6 +63,15 @@ export class CommandManager {
     this.loopStartIndex = -1;
     this.loopCount = 2;
     this.listEl = null;
+    this.loopStateListener = null;
+  }
+
+  /**
+   * Встановлення слухача зміни стану циклу
+   * @param {Function} callback
+   */
+  setLoopStateListener(callback) {
+    this.loopStateListener = typeof callback === 'function' ? callback : null;
   }
 
   /**
@@ -72,6 +81,7 @@ export class CommandManager {
   init(listElement) {
     this.listEl = listElement;
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -103,6 +113,7 @@ export class CommandManager {
     this.loopStartIndex = this.commands.length - 1;
     this.inLoop = true;
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -114,6 +125,7 @@ export class CommandManager {
     this.inLoop = false;
     this.loopStartIndex = -1;
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -135,6 +147,7 @@ export class CommandManager {
     }
     
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -150,6 +163,7 @@ export class CommandManager {
     
     loopCmd.children.splice(childIndex, 1);
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -168,6 +182,7 @@ export class CommandManager {
     }
     
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -186,6 +201,7 @@ export class CommandManager {
     }
     
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -210,6 +226,7 @@ export class CommandManager {
     }
     
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -221,6 +238,7 @@ export class CommandManager {
     this.loopStartIndex = -1;
     this.loopCount = 2;
     this.render();
+    this._notifyLoopStateChange();
   }
 
   /**
@@ -272,6 +290,7 @@ export class CommandManager {
     if (!this.listEl) return;
 
     this.listEl.innerHTML = '';
+    this.listEl.classList.toggle('command-list--loop-open', this.inLoop);
 
     if (this.commands.length === 0) {
       this.listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-3">Додай команди, щоб створити алгоритм</p>';
@@ -301,17 +320,17 @@ export class CommandManager {
           <span class="text-blue-600 text-lg">${cmd.getIcon()}</span>
           <span class="flex-1 text-gray-800 font-medium text-sm">${cmd.getName()}</span>
           <div class="flex gap-1">
-            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]" 
-                    data-action="up" data-index="${index}" 
+            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]"
+                    data-action="up" data-index="${index}"
                     ${index === 0 ? 'disabled' : ''}>
               <i class="fas fa-chevron-up text-xs"></i>
             </button>
-            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]" 
+            <button class="btn-sort bg-blue-500 text-white rounded [--shadow-color:theme(colors.blue.700)]"
                     data-action="down" data-index="${index}"
                     ${index === this.commands.length - 1 ? 'disabled' : ''}>
               <i class="fas fa-chevron-down text-xs"></i>
             </button>
-            <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]" 
+            <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]"
                     data-action="delete" data-index="${index}">
               <i class="fas fa-times text-xs"></i>
             </button>
@@ -321,47 +340,62 @@ export class CommandManager {
     } else if (cmd.type === COMMAND_TYPES.LOOP) {
       // Цикл
       const isActive = this.inLoop && index === this.loopStartIndex;
-      const borderColor = isActive ? 'border-yellow-400' : 'border-yellow-300';
-      
+      const childrenHtml = cmd.children.length === 0
+        ? '<div class="loop-block__body loop-block__body--empty">Додай команди руху до циклу</div>'
+        : `<div class="loop-block__body">
+            ${cmd.children.map((child, childIndex) => `
+              <div class="loop-block__child">
+                <span class="loop-block__child-icon">${child.getIcon()}</span>
+                <span class="loop-block__child-label">${child.getName()}</span>
+                <button class="btn-sort bg-red-400 text-white rounded [--shadow-color:theme(colors.red.600)] !w-7 !h-7"
+                        data-action="delete-child" data-index="${index}" data-child-index="${childIndex}">
+                  <i class="fas fa-times text-xs"></i>
+                </button>
+              </div>
+            `).join('')}
+          </div>`;
+
       item.innerHTML = `
-        <div class="bg-yellow-50 border-2 ${borderColor} rounded-lg p-2">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-yellow-600 text-lg">${cmd.getIcon()}</span>
-            <span class="flex-1 text-gray-800 font-bold text-sm">${cmd.getName()}</span>
-            <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}" 
-                   value="${cmd.loopCount}" 
-                   class="w-12 text-center border border-yellow-400 rounded px-1 py-0.5 text-sm"
-                   data-action="loop-count" data-index="${index}">
-            <div class="flex gap-1">
-              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]" 
+        <div class="loop-block ${isActive ? 'loop-block--active' : ''}">
+          <div class="loop-block__header">
+            <div class="loop-block__badge">${cmd.getIcon()}</div>
+            <div>
+              <p class="loop-block__title">Цикл</p>
+              <label class="loop-block__repeat">
+                Повторити
+                <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}"
+                       value="${cmd.loopCount}"
+                       data-action="loop-count" data-index="${index}">
+                раз(и)
+              </label>
+            </div>
+            <div class="loop-block__actions">
+              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]"
                       data-action="up" data-index="${index}"
                       ${index === 0 ? 'disabled' : ''}>
                 <i class="fas fa-chevron-up text-xs"></i>
               </button>
-              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]" 
+              <button class="btn-sort bg-yellow-500 text-white rounded [--shadow-color:theme(colors.yellow.700)]"
                       data-action="down" data-index="${index}"
                       ${index === this.commands.length - 1 ? 'disabled' : ''}>
                 <i class="fas fa-chevron-down text-xs"></i>
               </button>
-              <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]" 
+              <button class="btn-sort bg-red-500 text-white rounded [--shadow-color:theme(colors.red.700)]"
                       data-action="delete" data-index="${index}">
                 <i class="fas fa-times text-xs"></i>
               </button>
             </div>
           </div>
-          <div class="ml-4 space-y-1">
-            ${cmd.children.length === 0 
-              ? '<p class="text-gray-400 text-xs italic py-1">Додай команди в цикл</p>' 
-              : cmd.children.map((child, childIndex) => `
-                <div class="flex items-center gap-2 bg-white border border-yellow-200 rounded p-1.5">
-                  <span class="text-blue-600">${child.getIcon()}</span>
-                  <span class="flex-1 text-gray-700 text-xs">${child.getName()}</span>
-                  <button class="btn-sort bg-red-400 text-white rounded [--shadow-color:theme(colors.red.600)] !w-7 !h-7" 
-                          data-action="delete-child" data-index="${index}" data-child-index="${childIndex}">
-                    <i class="fas fa-times text-xs"></i>
-                  </button>
-                </div>
-              `).join('')}
+          ${isActive ? `<div class="loop-block__hint" role="status">
+            <span>Додавай команди руху — вони будуть повторюватись.</span>
+            <button class="btn-3d bg-yellow-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold [--shadow-color:rgba(180,83,9,0.6)] hover:bg-yellow-400"
+                    type="button" data-action="finish-loop" data-index="${index}">
+              <i class="fas fa-flag-checkered mr-1"></i>Закрити цикл
+            </button>
+          </div>` : ''}
+          ${childrenHtml}
+          <div class="loop-block__footer">
+            <span>🔚 Кінець циклу</span>
           </div>
         </div>
       `;
@@ -372,7 +406,6 @@ export class CommandManager {
 
     return item;
   }
-
   /**
    * Прив'язка обробників подій до елементу команди
    * @param {HTMLElement} element - DOM-елемент
@@ -399,6 +432,9 @@ export class CommandManager {
           case 'delete-child':
             this.removeChildCommand(index, childIndex);
             break;
+          case 'finish-loop':
+            this.endLoop();
+            break;
         }
       });
     });
@@ -409,6 +445,21 @@ export class CommandManager {
         const count = parseInt(e.target.value);
         this.setLoopCount(index, count);
       });
+    });
+  }
+
+  /**
+   * Сповіщення про зміну стану циклу
+   */
+  _notifyLoopStateChange() {
+    if (!this.loopStateListener) return;
+
+    const active = this.inLoop && this.loopStartIndex >= 0 && this.loopStartIndex < this.commands.length;
+    const loopCmd = active ? this.commands[this.loopStartIndex] : null;
+
+    this.loopStateListener({
+      active,
+      stepCount: loopCmd ? loopCmd.children.length : 0
     });
   }
 }
