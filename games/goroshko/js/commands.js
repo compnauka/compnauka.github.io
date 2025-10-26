@@ -1,6 +1,6 @@
 /**
- * Простий менеджер команд для побудови алгоритму
- * Орієнтований на зрозумілий досвід для дітей 7-9 років
+ * Менеджер команд для побудови алгоритму у стилі блоків code.org
+ * Підтримує додавання блоків кліком і перетягуванням, а також цикли з вкладеними командами
  */
 
 import { COMMAND_TYPES, DIRECTIONS, GAME_CONFIG } from './config.js';
@@ -20,6 +20,8 @@ const MOVE_NAMES = {
 };
 
 const DEFAULT_LOOP_COUNT = 2;
+const DATA_KEY_COMMAND_PATH = 'application/x-command-path';
+const DATA_KEY_NEW_COMMAND = 'application/x-new-command';
 
 function createMove(direction) {
   return { type: COMMAND_TYPES.MOVE, direction };
@@ -33,282 +35,396 @@ export class CommandManager {
   constructor() {
     this.commands = [];
     this.listEl = null;
-    this.activeLoop = null;
-    this.loopStateListener = null;
   }
 
   /**
-   * Підписка на зміну стану циклу
-   * @param {(state: {active:boolean, stepCount:number}) => void} callback
-   */
-  setLoopStateListener(callback) {
-    this.loopStateListener = typeof callback === 'function' ? callback : null;
-  }
-
-  /**
-   * Ініціалізація DOM-списку команд
+   * Ініціалізація контейнера для блочного редактора
    * @param {HTMLElement} listElement
    */
   init(listElement) {
     this.listEl = listElement;
     this.render();
-    this._notifyLoopState();
   }
 
-  /**
-   * Скидання алгоритму
-   */
+  /** Очищення алгоритму */
   clear() {
     this.commands = [];
-    this.activeLoop = null;
     this.render();
-    this._notifyLoopState();
   }
 
-  /**
-   * Додавання команди руху
-   * @param {string} direction
-   */
+  /** Додавання руху в кінець алгоритму */
   addMove(direction) {
     if (!Object.values(DIRECTIONS).includes(direction)) return;
+    this.insertCommand(createMove(direction));
+  }
 
-    const target = this.activeLoop ? this.activeLoop.children : this.commands;
-    target.push(createMove(direction));
-
-    this.render();
-    this._notifyLoopState();
+  /** Додавання циклу в кінець алгоритму */
+  addLoop() {
+    this.insertCommand(createLoop());
   }
 
   /**
-   * Початок циклу
+   * Додавання команди у вказану позицію
+   * @param {{type:string, direction?:string, loopCount?:number}} descriptor
+   * @param {{ parentPath?: string, index?: number }} [target]
    */
-  startLoop() {
-    if (this.activeLoop) return;
+  insertCommand(descriptor, target = {}) {
+    if (!this.listEl) return;
 
-    const loopCommand = createLoop(DEFAULT_LOOP_COUNT);
-    this.commands.push(loopCommand);
-    this.activeLoop = loopCommand;
+    const command = this._createCommandFromDescriptor(descriptor);
+    if (!command) return;
 
+    const parentPath = typeof target.parentPath === 'string' ? target.parentPath : '';
+    const parentArray = this._getArrayByParentPath(this._parsePath(parentPath));
+    if (!parentArray) return;
+
+    const insertIndex = typeof target.index === 'number'
+      ? Math.min(Math.max(target.index, 0), parentArray.length)
+      : parentArray.length;
+
+    parentArray.splice(insertIndex, 0, command);
     this.render();
-    this._notifyLoopState();
   }
 
   /**
-   * Завершення поточного циклу
+   * Видалення команди за шляхом
+   * @param {string} path
    */
-  endLoop() {
-    if (!this.activeLoop) return;
+  removeCommand(path) {
+    const resolved = this._resolvePath(path);
+    if (!resolved) return;
 
-    this.activeLoop = null;
+    const { parentArray, index } = resolved;
+    parentArray.splice(index, 1);
     this.render();
-    this._notifyLoopState();
-  }
-
-  /**
-   * Видалення команди верхнього рівня
-   * @param {number} index
-   */
-  removeCommand(index) {
-    if (index < 0 || index >= this.commands.length) return;
-
-    const [removed] = this.commands.splice(index, 1);
-    if (removed === this.activeLoop) {
-      this.activeLoop = null;
-    }
-
-    this.render();
-    this._notifyLoopState();
-  }
-
-  /**
-   * Видалення команди всередині циклу
-   * @param {number} loopIndex
-   * @param {number} childIndex
-   */
-  removeChild(loopIndex, childIndex) {
-    const loopCommand = this.commands[loopIndex];
-    if (!loopCommand || loopCommand.type !== COMMAND_TYPES.LOOP) return;
-    if (childIndex < 0 || childIndex >= loopCommand.children.length) return;
-
-    loopCommand.children.splice(childIndex, 1);
-    this.render();
-    this._notifyLoopState();
   }
 
   /**
    * Зміна кількості повторень циклу
-   * @param {number} loopIndex
-   * @param {number} value
+   * @param {string} path
+   * @param {number|string} value
    */
-  setLoopCount(loopIndex, value) {
-    const loopCommand = this.commands[loopIndex];
-    if (!loopCommand || loopCommand.type !== COMMAND_TYPES.LOOP) return;
+  setLoopCount(path, value) {
+    const resolved = this._resolvePath(path);
+    if (!resolved) return;
+
+    const command = resolved.parentArray[resolved.index];
+    if (!command || command.type !== COMMAND_TYPES.LOOP) return;
 
     const sanitized = Math.max(
       GAME_CONFIG.minLoopCount,
       Math.min(GAME_CONFIG.maxLoopCount, Number(value) || GAME_CONFIG.minLoopCount)
     );
 
-    loopCommand.loopCount = sanitized;
-    if (this.listEl) {
-      const input = this.listEl.querySelector(`input[data-index="${loopIndex}"]`);
-      if (input) {
-        input.value = String(sanitized);
-      }
-    }
-    this._notifyLoopState();
+    command.loopCount = sanitized;
+    this.render();
   }
 
-  /**
-   * Перетворення алгоритму на послідовність кроків
-   * @returns {Array<{type:string, direction:string}>}
-   */
+  /** Розгортання алгоритму в плоский список команд */
   flatten() {
-    const result = [];
+    const flat = [];
 
-    for (const command of this.commands) {
-      if (command.type === COMMAND_TYPES.MOVE) {
-        result.push({ ...command });
-      } else if (command.type === COMMAND_TYPES.LOOP) {
-        for (let i = 0; i < command.loopCount; i += 1) {
-          for (const child of command.children) {
-            result.push({ ...child });
+    const walk = (commands) => {
+      for (const command of commands) {
+        if (command.type === COMMAND_TYPES.MOVE) {
+          flat.push({ ...command });
+        } else if (command.type === COMMAND_TYPES.LOOP) {
+          for (let i = 0; i < command.loopCount; i += 1) {
+            walk(command.children);
           }
         }
       }
-    }
+    };
 
-    return result;
+    walk(this.commands);
+    return flat;
   }
 
-  /**
-   * Підрахунок використаних блоків
-   * @returns {number}
-   */
+  /** Підрахунок використаних блоків */
   countBlocks() {
-    let total = 0;
-    for (const command of this.commands) {
+    const count = (commands) => commands.reduce((total, command) => {
       if (command.type === COMMAND_TYPES.MOVE) {
-        total += 1;
-      } else if (command.type === COMMAND_TYPES.LOOP) {
-        total += 1 + command.children.length;
+        return total + 1;
       }
-    }
-    return total;
+      if (command.type === COMMAND_TYPES.LOOP) {
+        return total + 1 + count(command.children);
+      }
+      return total;
+    }, 0);
+
+    return count(this.commands);
   }
 
-  /**
-   * Відмалювання списку команд
-   */
+  /** Відмальовування робочої області */
   render() {
     if (!this.listEl) return;
 
     this.listEl.innerHTML = '';
-    this.listEl.setAttribute('data-loop-active', this.activeLoop ? 'true' : 'false');
 
     if (this.commands.length === 0) {
-      this.listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-3">Додай команди, щоб скласти алгоритм</p>';
+      const dropZone = this._createDropZone('', 0);
+      dropZone.classList.add('workspace-dropzone--empty');
+      dropZone.innerHTML = '<span>Перетягни сюди блок або натисни на нього в панелі</span>';
+      this.listEl.appendChild(dropZone);
       return;
     }
 
-    this.commands.forEach((command, index) => {
-      const element = command.type === COMMAND_TYPES.MOVE
-        ? this._renderMove(command, index)
-        : this._renderLoop(command, index);
-      this.listEl.appendChild(element);
-    });
+    const stack = document.createElement('div');
+    stack.className = 'workspace-stack';
+    this._renderList(this.commands, stack, '');
+    this.listEl.appendChild(stack);
   }
 
-  _renderMove(command, index) {
-    const item = document.createElement('div');
-    item.className = 'command-chip';
-    item.innerHTML = `
-      <div class="command-chip__label">
-        <span class="command-chip__icon">${MOVE_ICONS[command.direction] || ''}</span>
-        <span>${MOVE_NAMES[command.direction] || 'Рух'}</span>
+  /** Рендер списку команд для поточного рівня вкладеності */
+  _renderList(list, container, parentPath) {
+    for (let i = 0; i <= list.length; i += 1) {
+      const dropZone = this._createDropZone(parentPath, i);
+      container.appendChild(dropZone);
+
+      if (i === list.length) {
+        continue;
+      }
+
+      const command = list[i];
+      const commandPath = parentPath ? `${parentPath}.${i}` : `${i}`;
+      const block = command.type === COMMAND_TYPES.MOVE
+        ? this._renderMoveBlock(command, commandPath)
+        : this._renderLoopBlock(command, commandPath);
+
+      container.appendChild(block);
+    }
+  }
+
+  _renderMoveBlock(command, path) {
+    const block = document.createElement('div');
+    block.className = 'workspace-block workspace-block--move';
+    block.setAttribute('draggable', 'true');
+    block.dataset.path = path;
+
+    block.innerHTML = `
+      <div class="workspace-block__content">
+        <span class="workspace-block__icon">${MOVE_ICONS[command.direction] || ''}</span>
+        <span class="workspace-block__label">${MOVE_NAMES[command.direction] || 'Рух'}</span>
       </div>
-      <div class="command-chip__actions">
-        <button type="button" class="command-chip__button command-chip__button--delete" data-action="delete" data-index="${index}" aria-label="Видалити команду">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
+      <button type="button" class="workspace-block__action" aria-label="Видалити блок">
+        <i class="fas fa-times"></i>
+      </button>
     `;
 
-    item.querySelector('[data-action="delete"]').addEventListener('click', () => {
-      this.removeCommand(index);
+    block.querySelector('.workspace-block__action').addEventListener('click', () => {
+      this.removeCommand(path);
     });
 
-    return item;
+    this._bindDragEvents(block, path);
+    return block;
   }
 
-  _renderLoop(command, index) {
-    const item = document.createElement('div');
-    item.className = 'command-chip command-chip--loop';
-    if (command === this.activeLoop) {
-      item.classList.add('command-chip--active');
+  _renderLoopBlock(command, path) {
+    const block = document.createElement('div');
+    block.className = 'workspace-block workspace-block--loop';
+    block.setAttribute('draggable', 'true');
+    block.dataset.path = path;
+
+    const header = document.createElement('div');
+    header.className = 'workspace-block__loop-header';
+    header.innerHTML = `
+      <div class="workspace-block__content">
+        <span class="workspace-block__icon"><i class="fas fa-redo"></i></span>
+        <span class="workspace-block__label">Повторити</span>
+        <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}" value="${command.loopCount}" aria-label="Кількість повторень циклу">
+        <span class="workspace-block__suffix">раз(и)</span>
+      </div>
+      <button type="button" class="workspace-block__action" aria-label="Видалити цикл">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+
+    const input = header.querySelector('input');
+    input.addEventListener('change', (event) => {
+      this.setLoopCount(path, event.target.value);
+    });
+
+    header.querySelector('.workspace-block__action').addEventListener('click', () => {
+      this.removeCommand(path);
+    });
+
+    const childrenContainer = document.createElement('div');
+    childrenContainer.className = 'workspace-block__children';
+    this._renderList(command.children, childrenContainer, path);
+
+    if (command.children.length === 0) {
+      childrenContainer.innerHTML = '';
+      const emptyZone = this._createDropZone(path, 0);
+      emptyZone.classList.add('workspace-dropzone--empty', 'workspace-dropzone--inner');
+      emptyZone.innerHTML = '<span>Перетягни команду в цикл</span>';
+      childrenContainer.appendChild(emptyZone);
     }
 
-    const childrenHtml = command.children.map((child, childIndex) => `
-      <div class="command-chip__child">
-        <div class="command-chip__label">
-          <span class="command-chip__icon">${MOVE_ICONS[child.direction] || ''}</span>
-          <span>${MOVE_NAMES[child.direction] || 'Рух'}</span>
-        </div>
-        <div class="command-chip__actions">
-          <button type="button" class="command-chip__button command-chip__button--delete command-chip__button--small" data-action="delete-child" data-loop="${index}" data-child="${childIndex}" aria-label="Видалити крок циклу">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-    `).join('');
+    block.appendChild(header);
+    block.appendChild(childrenContainer);
 
-    item.innerHTML = `
-      <div class="command-chip__header">
-        <div class="command-chip__title">
-          <span class="command-chip__icon"><i class="fas fa-redo"></i></span>
-          <span>Цикл</span>
-        </div>
-        <label class="command-chip__repeat">
-          Повторити
-          <input type="number" min="${GAME_CONFIG.minLoopCount}" max="${GAME_CONFIG.maxLoopCount}" value="${command.loopCount}" data-action="loop-count" data-index="${index}">
-          раз(и)
-        </label>
-        <div class="command-chip__actions">
-          <button type="button" class="command-chip__button command-chip__button--delete" data-action="delete" data-index="${index}" aria-label="Видалити цикл">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-      <div class="command-chip__children">
-        ${childrenHtml || '<div class="command-chip__empty">Додай команди всередину циклу</div>'}
-      </div>
-    `;
-
-    item.querySelector('[data-action="delete"]').addEventListener('click', () => {
-      this.removeCommand(index);
-    });
-
-    item.querySelectorAll('[data-action="delete-child"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const loopIndex = Number(btn.dataset.loop);
-        const childIndex = Number(btn.dataset.child);
-        this.removeChild(loopIndex, childIndex);
-      });
-    });
-
-    const input = item.querySelector('input[data-action="loop-count"]');
-    input.addEventListener('change', (event) => {
-      this.setLoopCount(index, event.target.value);
-    });
-
-    return item;
+    this._bindDragEvents(block, path);
+    return block;
   }
 
-  _notifyLoopState() {
-    if (!this.loopStateListener) return;
+  _createDropZone(parentPath, index) {
+    const zone = document.createElement('div');
+    zone.className = 'workspace-dropzone';
+    zone.dataset.parent = parentPath;
+    zone.dataset.index = String(index);
 
-    const active = Boolean(this.activeLoop);
-    const stepCount = active ? this.activeLoop.children.length : 0;
-    this.loopStateListener({ active, stepCount });
+    zone.addEventListener('dragenter', (event) => this._handleDragEnter(event, zone));
+    zone.addEventListener('dragover', (event) => this._handleDragOver(event, zone));
+    zone.addEventListener('dragleave', () => zone.classList.remove('workspace-dropzone--active'));
+    zone.addEventListener('drop', (event) => this._handleDrop(event, zone));
+
+    return zone;
+  }
+
+  _bindDragEvents(block, path) {
+    block.addEventListener('dragstart', (event) => {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData(DATA_KEY_COMMAND_PATH, path);
+      event.dataTransfer.setData('text/plain', 'command');
+      block.classList.add('workspace-block--dragging');
+    });
+
+    block.addEventListener('dragend', () => {
+      block.classList.remove('workspace-block--dragging');
+    });
+  }
+
+  _handleDragEnter(event, zone) {
+    if (this._isValidDrag(event)) {
+      zone.classList.add('workspace-dropzone--active');
+    }
+  }
+
+  _handleDragOver(event, zone) {
+    if (!this._isValidDrag(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = this._isMovingExisting(event) ? 'move' : 'copy';
+    zone.classList.add('workspace-dropzone--active');
+  }
+
+  _handleDrop(event, zone) {
+    event.preventDefault();
+    zone.classList.remove('workspace-dropzone--active');
+
+    const parentPath = zone.dataset.parent || '';
+    const index = Number(zone.dataset.index || 0);
+
+    const movePath = event.dataTransfer.getData(DATA_KEY_COMMAND_PATH);
+    if (movePath) {
+      this._moveCommand(movePath, parentPath, index);
+      return;
+    }
+
+    const newCommandRaw = event.dataTransfer.getData(DATA_KEY_NEW_COMMAND);
+    if (newCommandRaw) {
+      try {
+        const descriptor = JSON.parse(newCommandRaw);
+        this.insertCommand(descriptor, { parentPath, index });
+      } catch (error) {
+        console.warn('Не вдалося розпарсити команду з панелі', error);
+      }
+    }
+  }
+
+  _isValidDrag(event) {
+    return Boolean(
+      event.dataTransfer.types.includes(DATA_KEY_COMMAND_PATH)
+      || event.dataTransfer.types.includes(DATA_KEY_NEW_COMMAND)
+    );
+  }
+
+  _isMovingExisting(event) {
+    return event.dataTransfer.types.includes(DATA_KEY_COMMAND_PATH);
+  }
+
+  _moveCommand(sourcePath, targetParent, targetIndex) {
+    const source = this._resolvePath(sourcePath);
+    if (!source) return;
+
+    const sourceParentPath = this._parentPath(sourcePath);
+    const sourcePathArr = this._parsePath(sourcePath);
+    const targetParentArr = this._parsePath(targetParent);
+
+    if (this._isDescendantPath(sourcePathArr, targetParentArr)) {
+      return; // забороняємо переміщення в саму себе
+    }
+
+    const command = source.parentArray[source.index];
+    source.parentArray.splice(source.index, 1);
+
+    let insertIndex = targetIndex;
+    if (sourceParentPath === targetParent) {
+      if (source.index < targetIndex) {
+        insertIndex -= 1;
+      }
+    }
+
+    const targetArray = this._getArrayByParentPath(targetParentArr);
+    if (!targetArray) return;
+
+    targetArray.splice(Math.min(insertIndex, targetArray.length), 0, command);
+    this.render();
+  }
+
+  _createCommandFromDescriptor(descriptor) {
+    if (!descriptor || typeof descriptor !== 'object') return null;
+    if (descriptor.type === COMMAND_TYPES.MOVE) {
+      return createMove(descriptor.direction);
+    }
+    if (descriptor.type === COMMAND_TYPES.LOOP) {
+      return createLoop(descriptor.loopCount || DEFAULT_LOOP_COUNT);
+    }
+    return null;
+  }
+
+  _parsePath(path) {
+    if (!path) return [];
+    return path.split('.').filter(Boolean).map(Number);
+  }
+
+  _parentPath(path) {
+    const parts = this._parsePath(path);
+    parts.pop();
+    return parts.length ? parts.join('.') : '';
+  }
+
+  _resolvePath(path) {
+    const parts = this._parsePath(path);
+    if (!parts.length) return null;
+
+    const index = parts.pop();
+    const parentArray = this._getArrayByParentPath(parts);
+    if (!parentArray || index < 0 || index >= parentArray.length) return null;
+
+    return { parentArray, index };
+  }
+
+  _getArrayByParentPath(pathArr) {
+    let current = this.commands;
+    for (const index of pathArr) {
+      const command = current[index];
+      if (!command || command.type !== COMMAND_TYPES.LOOP) {
+        return null;
+      }
+      current = command.children;
+    }
+    return current;
+  }
+
+  _isDescendantPath(sourcePathArr, targetParentArr) {
+    if (targetParentArr.length < sourcePathArr.length) {
+      return false;
+    }
+    for (let i = 0; i < sourcePathArr.length; i += 1) {
+      if (targetParentArr[i] !== sourcePathArr[i]) {
+        return false;
+      }
+    }
+    return targetParentArr.length >= sourcePathArr.length;
   }
 }

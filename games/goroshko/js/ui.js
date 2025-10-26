@@ -13,46 +13,6 @@ export class UIManager {
       this.tutorialShown = false;
     }
 
-
-    /**
-     * Оновлення візуального стану циклу
-     * @param {{active: boolean, stepCount: number}} state
-     */
-    updateLoopMode({ active = false, stepCount = 0 } = {}) {
-      const { btnLoop, btnRoot, commandList } = this.elements;
-
-      if (btnLoop) {
-        const textEl = btnLoop.querySelector('.btn-text');
-        if (textEl) {
-          textEl.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
-        } else {
-          btnLoop.textContent = active ? 'Цикл відкритий' : 'Почати цикл';
-        }
-        btnLoop.disabled = active;
-        btnLoop.setAttribute('aria-pressed', active ? 'true' : 'false');
-      }
-
-      if (btnRoot) {
-        const textEl = btnRoot.querySelector('.btn-text');
-        if (textEl) {
-          textEl.textContent = active
-            ? `Закрити цикл (${stepCount || 0})`
-            : 'Закрити цикл';
-        }
-
-        btnRoot.disabled = !active;
-        btnRoot.classList.toggle('bg-red-500', active);
-        btnRoot.classList.toggle('[--shadow-color:theme(colors.red.700)]', active);
-        btnRoot.classList.toggle('hover:bg-red-400', active);
-        btnRoot.classList.toggle('bg-gray-400', !active);
-        btnRoot.classList.toggle('[--shadow-color:theme(colors.gray.600)]', !active);
-      }
-
-      if (commandList) {
-        commandList.setAttribute('data-loop-active', active ? 'true' : 'false');
-      }
-    }
-
     /**
      * Ініціалізація UI-менеджера
      * @param {Object} elements - Об'єкт з DOM-елементами
@@ -184,58 +144,41 @@ export class UIManager {
     setControlsEnabled(enabled) {
       const buttons = [
         this.elements.btnRun,
-        this.elements.btnClear,
-        ...document.querySelectorAll('.cmd-btn')
+        this.elements.btnClear
       ].filter(Boolean);
-  
+
       buttons.forEach(btn => {
         btn.disabled = !enabled;
       });
+
+      if (this.elements.commandPalette) {
+        this.elements.commandPalette.querySelectorAll('.palette-block').forEach((btn) => {
+          btn.disabled = !enabled;
+          btn.setAttribute('draggable', enabled ? 'true' : 'false');
+        });
+      }
+
+      if (this.elements.commandList) {
+        this.elements.commandList.classList.toggle('workspace-disabled', !enabled);
+      }
     }
-  
+
     /**
      * Показ кнопок залежно від рівня
      * @param {number} level - Номер рівня (починаючи з 0)
      */
     updateButtonsVisibility(level) {
-      // Рівень 0: тільки права стрілка
-      // Рівень 1+: всі стрілки
-      // Рівень 4+: цикли
-  
-      const buttons = {
-        up: this.elements.btnUp,
-        down: this.elements.btnDown,
-        left: this.elements.btnLeft,
-        right: this.elements.btnRight,
-        loop: this.elements.btnLoop,
-        endLoop: this.elements.btnRoot
-      };
-  
-      // Спочатку ховаємо всі
-      Object.values(buttons).forEach(btn => {
-        if (btn) btn.classList.add('hidden-by-level');
-      });
-  
-      // Показуємо потрібні
-      if (level === 0) {
-        // Тільки права стрілка
-        if (buttons.right) buttons.right.classList.remove('hidden-by-level');
-      } else if (level < 4) {
-        // Всі стрілки
-        if (buttons.up) buttons.up.classList.remove('hidden-by-level');
-        if (buttons.down) buttons.down.classList.remove('hidden-by-level');
-        if (buttons.left) buttons.left.classList.remove('hidden-by-level');
-        if (buttons.right) buttons.right.classList.remove('hidden-by-level');
-      } else {
-        // Всі кнопки включно з циклами
-        Object.values(buttons).forEach(btn => {
-          if (btn) btn.classList.remove('hidden-by-level');
-        });
-      }
+      if (!this.elements.commandPalette) return;
 
-      if (level < 4) {
-        this.updateLoopMode({ active: false, stepCount: 0 });
-      }
+      const buttons = this.elements.commandPalette.querySelectorAll('[data-visible-from]');
+      buttons.forEach((btn) => {
+        const fromLevel = Number(btn.dataset.visibleFrom || '0');
+        if (level >= fromLevel) {
+          btn.classList.remove('hidden-by-level');
+        } else {
+          btn.classList.add('hidden-by-level');
+        }
+      });
     }
   
     /**

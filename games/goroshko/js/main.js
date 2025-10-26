@@ -26,14 +26,7 @@ async function init() {
 
     // Команди
     commandList: document.getElementById('commandList'),
-    loopStatus: document.getElementById('loopStatus'),
-    loopStepCount: document.getElementById('loopStepCount'),
-    btnUp: document.getElementById('btnUp'),
-    btnDown: document.getElementById('btnDown'),
-    btnLeft: document.getElementById('btnLeft'),
-    btnRight: document.getElementById('btnRight'),
-    btnLoop: document.getElementById('btnLoop'),
-    btnRoot: document.getElementById('btnRoot'),
+    commandPalette: document.getElementById('commandPalette'),
     btnRun: document.getElementById('btnRun'),
     btnClear: document.getElementById('btnClear'),
 
