@@ -107,7 +107,7 @@ export class BattleManager {
       // Хід героя
       const heroDmg = Math.max(1, this.heroDamage);
       this.monsterHealth -= heroDmg;
-      this._log(`⚔️ Котигорошко завдає ${heroDmg} шкоди!`);
+      this._log(`⚔️ Кодегорошко завдає ${heroDmg} шкоди!`);
       this._updateDisplay();
 
       if (this.monsterHealth <= 0) {
@@ -126,7 +126,7 @@ export class BattleManager {
       this._updateDisplay();
 
       if (this.heroHealth <= 0) {
-        this._log(`💔 Котигорошко переможений...`);
+        this._log(`💔 Кодегорошко переможений...`);
         await this._delay(GAME_CONFIG.battleRoundMs);
         soundEngine.play('defeat');
         return false;
