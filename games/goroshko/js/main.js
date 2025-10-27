@@ -32,6 +32,8 @@ async function init() {
     btnClear: document.getElementById('btnClear'),
     mapPanel: document.getElementById('mapPanel'),
     programPanel: document.getElementById('programPanel'),
+    workspaceControls: document.querySelector('.workspace-controls'),
+    workspaceIntro: document.querySelector('.workspace-intro'),
 
     // Інформація про рівень
     levelNum: document.getElementById('levelNum'),
