@@ -79,7 +79,7 @@ export class GridManager {
     if (row === this.heroPos[0] && col === this.heroPos[1]) {
       cell.classList.add(...CELL_CLASSES.hero.split(' '));
       cell.textContent = ICONS.hero;
-      cell.setAttribute('aria-label', 'Кодегорошко');
+      cell.setAttribute('aria-label', 'Котигорошко');
     } else if (row === this.monsterPos[0] && col === this.monsterPos[1]) {
       cell.classList.add(...CELL_CLASSES.monster.split(' '));
       cell.textContent = this._getMonsterIcon();
@@ -170,7 +170,7 @@ export class GridManager {
     // Оновлюємо нову клітинку
     newCell.className = CELL_CLASSES.base + ' ' + CELL_CLASSES.hero;
     newCell.textContent = ICONS.hero;
-    newCell.setAttribute('aria-label', 'Кодегорошко');
+    newCell.setAttribute('aria-label', 'Котигорошко');
 
     this.heroPos = newPos;
 

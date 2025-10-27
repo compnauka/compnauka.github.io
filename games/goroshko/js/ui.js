@@ -12,7 +12,6 @@ export class UIManager {
       this.elements = {};
       this.tutorialShown = false;
       this._messageTimeout = null;
-      this._homes = {};
     }
 
     /**
@@ -24,27 +23,16 @@ export class UIManager {
       this.elements.mapPanel = elements.mapPanel || document.getElementById('mapPanel');
       this.elements.programPanel = elements.programPanel || document.getElementById('programPanel');
       this.elements.statBoard = elements.statBoard || document.querySelector('.stat-board');
-      this.elements.commandList = elements.commandList || document.getElementById('commandList');
-      this.elements.defaultCommandList = this.elements.commandList;
-      this.elements.workspaceControls = elements.workspaceControls || document.querySelector('.workspace-controls');
-      this.elements.workspaceIntro = elements.workspaceIntro || document.querySelector('.workspace-intro');
-
-      this._rememberHome('commandList');
-      this._rememberHome('workspaceControls');
-      this._rememberHome('workspaceIntro');
-      this._rememberHome('message');
+      this.elements.defaultCommandList = elements.commandList || document.getElementById('commandList');
+      if (!this.elements.commandList) {
+        this.elements.commandList = this.elements.defaultCommandList;
+      }
     }
 
     updateUILayout(levelIndex) {
       const mapPanel = this.elements.mapPanel || document.getElementById('mapPanel');
       const programPanel = this.elements.programPanel || document.getElementById('programPanel');
-      const mapBody = mapPanel?.querySelector('.interface-panel__body') || null;
       const useInlineWorkspace = levelIndex < 2;
-      const body = typeof document !== 'undefined' ? document.body : null;
-
-      if (body) {
-        body.classList.toggle('ui-inline-workspace', useInlineWorkspace);
-      }
 
       if (useInlineWorkspace) {
         if (programPanel) {
@@ -58,54 +46,34 @@ export class UIManager {
           miniWorkspace.className = 'mini-workspace';
           miniWorkspace.innerHTML = `
             <div class="mini-workspace__title">Твій план:</div>
-            <div class="mini-workspace__intro" data-slot="intro"></div>
-            <div class="mini-workspace__commands" data-slot="command-list"></div>
-            <div class="mini-workspace__controls" data-slot="controls"></div>
-            <div class="mini-workspace__message" data-slot="message"></div>
+            <div class="mini-workspace__commands" id="commandListContainer"></div>
           `;
-
-          if (mapBody && typeof mapBody.prepend === 'function') {
-            mapBody.prepend(miniWorkspace);
-          } else if (mapPanel) {
-            const header = mapPanel.querySelector('.interface-panel__header');
-            if (header && typeof header.after === 'function') {
-              header.after(miniWorkspace);
-            } else {
-              mapPanel.appendChild(miniWorkspace);
-            }
+          const header = mapPanel.querySelector('.interface-panel__header');
+          if (header && typeof header.after === 'function') {
+            header.after(miniWorkspace);
+          } else {
+            mapPanel.appendChild(miniWorkspace);
           }
         }
 
-        const commandsSlot = miniWorkspace?.querySelector('[data-slot="command-list"]');
-        const controlsSlot = miniWorkspace?.querySelector('[data-slot="controls"]');
-        const messageSlot = miniWorkspace?.querySelector('[data-slot="message"]');
-        const introSlot = miniWorkspace?.querySelector('[data-slot="intro"]');
-
-        this._moveElementTo('workspaceIntro', introSlot);
-        this._moveElementTo('commandList', commandsSlot);
-        this._moveElementTo('workspaceControls', controlsSlot);
-        this._moveElementTo('message', messageSlot);
-
-        if (this.elements.workspaceControls) {
-          this.elements.workspaceControls.classList.add('workspace-controls--inline');
+        const container = document.getElementById('commandListContainer');
+        if (container) {
+          this.elements.commandList = container;
+        } else if (this.elements.defaultCommandList) {
+          this.elements.commandList = this.elements.defaultCommandList;
         }
       } else {
         if (programPanel) {
           programPanel.classList.remove('hidden');
         }
-
-        if (this.elements.workspaceControls) {
-          this.elements.workspaceControls.classList.remove('workspace-controls--inline');
-        }
-
-        this._restoreHome('workspaceIntro');
-        this._restoreHome('commandList');
-        this._restoreHome('workspaceControls');
-        this._restoreHome('message');
-
         const miniWorkspace = document.getElementById('miniWorkspace');
         if (miniWorkspace) {
           miniWorkspace.remove();
+        }
+        if (this.elements.defaultCommandList) {
+          this.elements.commandList = this.elements.defaultCommandList;
+        } else {
+          this.elements.commandList = document.getElementById('commandList');
         }
       }
 
@@ -119,37 +87,6 @@ export class UIManager {
           statBoard.classList.remove('stat-board--minimal');
           this._removeMapHealthIndicator();
         }
-      }
-    }
-
-    _rememberHome(key) {
-      const el = this.elements[key];
-      if (!el || this._homes[key]) return;
-
-      this._homes[key] = {
-        parent: el.parentElement || null,
-        nextSibling: el.nextSibling || null
-      };
-    }
-
-    _moveElementTo(key, target) {
-      const el = this.elements[key];
-      if (!el || !target) return;
-
-      this._rememberHome(key);
-      if (target.contains(el)) return;
-      target.appendChild(el);
-    }
-
-    _restoreHome(key) {
-      const el = this.elements[key];
-      const home = this._homes[key];
-      if (!el || !home || !home.parent) return;
-
-      if (home.nextSibling && home.nextSibling.parentNode === home.parent) {
-        home.parent.insertBefore(el, home.nextSibling);
-      } else {
-        home.parent.appendChild(el);
       }
     }
 
