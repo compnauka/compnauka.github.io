@@ -21,7 +21,10 @@ export const GAME_CONFIG = {
     // === ЗВУКИ ===
     soundUrls: {
       victory: 'https://www.soundjay.com/misc/sounds/success-fanfare-trumpets.mp3',
-      defeat: 'https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3'
+      defeat: 'https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3',
+      bump: 'https://www.soundjay.com/misc/sounds/thud-01.mp3',
+      collect: 'https://www.soundjay.com/misc/sounds/bell-ring-01.mp3',
+      step: 'https://www.soundjay.com/misc/sounds/click-03.mp3'
     },
     defaultSoundVolume: 0.32,
   

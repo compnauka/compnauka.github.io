@@ -17,6 +17,7 @@ export class GridManager {
     this.monsterPos = [0, 0];
     this.obstacles = [];
     this.collected = new Set();
+    this.hintTimeout = null;
   }
 
   /**
@@ -32,7 +33,8 @@ export class GridManager {
     this.obstacles = levelData.obstacles || [];
     this.items = levelData.items || { weapons: [], armor: [], potions: [] };
     this.collected = new Set();
-    
+    this.hintTimeout = null;
+
     this.render();
   }
 
@@ -42,6 +44,8 @@ export class GridManager {
    */
   render() {
     if (!this.gridEl) return;
+
+    this.clearHintPath();
 
     // Налаштування розміру сітки
     this.gridEl.style.display = 'grid';
@@ -190,12 +194,94 @@ export class GridManager {
     if (!cell) return;
 
     this.collected.add(`${row},${col}`);
-    
+
     cell.classList.add('collecting');
     setTimeout(() => {
       cell.classList.remove('collecting');
       cell.classList.add(CELL_CLASSES.collected.split(' ')[0]);
     }, 200);
+  }
+
+  clearHintPath() {
+    if (this.hintTimeout) {
+      clearTimeout(this.hintTimeout);
+      this.hintTimeout = null;
+    }
+
+    if (!this.gridEl) return;
+
+    this.gridEl.querySelectorAll('.hint-path').forEach((cell) => {
+      cell.classList.remove('hint-path');
+      cell.querySelectorAll('.hint-arrow').forEach((arrow) => arrow.remove());
+    });
+  }
+
+  showHintPath(start, end, items) {
+    if (!this.gridEl || !Array.isArray(start) || !Array.isArray(end)) return;
+
+    this.clearHintPath();
+
+    const path = this._findPath(start, end);
+    if (!path || path.length < 2) return;
+
+    path.forEach((coord, index) => {
+      if (index === 0 || index === path.length - 1) return;
+      const [row, col] = coord;
+      const cell = this.gridEl.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+      if (!cell) return;
+      cell.classList.add('hint-path');
+
+      const arrow = document.createElement('div');
+      arrow.className = 'hint-arrow';
+      arrow.textContent = this._getDirection(path[index - 1], coord);
+      cell.appendChild(arrow);
+    });
+
+    this.hintTimeout = setTimeout(() => this.clearHintPath(), 5000);
+  }
+
+  _findPath(start, end) {
+    const queue = [[start, [start]]];
+    const visited = new Set([`${start[0]},${start[1]}`]);
+
+    while (queue.length > 0) {
+      const [position, path] = queue.shift();
+      const [row, col] = position;
+
+      if (row === end[0] && col === end[1]) {
+        return path;
+      }
+
+      const neighbors = [
+        [row - 1, col],
+        [row + 1, col],
+        [row, col - 1],
+        [row, col + 1]
+      ];
+
+      for (const [nr, nc] of neighbors) {
+        const key = `${nr},${nc}`;
+        if (visited.has(key)) continue;
+
+        if (nr === end[0] && nc === end[1]) {
+          return [...path, [nr, nc]];
+        }
+
+        if (this.canMoveTo([nr, nc])) {
+          visited.add(key);
+          queue.push([[nr, nc], [...path, [nr, nc]]]);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  _getDirection([fromRow, fromCol], [toRow, toCol]) {
+    if (toRow < fromRow) return '↑';
+    if (toRow > fromRow) return '↓';
+    if (toCol < fromCol) return '←';
+    return '→';
   }
 
   /**
@@ -224,10 +310,31 @@ export class GridManager {
    */
   reset() {
     this.collected.clear();
+    this.clearHintPath();
     if (this.gridEl) {
       this.gridEl.innerHTML = '';
     }
   }
+
+  animateFailure(heroPos, obstaclePos) {
+    if (!this.gridEl) return;
+
+    if (Array.isArray(heroPos)) {
+      const heroCell = this.gridEl.querySelector(`[data-row="${heroPos[0]}"][data-col="${heroPos[1]}"]`);
+      if (heroCell) {
+        heroCell.classList.add('cell-shake');
+        setTimeout(() => heroCell.classList.remove('cell-shake'), 300);
+      }
+    }
+
+    if (Array.isArray(obstaclePos)) {
+      const [row, col] = obstaclePos;
+      if (row >= 0 && row < this.size && col >= 0 && col < this.size) {
+        this.flashCell(obstaclePos);
+      }
+    }
+  }
+
   /**
    * Анімація "блимання" клітинки
    * @param {Array} pos - Позиція [row, col]

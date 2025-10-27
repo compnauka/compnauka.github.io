@@ -31,6 +31,13 @@ export class Game {
     this.heroArmor = 0;
     this.heroHealth = GAME_CONFIG.baseHealth;
 
+    this.currentLevelAttempts = 0;
+
+    this.commandIterator = null;
+    this.currentStep = 0;
+    this.flatCommandsCache = [];
+    this.currentHeroPos = [0, 0];
+
     // Менеджери
     this.grid = new GridManager();
     this.commands = new CommandManager();
@@ -46,7 +53,6 @@ export class Game {
     this.elements = elements;
     // Ініціалізація менеджерів
     this.ui.init(elements);
-    this.commands.init(elements.commandList);
     this.battle.init({
       scene: elements.battleScene,
       log: elements.battleLog,
@@ -93,10 +99,25 @@ export class Game {
       throw new Error(`Level with index ${levelIndex} not found.`);
     }
 
-    // Скидання стану
     this.heroDamage = 0;
     this.heroArmor = 0;
     this.heroHealth = GAME_CONFIG.baseHealth;
+    this.currentLevelAttempts = 0;
+    this.isRunning = false;
+    this.commandIterator = null;
+    this.currentStep = 0;
+    this.flatCommandsCache = [];
+    this.currentHeroPos = [...this.levelData.hero];
+
+    if (typeof this.grid.clearHintPath === 'function') {
+      this.grid.clearHintPath();
+    }
+
+    this.ui.updateUILayout(levelIndex);
+
+    if (this.elements?.commandList) {
+      this.commands.init(this.elements.commandList);
+    }
     this.commands.clear();
     this.battle.reset();
 
@@ -109,6 +130,10 @@ export class Game {
     this.grid.init(gridElement, this.levelData);
     this.grid.monsterIcon = this.levelData.monsterStats.icon;
 
+    if (typeof this.grid.clearHintPath === 'function') {
+      this.grid.clearHintPath();
+    }
+
     // Оновлення UI
     this._updateStatsUI();
 
@@ -117,7 +142,7 @@ export class Game {
     this.ui.hideVictoryModal();
 
     // Показ туторіалу для рівня з циклами
-    if (levelIndex === 4) {
+    if (levelIndex === 7) {
       this.ui.showTutorial();
     }
   }
@@ -128,54 +153,35 @@ export class Game {
   async run() {
     if (this.isRunning) return;
 
-    const flatCommands = this.commands.flatten();
-    if (flatCommands.length === 0) {
-      this.ui.showMessage('Додай команди до алгоритму!', 'error');
+    this.resetRunner();
+
+    this.flatCommandsCache = this.commands.flatten();
+    if (this.flatCommandsCache.length === 0) {
+      this.ui.showDialogue('Додай команди до алгоритму!', 'error');
       return;
     }
 
     this.isRunning = true;
+    this.commandIterator = null;
     this.ui.setControlsEnabled(false);
     this.ui.hideMessage();
 
-    // Скидання позиції героя
-    let heroPos = [...this.levelData.hero];
-    this.grid.heroPos = heroPos;
-
-    // Виконання команд
-    for (const cmd of flatCommands) {
-      if (!this.isRunning) break;
-
-      const newPos = this._getNextPosition(heroPos, cmd.direction);
-
-      // Перевірка можливості руху
-      if (!this.grid.canMoveTo(newPos)) {
-        this.ui.showMessage('❌ Котигорошко врізався в перешкоду!', 'error');
-        this.grid.flashCell(newPos);
+    while (this.currentStep < this.flatCommandsCache.length && this.isRunning) {
+      const success = await this.executeStep();
+      if (!success) {
         this.isRunning = false;
-        this.ui.setControlsEnabled(true);
-        return;
+        break;
       }
-
-      // Рух героя
-      await this.grid.updateHeroPosition(newPos);
-      heroPos = newPos;
-
-      // Збір предметів
-      await this._collectItems(heroPos);
-
       await this._delay(GAME_CONFIG.stepMs);
     }
 
-    // Перевірка досягнення монстра
-    const [monsterRow, monsterCol] = this.levelData.monster;
-    if (heroPos[0] === monsterRow && heroPos[1] === monsterCol) {
-      await this._startBattle();
-    } else {
-      this.ui.showMessage('Ти не дійшов до монстра! Спробуй ще раз.', 'error');
-      this.isRunning = false;
-      this.ui.setControlsEnabled(true);
+    if (this.isRunning) {
+      await this.checkFinalPosition();
     }
+
+    this.ui.setControlsEnabled(true);
+    this.isRunning = false;
+    this.commandIterator = null;
   }
 
   /**
@@ -221,7 +227,8 @@ export class Game {
     if (victory) {
       await this._handleVictory();
     } else {
-      this.ui.showMessage('💔 Поразка! Спробуй краще спорядження або алгоритм.', 'error');
+      this._handleFailedAttempt();
+      this.ui.showDialogue('💔 Поразка! Спробуй краще спорядження або алгоритм.', 'error', 3000);
     }
 
     this.isRunning = false;
@@ -316,8 +323,90 @@ export class Game {
 
     onCollect();
     this.grid.animateCollect(row, col);
+    soundEngine.play('collect');
     this._updateStatsUI();
     await this._delay(GAME_CONFIG.collectAnimMs);
+  }
+
+  resetRunner() {
+    this.commandIterator = null;
+    this.currentStep = 0;
+    this.flatCommandsCache = [];
+
+    if (!this.levelData) return;
+
+    this.currentHeroPos = [...this.levelData.hero];
+
+    if (this.grid) {
+      if (this.grid.collected && typeof this.grid.collected.clear === 'function') {
+        this.grid.collected.clear();
+      }
+      this.grid.heroPos = [...this.levelData.hero];
+      if (typeof this.grid.clearHintPath === 'function') {
+        this.grid.clearHintPath();
+      }
+      this.grid.render();
+    }
+
+    this.heroDamage = 0;
+    this.heroArmor = 0;
+    this.heroHealth = GAME_CONFIG.baseHealth;
+    this._updateStatsUI();
+    this.ui.hideMessage();
+    this.isRunning = false;
+  }
+
+  _handleFailedAttempt() {
+    if (!this.levelData) return;
+
+    this.currentLevelAttempts += 1;
+
+    if (this.currentLevelAttempts >= 5) {
+      this.ui.showDialogue('👀 Хочеш підказку, як дійти?', 'info', 3500);
+      if (typeof this.grid.showHintPath === 'function') {
+        this.grid.showHintPath([...this.levelData.hero], this.levelData.monster, this.levelData.items);
+      }
+    } else if (this.currentLevelAttempts >= 3) {
+      this.ui.showDialogue('💡 Спробуй інший шлях!', 'info', 2500);
+    }
+  }
+
+  async executeStep() {
+    if (!this.levelData || this.currentStep >= this.flatCommandsCache.length) {
+      return false;
+    }
+
+    const cmd = this.flatCommandsCache[this.currentStep];
+    this.currentStep += 1;
+
+    const newPos = this._getNextPosition(this.currentHeroPos, cmd.direction);
+
+    if (!this.grid.canMoveTo(newPos)) {
+      this.grid.animateFailure(this.currentHeroPos, newPos);
+      soundEngine.play('bump');
+      this.ui.showDialogue('Ой! Стіна!', 'error', 2000);
+      this._handleFailedAttempt();
+      return false;
+    }
+
+    await this.grid.updateHeroPosition(newPos);
+    soundEngine.play('step');
+    this.currentHeroPos = newPos;
+
+    await this._collectItems(this.currentHeroPos);
+    return true;
+  }
+
+  async checkFinalPosition() {
+    if (!this.levelData) return;
+
+    const [monsterRow, monsterCol] = this.levelData.monster;
+    if (this.currentHeroPos[0] === monsterRow && this.currentHeroPos[1] === monsterCol) {
+      await this._startBattle();
+    } else if (this.currentStep >= this.flatCommandsCache.length) {
+      this.ui.showDialogue('Ти не дійшов до монстра! Спробуй ще раз.', 'error', 3000);
+      this._handleFailedAttempt();
+    }
   }
 
   /**
@@ -334,6 +423,7 @@ export class Game {
         item.addEventListener('click', () => {
           this._applyPaletteCommand(descriptor);
           this.ui.animateButton(item);
+          this.ui.animatePaletteTransfer(item, this.elements?.commandList);
         });
 
         item.addEventListener('dragstart', (event) => {
@@ -359,9 +449,48 @@ export class Game {
       elements.btnRun.addEventListener('click', () => this.run());
     }
 
+    if (elements.btnStep) {
+      elements.btnStep.addEventListener('click', async () => {
+        if (this.isRunning) return;
+
+        this.ui.animateButton(elements.btnStep);
+
+        if (this.commandIterator === null) {
+          this.resetRunner();
+          this.flatCommandsCache = this.commands.flatten();
+          if (this.flatCommandsCache.length === 0) {
+            this.ui.showDialogue('Додай команди!', 'error');
+            return;
+          }
+          this.commandIterator = this.flatCommandsCache[Symbol.iterator]();
+          this.currentStep = 0;
+          this.ui.hideMessage();
+        }
+
+        this.ui.setControlsEnabled(false);
+        let success = false;
+        try {
+          success = await this.executeStep();
+        } finally {
+          this.ui.setControlsEnabled(true);
+        }
+
+        if (!success || this.currentStep >= this.flatCommandsCache.length) {
+          this.ui.setControlsEnabled(false);
+          try {
+            await this.checkFinalPosition();
+          } finally {
+            this.ui.setControlsEnabled(true);
+          }
+          this.commandIterator = null;
+        }
+      });
+    }
+
     if (elements.btnClear) {
       elements.btnClear.addEventListener('click', () => {
         this.commands.clear();
+        this.resetRunner();
         this.ui.animateButton(elements.btnClear);
       });
     }
@@ -420,13 +549,17 @@ export class Game {
   _applyPaletteCommand(descriptor) {
     if (!descriptor) return;
 
+    const target = { parentPath: '', index: this.commands.commands.length };
+
     if (descriptor.type === COMMAND_TYPES.MOVE) {
-      this.commands.addMove(descriptor.direction);
+      if (descriptor.direction) {
+        this.commands.insertCommand({ type: COMMAND_TYPES.MOVE, direction: descriptor.direction }, target);
+      }
     } else if (descriptor.type === COMMAND_TYPES.LOOP) {
       if (descriptor.loopCount) {
-        this.commands.insertCommand({ type: COMMAND_TYPES.LOOP, loopCount: descriptor.loopCount });
+        this.commands.insertCommand({ type: COMMAND_TYPES.LOOP, loopCount: descriptor.loopCount }, target);
       } else {
-        this.commands.addLoop();
+        this.commands.insertCommand({ type: COMMAND_TYPES.LOOP }, target);
       }
     }
   }
