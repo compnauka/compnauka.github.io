@@ -10,71 +10,139 @@ import { GAME_CONFIG, ICONS } from './config.js';
 
 const BASE_LEVELS = [
   {
-    size: 8,
-    hero: [3, 2],
-    monster: [3, 5],
+    size: 4,
+    hero: [1, 0],
+    monster: [1, 3],
     items: { weapons: [], armor: [], potions: [] },
     monsterStats: {
-      health: 10,
+      health: 1,
       damage: 0,
       name: 'Опудало',
       icon: ICONS.monsters.scarecrow
     },
     obstacles: [],
-    desc: "Дійди до Опудала, використовуючи лише рух праворуч!",
-    par: { gold: 3, silver: 4 }
+    desc: "Дійди до опудала, натиснувши [→] 3 рази!",
+    par: { gold: 3, silver: 3 },
+    personalise: false
   },
   {
-    size: 8,
-    hero: [5, 2],
-    monster: [2, 5],
+    size: 5,
+    hero: [3, 1],
+    monster: [1, 3],
     items: { weapons: [], armor: [], potions: [] },
     monsterStats: {
-      health: 20,
-      damage: 5,
+      health: 10,
+      damage: 0,
+      name: 'Привид',
+      icon: '👻'
+    },
+    obstacles: [
+      [2, 1], [2, 2], [2, 3]
+    ],
+    desc: "Обійди стінку, щоб дістатись до привида!",
+    par: { gold: 4, silver: 5 },
+    personalise: true
+  },
+  {
+    size: 5,
+    hero: [4, 0],
+    monster: [0, 4],
+    items: { weapons: [], armor: [], potions: [] },
+    monsterStats: {
+      health: 10,
+      damage: 0,
       name: 'Гоблін',
       icon: ICONS.monsters.goblin
     },
     obstacles: [
-      [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
-      [1,0],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],
-      [2,0],[2,1],[2,6],[2,7],
-      [3,0],[3,1],[3,3],[3,4],[3,6],[3,7],
-      [4,0],[4,1],[4,3],[4,4],[4,5],[4,6],[4,7],
-      [5,0],[5,1],[5,6],[5,7],
-      [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],
-      [7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]
+      [3, 0], [3, 1], [3, 2],
+      [1, 2], [1, 3], [1, 4]
     ],
-    desc: 'Обійди перешкоди, щоб дістатися до Гобліна!',
-    par: { gold: 10, silver: 12 }
+    desc: "Проведи героя через лабіринт!",
+    par: { gold: 8, silver: 10 },
+    personalise: true
   },
   {
-    size: 8,
-    hero: [5, 2],
-    monster: [2, 5],
-    items: {
-      weapons: [[4, 3]],
-      armor: [[3, 4]],
-      potions: []
-    },
+    size: 6,
+    hero: [5, 0],
+    monster: [0, 5],
+    items: { weapons: [[3, 2]], armor: [], potions: [] },
     monsterStats: {
-      health: 50,
-      damage: 12,
+      health: 30,
+      damage: 5,
       name: 'Орк',
       icon: ICONS.monsters.orc
     },
     obstacles: [
-      [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
-      [1,0],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],
-      [2,0],[2,1],[2,6],[2,7],
-      [3,0],[3,1],[3,6],[3,7],
-      [4,0],[4,1],[4,2],[4,6],[4,7],
-      [5,0],[5,1],[5,6],[5,7],
-      [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],
-      [7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]
+      [4, 0], [4, 1], [4, 2],
+      [2, 3], [2, 4], [2, 5],
+      [0, 4]
     ],
-    desc: 'Збери зброю та броню на шляху до Орка!',
-    par: { gold: 12, silver: 15 }
+    desc: "Збери меч ⚔️, щоб перемогти Орка!",
+    par: { gold: 10, silver: 12 },
+    personalise: true
+  },
+  {
+    size: 6,
+    hero: [5, 1],
+    monster: [0, 4],
+    items: { weapons: [], armor: [[2, 4]], potions: [] },
+    monsterStats: {
+      health: 40,
+      damage: 6,
+      name: 'Вовкулака',
+      icon: '🐺'
+    },
+    obstacles: [
+      [4, 1], [4, 2], [4, 3],
+      [3, 3], [2, 3],
+      [1, 1], [1, 2], [1, 3],
+      [0, 2]
+    ],
+    desc: 'Зроби довгий обхід поміж деревами та підбери щит.',
+    par: { gold: 12, silver: 14 },
+    personalise: true
+  },
+  {
+    size: 6,
+    hero: [5, 5],
+    monster: [0, 0],
+    items: { weapons: [[4, 4]], armor: [[2, 1]], potions: [[3, 3]] },
+    monsterStats: {
+      health: 55,
+      damage: 8,
+      name: 'Відьма',
+      icon: '🧙'
+    },
+    obstacles: [
+      [4, 5], [3, 5], [2, 5],
+      [2, 2], [2, 3], [1, 3],
+      [4, 1], [4, 2], [4, 3]
+    ],
+    desc: 'Сплануй шлях, щоб встигнути за силою та зіллям.',
+    par: { gold: 14, silver: 16 },
+    personalise: true
+  },
+  {
+    size: 7,
+    hero: [6, 1],
+    monster: [0, 5],
+    items: { weapons: [[5, 3]], armor: [[1, 4]], potions: [[3, 5]] },
+    monsterStats: {
+      health: 70,
+      damage: 12,
+      name: 'Чугайстер',
+      icon: '🧟'
+    },
+    obstacles: [
+      [5, 1], [4, 1], [3, 1],
+      [4, 4], [4, 5], [4, 6],
+      [2, 2], [2, 3], [2, 4],
+      [1, 5]
+    ],
+    desc: 'Довга доріжка без циклів — уважно рахуй кроки!',
+    par: { gold: 16, silver: 18 },
+    personalise: true
   },
   {
     size: 8,
@@ -101,36 +169,9 @@ const BASE_LEVELS = [
       [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],
       [7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]
     ],
-    desc: 'Збери все спорядження, включно з зіллям (🧪)!',
-    par: { gold: 14, silver: 18 }
-  },
-  {
-    size: 8,
-    hero: [5, 2],
-    monster: [2, 5],
-    items: {
-      weapons: [[4, 2]],
-      armor: [[3, 2]],
-      potions: [[2, 2]]
-    },
-    monsterStats: {
-      health: 50,
-      damage: 10,
-      name: 'Скелет',
-      icon: ICONS.monsters.skeleton
-    },
-    obstacles: [
-      [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
-      [1,0],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],
-      [2,0],[2,1],[2,6],[2,7],
-      [3,0],[3,1],[3,6],[3,7],
-      [4,0],[4,1],[4,6],[4,7],
-      [5,0],[5,1],[5,6],[5,7],
-      [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],
-      [7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]
-    ],
     desc: 'Нова механіка! Використай цикли, щоб пройти!',
-    par: { gold: 5, silver: 8 }
+    par: { gold: 5, silver: 8 },
+    personalise: true
   },
   {
     size: 8,
@@ -149,7 +190,8 @@ const BASE_LEVELS = [
     },
     obstacles: [[5,1],[5,2],[5,3],[5,4],[3,2],[3,4],[3,5],[1,2],[2,2]],
     desc: 'Фінальний виклик! Оптимізуй свій шлях за допомогою циклів.',
-    par: { gold: 10, silver: 15 }
+    par: { gold: 10, silver: 15 },
+    personalise: true
   }
 ];
 
@@ -276,9 +318,18 @@ function personaliseRotationalLevel(template, seedKey, index) {
 
 function personaliseBaseLevel(index, variantKey) {
   const template = BASE_LEVELS[index];
+  if (!template) {
+    return null;
+  }
+
+  if (template.personalise === false) {
+    return structuredCloneSafe(template);
+  }
+
   if (index === 0) {
     return personaliseTutorialLevel(template, `${variantKey}|tutorial`);
   }
+
   return personaliseRotationalLevel(template, variantKey, index);
 }
 
@@ -372,11 +423,21 @@ function generateRandomLevel(difficulty = 1, variantKey = 'default', index = BAS
 }
 
 export function getLevel(index, variantKey = 'default') {
-  if (index < BASE_LEVEL_COUNT) {
-    return personaliseBaseLevel(index, variantKey);
+  if (index >= BASE_LEVEL_COUNT) {
+    const difficulty = index - BASE_LEVEL_COUNT + 1;
+    return generateRandomLevel(difficulty, variantKey, index);
   }
-  const difficulty = index - BASE_LEVEL_COUNT + 1;
-  return generateRandomLevel(difficulty, variantKey, index);
+
+  const template = BASE_LEVELS[index];
+  if (!template) {
+    return generateRandomLevel(1, variantKey, index);
+  }
+
+  if (template.personalise === false) {
+    return structuredCloneSafe(template);
+  }
+
+  return personaliseBaseLevel(index, variantKey);
 }
 
 export function getBaseLevelCount() {

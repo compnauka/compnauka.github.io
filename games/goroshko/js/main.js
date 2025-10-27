@@ -28,7 +28,10 @@ async function init() {
     commandList: document.getElementById('commandList'),
     commandPalette: document.getElementById('commandPalette'),
     btnRun: document.getElementById('btnRun'),
+    btnStep: document.getElementById('btnStep'),
     btnClear: document.getElementById('btnClear'),
+    mapPanel: document.getElementById('mapPanel'),
+    programPanel: document.getElementById('programPanel'),
 
     // Інформація про рівень
     levelNum: document.getElementById('levelNum'),
@@ -37,6 +40,7 @@ async function init() {
     armor: document.getElementById('armor'),
     health: document.getElementById('health'),
     parGold: document.getElementById('parGold'),
+    statBoard: document.querySelector('.stat-board'),
 
     // Досягнення
     achievementList: document.getElementById('achievementList'),
