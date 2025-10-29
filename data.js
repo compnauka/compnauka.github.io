@@ -113,7 +113,8 @@ const CATEGORIES = [
     iconClass: "fas fa-gamepad", // Іконка для категорії
     services: [
       { name: "Змійка", description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.", link: "games/snake.html", image: "images/51.jpg", tags: [] },
-      { name: "Теніс", description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", link: "games/tanis.html", image: "images/52.jpg", tags: [] },
+      { name: "Теніс", description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", link: "games/tenis.html", image: "images/52.jpg", tags: [] },
+      { name: "Морський бій", description: "Класична онлайн-гра для двох гравців. Розвиває стратегічне та критичне мислення.", link: "games/seabattle.html", image: "images/52.jpg", tags: [] },
       { name: "Космічні заарбники", description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", link: "games/spaceinviders.html", image: "images/53.jpg", tags: [] }
     ]
   }
