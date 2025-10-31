@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Пригоди Алгоритмів — v2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root{ --cell-gap-sm:2px; --cell-gap-lg:4px; }
+    body{font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;touch-action:manipulation}
+    .grid-cell{aspect-ratio:1;border:2px solid #cbd5e0;transition:all .2s;}
+    @media (max-width:640px){.grid-cell{border-width:1px}}
+    .command-slot{aspect-ratio:1;border:3px dashed #a0aec0;transition:all .2s;min-width:40px;min-height:40px}
+    @media (min-width:640px){.command-slot{min-width:50px;min-height:50px}}
+    .command-slot.filled{border-style:solid;border-color:#4299e1;background-color:#ebf8ff;cursor:pointer}
+    .arrow-btn{aspect-ratio:1;cursor:pointer;transition:transform .15s;user-select:none;-webkit-user-select:none}
+    .arrow-btn:active{transform:scale(1.08)}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .character{animation:bounce 1s infinite}
+    @keyframes collect{0%{transform:scale(1) rotate(0);opacity:1}100%{transform:scale(2) rotate(360deg);opacity:0}}
+    .collecting{animation:collect .6s forwards}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    .shake{animation:shake .5s}
+    @keyframes cell-land-pulse{0%{transform:scale(1);background-color:#ebf8ff}50%{transform:scale(1.06);background-color:#bee3f8}100%{transform:scale(1);background-color:#ebf8ff}}
+    .landing{animation:cell-land-pulse .35s ease-out}
+    @keyframes win-tada{0%{transform:scale(1) rotate(0)}20%{transform:scale(1.2) rotate(-10deg)}40%{transform:scale(1.2) rotate(10deg)}60%{transform:scale(1.2) rotate(-10deg)}80%{transform:scale(1.2) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+    .win-pulse div{animation:win-tada 1s ease-in-out}
+    @keyframes grid-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
+    .grid-shaking{animation:grid-shake .4s linear}
+    .sparkle-container{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .sparkle-bit{position:absolute;width:8px;height:8px;background-color:#fbd38d;border-radius:50%;animation:sparkle-fx .8s forwards;opacity:0}
+    @keyframes sparkle-fx{0%{opacity:1;transform:scale(.5) translate(0,0)}100%{opacity:0;transform:scale(1.2) var(--tw-translate)}}
+    /* Helper classes for emoji sizes (responsive, JS toggles) */
+    .emoji-xs{font-size:1.35rem}
+    .emoji-sm{font-size:1.75rem}
+    .emoji-md{font-size:2.25rem}
+    .emoji-lg{font-size:2.75rem}
+    .trail-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:#60a5fa;opacity:.9;top:50%;left:50%;transform:translate(-50%,-50%);animation:trail-fade .6s ease-out forwards}
+    @keyframes trail-fade{to{opacity:0;transform:translate(-50%,-50%) scale(0.4)}}
+    .near-obstacle{box-shadow:inset 0 0 0 3px rgba(239,68,68,.35);animation:near-pulse .6s ease-out 1}
+    @keyframes near-pulse{0%{box-shadow:inset 0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:inset 0 0 0 6px rgba(239,68,68,.35)}100%{box-shadow:inset 0 0 0 3px rgba(239,68,68,.35)}}
+    .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .confetti-bit{position:absolute;width:6px;height:10px;opacity:.9;animation:confetti-fall 900ms ease-out forwards}
+    @keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0)}100%{transform:translateY(120px) rotate(360deg);opacity:0}}
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 min-h-screen p-2 sm:p-4">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <header class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6">
+      <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-purple-600 mb-2">
+        <i class="fas fa-puzzle-piece" aria-hidden="true"></i>
+        <span class="sr-only">Гра</span> Пригоди Алгоритмів
+      </h1>
+      <div class="flex justify-between items-center text-lg sm:text-xl md:text-2xl" role="status" aria-live="polite">
+        <div class="font-bold text-blue-600">Рівень: <span id="levelNum">1</span></div>
+        <div class="font-bold text-green-600"><i class="fas fa-star" aria-hidden="true"></i> <span id="starsCount">0</span></div>
+      </div>
+    </header>
+
+    <!-- Main layout -->
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
+      <!-- Game board -->
+      <section class="md:col-span-2 bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col" aria-label="Ігрове поле">
+        <div class="flex-1 flex justify-center items-center min-h-[300px] md:min-h-[420px]">
+          <div id="gameGrid" class="relative" aria-label="Сітка гри" role="grid"></div>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <aside class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col" aria-label="Панель керування">
+        <h2 class="text-xl sm:text-2xl font-bold text-purple-600 mb-3 sm:mb-4 flex-shrink-0"><i class="fas fa-code" aria-hidden="true"></i> Команди</h2>
+
+        <div class="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6 flex-shrink-0">
+          <button id="upBtn" class="arrow-btn bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3" aria-label="Вгору"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+          <button id="downBtn" class="arrow-btn bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3" aria-label="Вниз"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
+          <button id="leftBtn" class="arrow-btn bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3" aria-label="Вліво"><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
+          <button id="rightBtn" class="arrow-btn bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3" aria-label="Вправо"><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+        </div>
+
+        <h3 class="text-lg sm:text-xl font-bold text-gray-700 mb-2 sm:mb-3 flex-shrink-0">Алгоритм:</h3>
+        <div id="commandSlots" class="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-4 sm:mb-6 flex-shrink-0" aria-label="Слоти команд"></div>
+
+        <div class="flex-grow"></div>
+
+        <div class="flex gap-2 flex-shrink-0">
+          <button id="runBtn" class="flex-1 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-play" aria-hidden="true"></i> Пуск</button>
+          <button id="clearBtn" class="flex-1 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl"><i class="fas fa-trash" aria-hidden="true"></i> Очистити</button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Win modal -->
+    <div id="winModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center">
+        <div class="text-5xl sm:text-6xl mb-4" aria-hidden="true">🎉</div>
+        <h2 id="winTitle" class="text-2xl sm:text-3xl font-bold text-purple-600 mb-4">Чудово!</h2>
+        <p class="text-lg sm:text-xl mb-6" id="winMessage"></p>
+        <button id="nextLevelBtn" class="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl w-full sm:w-auto">Наступний рівень <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    <!-- Error modal -->
+    <div id="errorModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="errTitle">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center">
+        <div class="text-5xl sm:text-6xl mb-4" aria-hidden="true">😅</div>
+        <h2 id="errTitle" class="text-2xl sm:text-3xl font-bold text-red-600 mb-4">Ой!</h2>
+        <p class="text-lg sm:text-xl mb-6" id="errorMessage"></p>
+        <div class="flex gap-2 flex-wrap justify-center">
+          <button id="retryBtn" class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl">Спробувати ще раз <i class="fas fa-redo" aria-hidden="true"></i></button>
+          <button id="closeErrBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl">Закрити</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Constants =====
+    const ANIMATION_SPEED = 380; // мс — легше слухати синхрон
+    const DIRECTION_VECTORS = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
+    const ARROW_ICONS = {
+      up:'<i class="fas fa-arrow-up text-blue-500" aria-hidden="true"></i>',
+      down:'<i class="fas fa-arrow-down text-green-500" aria-hidden="true"></i>',
+      left:'<i class="fas fa-arrow-left text-yellow-500" aria-hidden="true"></i>',
+      right:'<i class="fas fa-arrow-right text-red-500" aria-hidden="true"></i>'
+    };
+
+    // ===== Levels (stable) =====
+    const LEVELS = [
+      { size:3, start:[1,0], end:[1,1], obstacles:[], items:[], maxCommands:1 },
+      { size:3, start:[1,0], end:[1,2], obstacles:[], items:[], maxCommands:2 },
+      { size:3, start:[0,1], end:[2,1], obstacles:[], items:[], maxCommands:2 },
+      { size:3, start:[0,0], end:[0,2], obstacles:[], items:[[0,1]], maxCommands:2 },
+      { size:3, start:[0,0], end:[1,1], obstacles:[], items:[], maxCommands:2 },
+      { size:4, start:[1,0], end:[1,2], obstacles:[[0,1],[2,1]], items:[[1,1]], maxCommands:3 },
+      { size:4, start:[0,0], end:[1,3], obstacles:[[0,2],[1,1]], items:[[0,1]], maxCommands:4 },
+      { size:4, start:[0,0], end:[3,0], obstacles:[[1,0],[2,0]], items:[[1,1]], maxCommands:4 },
+      { size:5, start:[0,0], end:[4,4], obstacles:[], items:[[1,1],[3,3]], maxCommands:8 },
+      { size:5, start:[2,0], end:[2,4], obstacles:[[1,2],[2,2],[3,2]], items:[[2,1],[2,3]], maxCommands:6 },
+      { size:4, start:[0,0], end:[3,3], obstacles:[], items:[[0,3],[3,0]], maxCommands:6 },
+      { size:5, start:[0,0], end:[4,0], obstacles:[[1,0],[1,1],[1,2],[3,1],[3,2],[3,3],[0,3],[1,3]], items:[[2,2]], maxCommands:8 },
+      { size:6, start:[0,0], end:[5,5], obstacles:[[0,1],[1,1],[2,1],[3,1],[4,1],[1,3],[2,3],[3,3],[4,3],[5,3]], items:[[2,2],[3,4]], maxCommands:10 },
+      { size:6, start:[0,0], end:[5,5], obstacles:[[1,0],[0,2],[1,3],[3,1],[4,1],[2,4],[4,3],[3,5],[5,4]], items:[[2,2],[4,4]], maxCommands:10 },
+      { size:7, start:[3,3], end:[0,0], obstacles:[[1,0],[1,1],[1,2],[1,3],[1,4],[3,1],[4,1],[5,1],[3,2],[3,4],[3,5],[5,3],[4,3],[5,4],[5,5]], items:[[0,6],[6,0],[6,6]], maxCommands:12 }
+    ];
+
+    // ===== State =====
+    const gameState = {
+      currentLevel: 0,
+      commands: [], // fixed length per level
+      totalStars: 0,
+      isExecuting: false,
+      currentPos: null // track for responsive reflow
+    };
+
+    // ===== DOM =====
+    const el = (id) => document.getElementById(id);
+    const elements = {
+      gameGrid: el('gameGrid'), commandSlots: el('commandSlots'), runBtn: el('runBtn'), clearBtn: el('clearBtn'),
+      winModal: el('winModal'), errorModal: el('errorModal'), nextLevelBtn: el('nextLevelBtn'), retryBtn: el('retryBtn'), closeErrBtn: el('closeErrBtn'),
+      levelNum: el('levelNum'), starsCount: el('starsCount'), winMessage: el('winMessage'), errorMessage: el('errorMessage'),
+      upBtn: el('upBtn'), downBtn: el('downBtn'), leftBtn: el('leftBtn'), rightBtn: el('rightBtn')
+    };
+
+    // ===== Utils =====
+    const utils = {
+      sleep: (ms) => new Promise(r => setTimeout(r, ms)),
+      arraysEqual: (a,b) => a && b && a[0]===b[0] && a[1]===b[1],
+      isValidPosition: (pos, level) => pos[0]>=0 && pos[0]<level.size && pos[1]>=0 && pos[1]<level.size && !level.obstacles.some(o=>utils.arraysEqual(o,pos)),
+      emojiClass: () => {
+        const w = window.innerWidth;
+        if (w < 480) return 'emoji-xs';
+        if (w < 640) return 'emoji-sm';
+        if (w < 1024) return 'emoji-md';
+        return 'emoji-lg';
+      },
+      // Compute cell size from container width -> tablet-friendly
+      getCellSize: (level) => {
+        const wrap = elements.gameGrid.parentElement; // flex center box
+        const rect = wrap.getBoundingClientRect();
+        const gap = window.innerWidth < 640 ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-gap-sm')) || 2 : parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-gap-lg')) || 4;
+        const columns = level.size;
+        const maxGridWidth = Math.min(rect.width, 900); // cap for very wide screens
+        const size = Math.floor((maxGridWidth - (columns - 1) * gap) / columns);
+        return Math.max(36, Math.min(size, 110)); // clamp
+      }
+    };
+
+    // ===== Helper: ensure at least one reachable apple per level =====
+    function ensureStars(level){
+      if (!Array.isArray(level.items)) level.items = [];
+      if (level.items.length > 0) return;
+      const n = level.size;
+      const start = level.start; const end = level.end; const maxC = level.maxCommands || 0;
+      const inB = (r,c)=> r>=0&&r<n&&c>=0&&c<n;
+      const free = (r,c)=> inB(r,c) && !utils.arraysEqual([r,c], start) && !level.obstacles.some(o=>utils.arraysEqual(o,[r,c]));
+
+      const cand = [];
+      if (maxC <= 2 && inB(end[0],end[1])) cand.push([end[0],end[1]]);
+      const dr = Math.sign(end[0]-start[0]);
+      const dc = Math.sign(end[1]-start[1]);
+      if (dr!==0 || dc!==0){
+        const pr = start[0]+dr, pc = start[1]+dc;
+        if (free(pr,pc)) cand.push([pr,pc]);
+      }
+      const center = [Math.floor(n/2), Math.floor(n/2)];
+      [[center[0],center[1]],[n-2,n-2],[1,1],[0,n-1],[n-1,0]].forEach(([r,c])=>{ if (free(r,c)) cand.push([r,c]); });
+      if (cand.length===0){
+        for (let r=0;r<n;r++){
+          for (let c=0;c<n;c++){
+            if (free(r,c)) { cand.push([r,c]); break; }
+          }
+          if (cand.length) break;
+        }
+      }
+      if (cand.length) level.items = [cand[0]];
+    }
+
+    // ===== Helper: compute shortest path (BFS) to ensure level is solvable within maxCommands =====
+    function shortestSteps(level){
+      const n = level.size;
+      const obs = new Set(level.obstacles.map(([r,c])=>`${r},${c}`));
+      const key = (r,c)=>`${r},${c}`;
+      const inB = (r,c)=> r>=0&&r<n&&c>=0&&c<n;
+      const q = [[level.start[0], level.start[1], 0]];
+      const seen = new Set([key(level.start[0], level.start[1])]);
+      while(q.length){
+        const [r,c,d] = q.shift();
+        if (r===level.end[0] && c===level.end[1]) return d;
+        for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const nr=r+dr, nc=c+dc; const k=key(nr,nc);
+          if (inB(nr,nc) && !obs.has(k) && !seen.has(k)){
+            seen.add(k); q.push([nr,nc,d+1]);
+          }
+        }
+      }
+      return Infinity; // unreachable
+    }
+
+    // ===== Helper: auto-heal unsolvable levels by removing minimal obstacles =====
+    function healLevel(level){
+      // Try removing one obstacle that yields a finite path with minimal steps
+      let best = {idx:-1, steps:Infinity};
+      for (let i=0;i<level.obstacles.length;i++){
+        const removed = level.obstacles.splice(i,1)[0];
+        const s = shortestSteps(level);
+        level.obstacles.splice(i,0,removed);
+        if (Number.isFinite(s) && s < best.steps){ best = {idx:i, steps:s}; }
+      }
+      if (best.idx>=0){
+        const [removed] = level.obstacles.splice(best.idx,1);
+        return {healed:true, removed:[removed], steps:best.steps};
+      }
+      // Fallback: try removing any pair of obstacles
+      let bestPair = null; let bestSteps = Infinity;
+      for (let i=0;i<level.obstacles.length;i++){
+        const oi = level.obstacles.splice(i,1)[0];
+        for (let j=0;j<level.obstacles.length;j++){
+          const oj = level.obstacles.splice(j,1)[0];
+          const s = shortestSteps(level);
+          level.obstacles.splice(j,0,oj);
+          if (Number.isFinite(s) && s < bestSteps){ bestPair = {i, j, s}; bestSteps = s; }
+        }
+        level.obstacles.splice(i,0,oi);
+      }
+      if (bestPair){
+        // remove higher index first to keep indices valid
+        const removed = [];
+        const idxs = [bestPair.i, bestPair.j].sort((a,b)=>b-a);
+        idxs.forEach(idx=> removed.push(level.obstacles.splice(idx,1)[0]));
+        return {healed:true, removed, steps:bestPair.s};
+      }
+      return {healed:false};
+    }
+
+    // Small, non-blocking toast
+    function showToast(msg){
+      const node = document.createElement('div');
+      node.className = 'fixed left-1/2 -translate-x-1/2 top-4 z-[60] bg-black/80 text-white px-4 py-2 rounded-xl shadow-xl text-sm sm:text-base';
+      node.textContent = msg;
+      document.body.appendChild(node);
+      setTimeout(()=>{ node.style.transition='opacity .4s'; node.style.opacity='0'; setTimeout(()=>node.remove(), 450); }, 1500);
+    }
+
+    // ===== Init / Render =====
+    function initLevel(){
+      const level = LEVELS[gameState.currentLevel];
+      if (!level || !Number.isInteger(level.size) || level.size<=0) {
+        console.error('Некоректний рівень:', level);
+        showError('Сталася помилка з рівнем. Спробуй перезапустити.', false);
+        return;
+      }
+      // Auto-heal if unreachable
+      let stepsNow = shortestSteps(level);
+      if (!Number.isFinite(stepsNow)){
+        const heal = healLevel(level);
+        if (heal.healed){ showToast('🛠️ Відкрив прохід для цього рівня'); stepsNow = heal.steps; }
+      }
+      // Auto-adjust maxCommands to ensure solvable within limit
+      const shortest = stepsNow;
+      if (Number.isFinite(shortest) && (level.maxCommands ?? 0) < shortest){
+        console.warn(`maxCommands too small on level ${gameState.currentLevel+1}; expected ≥ ${shortest}, was ${level.maxCommands}. Auto-fixing.`);
+        level.maxCommands = shortest; // adjust to minimal required
+      }
+      elements.levelNum.textContent = `${gameState.currentLevel+1}/${LEVELS.length}`;
+      gameState.commands = Array(level.maxCommands).fill(null);
+      gameState.currentPos = [...level.start];
+      ensureStars(level);
+      if (Number.isFinite(shortest) && (level.maxCommands ?? 0) < shortest){
+        console.warn(`maxCommands too small on level ${gameState.currentLevel+1}; expected ≥ ${shortest}, was ${level.maxCommands}. Auto-fixing.`);
+        level.maxCommands = shortest; // adjust to minimal required
+      }
+      elements.levelNum.textContent = `${gameState.currentLevel+1}/${LEVELS.length}`;
+      gameState.commands = Array(level.maxCommands).fill(null);
+      gameState.currentPos = [...level.start];
+      ensureStars(level);
+      renderGrid(level);
+      renderCommandSlots();
+      elements.runBtn.disabled = false;
+      gameState.isExecuting = false;
+    }
+
+    function renderGrid(level){
+      const g = elements.gameGrid;
+      g.classList.remove('grid-shaking');
+      g.innerHTML = '';
+      const cellSize = utils.getCellSize(level);
+      const gap = window.innerWidth < 640 ? '2px' : '4px';
+      g.style.display = 'grid';
+      g.style.gridTemplateColumns = `repeat(${level.size}, ${cellSize}px)`;
+      g.style.gap = gap;
+
+      const emojiCls = utils.emojiClass();
+      for (let r=0;r<level.size;r++){
+        for (let c=0;c<level.size;c++){
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell flex items-center justify-center bg-blue-50 rounded-lg';
+          cell.dataset.row = r; cell.dataset.col = c; cell.setAttribute('role','gridcell');
+
+          const pos = [r,c];
+          if (utils.arraysEqual(pos, level.start)){
+            cell.innerHTML = `<div class="character ${emojiCls}" aria-label="Старт">🤖</div>`;
+            cell.classList.add('bg-green-200');
+          } else if (utils.arraysEqual(pos, level.end)){
+            cell.innerHTML = `<div class="${emojiCls}" aria-label="Фініш">🏆</div>`;
+            cell.classList.add('bg-yellow-200');
+          } else if (level.obstacles.some(o=>utils.arraysEqual(o,pos))){
+            cell.innerHTML = `<div class="${emojiCls}" aria-hidden="true">🌳</div>`;
+            cell.classList.add('bg-gray-300');
+          } else if (level.items.some(it=>utils.arraysEqual(it,pos))){
+            cell.innerHTML = `<div class="${emojiCls}" data-item="apple" aria-label="Яблуко">🍎</div>`;
+            cell.classList.add('bg-red-100');
+          }
+          g.appendChild(cell);
+        }
+      }
+      // Place character at currentPos if not start
+      if (gameState.currentPos && !utils.arraysEqual(gameState.currentPos, level.start)){
+        updateCharacterPosition(gameState.currentPos, /*noJump=*/true);
+      }
+    }
+
+    function renderCommandSlots(){
+      const level = LEVELS[gameState.currentLevel];
+      const wrap = elements.commandSlots; wrap.innerHTML = '';
+      const iconSize = window.innerWidth < 640 ? 'text-2xl' : 'text-3xl';
+      for (let i=0;i<level.maxCommands;i++){
+        const slot = document.createElement('div');
+        slot.className = 'command-slot rounded-xl flex items-center justify-center bg-gray-50';
+        slot.dataset.index = i;
+        const val = gameState.commands[i];
+        if (val){
+          slot.classList.add('filled');
+          slot.innerHTML = `<div class="${iconSize}">${ARROW_ICONS[val]}</div>`;
+          slot.title = 'Натисни, щоб видалити';
+          slot.addEventListener('click', ()=>removeCommand(i));
+        }
+        wrap.appendChild(slot);
+      }
+    }
+
+    // ===== Commands =====
+    function addCommand(direction){
+      if (gameState.isExecuting) return;
+      const level = LEVELS[gameState.currentLevel];
+      if (!['up','down','left','right'].includes(direction)) return;
+      const idx = gameState.commands.indexOf(null);
+      if (idx !== -1){
+        gameState.commands[idx] = direction;
+        renderCommandSlots();
+      } else {
+        elements.commandSlots.classList.add('shake');
+        setTimeout(()=>elements.commandSlots.classList.remove('shake'), 400);
+      }
+    }
+    function removeCommand(index){
+      if (gameState.isExecuting) return;
+      if (index>=0 && index<gameState.commands.length && gameState.commands[index]){
+        gameState.commands[index] = null;
+        renderCommandSlots();
+      }
+    }
+
+    // ===== Execution =====
+    async function executeCommands(){
+      if (gameState.isExecuting) return;
+      const cmds = gameState.commands.filter(Boolean);
+      if (cmds.length === 0){ showError('Додай команди для руху! 🎯', false); return; }
+
+      gameState.isExecuting = true; elements.runBtn.disabled = true;
+      const level = LEVELS[gameState.currentLevel];
+      let position = [...level.start];
+      let collectedIdx = new Set();
+
+      try{
+        for (const cmd of cmds){
+          await utils.sleep(ANIMATION_SPEED);
+          const [dr,dc] = DIRECTION_VECTORS[cmd];
+          const next = [position[0]+dr, position[1]+dc];
+          if (!utils.isValidPosition(next, level)){
+            feedbackBump();
+            showError('Ой! Ти врізався! Спробуй інший шлях! 😅');
+            gameState.isExecuting = false; elements.runBtn.disabled = false; return;
+          }
+          // leave a tiny trail on the previous cell
+          leaveTrail(position);
+          position = next; gameState.currentPos = [...position];
+          updateCharacterPosition(position);
+          const idx = level.items.findIndex(it=>utils.arraysEqual(it, position));
+          if (idx !== -1 && !collectedIdx.has(idx)){
+            collectedIdx.add(idx);
+            await collectItem(position, idx);
+          }
+        }
+        await utils.sleep(220);
+        if (utils.arraysEqual(position, level.end)){
+          handleLevelComplete(collectedIdx.size, level.items.length);
+        } else {
+          feedbackBump();
+          showError('Майже вийшло! Спробуй дійти до фінішу! 🏁');
+        }
+      } catch(err){
+        console.error(err);
+        feedbackBump(); showError('Щось пішло не так! Спробуй ще раз! 🔧');
+      } finally {
+        gameState.isExecuting = false; elements.runBtn.disabled = false;
+      }
+    }
+
+    function feedbackBump(){
+      elements.gameGrid.classList.add('grid-shaking');
+      if (navigator.vibrate) try{ navigator.vibrate(80); }catch(e){}
+      setTimeout(()=>elements.gameGrid.classList.remove('grid-shaking'), 420);
+    }
+
+    function updateCharacterPosition(position, noJump=false){
+      document.querySelectorAll('.character').forEach(el=>el.remove());
+      document.querySelectorAll('.landing').forEach(el=>el.classList.remove('landing'));
+      const cell = document.querySelector(`[data-row="${position[0]}"][data-col="${position[1]}"]`);
+      if (!cell) return;
+      const emojiCls = utils.emojiClass();
+      const rocket = document.createElement('div');
+      rocket.className = `character ${emojiCls}`;
+      rocket.textContent = '🤖';
+      rocket.setAttribute('aria-label','Герой');
+      cell.appendChild(rocket);
+      if (!noJump) cell.classList.add('landing');
+      // near-obstacle hint
+      const level = LEVELS[gameState.currentLevel];
+      const neigh = [[-1,0],[1,0],[0,-1],[0,1]].some(([dr,dc])=> level.obstacles.some(o=> utils.arraysEqual(o,[position[0]+dr, position[1]+dc])));
+      cell.classList.toggle('near-obstacle', neigh);
+    }
+
+    async function collectItem(position, itemIndex){
+      const cell = document.querySelector(`[data-row="${position[0]}"][data-col="${position[1]}"]`);
+      if (!cell) return;
+      cell.style.position='relative';
+      const star = cell.querySelector('[data-item="apple"]');
+      if (star){
+        star.classList.add('collecting');
+        const sparkleBox = document.createElement('div'); sparkleBox.className='sparkle-container';
+        for (let i=0;i<10;i++){
+          const s = document.createElement('div'); s.className='sparkle-bit';
+          const a=Math.random()*2*Math.PI, r=Math.random()*30+20;
+          s.style.setProperty('--tw-translate',`translate(${Math.cos(a)*r}px, ${Math.sin(a)*r}px)`);
+          s.style.animationDelay = `${Math.random()*0.25}s`;
+          sparkleBox.appendChild(s);
+        }
+        cell.appendChild(sparkleBox);
+        await utils.sleep(600);
+        sparkleBox.remove();
+        star.remove();
+        if (navigator.vibrate) try{ navigator.vibrate(40); }catch(e){}
+      }
+    }
+
+    function handleLevelComplete(collected,total){
+      const level = LEVELS[gameState.currentLevel];
+      const endCell = document.querySelector(`[data-row="${level.end[0]}"][data-col="${level.end[1]}"]`);
+      if (endCell) endCell.classList.add('win-pulse');
+      launchConfetti();
+      gameState.totalStars++; elements.starsCount.textContent = String(gameState.totalStars);
+      const msg = total > 0 ? `Ти зібрав ${collected} з ${total} яблук! ⭐ +1` : 'Рівень пройдено! ⭐ +1';
+      elements.winMessage.textContent = msg;
+      setTimeout(()=>elements.winModal.classList.remove('hidden'), 350);
+    }
+
+    function showError(message, shouldRestart = true){
+      elements.errorMessage.textContent = message;
+      elements.errorModal.dataset.shouldRestart = String(shouldRestart);
+      elements.errorModal.classList.remove('hidden');
+    }
+
+    // ===== Events =====
+    elements.runBtn.addEventListener('click', executeCommands);
+    elements.clearBtn.addEventListener('click', ()=>{
+      if (gameState.isExecuting) return;
+      const level = LEVELS[gameState.currentLevel];
+      gameState.commands = Array(level.maxCommands).fill(null);
+      renderCommandSlots();
+    });
+    elements.nextLevelBtn.addEventListener('click', ()=>{
+      elements.winModal.classList.add('hidden');
+      gameState.currentLevel++;
+      if (gameState.currentLevel >= LEVELS.length){
+        gameState.currentLevel = 0; gameState.totalStars = 0; elements.starsCount.textContent = '0';
+        showError('🎊 Вітаємо! Ти пройшов всі рівні! Починаємо спочатку! 🎉', true);
+      }
+      initLevel();
+    });
+    elements.retryBtn.addEventListener('click', ()=>{
+      elements.errorModal.classList.add('hidden');
+      const restart = elements.errorModal.dataset.shouldRestart === 'true';
+      if (restart) initLevel();
+    });
+    elements.closeErrBtn.addEventListener('click', ()=>{
+      elements.errorModal.classList.add('hidden');
+    });
+
+    // Modal accessibility: backdrop click & Esc
+    [elements.winModal, elements.errorModal].forEach(modal=>{
+      modal.addEventListener('click', (e)=>{ if (e.target===modal) modal.classList.add('hidden'); });
+    });
+    window.addEventListener('keydown', (e)=>{
+      if (e.key==='Escape'){
+        elements.winModal.classList.add('hidden');
+        elements.errorModal.classList.add('hidden');
+      } else if (e.key==='Enter'){ executeCommands(); }
+      else if (!e.ctrlKey && !e.metaKey && !e.altKey){
+        // quick arrows for accessibility
+        if (e.key==='ArrowUp') addCommand('up');
+        if (e.key==='ArrowDown') addCommand('down');
+        if (e.key==='ArrowLeft') addCommand('left');
+        if (e.key==='ArrowRight') addCommand('right');
+      }
+    });
+
+    // Tiny footprint trail maker
+    function leaveTrail(pos){
+      const cell = document.querySelector(`[data-row="${pos[0]}"][data-col="${pos[1]}"]`);
+      if (!cell) return;
+      const dot = document.createElement('div'); dot.className='trail-dot';
+      cell.appendChild(dot);
+      setTimeout(()=>dot.remove(), 650);
+    }
+
+    function launchConfetti(){
+      const box = document.createElement('div'); box.className='confetti';
+      const host = elements.gameGrid;
+      host.appendChild(box);
+      const colors = ['#60a5fa','#f472b6','#34d399','#fbbf24','#f87171','#a78bfa'];
+      const bits = 40;
+      const rect = host.getBoundingClientRect();
+      for (let i=0;i<bits;i++){
+        const b = document.createElement('div'); b.className='confetti-bit';
+        b.style.left = Math.random()*rect.width + 'px';
+        b.style.top = (Math.random()*20) + 'px';
+        b.style.background = colors[Math.floor(Math.random()*colors.length)];
+        b.style.transform = `translateY(0) rotate(${Math.random()*180}deg)`;
+        b.style.animationDelay = (Math.random()*0.25)+'s';
+        box.appendChild(b);
+      }
+      setTimeout(()=> box.remove(), 1200);
+    }
+
+    // Controls
+    elements.upBtn.addEventListener('click', ()=>addCommand('up'));
+    elements.downBtn.addEventListener('click', ()=>addCommand('down'));
+    elements.leftBtn.addEventListener('click', ()=>addCommand('left'));
+    elements.rightBtn.addEventListener('click', ()=>addCommand('right'));
+
+    // Resize: reflow sizes without nuking state
+    let resizeTimer;
+    window.addEventListener('resize', ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(()=>{
+        const level = LEVELS[gameState.currentLevel];
+        if (!level) return;
+        // Only re-render grid layout (sizes), keep commands & position
+        const prevPos = gameState.currentPos ? [...gameState.currentPos] : null;
+        renderGrid(level);
+        if (prevPos) updateCharacterPosition(prevPos, true);
+        renderCommandSlots();
+      }, 150);
+    });
+
+    // ====== Simple smoke tests (run manually) ======
+    // Open DevTools console and run: window.__runSmokeTests()
+    window.__runSmokeTests = function(){
+      const results = [];
+      try{
+        const lvl = { size:3, start:[1,0], end:[1,1], obstacles:[], items:[], maxCommands:1 };
+        ensureStars(lvl);
+        results.push(['ensureStars places an apple', Array.isArray(lvl.items) && lvl.items.length===1]);
+      }catch(e){ results.push(['ensureStars crash', false, e]); }
+      try{
+        // all built-in levels should be solvable after healing and within maxCommands after auto-fix
+        const allOk = LEVELS.every(l=>{
+          const copy = JSON.parse(JSON.stringify(l));
+          if (!Number.isFinite(shortestSteps(copy))){ healLevel(copy); }
+          const steps = shortestSteps(copy);
+          return Number.isFinite(steps);
+        });
+        results.push(['all levels solvable after heal', allOk]);
+      }catch(e){ results.push(['healLevel crash', false, e]); }
+      try{
+        const before = gameState.totalStars;
+        handleLevelComplete(0,0);
+        const after = gameState.totalStars;
+        results.push(['level complete adds one star', after===before+1]);
+        document.getElementById('winModal').classList.add('hidden');
+      }catch(e){ results.push(['handleLevelComplete crash', false, e]); }
+      console.table(results.map(([name, ok, err])=>({test:name, ok, err:err?String(err):''})));
+      return results;
+    }
+
+    // Boot
+    initLevel();
+  </script>
+</body>
+</html>
