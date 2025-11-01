@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Аквалангіст і Скарби</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root{ --cell-gap-sm:2px; --cell-gap-lg:4px; }
+    body{font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;touch-action:manipulation}
+    .grid-cell{aspect-ratio:1;border:2px solid #22d3ee;transition:all .2s;position:relative;}
+    @media (max-width:640px){.grid-cell{border-width:1px}}
+
+    .command-slot{
+      aspect-ratio:1;
+      border:3px dashed #22d3ee;
+      transition:all .2s;
+      width:100%;
+      min-width:0;
+      min-height:0;
+    }
+    .command-slot.filled{border-style:solid;border-color:#06b6d4;background-color:#155e75;cursor:pointer}
+
+    #commandSlots{
+      display:grid;
+      grid-auto-flow: row;
+      grid-auto-rows: 1fr;
+      gap:.5rem;
+    }
+    @media (min-width:640px){
+      #commandSlots{ gap:.75rem; }
+    }
+
+    .arrow-btn{aspect-ratio:1;cursor:pointer;transition:transform .15s;user-select:none}
+    .arrow-btn:active{transform:scale(1.08)}
+    @keyframes diver-float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(5deg)}}
+    .character{animation:diver-float 2s infinite ease-in-out}
+    @keyframes treasure-collect{0%{transform:scale(1) rotate(0);opacity:1}50%{transform:scale(1.5) rotate(180deg);opacity:0.7}100%{transform:scale(0.2) rotate(360deg);opacity:0}}
+    .collecting{animation:treasure-collect .7s forwards}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    .shake{animation:shake .5s}
+    @keyframes cell-sparkle{0%{transform:scale(1);background-color:#164e63;box-shadow:0 0 0 rgba(6,182,212,0)}50%{transform:scale(1.05);background-color:#0e7490;box-shadow:0 0 20px rgba(6,182,212,0.6)}100%{transform:scale(1);background-color:#164e63;box-shadow:0 0 0 rgba(6,182,212,0)}}
+    .landing{animation:cell-sparkle .4s ease-out}
+    @keyframes win-rainbow{0%{transform:scale(1) rotate(0);filter:hue-rotate(0deg)}20%{transform:scale(1.15) rotate(-8deg);filter:hue-rotate(60deg)}40%{transform:scale(1.15) rotate(8deg);filter:hue-rotate(120deg)}60%{transform:scale(1.15) rotate(-8deg);filter:hue-rotate(180deg)}80%{transform:scale(1.15) rotate(8deg);filter:hue-rotate(240deg)}100%{transform:scale(1) rotate(0);filter:hue-rotate(360deg)}}
+    .win-pulse div{animation:win-rainbow 1.5s ease-in-out}
+    @keyframes grid-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
+    .grid-shaking{animation:grid-shake .4s linear}
+    .sparkle-container{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .sparkle-bit{position:absolute;width:10px;height:10px;background:linear-gradient(45deg, #fde047, #22d3ee);border-radius:50%;animation:sparkle-fx .9s forwards;opacity:0}
+    @keyframes sparkle-fx{0%{opacity:1;transform:scale(.5) translate(0,0)}100%{opacity:0;transform:scale(1.5) var(--tw-translate)}}
+
+    .emoji-xs{font-size:1.35rem}
+    .emoji-sm{font-size:1.75rem}
+    .emoji-md{font-size:2.25rem}
+    .emoji-lg{font-size:2.75rem}
+
+    .trail-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg, #22d3ee, #60a5fa);opacity:.9;top:50%;left:50%;transform:translate(-50%,-50%);animation:trail-fade .7s ease-out forwards;box-shadow:0 0 8px rgba(34,211,238,0.6)}
+    @keyframes trail-fade{to{opacity:0;transform:translate(-50%,-50%) scale(0.3)}}
+    .near-obstacle{box-shadow:inset 0 0 0 3px rgba(239,68,68,.4);animation:near-pulse .6s ease-out 1}
+    @keyframes near-pulse{0%{box-shadow:inset 0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:inset 0 0 0 6px rgba(239,68,68,.4)}100%{box-shadow:inset 0 0 0 3px rgba(239,68,68,.4)}}
+    .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:100}
+    .confetti-bit{position:absolute;width:10px;height:10px;border-radius:50%;opacity:.95;animation:confetti-fall 1400ms ease-out forwards}
+    @keyframes confetti-fall{0%{transform:translateY(-30px) rotate(0) scale(1)}100%{transform:translateY(180px) rotate(1080deg) scale(0.5);opacity:0}}
+    
+    @keyframes float-achievement{
+      0%{transform:translateY(20px) scale(0.8);opacity:0}
+      50%{transform:translateY(0) scale(1.08);opacity:1}
+      100%{transform:translateY(0) scale(1);opacity:1}
+    }
+    .achievement-toast{
+      animation: float-achievement 0.7s ease-out;
+    }
+    
+    .progress-bar{
+      height:10px;
+      background:linear-gradient(90deg, #fde047 0%, #fbbf24 50%, #f59e0b 100%);
+      border-radius:999px;
+      transition:width 0.6s ease-out;
+      box-shadow:0 0 10px rgba(251,191,36,0.5);
+    }
+    
+    @keyframes pulse-glow{
+      0%, 100%{box-shadow:0 0 20px rgba(251,191,36,0.6), 0 0 40px rgba(253,224,71,0.4)}
+      50%{box-shadow:0 0 30px rgba(251,191,36,0.8), 0 0 60px rgba(253,224,71,0.6)}
+    }
+    .pulse-glow{animation:pulse-glow 2s infinite}
+
+    .hint-bubble{
+      animation: bounce 2s infinite;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    }
+    
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    
+    .treasure-glow{
+      animation: treasure-pulse 1.5s infinite;
+    }
+    
+    @keyframes treasure-pulse{
+      0%, 100%{transform:scale(1);filter:brightness(1)}
+      50%{transform:scale(1.1);filter:brightness(1.3)}
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-cyan-800 via-blue-900 to-teal-900 min-h-screen p-2 sm:p-4">
+  <div class="max-w-7xl mx-auto">
+    
+
+<header class="bg-cyan-900/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-cyan-700">
+      <div class="flex justify-between items-start mb-3">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+          <i class="fas fa-water" aria-hidden="true"></i>
+          Аквалангіст і Скарби
+        </h1>
+        <button id="soundBtn" class="bg-gradient-to-r from-cyan-700 to-blue-800 hover:from-cyan-600 hover:to-blue-700 px-3 py-2 rounded-xl transition" title="Звук" aria-pressed="true">
+          <i class="fas fa-volume-high text-xl text-yellow-300" aria-hidden="true"></i>
+          <span class="sr-only">Перемкнути звук</span>
+        </button>
+      </div>
+      
+      
+
+<div class="bg-gray-700 rounded-full h-4 mb-3 overflow-hidden border-2 border-cyan-600" aria-label="Прогрес занурення">
+        <div id="progressBar" class="progress-bar" style="width:0%"></div>
+      </div>
+      
+      <div class="flex justify-between items-center text-lg sm:text-xl md:text-2xl" role="status" aria-live="polite">
+        <div class="font-bold text-cyan-300">Рівень: <span id="levelNum">1</span>/<span id="totalLevels">10</span></div>
+        <div class="font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+          <i class="fas fa-coins" aria-hidden="true"></i> <span id="gemsCount">0</span>
+        </div>
+      </div>
+      
+      
+
+<div id="hintBubble" class="hidden mt-3 bg-gradient-to-r from-cyan-800 to-blue-900 border-2 border-yellow-400 rounded-xl p-3 text-center hint-bubble">
+        <p class="text-lg sm:text-xl font-bold text-yellow-300"><i class="fas fa-compass" aria-hidden="true"></i> <span id="hintText"></span></p>
+      </div>
+    </header>
+
+    
+
+<main class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
+      
+
+<section class="md:col-span-2 bg-cyan-900/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-cyan-700" aria-label="Ігрове поле">
+        <div class="flex-1 flex justify-center items-center min-h-[300px] md:min-h-[420px]">
+          <div id="gameGrid" class="relative" aria-label="Сітка гри" role="grid"></div>
+        </div>
+      </section>
+
+      
+
+<aside class="bg-cyan-900/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-cyan-700" aria-label="Панель керування">
+        <h2 class="text-xl sm:text-2xl font-bold text-cyan-300 mb-3 sm:mb-4 flex-shrink-0"><i class="fas fa-compass-drafting" aria-hidden="true"></i> Керування</h2>
+
+        <div class="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6 flex-shrink-0">
+          <button id="upBtn" class="arrow-btn bg-gradient-to-br from-cyan-500 to-cyan-700 hover:from-cyan-400 hover:to-cyan-600 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3 shadow-lg" aria-label="Вгору"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+          <button id="downBtn" class="arrow-btn bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3 shadow-lg" aria-label="Вниз"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
+          <button id="leftBtn" class="arrow-btn bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3 shadow-lg" aria-label="Вліво"><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
+          <button id="rightBtn" class="arrow-btn bg-gradient-to-br from-sky-500 to-sky-700 hover:from-sky-400 hover:to-sky-600 text-white rounded-xl text-3xl sm:text-4xl md:text-5xl p-2 sm:p-3 shadow-lg" aria-label="Вправо"><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+        </div>
+
+        <h3 class="text-lg sm:text-xl font-bold text-gray-300 mb-2 sm:mb-3 flex-shrink-0">План занурення:</h3>
+        <div id="commandSlots" class="mb-4 sm:mb-6 flex-shrink-0" aria-label="Слоти команд"></div>
+
+        <div class="flex-grow"></div>
+
+        <div class="flex gap-2 flex-shrink-0">
+          <button id="runBtn" class="flex-1 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"><i class="fas fa-play" aria-hidden="true"></i> Старт!</button>
+          <button id="clearBtn" class="flex-1 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"><i class="fas fa-eraser" aria-hidden="true"></i> Очистити</button>
+        </div>
+      </aside>
+    </main>
+
+    
+
+<div id="winModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+      <div class="bg-gradient-to-br from-cyan-800 to-blue-900 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden border-4 border-yellow-400 shadow-2xl">
+        <div id="winConfetti" class="confetti"></div>
+        <div class="text-6xl sm:text-7xl mb-4 win-pulse"><div>🤿</div></div>
+        <h2 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent mb-2">Скарби знайдено!</h2>
+        <p class="text-xl sm:text-2xl mb-4 font-bold text-yellow-300" id="encouragement"></p>
+        <p class="text-lg sm:text-xl mb-6 text-gray-200" id="winMessage"></p>
+        <button id="nextLevelBtn" class="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-gray-900 font-bold py-4 px-8 rounded-xl text-xl w-full pulse-glow shadow-lg">
+          Наступне занурення <i class="fas fa-anchor" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    
+
+<div id="errorModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+      <div class="bg-gradient-to-br from-gray-800 to-red-900 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-4 border-red-500 shadow-2xl">
+        <div class="text-5xl sm:text-6xl mb-4" aria-hidden="true">🤿</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-red-500 mb-4">Небезпека!</h2>
+        <p class="text-lg sm:text-xl mb-6 text-gray-200" id="errorMessage"></p>
+        <div class="flex gap-2 flex-wrap justify-center">
+          <button id="retryBtn" class="bg-gradient-to-r from-cyan-400 to-blue-400 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-lg">
+            Спробувати ще <i class="fas fa-rotate-right" aria-hidden="true"></i>
+          </button>
+          <button id="closeErrBtn" class="bg-gray-500 hover:bg-gray-600 text-gray-100 font-bold py-3 px-6 rounded-xl text-lg shadow-lg">Зрозуміло</button>
+        </div>
+      </div>
+    </div>
+
+    
+
+<div id="achievementToast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-gradient-to-r from-cyan-500 via-yellow-500 to-amber-500 text-white px-6 py-4 rounded-2xl shadow-2xl achievement-toast border-4 border-white">
+      <div class="flex items-center gap-3">
+        <div class="text-4xl" id="achievementIcon"></div>
+        <div>
+          <div class="font-bold text-lg" id="achievementTitle"></div>
+          <div class="text-sm" id="achievementText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Constants =====
+    const ANIMATION_SPEED = 350;
+    const DIRECTION_VECTORS = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] };
+    const ARROW_ICONS = {
+      up:'<i class="fas fa-arrow-up text-cyan-400" aria-hidden="true"></i>',
+      down:'<i class="fas fa-arrow-down text-blue-400" aria-hidden="true"></i>',
+      left:'<i class="fas fa-arrow-left text-teal-400" aria-hidden="true"></i>',
+      right:'<i class="fas fa-arrow-right text-sky-400" aria-hidden="true"></i>'
+    };
+
+    // ===== Levels =====
+    const LEVELS = [
+      // Level 1-2: Tutorial - Simple straight lines
+      { 
+        size:3, start:[1,0], obstacles:[], 
+        gems:[[1,1],[1,2]], maxCommands:2,
+        hint:"Пливи вправо, щоб зібрати скарби! 💰" 
+      },
+      { 
+        size:4, start:[0,0], obstacles:[], 
+        gems:[[1,0],[2,0],[3,0]], maxCommands:3,
+        hint:"Пливи вниз та збери всі скрині! 🤿" 
+      },
+      
+      // Level 3-4: Easy turns
+      { 
+        size:4, start:[0,0], obstacles:[], 
+        gems:[[0,1],[1,1],[1,2]], maxCommands:4
+      },
+      { 
+        size:4, start:[0,0], obstacles:[[1,1]], 
+        gems:[[0,2],[2,0],[2,2]], maxCommands:6
+      },
+      
+      // Level 5-6: Medium complexity
+      { 
+        size:5, start:[2,0], obstacles:[[2,1],[2,2]], 
+        gems:[[1,1],[3,1],[2,3]], maxCommands:9
+      },
+      { 
+        size:5, start:[0,0], obstacles:[[1,1],[2,2],[3,3]], 
+        gems:[[0,2],[2,0],[4,4]], maxCommands:12
+      },
+      
+      // Level 7-8: Advanced mazes
+      { 
+        size:5, start:[0,2], obstacles:[[1,0],[1,1],[1,3],[1,4],[3,2]], 
+        gems:[[0,0],[0,4],[4,0],[4,4]], maxCommands:18
+      },
+      { 
+        size:6, start:[0,0], obstacles:[[1,1],[1,2],[2,3],[3,2],[4,4]], 
+        gems:[[0,3],[3,0],[5,3],[3,5]], maxCommands:18
+      },
+      
+      // Level 9-10: Expert challenges
+      { 
+        size:6, start:[0,0], obstacles:[[1,1],[2,0],[2,3],[3,2],[4,1],[4,4]], 
+        gems:[[0,4],[2,2],[4,0],[5,5]], maxCommands:25
+      },
+      { 
+        size:7, start:[3,0], obstacles:[[1,2],[2,1],[2,3],[3,2],[4,1],[4,3],[5,2]], 
+        gems:[[0,0],[0,6],[6,0],[6,6],[3,3]], maxCommands:30
+      }
+    ];
+
+    // ===== Encouragements =====
+    const ENCOURAGEMENTS = [
+      "Ти справжній шукач скарбів! 🗺️", "Все золото твоє! 💰", "Чудова робота, аквалангісте! 🤿", 
+      "Ти молодець! 🌟", "Пливеш як профі! 💯", "Володар глибин! 🏆",
+      "Скарб знайдено! ⭐", "Безпека понад усе! 🛡️"
+    ];
+
+    const FRIENDLY_ERRORS = [
+      "Ой, аквалангіст натрапив на акулу! 🦈 Знайди інший шлях.",
+      "Аквалангіст виплив занадто далеко! 🌊 Перевір курс.",
+      "Хм, цей маршрут не збирає всі скарби! 💰 Спробуй ще раз.",
+      "Аквалангіст заблукав! 🤔 Куди йому пливти?"
+    ];
+
+    // ===== Achievements =====
+    const ACHIEVEMENTS = {
+      firstGems: { icon:"💰", title:"Перша знахідка!", text:"Ти знайшов свою першу скриню!" },
+      tenGems: { icon:"🪙", title:"10 скринь!", text:"Вже 10 скринь зі скарбами!" },
+      twentyGems: { icon:"🏆", title:"20 скринь!", text:"Твоя колекція вражає!" },
+      thirtyGems: { icon:"🏅", title:"30 скринь!", text:"Неймовірна кількість золота!" },
+      halfwayDone: { icon:"🤿", title:"На півдорозі!", text:"Половина занурень виконана!" },
+      master: { icon:"🌟", title:"Майстер-аквалангіст!", text:"Ти пройшов всі рівні, володар морів!" }
+    };
+
+    // ===== State =====
+    const gameState = {
+      currentLevel: 0,
+      commands: [],
+      totalGems: 0,
+      isExecuting: false,
+      currentPos: null,
+      soundEnabled: true,
+      shownAchievements: new Set()
+    };
+
+    // AudioContext (один раз) + резюме після першої взаємодії
+    let audioCtx = null;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      console.warn("AudioContext is not supported, sounds will be disabled.");
+    }
+    const ensureAudio = async () => {
+      try {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+      } catch(e) { /* ignore */ }
+    };
+
+    // ===== DOM =====
+    const el = (id) => document.getElementById(id);
+    const elements = {
+      gameGrid: el('gameGrid'), commandSlots: el('commandSlots'), runBtn: el('runBtn'), clearBtn: el('clearBtn'),
+      winModal: el('winModal'), errorModal: el('errorModal'), nextLevelBtn: el('nextLevelBtn'), 
+      retryBtn: el('retryBtn'), closeErrBtn: el('closeErrBtn'),
+      levelNum: el('levelNum'), totalLevels: el('totalLevels'), gemsCount: el('gemsCount'), 
+      winMessage: el('winMessage'), errorMessage: el('errorMessage'),
+      upBtn: el('upBtn'), downBtn: el('downBtn'), leftBtn: el('leftBtn'), rightBtn: el('rightBtn'),
+      progressBar: el('progressBar'), encouragement: el('encouragement'), hintBubble: el('hintBubble'),
+      hintText: el('hintText'), soundBtn: el('soundBtn'), achievementToast: el('achievementToast'),
+      achievementIcon: el('achievementIcon'), achievementTitle: el('achievementTitle'),
+      achievementText: el('achievementText'), winConfetti: el('winConfetti')
+    };
+
+    // ===== Utils =====
+    const utils = {
+      sleep: (ms) => new Promise(r => setTimeout(r, ms)),
+      arraysEqual: (a,b) => a && b && a[0]===b[0] && a[1]===b[1],
+      isValidPosition: (pos, level) => pos[0]>=0 && pos[0]<level.size && pos[1]>=0 && pos[1]<level.size && 
+        !level.obstacles.some(o=>utils.arraysEqual(o,pos)),
+      emojiClass: () => {
+        const w = window.innerWidth;
+        if (w < 480) return 'emoji-xs';
+        if (w < 640) return 'emoji-sm';
+        if (w < 1024) return 'emoji-md';
+        return 'emoji-lg';
+      },
+      getCellSize: (level) => {
+        const wrap = elements.gameGrid.parentElement;
+        const rect = wrap.getBoundingClientRect();
+        const gap = window.innerWidth < 640 ? 2 : 4;
+        const columns = level.size;
+        const maxGridWidth = Math.min(rect.width, 900);
+        const size = Math.floor((maxGridWidth - (columns - 1) * gap) / columns);
+        return Math.max(36, Math.min(size, 110));
+      },
+      randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)],
+      playSound: (freq, duration=100) => {
+        if (!gameState.soundEnabled || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine'; // Watery sound
+          gain.gain.value = 0.1;
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration/1000);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration/1000);
+        } catch(e) {
+          console.error("Error playing sound:", e);
+        }
+      }
+    };
+
+    // ===== Sound Effects =====
+    const sounds = {
+      move: () => utils.playSound(300, 70), // "Blip" sound
+      collect: () => { // "Treasure" sound
+        utils.playSound(800, 80);
+        setTimeout(() => utils.playSound(1000, 100), 80);
+      },
+      win: () => { // "Fanfare"
+        utils.playSound(523, 120);
+        setTimeout(() => utils.playSound(659, 120), 120);
+        setTimeout(() => utils.playSound(784, 150), 240);
+        setTimeout(() => utils.playSound(1047, 200), 390);
+      },
+      error: () => utils.playSound(150, 250), // "Danger" sound
+      click: () => utils.playSound(650, 40) // Click
+    };
+
+    // ===== Achievements =====
+    function checkAchievements() {
+      const gems = gameState.totalGems;
+      const level = gameState.currentLevel;
+      
+      if (gems >= 1 && gems < 10 && !gameState.shownAchievements.has('firstGems')) {
+        showAchievement(ACHIEVEMENTS.firstGems);
+        gameState.shownAchievements.add('firstGems');
+      } else if (gems >= 10 && gems < 20 && !gameState.shownAchievements.has('tenGems')) {
+        showAchievement(ACHIEVEMENTS.tenGems);
+        gameState.shownAchievements.add('tenGems');
+      } else if (gems >= 20 && gems < 30 && !gameState.shownAchievements.has('twentyGems')) {
+        showAchievement(ACHIEVEMENTS.twentyGems);
+        gameState.shownAchievements.add('twentyGems');
+      } else if (gems >= 30 && !gameState.shownAchievements.has('thirtyGems')) {
+        showAchievement(ACHIEVEMENTS.thirtyGems);
+        gameState.shownAchievements.add('thirtyGems');
+      }
+      
+      if (level === Math.floor(LEVELS.length/2) && !gameState.shownAchievements.has('halfwayDone')) {
+        showAchievement(ACHIEVEMENTS.halfwayDone);
+        gameState.shownAchievements.add('halfwayDone');
+      }
+      
+      if (level === LEVELS.length - 1 && !gameState.shownAchievements.has('master')) {
+        showAchievement(ACHIEVEMENTS.master);
+        gameState.shownAchievements.add('master');
+      }
+    }
+
+    function showAchievement(ach) {
+      elements.achievementIcon.textContent = ach.icon;
+      elements.achievementTitle.textContent = ach.title;
+      elements.achievementText.textContent = ach.text;
+      elements.achievementToast.classList.remove('hidden');
+      
+      setTimeout(() => {
+        elements.achievementToast.style.transition = 'opacity 0.5s, transform 0.5s';
+        elements.achievementToast.style.opacity = '0';
+        elements.achievementToast.style.transform = 'translate(-50%, -20px)';
+        setTimeout(() => {
+          elements.achievementToast.classList.add('hidden');
+          elements.achievementToast.style.opacity = '1';
+          elements.achievementToast.style.transform = 'translate(-50%, 0)';
+        }, 500);
+      }, 3500);
+    }
+
+    // ===== Confetti =====
+    function createConfetti() {
+      const container = elements.winConfetti;
+      container.innerHTML = '';
+      const colors = ['#fde047', '#fbbf24', '#f59e0b', '#22d3ee', '#60a5fa', '#38bdf8']; // Gold/water colors
+      
+      for (let i = 0; i < 40; i++) {
+        const bit = document.createElement('div');
+        bit.className = 'confetti-bit';
+        bit.style.left = Math.random() * 100 + '%';
+        bit.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        bit.style.animationDelay = (Math.random() * 0.4) + 's';
+        container.appendChild(bit);
+      }
+    }
+
+    // ===== Sparkles (чистимо перед створенням) =====
+    function createSparkles(cell) {
+      // Прибрати попередні контейнери sparkles у цій клітинці
+      cell.querySelectorAll('.sparkle-container').forEach(s => s.remove());
+
+      const container = document.createElement('div');
+      container.className = 'sparkle-container';
+      cell.appendChild(container);
+      
+      for (let i = 0; i < 8; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle-bit';
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 30;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        sparkle.style.setProperty('--tw-translate', `translate(${tx}px, ${ty}px)`);
+        sparkle.style.left = '50%';
+        sparkle.style.top = '50%';
+        sparkle.style.animationDelay = (i * 0.05) + 's';
+        container.appendChild(sparkle);
+      }
+      
+      // Запасне прибирання
+      setTimeout(() => container.remove(), 1000);
+    }
+
+    // ===== Level Management =====
+    function updateProgress() {
+      const progress = ((gameState.currentLevel + 1) / LEVELS.length) * 100;
+      elements.progressBar.style.width = progress + '%';
+    }
+
+    function showHint(level) {
+      if (level.hint && gameState.currentLevel < 3) {
+        elements.hintText.textContent = level.hint;
+        elements.hintBubble.classList.remove('hidden');
+      } else {
+        elements.hintBubble.classList.add('hidden');
+      }
+    }
+
+    // ===== Init Level (глобальне прибирання) =====
+    function initLevel() {
+      const level = LEVELS[gameState.currentLevel];
+      if (!level || !Number.isInteger(level.size) || level.size <= 0) {
+        console.error('Invalid level:', level);
+        return;
+      }
+
+      // Глобальне прибирання артефактів анімацій
+      document.querySelectorAll('.sparkle-container, .trail-dot').forEach(n => n.remove());
+      elements.gameGrid.classList.remove('grid-shaking');
+
+      elements.totalLevels.textContent = LEVELS.length;
+      elements.levelNum.textContent = gameState.currentLevel + 1;
+      gameState.commands = Array(level.maxCommands).fill(null);
+      gameState.currentPos = [...level.start];
+      renderGrid(level);
+      renderCommandSlots();
+      updateProgress();
+      showHint(level);
+      elements.runBtn.disabled = false;
+      gameState.isExecuting = false;
+    }
+
+    // ===== Render Grid =====
+    function renderGrid(level) {
+      const g = elements.gameGrid;
+      g.classList.remove('grid-shaking');
+      g.innerHTML = '';
+      const cellSize = utils.getCellSize(level);
+      const gap = window.innerWidth < 640 ? '2px' : '4px';
+      g.style.display = 'grid';
+      g.style.gridTemplateColumns = `repeat(${level.size}, ${cellSize}px)`;
+      g.style.gap = gap;
+
+      const emojiCls = utils.emojiClass();
+      for (let r = 0; r < level.size; r++) {
+        for (let c = 0; c < level.size; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell flex items-center justify-center bg-cyan-900 rounded-lg'; // Adjusted cell background
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.setAttribute('role', 'gridcell');
+
+          const pos = [r, c];
+          if (utils.arraysEqual(pos, level.start)) {
+            cell.innerHTML = `<div class="character ${emojiCls}" aria-label="Аквалангіст">🤿</div>`;
+            cell.classList.add('bg-blue-800'); // Diver start color
+          } else if (level.obstacles.some(o => utils.arraysEqual(o, pos))) {
+            cell.innerHTML = `<i class="fas fa-shark text-gray-400 ${emojiCls}" aria-hidden="true"></i>`; // Shark obstacle
+            cell.classList.add('bg-gray-700'); // Obstacle background
+          } else if (level.gems.some(g => utils.arraysEqual(g, pos))) {
+            cell.innerHTML = `<div class="${emojiCls} treasure-glow" data-gem="treasure" aria-label="Скарб">💰</div>`; // Treasure target
+            cell.classList.add('bg-gradient-to-br', 'from-yellow-800', 'to-cyan-900'); // Treasure target background
+          }
+          g.appendChild(cell);
+        }
+      }
+    }
+
+    // ===== Render Command Slots =====
+    function renderCommandSlots() {
+      const level = LEVELS[gameState.currentLevel];
+      const wrap = elements.commandSlots;
+      wrap.innerHTML = '';
+
+      const maxCols = window.innerWidth < 640 ? 4 : 6;
+      const cols = Math.min(level.maxCommands, maxCols);
+      wrap.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      for (let i = 0; i < level.maxCommands; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'command-slot flex items-center justify-center rounded-lg text-2xl sm:text-3xl md:text-4xl';
+        slot.dataset.index = i;
+
+        if (gameState.commands[i]) {
+          slot.classList.add('filled');
+          slot.innerHTML = ARROW_ICONS[gameState.commands[i]];
+          slot.setAttribute('title', 'Клік — видалити команду');
+          slot.addEventListener('click', () => {
+            if (!gameState.isExecuting) {
+              sounds.click();
+              gameState.commands[i] = null;
+              renderCommandSlots();
+            }
+          });
+        }
+        wrap.appendChild(slot);
+      }
+    }
+
+    // ===== Add Command =====
+    async function addCommand(direction) {
+      if (gameState.isExecuting) return;
+      await ensureAudio();
+      sounds.click();
+      
+      const firstEmpty = gameState.commands.indexOf(null);
+      if (firstEmpty !== -1) {
+        gameState.commands[firstEmpty] = direction;
+        renderCommandSlots();
+      }
+    }
+
+    // ===== Clear Commands =====
+    async function clearCommands() { 
+      if (gameState.isExecuting) return;
+      await ensureAudio(); 
+      sounds.click();
+      const level = LEVELS[gameState.currentLevel];
+      gameState.commands = Array(level.maxCommands).fill(null);
+      renderCommandSlots();
+    }
+
+    // ===== Get Cell Element =====
+    function getCellElement(pos) {
+      return elements.gameGrid.querySelector(`[data-row="${pos[0]}"][data-col="${pos[1]}"]`);
+    }
+
+    // ===== Update Character Position (із прибиранням артефактів) =====
+    function updateCharacterPosition(newPos, noJump = false) {
+      const level = LEVELS[gameState.currentLevel];
+      const oldCell = getCellElement(gameState.currentPos);
+      const newCell = getCellElement(newPos);
+
+      if (oldCell) {
+        const char = oldCell.querySelector('.character');
+        if (char) char.remove();
+
+        // Прибрати накопичені «хвости» з попередньої позиції
+        oldCell.querySelectorAll('.trail-dot').forEach(t => t.remove());
+
+        if (utils.arraysEqual(gameState.currentPos, level.start)) {
+          oldCell.classList.add('bg-blue-800'); // Restore start color
+        } else {
+          oldCell.classList.remove('bg-blue-800', 'landing');
+        }
+
+        // Додаємо «хвіст» лише якщо позиція справді змінилась
+        if (!utils.arraysEqual(gameState.currentPos, newPos)) {
+          const trail = document.createElement('div');
+          trail.className = 'trail-dot';
+          oldCell.appendChild(trail);
+          setTimeout(() => trail.remove(), 700);
+        }
+      }
+
+      if (newCell) {
+        const emojiCls = utils.emojiClass();
+        const char = document.createElement('div');
+        char.className = `character ${emojiCls}`;
+        char.setAttribute('aria-label', 'Аквалангіст');
+        char.textContent = '🤿';
+        newCell.appendChild(char);
+
+        if (!noJump) {
+          newCell.classList.add('landing');
+          setTimeout(() => newCell.classList.remove('landing'), 400);
+          createSparkles(newCell);
+        }
+      }
+
+      gameState.currentPos = newPos;
+    }
+
+    // ===== Execute Commands =====
+    async function executeCommands() {
+      if (gameState.isExecuting) return;
+      await ensureAudio(); 
+      
+      const hasCommands = gameState.commands.some(c => c !== null);
+      if (!hasCommands) {
+        showError("Додай команди для занурення! 🗺️", false);
+        return;
+      }
+
+      gameState.isExecuting = true;
+      elements.runBtn.disabled = true;
+
+      const level = LEVELS[gameState.currentLevel];
+      let pos = [...level.start];
+      let collectedGems = 0; // Refers to collected treasures
+      const remainingGems = [...level.gems]; // Refers to remaining treasures
+
+      // Скидаємо позицію персонажа на початок перед виконанням
+      updateCharacterPosition(level.start, true);
+      await utils.sleep(100); // Маленька пауза перед початком
+
+      for (let i = 0; i < gameState.commands.length; i++) {
+        const cmd = gameState.commands[i];
+        if (!cmd) break;
+
+        const [dr, dc] = DIRECTION_VECTORS[cmd];
+        const newPos = [pos[0] + dr, pos[1] + dc];
+
+        await utils.sleep(ANIMATION_SPEED);
+
+        // Check collision
+        if (!utils.isValidPosition(newPos, level)) {
+          sounds.error();
+          elements.gameGrid.classList.add('grid-shaking');
+          setTimeout(() => elements.gameGrid.classList.remove('grid-shaking'), 400);
+          
+          const errorMsg = newPos[0] < 0 || newPos[0] >= level.size || 
+                           newPos[1] < 0 || newPos[1] >= level.size
+            ? "Аквалангіст виплив занадто далеко! 🌊 Перевір курс."
+            : "Ой, аквалангіст натрапив на акулу! 🦈 Знайди інший шлях.";
+          
+          showError(errorMsg, true);
+          gameState.isExecuting = false;
+          elements.runBtn.disabled = false;
+          return;
+        }
+
+        // Move character
+        sounds.move();
+        updateCharacterPosition(newPos);
+        pos = newPos;
+
+        // Check treasure collection
+        const gemIdx = remainingGems.findIndex(g => utils.arraysEqual(g, pos));
+        if (gemIdx !== -1) {
+          sounds.collect(); // Use collect sound for treasure
+          collectedGems++;
+          const cell = getCellElement(pos);
+          const treasure = cell?.querySelector('[data-gem="treasure"]'); // Find the treasure element
+          if (treasure) {
+            treasure.classList.add('collecting'); // Use new collecting animation
+            setTimeout(() => treasure.remove(), 700);
+          }
+          remainingGems.splice(gemIdx, 1);
+        }
+      }
+
+      // Check win - must collect ALL treasures
+      if (remainingGems.length === 0) {
+        sounds.win();
+        gameState.totalGems += collectedGems;
+        elements.gemsCount.textContent = gameState.totalGems;
+        checkAchievements();
+        await utils.sleep(400);
+        showWin(collectedGems);
+      } else {
+        sounds.error();
+        const leftGems = remainingGems.length;
+        const treasureWord = leftGems === 1 ? 'скарб' : (leftGems < 5 ? 'скарби' : 'скарбів');
+        showError(`Залишилось ще ${leftGems} ${treasureWord}! 💰 Спробуй знову.`, true);
+      }
+
+      gameState.isExecuting = false;
+      elements.runBtn.disabled = false;
+    }
+
+    // ===== Show Win =====
+    function showWin(treasuresCollected) {
+      createConfetti();
+      elements.encouragement.textContent = utils.randomChoice(ENCOURAGEMENTS);
+      
+      const treasureWord = treasuresCollected === 1 ? 'скарб' : (treasuresCollected < 5 ? 'скарби' : 'скарбів');
+      elements.winMessage.textContent = `Ти знайшов ${treasuresCollected} ${treasureWord}! 💪 Місія виконана!`;
+      
+      if (gameState.currentLevel === LEVELS.length - 1) {
+        elements.nextLevelBtn.innerHTML = 'Вітаємо! 🎊';
+        elements.winMessage.textContent = `Ти пройшов всі ${LEVELS.length} рівнів! Знайдено скарбів: ${gameState.totalGems} 💰`;
+      } else {
+        elements.nextLevelBtn.innerHTML = 'Наступне занурення <i class="fas fa-anchor" aria-hidden="true"></i>';
+      }
+      
+      elements.winModal.classList.remove('hidden');
+    }
+
+    // ===== Show Error =====
+    function showError(msg, canRetry) {
+      elements.errorMessage.textContent = msg;
+      elements.retryBtn.style.display = canRetry ? 'inline-block' : 'none';
+      elements.errorModal.classList.remove('hidden');
+    }
+
+    // ===== Event Listeners =====
+    elements.upBtn.addEventListener('click', () => { addCommand('up'); });
+    elements.downBtn.addEventListener('click', () => { addCommand('down'); });
+    elements.leftBtn.addEventListener('click', () => { addCommand('left'); });
+    elements.rightBtn.addEventListener('click', () => { addCommand('right'); });
+    elements.clearBtn.addEventListener('click', () => { clearCommands(); });
+    elements.runBtn.addEventListener('click', () => { executeCommands(); });
+
+    elements.nextLevelBtn.addEventListener('click', async () => { 
+      await ensureAudio(); 
+      elements.winModal.classList.add('hidden');
+      if (gameState.currentLevel < LEVELS.length - 1) {
+        gameState.currentLevel++;
+        initLevel();
+      } else {
+        // Game completed - restart
+        gameState.currentLevel = 0;
+        gameState.totalGems = 0;
+        gameState.shownAchievements.clear();
+        elements.gemsCount.textContent = '0';
+        elements.nextLevelBtn.innerHTML = 'Наступне занурення <i class="fas fa-anchor" aria-hidden="true"></i>';
+        initLevel();
+      }
+    });
+
+    elements.retryBtn.addEventListener('click', async () => { 
+      await ensureAudio(); 
+      elements.errorModal.classList.add('hidden');
+      initLevel(); 
+    });
+
+    elements.closeErrBtn.addEventListener('click', async () => { 
+      await ensureAudio(); 
+      elements.errorModal.classList.add('hidden');
+      const level = LEVELS[gameState.currentLevel];
+      updateCharacterPosition(level.start, true);
+      gameState.currentPos = [...level.start];
+    });
+
+    elements.soundBtn.addEventListener('click', async () => {
+      await ensureAudio();
+      gameState.soundEnabled = !gameState.soundEnabled;
+      elements.soundBtn.setAttribute('aria-pressed', String(gameState.soundEnabled));
+      const icon = elements.soundBtn.querySelector('i');
+      if (gameState.soundEnabled) {
+        icon.className = 'fas fa-volume-high text-xl text-yellow-300';
+        sounds.click();
+      } else {
+        icon.className = 'fas fa-volume-xmark text-xl text-yellow-300';
+      }
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (gameState.isExecuting) return;
+      if (!elements.winModal.classList.contains('hidden') || !elements.errorModal.classList.contains('hidden')) return;
+
+      switch(e.key) {
+        case 'ArrowUp': e.preventDefault(); addCommand('up'); break;
+        case 'ArrowDown': e.preventDefault(); addCommand('down'); break;
+        case 'ArrowLeft': e.preventDefault(); addCommand('left'); break;
+        case 'ArrowRight': e.preventDefault(); addCommand('right'); break;
+        case 'Enter': e.preventDefault(); executeCommands(); break;
+        case 'Escape':
+        case 'Backspace': e.preventDefault(); clearCommands(); break;
+      }
+    });
+
+    // Responsive reflow
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const level = LEVELS[gameState.currentLevel];
+        renderGrid(level);
+        updateCharacterPosition(gameState.currentPos || level.start, true);
+      }, 250);
+    });
+
+    // ===== Initialize Game =====
+    initLevel();
+  </script>
+</body>
+</html>
