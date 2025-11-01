@@ -244,34 +244,34 @@
         gems:[[0,2],[2,0],[2,2]], maxCommands:6
       },
       
-      // Level 5-6: Medium complexity
+      // Level 5-6: Medium complexity (Виправлено maxCommands)
       { 
         size:5, start:[2,0], obstacles:[[2,1],[2,2]], 
-        gems:[[1,1],[3,1],[2,3]], maxCommands:7
+        gems:[[1,1],[3,1],[2,3]], maxCommands:9
       },
       { 
         size:5, start:[0,0], obstacles:[[1,1],[2,2],[3,3]], 
-        gems:[[0,2],[2,0],[4,4]], maxCommands:9
+        gems:[[0,2],[2,0],[4,4]], maxCommands:12
       },
       
-      // Level 7-8: Advanced mazes
+      // Level 7-8: Advanced mazes (Виправлено maxCommands)
       { 
         size:5, start:[0,2], obstacles:[[1,0],[1,1],[1,3],[1,4],[3,2]], 
-        gems:[[0,0],[0,4],[4,0],[4,4]], maxCommands:12
+        gems:[[0,0],[0,4],[4,0],[4,4]], maxCommands:18
       },
       { 
         size:6, start:[0,0], obstacles:[[1,1],[1,2],[2,3],[3,2],[4,4]], 
-        gems:[[0,3],[3,0],[5,3],[3,5]], maxCommands:14
+        gems:[[0,3],[3,0],[5,3],[3,5]], maxCommands:18
       },
       
-      // Level 9-10: Expert challenges
+      // Level 9-10: Expert challenges (Виправлено maxCommands та перешкоди)
       { 
-        size:6, start:[0,0], obstacles:[[0,2],[1,1],[2,0],[2,3],[3,2],[4,1],[4,4]], 
-        gems:[[0,4],[2,2],[4,0],[5,5]], maxCommands:16
+        size:6, start:[0,0], obstacles:[[1,1],[2,0],[2,3],[3,2],[4,1],[4,4]], 
+        gems:[[0,4],[2,2],[4,0],[5,5]], maxCommands:25
       },
       { 
         size:7, start:[3,0], obstacles:[[1,2],[2,1],[2,3],[3,2],[4,1],[4,3],[5,2]], 
-        gems:[[0,0],[0,6],[6,0],[6,6],[3,3]], maxCommands:18
+        gems:[[0,0],[0,6],[6,0],[6,6],[3,3]], maxCommands:30
       }
     ];
 
@@ -610,8 +610,9 @@
     }
 
     // ===== Clear Commands =====
-    function clearCommands() {
+    async function clearCommands() { // <-- Зроблено async
       if (gameState.isExecuting) return;
+      await ensureAudio(); // <-- Додано
       sounds.click();
       const level = LEVELS[gameState.currentLevel];
       gameState.commands = Array(level.maxCommands).fill(null);
@@ -672,6 +673,7 @@
     // ===== Execute Commands =====
     async function executeCommands() {
       if (gameState.isExecuting) return;
+      await ensureAudio(); // <-- Додано
       
       const hasCommands = gameState.commands.some(c => c !== null);
       if (!hasCommands) {
@@ -782,16 +784,17 @@
     }
 
     // ===== Event Listeners =====
-    const primeAudio = () => ensureAudio();
+    // const primeAudio = () => ensureAudio(); // <-- Цей рядок видалено
 
-    elements.upBtn.addEventListener('click', () => { primeAudio(); addCommand('up'); });
-    elements.downBtn.addEventListener('click', () => { primeAudio(); addCommand('down'); });
-    elements.leftBtn.addEventListener('click', () => { primeAudio(); addCommand('left'); });
-    elements.rightBtn.addEventListener('click', () => { primeAudio(); addCommand('right'); });
-    elements.clearBtn.addEventListener('click', () => { primeAudio(); clearCommands(); });
-    elements.runBtn.addEventListener('click', () => { primeAudio(); executeCommands(); });
+    elements.upBtn.addEventListener('click', () => { addCommand('up'); });
+    elements.downBtn.addEventListener('click', () => { addCommand('down'); });
+    elements.leftBtn.addEventListener('click', () => { addCommand('left'); });
+    elements.rightBtn.addEventListener('click', () => { addCommand('right'); });
+    elements.clearBtn.addEventListener('click', () => { clearCommands(); });
+    elements.runBtn.addEventListener('click', () => { executeCommands(); });
 
-    elements.nextLevelBtn.addEventListener('click', () => {
+    elements.nextLevelBtn.addEventListener('click', async () => { // <-- Зроблено async
+      await ensureAudio(); // <-- Додано
       elements.winModal.classList.add('hidden');
       if (gameState.currentLevel < LEVELS.length - 1) {
         gameState.currentLevel++;
@@ -807,12 +810,14 @@
       }
     });
 
-    elements.retryBtn.addEventListener('click', () => {
+    elements.retryBtn.addEventListener('click', async () => { // <-- Зроблено async
+      await ensureAudio(); // <-- Додано
       elements.errorModal.classList.add('hidden');
       initLevel(); 
     });
 
-    elements.closeErrBtn.addEventListener('click', () => {
+    elements.closeErrBtn.addEventListener('click', async () => { // <-- Зроблено async
+      await ensureAudio(); // <-- Додано
       elements.errorModal.classList.add('hidden');
       const level = LEVELS[gameState.currentLevel];
       updateCharacterPosition(level.start, true);
@@ -864,3 +869,5 @@
   </script>
 </body>
 </html>
+
+
