@@ -46,7 +46,7 @@
     }
     #commandSlots {
       display: grid;
-      /* ЗМІНА: Змінено 'row' на 'column' для горизонтального розташування */
+      /* ЗМІНА v3: Горизонтальне розташування слотів */
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
       gap: 0.5rem;
@@ -347,6 +347,7 @@
   class="bg-gradient-to-br from-red-200 via-orange-200 to-yellow-200 min-h-screen p-2 sm:p-4"
 >
   <div class="max-w-7xl mx-auto">
+    <!-- Header -->
     <header
       class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300"
     >
@@ -371,6 +372,7 @@
         </button>
       </div>
 
+      <!-- Progress Bar -->
       <div
         class="bg-gray-200 rounded-full h-4 mb-3 overflow-hidden border-2 border-orange-300"
         aria-label="Прогрес рівнів"
@@ -396,6 +398,7 @@
         </div>
       </div>
 
+      <!-- Hint bubble -->
       <div
         id="hintBubble"
         class="hidden mt-3 bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-400 rounded-xl p-3 text-center hint-bubble"
@@ -407,94 +410,127 @@
       </div>
     </header>
 
-    <main class="relative">
-      <section
-        class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300"
-        aria-label="Ігрове поле"
-      >
-        <div
-          class="flex-1 flex justify-center items-center min-h-[300px] md:min-h-[420px]"
-        >
-          <div
-            id="gameGrid"
-            class="relative"
-            aria-label="Сітка гри"
-            role="grid"
-          ></div>
-        </div>
-      </section>
-
+    <!-- 
+      ЗМІНА v3: 
+      - Нова структура 'grid' з двома колонками (auto 1fr).
+      - Це розміщує стрілки ЗЛІВА від ігрового поля, а не поверх нього.
+    -->
+    <main class="grid grid-cols-[auto_1fr] gap-3 sm:gap-6">
+      <!-- 
+        НОВИЙ БЛОК v3:
+        - Контейнер для кнопок-стрілок у першій колонці.
+        - Великі кнопки для дітей.
+      -->
       <div
         id="arrowControls"
-        class="absolute top-4 sm:top-6 left-4 sm:left-6 z-10"
+        class="flex flex-col gap-2 sm:gap-4 justify-center"
       >
-        <div class="flex flex-col gap-2 sm:gap-3">
-          <button
-            id="upBtn"
-            class="arrow-btn bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white rounded-xl text-2xl sm:text-3xl p-2 sm:p-2.5 shadow-lg"
-            aria-label="Вгору"
-          >
-            <i class="fas fa-arrow-up" aria-hidden="true"></i>
-          </button>
-          <button
-            id="downBtn"
-            class="arrow-btn bg-gradient-to-br from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white rounded-xl text-2xl sm:text-3xl p-2 sm:p-2.5 shadow-lg"
-            aria-label="Вниз"
-          >
-            <i class="fas fa-arrow-down" aria-hidden="true"></i>
-          </button>
-          <button
-            id="leftBtn"
-            class="arrow-btn bg-gradient-to-br from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white rounded-xl text-2xl sm:text-3xl p-2 sm:p-2.5 shadow-lg"
-            aria-label="Вліво"
-          >
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-          </button>
-          <button
-            id="rightBtn"
-            class="arrow-btn bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white rounded-xl text-2xl sm:text-3xl p-2 sm:p-2.5 shadow-lg"
-            aria-label="Вправо"
-          >
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </button>
-        </div>
+        <button
+          id="upBtn"
+          class="arrow-btn bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white rounded-xl text-3xl sm:text-4xl p-3 sm:p-4 shadow-lg"
+          aria-label="Вгору"
+        >
+          <i class="fas fa-arrow-up" aria-hidden="true"></i>
+        </button>
+        <button
+          id="downBtn"
+          class="arrow-btn bg-gradient-to-br from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white rounded-xl text-3xl sm:text-4xl p-3 sm:p-4 shadow-lg"
+          aria-label="Вниз"
+        >
+          <i class="fas fa-arrow-down" aria-hidden="true"></i>
+        </button>
+        <button
+          id="leftBtn"
+          class="arrow-btn bg-gradient-to-br from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white rounded-xl text-3xl sm:text-4xl p-3 sm:p-4 shadow-lg"
+          aria-label="Вліво"
+        >
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <button
+          id="rightBtn"
+          class="arrow-btn bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white rounded-xl text-3xl sm:text-4xl p-3 sm:p-4 shadow-lg"
+          aria-label="Вправо"
+        >
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
       </div>
 
-      <div
-        id="executionControls"
-        class="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 z-10 p-3 sm:p-4 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border-4 border-orange-300 w-[90%] max-w-lg sm:w-auto sm:max-w-none"
-      >
-        <div class="flex gap-2 flex-shrink-0">
-          <button
-            id="runBtn"
-            class="flex-1 bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-          >
-            <i class="fas fa-water" aria-hidden="true"></i> Гасити!
-          </button>
-          <button
-            id="clearBtn"
-            class="flex-1 bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-3 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
-          >
-            <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
-          </button>
-        </div>
-
-        <div class="flex-shrink min-w-0">
-          <h3
-            class="text-lg sm:text-xl font-bold text-gray-700 mb-2 text-center sm:text-left flex-shrink-0"
-          >
-            План гасіння:
-          </h3>
+      <!-- 
+        НОВИЙ БЛОК v3:
+        - Контейнер для 2-ї колонки (поле + слоти).
+        - 'flex flex-col', щоб розташувати поле НАД слотами.
+      -->
+      <div class="flex flex-col gap-3 sm:gap-6 min-w-0">
+        <!-- 
+          ЗМІНА v3:
+          - Ігрове поле. 'flex-grow' дозволяє йому зайняти весь доступний
+            вертикальний простір.
+        -->
+        <section
+          class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300 flex-grow"
+          aria-label="Ігрове поле"
+        >
           <div
-            id="commandSlots"
-            class="flex-shrink-0"
-            aria-label="Слоти команд"
-          ></div>
+            class="flex-1 flex justify-center items-center min-h-[300px] md:min-h-[420px]"
+          >
+            <div
+              id="gameGrid"
+              class="relative"
+              aria-label="Сітка гри"
+              role="grid"
+            ></div>
+          </div>
+        </section>
+
+        <!-- 
+          НОВИЙ БЛОК v3:
+          - Панель керування ПІД ігровим полем.
+          - Вона не може наїхати на ігрове поле.
+        -->
+        <div
+          id="executionPanel"
+          class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
+        >
+          <!-- Кнопки 'Гасити' та 'Очистити' -->
+          <div class="flex gap-2 flex-shrink-0 w-full sm:w-auto">
+            <button
+              id="runBtn"
+              class="flex-1 bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              <i class="fas fa-water" aria-hidden="true"></i> Гасити!
+            </button>
+            <button
+              id="clearBtn"
+              class="flex-1 bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
+            >
+              <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
+            </button>
+          </div>
+
+          <!-- Заголовок та слоти команд -->
+          <div class="flex-grow min-w-0 w-full sm:w-auto">
+            <h3
+              class="text-lg sm:text-xl font-bold text-gray-700 mb-2 flex-shrink-0 text-center sm:text-left"
+            >
+              План гасіння:
+            </h3>
+            <div
+              id="commandSlots"
+              class="flex-shrink-0"
+              aria-label="Слоти команд"
+            ></div>
+          </div>
         </div>
       </div>
 
-      </main>
+      <!-- 
+        ВИДАЛЕНО: 
+        - <aside> (з v1)
+        - Абсолютно позиціоновані контейнери (з v2)
+      -->
+    </main>
 
+    <!-- Win modal -->
     <div
       id="winModal"
       class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -528,6 +564,7 @@
       </div>
     </div>
 
+    <!-- Error modal -->
     <div
       id="errorModal"
       class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -560,6 +597,7 @@
       </div>
     </div>
 
+    <!-- Achievement toast -->
     <div
       id="achievementToast"
       class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-white px-6 py-4 rounded-2xl shadow-2xl achievement-toast border-4 border-white"
@@ -889,7 +927,8 @@
         const rect = wrap.getBoundingClientRect();
         const gap = window.innerWidth < 640 ? 2 : 4;
         const columns = level.size;
-        const maxGridWidth = Math.min(rect.width, 900);
+        // ЗМІНА v3: Треба враховувати ширину батьківського елемента, яка вже є частиною grid
+        const maxGridWidth = Math.min(rect.width, rect.height, 900); // Використовуємо висоту для кращого
         const size = Math.floor(
           (maxGridWidth - (columns - 1) * gap) / columns
         );
@@ -1142,12 +1181,10 @@
       const wrap = elements.commandSlots;
       wrap.innerHTML = "";
 
-      const maxCols = window.innerWidth < 640 ? 4 : 6;
-      // ЗМІНА: Логіка JS не змінюється, але CSS (grid-auto-flow: column) змусить 'grid-template-columns' 
-      // контролювати кількість *рядків* (якщо їх буде багато), а не колонки.
-      // Для нашого випадку (горизонтальний список) ми хочемо, щоб JS контролював саме колонки.
-      // Тому логіка нижче залишається коректною.
+      // ЗМІНА v3: Збільшено ліміт колонок, оскільки місця тепер більше
+      const maxCols = window.innerWidth < 640 ? 4 : 8;
       const cols = Math.min(level.maxCommands, maxCols);
+      // CSS 'grid-auto-flow: column' змусить 'grid-template-columns' контролювати колонки, як і раніше
       wrap.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
       for (let i = 0; i < level.maxCommands; i++) {
