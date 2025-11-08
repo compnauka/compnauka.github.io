@@ -24,6 +24,7 @@
         border: 2px solid #fdba74;
         transition: all 0.2s;
         position: relative;
+        overflow: hidden;
       }
       @media (max-width: 640px) {
         .grid-cell {
@@ -31,12 +32,11 @@
         }
       }
 
-      /* ЗМІНА v7: Збільшено розмір слота та рамки */
       .command-slot {
         aspect-ratio: 1;
-        border: 4px dashed #f97316; /* Товща рамка */
+        border: 4px dashed #f97316;
         transition: all 0.2s;
-        height: 60px; /* Було 48px */
+        height: 60px;
         flex-shrink: 0;
         width: auto;
       }
@@ -48,26 +48,20 @@
       }
       @media (min-width: 640px) {
         .command-slot {
-          height: 80px; /* Було 64px */
+          height: 80px;
         }
       }
-      #commandSlots {
-        display: flex;
-        gap: 0.5rem;
-        padding-bottom: 4px;
-      }
-      @media (min-width: 640px) {
+      @media (min-width: 768px) {
         #commandSlots {
           gap: 0.75rem;
         }
       }
 
-      /* ЗМІНА v7: Збільшено зону натискання (min-width/height) та іконку */
       .arrow-btn {
         min-width: 70px;
         min-height: 70px;
         aspect-ratio: 1;
-        font-size: 2rem; /* Більша іконка */
+        font-size: 2rem;
         cursor: pointer;
         transition: transform 0.15s;
         user-select: none;
@@ -75,7 +69,7 @@
       .arrow-btn:active {
         transform: scale(1.08);
       }
-      @media (min-width: 640px) {
+      @media (min-width: 768px) {
         .arrow-btn {
           min-width: 90px;
           min-height: 90px;
@@ -92,16 +86,15 @@
           transform: translateY(-8px) rotate(5deg);
         }
       }
-      /* ЗМІНА v7: Збільшено персонажа, додано тінь */
       .character {
         animation: firefighter-float 2s infinite ease-in-out;
-        font-size: 3rem !important; /* Більший пожежник */
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); /* Тінь */
+        font-size: 3rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         transform-style: preserve-3d;
       }
-      @media (min-width: 640px) {
+      @media (min-width: 768px) {
         .character {
-          font-size: 4rem !important;
+          font-size: 4rem;
         }
       }
 
@@ -229,18 +222,19 @@
           transform: scale(1.5) var(--tw-translate);
         }
       }
-      /* ЗМІНА v7: Адаптовано під нові розміри персонажа */
       .emoji-xs {
-        font-size: 1.75rem !important;
+        font-size: 1.75rem;
       }
       .emoji-sm {
-        font-size: 2.25rem !important;
+        font-size: 2.25rem;
       }
-      .emoji-md {
-        font-size: 3rem !important;
-      }
-      .emoji-lg {
-        font-size: 4rem !important;
+      @media (min-width: 768px) {
+        .emoji-md {
+          font-size: 3rem;
+        }
+        .emoji-lg {
+          font-size: 4rem;
+        }
       }
       .trail-dot {
         position: absolute;
@@ -302,15 +296,18 @@
       }
       @keyframes float-achievement {
         0% {
-          transform: translateY(20px) scale(0.8);
+          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
+          transform: translateY(20px) scale(0.8) translateX(-50%);
           opacity: 0;
         }
         50% {
-          transform: translateY(0) scale(1.08);
+          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
+          transform: translateY(0) scale(1.08) translateX(-50%);
           opacity: 1;
         }
         100% {
-          transform: translateY(0) scale(1);
+          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
+          transform: translateY(0) scale(1) translateX(-50%);
           opacity: 1;
         }
       }
@@ -371,7 +368,6 @@
         }
       }
 
-      /* ЗМІНА v7: Анімація підказки для кнопок */
       @keyframes pulse-hint {
         0%,
         100% {
@@ -386,19 +382,23 @@
       .pulse-hint-animation {
         animation: pulse-hint 1.5s infinite;
       }
-      
-      /* ЗМІНА v7: Анімація для плаваючого смайлика */
+
       @keyframes float-up-emoji {
-          0% { transform: translateY(0) scale(0.5); opacity: 1; }
-          100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        0% {
+          transform: translateY(0) scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px) scale(1.5);
+          opacity: 0;
+        }
       }
       .floating-emoji {
-          position: absolute;
-          z-index: 1000;
-          animation: float-up-emoji 1.5s ease-out forwards;
+        position: absolute;
+        z-index: 1000;
+        animation: float-up-emoji 1.5s ease-out forwards;
       }
 
-      /* ЗМІНА v7: Адаптив для малих екранів */
       @media (max-width: 375px) {
         .arrow-btn {
           min-width: 65px;
@@ -412,7 +412,7 @@
         }
 
         .grid-cell {
-          min-height: 50px; /* Запобігає колапсу сітки */
+          min-height: 50px;
         }
       }
     </style>
@@ -421,7 +421,8 @@
     class="bg-gradient-to-br from-red-200 via-orange-200 to-yellow-200 min-h-screen p-2 sm:p-4"
   >
     <div class="max-w-7xl mx-auto">
-      <!-- Header --><header
+      <!-- Header -->
+      <header
         class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300"
       >
         <div class="flex justify-between items-start mb-3">
@@ -458,7 +459,8 @@
           </div>
         </div>
 
-        <!-- Progress Bar --><div
+        <!-- Progress Bar -->
+        <div
           class="bg-gray-200 rounded-full h-4 mb-3 overflow-hidden border-2 border-orange-300"
           aria-label="Прогрес рівнів"
         >
@@ -473,7 +475,7 @@
           <div class="font-bold text-orange-600">
             Рівень: <span id="levelNum">1</span>/<span id="totalLevels"
               >8</span
-            > <!-- ЗМІНА v7: Оновлено кількість рівнів -->
+            >
           </div>
           <div
             class="font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent"
@@ -483,7 +485,8 @@
           </div>
         </div>
 
-        <!-- Hint bubble --><div
+        <!-- Hint bubble -->
+        <div
           id="hintBubble"
           class="hidden mt-3 bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-400 rounded-xl p-3 text-center hint-bubble"
         >
@@ -494,10 +497,11 @@
         </div>
       </header>
 
-      <main class="flex flex-col sm:flex-row gap-3 sm:gap-6">
-        <!-- Колонка кнопок-стрілок. --><div
+      <main class="flex flex-col md:flex-row gap-3 sm:gap-6">
+        <!-- Колонка кнопок-стрілок. -->
+        <div
           id="arrowControls"
-          class="flex flex-row sm:flex-col gap-2 sm:gap-4 justify-center sm:h-full sm:items-center order-2 sm:order-none"
+          class="flex flex-row md:flex-col gap-2 sm:gap-4 justify-center md:h-full md:items-center order-2 md:order-none"
         >
           <button
             id="upBtn"
@@ -529,8 +533,10 @@
           </button>
         </div>
 
-        <!-- Контейнер для ігрового поля + слотів. --><div class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 sm:order-none">
-          <!-- Ігрове поле. --><section
+        <!-- Контейнер для ігрового поля + слотів. -->
+        <div class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 md:order-none">
+          <!-- Ігрове поле. -->
+          <section
             class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300 flex-grow"
             aria-label="Ігрове поле"
           >
@@ -546,34 +552,34 @@
             </div>
           </section>
 
-          <!-- Панель керування ПІД ігровим полем. --><div
+          <!-- Панель керування ПІД ігровим полем. -->
+          <div
             id="executionPanel"
-            class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
+            class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col md:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
           >
-            <!-- ЗМІНА v7: Додано кнопки "Підказка" та "Відміна" (будуть додані через JS) -->
-            
-            <!-- Кнопки 'Гасити' та 'Очистити' --><div class="flex gap-2 flex-shrink-0 w-full sm:w-auto" id="mainControls">
+            <!-- Кнопки 'Гасити' та 'Очистити' -->
+            <!-- ВИПРАВЛЕННЯ: 'grid-cols-2' замінено на 'grid-cols-[1fr_auto]', щоб друга колонка була вузькою -->
+            <div class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0" id="mainControls">
               <button
                 id="runBtn"
-                class="flex-1 bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
+                class="bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              > <!-- ВИПРАВЛЕННЯ: 'flex-1' видалено -->
                 <i class="fas fa-water" aria-hidden="true"></i> Гасити!
               </button>
               <button
                 id="clearBtn"
-                class="flex-1 bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
-              >
+                class="bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
+              > <!-- ВИПРАВЛЕННЯ: 'flex-1' видалено -->
                 <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
               </button>
             </div>
 
             <!-- Контейнер для слотів -->
             <div
-              class="flex-shrink min-w-0 w-full sm:w-auto overflow-x-auto py-1"
+              class="flex-1 min-w-0 w-full sm:w-auto py-1"
             >
               <div
                 id="commandSlots"
-                class="flex-shrink-0"
                 aria-label="Слоти команд"
               ></div>
             </div>
@@ -581,7 +587,8 @@
         </div>
       </main>
 
-      <!-- Win modal --><div
+      <!-- Win modal -->
+      <div
         id="winModal"
         class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
         role="dialog"
@@ -614,7 +621,8 @@
         </div>
       </div>
 
-      <!-- Error modal (ЗМІНА v7: Використовує позитивне підкріплення) --><div
+      <!-- Error modal -->
+      <div
         id="errorModal"
         class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
         role="dialog"
@@ -625,7 +633,7 @@
         >
           <!-- 'errorMessage' буде містити HTML для позитивного повідомлення -->
           <div id="errorMessage"></div>
-          
+
           <div class="flex gap-2 flex-wrap justify-center mt-6">
             <button
               id="retryBtn"
@@ -643,7 +651,8 @@
         </div>
       </div>
 
-      <!-- Achievement toast --><div
+      <!-- Achievement toast -->
+      <div
         id="achievementToast"
         class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-white px-6 py-4 rounded-2xl shadow-2xl achievement-toast border-4 border-white"
       >
@@ -656,33 +665,33 @@
         </div>
       </div>
     </div>
-    
-    <!-- ЗМІНА v7: Додано HTML для туторіалу -->
+
+    <!-- Туторіал -->
     <div id="tutorialOverlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md text-center">
         <div class="text-7xl mb-4 animate-bounce">👨‍🚒</div>
         <h2 class="text-3xl font-bold text-orange-600 mb-4">Привіт, юний пожежнику!</h2>
         <p class="text-xl mb-6">Допоможи мені загасити вогонь! 🔥</p>
-        
+
         <div class="space-y-4">
           <div class="flex items-center gap-4 bg-orange-50 p-4 rounded-xl">
             <div class="text-5xl">⬆️</div>
             <p class="text-lg text-left">Натискай стрілки, щоб я рухався</p>
           </div>
-          
+
           <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-xl">
             <div class="text-5xl">💧</div>
             <p class="text-lg text-left">Потім натисни "Гасити!"</p>
           </div>
         </div>
-        
+
         <button id="startTutorial" class="mt-6 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-8 rounded-xl text-2xl w-full pulse-glow">
           Почати! 🚒
         </button>
       </div>
     </div>
-    
-    <!-- ЗМІНА v7: Додано HTML для Батьківського режиму -->
+
+    <!-- Батьківський режим -->
     <button id="parentBtn" class="fixed bottom-4 right-4 bg-gray-300 text-gray-700 p-3 rounded-full z-50 shadow-lg">
       <i class="fas fa-user-tie"></i>
     </button>
@@ -690,7 +699,7 @@
     <div id="parentModal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl p-6 max-w-lg w-full">
         <h2 class="text-2xl font-bold mb-4">📊 Прогрес дитини</h2>
-        
+
         <div class="space-y-3">
           <div class="flex justify-between">
             <span>Пройдено рівнів:</span>
@@ -705,7 +714,7 @@
             <strong id="parentTime">0 хв</strong>
           </div>
         </div>
-        
+
         <div class="mt-6 p-4 bg-blue-50 rounded-xl">
           <h3 class="font-bold mb-2">💡 Поради:</h3>
           <ul class="text-sm space-y-1 list-disc list-inside">
@@ -714,7 +723,7 @@
             <li>Рекомендований час гри: 15 хвилин.</li>
           </ul>
         </div>
-        
+
         <button id="closeParentModal" class="mt-4 bg-orange-500 text-white py-3 px-6 rounded-xl w-full">
           Закрити
         </button>
@@ -722,1117 +731,1117 @@
     </div>
 
     <script>
-      // ===== Constants =====
-      const ANIMATION_SPEED = 250; // ЗМІНА v7: Прискорено (було 350)
-      const DIRECTION_VECTORS = {
-        up: [-1, 0],
-        down: [1, 0],
-        left: [0, -1],
-        right: [0, 1],
-      };
-      const ARROW_ICONS = {
-        up: '<i class="fas fa-arrow-up text-orange-500" aria-hidden="true"></i>',
-        down: '<i class="fas fa-arrow-down text-red-500" aria-hidden="true"></i>',
-        left: '<i class="fas fa-arrow-left text-yellow-500" aria-hidden="true"></i>',
-        right:
-          '<i class="fas fa-arrow-right text-amber-500" aria-hidden="true"></i>',
-      };
+      // РЕФАКТОРИНГ: Весь код загорнуто в IIFE (Immediately Invoked Function Expression)
+      // Це запобігає забрудненню глобальної області видимості.
+      (function () {
+        "use strict"; // Увімкнення суворого режиму
 
-      // ЗМІНА v7: Спрощені рівні для 4-5 років
-      const LEVELS = [
-        // 1. Пряма лінія
-        {
-          size: 3, start: [1, 0], obstacles: [], gems: [[1, 1], [1, 2]],
-          maxCommands: 2, hint: "Натисни стрілку 'Вправо' ➡️ двічі!",
-          optimizeGrid: false,
-        },
-        // 2. Пряма лінія
-        {
-          size: 4, start: [0, 0], obstacles: [], gems: [[1, 0], [2, 0], [3, 0]],
-          maxCommands: 3, hint: "Натисни стрілку 'Вниз' ⬇️ тричі!",
-          optimizeGrid: false,
-        },
-        // 3. Простий поворот
-        {
-          size: 4, start: [0, 0], obstacles: [], gems: [[0, 1], [1, 1], [1, 2]],
-          maxCommands: 4, hint: "Спершу 'Вправо' ➡️, потім 'Вниз' ⬇️...",
-          optimizeGrid: false,
-        },
-        // 4. Перша перешкода
-        {
-          size: 4, start: [0, 0], obstacles: [[1, 1]], gems: [[0, 2], [2, 0], [2, 2]],
-          maxCommands: 6, hint: "Обережно, вода! 🌊 Треба обійти.",
-          optimizeGrid: true,
-        },
-        // 5. Ще одна перешкода
-        {
-          size: 4, start: [0,0], obstacles: [[1,0]], gems: [[0,1], [2,1]],
-          maxCommands: 5, optimizeGrid: true,
-        },
-        // 6. Дві перешкоди, 5x5
-        {
-          size: 5, start: [2, 0], obstacles: [[2, 1], [2, 2]], gems: [[1, 1], [3, 1], [2, 3]],
-          maxCommands: 9, optimizeGrid: true,
-        },
-        // 7. Простий лабіринт 5x5
-        {
-          size: 5, start: [0, 0], obstacles: [[1, 1], [2, 2], [3, 3]], gems: [[0, 2], [2, 0], [4, 4]],
-          maxCommands: 10, optimizeGrid: true,
-        },
-        // 8. Фінальний рівень 5x5
-        {
-          size: 5, start: [0, 2], obstacles: [[1, 0], [1, 1], [1, 3], [1, 4], [3, 2]],
-          gems: [[0, 0], [0, 4], [4, 0], [4, 4]],
-          maxCommands: 10, optimizeGrid: true,
-        },
-      ];
-      
-      const TOTAL_LEVELS_COUNT = LEVELS.length;
+        // ===== Constants =====
+        const ANIMATION_SPEED = 250;
+        const DIRECTION_VECTORS = {
+          up: [-1, 0],
+          down: [1, 0],
+          left: [0, -1],
+          right: [0, 1],
+        };
+        const ARROW_ICONS = {
+          up: '<i class="fas fa-arrow-up text-orange-500" aria-hidden="true"></i>',
+          down: '<i class="fas fa-arrow-down text-red-500" aria-hidden="true"></i>',
+          left: '<i class="fas fa-arrow-left text-yellow-500" aria-hidden="true"></i>',
+          right:
+            '<i class="fas fa-arrow-right text-amber-500" aria-hidden="true"></i>',
+        };
 
-      // ЗМІНА v7: Позитивні повідомлення
-      const ENCOURAGEMENTS = [
-        "Ти справжній герой! 🚒", "Вогонь погашено! 🔥", "Чудова робота, пожежнику! 👨‍🚒",
-        "Ти молодець! 💧", "Гасиш як профі! 💯", "Вогняний майстер! 🏆",
-      ];
-      const POSITIVE_ERRORS = [
-        "Майже вийшло! Спробуй ще раз! 💪", "Ти на правильному шляху! Продовжуй! 🌟",
-        "Чудова спроба! Може, інший маршрут? 🤔", "Так близько! Ти впораєшся! ⭐",
-      ];
-
-      // ===== Achievements =====
-      const ACHIEVEMENTS = {
-        firstGems: { icon: "🔥", title: "Перші полум'я!", text: "Ти загасив свій перший вогонь!" },
-        halfwayDone: { icon: "👨‍🚒", title: "На півдорозі!", text: "Половина викликів позаду!" },
-        master: { icon: "🌟", title: "Майстер пожежогасіння!", text: "Ти пройшов всі рівні, герой!" }
-      };
-
-      // ===== State =====
-      const gameState = {
-        currentLevel: 0,
-        commands: [],
-        totalGems: 0,
-        isExecuting: false,
-        currentPos: null,
-        soundEnabled: true,
-        shownAchievements: new Set(),
-        optimizedGridMap: null,
-      };
-      
-      // ЗМІНА v7: Таймер сесії
-      let sessionStartTime = Date.now();
-      const MAX_SESSION_TIME = 15 * 60 * 1000; // 15 хвилин
-
-      // AudioContext (один раз) + резюме після першої взаємодії
-      let audioCtx = null;
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) {
-        console.warn("AudioContext is not supported, sounds will be disabled.");
-      }
-      const ensureAudio = async () => {
-        try {
-          if (audioCtx && audioCtx.state === "suspended") {
-            await audioCtx.resume();
-          }
-        } catch (e) { /* ignore */ }
-      };
-
-      // ===== DOM =====
-      const el = (id) => document.getElementById(id);
-      const elements = {
-        gameGrid: el("gameGrid"),
-        commandSlots: el("commandSlots"),
-        runBtn: el("runBtn"),
-        clearBtn: el("clearBtn"),
-        winModal: el("winModal"),
-        errorModal: el("errorModal"),
-        nextLevelBtn: el("nextLevelBtn"),
-        retryBtn: el("retryBtn"),
-        closeErrBtn: el("closeErrBtn"),
-        levelNum: el("levelNum"),
-        totalLevels: el("totalLevels"),
-        gemsCount: el("gemsCount"),
-        winMessage: el("winMessage"),
-        errorMessage: el("errorMessage"),
-        upBtn: el("upBtn"),
-        downBtn: el("downBtn"),
-        leftBtn: el("leftBtn"),
-        rightBtn: el("rightBtn"),
-        progressBar: el("progressBar"),
-        encouragement: el("encouragement"),
-        hintBubble: el("hintBubble"),
-        hintText: el("hintText"),
-        soundBtn: el("soundBtn"),
-        fullscreenBtn: el("fullscreenBtn"),
-        achievementToast: el("achievementToast"),
-        achievementIcon: el("achievementIcon"),
-        achievementTitle: el("achievementTitle"),
-        achievementText: el("achievementText"),
-        winConfetti: el("winConfetti"),
-        // ЗМІНА v7: Нові елементи DOM
-        tutorialOverlay: el("tutorialOverlay"),
-        startTutorial: el("startTutorial"),
-        parentBtn: el("parentBtn"),
-        parentModal: el("parentModal"),
-        closeParentModal: el("closeParentModal"),
-        parentLevels: el("parentLevels"),
-        parentGems: el("parentGems"),
-        parentTime: el("parentTime"),
-        executionPanel: el("executionPanel"),
-        mainControls: el("mainControls"),
-      };
-
-      // ===== Utils =====
-      const utils = {
-        sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
-        arraysEqual: (a, b) => a && b && a[0] === b[0] && a[1] === b[1],
-        isValidPosition: (pos, level) => {
-          const gridMap = gameState.optimizedGridMap || {
-            rows: level.size,
-            cols: level.size,
-            rowMap: Array.from({ length: level.size }, (_, i) => i),
-            colMap: Array.from({ length: level.size }, (_, i) => i),
-          };
-          
-          const mappedRowIndex = gridMap.rowMap.indexOf(pos[0]);
-          const mappedColIndex = gridMap.colMap.indexOf(pos[1]);
-
-          return (
-            mappedRowIndex !== -1 &&
-            mappedColIndex !== -1 &&
-            !level.obstacles.some((o) => utils.arraysEqual(o, pos))
-          );
-        },
-        emojiClass: () => {
-          const w = window.innerWidth;
-          if (w < 480) return "emoji-xs";
-          if (w < 640) return "emoji-sm";
-          if (w < 1024) return "emoji-md";
-          return "emoji-lg";
-        },
-        getCellSize: (level) => {
-          const wrap = elements.gameGrid.parentElement;
-          const rect = wrap.getBoundingClientRect();
-          const gap = window.innerWidth < 640 ? 2 : 4;
-          const gridMap = gameState.optimizedGridMap || {
-            rows: level.size,
-            cols: level.size,
-            rowMap: Array.from({ length: level.size }, (_, i) => i),
-            colMap: Array.from({ length: level.size }, (_, i) => i),
-          };
-          const columns = gridMap.cols;
-          const rows = gridMap.rows;
-          
-          const availableWidth = rect.width - (columns - 1) * gap - 10; // -10 for padding
-          const availableHeight = rect.height - (rows - 1) * gap - 10;
-
-          const sizeBasedOnWidth = availableWidth / columns;
-          const sizeBasedOnHeight = availableHeight / rows;
-          
-          const size = Math.floor(Math.min(sizeBasedOnWidth, sizeBasedOnHeight));
-          
-          return Math.max(36, Math.min(size, 110));
-        },
-        randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)],
-        playSound: (freq, duration = 100) => {
-          if (!gameState.soundEnabled || !audioCtx) return;
-          try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = freq;
-            osc.type = "sine";
-            gain.gain.value = 0.1;
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(
-              0.01,
-              audioCtx.currentTime + duration / 1000
-            );
-            osc.stop(audioCtx.currentTime + duration / 1000);
-          } catch (e) {
-            console.error("Error playing sound:", e);
-          }
-        },
-      };
-
-      // ===== Sound Effects =====
-      const sounds = {
-        move: () => utils.playSound(350, 70),
-        collect: () => {
-          utils.playSound(200, 80);
-          setTimeout(() => utils.playSound(300, 100), 80);
-        },
-        win: () => {
-          utils.playSound(440, 120);
-          setTimeout(() => utils.playSound(523, 120), 120);
-          setTimeout(() => utils.playSound(440, 150), 240);
-          setTimeout(() => utils.playSound(523, 200), 390);
-        },
-        error: () => utils.playSound(150, 250),
-        click: () => utils.playSound(650, 40),
-        // ЗМІНА v7: Звук для "маленької перемоги"
-        cheer: () => {
-            utils.playSound(523, 100);
-            setTimeout(() => utils.playSound(659, 150), 100);
-        }
-      };
-      
-      // ЗМІНА v7: Функція вібрації
-      function vibrateDevice(pattern = [50]) {
-        if ('vibrate' in navigator) {
-          navigator.vibrate(pattern);
-        }
-      }
-      
-      // ЗМІНА v7: Функція голосових підказок
-      function speak(text) {
-        if ('speechSynthesis' in window && gameState.soundEnabled) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'uk-UA';
-          utterance.rate = 0.9;
-          utterance.pitch = 1.2;
-          window.speechSynthesis.speak(utterance);
-        }
-      }
-      
-      // ЗМІНА v7: Функції збереження/завантаження прогресу
-      function saveProgress() {
-        try {
-          localStorage.setItem('firefighterProgress', JSON.stringify({
-            level: gameState.currentLevel,
-            gems: gameState.totalGems,
-            achievements: Array.from(gameState.shownAchievements),
-            timestamp: Date.now()
-          }));
-        } catch(e) { console.warn("Could not save progress.", e); }
-      };
-
-      function loadProgress() {
-        try {
-          const saved = localStorage.getItem('firefighterProgress');
-          if (saved) {
-            const data = JSON.parse(saved);
-            // Автоматично завантажувати лише якщо минуло менше 7 днів
-            if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
-              gameState.currentLevel = data.level || 0;
-              gameState.totalGems = data.gems || 0;
-              gameState.shownAchievements = new Set(data.achievements || []);
-              elements.gemsCount.textContent = gameState.totalGems;
-            }
-          }
-        } catch(e) { console.warn("Could not load progress.", e); }
-      };
-
-      // ===== Achievements =====
-      function checkAchievements() {
-        const gems = gameState.totalGems;
-        const level = gameState.currentLevel;
-
-        if (gems >= 1 && !gameState.shownAchievements.has('firstGems')) {
-          showAchievement(ACHIEVEMENTS.firstGems);
-          gameState.shownAchievements.add('firstGems');
-        }
-        
-        if (level === Math.floor(TOTAL_LEVELS_COUNT / 2) && !gameState.shownAchievements.has('halfwayDone')) {
-          showAchievement(ACHIEVEMENTS.halfwayDone);
-          gameState.shownAchievements.add('halfwayDone');
-        }
-        
-        if (level === TOTAL_LEVELS_COUNT - 1 && !gameState.shownAchievements.has('master')) {
-          showAchievement(ACHIEVEMENTS.master);
-          gameState.shownAchievements.add('master');
-        }
-      }
-
-      function showAchievement(ach) {
-        elements.achievementIcon.textContent = ach.icon;
-        elements.achievementTitle.textContent = ach.title;
-        elements.achievementText.textContent = ach.text;
-        elements.achievementToast.classList.remove("hidden");
-
-        setTimeout(() => {
-          elements.achievementToast.style.transition =
-            "opacity 0.5s, transform 0.5s";
-          elements.achievementToast.style.opacity = "0";
-          elements.achievementToast.style.transform = "translate(-50%, -20px)";
-          setTimeout(() => {
-            elements.achievementToast.classList.add("hidden");
-            elements.achievementToast.style.opacity = "1";
-            elements.achievementToast.style.transform = "translate(-50%, 0)";
-          }, 500);
-        }, 3500);
-      }
-
-      // ===== Confetti =====
-      function createConfetti() {
-        const container = elements.winConfetti;
-        container.innerHTML = "";
-        const colors = [
-          "#f59e0b", "#ef4444", "#f87171", "#fbbf24", "#f97316", "#dc2626",
+        const LEVELS = [
+          // 1. Пряма лінія
+          {
+            size: 3, start: [1, 0], obstacles: [], gems: [[1, 1], [1, 2]],
+            maxCommands: 2, hint: "Натисни стрілку 'Вправо' ➡️ двічі!",
+            optimizeGrid: false,
+          },
+          // 2. Пряма лінія
+          {
+            size: 4, start: [0, 0], obstacles: [], gems: [[1, 0], [2, 0], [3, 0]],
+            maxCommands: 3, hint: "Натисни стрілку 'Вниз' ⬇️ тричі!",
+            optimizeGrid: false,
+          },
+          // 3. Простий поворот
+          {
+            size: 3, start: [0, 0], obstacles: [], gems: [[0, 1], [0, 2], [1, 2]],
+            maxCommands: 3, hint: "Проведи пожежника до вогню!",
+            optimizeGrid: false,
+          },
+          // 4. Перша перешкода
+          {
+            size: 4, start: [0,0], obstacles: [[1,0]], gems: [[0,1], [2,1]],
+            maxCommands: 5, optimizeGrid: true,
+          },
+          // 5. Ще одна перешкода
+          {
+            size: 4, start: [0, 0], obstacles: [[1, 1]], gems: [[0, 2], [2, 0], [2, 2]],
+            maxCommands: 6, hint: "Обережно, вода! 🌊 Треба обійти.",
+            optimizeGrid: true,
+          },
+          // 6. Дві перешкоди, 5x5
+          {
+            size: 5, start: [2, 0], obstacles: [[2, 1], [2, 2]], gems: [[1, 1], [3, 1], [2, 3]],
+            maxCommands: 9, optimizeGrid: true,
+          },
+          // 7. Простий лабіринт 5x5
+          {
+            size: 5, start: [0, 0], obstacles: [[1, 1], [2, 2], [3, 3]], gems: [[0, 2], [2, 0], [4, 4]],
+            maxCommands: 12, optimizeGrid: true,
+          },
+          // 8. Фінальний рівень 5x5
+          // ВИПРАВЛЕННЯ: Зменшено кількість вогнів, щоб рівень був
+          // можливий для проходження з 10 слотами.
+          {
+            size: 5, start: [0, 2], obstacles: [[1, 0], [1, 1], [1, 3], [1, 4], [3, 2]],
+            gems: [[4, 0], [4, 4]], // Було [[0, 0], [0, 4], [4, 0], [4, 4]]
+            maxCommands: 10, optimizeGrid: true,
+          },
         ];
 
-        for (let i = 0; i < 40; i++) {
-          const bit = document.createElement("div");
-          bit.className = "confetti-bit";
-          bit.style.left = Math.random() * 100 + "%";
-          bit.style.backgroundColor =
-            colors[Math.floor(Math.random() * colors.length)];
-          bit.style.animationDelay = Math.random() * 0.4 + "s";
-          container.appendChild(bit);
-        }
-      }
+        const TOTAL_LEVELS_COUNT = LEVELS.length;
 
-      // ===== Sparkles =====
-      function createSparkles(cell) {
-        cell.querySelectorAll(".sparkle-container").forEach((s) => s.remove());
-        const container = document.createElement("div");
-        container.className = "sparkle-container";
-        cell.appendChild(container);
+        const ENCOURAGEMENTS = [
+          "Ти справжній герой! 🚒", "Вогонь погашено! 🔥", "Чудова робота, пожежнику! 👨‍🚒",
+          "Ти молодець! 💧", "Гасиш як профі! 💯", "Вогняний майстер! 🏆",
+        ];
+        const POSITIVE_ERRORS = [
+          "Майже вийшло! Спробуй ще раз! 💪", "Ти на правильному шляху! Продовжуй! 🌟",
+          "Чудова спроба! Може, інший маршрут? 🤔", "Так близько! Ти впораєшся! ⭐",
+        ];
 
-        for (let i = 0; i < 8; i++) {
-          const sparkle = document.createElement("div");
-          sparkle.className = "sparkle-bit";
-          const angle = (i / 8) * Math.PI * 2;
-          const distance = 30;
-          const tx = Math.cos(angle) * distance;
-          const ty = Math.sin(angle) * distance;
-          sparkle.style.setProperty(
-            "--tw-translate",
-            `translate(${tx}px, ${ty}px)`
-          );
-          sparkle.style.left = "50%";
-          sparkle.style.top = "50%";
-          sparkle.style.animationDelay = i * 0.05 + "s";
-          container.appendChild(sparkle);
+        // ===== Achievements =====
+        const ACHIEVEMENTS = {
+          firstGems: { icon: "🔥", title: "Перші полум'я!", text: "Ти загасив свій перший вогонь!" },
+          halfwayDone: { icon: "👨‍🚒", title: "На півдорозі!", text: "Половина викликів позаду!" },
+          master: { icon: "🌟", title: "Майстер пожежогасіння!", text: "Ти пройшов всі рівні, герой!" }
+        };
+
+        // ===== State =====
+        const gameState = {
+          currentLevel: 0,
+          commands: [],
+          totalGems: 0,
+          isExecuting: false,
+          currentPos: null,
+          soundEnabled: true,
+          shownAchievements: new Set(),
+          optimizedGridMap: null,
+        };
+
+        let sessionStartTime = Date.now();
+        const MAX_SESSION_TIME = 15 * 60 * 1000;
+
+        let audioCtx = null;
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn("AudioContext is not supported, sounds will be disabled.");
         }
-        setTimeout(() => container.remove(), 1000);
-      }
-      
-      // ЗМІНА v7: Плаваючий смайлик
-      function showFloatingEmoji(emoji, pos) {
+        const ensureAudio = async () => {
+          try {
+            if (audioCtx && audioCtx.state === "suspended") {
+              await audioCtx.resume();
+            }
+          } catch (e) { /* ignore */ }
+        };
+
+        // ===== DOM =====
+        const el = (id) => document.getElementById(id);
+        const elements = {
+          gameGrid: el("gameGrid"),
+          commandSlots: el("commandSlots"),
+          runBtn: el("runBtn"),
+          clearBtn: el("clearBtn"),
+          winModal: el("winModal"),
+          errorModal: el("errorModal"),
+          nextLevelBtn: el("nextLevelBtn"),
+          retryBtn: el("retryBtn"),
+          closeErrBtn: el("closeErrBtn"),
+          levelNum: el("levelNum"),
+          totalLevels: el("totalLevels"),
+          gemsCount: el("gemsCount"),
+          winMessage: el("winMessage"),
+          errorMessage: el("errorMessage"),
+          upBtn: el("upBtn"),
+          downBtn: el("downBtn"),
+          leftBtn: el("leftBtn"),
+          rightBtn: el("rightBtn"),
+          progressBar: el("progressBar"),
+          encouragement: el("encouragement"),
+          hintBubble: el("hintBubble"),
+          hintText: el("hintText"),
+          soundBtn: el("soundBtn"),
+          fullscreenBtn: el("fullscreenBtn"),
+          achievementToast: el("achievementToast"),
+          achievementIcon: el("achievementIcon"),
+          achievementTitle: el("achievementTitle"),
+          achievementText: el("achievementText"),
+          winConfetti: el("winConfetti"),
+          tutorialOverlay: el("tutorialOverlay"),
+          startTutorial: el("startTutorial"),
+          parentBtn: el("parentBtn"),
+          parentModal: el("parentModal"),
+          closeParentModal: el("closeParentModal"),
+          parentLevels: el("parentLevels"),
+          parentGems: el("parentGems"),
+          parentTime: el("parentTime"),
+          executionPanel: el("executionPanel"),
+          mainControls: el("mainControls"),
+        };
+
+        // ===== Utils =====
+        const utils = {
+          sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+          arraysEqual: (a, b) => a && b && a[0] === b[0] && a[1] === b[1],
+          isValidPosition: (pos, level) => {
+            const gridMap = gameState.optimizedGridMap || {
+              rows: level.size,
+              cols: level.size,
+              rowMap: Array.from({ length: level.size }, (_, i) => i),
+              colMap: Array.from({ length: level.size }, (_, i) => i),
+            };
+
+            const mappedRowIndex = gridMap.rowMap.indexOf(pos[0]);
+            const mappedColIndex = gridMap.colMap.indexOf(pos[1]);
+
+            return (
+              mappedRowIndex !== -1 &&
+              mappedColIndex !== -1 &&
+              !level.obstacles.some((o) => utils.arraysEqual(o, pos))
+            );
+          },
+          emojiClass: () => {
+            const w = window.innerWidth;
+            if (w < 480) return "emoji-xs";
+            if (w < 640) return "emoji-sm";
+            if (w < 1024) return "emoji-md";
+            return "emoji-lg";
+          },
+          getCellSize: (level) => {
+            const wrap = elements.gameGrid.parentElement;
+            const rect = wrap.getBoundingClientRect();
+            const gap = window.innerWidth < 640 ? 2 : 4;
+            const gridMap = gameState.optimizedGridMap || {
+              rows: level.size,
+              cols: level.size,
+              rowMap: Array.from({ length: level.size }, (_, i) => i),
+              colMap: Array.from({ length: level.size }, (_, i) => i),
+            };
+            const columns = gridMap.cols;
+            const rows = gridMap.rows;
+
+            const availableWidth = rect.width - (columns - 1) * gap - 10; // -10 for padding
+            const availableHeight = rect.height - (rows - 1) * gap - 10;
+
+            const sizeBasedOnWidth = availableWidth / columns;
+            const sizeBasedOnHeight = availableHeight / rows;
+
+            const size = Math.floor(Math.min(sizeBasedOnWidth, sizeBasedOnHeight));
+
+            return Math.max(36, Math.min(size, 110));
+          },
+          randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)],
+          playSound: (freq, duration = 100) => {
+            if (!gameState.soundEnabled || !audioCtx) return;
+            try {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = "sine";
+              gain.gain.value = 0.1;
+              osc.start();
+              gain.gain.exponentialRampToValueAtTime(
+                0.01,
+                audioCtx.currentTime + duration / 1000
+              );
+              osc.stop(audioCtx.currentTime + duration / 1000);
+            } catch (e) {
+              console.error("Error playing sound:", e);
+            }
+          },
+        };
+
+        // ===== Sound Effects =====
+        const sounds = {
+          move: () => utils.playSound(350, 70),
+          collect: () => {
+            utils.playSound(200, 80);
+            setTimeout(() => utils.playSound(300, 100), 80);
+          },
+          win: () => {
+            utils.playSound(440, 120);
+            setTimeout(() => utils.playSound(523, 120), 120);
+            setTimeout(() => utils.playSound(440, 150), 240);
+            setTimeout(() => utils.playSound(523, 200), 390);
+          },
+          error: () => utils.playSound(150, 250),
+          click: () => utils.playSound(650, 40),
+          cheer: () => {
+            utils.playSound(523, 100);
+            setTimeout(() => utils.playSound(659, 150), 100);
+          }
+        };
+
+        function vibrateDevice(pattern = [50]) {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+          }
+        }
+
+        function speak(text) {
+          if ('speechSynthesis' in window && gameState.soundEnabled) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'uk-UA';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.2;
+            window.speechSynthesis.speak(utterance);
+          }
+        }
+
+        function saveProgress() {
+          try {
+            localStorage.setItem('firefighterProgress', JSON.stringify({
+              level: gameState.currentLevel,
+              gems: gameState.totalGems,
+              achievements: Array.from(gameState.shownAchievements),
+              timestamp: Date.now()
+            }));
+          } catch(e) { console.warn("Could not save progress.", e); }
+        };
+
+        function loadProgress() {
+          try {
+            const saved = localStorage.getItem('firefighterProgress');
+            if (saved) {
+              const data = JSON.parse(saved);
+              if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                gameState.currentLevel = data.level || 0;
+                gameState.totalGems = data.gems || 0;
+                gameState.shownAchievements = new Set(data.achievements || []);
+                elements.gemsCount.textContent = gameState.totalGems;
+              }
+            }
+          } catch(e) { console.warn("Could not load progress.", e); }
+        };
+
+        // ===== Achievements =====
+        function checkAchievements() {
+          const gems = gameState.totalGems;
+          const level = gameState.currentLevel;
+
+          if (gems >= 1 && !gameState.shownAchievements.has('firstGems')) {
+            showAchievement(ACHIEVEMENTS.firstGems);
+            gameState.shownAchievements.add('firstGems');
+          }
+
+          if (level === Math.floor(TOTAL_LEVELS_COUNT / 2) && !gameState.shownAchievements.has('halfwayDone')) {
+            showAchievement(ACHIEVEMENTS.halfwayDone);
+            gameState.shownAchievements.add('halfwayDone');
+          }
+
+          if (level === TOTAL_LEVELS_COUNT - 1 && !gameState.shownAchievements.has('master')) {
+            showAchievement(ACHIEVEMENTS.master);
+            gameState.shownAchievements.add('master');
+          }
+        }
+
+        function showAchievement(ach) {
+          elements.achievementIcon.textContent = ach.icon;
+          elements.achievementTitle.textContent = ach.title;
+          elements.achievementText.textContent = ach.text;
+          elements.achievementToast.classList.remove("hidden");
+
+          setTimeout(() => {
+            elements.achievementToast.style.transition =
+              "opacity 0.5s, transform 0.5s";
+            elements.achievementToast.style.opacity = "0";
+            elements.achievementToast.style.transform = "translate(-50%, -20px)";
+            setTimeout(() => {
+              elements.achievementToast.classList.add("hidden");
+              elements.achievementToast.style.opacity = "1";
+              elements.achievementToast.style.transform = "translate(-50%, 0)";
+            }, 500);
+          }, 3500);
+        }
+
+        // ===== Confetti =====
+        function createConfetti() {
+          const container = elements.winConfetti;
+          container.innerHTML = "";
+          const colors = [
+            "#f59e0b", "#ef4444", "#f87171", "#fbbf24", "#f97316", "#dc2626",
+          ];
+
+          for (let i = 0; i < 40; i++) {
+            const bit = document.createElement("div");
+            bit.className = "confetti-bit";
+            bit.style.left = Math.random() * 100 + "%";
+            bit.style.backgroundColor =
+              colors[Math.floor(Math.random() * colors.length)];
+            bit.style.animationDelay = Math.random() * 0.4 + "s";
+            container.appendChild(bit);
+          }
+        }
+
+        // ===== Sparkles =====
+        function createSparkles(cell) {
+          cell.querySelectorAll(".sparkle-container").forEach((s) => s.remove());
+          const container = document.createElement("div");
+          container.className = "sparkle-container";
+          cell.appendChild(container);
+
+          for (let i = 0; i < 8; i++) {
+            const sparkle = document.createElement("div");
+            sparkle.className = "sparkle-bit";
+            const angle = (i / 8) * Math.PI * 2;
+            const distance = 30;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            sparkle.style.setProperty(
+              "--tw-translate",
+              `translate(${tx}px, ${ty}px)`
+            );
+            sparkle.style.left = "50%";
+            sparkle.style.top = "50%";
+            sparkle.style.animationDelay = i * 0.05 + "s";
+            container.appendChild(sparkle);
+          }
+          setTimeout(() => container.remove(), 1000);
+        }
+
+        function showFloatingEmoji(emoji, pos) {
           const cell = getCellElement(pos);
           if (!cell) return;
-          
+
           const floater = document.createElement('div');
           floater.textContent = emoji;
           floater.className = 'floating-emoji text-4xl';
           cell.appendChild(floater);
-          
+
           setTimeout(() => floater.remove(), 1500);
-      }
-      
-      // ЗМІНА v7: Маленьке святкування
-      function celebrateSmallWin(cell) {
+        }
+
+        function celebrateSmallWin(cell) {
           sounds.cheer();
           createSparkles(cell);
           showFloatingEmoji('🎉', gameState.currentPos);
-      }
-
-      // ===== Level Management =====
-      function updateProgress() {
-        const progress = ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
-        elements.progressBar.style.width = progress + "%";
-      }
-
-      function showHint(level) {
-        if (level.hint && gameState.currentLevel < 3) {
-          elements.hintText.textContent = level.hint;
-          elements.hintBubble.classList.remove("hidden");
-        } else {
-          elements.hintBubble.classList.add("hidden");
         }
-      }
 
-      function optimizeGrid(level) {
-        if (!level.optimizeGrid) {
-          gameState.optimizedGridMap = null;
-          return;
+        // ===== Level Management =====
+        function updateProgress() {
+          const progress = ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
+          elements.progressBar.style.width = progress + "%";
         }
-        const activeRows = new Set();
-        const activeCols = new Set();
-        const allPositions = [
-          level.start,
-          ...level.obstacles,
-          ...level.gems,
-        ];
-        allPositions.forEach(([r, c]) => {
-          activeRows.add(r);
-          activeCols.add(c);
-        });
-        const minR = Math.min(...activeRows);
-        const maxR = Math.max(...activeRows);
-        const minC = Math.min(...activeCols);
-        const maxC = Math.max(...activeCols);
-        for (let r = minR; r <= maxR; r++) {
-          for (let c = minC; c <= maxC; c++) {
-            if (!level.obstacles.some((o) => utils.arraysEqual(o, [r, c]))) {
+
+        function showHint(level) {
+          if (level.hint && gameState.currentLevel < 3) {
+            elements.hintText.textContent = level.hint;
+            elements.hintBubble.classList.remove("hidden");
+          } else {
+            elements.hintBubble.classList.add("hidden");
+          }
+        }
+
+        function optimizeGrid(level) {
+          if (!level.optimizeGrid) {
+            gameState.optimizedGridMap = null;
+            return;
+          }
+          const activeRows = new Set();
+          const activeCols = new Set();
+          const allPositions = [
+            level.start,
+            ...level.obstacles,
+            ...level.gems,
+          ];
+          allPositions.forEach(([r, c]) => {
+            activeRows.add(r);
+            activeCols.add(c);
+          });
+          const minR = Math.min(...activeRows);
+          const maxR = Math.max(...activeRows);
+          const minC = Math.min(...activeCols);
+          const maxC = Math.max(...activeCols);
+          for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+              if (!level.obstacles.some((o) => utils.arraysEqual(o, [r, c]))) {
+                activeRows.add(r);
+                activeCols.add(c);
+              }
+            }
+          }
+          level.obstacles.forEach(([r, c]) => {
+            if (r >= minR && r <= maxR && c >= minC && c <= maxC) {
               activeRows.add(r);
               activeCols.add(c);
             }
-          }
+          });
+          const sortedRows = Array.from(activeRows).sort((a, b) => a - b);
+          const sortedCols = Array.from(activeCols).sort((a, b) => a - b);
+          gameState.optimizedGridMap = {
+            rows: sortedRows.length,
+            cols: sortedCols.length,
+            rowMap: sortedRows,
+            colMap: sortedCols,
+          };
         }
-        level.obstacles.forEach(([r, c]) => {
-          if (r >= minR && r <= maxR && c >= minC && c <= maxC) {
-            activeRows.add(r);
-            activeCols.add(c);
+
+        // ===== Init Level (глобальне прибирання) =====
+        function initLevel() {
+          const level = LEVELS[gameState.currentLevel];
+          if (!level) {
+            console.error("Invalid level index:", gameState.currentLevel);
+            gameState.currentLevel = 0;
+            initLevel();
+            return;
           }
-        });
-        const sortedRows = Array.from(activeRows).sort((a, b) => a - b);
-        const sortedCols = Array.from(activeCols).sort((a, b) => a - b);
-        gameState.optimizedGridMap = {
-          rows: sortedRows.length,
-          cols: sortedCols.length,
-          rowMap: sortedRows,
-          colMap: sortedCols,
-        };
-      }
+          document
+            .querySelectorAll(".sparkle-container, .trail-dot, .floating-emoji")
+            .forEach((n) => n.remove());
+          elements.gameGrid.classList.remove("grid-shaking");
 
-      // ===== Init Level (глобальне прибирання) =====
-      function initLevel() {
-        const level = LEVELS[gameState.currentLevel];
-        if (!level) {
-          console.error("Invalid level index:", gameState.currentLevel);
-          gameState.currentLevel = 0; // Скинути на початок
-          initLevel();
-          return;
-        }
-        document
-          .querySelectorAll(".sparkle-container, .trail-dot, .floating-emoji")
-          .forEach((n) => n.remove());
-        elements.gameGrid.classList.remove("grid-shaking");
+          optimizeGrid(level);
 
-        optimizeGrid(level);
+          elements.totalLevels.textContent = TOTAL_LEVELS_COUNT;
+          elements.levelNum.textContent = gameState.currentLevel + 1;
+          gameState.commands = Array(level.maxCommands).fill(null);
+          gameState.currentPos = [...level.start];
+          renderGrid(level);
+          renderCommandSlots();
+          updateProgress();
+          showHint(level);
+          elements.runBtn.disabled = false;
+          gameState.isExecuting = false;
 
-        elements.totalLevels.textContent = TOTAL_LEVELS_COUNT;
-        elements.levelNum.textContent = gameState.currentLevel + 1;
-        gameState.commands = Array(level.maxCommands).fill(null);
-        gameState.currentPos = [...level.start];
-        renderGrid(level);
-        renderCommandSlots();
-        updateProgress();
-        showHint(level);
-        elements.runBtn.disabled = false;
-        gameState.isExecuting = false;
-        
-        // ЗМІНА v7: Показ підказок
-        showNextStepHint();
-        if (level.obstacles.length > 0 && !localStorage.getItem('shownObstacleIntro')) {
+          showNextStepHint();
+          if (level.obstacles.length > 0 && !localStorage.getItem('shownObstacleIntro')) {
             showObstacleIntro();
             localStorage.setItem('shownObstacleIntro', 'true');
-        }
-      }
-
-      // ===== Render Grid =====
-      function renderGrid(level) {
-        const g = elements.gameGrid;
-        g.classList.remove("grid-shaking");
-        g.innerHTML = "";
-
-        const gridMap = gameState.optimizedGridMap || {
-          rows: level.size,
-          cols: level.size,
-          rowMap: Array.from({ length: level.size }, (_, i) => i),
-          colMap: Array.from({ length: level.size }, (_, i) => i),
-        };
-
-        const cellSize = utils.getCellSize(level);
-        const gap = window.innerWidth < 640 ? "2px" : "4px";
-        g.style.display = "grid";
-        g.style.gridTemplateColumns = `repeat(${gridMap.cols}, ${cellSize}px)`;
-        g.style.gridTemplateRows = `repeat(${gridMap.rows}, ${cellSize}px)`;
-        g.style.gap = gap;
-
-        const emojiCls = utils.emojiClass();
-        for (let r = 0; r < gridMap.rows; r++) {
-          for (let c = 0; c < gridMap.cols; c++) {
-            const originalRow = gridMap.rowMap[r];
-            const originalCol = gridMap.colMap[c];
-            const originalPos = [originalRow, originalCol];
-
-            const cell = document.createElement("div");
-            cell.className =
-              "grid-cell flex items-center justify-center bg-orange-50 rounded-lg";
-            cell.dataset.row = originalRow;
-            cell.dataset.col = originalCol;
-            cell.setAttribute("role", "gridcell");
-
-            if (utils.arraysEqual(originalPos, level.start)) {
-              cell.innerHTML = `<div class="character ${emojiCls}" aria-label="Пожежник">👨‍🚒</div>`;
-              cell.classList.add("bg-red-200");
-            } else if (
-              level.obstacles.some((o) => utils.arraysEqual(o, originalPos))
-            ) {
-              cell.innerHTML = `<i class="fas fa-water text-blue-600 ${emojiCls}" aria-hidden="true"></i>`;
-              cell.classList.add("bg-blue-300");
-            } else if (
-              level.gems.some((g) => utils.arraysEqual(g, originalPos))
-            ) {
-              cell.innerHTML = `<div class="${emojiCls} fire-glow" data-gem="fire" aria-label="Вогонь">🔥</div>`;
-              cell.classList.add(
-                "bg-gradient-to-br",
-                "from-red-100",
-                "to-yellow-100"
-              );
-            }
-            g.appendChild(cell);
           }
         }
-      }
 
-      // ===== Render Command Slots =====
-      function renderCommandSlots() {
-        const level = LEVELS[gameState.currentLevel];
-        const wrap = elements.commandSlots;
-        wrap.innerHTML = "";
+        // ===== Render Grid =====
+        function renderGrid(level) {
+          const g = elements.gameGrid;
+          g.classList.remove("grid-shaking");
+          g.innerHTML = "";
 
-        for (let i = 0; i < level.maxCommands; i++) {
-          const slot = document.createElement("div");
-          slot.className =
-            "command-slot flex items-center justify-center rounded-lg text-2xl sm:text-3xl md:text-4xl";
-          slot.dataset.index = i;
+          const gridMap = gameState.optimizedGridMap || {
+            rows: level.size,
+            cols: level.size,
+            rowMap: Array.from({ length: level.size }, (_, i) => i),
+            colMap: Array.from({ length: level.size }, (_, i) => i),
+          };
 
-          if (gameState.commands[i]) {
-            slot.classList.add("filled");
-            slot.innerHTML = ARROW_ICONS[gameState.commands[i]];
-            slot.setAttribute("title", "Клік — видалити команду");
-            slot.addEventListener("click", () => {
-              if (!gameState.isExecuting) {
-                vibrateDevice([30]);
-                sounds.click();
-                gameState.commands[i] = null;
-                renderCommandSlots();
+          const cellSize = utils.getCellSize(level);
+          const gap = window.innerWidth < 640 ? "2px" : "4px";
+          g.style.display = "grid";
+          g.style.gridTemplateColumns = `repeat(${gridMap.cols}, ${cellSize}px)`;
+          g.style.gridTemplateRows = `repeat(${gridMap.rows}, ${cellSize}px)`;
+          g.style.gap = gap;
+
+          const emojiCls = utils.emojiClass();
+          for (let r = 0; r < gridMap.rows; r++) {
+            for (let c = 0; c < gridMap.cols; c++) {
+              const originalRow = gridMap.rowMap[r];
+              const originalCol = gridMap.colMap[c];
+              const originalPos = [originalRow, originalCol];
+
+              const cell = document.createElement("div");
+              cell.className =
+                "grid-cell flex items-center justify-center bg-orange-50 rounded-lg";
+              cell.dataset.row = originalRow;
+              cell.dataset.col = originalCol;
+              cell.setAttribute("role", "gridcell");
+
+              if (utils.arraysEqual(originalPos, level.start)) {
+                cell.innerHTML = `<div class="character ${emojiCls}" aria-label="Пожежник">👨‍🚒</div>`;
+                cell.classList.add("bg-red-200");
+              } else if (
+                level.obstacles.some((o) => utils.arraysEqual(o, originalPos))
+              ) {
+                cell.innerHTML = `<i class="fas fa-water text-blue-600 ${emojiCls}" aria-hidden="true"></i>`;
+                cell.classList.add("bg-blue-300");
+              } else if (
+                level.gems.some((g) => utils.arraysEqual(g, originalPos))
+              ) {
+                cell.innerHTML = `<div class="${emojiCls} fire-glow" data-gem="fire" aria-label="Вогонь">🔥</div>`;
+                cell.classList.add(
+                  "bg-gradient-to-br",
+                  "from-red-100",
+                  "to-yellow-100"
+                );
               }
-            });
+              g.appendChild(cell);
+            }
           }
-          wrap.appendChild(slot);
         }
-      }
-      
-      // ЗМІНА v7: Підказка для наступного кроку
-      function showNextStepHint() {
-          // Очистити попередні підказки
+
+        // ===== Render Command Slots =====
+        function renderCommandSlots() {
+          const level = LEVELS[gameState.currentLevel];
+          const wrap = elements.commandSlots;
+          wrap.innerHTML = "";
+          // ВИПРАВЛЕННЯ: Додано 'flex' для горизонтального розташування слотів
+          wrap.className = "flex flex-row flex-wrap gap-2 justify-start items-center";
+
+          for (let i = 0; i < level.maxCommands; i++) {
+            const slot = document.createElement("div");
+            slot.className =
+              "command-slot flex items-center justify-center rounded-lg text-2xl sm:text-3xl md:text-4xl";
+            slot.dataset.index = i;
+
+            if (gameState.commands[i]) {
+              slot.classList.add("filled");
+              slot.innerHTML = ARROW_ICONS[gameState.commands[i]];
+              slot.setAttribute("title", "Клік — видалити команду");
+              slot.addEventListener("click", () => {
+                if (!gameState.isExecuting) {
+                  vibrateDevice([30]);
+                  sounds.click();
+                  gameState.commands[i] = null;
+                  renderCommandSlots();
+                }
+              });
+            }
+            wrap.appendChild(slot);
+          }
+        }
+
+        function showNextStepHint() {
           document.querySelectorAll('.pulse-hint-animation').forEach(el => el.classList.remove('pulse-hint-animation'));
-          
+
           const level = LEVELS[gameState.currentLevel];
           if (gameState.currentLevel < 2 && gameState.commands.every(c => c === null)) {
-              const solution = findSimplestPath(level);
-              if (solution && solution.length > 0) {
-                  const nextMove = solution[0];
-                  const button = elements[`${nextMove}Btn`];
-                  if (button) {
-                      button.classList.add('pulse-hint-animation');
-                  }
+            const solution = findSimplestPath(level);
+            if (solution && solution.length > 0) {
+              const nextMove = solution[0];
+              const button = elements[`${nextMove}Btn`];
+              if (button) {
+                button.classList.add('pulse-hint-animation');
               }
-          }
-      }
-
-      // ===== Add Command =====
-      async function addCommand(direction) {
-        if (gameState.isExecuting) return;
-        await ensureAudio();
-        vibrateDevice([30]);
-        sounds.click();
-
-        const firstEmpty = gameState.commands.indexOf(null);
-        if (firstEmpty !== -1) {
-          gameState.commands[firstEmpty] = direction;
-          renderCommandSlots();
-        }
-        // ЗМІНА v7: Прибрати підказку після першого кліку
-        document.querySelectorAll('.pulse-hint-animation').forEach(el => el.classList.remove('pulse-hint-animation'));
-      }
-
-      // ===== Clear Commands =====
-      async function clearCommands() {
-        if (gameState.isExecuting) return;
-        await ensureAudio();
-        vibrateDevice([50]);
-        sounds.click();
-        const level = LEVELS[gameState.currentLevel];
-        gameState.commands = Array(level.maxCommands).fill(null);
-        renderCommandSlots();
-        showNextStepHint(); // ЗМІНА v7: Показати підказку знову
-      }
-
-      // ===== Get Cell Element =====
-      function getCellElement(pos) {
-        return elements.gameGrid.querySelector(
-          `[data-row="${pos[0]}"][data-col="${pos[1]}"]`
-        );
-      }
-
-      function highlightNearObstacles(pos, level) {
-        elements.gameGrid
-          .querySelectorAll(".near-obstacle")
-          .forEach((cell) => cell.classList.remove("near-obstacle"));
-        const [r, c] = pos;
-        const neighbors = [
-          [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1],
-        ];
-        for (const neighborPos of neighbors) {
-          if (level.obstacles.some((o) => utils.arraysEqual(o, neighborPos))) {
-            const cell = getCellElement(neighborPos);
-            if (cell) {
-              cell.classList.add("near-obstacle");
             }
           }
         }
-      }
 
-      // ===== Update Character Position =====
-      function updateCharacterPosition(newPos, noJump = false) {
-        const level = LEVELS[gameState.currentLevel];
-        const oldCell = getCellElement(gameState.currentPos);
-        const newCell = getCellElement(newPos);
+        // ===== Add Command =====
+        async function addCommand(direction) {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([30]);
+          sounds.click();
 
-        if (oldCell) {
-          const char = oldCell.querySelector(".character");
-          if (char) char.remove();
-          oldCell.querySelectorAll(".trail-dot").forEach((t) => t.remove());
-          if (utils.arraysEqual(gameState.currentPos, level.start)) {
-            oldCell.classList.add("bg-red-200");
-          } else {
-            oldCell.classList.remove("bg-red-200", "landing");
+          const firstEmpty = gameState.commands.indexOf(null);
+          if (firstEmpty !== -1) {
+            gameState.commands[firstEmpty] = direction;
+            renderCommandSlots();
           }
-          if (!utils.arraysEqual(gameState.currentPos, newPos)) {
-            const trail = document.createElement("div");
-            trail.className = "trail-dot";
-            oldCell.appendChild(trail);
-            setTimeout(() => trail.remove(), 700);
+          document.querySelectorAll('.pulse-hint-animation').forEach(el => el.classList.remove('pulse-hint-animation'));
+        }
+
+        // ===== Clear Commands =====
+        async function clearCommands() {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([50]);
+          sounds.click();
+          const level = LEVELS[gameState.currentLevel];
+          gameState.commands = Array(level.maxCommands).fill(null);
+          renderCommandSlots();
+          showNextStepHint();
+        }
+
+        // ===== Get Cell Element =====
+        function getCellElement(pos) {
+          return elements.gameGrid.querySelector(
+            `[data-row="${pos[0]}"][data-col="${pos[1]}"]`
+          );
+        }
+
+        function highlightNearObstacles(pos, level) {
+          elements.gameGrid
+            .querySelectorAll(".near-obstacle")
+            .forEach((cell) => cell.classList.remove("near-obstacle"));
+          const [r, c] = pos;
+          const neighbors = [
+            [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1],
+          ];
+          for (const neighborPos of neighbors) {
+            if (level.obstacles.some((o) => utils.arraysEqual(o, neighborPos))) {
+              const cell = getCellElement(neighborPos);
+              if (cell) {
+                cell.classList.add("near-obstacle");
+              }
+            }
           }
         }
 
-        if (newCell) {
-          const emojiCls = utils.emojiClass();
-          const char = document.createElement("div");
-          char.className = `character ${emojiCls}`;
-          char.setAttribute("aria-label", "Пожежник");
-          char.textContent = "👨‍🚒";
-          newCell.appendChild(char);
-          if (!noJump) {
-            newCell.classList.add("landing");
-            setTimeout(() => newCell.classList.remove("landing"), 400);
-            // createSparkles(newCell); // ЗМІНА v7: Прибрано звідси, додано до 'celebrateSmallWin'
+        // ===== Update Character Position =====
+        function updateCharacterPosition(newPos, noJump = false) {
+          const level = LEVELS[gameState.currentLevel];
+          const oldCell = getCellElement(gameState.currentPos);
+          const newCell = getCellElement(newPos);
+
+          if (oldCell) {
+            const char = oldCell.querySelector(".character");
+            if (char) char.remove();
+            oldCell.querySelectorAll(".trail-dot").forEach((t) => t.remove());
+            if (utils.arraysEqual(gameState.currentPos, level.start)) {
+              oldCell.classList.add("bg-red-200");
+            } else {
+              oldCell.classList.remove("bg-red-200", "landing");
+            }
+            if (!utils.arraysEqual(gameState.currentPos, newPos)) {
+              const trail = document.createElement("div");
+              trail.className = "trail-dot";
+              oldCell.appendChild(trail);
+              setTimeout(() => trail.remove(), 700);
+            }
           }
-          highlightNearObstacles(newPos, level);
+
+          if (newCell) {
+            const emojiCls = utils.emojiClass();
+            const char = document.createElement("div");
+            char.className = `character ${emojiCls}`;
+            char.setAttribute("aria-label", "Пожежник");
+            char.textContent = "👨‍🚒";
+            newCell.appendChild(char);
+            if (!noJump) {
+              newCell.classList.add("landing");
+              setTimeout(() => newCell.classList.remove("landing"), 400);
+            }
+            highlightNearObstacles(newPos, level);
+          }
+          gameState.currentPos = newPos;
         }
-        gameState.currentPos = newPos;
-      }
 
-      // ===== Execute Commands =====
-      async function executeCommands() {
-        if (gameState.isExecuting) return;
-        await ensureAudio();
-        vibrateDevice([100]);
+        // ===== Execute Commands =====
+        async function executeCommands() {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([100]);
 
-        const hasCommands = gameState.commands.some((c) => c !== null);
-        if (!hasCommands) {
-          showError("Додай команди для гасіння вогню! 🔥", false);
-          return;
-        }
-
-        gameState.isExecuting = true;
-        elements.runBtn.disabled = true;
-
-        const level = LEVELS[gameState.currentLevel];
-        let pos = [...level.start];
-        let collectedGems = 0;
-        const remainingGems = [...level.gems];
-        
-        updateCharacterPosition(level.start, true);
-        await utils.sleep(100);
-        
-        for (let i = 0; i < gameState.commands.length; i++) {
-          const cmd = gameState.commands[i];
-          if (!cmd) break;
-
-          const [dr, dc] = DIRECTION_VECTORS[cmd];
-          const newPos = [pos[0] + dr, pos[1] + dc];
-
-          await utils.sleep(ANIMATION_SPEED);
-
-          if (!utils.isValidPosition(newPos, level)) {
-            sounds.error();
-            elements.gameGrid.classList.add("grid-shaking");
-            setTimeout(
-              () => elements.gameGrid.classList.remove("grid-shaking"),
-              400
-            );
-            const gridMap = gameState.optimizedGridMap || { rowMap: [], colMap: [] };
-            const mappedRowIndex = gridMap.rowMap.indexOf(newPos[0]);
-            const mappedColIndex = gridMap.colMap.indexOf(newPos[1]);
-            const errorMsg =
-              (mappedRowIndex === -1 || mappedColIndex === -1)
-                ? "Пожежник вийшов за межі зони гасіння! 🚒"
-                : "Ой, пожежник не може пройти через воду! 🌊";
-            showError(errorMsg, true);
-            gameState.isExecuting = false;
-            elements.runBtn.disabled = false;
+          const hasCommands = gameState.commands.some((c) => c !== null);
+          if (!hasCommands) {
+            showError("Додай команди для гасіння вогню! 🔥", false);
             return;
           }
 
-          sounds.move();
-          updateCharacterPosition(newPos);
-          pos = newPos;
+          gameState.isExecuting = true;
+          elements.runBtn.disabled = true;
 
-          const gemIdx = remainingGems.findIndex((g) =>
-            utils.arraysEqual(g, pos)
-          );
-          if (gemIdx !== -1) {
-            // ЗМІНА v7: Маленьке святкування
-            const cell = getCellElement(pos);
-            celebrateSmallWin(cell); 
-            
-            collectedGems++;
-            const fire = cell?.querySelector('[data-gem="fire"]');
-            if (fire) {
-              fire.classList.add("extinguishing");
-              setTimeout(() => fire.remove(), 700);
+          const level = LEVELS[gameState.currentLevel];
+          let pos = [...level.start];
+          let collectedGems = 0;
+          const remainingGems = [...level.gems];
+
+          updateCharacterPosition(level.start, true);
+          await utils.sleep(100);
+
+          for (let i = 0; i < gameState.commands.length; i++) {
+            const cmd = gameState.commands[i];
+            if (!cmd) break;
+
+            const [dr, dc] = DIRECTION_VECTORS[cmd];
+            const newPos = [pos[0] + dr, pos[1] + dc];
+
+            await utils.sleep(ANIMATION_SPEED);
+
+            if (!utils.isValidPosition(newPos, level)) {
+              sounds.error();
+              elements.gameGrid.classList.add("grid-shaking");
+              setTimeout(
+                () => elements.gameGrid.classList.remove("grid-shaking"),
+                400
+              );
+              const gridMap = gameState.optimizedGridMap || { rowMap: [], colMap: [] };
+              const mappedRowIndex = gridMap.rowMap.indexOf(newPos[0]);
+              const mappedColIndex = gridMap.colMap.indexOf(newPos[1]);
+              const errorMsg =
+                (mappedRowIndex === -1 || mappedColIndex === -1)
+                  ? "Пожежник вийшов за межі зони гасіння! 🚒"
+                  : "Ой, пожежник не може пройти через воду! 🌊";
+              showError(errorMsg, true);
+              gameState.isExecuting = false;
+              elements.runBtn.disabled = false;
+              return;
             }
-            remainingGems.splice(gemIdx, 1);
-          }
-        }
 
-        if (remainingGems.length === 0) {
-          sounds.win();
-          gameState.totalGems += collectedGems;
-          elements.gemsCount.textContent = gameState.totalGems;
-          checkAchievements();
-          saveProgress(); // ЗМІНА v7: Зберегти прогрес
-          await utils.sleep(400);
-          showWin(collectedGems);
-        } else {
-          sounds.error();
-          const leftGems = remainingGems.length;
-          const fireWord =
-            leftGems === 1 ? "осередок" : (leftGems < 5 ? "осередки" : "осередків");
-          showError(`Залишилось ще ${leftGems} ${fireWord} вогню! 🔥`, true);
-        }
+            sounds.move();
+            updateCharacterPosition(newPos);
+            pos = newPos;
 
-        gameState.isExecuting = false;
-        elements.runBtn.disabled = false;
-      }
-
-      // ===== Show Win =====
-      function showWin(firesExtinguished) {
-        createConfetti();
-        elements.encouragement.textContent =
-          utils.randomChoice(ENCOURAGEMENTS);
-
-        const fireWord =
-          firesExtinguished === 1 ? "осередок" : (firesExtinguished < 5 ? "осередки" : "осередків");
-        elements.winMessage.textContent = `Ти загасив ${firesExtinguished} ${fireWord}! 💪 Безпека гарантована!`;
-
-        if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
-          elements.nextLevelBtn.innerHTML = "Вітаємо! 🎊";
-          elements.winMessage.textContent = `Ти пройшов всі ${TOTAL_LEVELS_COUNT} рівнів! Загашено осередків вогню: ${gameState.totalGems} 🔥`;
-          speak("Неймовірно! Ти пройшов усі рівні! Ти справжній герой!");
-        } else {
-          elements.nextLevelBtn.innerHTML =
-            'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
-          speak("Молодець! Ти загасив весь вогонь!");
-        }
-
-        elements.winModal.classList.remove("hidden");
-      }
-
-      // ===== Show Error =====
-      function showError(msg, canRetry) {
-        // ЗМІНА v7: Позитивне підкріплення
-        const encouragingMsg = utils.randomChoice(POSITIVE_ERRORS);
-        elements.errorMessage.innerHTML = `
-          <div class="text-5xl mb-4">😊</div>
-          <p class="text-2xl font-bold text-orange-600 mb-2">${encouragingMsg}</p>
-          <p class="text-lg text-gray-600">${msg}</p>
-        `;
-        speak("Спробуй ще раз! Ти впораєшся!");
-        elements.retryBtn.style.display = canRetry ? "inline-block" : "none";
-        elements.errorModal.classList.remove("hidden");
-      }
-      
-      // ЗМІНА v7: Інтро про перешкоди
-      function showObstacleIntro() {
-        const modal = document.createElement('div');
-        modal.className = "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
-        modal.innerHTML = `
-          <div class="bg-white rounded-3xl p-8 text-center max-w-md">
-            <div class="text-8xl mb-4">🌊</div>
-            <h2 class="text-3xl font-bold text-blue-600 mb-4">Обережно!</h2>
-            <p class="text-2xl mb-4">Це вода! Пожежник не може пройти через воду.</p>
-            <p class="text-xl mb-6">Знайди інший шлях! 🔄</p>
-            
-            <button onclick="this.parentElement.parentElement.remove()" 
-                    class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full pulse-glow">
-              Зрозуміло! 💪
-            </button>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        speak("Обережно! Це вода. Знайди інший шлях!");
-      }
-
-      // ===== Fullscreen =====
-      function updateFullscreenIcon() {
-        const icon = elements.fullscreenBtn.querySelector("i");
-        if (document.fullscreenElement) {
-          icon.className = "fas fa-compress text-xl text-orange-600";
-          elements.fullscreenBtn.title = "Вийти з повноекранного режиму";
-        } else {
-          icon.className = "fas fa-expand text-xl text-orange-600";
-          elements.fullscreenBtn.title = "На весь екран";
-        }
-      }
-      function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch((err) => {
-            console.warn(
-              `Error attempting to enable full-screen mode: ${err.message} (${err.name})`
+            const gemIdx = remainingGems.findIndex((g) =>
+              utils.arraysEqual(g, pos)
             );
+            if (gemIdx !== -1) {
+              const cell = getCellElement(pos);
+              celebrateSmallWin(cell);
+
+              collectedGems++;
+              const fire = cell?.querySelector('[data-gem="fire"]');
+              if (fire) {
+                fire.classList.add("extinguishing");
+                setTimeout(() => fire.remove(), 700);
+              }
+              remainingGems.splice(gemIdx, 1);
+            }
+          }
+
+          if (remainingGems.length === 0) {
+            sounds.win();
+            gameState.totalGems += collectedGems;
+            elements.gemsCount.textContent = gameState.totalGems;
+            // checkAchievements(); // ВИДАЛЕНО: Перенесено, щоб уникнути накладання
+            saveProgress();
+            await utils.sleep(400);
+            showWin(collectedGems);
+          } else {
+            sounds.error();
+            const leftGems = remainingGems.length;
+            const fireWord =
+              leftGems === 1 ? "осередок" : (leftGems < 5 ? "осередки" : "осередків");
+            showError(`Залишилось ще ${leftGems} ${fireWord} вогню! 🔥`, true);
+          }
+
+          gameState.isExecuting = false;
+          elements.runBtn.disabled = false;
+        }
+
+        // ===== Show Win =====
+        function showWin(firesExtinguished) {
+          createConfetti();
+          elements.encouragement.textContent =
+            utils.randomChoice(ENCOURAGEMENTS);
+
+          const fireWord =
+            firesExtinguished === 1 ? "осередок" : (firesExtinguished < 5 ? "осередки" : "осередків");
+          elements.winMessage.textContent = `Ти загасив ${firesExtinguished} ${fireWord}! 💪 Безпека гарантована!`;
+
+          if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
+            elements.nextLevelBtn.innerHTML = "Вітаємо! 🎊";
+            elements.winMessage.textContent = `Ти пройшов всі ${TOTAL_LEVELS_COUNT} рівнів! Загашено осередків вогню: ${gameState.totalGems} 🔥`;
+            speak("Неймовірно! Ти пройшов усі рівні! Ти справжній герой!");
+          } else {
+            elements.nextLevelBtn.innerHTML =
+              'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
+            speak("Молодець! Ти загасив весь вогонь!");
+          }
+
+          elements.winModal.classList.remove("hidden");
+        }
+
+        // ===== Show Error =====
+        function showError(msg, canRetry) {
+          const encouragingMsg = utils.randomChoice(POSITIVE_ERRORS);
+          elements.errorMessage.innerHTML = `
+            <div class="text-5xl mb-4">😊</div>
+            <p class="text-2xl font-bold text-orange-600 mb-2">${encouragingMsg}</p>
+            <p class="text-lg text-gray-600">${msg}</p>
+          `;
+          speak("Спробуй ще раз! Ти впораєшся!");
+          elements.retryBtn.style.display = canRetry ? "inline-block" : "none";
+          elements.errorModal.classList.remove("hidden");
+        }
+
+        // ===== REFACTORED: showObstacleIntro =====
+        // Використовує addEventListener замість inline onclick
+        function showObstacleIntro() {
+          const modal = document.createElement('div');
+          modal.className = "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
+          modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center max-w-md">
+              <div class="text-8xl mb-4">🌊</div>
+              <h2 class="text-3xl font-bold text-blue-600 mb-4">Обережно!</h2>
+              <p class="text-2xl mb-4">Це вода! Пожежник не може пройти через воду.</p>
+              <p class="text-xl mb-6">Знайди інший шлях! 🔄</p>
+              
+              <button class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full pulse-glow">
+                Зрозуміло! 💪
+              </button>
+            </div>
+          `;
+          
+          // Додаємо слухача
+          modal.querySelector('button').addEventListener('click', () => {
+              modal.remove();
           });
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
+
+          document.body.appendChild(modal);
+          speak("Обережно! Це вода. Знайди інший шлях!");
+        }
+
+        // ===== Fullscreen =====
+        function updateFullscreenIcon() {
+          const icon = elements.fullscreenBtn.querySelector("i");
+          if (document.fullscreenElement) {
+            icon.className = "fas fa-compress text-xl text-orange-600";
+            elements.fullscreenBtn.title = "Вийти з повноекранного режиму";
+          } else {
+            icon.className = "fas fa-expand text-xl text-orange-600";
+            elements.fullscreenBtn.title = "На весь екран";
           }
         }
-      }
-      
-      // ЗМІНА v7: Таймер сесії
-      function checkSessionTime() {
-        const elapsed = Date.now() - sessionStartTime;
-        
-        if (elapsed > MAX_SESSION_TIME && document.querySelectorAll('.break-reminder').length === 0) {
-          showBreakReminder();
+        function toggleFullScreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch((err) => {
+              console.warn(
+                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`
+              );
+            });
+          } else {
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }
         }
-        
-        // Оновлення таймера для батьків
-        elements.parentTime.textContent = `${Math.floor(elapsed / 60000)} хв`;
-      }
 
-      function showBreakReminder() {
-        const modal = document.createElement('div');
-        modal.className = 'break-reminder fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4';
-        modal.innerHTML = `
-          <div class="bg-white rounded-3xl p-8 text-center max-w-md">
-            <div class="text-8xl mb-4">⏰</div>
-            <h2 class="text-3xl font-bold text-orange-600 mb-4">Час відпочити!</h2>
-            <p class="text-xl mb-6">Ти чудово попрацював! Давай зробимо перерву? 🌟</p>
-            
-            <button onclick="this.closest('div.break-reminder').remove(); sessionStartTime = Date.now();" 
-                    class="bg-green-500 text-white py-4 px-8 rounded-xl text-xl w-full mb-3">
-              Ще трошки пограю 🎮
-            </button>
-            <button onclick="location.reload()" 
-                    class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full">
-              Закінчити гру 👋
-            </button>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        speak("Час відпочити! Ти чудово попрацював!");
-      }
-      
-      // ЗМІНА v7: Пошук шляху (BFS) для підказки
-      function findSimplestPath(level) {
+        function checkSessionTime() {
+          const elapsed = Date.now() - sessionStartTime;
+
+          if (elapsed > MAX_SESSION_TIME && document.querySelectorAll('.break-reminder').length === 0) {
+            showBreakReminder();
+          }
+
+          elements.parentTime.textContent = `${Math.floor(elapsed / 60000)} хв`;
+        }
+
+        // ===== REFACTORED: showBreakReminder =====
+        // Використовує addEventListener для кнопок, щоб мати доступ до
+        // локальної змінної 'sessionStartTime'.
+        function showBreakReminder() {
+          const modal = document.createElement('div');
+          modal.className = 'break-reminder fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4';
+          modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center max-w-md">
+              <div class="text-8xl mb-4">⏰</div>
+              <h2 class="text-3xl font-bold text-orange-600 mb-4">Час відпочити!</h2>
+              <p class="text-xl mb-6">Ти чудово попрацював! Давай зробимо перерву? 🌟</p>
+              
+              <button id="breakPlayMoreBtn" class="bg-green-500 text-white py-4 px-8 rounded-xl text-xl w-full mb-3">
+                Ще трошки пограю 🎮
+              </button>
+              <button id="breakEndGameBtn" class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full">
+                Закінчити гру 👋
+              </button>
+            </div>
+          `;
+
+          // Додаємо слухачі
+          modal.querySelector('#breakPlayMoreBtn').addEventListener('click', () => {
+              modal.remove();
+              sessionStartTime = Date.now(); // Скинути таймер
+          });
+          
+          modal.querySelector('#breakEndGameBtn').addEventListener('click', () => {
+              location.reload();
+          });
+
+          document.body.appendChild(modal);
+          speak("Час відпочити! Ти чудово попрацював!");
+        }
+
+        function findSimplestPath(level) {
           const queue = [[level.start, []]]; // [position, path_array]
           const visited = new Set([level.start.toString()]);
-          const target = level.gems[0]; // Мета - перший вогонь
+          const target = level.gems[0];
           
           if (!target) return [];
 
           while (queue.length > 0) {
-              const [currentPos, path] = queue.shift();
+            const [currentPos, path] = queue.shift();
 
-              if (utils.arraysEqual(currentPos, target)) {
-                  return path; // Знайшли шлях
-              }
+            if (utils.arraysEqual(currentPos, target)) {
+              return path;
+            }
 
-              for (const direction in DIRECTION_VECTORS) {
-                  const [dr, dc] = DIRECTION_VECTORS[direction];
-                  const newPos = [currentPos[0] + dr, currentPos[1] + dc];
-                  
-                  if (utils.isValidPosition(newPos, level) && !visited.has(newPos.toString())) {
-                      visited.add(newPos.toString());
-                      queue.push([newPos, [...path, direction]]);
-                  }
+            for (const direction in DIRECTION_VECTORS) {
+              const [dr, dc] = DIRECTION_VECTORS[direction];
+              const newPos = [currentPos[0] + dr, currentPos[1] + dc];
+              
+              if (utils.isValidPosition(newPos, level) && !visited.has(newPos.toString())) {
+                visited.add(newPos.toString());
+                queue.push([newPos, [...path, direction]]);
               }
+            }
           }
-          return []; // Шлях не знайдено
-      }
-      
-      // ЗМІНА v7: Додавання кнопок "Підказка" та "Відміна"
-      function addExtraButtons() {
-          // Кнопка "Підказка"
+          return [];
+        }
+
+        function addExtraButtons() {
           const helpBtn = document.createElement('button');
           helpBtn.innerHTML = '<i class="fas fa-lightbulb"></i>';
-          helpBtn.className = 'bg-yellow-400 hover:bg-yellow-500 text-white font-bold p-3 sm:py-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
+          // ВИПРАВЛЕННЯ: Зменшено горизонтальний padding (було p-3 sm:py-4 sm:px-6)
+          helpBtn.className = 'bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
           helpBtn.title = 'Підказка';
           
           helpBtn.addEventListener('click', async () => {
-              vibrateDevice([50, 50, 50]);
-              const solution = findSimplestPath(LEVELS[gameState.currentLevel]);
-              if (solution.length > 0) {
-                  // Показати перші 2-3 кроки
-                  for (let i = 0; i < Math.min(3, solution.length); i++) {
-                      if (gameState.commands[i] === null) {
-                        gameState.commands[i] = solution[i];
-                        renderCommandSlots();
-                        const btn = elements[`${solution[i]}Btn`];
-                        btn.classList.add('pulse-hint-animation');
-                        await utils.sleep(500);
-                        btn.classList.remove('pulse-hint-animation');
-                      }
-                  }
+            vibrateDevice([50, 50, 50]);
+            const solution = findSimplestPath(LEVELS[gameState.currentLevel]);
+            if (solution.length > 0) {
+              for (let i = 0; i < Math.min(3, solution.length); i++) {
+                if (gameState.commands[i] === null) {
+                  gameState.commands[i] = solution[i];
+                  renderCommandSlots();
+                  const btn = elements[`${solution[i]}Btn`];
+                  btn.classList.add('pulse-hint-animation');
+                  await utils.sleep(500);
+                  btn.classList.remove('pulse-hint-animation');
+                }
               }
+            }
           });
           
-          // Кнопка "Відміна"
           const undoBtn = document.createElement('button');
           undoBtn.innerHTML = '<i class="fas fa-undo"></i>';
-          undoBtn.className = 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold p-3 sm:py-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
+          // ВИПРАВЛЕННЯ: Зменшено горизонтальний padding (було p-3 sm:py-4 sm:px-6)
+          undoBtn.className = 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
           undoBtn.title = 'Відмінити останню команду';
           
           undoBtn.addEventListener('click', () => {
-              for (let i = gameState.commands.length - 1; i >= 0; i--) {
-                  if (gameState.commands[i] !== null) {
-                      gameState.commands[i] = null;
-                      renderCommandSlots();
-                      vibrateDevice([30]);
-                      break;
-                  }
+            for (let i = gameState.commands.length - 1; i >= 0; i--) {
+              if (gameState.commands[i] !== null) {
+                gameState.commands[i] = null;
+                renderCommandSlots();
+                vibrateDevice([30]);
+                break;
               }
+            }
           });
           
-          // Додаємо кнопки
           const panel = elements.mainControls;
-          panel.insertBefore(helpBtn, panel.children[1]); // Додаємо підказку перед "Очистити"
-          panel.appendChild(undoBtn); // Додаємо відміну в кінець
-      }
-
-      // ===== Event Listeners =====
-      elements.upBtn.addEventListener("click", () => { addCommand("up"); });
-      elements.downBtn.addEventListener("click", () => { addCommand("down"); });
-      elements.leftBtn.addEventListener("click", () => { addCommand("left"); });
-      elements.rightBtn.addEventListener("click", () => { addCommand("right"); });
-      elements.clearBtn.addEventListener("click", () => { clearCommands(); });
-      elements.runBtn.addEventListener("click", () => { executeCommands(); });
-
-      elements.nextLevelBtn.addEventListener("click", async () => {
-        await ensureAudio();
-        elements.winModal.classList.add("hidden");
-        if (gameState.currentLevel < TOTAL_LEVELS_COUNT - 1) {
-          gameState.currentLevel++;
-          initLevel();
-        } else {
-          // Game completed - restart
-          gameState.currentLevel = 0;
-          gameState.totalGems = 0;
-          gameState.shownAchievements.clear();
-          elements.gemsCount.textContent = "0";
-          elements.nextLevelBtn.innerHTML =
-            'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
-          initLevel();
+          panel.insertBefore(helpBtn, panel.children[1]);
+          panel.appendChild(undoBtn);
         }
-        saveProgress(); // Зберегти новий рівень
-      });
 
-      elements.retryBtn.addEventListener("click", async () => {
-        await ensureAudio();
-        elements.errorModal.classList.add("hidden");
-        initLevel();
-      });
+        // ===== Event Listeners =====
+        elements.upBtn.addEventListener("click", () => { addCommand("up"); });
+        elements.downBtn.addEventListener("click", () => { addCommand("down"); });
+        elements.leftBtn.addEventListener("click", () => { addCommand("left"); });
+        elements.rightBtn.addEventListener("click", () => { addCommand("right"); });
+        elements.clearBtn.addEventListener("click", () => { clearCommands(); });
+        elements.runBtn.addEventListener("click", () => { executeCommands(); });
 
-      elements.closeErrBtn.addEventListener("click", async () => {
-        await ensureAudio();
-        elements.errorModal.classList.add("hidden");
-        const level = LEVELS[gameState.currentLevel];
-        updateCharacterPosition(level.start, true);
-        gameState.currentPos = [...level.start];
-        highlightNearObstacles(level.start, level);
-      });
+        elements.nextLevelBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.winModal.classList.add("hidden");
+          checkAchievements(); // ДОДАНО: Повідомлення про досягнення з'явиться ПІСЛЯ закриття вікна
+          if (gameState.currentLevel < TOTAL_LEVELS_COUNT - 1) {
+            gameState.currentLevel++;
+            initLevel();
+          } else {
+            gameState.currentLevel = 0;
+            gameState.totalGems = 0;
+            gameState.shownAchievements.clear();
+            elements.gemsCount.textContent = "0";
+            elements.nextLevelBtn.innerHTML =
+              'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
+            initLevel();
+          }
+          saveProgress();
+        });
 
-      elements.soundBtn.addEventListener("click", async () => {
-        await ensureAudio();
-        gameState.soundEnabled = !gameState.soundEnabled;
-        elements.soundBtn.setAttribute(
-          "aria-pressed",
-          String(gameState.soundEnabled)
-        );
-        const icon = elements.soundBtn.querySelector("i");
-        if (gameState.soundEnabled) {
-          icon.className = "fas fa-volume-high text-xl text-orange-600";
-          sounds.click();
-        } else {
-          icon.className = "fas fa-volume-xmark text-xl text-orange-600";
-          window.speechSynthesis.cancel(); // Вимкнути поточні репліки
-        }
-      });
+        elements.retryBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.errorModal.classList.add("hidden");
+          initLevel();
+        });
 
-      elements.fullscreenBtn.addEventListener("click", () => {
-        toggleFullScreen();
-      });
-      document.addEventListener("fullscreenchange", updateFullscreenIcon);
-      
-      // ЗМІНА v7: Слухачі туторіалу та батьківського режиму
-      elements.startTutorial.addEventListener("click", () => {
+        elements.closeErrBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.errorModal.classList.add("hidden");
+          const level = LEVELS[gameState.currentLevel];
+          updateCharacterPosition(level.start, true);
+          gameState.currentPos = [...level.start];
+          highlightNearObstacles(level.start, level);
+        });
+
+        elements.soundBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          gameState.soundEnabled = !gameState.soundEnabled;
+          elements.soundBtn.setAttribute(
+            "aria-pressed",
+            String(gameState.soundEnabled)
+          );
+          const icon = elements.soundBtn.querySelector("i");
+          if (gameState.soundEnabled) {
+            icon.className = "fas fa-volume-high text-xl text-orange-600";
+            sounds.click();
+          } else {
+            icon.className = "fas fa-volume-xmark text-xl text-orange-600";
+            window.speechSynthesis.cancel();
+          }
+        });
+
+        elements.fullscreenBtn.addEventListener("click", () => {
+          toggleFullScreen();
+        });
+        document.addEventListener("fullscreenchange", updateFullscreenIcon);
+
+        elements.startTutorial.addEventListener("click", () => {
           elements.tutorialOverlay.style.display = 'none';
-          ensureAudio(); // Активувати аудіо при першій взаємодії
-      });
-      
-      elements.parentBtn.addEventListener('click', () => {
-          // Оновити статистику перед показом
+          ensureAudio();
+        });
+        
+        elements.parentBtn.addEventListener('click', () => {
           elements.parentLevels.textContent = `${gameState.currentLevel}/${TOTAL_LEVELS_COUNT}`;
           elements.parentGems.textContent = gameState.totalGems;
-          checkSessionTime(); // Оновити таймер
+          checkSessionTime();
           elements.parentModal.classList.remove('hidden');
-      });
-      
-      elements.closeParentModal.addEventListener('click', () => {
+        });
+        
+        elements.closeParentModal.addEventListener('click', () => {
           elements.parentModal.classList.add('hidden');
-      });
+        });
 
-      // Keyboard support
-      document.addEventListener("keydown", (e) => {
-        if (gameState.isExecuting) return;
-        if (
-          !elements.winModal.classList.contains("hidden") ||
-          !elements.errorModal.classList.contains("hidden")
-        )
-          return;
+        // Keyboard support
+        document.addEventListener("keydown", (e) => {
+          if (gameState.isExecuting) return;
+          if (
+            !elements.winModal.classList.contains("hidden") ||
+            !elements.errorModal.classList.contains("hidden")
+          )
+            return;
 
-        switch (e.key) {
-          case "ArrowUp": e.preventDefault(); addCommand("up"); break;
-          case "ArrowDown": e.preventDefault(); addCommand("down"); break;
-          case "ArrowLeft": e.preventDefault(); addCommand("left"); break;
-          case "ArrowRight": e.preventDefault(); addCommand("right"); break;
-          case "Enter": e.preventDefault(); executeCommands(); break;
-          case "Escape":
-          case "Backspace": e.preventDefault(); clearCommands(); break;
-        }
-      });
+          switch (e.key) {
+            case "ArrowUp": e.preventDefault(); addCommand("up"); break;
+            case "ArrowDown": e.preventDefault(); addCommand("down"); break;
+            case "ArrowLeft": e.preventDefault(); addCommand("left"); break;
+            case "ArrowRight": e.preventDefault(); addCommand("right"); break;
+            case "Enter": e.preventDefault(); executeCommands(); break;
+            case "Escape":
+            case "Backspace": e.preventDefault(); clearCommands(); break;
+          }
+        });
 
-      // Responsive reflow
-      let resizeTimeout;
-      window.addEventListener("resize", () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          const level = LEVELS[gameState.currentLevel];
-          renderGrid(level);
-          updateCharacterPosition(gameState.currentPos || level.start, true);
-        }, 250);
-      });
+        // Responsive reflow
+        let resizeTimeout;
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            const level = LEVELS[gameState.currentLevel];
+            renderGrid(level);
+            updateCharacterPosition(gameState.currentPos || level.start, true);
+          }, 250);
+        });
 
-      // ===== Initialize Game =====
-      
-      // ЗМІНА v7: Перевірка, чи туторіал вже бачили
-      if (localStorage.getItem('firefighterProgress')) {
+        // ===== Initialize Game =====
+        if (localStorage.getItem('firefighterProgress')) {
           elements.tutorialOverlay.style.display = 'none';
-      }
-      
-      loadProgress(); // Завантажити прогрес
-      initLevel();
-      addExtraButtons(); // Додати кнопки "Підказка" та "Відміна"
-      setInterval(checkSessionTime, 2 * 60 * 1000); // Запустити таймер сесії
+        }
+        
+        loadProgress();
+        initLevel();
+        addExtraButtons();
+        setInterval(checkSessionTime, 2 * 60 * 1000);
+
+      })(); // Кінець IIFE
     </script>
   </body>
 </html>
