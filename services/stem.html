@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Пожежник і Вогонь</title>
+    <!-- ЗМІНЕНО: Назва гри оновлена -->
+    <title>Пожежник 101</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
@@ -18,6 +19,9 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, sans-serif;
         touch-action: manipulation;
+        /* ДОДАНО: Запобігаємо прокрутці, щоб імітувати застосунок */
+        overflow: hidden;
+        height: 100vh;
       }
       .grid-cell {
         aspect-ratio: 1;
@@ -296,17 +300,14 @@
       }
       @keyframes float-achievement {
         0% {
-          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
           transform: translateY(20px) scale(0.8) translateX(-50%);
           opacity: 0;
         }
         50% {
-          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
           transform: translateY(0) scale(1.08) translateX(-50%);
           opacity: 1;
         }
         100% {
-          /* ВИПРАВЛЕННЯ: Додано translateX(-50%) для центрування */
           transform: translateY(0) scale(1) translateX(-50%);
           opacity: 1;
         }
@@ -339,19 +340,6 @@
       }
       .pulse-glow {
         animation: pulse-glow 2s infinite;
-      }
-      .hint-bubble {
-        animation: bounce 2s infinite;
-        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-      }
-      @keyframes bounce {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-6px);
-        }
       }
       .fire-glow {
         animation: fire-pulse 1.5s infinite;
@@ -420,19 +408,47 @@
   <body
     class="bg-gradient-to-br from-red-200 via-orange-200 to-yellow-200 min-h-screen p-2 sm:p-4"
   >
-    <div class="max-w-7xl mx-auto">
+    <!-- ЗМІНЕНО: Структура тіла для кращого прилягання -->
+    <div
+      class="max-w-7xl mx-auto h-full flex flex-col"
+      aria-label="Основний контейнер гри"
+    >
       <!-- Header -->
       <header
-        class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300"
+        class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300 flex-shrink-0"
       >
-        <div class="flex justify-between items-start mb-3">
+        <!-- ЗМІНЕНО: Верхній рядок тепер містить назву, рівень, очки та кнопки -->
+        <div
+          class="flex justify-between items-center mb-3 gap-3 sm:gap-6"
+          role="status"
+          aria-live="polite"
+        >
           <h1
-            class="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent"
+            class="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent flex-shrink-0"
           >
             <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>
-            Пожежник і Вогонь
+            <!-- ЗМІНЕНО: Назва гри -->
+            Пожежник 101
           </h1>
-          <div class="flex items-center gap-2 sm:gap-3">
+
+          <!-- ДОДАНО: Контейнер для Рівня та Очок (росте, щоб зайняти місце) -->
+          <div
+            class="flex items-center gap-3 sm:gap-5 text-lg sm:text-xl md:text-2xl flex-grow justify-center"
+          >
+            <div class="font-bold text-orange-600">
+              Рівень: <span id="levelNum">1</span>/<span id="totalLevels"
+                >8</span
+              >
+            </div>
+            <div
+              class="font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent"
+            >
+              <i class="fas fa-fire" aria-hidden="true"></i>
+              <span id="gemsCount">0</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               id="fullscreenBtn"
               class="bg-gradient-to-r from-orange-200 to-red-200 hover:from-orange-300 hover:to-red-300 px-3 py-2 rounded-xl transition"
@@ -461,43 +477,20 @@
 
         <!-- Progress Bar -->
         <div
-          class="bg-gray-200 rounded-full h-4 mb-3 overflow-hidden border-2 border-orange-300"
+          class="bg-gray-200 rounded-full h-4 overflow-hidden border-2 border-orange-300"
           aria-label="Прогрес рівнів"
         >
           <div id="progressBar" class="progress-bar" style="width: 0%"></div>
         </div>
 
-        <div
-          class="flex justify-between items-center text-lg sm:text-xl md:text-2xl"
-          role="status"
-          aria-live="polite"
-        >
-          <div class="font-bold text-orange-600">
-            Рівень: <span id="levelNum">1</span>/<span id="totalLevels"
-              >8</span
-            >
-          </div>
-          <div
-            class="font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent"
-          >
-            <i class="fas fa-fire" aria-hidden="true"></i>
-            <span id="gemsCount">0</span>
-          </div>
-        </div>
-
-        <!-- Hint bubble -->
-        <div
-          id="hintBubble"
-          class="hidden mt-3 bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-400 rounded-xl p-3 text-center hint-bubble"
-        >
-          <p class="text-lg sm:text-xl font-bold text-orange-700">
-            <i class="fas fa-lightbulb" aria-hidden="true"></i>
-            <span id="hintText"></span>
-          </p>
-        </div>
+        <!-- ВИДАЛЕНО: Рядок з рівнем та очками (перенесено нагору) -->
+        <!-- ВИДАЛЕНО: Підказка (#hintBubble) (перенесено у модальне вікно) -->
       </header>
 
-      <main class="flex flex-col md:flex-row gap-3 sm:gap-6">
+      <!-- ЗМІНЕНО: 'min-h-0' додано для правильного flex-розрахунку в Safari -->
+      <main
+        class="flex flex-col md:flex-row gap-3 sm:gap-6 flex-grow min-h-0"
+      >
         <!-- Колонка кнопок-стрілок. -->
         <div
           id="arrowControls"
@@ -534,14 +527,18 @@
         </div>
 
         <!-- Контейнер для ігрового поля + слотів. -->
-        <div class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 md:order-none">
+        <!-- ЗМІНЕНО: 'min-h-0' додано для правильного flex-розрахунку в Safari -->
+        <div
+          class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 md:order-none min-h-0"
+        >
           <!-- Ігрове поле. -->
           <section
             class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300 flex-grow"
             aria-label="Ігрове поле"
           >
+            <!-- ЗМІНЕНО: Видалено 'min-h-[300px] md:min-h-[420px]', щоб панель слотів не виштовхувалась -->
             <div
-              class="flex-1 flex justify-center items-center min-h-[300px] md:min-h-[420px]"
+              class="flex-1 flex justify-center items-center"
             >
               <div
                 id="gameGrid"
@@ -558,30 +555,27 @@
             class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col md:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
           >
             <!-- Кнопки 'Гасити' та 'Очистити' -->
-            <!-- ВИПРАВЛЕННЯ: 'grid-cols-2' замінено на 'grid-cols-[1fr_auto]', щоб друга колонка була вузькою -->
-            <div class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0" id="mainControls">
+            <div
+              class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0"
+              id="mainControls"
+            >
               <button
                 id="runBtn"
                 class="bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              > <!-- ВИПРАВЛЕННЯ: 'flex-1' видалено -->
+              >
                 <i class="fas fa-water" aria-hidden="true"></i> Гасити!
               </button>
               <button
                 id="clearBtn"
                 class="bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
-              > <!-- ВИПРАВЛЕННЯ: 'flex-1' видалено -->
+              >
                 <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
               </button>
             </div>
 
             <!-- Контейнер для слотів -->
-            <div
-              class="flex-1 min-w-0 w-full sm:w-auto py-1"
-            >
-              <div
-                id="commandSlots"
-                aria-label="Слоти команд"
-              ></div>
+            <div class="flex-1 min-w-0 w-full sm:w-auto py-1">
+              <div id="commandSlots" aria-label="Слоти команд"></div>
             </div>
           </div>
         </div>
@@ -651,6 +645,35 @@
         </div>
       </div>
 
+      <!-- ДОДАНО: Модальне вікно для підказки -->
+      <div
+        id="hintModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-orange-100 to-yellow-100 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-4 border-orange-400 shadow-2xl"
+        >
+          <div class="text-6xl mb-4">💡</div>
+          <h2
+            class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent mb-4"
+          >
+            Підказка!
+          </h2>
+          <p
+            class="text-xl sm:text-2xl mb-6 font-bold text-orange-700"
+            id="hintModalText"
+          ></p>
+          <button
+            id="closeHintBtn"
+            class="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-lg w-full"
+          >
+            Зрозуміло!
+          </button>
+        </div>
+      </div>
+
       <!-- Achievement toast -->
       <div
         id="achievementToast"
@@ -667,10 +690,15 @@
     </div>
 
     <!-- Туторіал -->
-    <div id="tutorialOverlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+    <div
+      id="tutorialOverlay"
+      class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
+    >
       <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md text-center">
         <div class="text-7xl mb-4 animate-bounce">👨‍🚒</div>
-        <h2 class="text-3xl font-bold text-orange-600 mb-4">Привіт, юний пожежнику!</h2>
+        <h2 class="text-3xl font-bold text-orange-600 mb-4">
+          Привіт, юний пожежнику!
+        </h2>
         <p class="text-xl mb-6">Допоможи мені загасити вогонь! 🔥</p>
 
         <div class="space-y-4">
@@ -685,18 +713,27 @@
           </div>
         </div>
 
-        <button id="startTutorial" class="mt-6 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-8 rounded-xl text-2xl w-full pulse-glow">
+        <button
+          id="startTutorial"
+          class="mt-6 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-8 rounded-xl text-2xl w-full pulse-glow"
+        >
           Почати! 🚒
         </button>
       </div>
     </div>
 
     <!-- Батьківський режим -->
-    <button id="parentBtn" class="fixed bottom-4 right-4 bg-gray-300 text-gray-700 p-3 rounded-full z-50 shadow-lg">
+    <button
+      id="parentBtn"
+      class="fixed bottom-4 right-4 bg-gray-300 text-gray-700 p-3 rounded-full z-50 shadow-lg"
+    >
       <i class="fas fa-user-tie"></i>
     </button>
 
-    <div id="parentModal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+    <div
+      id="parentModal"
+      class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
+    >
       <div class="bg-white rounded-3xl p-6 max-w-lg w-full">
         <h2 class="text-2xl font-bold mb-4">📊 Прогрес дитини</h2>
 
@@ -724,7 +761,10 @@
           </ul>
         </div>
 
-        <button id="closeParentModal" class="mt-4 bg-orange-500 text-white py-3 px-6 rounded-xl w-full">
+        <button
+          id="closeParentModal"
+          class="mt-4 bg-orange-500 text-white py-3 px-6 rounded-xl w-full"
+        >
           Закрити
         </button>
       </div>
@@ -755,69 +795,162 @@
         const LEVELS = [
           // 1. Пряма лінія
           {
-            size: 3, start: [1, 0], obstacles: [], gems: [[1, 1], [1, 2]],
-            maxCommands: 2, hint: "Натисни стрілку 'Вправо' ➡️ двічі!",
+            size: 3,
+            start: [1, 0],
+            obstacles: [],
+            gems: [
+              [1, 1],
+              [1, 2],
+            ],
+            maxCommands: 2,
+            hint: "Натисни стрілку 'Вправо' ➡️ двічі!",
             optimizeGrid: false,
           },
           // 2. Пряма лінія
           {
-            size: 4, start: [0, 0], obstacles: [], gems: [[1, 0], [2, 0], [3, 0]],
-            maxCommands: 3, hint: "Натисни стрілку 'Вниз' ⬇️ тричі!",
+            size: 4,
+            start: [0, 0],
+            obstacles: [],
+            gems: [
+              [1, 0],
+              [2, 0],
+              [3, 0],
+            ],
+            maxCommands: 3,
+            hint: "Натисни стрілку 'Вниз' ⬇️ тричі!",
             optimizeGrid: false,
           },
           // 3. Простий поворот
           {
-            size: 3, start: [0, 0], obstacles: [], gems: [[0, 1], [0, 2], [1, 2]],
-            maxCommands: 3, hint: "Проведи пожежника до вогню!",
+            size: 3,
+            start: [0, 0],
+            obstacles: [],
+            gems: [
+              [0, 1],
+              [0, 2],
+              [1, 2],
+            ],
+            maxCommands: 3,
+            hint: "Проведи пожежника до вогню!",
             optimizeGrid: false,
           },
           // 4. Перша перешкода
           {
-            size: 4, start: [0,0], obstacles: [[1,0]], gems: [[0,1], [2,1]],
-            maxCommands: 5, optimizeGrid: true,
+            size: 4,
+            start: [0, 0],
+            obstacles: [[1, 0]],
+            gems: [
+              [0, 1],
+              [2, 1],
+            ],
+            maxCommands: 5,
+            optimizeGrid: true,
+            hint: "Ой! Треба обійти воду! 🌊", // ДОДАНО: Підказка для 4 рівня
           },
           // 5. Ще одна перешкода
           {
-            size: 4, start: [0, 0], obstacles: [[1, 1]], gems: [[0, 2], [2, 0], [2, 2]],
-            maxCommands: 6, hint: "Обережно, вода! 🌊 Треба обійти.",
+            size: 4,
+            start: [0, 0],
+            obstacles: [[1, 1]],
+            gems: [
+              [0, 2],
+              [2, 0],
+              [2, 2],
+            ],
+            maxCommands: 6,
+            hint: "Обережно, вода! 🌊 Треба обійти.",
             optimizeGrid: true,
           },
           // 6. Дві перешкоди, 5x5
           {
-            size: 5, start: [2, 0], obstacles: [[2, 1], [2, 2]], gems: [[1, 1], [3, 1], [2, 3]],
-            maxCommands: 9, optimizeGrid: true,
+            size: 5,
+            start: [2, 0],
+            obstacles: [
+              [2, 1],
+              [2, 2],
+            ],
+            gems: [
+              [1, 1],
+              [3, 1],
+              [2, 3],
+            ],
+            maxCommands: 9,
+            optimizeGrid: true,
+            hint: "Знайди шлях навколо перешкод!", // ДОДАНО: Підказка
           },
           // 7. Простий лабіринт 5x5
           {
-            size: 5, start: [0, 0], obstacles: [[1, 1], [2, 2], [3, 3]], gems: [[0, 2], [2, 0], [4, 4]],
-            maxCommands: 12, optimizeGrid: true,
+            size: 5,
+            start: [0, 0],
+            obstacles: [
+              [1, 1],
+              [2, 2],
+              [3, 3],
+            ],
+            gems: [
+              [0, 2],
+              [2, 0],
+              [4, 4],
+            ],
+            maxCommands: 12,
+            optimizeGrid: true,
+            hint: "Треба зібрати весь вогонь! 🔥", // ДОДАНО: Підказка
           },
           // 8. Фінальний рівень 5x5
-          // ВИПРАВЛЕННЯ: Зменшено кількість вогнів, щоб рівень був
-          // можливий для проходження з 10 слотами.
           {
-            size: 5, start: [0, 2], obstacles: [[1, 0], [1, 1], [1, 3], [1, 4], [3, 2]],
-            gems: [[4, 0], [4, 4]], // Було [[0, 0], [0, 4], [4, 0], [4, 4]]
-            maxCommands: 10, optimizeGrid: true,
+            size: 5,
+            start: [0, 2],
+            obstacles: [
+              [1, 0],
+              [1, 1],
+              [1, 3],
+              [1, 4],
+              [3, 2],
+            ],
+            gems: [
+              [4, 0],
+              [4, 4],
+            ],
+            maxCommands: 10,
+            optimizeGrid: true,
+            hint: "Складний виклик! Ти впораєшся! 💪", // ДОДАНО: Підказка
           },
         ];
 
         const TOTAL_LEVELS_COUNT = LEVELS.length;
 
         const ENCOURAGEMENTS = [
-          "Ти справжній герой! 🚒", "Вогонь погашено! 🔥", "Чудова робота, пожежнику! 👨‍🚒",
-          "Ти молодець! 💧", "Гасиш як профі! 💯", "Вогняний майстер! 🏆",
+          "Ти справжній герой! 🚒",
+          "Вогонь погашено! 🔥",
+          "Чудова робота, пожежнику! 👨‍🚒",
+          "Ти молодець! 💧",
+          "Гасиш як профі! 💯",
+          "Вогняний майстер! 🏆",
         ];
         const POSITIVE_ERRORS = [
-          "Майже вийшло! Спробуй ще раз! 💪", "Ти на правильному шляху! Продовжуй! 🌟",
-          "Чудова спроба! Може, інший маршрут? 🤔", "Так близько! Ти впораєшся! ⭐",
+          "Майже вийшло! Спробуй ще раз! 💪",
+          "Ти на правильному шляху! Продовжуй! 🌟",
+          "Чудова спроба! Може, інший маршрут? 🤔",
+          "Так близько! Ти впораєшся! ⭐",
         ];
 
         // ===== Achievements =====
         const ACHIEVEMENTS = {
-          firstGems: { icon: "🔥", title: "Перші полум'я!", text: "Ти загасив свій перший вогонь!" },
-          halfwayDone: { icon: "👨‍🚒", title: "На півдорозі!", text: "Половина викликів позаду!" },
-          master: { icon: "🌟", title: "Майстер пожежогасіння!", text: "Ти пройшов всі рівні, герой!" }
+          firstGems: {
+            icon: "🔥",
+            title: "Перші полум'я!",
+            text: "Ти загасив свій перший вогонь!",
+          },
+          halfwayDone: {
+            icon: "👨‍🚒",
+            title: "На півдорозі!",
+            text: "Половина викликів позаду!",
+          },
+          master: {
+            icon: "🌟",
+            title: "Майстер пожежогасіння!",
+            text: "Ти пройшов всі рівні, герой!",
+          },
         };
 
         // ===== State =====
@@ -846,7 +979,9 @@
             if (audioCtx && audioCtx.state === "suspended") {
               await audioCtx.resume();
             }
-          } catch (e) { /* ignore */ }
+          } catch (e) {
+            /* ignore */
+          }
         };
 
         // ===== DOM =====
@@ -858,6 +993,10 @@
           clearBtn: el("clearBtn"),
           winModal: el("winModal"),
           errorModal: el("errorModal"),
+          // ДОДАНО: Елементи модального вікна підказки
+          hintModal: el("hintModal"),
+          hintModalText: el("hintModalText"),
+          closeHintBtn: el("closeHintBtn"),
           nextLevelBtn: el("nextLevelBtn"),
           retryBtn: el("retryBtn"),
           closeErrBtn: el("closeErrBtn"),
@@ -872,8 +1011,7 @@
           rightBtn: el("rightBtn"),
           progressBar: el("progressBar"),
           encouragement: el("encouragement"),
-          hintBubble: el("hintBubble"),
-          hintText: el("hintText"),
+          // ВИДАЛЕНО: hintBubble, hintText
           soundBtn: el("soundBtn"),
           fullscreenBtn: el("fullscreenBtn"),
           achievementToast: el("achievementToast"),
@@ -985,19 +1123,21 @@
           cheer: () => {
             utils.playSound(523, 100);
             setTimeout(() => utils.playSound(659, 150), 100);
-          }
+          },
         };
 
         function vibrateDevice(pattern = [50]) {
-          if ('vibrate' in navigator) {
+          if ("vibrate" in navigator) {
             navigator.vibrate(pattern);
           }
         }
 
         function speak(text) {
-          if ('speechSynthesis' in window && gameState.soundEnabled) {
+          if ("speechSynthesis" in window && gameState.soundEnabled) {
+            // Зупиняємо попередні репліки, щоб уникнути накладання
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'uk-UA';
+            utterance.lang = "uk-UA";
             utterance.rate = 0.9;
             utterance.pitch = 1.2;
             window.speechSynthesis.speak(utterance);
@@ -1006,18 +1146,23 @@
 
         function saveProgress() {
           try {
-            localStorage.setItem('firefighterProgress', JSON.stringify({
-              level: gameState.currentLevel,
-              gems: gameState.totalGems,
-              achievements: Array.from(gameState.shownAchievements),
-              timestamp: Date.now()
-            }));
-          } catch(e) { console.warn("Could not save progress.", e); }
-        };
+            localStorage.setItem(
+              "firefighterProgress",
+              JSON.stringify({
+                level: gameState.currentLevel,
+                gems: gameState.totalGems,
+                achievements: Array.from(gameState.shownAchievements),
+                timestamp: Date.now(),
+              })
+            );
+          } catch (e) {
+            console.warn("Could not save progress.", e);
+          }
+        }
 
         function loadProgress() {
           try {
-            const saved = localStorage.getItem('firefighterProgress');
+            const saved = localStorage.getItem("firefighterProgress");
             if (saved) {
               const data = JSON.parse(saved);
               if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
@@ -1027,27 +1172,35 @@
                 elements.gemsCount.textContent = gameState.totalGems;
               }
             }
-          } catch(e) { console.warn("Could not load progress.", e); }
-        };
+          } catch (e) {
+            console.warn("Could not load progress.", e);
+          }
+        }
 
         // ===== Achievements =====
         function checkAchievements() {
           const gems = gameState.totalGems;
           const level = gameState.currentLevel;
 
-          if (gems >= 1 && !gameState.shownAchievements.has('firstGems')) {
+          if (gems >= 1 && !gameState.shownAchievements.has("firstGems")) {
             showAchievement(ACHIEVEMENTS.firstGems);
-            gameState.shownAchievements.add('firstGems');
+            gameState.shownAchievements.add("firstGems");
           }
 
-          if (level === Math.floor(TOTAL_LEVELS_COUNT / 2) && !gameState.shownAchievements.has('halfwayDone')) {
+          if (
+            level === Math.floor(TOTAL_LEVELS_COUNT / 2) &&
+            !gameState.shownAchievements.has("halfwayDone")
+          ) {
             showAchievement(ACHIEVEMENTS.halfwayDone);
-            gameState.shownAchievements.add('halfwayDone');
+            gameState.shownAchievements.add("halfwayDone");
           }
 
-          if (level === TOTAL_LEVELS_COUNT - 1 && !gameState.shownAchievements.has('master')) {
+          if (
+            level === TOTAL_LEVELS_COUNT - 1 &&
+            !gameState.shownAchievements.has("master")
+          ) {
             showAchievement(ACHIEVEMENTS.master);
-            gameState.shownAchievements.add('master');
+            gameState.shownAchievements.add("master");
           }
         }
 
@@ -1075,7 +1228,12 @@
           const container = elements.winConfetti;
           container.innerHTML = "";
           const colors = [
-            "#f59e0b", "#ef4444", "#f87171", "#fbbf24", "#f97316", "#dc2626",
+            "#f59e0b",
+            "#ef4444",
+            "#f87171",
+            "#fbbf24",
+            "#f97316",
+            "#dc2626",
           ];
 
           for (let i = 0; i < 40; i++) {
@@ -1119,9 +1277,9 @@
           const cell = getCellElement(pos);
           if (!cell) return;
 
-          const floater = document.createElement('div');
+          const floater = document.createElement("div");
           floater.textContent = emoji;
-          floater.className = 'floating-emoji text-4xl';
+          floater.className = "floating-emoji text-4xl";
           cell.appendChild(floater);
 
           setTimeout(() => floater.remove(), 1500);
@@ -1130,23 +1288,17 @@
         function celebrateSmallWin(cell) {
           sounds.cheer();
           createSparkles(cell);
-          showFloatingEmoji('🎉', gameState.currentPos);
+          showFloatingEmoji("🎉", gameState.currentPos);
         }
 
         // ===== Level Management =====
         function updateProgress() {
-          const progress = ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
+          const progress =
+            ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
           elements.progressBar.style.width = progress + "%";
         }
 
-        function showHint(level) {
-          if (level.hint && gameState.currentLevel < 3) {
-            elements.hintText.textContent = level.hint;
-            elements.hintBubble.classList.remove("hidden");
-          } else {
-            elements.hintBubble.classList.add("hidden");
-          }
-        }
+        // ВИДАЛЕНО: Функція showHint, оскільки підказка тепер у модальному вікні
 
         function optimizeGrid(level) {
           if (!level.optimizeGrid) {
@@ -1215,14 +1367,17 @@
           renderGrid(level);
           renderCommandSlots();
           updateProgress();
-          showHint(level);
+          // ВИДАЛЕНО: showHint(level);
           elements.runBtn.disabled = false;
           gameState.isExecuting = false;
 
           showNextStepHint();
-          if (level.obstacles.length > 0 && !localStorage.getItem('shownObstacleIntro')) {
+          if (
+            level.obstacles.length > 0 &&
+            !localStorage.getItem("shownObstacleIntro")
+          ) {
             showObstacleIntro();
-            localStorage.setItem('shownObstacleIntro', 'true');
+            localStorage.setItem("shownObstacleIntro", "true");
           }
         }
 
@@ -1288,8 +1443,8 @@
           const level = LEVELS[gameState.currentLevel];
           const wrap = elements.commandSlots;
           wrap.innerHTML = "";
-          // ВИПРАВЛЕННЯ: Додано 'flex' для горизонтального розташування слотів
-          wrap.className = "flex flex-row flex-wrap gap-2 justify-start items-center";
+          wrap.className =
+            "flex flex-row flex-wrap gap-2 justify-start items-center";
 
           for (let i = 0; i < level.maxCommands; i++) {
             const slot = document.createElement("div");
@@ -1315,16 +1470,21 @@
         }
 
         function showNextStepHint() {
-          document.querySelectorAll('.pulse-hint-animation').forEach(el => el.classList.remove('pulse-hint-animation'));
+          document
+            .querySelectorAll(".pulse-hint-animation")
+            .forEach((el) => el.classList.remove("pulse-hint-animation"));
 
           const level = LEVELS[gameState.currentLevel];
-          if (gameState.currentLevel < 2 && gameState.commands.every(c => c === null)) {
+          if (
+            gameState.currentLevel < 2 &&
+            gameState.commands.every((c) => c === null)
+          ) {
             const solution = findSimplestPath(level);
             if (solution && solution.length > 0) {
               const nextMove = solution[0];
               const button = elements[`${nextMove}Btn`];
               if (button) {
-                button.classList.add('pulse-hint-animation');
+                button.classList.add("pulse-hint-animation");
               }
             }
           }
@@ -1342,7 +1502,9 @@
             gameState.commands[firstEmpty] = direction;
             renderCommandSlots();
           }
-          document.querySelectorAll('.pulse-hint-animation').forEach(el => el.classList.remove('pulse-hint-animation'));
+          document
+            .querySelectorAll(".pulse-hint-animation")
+            .forEach((el) => el.classList.remove("pulse-hint-animation"));
         }
 
         // ===== Clear Commands =====
@@ -1370,10 +1532,15 @@
             .forEach((cell) => cell.classList.remove("near-obstacle"));
           const [r, c] = pos;
           const neighbors = [
-            [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1],
+            [r - 1, c],
+            [r + 1, c],
+            [r, c - 1],
+            [r, c + 1],
           ];
           for (const neighborPos of neighbors) {
-            if (level.obstacles.some((o) => utils.arraysEqual(o, neighborPos))) {
+            if (
+              level.obstacles.some((o) => utils.arraysEqual(o, neighborPos))
+            ) {
               const cell = getCellElement(neighborPos);
               if (cell) {
                 cell.classList.add("near-obstacle");
@@ -1460,11 +1627,14 @@
                 () => elements.gameGrid.classList.remove("grid-shaking"),
                 400
               );
-              const gridMap = gameState.optimizedGridMap || { rowMap: [], colMap: [] };
+              const gridMap = gameState.optimizedGridMap || {
+                rowMap: [],
+                colMap: [],
+              };
               const mappedRowIndex = gridMap.rowMap.indexOf(newPos[0]);
               const mappedColIndex = gridMap.colMap.indexOf(newPos[1]);
               const errorMsg =
-                (mappedRowIndex === -1 || mappedColIndex === -1)
+                mappedRowIndex === -1 || mappedColIndex === -1
                   ? "Пожежник вийшов за межі зони гасіння! 🚒"
                   : "Ой, пожежник не може пройти через воду! 🌊";
               showError(errorMsg, true);
@@ -1498,7 +1668,6 @@
             sounds.win();
             gameState.totalGems += collectedGems;
             elements.gemsCount.textContent = gameState.totalGems;
-            // checkAchievements(); // ВИДАЛЕНО: Перенесено, щоб уникнути накладання
             saveProgress();
             await utils.sleep(400);
             showWin(collectedGems);
@@ -1506,7 +1675,11 @@
             sounds.error();
             const leftGems = remainingGems.length;
             const fireWord =
-              leftGems === 1 ? "осередок" : (leftGems < 5 ? "осередки" : "осередків");
+              leftGems === 1
+                ? "осередок"
+                : leftGems < 5
+                ? "осередки"
+                : "осередків";
             showError(`Залишилось ще ${leftGems} ${fireWord} вогню! 🔥`, true);
           }
 
@@ -1521,7 +1694,11 @@
             utils.randomChoice(ENCOURAGEMENTS);
 
           const fireWord =
-            firesExtinguished === 1 ? "осередок" : (firesExtinguished < 5 ? "осередки" : "осередків");
+            firesExtinguished === 1
+              ? "осередок"
+              : firesExtinguished < 5
+              ? "осередки"
+              : "осередків";
           elements.winMessage.textContent = `Ти загасив ${firesExtinguished} ${fireWord}! 💪 Безпека гарантована!`;
 
           if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
@@ -1551,10 +1728,10 @@
         }
 
         // ===== REFACTORED: showObstacleIntro =====
-        // Використовує addEventListener замість inline onclick
         function showObstacleIntro() {
-          const modal = document.createElement('div');
-          modal.className = "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
+          const modal = document.createElement("div");
+          modal.className =
+            "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
           modal.innerHTML = `
             <div class="bg-white rounded-3xl p-8 text-center max-w-md">
               <div class="text-8xl mb-4">🌊</div>
@@ -1567,10 +1744,9 @@
               </button>
             </div>
           `;
-          
-          // Додаємо слухача
-          modal.querySelector('button').addEventListener('click', () => {
-              modal.remove();
+
+          modal.querySelector("button").addEventListener("click", () => {
+            modal.remove();
           });
 
           document.body.appendChild(modal);
@@ -1605,7 +1781,10 @@
         function checkSessionTime() {
           const elapsed = Date.now() - sessionStartTime;
 
-          if (elapsed > MAX_SESSION_TIME && document.querySelectorAll('.break-reminder').length === 0) {
+          if (
+            elapsed > MAX_SESSION_TIME &&
+            document.querySelectorAll(".break-reminder").length === 0
+          ) {
             showBreakReminder();
           }
 
@@ -1613,11 +1792,10 @@
         }
 
         // ===== REFACTORED: showBreakReminder =====
-        // Використовує addEventListener для кнопок, щоб мати доступ до
-        // локальної змінної 'sessionStartTime'.
         function showBreakReminder() {
-          const modal = document.createElement('div');
-          modal.className = 'break-reminder fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4';
+          const modal = document.createElement("div");
+          modal.className =
+            "break-reminder fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4";
           modal.innerHTML = `
             <div class="bg-white rounded-3xl p-8 text-center max-w-md">
               <div class="text-8xl mb-4">⏰</div>
@@ -1633,15 +1811,18 @@
             </div>
           `;
 
-          // Додаємо слухачі
-          modal.querySelector('#breakPlayMoreBtn').addEventListener('click', () => {
+          modal
+            .querySelector("#breakPlayMoreBtn")
+            .addEventListener("click", () => {
               modal.remove();
               sessionStartTime = Date.now(); // Скинути таймер
-          });
-          
-          modal.querySelector('#breakEndGameBtn').addEventListener('click', () => {
+            });
+
+          modal
+            .querySelector("#breakEndGameBtn")
+            .addEventListener("click", () => {
               location.reload();
-          });
+            });
 
           document.body.appendChild(modal);
           speak("Час відпочити! Ти чудово попрацював!");
@@ -1651,7 +1832,7 @@
           const queue = [[level.start, []]]; // [position, path_array]
           const visited = new Set([level.start.toString()]);
           const target = level.gems[0];
-          
+
           if (!target) return [];
 
           while (queue.length > 0) {
@@ -1664,8 +1845,11 @@
             for (const direction in DIRECTION_VECTORS) {
               const [dr, dc] = DIRECTION_VECTORS[direction];
               const newPos = [currentPos[0] + dr, currentPos[1] + dc];
-              
-              if (utils.isValidPosition(newPos, level) && !visited.has(newPos.toString())) {
+
+              if (
+                utils.isValidPosition(newPos, level) &&
+                !visited.has(newPos.toString())
+              ) {
                 visited.add(newPos.toString());
                 queue.push([newPos, [...path, direction]]);
               }
@@ -1675,14 +1859,29 @@
         }
 
         function addExtraButtons() {
-          const helpBtn = document.createElement('button');
+          const helpBtn = document.createElement("button");
           helpBtn.innerHTML = '<i class="fas fa-lightbulb"></i>';
-          // ВИПРАВЛЕННЯ: Зменшено горизонтальний padding (було p-3 sm:py-4 sm:px-6)
-          helpBtn.className = 'bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
-          helpBtn.title = 'Підказка';
-          
-          helpBtn.addEventListener('click', async () => {
+          helpBtn.className =
+            "bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
+          helpBtn.title = "Підказка";
+
+          // ЗМІНЕНО: Логіка кнопки підказки
+          helpBtn.addEventListener("click", async () => {
             vibrateDevice([50, 50, 50]);
+            await ensureAudio();
+            sounds.click();
+
+            const level = LEVELS[gameState.currentLevel];
+            // Використовуємо підказку з рівня або стандартну
+            const hint =
+              level.hint || "Спробуй спланувати маршрут до вогню! 🚒";
+
+            // Заповнюємо та показуємо модальне вікно
+            elements.hintModalText.textContent = hint;
+            elements.hintModal.classList.remove("hidden");
+            speak(hint); // Озвучуємо підказку
+
+            // Ця логіка показує перші 3 кроки рішення
             const solution = findSimplestPath(LEVELS[gameState.currentLevel]);
             if (solution.length > 0) {
               for (let i = 0; i < Math.min(3, solution.length); i++) {
@@ -1690,21 +1889,23 @@
                   gameState.commands[i] = solution[i];
                   renderCommandSlots();
                   const btn = elements[`${solution[i]}Btn`];
-                  btn.classList.add('pulse-hint-animation');
-                  await utils.sleep(500);
-                  btn.classList.remove('pulse-hint-animation');
+                  if (btn) {
+                    btn.classList.add("pulse-hint-animation");
+                    await utils.sleep(500);
+                    btn.classList.remove("pulse-hint-animation");
+                  }
                 }
               }
             }
           });
-          
-          const undoBtn = document.createElement('button');
+
+          const undoBtn = document.createElement("button");
           undoBtn.innerHTML = '<i class="fas fa-undo"></i>';
-          // ВИПРАВЛЕННЯ: Зменшено горизонтальний padding (було p-3 sm:py-4 sm:px-6)
-          undoBtn.className = 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg';
-          undoBtn.title = 'Відмінити останню команду';
-          
-          undoBtn.addEventListener('click', () => {
+          undoBtn.className =
+            "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
+          undoBtn.title = "Відмінити останню команду";
+
+          undoBtn.addEventListener("click", () => {
             for (let i = gameState.commands.length - 1; i >= 0; i--) {
               if (gameState.commands[i] !== null) {
                 gameState.commands[i] = null;
@@ -1714,24 +1915,36 @@
               }
             }
           });
-          
+
           const panel = elements.mainControls;
           panel.insertBefore(helpBtn, panel.children[1]);
           panel.appendChild(undoBtn);
         }
 
         // ===== Event Listeners =====
-        elements.upBtn.addEventListener("click", () => { addCommand("up"); });
-        elements.downBtn.addEventListener("click", () => { addCommand("down"); });
-        elements.leftBtn.addEventListener("click", () => { addCommand("left"); });
-        elements.rightBtn.addEventListener("click", () => { addCommand("right"); });
-        elements.clearBtn.addEventListener("click", () => { clearCommands(); });
-        elements.runBtn.addEventListener("click", () => { executeCommands(); });
+        elements.upBtn.addEventListener("click", () => {
+          addCommand("up");
+        });
+        elements.downBtn.addEventListener("click", () => {
+          addCommand("down");
+        });
+        elements.leftBtn.addEventListener("click", () => {
+          addCommand("left");
+        });
+        elements.rightBtn.addEventListener("click", () => {
+          addCommand("right");
+        });
+        elements.clearBtn.addEventListener("click", () => {
+          clearCommands();
+        });
+        elements.runBtn.addEventListener("click", () => {
+          executeCommands();
+        });
 
         elements.nextLevelBtn.addEventListener("click", async () => {
           await ensureAudio();
           elements.winModal.classList.add("hidden");
-          checkAchievements(); // ДОДАНО: Повідомлення про досягнення з'явиться ПІСЛЯ закриття вікна
+          checkAchievements();
           if (gameState.currentLevel < TOTAL_LEVELS_COUNT - 1) {
             gameState.currentLevel++;
             initLevel();
@@ -1762,6 +1975,13 @@
           highlightNearObstacles(level.start, level);
         });
 
+        // ДОДАНО: Слухач для кнопки закриття модального вікна підказки
+        elements.closeHintBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          sounds.click();
+          elements.hintModal.classList.add("hidden");
+        });
+
         elements.soundBtn.addEventListener("click", async () => {
           await ensureAudio();
           gameState.soundEnabled = !gameState.soundEnabled;
@@ -1785,38 +2005,58 @@
         document.addEventListener("fullscreenchange", updateFullscreenIcon);
 
         elements.startTutorial.addEventListener("click", () => {
-          elements.tutorialOverlay.style.display = 'none';
+          elements.tutorialOverlay.style.display = "none";
           ensureAudio();
         });
-        
-        elements.parentBtn.addEventListener('click', () => {
+
+        elements.parentBtn.addEventListener("click", () => {
           elements.parentLevels.textContent = `${gameState.currentLevel}/${TOTAL_LEVELS_COUNT}`;
           elements.parentGems.textContent = gameState.totalGems;
           checkSessionTime();
-          elements.parentModal.classList.remove('hidden');
+          elements.parentModal.classList.remove("hidden");
         });
-        
-        elements.closeParentModal.addEventListener('click', () => {
-          elements.parentModal.classList.add('hidden');
+
+        elements.closeParentModal.addEventListener("click", () => {
+          elements.parentModal.classList.add("hidden");
         });
 
         // Keyboard support
         document.addEventListener("keydown", (e) => {
           if (gameState.isExecuting) return;
+          // ЗМІНЕНО: Додано перевірку на модальне вікно підказки
           if (
             !elements.winModal.classList.contains("hidden") ||
-            !elements.errorModal.classList.contains("hidden")
+            !elements.errorModal.classList.contains("hidden") ||
+            !elements.hintModal.classList.contains("hidden")
           )
             return;
 
           switch (e.key) {
-            case "ArrowUp": e.preventDefault(); addCommand("up"); break;
-            case "ArrowDown": e.preventDefault(); addCommand("down"); break;
-            case "ArrowLeft": e.preventDefault(); addCommand("left"); break;
-            case "ArrowRight": e.preventDefault(); addCommand("right"); break;
-            case "Enter": e.preventDefault(); executeCommands(); break;
+            case "ArrowUp":
+              e.preventDefault();
+              addCommand("up");
+              break;
+            case "ArrowDown":
+              e.preventDefault();
+              addCommand("down");
+              break;
+            case "ArrowLeft":
+              e.preventDefault();
+              addCommand("left");
+              break;
+            case "ArrowRight":
+              e.preventDefault();
+              addCommand("right");
+              break;
+            case "Enter":
+              e.preventDefault();
+              executeCommands();
+              break;
             case "Escape":
-            case "Backspace": e.preventDefault(); clearCommands(); break;
+            case "Backspace":
+              e.preventDefault();
+              clearCommands();
+              break;
           }
         });
 
@@ -1832,15 +2072,14 @@
         });
 
         // ===== Initialize Game =====
-        if (localStorage.getItem('firefighterProgress')) {
-          elements.tutorialOverlay.style.display = 'none';
+        if (localStorage.getItem("firefighterProgress")) {
+          elements.tutorialOverlay.style.display = "none";
         }
-        
+
         loadProgress();
         initLevel();
         addExtraButtons();
         setInterval(checkSessionTime, 2 * 60 * 1000);
-
       })(); // Кінець IIFE
     </script>
   </body>
