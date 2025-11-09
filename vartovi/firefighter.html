@@ -1,0 +1,2287 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Пожежник 101</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --cell-gap-sm: 2px;
+        --cell-gap-lg: 4px;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        /* Важливо для відчуття 'застосунку': вимикаємо виділення та дивні дотики */
+        touch-action: manipulation;
+        overflow: hidden;
+        height: 100vh;
+        /* Запобігаємо виділенню тексту при швидких натисканнях */
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
+      .grid-cell {
+        aspect-ratio: 1;
+        border: 2px solid #fdba74;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      @media (max-width: 640px) {
+        .grid-cell {
+          border-width: 1px;
+        }
+      }
+
+      .command-slot {
+        aspect-ratio: 1;
+        border: 4px dashed #f97316;
+        transition: all 0.2s;
+        height: 60px;
+        flex-shrink: 0;
+        width: auto;
+      }
+      .command-slot.filled {
+        border-style: solid;
+        border-color: #ea580c;
+        background-color: #fff7ed;
+        /* ПОКРАЩЕННЯ UX: Прибираємо курсор 'pointer', оскільки видалення через клік вимкнено */
+        cursor: default;
+      }
+      @media (min-width: 640px) {
+        .command-slot {
+          height: 80px;
+        }
+      }
+      @media (min-width: 768px) {
+        #commandSlots {
+          gap: 0.75rem;
+        }
+      }
+
+      .arrow-btn {
+        min-width: 70px;
+        min-height: 70px;
+        aspect-ratio: 1;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: transform 0.15s;
+        user-select: none;
+      }
+      /* Ефект "натискання" для тач-пристроїв */
+      .arrow-btn:active {
+        transform: scale(1.08);
+      }
+      @media (min-width: 768px) {
+        .arrow-btn {
+          min-width: 90px;
+          min-height: 90px;
+          font-size: 2.5rem;
+        }
+      }
+
+      @keyframes firefighter-float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0);
+        }
+        50% {
+          transform: translateY(-8px) rotate(5deg);
+        }
+      }
+      .character {
+        animation: firefighter-float 2s infinite ease-in-out;
+        font-size: 3rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        transform-style: preserve-3d;
+      }
+      @media (min-width: 768px) {
+        .character {
+          font-size: 4rem;
+        }
+      }
+
+      @keyframes fire-extinguish {
+        0% {
+          transform: scale(1) rotate(0);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.5) rotate(180deg);
+          opacity: 0.7;
+        }
+        100% {
+          transform: scale(0.2) rotate(360deg);
+          opacity: 0;
+        }
+      }
+      .extinguishing {
+        animation: fire-extinguish 0.7s forwards;
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+      .shake {
+        animation: shake 0.5s;
+      }
+      @keyframes cell-sparkle {
+        0% {
+          transform: scale(1);
+          background-color: #fff7ed;
+          box-shadow: 0 0 0 rgba(234, 88, 12, 0);
+        }
+        50% {
+          transform: scale(1.05);
+          background-color: #ffedd5;
+          box-shadow: 0 0 20px rgba(234, 88, 12, 0.6);
+        }
+        100% {
+          transform: scale(1);
+          background-color: #fff7ed;
+          box-shadow: 0 0 0 rgba(234, 88, 12, 0);
+        }
+      }
+      .landing {
+        animation: cell-sparkle 0.4s ease-out;
+      }
+      @keyframes win-rainbow {
+        0% {
+          transform: scale(1) rotate(0);
+          filter: hue-rotate(0deg);
+        }
+        20% {
+          transform: scale(1.15) rotate(-8deg);
+          filter: hue-rotate(60deg);
+        }
+        40% {
+          transform: scale(1.15) rotate(8deg);
+          filter: hue-rotate(120deg);
+        }
+        60% {
+          transform: scale(1.15) rotate(-8deg);
+          filter: hue-rotate(180deg);
+        }
+        80% {
+          transform: scale(1.15) rotate(8deg);
+          filter: hue-rotate(240deg);
+        }
+        100% {
+          transform: scale(1) rotate(0);
+          filter: hue-rotate(360deg);
+        }
+      }
+      .win-pulse div {
+        animation: win-rainbow 1.5s ease-in-out;
+      }
+      @keyframes grid-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-6px);
+        }
+        50% {
+          transform: translateX(6px);
+        }
+        75% {
+          transform: translateX(-6px);
+        }
+      }
+      .grid-shaking {
+        animation: grid-shake 0.4s linear;
+      }
+      .sparkle-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .sparkle-bit {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: linear-gradient(45deg, #facc15, #ef4444);
+        border-radius: 50%;
+        animation: sparkle-fx 0.9s forwards;
+        opacity: 0;
+      }
+      @keyframes sparkle-fx {
+        0% {
+          opacity: 1;
+          transform: scale(0.5) translate(0, 0);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.5) var(--tw-translate);
+        }
+      }
+      .emoji-xs {
+        font-size: 1.75rem;
+      }
+      .emoji-sm {
+        font-size: 2.25rem;
+      }
+      @media (min-width: 768px) {
+        .emoji-md {
+          font-size: 3rem;
+        }
+        .emoji-lg {
+          font-size: 4rem;
+        }
+      }
+      .trail-dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444, #f97316);
+        opacity: 0.9;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: trail-fade 0.7s ease-out forwards;
+        box-shadow: 0 0 8px rgba(234, 88, 12, 0.6);
+      }
+      @keyframes trail-fade {
+        to {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.3);
+        }
+      }
+      .near-obstacle {
+        box-shadow: inset 0 0 0 3px rgba(239, 68, 68, 0.4);
+        animation: near-pulse 0.6s ease-out 1;
+      }
+      @keyframes near-pulse {
+        0% {
+          box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+        50% {
+          box-shadow: inset 0 0 0 6px rgba(239, 68, 68, 0.4);
+        }
+        100% {
+          box-shadow: inset 0 0 0 3px rgba(239, 68, 68, 0.4);
+        }
+      }
+      .confetti {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 100;
+      }
+      .confetti-bit {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        opacity: 0.95;
+        animation: confetti-fall 1400ms ease-out forwards;
+      }
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-30px) rotate(0) scale(1);
+        }
+        100% {
+          transform: translateY(180px) rotate(1080deg) scale(0.5);
+          opacity: 0;
+        }
+      }
+      @keyframes float-achievement {
+        0% {
+          transform: translateY(20px) scale(0.8) translateX(-50%);
+          opacity: 0;
+        }
+        50% {
+          transform: translateY(0) scale(1.08) translateX(-50%);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(0) scale(1) translateX(-50%);
+          opacity: 1;
+        }
+      }
+      .achievement-toast {
+        animation: float-achievement 0.7s ease-out;
+      }
+      .progress-bar {
+        height: 10px;
+        background: linear-gradient(
+          90deg,
+          #ef4444 0%,
+          #f97316 50%,
+          #facc15 100%
+        );
+        border-radius: 999px;
+        transition: width 0.6s ease-out;
+        box-shadow: 0 0 10px rgba(234, 88, 12, 0.5);
+      }
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(234, 88, 12, 0.6),
+            0 0 40px rgba(249, 115, 22, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(234, 88, 12, 0.8),
+            0 0 60px rgba(249, 115, 22, 0.6);
+        }
+      }
+      .pulse-glow {
+        animation: pulse-glow 2s infinite;
+      }
+      .fire-glow {
+        animation: fire-pulse 1.5s infinite;
+      }
+      @keyframes fire-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+        50% {
+          transform: scale(1.1);
+          filter: brightness(1.3);
+        }
+      }
+
+      @keyframes pulse-hint {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 20px 10px rgba(249, 115, 22, 0.3);
+        }
+      }
+      .pulse-hint-animation {
+        animation: pulse-hint 1.5s infinite;
+      }
+
+      @keyframes float-up-emoji {
+        0% {
+          transform: translateY(0) scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px) scale(1.5);
+          opacity: 0;
+        }
+      }
+      .floating-emoji {
+        position: absolute;
+        z-index: 1000;
+        animation: float-up-emoji 1.5s ease-out forwards;
+      }
+
+      /* Адаптація для дуже малих екранів */
+      @media (max-width: 375px) {
+        .arrow-btn {
+          min-width: 65px;
+          min-height: 65px;
+          font-size: 1.75rem;
+          padding: 0.75rem;
+        }
+
+        .command-slot {
+          height: 55px;
+        }
+
+        .grid-cell {
+          min-height: 50px;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-red-200 via-orange-200 to-yellow-200 min-h-screen p-2 sm:p-4"
+  >
+    <!-- Основна обгортка, що займає весь екран -->
+    <div
+      class="max-w-7xl mx-auto h-full flex flex-col"
+      aria-label="Основний контейнер гри"
+    >
+      <!-- Header -->
+      <header
+        class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300 flex-shrink-0"
+      >
+        <div
+          class="flex justify-between items-center mb-3 gap-3 sm:gap-6"
+          role="status"
+          aria-live="polite"
+        >
+          <h1
+            class="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent flex-shrink-0"
+          >
+            <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>
+            Пожежник 101
+          </h1>
+
+          <!-- Контейнер для Рівня та Очок (росте, щоб зайняти місце) -->
+          <div
+            class="flex items-center gap-3 sm:gap-5 text-lg sm:text-xl md:text-2xl flex-grow min-w-0 justify-center"
+          >
+            <div class="font-bold text-orange-600">
+              Рівень: <span id="levelNum">1</span>/<span id="totalLevels"
+                >10</span
+              >
+            </div>
+            <div
+              class="font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent"
+            >
+              <i class="fas fa-fire" aria-hidden="true"></i>
+              <span id="gemsCount">0</span>
+            </div>
+          </div>
+
+          <!-- Кнопки керування (Звук, Повний екран) -->
+          <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <button
+              id="fullscreenBtn"
+              class="bg-gradient-to-r from-orange-200 to-red-200 hover:from-orange-300 hover:to-red-300 px-3 py-2 rounded-xl transition"
+              title="На весь екран"
+            >
+              <i
+                class="fas fa-expand text-xl text-orange-600"
+                aria-hidden="true"
+              ></i>
+              <span class="sr-only">На весь екран</span>
+            </button>
+            <button
+              id="soundBtn"
+              class="bg-gradient-to-r from-orange-200 to-red-200 hover:from-orange-300 hover:to-red-300 px-3 py-2 rounded-xl transition"
+              title="Звук"
+              aria-pressed="true"
+            >
+              <i
+                class="fas fa-volume-high text-xl text-orange-600"
+                aria-hidden="true"
+              ></i>
+              <span class="sr-only">Перемкнути звук</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div
+          class="bg-gray-200 rounded-full h-4 overflow-hidden border-2 border-orange-300"
+          aria-label="Прогрес рівнів"
+        >
+          <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+        </div>
+      </header>
+
+      <!-- Основна ігрова зона: 'min-h-0' критично важливий для flex-розрахунку в Safari -->
+      <main class="flex flex-col md:flex-row gap-3 sm:gap-6 flex-grow min-h-0">
+        <!-- Колонка кнопок-стрілок. -->
+        <div
+          id="arrowControls"
+          class="flex flex-row md:flex-col gap-2 sm:gap-4 justify-center md:h-full md:items-center order-2 md:order-none"
+        >
+          <button
+            id="upBtn"
+            class="arrow-btn bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white rounded-xl shadow-lg w-full sm:w-auto"
+            aria-label="Вгору"
+          >
+            <i class="fas fa-arrow-up" aria-hidden="true"></i>
+          </button>
+          <button
+            id="downBtn"
+            class="arrow-btn bg-gradient-to-br from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white rounded-xl shadow-lg w-full sm:w-auto"
+            aria-label="Вниз"
+          >
+            <i class="fas fa-arrow-down" aria-hidden="true"></i>
+          </button>
+          <button
+            id="leftBtn"
+            class="arrow-btn bg-gradient-to-br from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white rounded-xl shadow-lg w-full sm:w-auto"
+            aria-label="Вліво"
+          >
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <button
+            id="rightBtn"
+            class="arrow-btn bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white rounded-xl shadow-lg w-full sm:w-auto"
+            aria-label="Вправо"
+          >
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <!-- Контейнер для ігрового поля + слотів. -->
+        <div
+          class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 md:order-none min-h-0"
+        >
+          <!-- Ігрове поле. -->
+          <section
+            class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300 flex-grow"
+            aria-label="Ігрове поле"
+          >
+            <div class="flex-1 flex justify-center items-center">
+              <div
+                id="gameGrid"
+                class="relative"
+                aria-label="Сітка гри"
+                role="grid"
+              ></div>
+            </div>
+          </section>
+
+          <!-- Панель керування ПІД ігровим полем. -->
+          <div
+            id="executionPanel"
+            class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col md:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
+          >
+            <!-- Кнопки 'Гасити' та 'Очистити' -->
+            <!-- 
+              ПОКРАЩЕННЯ АДАПТИВНОСТІ (за вашим запитом):
+              - 'mainControls' тепер 'grid grid-cols-[1fr_auto]'.
+              - Це створює сітку 2x2:
+              - Колонка 1 (широка): Гасити!, Очистити
+              - Колонка 2 (вузька): Підказка, Відмінити
+              - Це звільняє горизонтальний простір для слотів команд.
+            -->
+            <div
+              id="mainControls"
+              class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0 justify-center"
+            >
+              <button
+                id="runBtn"
+                class="bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                <i class="fas fa-water" aria-hidden="true"></i> Гасити!
+              </button>
+              <button
+                id="clearBtn"
+                class="bg-gradient-to-r from-red-400 to-orange-500 hover:from-red-500 hover:to-orange-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg md:text-xl shadow-lg"
+              >
+                <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
+              </button>
+              <!-- Кнопки "Підказка" та "Відмінити" будуть додані сюди динамічно JS -->
+            </div>
+
+            <!-- Контейнер для слотів -->
+            <div class="flex-1 min-w-0 w-full sm:w-auto py-1">
+              <div id="commandSlots" aria-label="Слоти команд"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Win modal (для звичайних рівнів) -->
+      <div
+        id="winModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-orange-100 to-red-100 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden border-4 border-orange-400 shadow-2xl"
+        >
+          <div id="winConfetti" class="confetti"></div>
+          <div class="text-6xl sm:text-7xl mb-4 win-pulse">
+            <div>👨‍🚒</div>
+          </div>
+          <h2
+            class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent mb-2"
+          >
+            Вогонь погашено!
+          </h2>
+          <p
+            class="text-xl sm:text-2xl mb-4 font-bold text-orange-600"
+            id="encouragement"
+          ></p>
+          <p class="text-lg sm:text-xl mb-6 text-gray-700" id="winMessage"></p>
+          <button
+            id="nextLevelBtn"
+            class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl w-full pulse-glow shadow-lg"
+          >
+            Наступний виклик
+            <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Game Complete modal (НОВЕ МОДАЛЬНЕ ВІКНО) -->
+      <div
+        id="gameCompleteModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-yellow-100 to-orange-200 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden border-4 border-yellow-400 shadow-2xl"
+        >
+          <div id="completeConfetti" class="confetti"></div>
+          <div class="text-7xl sm:text-8xl mb-4 win-pulse">
+            <div>🏆</div>
+          </div>
+          <h2
+            class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent mb-4"
+          >
+            Ти пройшов гру!
+          </h2>
+          <p class="text-lg sm:text-xl mb-6 text-gray-700">
+            Вітаємо! Ти став справжнім майстром пожежогасіння, зібравши
+            <strong class="text-orange-600" id="finalGemsCount">0</strong>
+            осередків вогню!
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button
+              id="restartGameBtn"
+              class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-3 px-6 rounded-xl text-lg w-full pulse-glow shadow-lg"
+            >
+              <i class="fas fa-redo-alt" aria-hidden="true"></i>
+              Почати спочатку
+            </button>
+            <button
+              id="goHomeBtn"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl text-lg w-full shadow-lg"
+            >
+              <i class="fas fa-home" aria-hidden="true"></i>
+              На головну
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error modal -->
+      <div
+        id="errorModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-orange-100 to-yellow-100 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-4 border-orange-400 shadow-2xl"
+        >
+          <!-- 'errorMessage' буде містити HTML для позитивного повідомлення -->
+          <div id="errorMessage"></div>
+
+          <div class="flex gap-2 flex-wrap justify-center mt-6">
+            <button
+              id="retryBtn"
+              class="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-lg"
+            >
+              Спробувати ще <i class="fas fa-rotate-right" aria-hidden="true"></i>
+            </button>
+            <button
+              id="closeErrBtn"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl text-lg shadow-lg"
+            >
+              Зрозуміло
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модальне вікно для підказки -->
+      <div
+        id="hintModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-orange-100 to-yellow-100 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-4 border-orange-400 shadow-2xl"
+        >
+          <div class="text-6xl mb-4">💡</div>
+          <h2
+            class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent mb-4"
+          >
+            Підказка!
+          </h2>
+          <p
+            class="text-xl sm:text-2xl mb-6 font-bold text-orange-700"
+            id="hintModalText"
+          ></p>
+          <button
+            id="closeHintBtn"
+            class="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-lg w-full"
+          >
+            Зрозуміло!
+          </button>
+        </div>
+      </div>
+
+      <!-- Achievement toast -->
+      <div
+        id="achievementToast"
+        class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-white px-6 py-4 rounded-2xl shadow-2xl achievement-toast border-4 border-white"
+      >
+        <div class="flex items-center gap-3">
+          <div class="text-4xl" id="achievementIcon"></div>
+          <div>
+            <div class="font-bold text-lg" id="achievementTitle"></div>
+            <div class="text-sm" id="achievementText"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Туторіал -->
+    <div
+      id="tutorialOverlay"
+      class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md text-center">
+        <div class="text-7xl mb-4 animate-bounce">👨‍🚒</div>
+        <h2 class="text-3xl font-bold text-orange-600 mb-4">
+          Привіт, юний пожежнику!
+        </h2>
+        <p class="text-xl mb-6">Допоможи мені загасити вогонь! 🔥</p>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-4 bg-orange-50 p-4 rounded-xl">
+            <div class="text-5xl">⬆️</div>
+            <p class="text-lg text-left">Натискай стрілки, щоб я рухався</p>
+          </div>
+
+          <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-xl">
+            <div class="text-5xl">💧</div>
+            <p class="text-lg text-left">Потім натисни "Гасити!"</p>
+          </div>
+        </div>
+
+        <button
+          id="startTutorial"
+          class="mt-6 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-8 rounded-xl text-2xl w-full pulse-glow"
+        >
+          Почати! 🚒
+        </button>
+      </div>
+    </div>
+
+    <!-- Батьківський режим -->
+    <button
+      id="parentBtn"
+      class="fixed bottom-4 right-4 bg-gray-300 text-gray-700 p-3 rounded-full z-50 shadow-lg"
+    >
+      <i class="fas fa-user-tie"></i>
+    </button>
+
+    <div
+      id="parentModal"
+      class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-3xl p-6 max-w-lg w-full">
+        <h2 class="text-2xl font-bold mb-4">📊 Прогрес дитини</h2>
+
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span>Пройдено рівнів:</span>
+            <strong id="parentLevels">0/10</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Загашено осередків:</span>
+            <strong id="parentGems">0</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Час сесії:</span>
+            <strong id="parentTime">0 хв</strong>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-blue-50 rounded-xl">
+          <h3 class="font-bold mb-2">💡 Поради:</h3>
+          <ul class="text-sm space-y-1 list-disc list-inside">
+            <li>Граючи разом, запитуйте: "Куди має йти пожежник?"</li>
+            <li>Святкуйте кожну спробу, не лише перемоги.</li>
+            <li>Рекомендований час гри: 15 хвилин.</li>
+          </ul>
+        </div>
+
+        <button
+          id="closeParentModal"
+          class="mt-4 bg-orange-500 text-white py-3 px-6 rounded-xl w-full"
+        >
+          Закрити
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Весь код гри загорнуто в IIFE (Immediately Invoked Function Expression)
+      // Це створює приватну область видимості та запобігає забрудненню глобального 'window'
+      (function () {
+        "use strict"; // Вмикаємо суворий режим JavaScript
+
+        // ===== 1. КОНСТАНТИ =====
+        // Налаштування гри, які не змінюються
+        // =================================
+
+        const ANIMATION_SPEED = 250; // Швидкість руху пожежника (мс)
+        const DIRECTION_VECTORS = {
+          up: [-1, 0],
+          down: [1, 0],
+          left: [0, -1],
+          right: [0, 1],
+        };
+        const ARROW_ICONS = {
+          up: '<i class="fas fa-arrow-up text-orange-500" aria-hidden="true"></i>',
+          down: '<i class="fas fa-arrow-down text-red-500" aria-hidden="true"></i>',
+          left: '<i class="fas fa-arrow-left text-yellow-500" aria-hidden="true"></i>',
+          right:
+            '<i class="fas fa-arrow-right text-amber-500" aria-hidden="true"></i>',
+        };
+
+        // Усі рівні гри
+        const LEVELS = [
+          // 1. Пряма лінія
+          {
+            size: 3,
+            start: [1, 0],
+            obstacles: [],
+            gems: [
+              [1, 1],
+              [1, 2],
+            ],
+            maxCommands: 2,
+            hint: "Натисни стрілку 'Вправо' ➡️ двічі!",
+            optimizeGrid: false,
+          },
+          // 2. Пряма лінія
+          {
+            size: 4,
+            start: [0, 0],
+            obstacles: [],
+            gems: [
+              [1, 0],
+              [2, 0],
+              [3, 0],
+            ],
+            maxCommands: 3,
+            hint: "Натисни стрілку 'Вниз' ⬇️ тричі!",
+            optimizeGrid: false,
+          },
+          // 3. Простий поворот
+          {
+            size: 3,
+            start: [0, 0],
+            obstacles: [],
+            gems: [
+              [0, 1],
+              [0, 2],
+              [1, 2],
+            ],
+            maxCommands: 3,
+            hint: "Проведи пожежника до вогню!",
+            optimizeGrid: false,
+          },
+          // 4. Перша перешкода
+          {
+            size: 4,
+            start: [0, 0],
+            obstacles: [[1, 0]],
+            gems: [
+              [0, 1],
+              [2, 1],
+            ],
+            maxCommands: 5,
+            optimizeGrid: true,
+            hint: "Ой! Треба обійти воду! 🌊",
+          },
+          // 5. Ще одна перешкода
+          // ЗМІНЕНО: Поле 3x3, optimizeGrid: false
+          {
+            size: 3,
+            start: [0, 0],
+            obstacles: [[1, 1]],
+            gems: [
+              [0, 2],
+              [2, 0],
+              [2, 2],
+            ],
+            maxCommands: 6,
+            hint: "Обережно, вода! 🌊 Треба обійти.",
+            optimizeGrid: false, // Поле тепер компактне 3x3
+          },
+          // 6. Дві перешкоди, 5x5
+          {
+            size: 5,
+            start: [2, 0],
+            obstacles: [
+              [2, 1],
+              [2, 2],
+            ],
+            gems: [
+              [1, 1],
+              [3, 1],
+              [2, 3],
+            ],
+            maxCommands: 9,
+            optimizeGrid: true,
+            hint: "Знайди шлях навколо перешкод!",
+          },
+          // 7. Простий лабіринт
+          // ЗМІНЕНО: Поле 4x4, оновлено позиції та слоти
+          {
+            size: 4,
+            start: [0, 0],
+            obstacles: [
+              [1, 1],
+              [2, 2],
+            ],
+            gems: [
+              [0, 2],
+              [2, 0],
+              [3, 0],
+            ],
+            maxCommands: 8, // Зменшено з 12
+            optimizeGrid: false, // Поле тепер компактне 4x4
+            hint: "Треба зібрати весь вогонь! 🔥",
+          },
+          // 8. Складніший 5x5
+          {
+            size: 5,
+            start: [0, 2],
+            obstacles: [
+              [1, 0],
+              [1, 1],
+              [1, 3],
+              [1, 4],
+              [3, 2],
+            ],
+            gems: [
+              [4, 0],
+              [4, 4],
+            ],
+            maxCommands: 10,
+            optimizeGrid: true,
+            hint: "Складний виклик! Ти впораєшся! 💪",
+          },
+          // 9. Лабіринт
+          // ЗМІНЕНО: Збільшено кількість слотів
+          {
+            size: 5,
+            start: [0, 0],
+            obstacles: [
+              [1, 0],
+              [1, 1],
+              [1, 2],
+              [3, 2],
+              [3, 3],
+              [3, 4],
+            ],
+            gems: [
+              [0, 4],
+              [4, 0],
+              [4, 4],
+            ],
+            maxCommands: 16, // Збільшено з 14
+            optimizeGrid: true,
+            hint: "Майже фінал! Потрібно зібрати весь вогонь!",
+          },
+          // 10. Фінальний рівень (УСКЛАДНЕНО)
+          {
+            size: 5,
+            start: [2, 0],
+            obstacles: [
+              [1, 1],
+              [1, 3],
+              [2, 1],
+              [2, 3],
+              [3, 1],
+              [3, 3],
+            ],
+            gems: [
+              [0, 2],
+              [2, 2],
+              [4, 2],
+              [0, 4], // Додано
+              [4, 4], // Додано
+            ],
+            maxCommands: 18, // Збільшено з 15 до 22
+            optimizeGrid: true,
+            hint: "Фінальний виклик! Усі осередки вогню мають бути погашені!",
+          },
+        ];
+
+        const TOTAL_LEVELS_COUNT = LEVELS.length;
+
+        // Варіанти підбадьорливих повідомлень
+        const ENCOURAGEMENTS = [
+          "Ти справжній герой! 🚒",
+          "Вогонь погашено! 🔥",
+          "Чудова робота, пожежнику! 👨‍🚒",
+          "Ти молодець! 💧",
+          "Гасиш як профі! 💯",
+          "Вогняний майстер! 🏆",
+        ];
+        // Варіанти "позитивних помилок"
+        const POSITIVE_ERRORS = [
+          "Майже вийшло! Спробуй ще раз! 💪",
+          "Ти на правильному шляху! Продовжуй! 🌟",
+          "Чудова спроба! Може, інший маршрут? 🤔",
+          "Так близько! Ти впораєшся! ⭐",
+        ];
+
+        // Досягнення
+        const ACHIEVEMENTS = {
+          firstGems: {
+            icon: "🔥",
+            title: "Перші полум'я!",
+            text: "Ти загасив свій перший вогонь!",
+          },
+          halfwayDone: {
+            icon: "👨‍🚒",
+            title: "На півдорозі!",
+            text: "Половина викликів позаду!",
+          },
+          master: {
+            icon: "🌟",
+            title: "Майстер пожежогасіння!",
+            text: "Ти пройшов всі рівні, герой!",
+          },
+        };
+
+        // ===== 2. СТАН ГРИ =====
+        // Єдиний об'єкт, що відстежує все, що відбувається у грі
+        // ============================
+
+        const gameState = {
+          currentLevel: 0,
+          commands: [], // Масив для команд (напр., ['right', 'right', null])
+          totalGems: 0, // Загальна к-сть "вогню"
+          isExecuting: false, // Чи виконується анімація
+          currentPos: null, // [row, col] позиція пожежника
+          soundEnabled: true,
+          shownAchievements: new Set(), // Які досягнення вже показані
+          optimizedGridMap: null, // Для оптимізованих сіток
+        };
+
+        let sessionStartTime = Date.now();
+        const MAX_SESSION_TIME = 15 * 60 * 1000; // 15 хвилин
+
+        // ===== 3. АУДІО ТА ВІБРАЦІЯ =====
+        // Керування звуковими ефектами та вібрацією
+        // ==================================
+
+        let audioCtx = null;
+        try {
+          // Створюємо AudioContext для звуків
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn("AudioContext is not supported, sounds will be disabled.");
+        }
+        // Браузери блокують аудіо до першого дотику користувача. Ця функція "пробуджує" аудіо.
+        const ensureAudio = async () => {
+          try {
+            if (audioCtx && audioCtx.state === "suspended") {
+              await audioCtx.resume();
+            }
+          } catch (e) {
+            /* ігноруємо помилку, якщо не вийшло */
+          }
+        };
+
+        const utils = {
+          // Проста утиліта для створення паузи
+          sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+          // Перевірка, чи два масиви (позиції) однакові
+          arraysEqual: (a, b) => a && b && a[0] === b[0] && a[1] === b[1],
+          // Перевірка, чи можна стати на клітинку (не за межами і не перешкода)
+          isValidPosition: (pos, level) => {
+            const gridMap = gameState.optimizedGridMap || {
+              rows: level.size,
+              cols: level.size,
+              rowMap: Array.from({ length: level.size }, (_, i) => i),
+              colMap: Array.from({ length: level.size }, (_, i) => i),
+            };
+
+            const mappedRowIndex = gridMap.rowMap.indexOf(pos[0]);
+            const mappedColIndex = gridMap.colMap.indexOf(pos[1]);
+
+            return (
+              mappedRowIndex !== -1 &&
+              mappedColIndex !== -1 &&
+              !level.obstacles.some((o) => utils.arraysEqual(o, pos))
+            );
+          },
+          // Визначення розміру емодзі залежно від ширини екрану
+          emojiClass: () => {
+            const w = window.innerWidth;
+            if (w < 480) return "emoji-xs";
+            if (w < 640) return "emoji-sm";
+            if (w < 1024) return "emoji-md";
+            return "emoji-lg";
+          },
+          // Розрахунок розміру клітинки, щоб вона вписалася в екран
+          getCellSize: (level) => {
+            const wrap = elements.gameGrid.parentElement;
+            if (!wrap) return 60; // Fаllback
+            const rect = wrap.getBoundingClientRect();
+            const gap = window.innerWidth < 640 ? 2 : 4;
+            const gridMap = gameState.optimizedGridMap || {
+              rows: level.size,
+              cols: level.size,
+              rowMap: Array.from({ length: level.size }, (_, i) => i),
+              colMap: Array.from({ length: level.size }, (_, i) => i),
+            };
+            const columns = gridMap.cols;
+            const rows = gridMap.rows;
+
+            const availableWidth = rect.width - (columns - 1) * gap - 10; // -10 for padding
+            const availableHeight = rect.height - (rows - 1) * gap - 10;
+
+            const sizeBasedOnWidth = availableWidth / columns;
+            const sizeBasedOnHeight = availableHeight / rows;
+
+            const size = Math.floor(Math.min(sizeBasedOnWidth, sizeBasedOnHeight));
+
+            return Math.max(36, Math.min(size, 110)); // Обмежуємо мін. та макс. розмір
+          },
+          // Випадковий елемент з масиву
+          randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)],
+          // Функція для програвання звуку
+          playSound: (freq, duration = 100) => {
+            if (!gameState.soundEnabled || !audioCtx) return;
+            try {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = "sine";
+              gain.gain.value = 0.1; // Невелика гучність
+              osc.start();
+              gain.gain.exponentialRampToValueAtTime(
+                0.01,
+                audioCtx.currentTime + duration / 1000
+              );
+              osc.stop(audioCtx.currentTime + duration / 1000);
+            } catch (e) {
+              console.error("Error playing sound:", e);
+            }
+          },
+        };
+
+        // Набір звукових ефектів
+        const sounds = {
+          move: () => utils.playSound(350, 70),
+          collect: () => {
+            utils.playSound(200, 80);
+            setTimeout(() => utils.playSound(300, 100), 80);
+          },
+          win: () => {
+            utils.playSound(440, 120);
+            setTimeout(() => utils.playSound(523, 120), 120);
+            setTimeout(() => utils.playSound(440, 150), 240);
+            setTimeout(() => utils.playSound(523, 200), 390);
+          },
+          error: () => utils.playSound(150, 250),
+          click: () => utils.playSound(650, 40),
+          cheer: () => {
+            utils.playSound(523, 100);
+            setTimeout(() => utils.playSound(659, 150), 100);
+          },
+        };
+
+        // Вібрація (для мобільних)
+        function vibrateDevice(pattern = [50]) {
+          if ("vibrate" in navigator) {
+            navigator.vibrate(pattern);
+          }
+        }
+
+        // Озвучення тексту (для підказок та перемог)
+        function speak(text) {
+          if ("speechSynthesis" in window && gameState.soundEnabled) {
+            window.speechSynthesis.cancel(); // Зупиняємо попередні
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = "uk-UA";
+            utterance.rate = 0.9;
+            utterance.pitch = 1.2;
+            window.speechSynthesis.speak(utterance);
+          }
+        }
+
+        // ===== 4. КЕШУВАННЯ DOM =====
+        // Зберігаємо посилання на HTML елементи, щоб не шукати їх щоразу
+        // ==============================
+
+        const el = (id) => document.getElementById(id); // Хелпер для 'getElementById'
+        const elements = {
+          gameGrid: el("gameGrid"),
+          commandSlots: el("commandSlots"),
+          runBtn: el("runBtn"),
+          clearBtn: el("clearBtn"),
+          winModal: el("winModal"),
+          errorModal: el("errorModal"),
+          hintModal: el("hintModal"),
+          hintModalText: el("hintModalText"),
+          closeHintBtn: el("closeHintBtn"),
+          nextLevelBtn: el("nextLevelBtn"),
+          retryBtn: el("retryBtn"),
+          closeErrBtn: el("closeErrBtn"),
+          levelNum: el("levelNum"),
+          totalLevels: el("totalLevels"),
+          gemsCount: el("gemsCount"),
+          winMessage: el("winMessage"),
+          errorMessage: el("errorMessage"),
+          upBtn: el("upBtn"),
+          downBtn: el("downBtn"),
+          leftBtn: el("leftBtn"),
+          rightBtn: el("rightBtn"),
+          progressBar: el("progressBar"),
+          encouragement: el("encouragement"),
+          soundBtn: el("soundBtn"),
+          fullscreenBtn: el("fullscreenBtn"),
+          achievementToast: el("achievementToast"),
+          achievementIcon: el("achievementIcon"),
+          achievementTitle: el("achievementTitle"),
+          achievementText: el("achievementText"),
+          winConfetti: el("winConfetti"),
+          tutorialOverlay: el("tutorialOverlay"),
+          startTutorial: el("startTutorial"),
+          parentBtn: el("parentBtn"),
+          parentModal: el("parentModal"),
+          closeParentModal: el("closeParentModal"),
+          parentLevels: el("parentLevels"),
+          parentGems: el("parentGems"),
+          parentTime: el("parentTime"),
+          executionPanel: el("executionPanel"),
+          mainControls: el("mainControls"),
+          // Нові елементи для фінального вікна
+          gameCompleteModal: el("gameCompleteModal"),
+          restartGameBtn: el("restartGameBtn"),
+          goHomeBtn: el("goHomeBtn"),
+          finalGemsCount: el("finalGemsCount"),
+          completeConfetti: el("completeConfetti"),
+        };
+
+        // ===== 5. ЗБЕРЕЖЕННЯ ПРОГРЕСУ =====
+        // Використовуємо localStorage для збереження рівня та очок
+        // ====================================
+
+        function saveProgress() {
+          try {
+            localStorage.setItem(
+              "firefighterProgress",
+              JSON.stringify({
+                level: gameState.currentLevel,
+                gems: gameState.totalGems,
+                achievements: Array.from(gameState.shownAchievements),
+                timestamp: Date.now(),
+              })
+            );
+          } catch (e) {
+            console.warn("Could not save progress.", e);
+          }
+        }
+
+        function loadProgress() {
+          try {
+            const saved = localStorage.getItem("firefighterProgress");
+            if (saved) {
+              const data = JSON.parse(saved);
+              // Завантажуємо прогрес, якщо він не старіший за 7 днів
+              if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                gameState.currentLevel = data.level || 0;
+                gameState.totalGems = data.gems || 0;
+                gameState.shownAchievements = new Set(data.achievements || []);
+                elements.gemsCount.textContent = gameState.totalGems;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not load progress.", e);
+          }
+        }
+
+        // ===== 6. ДОСЯГНЕННЯ ТА ЕФЕКТИ =====
+        // Керування тостами, конфетті та іншими "соковитими" ефектами
+        // ========================================
+
+        function checkAchievements() {
+          const gems = gameState.totalGems;
+          const level = gameState.currentLevel;
+
+          if (gems >= 1 && !gameState.shownAchievements.has("firstGems")) {
+            showAchievement(ACHIEVEMENTS.firstGems);
+            gameState.shownAchievements.add("firstGems");
+          }
+
+          if (
+            level === Math.floor(TOTAL_LEVELS_COUNT / 2) &&
+            !gameState.shownAchievements.has("halfwayDone")
+          ) {
+            showAchievement(ACHIEVEMENTS.halfwayDone);
+            gameState.shownAchievements.add("halfwayDone");
+          }
+
+          if (
+            level === TOTAL_LEVELS_COUNT - 1 &&
+            !gameState.shownAchievements.has("master")
+          ) {
+            showAchievement(ACHIEVEMENTS.master);
+            gameState.shownAchievements.add("master");
+          }
+        }
+
+        function showAchievement(ach) {
+          elements.achievementIcon.textContent = ach.icon;
+          elements.achievementTitle.textContent = ach.title;
+          elements.achievementText.textContent = ach.text;
+          elements.achievementToast.classList.remove("hidden");
+
+          // Сховати тост через 3.5 секунди
+          setTimeout(() => {
+            elements.achievementToast.style.transition =
+              "opacity 0.5s, transform 0.5s";
+            elements.achievementToast.style.opacity = "0";
+            elements.achievementToast.style.transform = "translate(-50%, -20px)";
+            setTimeout(() => {
+              elements.achievementToast.classList.add("hidden");
+              elements.achievementToast.style.opacity = "1";
+              elements.achievementToast.style.transform = "translate(-50%, 0)";
+            }, 500);
+          }, 3500);
+        }
+
+        // Створення конфетті у модальному вікні перемоги
+        function createConfetti(container) {
+          if (!container) return;
+          container.innerHTML = "";
+          const colors = [
+            "#f59e0b",
+            "#ef4444",
+            "#f87171",
+            "#fbbf24",
+            "#f97316",
+            "#dc2626",
+          ];
+
+          for (let i = 0; i < 40; i++) {
+            const bit = document.createElement("div");
+            bit.className = "confetti-bit";
+            bit.style.left = Math.random() * 100 + "%";
+            bit.style.backgroundColor =
+              colors[Math.floor(Math.random() * colors.length)];
+            bit.style.animationDelay = Math.random() * 0.4 + "s";
+            container.appendChild(bit);
+          }
+        }
+
+        // Створення іскор при зборі вогню
+        function createSparkles(cell) {
+          cell.querySelectorAll(".sparkle-container").forEach((s) => s.remove());
+          const container = document.createElement("div");
+          container.className = "sparkle-container";
+          cell.appendChild(container);
+
+          for (let i = 0; i < 8; i++) {
+            const sparkle = document.createElement("div");
+            sparkle.className = "sparkle-bit";
+            const angle = (i / 8) * Math.PI * 2;
+            const distance = 30;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            sparkle.style.setProperty(
+              "--tw-translate",
+              `translate(${tx}px, ${ty}px)`
+            );
+            sparkle.style.left = "50%";
+            sparkle.style.top = "50%";
+            sparkle.style.animationDelay = i * 0.05 + "s";
+            container.appendChild(sparkle);
+          }
+          setTimeout(() => container.remove(), 1000);
+        }
+
+        // Показ плаваючого емодзі (напр. "🎉")
+        function showFloatingEmoji(emoji, pos) {
+          const cell = getCellElement(pos);
+          if (!cell) return;
+
+          const floater = document.createElement("div");
+          floater.textContent = emoji;
+          floater.className = "floating-emoji text-4xl";
+          cell.appendChild(floater);
+
+          setTimeout(() => floater.remove(), 1500);
+        }
+
+        // Маленьке святкування при зборі 1 вогню
+        function celebrateSmallWin(cell) {
+          sounds.cheer();
+          createSparkles(cell);
+          showFloatingEmoji("🎉", gameState.currentPos);
+        }
+
+        // ===== 7. КЕРУВАННЯ РІВНЕМ =====
+        // Завантаження, рендеринг та оновлення рівнів
+        // ===================================
+
+        function updateProgress() {
+          const progress =
+            ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
+          elements.progressBar.style.width = progress + "%";
+        }
+
+        // Оптимізація сітки: видаляє порожні рядки/колонки
+        function optimizeGrid(level) {
+          if (!level.optimizeGrid) {
+            gameState.optimizedGridMap = null;
+            return;
+          }
+          const activeRows = new Set();
+          const activeCols = new Set();
+          const allPositions = [
+            level.start,
+            ...level.obstacles,
+            ...level.gems,
+          ];
+          allPositions.forEach(([r, c]) => {
+            activeRows.add(r);
+            activeCols.add(c);
+          });
+          const minR = Math.min(...activeRows);
+          const maxR = Math.max(...activeRows);
+          const minC = Math.min(...activeCols);
+          const maxC = Math.max(...activeCols);
+          for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+              if (!level.obstacles.some((o) => utils.arraysEqual(o, [r, c]))) {
+                activeRows.add(r);
+                activeCols.add(c);
+              }
+            }
+          }
+          level.obstacles.forEach(([r, c]) => {
+            if (r >= minR && r <= maxR && c >= minC && c <= maxC) {
+              activeRows.add(r);
+              activeCols.add(c);
+            }
+          });
+          const sortedRows = Array.from(activeRows).sort((a, b) => a - b);
+          const sortedCols = Array.from(activeCols).sort((a, b) => a - b);
+          gameState.optimizedGridMap = {
+            rows: sortedRows.length,
+            cols: sortedCols.length,
+            rowMap: sortedRows,
+            colMap: sortedCols,
+          };
+        }
+
+        // Головна функція ініціалізації рівня
+        function initLevel() {
+          const level = LEVELS[gameState.currentLevel];
+          if (!level) {
+            console.error("Invalid level index:", gameState.currentLevel);
+            gameState.currentLevel = 0;
+            initLevel();
+            return;
+          }
+          // Прибираємо сміття з попереднього рівня
+          document
+            .querySelectorAll(".sparkle-container, .trail-dot, .floating-emoji")
+            .forEach((n) => n.remove());
+          elements.gameGrid.classList.remove("grid-shaking");
+
+          optimizeGrid(level); // Розраховуємо оптимізовану сітку
+
+          elements.totalLevels.textContent = TOTAL_LEVELS_COUNT;
+          elements.levelNum.textContent = gameState.currentLevel + 1;
+          gameState.commands = Array(level.maxCommands).fill(null);
+          gameState.currentPos = [...level.start];
+
+          renderGrid(level); // Малюємо сітку
+          renderCommandSlots(); // Малюємо слоти
+          updateProgress(); // Оновлюємо прогрес-бар
+
+          elements.runBtn.disabled = false;
+          gameState.isExecuting = false;
+
+          showNextStepHint(); // Показ підказки для перших рівнів
+
+          // Показ інтро про перешкоди
+          if (
+            level.obstacles.length > 0 &&
+            !localStorage.getItem("shownObstacleIntro")
+          ) {
+            showObstacleIntro();
+            localStorage.setItem("shownObstacleIntro", "true");
+          }
+        }
+
+        // Рендеринг (малювання) ігрової сітки
+        function renderGrid(level) {
+          const g = elements.gameGrid;
+          g.classList.remove("grid-shaking");
+          g.innerHTML = "";
+
+          const gridMap = gameState.optimizedGridMap || {
+            rows: level.size,
+            cols: level.size,
+            rowMap: Array.from({ length: level.size }, (_, i) => i),
+            colMap: Array.from({ length: level.size }, (_, i) => i),
+          };
+
+          const cellSize = utils.getCellSize(level);
+          const gap = window.innerWidth < 640 ? "2px" : "4px";
+          g.style.display = "grid";
+          g.style.gridTemplateColumns = `repeat(${gridMap.cols}, ${cellSize}px)`;
+          g.style.gridTemplateRows = `repeat(${gridMap.rows}, ${cellSize}px)`;
+          g.style.gap = gap;
+
+          const emojiCls = utils.emojiClass();
+          for (let r = 0; r < gridMap.rows; r++) {
+            for (let c = 0; c < gridMap.cols; c++) {
+              const originalRow = gridMap.rowMap[r];
+              const originalCol = gridMap.colMap[c];
+              const originalPos = [originalRow, originalCol];
+
+              const cell = document.createElement("div");
+              cell.className =
+                "grid-cell flex items-center justify-center bg-orange-50 rounded-lg";
+              cell.dataset.row = originalRow;
+              cell.dataset.col = originalCol;
+              cell.setAttribute("role", "gridcell");
+
+              if (utils.arraysEqual(originalPos, level.start)) {
+                cell.innerHTML = `<div class="character ${emojiCls}" aria-label="Пожежник">👨‍🚒</div>`;
+                cell.classList.add("bg-red-200");
+              } else if (
+                level.obstacles.some((o) => utils.arraysEqual(o, originalPos))
+              ) {
+                cell.innerHTML = `<i class="fas fa-water text-blue-600 ${emojiCls}" aria-hidden="true"></i>`;
+                cell.classList.add("bg-blue-300");
+              } else if (
+                level.gems.some((g) => utils.arraysEqual(g, originalPos))
+              ) {
+                cell.innerHTML = `<div class="${emojiCls} fire-glow" data-gem="fire" aria-label="Вогонь">🔥</div>`;
+                cell.classList.add(
+                  "bg-gradient-to-br",
+                  "from-red-100",
+                  "to-yellow-100"
+                );
+              }
+              g.appendChild(cell);
+            }
+          }
+        }
+
+        // Рендеринг (малювання) слотів для команд
+        function renderCommandSlots() {
+          const level = LEVELS[gameState.currentLevel];
+          const wrap = elements.commandSlots;
+          wrap.innerHTML = "";
+          wrap.className =
+            "flex flex-row flex-wrap gap-2 justify-start items-center";
+
+          for (let i = 0; i < level.maxCommands; i++) {
+            const slot = document.createElement("div");
+            slot.className =
+              "command-slot flex items-center justify-center rounded-lg text-2xl sm:text-3xl md:text-4xl";
+            slot.dataset.index = i;
+
+            if (gameState.commands[i]) {
+              slot.classList.add("filled");
+              slot.innerHTML = ARROW_ICONS[gameState.commands[i]];
+              slot.setAttribute("title", "Команда додана");
+              // ПОКРАЩЕННЯ UX:
+              // Ми свідомо видалили addEventListener для кліку по заповненому слоту.
+              // Для дітей 4-5 років простіше мати одну дію (додати)
+              // та окремі кнопки для видалення ("Очистити", "Відмінити").
+              // Це спрощує модель взаємодії.
+            }
+            wrap.appendChild(slot);
+          }
+        }
+
+        // Підсвічування наступного кроку (тільки для перших рівнів)
+        function showNextStepHint() {
+          document
+            .querySelectorAll(".pulse-hint-animation")
+            .forEach((el) => el.classList.remove("pulse-hint-animation"));
+
+          const level = LEVELS[gameState.currentLevel];
+          if (
+            gameState.currentLevel < 2 &&
+            gameState.commands.every((c) => c === null)
+          ) {
+            const solution = findSimplestPath(level);
+            if (solution && solution.length > 0) {
+              const nextMove = solution[0];
+              const button = elements[`${nextMove}Btn`];
+              if (button) {
+                button.classList.add("pulse-hint-animation");
+              }
+            }
+          }
+        }
+
+        // ===== 8. ЛОГІКА ГРИ =====
+        // Основні дії: додати/очистити команду, виконати, перевірити
+        // ============================
+
+        // Додавання команди у перший вільний слот
+        async function addCommand(direction) {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([30]);
+          sounds.click();
+
+          const firstEmpty = gameState.commands.indexOf(null);
+          if (firstEmpty !== -1) {
+            gameState.commands[firstEmpty] = direction;
+            renderCommandSlots();
+          }
+          // Прибираємо підказку після першого кліку
+          document
+            .querySelectorAll(".pulse-hint-animation")
+            .forEach((el) => el.classList.remove("pulse-hint-animation"));
+        }
+
+        // Очищення всіх команд
+        async function clearCommands() {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([50]);
+          sounds.click();
+          const level = LEVELS[gameState.currentLevel];
+          gameState.commands = Array(level.maxCommands).fill(null);
+          renderCommandSlots();
+          showNextStepHint(); // Показати підказку знову, якщо потрібно
+        }
+
+        // Отримання DOM-елемента клітинки за її позицією [r, c]
+        function getCellElement(pos) {
+          return elements.gameGrid.querySelector(
+            `[data-row="${pos[0]}"][data-col="${pos[1]}"]`
+          );
+        }
+
+        // Підсвічування перешкод, коли пожежник поруч
+        function highlightNearObstacles(pos, level) {
+          elements.gameGrid
+            .querySelectorAll(".near-obstacle")
+            .forEach((cell) => cell.classList.remove("near-obstacle"));
+          const [r, c] = pos;
+          const neighbors = [
+            [r - 1, c],
+            [r + 1, c],
+            [r, c - 1],
+            [r, c + 1],
+          ];
+          for (const neighborPos of neighbors) {
+            if (
+              level.obstacles.some((o) => utils.arraysEqual(o, neighborPos))
+            ) {
+              const cell = getCellElement(neighborPos);
+              if (cell) {
+                cell.classList.add("near-obstacle");
+              }
+            }
+          }
+        }
+
+        // Оновлення позиції пожежника на сітці (візуально)
+        function updateCharacterPosition(newPos, noJump = false) {
+          const level = LEVELS[gameState.currentLevel];
+          const oldCell = getCellElement(gameState.currentPos);
+          const newCell = getCellElement(newPos);
+
+          if (oldCell) {
+            const char = oldCell.querySelector(".character");
+            if (char) char.remove();
+            oldCell.querySelectorAll(".trail-dot").forEach((t) => t.remove());
+            if (utils.arraysEqual(gameState.currentPos, level.start)) {
+              oldCell.classList.add("bg-red-200");
+            } else {
+              oldCell.classList.remove("bg-red-200", "landing");
+            }
+            if (!utils.arraysEqual(gameState.currentPos, newPos)) {
+              const trail = document.createElement("div");
+              trail.className = "trail-dot";
+              oldCell.appendChild(trail);
+              setTimeout(() => trail.remove(), 700);
+            }
+          }
+
+          if (newCell) {
+            const emojiCls = utils.emojiClass();
+            const char = document.createElement("div");
+            char.className = `character ${emojiCls}`;
+            char.setAttribute("aria-label", "Пожежник");
+            char.textContent = "👨‍🚒";
+            newCell.appendChild(char);
+            if (!noJump) {
+              newCell.classList.add("landing");
+              setTimeout(() => newCell.classList.remove("landing"), 400);
+            }
+            highlightNearObstacles(newPos, level);
+          }
+          gameState.currentPos = newPos;
+        }
+
+        // Виконання послідовності команд
+        async function executeCommands() {
+          if (gameState.isExecuting) return;
+          await ensureAudio();
+          vibrateDevice([100]);
+
+          const hasCommands = gameState.commands.some((c) => c !== null);
+          if (!hasCommands) {
+            showError("Додай команди для гасіння вогню! 🔥", false);
+            return;
+          }
+
+          gameState.isExecuting = true;
+          elements.runBtn.disabled = true;
+
+          const level = LEVELS[gameState.currentLevel];
+          let pos = [...level.start];
+          let collectedGems = 0;
+          const remainingGems = [...level.gems];
+
+          updateCharacterPosition(level.start, true);
+          await utils.sleep(100);
+
+          for (let i = 0; i < gameState.commands.length; i++) {
+            const cmd = gameState.commands[i];
+            if (!cmd) break; // Зупиняємось на першому порожньому слоті
+
+            const [dr, dc] = DIRECTION_VECTORS[cmd];
+            const newPos = [pos[0] + dr, pos[1] + dc];
+
+            await utils.sleep(ANIMATION_SPEED);
+
+            // Перевірка на зіткнення
+            if (!utils.isValidPosition(newPos, level)) {
+              sounds.error();
+              elements.gameGrid.classList.add("grid-shaking");
+              setTimeout(
+                () => elements.gameGrid.classList.remove("grid-shaking"),
+                400
+              );
+              const gridMap = gameState.optimizedGridMap || {
+                rowMap: [],
+                colMap: [],
+              };
+              const mappedRowIndex = gridMap.rowMap.indexOf(newPos[0]);
+              const mappedColIndex = gridMap.colMap.indexOf(newPos[1]);
+              const errorMsg =
+                mappedRowIndex === -1 || mappedColIndex === -1
+                  ? "Пожежник вийшов за межі зони гасіння! 🚒"
+                  : "Ой, пожежник не може пройти через воду! 🌊";
+              showError(errorMsg, true);
+              gameState.isExecuting = false;
+              elements.runBtn.disabled = false;
+              return;
+            }
+
+            // Рух
+            sounds.move();
+            updateCharacterPosition(newPos);
+            pos = newPos;
+
+            // Перевірка на збір вогню
+            const gemIdx = remainingGems.findIndex((g) =>
+              utils.arraysEqual(g, pos)
+            );
+            if (gemIdx !== -1) {
+              const cell = getCellElement(pos);
+              celebrateSmallWin(cell);
+
+              collectedGems++;
+              const fire = cell?.querySelector('[data-gem="fire"]');
+              if (fire) {
+                fire.classList.add("extinguishing");
+                setTimeout(() => fire.remove(), 700);
+              }
+              remainingGems.splice(gemIdx, 1);
+            }
+          }
+
+          // Перевірка на перемогу
+          if (remainingGems.length === 0) {
+            sounds.win();
+            gameState.totalGems += collectedGems;
+            elements.gemsCount.textContent = gameState.totalGems;
+            checkAchievements(); // Перевірка досягнень перенесена сюди
+            saveProgress();
+            await utils.sleep(400);
+            showWin(collectedGems);
+          } else {
+            // Не весь вогонь зібрано
+            sounds.error();
+            const leftGems = remainingGems.length;
+            const fireWord =
+              leftGems === 1
+                ? "осередок"
+                : leftGems < 5
+                ? "осередки"
+                : "осередків";
+            showError(`Залишилось ще ${leftGems} ${fireWord} вогню! 🔥`, true);
+          }
+
+          gameState.isExecuting = false;
+          elements.runBtn.disabled = false;
+        }
+
+        // ===== 9. МОДАЛЬНІ ВІКНА =====
+        // Показ вікон перемоги, помилки, підказок
+        // =================================
+
+        // Показ вікна перемоги
+        function showWin(firesExtinguished) {
+          if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
+            // Остання перемога - показуємо нове модальне вікно
+            showGameComplete();
+            return; // Виходимо, щоб не показувати звичайне вікно
+          }
+
+          createConfetti(elements.winConfetti); // Використовуємо контейнер для звичайного вікна
+          elements.encouragement.textContent =
+            utils.randomChoice(ENCOURAGEMENTS);
+
+          const fireWord =
+            firesExtinguished === 1
+              ? "осередок"
+              : firesExtinguished < 5
+              ? "осередки"
+              : "осередків";
+          elements.winMessage.textContent = `Ти загасив ${firesExtinguished} ${fireWord}! 💪 Безпека гарантована!`;
+
+          elements.nextLevelBtn.innerHTML =
+            'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
+          speak("Молодець! Ти загасив весь вогонь!");
+
+          elements.winModal.classList.remove("hidden");
+        }
+
+        // Нова функція для показу фінального вікна
+        function showGameComplete() {
+          createConfetti(elements.completeConfetti); // Використовуємо контейнер для фінального вікна
+          elements.finalGemsCount.textContent = gameState.totalGems;
+          elements.gameCompleteModal.classList.remove("hidden");
+          speak("Неймовірно! Ти пройшов усі рівні! Ти справжній герой!");
+        }
+
+        // Показ "позитивного" вікна помилки
+        function showError(msg, canRetry) {
+          const encouragingMsg = utils.randomChoice(POSITIVE_ERRORS);
+          elements.errorMessage.innerHTML = `
+            <div class="text-5xl mb-4">😊</div>
+            <p class="text-2xl font-bold text-orange-600 mb-2">${encouragingMsg}</p>
+            <p class="text-lg text-gray-600">${msg}</p>
+          `;
+          speak("Спробуй ще раз! Ти впораєшся!");
+          elements.retryBtn.style.display = canRetry ? "inline-block" : "none";
+          elements.errorModal.classList.remove("hidden");
+        }
+
+        // Показ інтро-повідомлення про воду
+        function showObstacleIntro() {
+          const modal = document.createElement("div");
+          modal.className =
+            "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
+          modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center max-w-md">
+              <div class="text-8xl mb-4">🌊</div>
+              <h2 class="text-3xl font-bold text-blue-600 mb-4">Обережно!</h2>
+              <p class="text-2xl mb-4">Це вода! Пожежник не може пройти через воду.</p>
+              <p class="text-xl mb-6">Знайди інший шлях! 🔄</p>
+              
+              <button class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full pulse-glow">
+                Зрозуміло! 💪
+              </button>
+            </div>
+          `;
+
+          modal.querySelector("button").addEventListener("click", () => {
+            modal.remove();
+          });
+
+          document.body.appendChild(modal);
+          speak("Обережно! Це вода. Знайди інший шлях!");
+        }
+
+        // ===== 10. ДОДАТКОВІ ФУНКЦІЇ =====
+        // Повний екран, таймер сесії, пошук шляху
+        // ===================================
+
+        // Керування іконкою повного екрану
+        function updateFullscreenIcon() {
+          const icon = elements.fullscreenBtn.querySelector("i");
+          if (document.fullscreenElement) {
+            icon.className = "fas fa-compress text-xl text-orange-600";
+            elements.fullscreenBtn.title = "Вийти з повноекранного режиму";
+          } else {
+            icon.className = "fas fa-expand text-xl text-orange-600";
+            elements.fullscreenBtn.title = "На весь екран";
+          }
+        }
+        function toggleFullScreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch((err) => {
+              console.warn(
+                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`
+              );
+            });
+          } else {
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }
+        }
+
+        // Перевірка часу сесії для батьківського контролю
+        function checkSessionTime() {
+          const elapsed = Date.now() - sessionStartTime;
+
+          if (
+            elapsed > MAX_SESSION_TIME &&
+            document.querySelectorAll(".break-reminder").length === 0
+          ) {
+            showBreakReminder();
+          }
+
+          elements.parentTime.textContent = `${Math.floor(elapsed / 60000)} хв`;
+        }
+
+        // Показ нагадування про перерву
+        function showBreakReminder() {
+          const modal = document.createElement("div");
+          modal.className =
+            "break-reminder fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4";
+          modal.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center max-w-md">
+              <div class="text-8xl mb-4">⏰</div>
+              <h2 class="text-3xl font-bold text-orange-600 mb-4">Час відпочити!</h2>
+              <p class="text-xl mb-6">Ти чудово попрацював! Давай зробимо перерву? 🌟</p>
+              
+              <button id="breakPlayMoreBtn" class="bg-green-500 text-white py-4 px-8 rounded-xl text-xl w-full mb-3">
+                Ще трошки пограю 🎮
+              </button>
+              <button id="breakEndGameBtn" class="bg-orange-500 text-white py-4 px-8 rounded-xl text-xl w-full">
+                Закінчити гру 👋
+              </button>
+            </div>
+          `;
+
+          modal
+            .querySelector("#breakPlayMoreBtn")
+            .addEventListener("click", () => {
+              modal.remove();
+              sessionStartTime = Date.now(); // Скинути таймер
+            });
+
+          modal
+            .querySelector("#breakEndGameBtn")
+            .addEventListener("click", () => {
+              location.reload(); // Простий спосіб "закінчити"
+            });
+
+          document.body.appendChild(modal);
+          speak("Час відпочити! Ти чудово попрацював!");
+        }
+
+        // Пошук найпростішого шляху (BFS) для підказок
+        function findSimplestPath(level) {
+          const queue = [[level.start, []]]; // [position, path_array]
+          const visited = new Set([level.start.toString()]);
+          const target = level.gems[0]; // Шукаємо шлях до першого вогню
+
+          if (!target) return [];
+
+          while (queue.length > 0) {
+            const [currentPos, path] = queue.shift();
+
+            if (utils.arraysEqual(currentPos, target)) {
+              return path; // Знайшли
+            }
+
+            for (const direction in DIRECTION_VECTORS) {
+              const [dr, dc] = DIRECTION_VECTORS[direction];
+              const newPos = [currentPos[0] + dr, currentPos[1] + dc];
+
+              if (
+                utils.isValidPosition(newPos, level) &&
+                !visited.has(newPos.toString())
+              ) {
+                visited.add(newPos.toString());
+                queue.push([newPos, [...path, direction]]);
+              }
+            }
+          }
+          return []; // Шлях не знайдено
+        }
+
+        // Додавання кнопок "Підказка" та "Відмінити"
+        function addExtraButtons() {
+          const helpBtn = document.createElement("button");
+          helpBtn.id = "hintBtn"; // Додано ID для легкого доступу
+          helpBtn.innerHTML = '<i class="fas fa-lightbulb"></i>';
+          helpBtn.className =
+            "bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
+          helpBtn.title = "Підказка";
+
+          helpBtn.addEventListener("click", async () => {
+            vibrateDevice([50, 50, 50]);
+            await ensureAudio();
+            sounds.click();
+
+            const level = LEVELS[gameState.currentLevel];
+            const hint =
+              level.hint || "Спробуй спланувати маршрут до вогню! 🚒";
+
+            // Заповнюємо та показуємо модальне вікно
+            elements.hintModalText.textContent = hint;
+            elements.hintModal.classList.remove("hidden");
+            speak(hint); // Озвучуємо підказку
+
+            // Авто-заповнення перших 3 кроків
+            const solution = findSimplestPath(LEVELS[gameState.currentLevel]);
+            if (solution.length > 0) {
+              for (let i = 0; i < Math.min(3, solution.length); i++) {
+                if (gameState.commands[i] === null) {
+                  gameState.commands[i] = solution[i];
+                  renderCommandSlots();
+                  const btn = elements[`${solution[i]}Btn`];
+                  if (btn) {
+                    btn.classList.add("pulse-hint-animation");
+                    await utils.sleep(500);
+                    btn.classList.remove("pulse-hint-animation");
+                  }
+                }
+              }
+            }
+          });
+
+          const undoBtn = document.createElement("button");
+          undoBtn.id = "undoBtn"; // Додано ID для легкого доступу
+          undoBtn.innerHTML = '<i class="fas fa-undo"></i>';
+          undoBtn.className =
+            "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
+          undoBtn.title = "Відмінити останню команду";
+
+          undoBtn.addEventListener("click", () => {
+            // Знаходимо останню додану команду і видаляємо її
+            for (let i = gameState.commands.length - 1; i >= 0; i--) {
+              if (gameState.commands[i] !== null) {
+                gameState.commands[i] = null;
+                renderCommandSlots();
+                vibrateDevice([30]);
+                break;
+              }
+            }
+          });
+
+          // ЗМІНЕНО: Додаємо кнопки у вертикальний flex-контейнер
+          const panel = elements.mainControls;
+          // Вставляємо "Підказку" після "Гасити!"
+          panel.insertBefore(helpBtn, panel.children[1]);
+          // Додаємо "Відмінити" в кінець (після "Очистити")
+          panel.appendChild(undoBtn);
+        }
+
+        // ===== 11. СЛУХАЧІ ПОДІЙ =====
+        // Прив'язка функцій до натискань кнопок
+        // ================================
+
+        // Кнопки-стрілки
+        elements.upBtn.addEventListener("click", () => {
+          addCommand("up");
+        });
+        elements.downBtn.addEventListener("click", () => {
+          addCommand("down");
+        });
+        elements.leftBtn.addEventListener("click", () => {
+          addCommand("left");
+        });
+        elements.rightBtn.addEventListener("click", () => {
+          addCommand("right");
+        });
+        // Кнопки керування
+        elements.clearBtn.addEventListener("click", () => {
+          clearCommands();
+        });
+        elements.runBtn.addEventListener("click", () => {
+          executeCommands();
+        });
+
+        // Кнопки модальних вікон
+        elements.nextLevelBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.winModal.classList.add("hidden");
+          // checkAchievements(); // Перенесено в executeCommands
+          if (gameState.currentLevel < TOTAL_LEVELS_COUNT - 1) {
+            gameState.currentLevel++;
+            initLevel();
+          }
+          // Блок 'else' для фінального рівня більше не потрібен тут
+          saveProgress();
+        });
+
+        elements.retryBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.errorModal.classList.add("hidden");
+          initLevel(); // Перезапускаємо рівень
+        });
+
+        elements.closeErrBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.errorModal.classList.add("hidden");
+          // Повертаємо пожежника на старт (але не скидаємо команди)
+          const level = LEVELS[gameState.currentLevel];
+          updateCharacterPosition(level.start, true);
+          gameState.currentPos = [...level.start];
+          highlightNearObstacles(level.start, level);
+        });
+
+        elements.closeHintBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          sounds.click();
+          elements.hintModal.classList.add("hidden");
+        });
+
+        // Нові слухачі для фінального вікна
+        elements.restartGameBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.gameCompleteModal.classList.add("hidden");
+          // Гра пройдена, починаємо спочатку
+          gameState.currentLevel = 0;
+          gameState.totalGems = 0;
+          gameState.shownAchievements.clear();
+          elements.gemsCount.textContent = "0";
+          initLevel();
+          saveProgress(); // Зберігаємо скидання
+        });
+
+        elements.goHomeBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.gameCompleteModal.classList.add("hidden");
+          // Поки що "На головну" просто перезавантажує гру
+          location.reload();
+        });
+
+        // Кнопки в хедері
+        elements.soundBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          gameState.soundEnabled = !gameState.soundEnabled;
+          elements.soundBtn.setAttribute(
+            "aria-pressed",
+            String(gameState.soundEnabled)
+          );
+          const icon = elements.soundBtn.querySelector("i");
+          if (gameState.soundEnabled) {
+            icon.className = "fas fa-volume-high text-xl text-orange-600";
+            sounds.click();
+          } else {
+            icon.className = "fas fa-volume-xmark text-xl text-orange-600";
+            window.speechSynthesis.cancel();
+          }
+        });
+
+        elements.fullscreenBtn.addEventListener("click", () => {
+          toggleFullScreen();
+        });
+        document.addEventListener("fullscreenchange", updateFullscreenIcon);
+
+        // Туторіал та Батьківський режим
+        elements.startTutorial.addEventListener("click", () => {
+          elements.tutorialOverlay.style.display = "none";
+          ensureAudio(); // Перший дотик користувача
+        });
+
+        elements.parentBtn.addEventListener("click", () => {
+          elements.parentLevels.textContent = `${
+            gameState.currentLevel + 1
+          }/${TOTAL_LEVELS_COUNT}`;
+          elements.parentGems.textContent = gameState.totalGems;
+          checkSessionTime();
+          elements.parentModal.classList.remove("hidden");
+        });
+
+        elements.closeParentModal.addEventListener("click", () => {
+          elements.parentModal.classList.add("hidden");
+        });
+
+        // Підтримка клавіатури (для тестування та доступності)
+        document.addEventListener("keydown", (e) => {
+          if (gameState.isExecuting) return;
+          if (
+            !elements.winModal.classList.contains("hidden") ||
+            !elements.errorModal.classList.contains("hidden") ||
+            !elements.hintModal.classList.contains("hidden")
+          )
+            return;
+
+          switch (e.key) {
+            case "ArrowUp":
+              e.preventDefault();
+              addCommand("up");
+              break;
+            case "ArrowDown":
+              e.preventDefault();
+              addCommand("down");
+              break;
+            case "ArrowLeft":
+              e.preventDefault();
+              addCommand("left");
+              break;
+            case "ArrowRight":
+              e.preventDefault();
+              addCommand("right");
+              break;
+            case "Enter":
+              e.preventDefault();
+              executeCommands();
+              break;
+            case "Escape":
+            case "Backspace":
+              e.preventDefault();
+              clearCommands();
+              break;
+          }
+        });
+
+        // Адаптація сітки при зміні розміру вікна
+        let resizeTimeout;
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            const level = LEVELS[gameState.currentLevel];
+            renderGrid(level);
+            updateCharacterPosition(gameState.currentPos || level.start, true);
+          }, 250);
+        });
+
+        // ===== 12. ІНІЦІАЛІЗАЦІЯ ГРИ =====
+        // Запуск гри
+        // =================================
+
+        if (localStorage.getItem("firefighterProgress")) {
+          // Якщо гравець вже грав, ховаємо туторіал
+          elements.tutorialOverlay.style.display = "none";
+        }
+
+        loadProgress(); // Завантажуємо збережений прогрес
+        initLevel(); // Ініціалізуємо поточний рівень
+        addExtraButtons(); // Додаємо кнопки 'Підказка' та 'Відмінити'
+        setInterval(checkSessionTime, 2 * 60 * 1000); // Перевіряємо час сесії кожні 2 хв
+      })(); // Кінець IIFE
+    </script>
+  </body>
+</html>
