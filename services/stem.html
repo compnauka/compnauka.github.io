@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- ЗМІНЕНО: Назва гри оновлена -->
     <title>Пожежник 101</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -18,10 +17,14 @@
       body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, sans-serif;
+        /* Важливо для відчуття 'застосунку': вимикаємо виділення та дивні дотики */
         touch-action: manipulation;
-        /* ДОДАНО: Запобігаємо прокрутці, щоб імітувати застосунок */
         overflow: hidden;
         height: 100vh;
+        /* Запобігаємо виділенню тексту при швидких натисканнях */
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
       }
       .grid-cell {
         aspect-ratio: 1;
@@ -48,7 +51,8 @@
         border-style: solid;
         border-color: #ea580c;
         background-color: #fff7ed;
-        cursor: pointer;
+        /* ПОКРАЩЕННЯ UX: Прибираємо курсор 'pointer', оскільки видалення через клік вимкнено */
+        cursor: default;
       }
       @media (min-width: 640px) {
         .command-slot {
@@ -70,6 +74,7 @@
         transition: transform 0.15s;
         user-select: none;
       }
+      /* Ефект "натискання" для тач-пристроїв */
       .arrow-btn:active {
         transform: scale(1.08);
       }
@@ -387,6 +392,7 @@
         animation: float-up-emoji 1.5s ease-out forwards;
       }
 
+      /* Адаптація для дуже малих екранів */
       @media (max-width: 375px) {
         .arrow-btn {
           min-width: 65px;
@@ -408,7 +414,7 @@
   <body
     class="bg-gradient-to-br from-red-200 via-orange-200 to-yellow-200 min-h-screen p-2 sm:p-4"
   >
-    <!-- ЗМІНЕНО: Структура тіла для кращого прилягання -->
+    <!-- Основна обгортка, що займає весь екран -->
     <div
       class="max-w-7xl mx-auto h-full flex flex-col"
       aria-label="Основний контейнер гри"
@@ -417,7 +423,6 @@
       <header
         class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 mb-3 sm:mb-6 border-4 border-orange-300 flex-shrink-0"
       >
-        <!-- ЗМІНЕНО: Верхній рядок тепер містить назву, рівень, очки та кнопки -->
         <div
           class="flex justify-between items-center mb-3 gap-3 sm:gap-6"
           role="status"
@@ -427,17 +432,16 @@
             class="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent flex-shrink-0"
           >
             <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>
-            <!-- ЗМІНЕНО: Назва гри -->
             Пожежник 101
           </h1>
 
-          <!-- ДОДАНО: Контейнер для Рівня та Очок (росте, щоб зайняти місце) -->
+          <!-- Контейнер для Рівня та Очок (росте, щоб зайняти місце) -->
           <div
-            class="flex items-center gap-3 sm:gap-5 text-lg sm:text-xl md:text-2xl flex-grow justify-center"
+            class="flex items-center gap-3 sm:gap-5 text-lg sm:text-xl md:text-2xl flex-grow min-w-0 justify-center"
           >
             <div class="font-bold text-orange-600">
               Рівень: <span id="levelNum">1</span>/<span id="totalLevels"
-                >8</span
+                >10</span
               >
             </div>
             <div
@@ -448,6 +452,7 @@
             </div>
           </div>
 
+          <!-- Кнопки керування (Звук, Повний екран) -->
           <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               id="fullscreenBtn"
@@ -482,15 +487,10 @@
         >
           <div id="progressBar" class="progress-bar" style="width: 0%"></div>
         </div>
-
-        <!-- ВИДАЛЕНО: Рядок з рівнем та очками (перенесено нагору) -->
-        <!-- ВИДАЛЕНО: Підказка (#hintBubble) (перенесено у модальне вікно) -->
       </header>
 
-      <!-- ЗМІНЕНО: 'min-h-0' додано для правильного flex-розрахунку в Safari -->
-      <main
-        class="flex flex-col md:flex-row gap-3 sm:gap-6 flex-grow min-h-0"
-      >
+      <!-- Основна ігрова зона: 'min-h-0' критично важливий для flex-розрахунку в Safari -->
+      <main class="flex flex-col md:flex-row gap-3 sm:gap-6 flex-grow min-h-0">
         <!-- Колонка кнопок-стрілок. -->
         <div
           id="arrowControls"
@@ -527,7 +527,6 @@
         </div>
 
         <!-- Контейнер для ігрового поля + слотів. -->
-        <!-- ЗМІНЕНО: 'min-h-0' додано для правильного flex-розрахунку в Safari -->
         <div
           class="flex flex-col gap-3 sm:gap-6 min-w-0 flex-grow order-1 md:order-none min-h-0"
         >
@@ -536,10 +535,7 @@
             class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 flex flex-col border-4 border-orange-300 flex-grow"
             aria-label="Ігрове поле"
           >
-            <!-- ЗМІНЕНО: Видалено 'min-h-[300px] md:min-h-[420px]', щоб панель слотів не виштовхувалась -->
-            <div
-              class="flex-1 flex justify-center items-center"
-            >
+            <div class="flex-1 flex justify-center items-center">
               <div
                 id="gameGrid"
                 class="relative"
@@ -555,9 +551,17 @@
             class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col md:flex-row items-center gap-3 sm:gap-4 border-4 border-orange-300 flex-shrink-0"
           >
             <!-- Кнопки 'Гасити' та 'Очистити' -->
+            <!-- 
+              ПОКРАЩЕННЯ АДАПТИВНОСТІ (за вашим запитом):
+              - 'mainControls' тепер 'grid grid-cols-[1fr_auto]'.
+              - Це створює сітку 2x2:
+              - Колонка 1 (широка): Гасити!, Очистити
+              - Колонка 2 (вузька): Підказка, Відмінити
+              - Це звільняє горизонтальний простір для слотів команд.
+            -->
             <div
-              class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0"
               id="mainControls"
+              class="grid grid-cols-[1fr_auto] gap-2 flex-shrink-0 justify-center"
             >
               <button
                 id="runBtn"
@@ -571,6 +575,7 @@
               >
                 <i class="fas fa-eraser" aria-hidden="true"></i> Очистити
               </button>
+              <!-- Кнопки "Підказка" та "Відмінити" будуть додані сюди динамічно JS -->
             </div>
 
             <!-- Контейнер для слотів -->
@@ -581,7 +586,7 @@
         </div>
       </main>
 
-      <!-- Win modal -->
+      <!-- Win modal (для звичайних рівнів) -->
       <div
         id="winModal"
         class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -615,6 +620,49 @@
         </div>
       </div>
 
+      <!-- Game Complete modal (НОВЕ МОДАЛЬНЕ ВІКНО) -->
+      <div
+        id="gameCompleteModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="bg-gradient-to-br from-yellow-100 to-orange-200 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden border-4 border-yellow-400 shadow-2xl"
+        >
+          <div id="completeConfetti" class="confetti"></div>
+          <div class="text-7xl sm:text-8xl mb-4 win-pulse">
+            <div>🏆</div>
+          </div>
+          <h2
+            class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent mb-4"
+          >
+            Ти пройшов гру!
+          </h2>
+          <p class="text-lg sm:text-xl mb-6 text-gray-700">
+            Вітаємо! Ти став справжнім майстром пожежогасіння, зібравши
+            <strong class="text-orange-600" id="finalGemsCount">0</strong>
+            осередків вогню!
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button
+              id="restartGameBtn"
+              class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-3 px-6 rounded-xl text-lg w-full pulse-glow shadow-lg"
+            >
+              <i class="fas fa-redo-alt" aria-hidden="true"></i>
+              Почати спочатку
+            </button>
+            <button
+              id="goHomeBtn"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl text-lg w-full shadow-lg"
+            >
+              <i class="fas fa-home" aria-hidden="true"></i>
+              На головну
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Error modal -->
       <div
         id="errorModal"
@@ -645,7 +693,7 @@
         </div>
       </div>
 
-      <!-- ДОДАНО: Модальне вікно для підказки -->
+      <!-- Модальне вікно для підказки -->
       <div
         id="hintModal"
         class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -740,10 +788,10 @@
         <div class="space-y-3">
           <div class="flex justify-between">
             <span>Пройдено рівнів:</span>
-            <strong id="parentLevels">0/8</strong>
+            <strong id="parentLevels">0/10</strong>
           </div>
           <div class="flex justify-between">
-            <span>Зібрано вогню:</span>
+            <span>Загашено осередків:</span>
             <strong id="parentGems">0</strong>
           </div>
           <div class="flex justify-between">
@@ -771,13 +819,16 @@
     </div>
 
     <script>
-      // РЕФАКТОРИНГ: Весь код загорнуто в IIFE (Immediately Invoked Function Expression)
-      // Це запобігає забрудненню глобальної області видимості.
+      // Весь код гри загорнуто в IIFE (Immediately Invoked Function Expression)
+      // Це створює приватну область видимості та запобігає забрудненню глобального 'window'
       (function () {
-        "use strict"; // Увімкнення суворого режиму
+        "use strict"; // Вмикаємо суворий режим JavaScript
 
-        // ===== Constants =====
-        const ANIMATION_SPEED = 250;
+        // ===== 1. КОНСТАНТИ =====
+        // Налаштування гри, які не змінюються
+        // =================================
+
+        const ANIMATION_SPEED = 250; // Швидкість руху пожежника (мс)
         const DIRECTION_VECTORS = {
           up: [-1, 0],
           down: [1, 0],
@@ -792,6 +843,7 @@
             '<i class="fas fa-arrow-right text-amber-500" aria-hidden="true"></i>',
         };
 
+        // Усі рівні гри
         const LEVELS = [
           // 1. Пряма лінія
           {
@@ -845,11 +897,12 @@
             ],
             maxCommands: 5,
             optimizeGrid: true,
-            hint: "Ой! Треба обійти воду! 🌊", // ДОДАНО: Підказка для 4 рівня
+            hint: "Ой! Треба обійти воду! 🌊",
           },
           // 5. Ще одна перешкода
+          // ЗМІНЕНО: Поле 3x3, optimizeGrid: false
           {
-            size: 4,
+            size: 3,
             start: [0, 0],
             obstacles: [[1, 1]],
             gems: [
@@ -859,7 +912,7 @@
             ],
             maxCommands: 6,
             hint: "Обережно, вода! 🌊 Треба обійти.",
-            optimizeGrid: true,
+            optimizeGrid: false, // Поле тепер компактне 3x3
           },
           // 6. Дві перешкоди, 5x5
           {
@@ -876,27 +929,27 @@
             ],
             maxCommands: 9,
             optimizeGrid: true,
-            hint: "Знайди шлях навколо перешкод!", // ДОДАНО: Підказка
+            hint: "Знайди шлях навколо перешкод!",
           },
-          // 7. Простий лабіринт 5x5
+          // 7. Простий лабіринт
+          // ЗМІНЕНО: Поле 4x4, оновлено позиції та слоти
           {
-            size: 5,
+            size: 4,
             start: [0, 0],
             obstacles: [
               [1, 1],
               [2, 2],
-              [3, 3],
             ],
             gems: [
               [0, 2],
               [2, 0],
-              [4, 4],
+              [3, 0],
             ],
-            maxCommands: 12,
-            optimizeGrid: true,
-            hint: "Треба зібрати весь вогонь! 🔥", // ДОДАНО: Підказка
+            maxCommands: 8, // Зменшено з 12
+            optimizeGrid: false, // Поле тепер компактне 4x4
+            hint: "Треба зібрати весь вогонь! 🔥",
           },
-          // 8. Фінальний рівень 5x5
+          // 8. Складніший 5x5
           {
             size: 5,
             start: [0, 2],
@@ -913,12 +966,58 @@
             ],
             maxCommands: 10,
             optimizeGrid: true,
-            hint: "Складний виклик! Ти впораєшся! 💪", // ДОДАНО: Підказка
+            hint: "Складний виклик! Ти впораєшся! 💪",
+          },
+          // 9. Лабіринт
+          // ЗМІНЕНО: Збільшено кількість слотів
+          {
+            size: 5,
+            start: [0, 0],
+            obstacles: [
+              [1, 0],
+              [1, 1],
+              [1, 2],
+              [3, 2],
+              [3, 3],
+              [3, 4],
+            ],
+            gems: [
+              [0, 4],
+              [4, 0],
+              [4, 4],
+            ],
+            maxCommands: 16, // Збільшено з 14
+            optimizeGrid: true,
+            hint: "Майже фінал! Потрібно зібрати весь вогонь!",
+          },
+          // 10. Фінальний рівень (УСКЛАДНЕНО)
+          {
+            size: 5,
+            start: [2, 0],
+            obstacles: [
+              [1, 1],
+              [1, 3],
+              [2, 1],
+              [2, 3],
+              [3, 1],
+              [3, 3],
+            ],
+            gems: [
+              [0, 2],
+              [2, 2],
+              [4, 2],
+              [0, 4], // Додано
+              [4, 4], // Додано
+            ],
+            maxCommands: 22, // Збільшено з 15 до 22
+            optimizeGrid: true,
+            hint: "Фінальний виклик! Усі осередки вогню мають бути погашені!",
           },
         ];
 
         const TOTAL_LEVELS_COUNT = LEVELS.length;
 
+        // Варіанти підбадьорливих повідомлень
         const ENCOURAGEMENTS = [
           "Ти справжній герой! 🚒",
           "Вогонь погашено! 🔥",
@@ -927,6 +1026,7 @@
           "Гасиш як профі! 💯",
           "Вогняний майстер! 🏆",
         ];
+        // Варіанти "позитивних помилок"
         const POSITIVE_ERRORS = [
           "Майже вийшло! Спробуй ще раз! 💪",
           "Ти на правильному шляху! Продовжуй! 🌟",
@@ -934,7 +1034,7 @@
           "Так близько! Ти впораєшся! ⭐",
         ];
 
-        // ===== Achievements =====
+        // Досягнення
         const ACHIEVEMENTS = {
           firstGems: {
             icon: "🔥",
@@ -953,88 +1053,52 @@
           },
         };
 
-        // ===== State =====
+        // ===== 2. СТАН ГРИ =====
+        // Єдиний об'єкт, що відстежує все, що відбувається у грі
+        // ============================
+
         const gameState = {
           currentLevel: 0,
-          commands: [],
-          totalGems: 0,
-          isExecuting: false,
-          currentPos: null,
+          commands: [], // Масив для команд (напр., ['right', 'right', null])
+          totalGems: 0, // Загальна к-сть "вогню"
+          isExecuting: false, // Чи виконується анімація
+          currentPos: null, // [row, col] позиція пожежника
           soundEnabled: true,
-          shownAchievements: new Set(),
-          optimizedGridMap: null,
+          shownAchievements: new Set(), // Які досягнення вже показані
+          optimizedGridMap: null, // Для оптимізованих сіток
         };
 
         let sessionStartTime = Date.now();
-        const MAX_SESSION_TIME = 15 * 60 * 1000;
+        const MAX_SESSION_TIME = 15 * 60 * 1000; // 15 хвилин
+
+        // ===== 3. АУДІО ТА ВІБРАЦІЯ =====
+        // Керування звуковими ефектами та вібрацією
+        // ==================================
 
         let audioCtx = null;
         try {
+          // Створюємо AudioContext для звуків
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
           console.warn("AudioContext is not supported, sounds will be disabled.");
         }
+        // Браузери блокують аудіо до першого дотику користувача. Ця функція "пробуджує" аудіо.
         const ensureAudio = async () => {
           try {
             if (audioCtx && audioCtx.state === "suspended") {
               await audioCtx.resume();
             }
           } catch (e) {
-            /* ignore */
+            /* ігноруємо помилку, якщо не вийшло */
           }
         };
 
-        // ===== DOM =====
-        const el = (id) => document.getElementById(id);
-        const elements = {
-          gameGrid: el("gameGrid"),
-          commandSlots: el("commandSlots"),
-          runBtn: el("runBtn"),
-          clearBtn: el("clearBtn"),
-          winModal: el("winModal"),
-          errorModal: el("errorModal"),
-          // ДОДАНО: Елементи модального вікна підказки
-          hintModal: el("hintModal"),
-          hintModalText: el("hintModalText"),
-          closeHintBtn: el("closeHintBtn"),
-          nextLevelBtn: el("nextLevelBtn"),
-          retryBtn: el("retryBtn"),
-          closeErrBtn: el("closeErrBtn"),
-          levelNum: el("levelNum"),
-          totalLevels: el("totalLevels"),
-          gemsCount: el("gemsCount"),
-          winMessage: el("winMessage"),
-          errorMessage: el("errorMessage"),
-          upBtn: el("upBtn"),
-          downBtn: el("downBtn"),
-          leftBtn: el("leftBtn"),
-          rightBtn: el("rightBtn"),
-          progressBar: el("progressBar"),
-          encouragement: el("encouragement"),
-          // ВИДАЛЕНО: hintBubble, hintText
-          soundBtn: el("soundBtn"),
-          fullscreenBtn: el("fullscreenBtn"),
-          achievementToast: el("achievementToast"),
-          achievementIcon: el("achievementIcon"),
-          achievementTitle: el("achievementTitle"),
-          achievementText: el("achievementText"),
-          winConfetti: el("winConfetti"),
-          tutorialOverlay: el("tutorialOverlay"),
-          startTutorial: el("startTutorial"),
-          parentBtn: el("parentBtn"),
-          parentModal: el("parentModal"),
-          closeParentModal: el("closeParentModal"),
-          parentLevels: el("parentLevels"),
-          parentGems: el("parentGems"),
-          parentTime: el("parentTime"),
-          executionPanel: el("executionPanel"),
-          mainControls: el("mainControls"),
-        };
-
-        // ===== Utils =====
         const utils = {
+          // Проста утиліта для створення паузи
           sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+          // Перевірка, чи два масиви (позиції) однакові
           arraysEqual: (a, b) => a && b && a[0] === b[0] && a[1] === b[1],
+          // Перевірка, чи можна стати на клітинку (не за межами і не перешкода)
           isValidPosition: (pos, level) => {
             const gridMap = gameState.optimizedGridMap || {
               rows: level.size,
@@ -1052,6 +1116,7 @@
               !level.obstacles.some((o) => utils.arraysEqual(o, pos))
             );
           },
+          // Визначення розміру емодзі залежно від ширини екрану
           emojiClass: () => {
             const w = window.innerWidth;
             if (w < 480) return "emoji-xs";
@@ -1059,8 +1124,10 @@
             if (w < 1024) return "emoji-md";
             return "emoji-lg";
           },
+          // Розрахунок розміру клітинки, щоб вона вписалася в екран
           getCellSize: (level) => {
             const wrap = elements.gameGrid.parentElement;
+            if (!wrap) return 60; // Fаllback
             const rect = wrap.getBoundingClientRect();
             const gap = window.innerWidth < 640 ? 2 : 4;
             const gridMap = gameState.optimizedGridMap || {
@@ -1080,9 +1147,11 @@
 
             const size = Math.floor(Math.min(sizeBasedOnWidth, sizeBasedOnHeight));
 
-            return Math.max(36, Math.min(size, 110));
+            return Math.max(36, Math.min(size, 110)); // Обмежуємо мін. та макс. розмір
           },
+          // Випадковий елемент з масиву
           randomChoice: (arr) => arr[Math.floor(Math.random() * arr.length)],
+          // Функція для програвання звуку
           playSound: (freq, duration = 100) => {
             if (!gameState.soundEnabled || !audioCtx) return;
             try {
@@ -1092,7 +1161,7 @@
               gain.connect(audioCtx.destination);
               osc.frequency.value = freq;
               osc.type = "sine";
-              gain.gain.value = 0.1;
+              gain.gain.value = 0.1; // Невелика гучність
               osc.start();
               gain.gain.exponentialRampToValueAtTime(
                 0.01,
@@ -1105,7 +1174,7 @@
           },
         };
 
-        // ===== Sound Effects =====
+        // Набір звукових ефектів
         const sounds = {
           move: () => utils.playSound(350, 70),
           collect: () => {
@@ -1126,16 +1195,17 @@
           },
         };
 
+        // Вібрація (для мобільних)
         function vibrateDevice(pattern = [50]) {
           if ("vibrate" in navigator) {
             navigator.vibrate(pattern);
           }
         }
 
+        // Озвучення тексту (для підказок та перемог)
         function speak(text) {
           if ("speechSynthesis" in window && gameState.soundEnabled) {
-            // Зупиняємо попередні репліки, щоб уникнути накладання
-            window.speechSynthesis.cancel();
+            window.speechSynthesis.cancel(); // Зупиняємо попередні
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = "uk-UA";
             utterance.rate = 0.9;
@@ -1143,6 +1213,64 @@
             window.speechSynthesis.speak(utterance);
           }
         }
+
+        // ===== 4. КЕШУВАННЯ DOM =====
+        // Зберігаємо посилання на HTML елементи, щоб не шукати їх щоразу
+        // ==============================
+
+        const el = (id) => document.getElementById(id); // Хелпер для 'getElementById'
+        const elements = {
+          gameGrid: el("gameGrid"),
+          commandSlots: el("commandSlots"),
+          runBtn: el("runBtn"),
+          clearBtn: el("clearBtn"),
+          winModal: el("winModal"),
+          errorModal: el("errorModal"),
+          hintModal: el("hintModal"),
+          hintModalText: el("hintModalText"),
+          closeHintBtn: el("closeHintBtn"),
+          nextLevelBtn: el("nextLevelBtn"),
+          retryBtn: el("retryBtn"),
+          closeErrBtn: el("closeErrBtn"),
+          levelNum: el("levelNum"),
+          totalLevels: el("totalLevels"),
+          gemsCount: el("gemsCount"),
+          winMessage: el("winMessage"),
+          errorMessage: el("errorMessage"),
+          upBtn: el("upBtn"),
+          downBtn: el("downBtn"),
+          leftBtn: el("leftBtn"),
+          rightBtn: el("rightBtn"),
+          progressBar: el("progressBar"),
+          encouragement: el("encouragement"),
+          soundBtn: el("soundBtn"),
+          fullscreenBtn: el("fullscreenBtn"),
+          achievementToast: el("achievementToast"),
+          achievementIcon: el("achievementIcon"),
+          achievementTitle: el("achievementTitle"),
+          achievementText: el("achievementText"),
+          winConfetti: el("winConfetti"),
+          tutorialOverlay: el("tutorialOverlay"),
+          startTutorial: el("startTutorial"),
+          parentBtn: el("parentBtn"),
+          parentModal: el("parentModal"),
+          closeParentModal: el("closeParentModal"),
+          parentLevels: el("parentLevels"),
+          parentGems: el("parentGems"),
+          parentTime: el("parentTime"),
+          executionPanel: el("executionPanel"),
+          mainControls: el("mainControls"),
+          // Нові елементи для фінального вікна
+          gameCompleteModal: el("gameCompleteModal"),
+          restartGameBtn: el("restartGameBtn"),
+          goHomeBtn: el("goHomeBtn"),
+          finalGemsCount: el("finalGemsCount"),
+          completeConfetti: el("completeConfetti"),
+        };
+
+        // ===== 5. ЗБЕРЕЖЕННЯ ПРОГРЕСУ =====
+        // Використовуємо localStorage для збереження рівня та очок
+        // ====================================
 
         function saveProgress() {
           try {
@@ -1165,6 +1293,7 @@
             const saved = localStorage.getItem("firefighterProgress");
             if (saved) {
               const data = JSON.parse(saved);
+              // Завантажуємо прогрес, якщо він не старіший за 7 днів
               if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
                 gameState.currentLevel = data.level || 0;
                 gameState.totalGems = data.gems || 0;
@@ -1177,7 +1306,10 @@
           }
         }
 
-        // ===== Achievements =====
+        // ===== 6. ДОСЯГНЕННЯ ТА ЕФЕКТИ =====
+        // Керування тостами, конфетті та іншими "соковитими" ефектами
+        // ========================================
+
         function checkAchievements() {
           const gems = gameState.totalGems;
           const level = gameState.currentLevel;
@@ -1210,6 +1342,7 @@
           elements.achievementText.textContent = ach.text;
           elements.achievementToast.classList.remove("hidden");
 
+          // Сховати тост через 3.5 секунди
           setTimeout(() => {
             elements.achievementToast.style.transition =
               "opacity 0.5s, transform 0.5s";
@@ -1223,9 +1356,9 @@
           }, 3500);
         }
 
-        // ===== Confetti =====
-        function createConfetti() {
-          const container = elements.winConfetti;
+        // Створення конфетті у модальному вікні перемоги
+        function createConfetti(container) {
+          if (!container) return;
           container.innerHTML = "";
           const colors = [
             "#f59e0b",
@@ -1247,7 +1380,7 @@
           }
         }
 
-        // ===== Sparkles =====
+        // Створення іскор при зборі вогню
         function createSparkles(cell) {
           cell.querySelectorAll(".sparkle-container").forEach((s) => s.remove());
           const container = document.createElement("div");
@@ -1273,6 +1406,7 @@
           setTimeout(() => container.remove(), 1000);
         }
 
+        // Показ плаваючого емодзі (напр. "🎉")
         function showFloatingEmoji(emoji, pos) {
           const cell = getCellElement(pos);
           if (!cell) return;
@@ -1285,21 +1419,24 @@
           setTimeout(() => floater.remove(), 1500);
         }
 
+        // Маленьке святкування при зборі 1 вогню
         function celebrateSmallWin(cell) {
           sounds.cheer();
           createSparkles(cell);
           showFloatingEmoji("🎉", gameState.currentPos);
         }
 
-        // ===== Level Management =====
+        // ===== 7. КЕРУВАННЯ РІВНЕМ =====
+        // Завантаження, рендеринг та оновлення рівнів
+        // ===================================
+
         function updateProgress() {
           const progress =
             ((gameState.currentLevel + 1) / TOTAL_LEVELS_COUNT) * 100;
           elements.progressBar.style.width = progress + "%";
         }
 
-        // ВИДАЛЕНО: Функція showHint, оскільки підказка тепер у модальному вікні
-
+        // Оптимізація сітки: видаляє порожні рядки/колонки
         function optimizeGrid(level) {
           if (!level.optimizeGrid) {
             gameState.optimizedGridMap = null;
@@ -1344,7 +1481,7 @@
           };
         }
 
-        // ===== Init Level (глобальне прибирання) =====
+        // Головна функція ініціалізації рівня
         function initLevel() {
           const level = LEVELS[gameState.currentLevel];
           if (!level) {
@@ -1353,25 +1490,29 @@
             initLevel();
             return;
           }
+          // Прибираємо сміття з попереднього рівня
           document
             .querySelectorAll(".sparkle-container, .trail-dot, .floating-emoji")
             .forEach((n) => n.remove());
           elements.gameGrid.classList.remove("grid-shaking");
 
-          optimizeGrid(level);
+          optimizeGrid(level); // Розраховуємо оптимізовану сітку
 
           elements.totalLevels.textContent = TOTAL_LEVELS_COUNT;
           elements.levelNum.textContent = gameState.currentLevel + 1;
           gameState.commands = Array(level.maxCommands).fill(null);
           gameState.currentPos = [...level.start];
-          renderGrid(level);
-          renderCommandSlots();
-          updateProgress();
-          // ВИДАЛЕНО: showHint(level);
+
+          renderGrid(level); // Малюємо сітку
+          renderCommandSlots(); // Малюємо слоти
+          updateProgress(); // Оновлюємо прогрес-бар
+
           elements.runBtn.disabled = false;
           gameState.isExecuting = false;
 
-          showNextStepHint();
+          showNextStepHint(); // Показ підказки для перших рівнів
+
+          // Показ інтро про перешкоди
           if (
             level.obstacles.length > 0 &&
             !localStorage.getItem("shownObstacleIntro")
@@ -1381,7 +1522,7 @@
           }
         }
 
-        // ===== Render Grid =====
+        // Рендеринг (малювання) ігрової сітки
         function renderGrid(level) {
           const g = elements.gameGrid;
           g.classList.remove("grid-shaking");
@@ -1438,7 +1579,7 @@
           }
         }
 
-        // ===== Render Command Slots =====
+        // Рендеринг (малювання) слотів для команд
         function renderCommandSlots() {
           const level = LEVELS[gameState.currentLevel];
           const wrap = elements.commandSlots;
@@ -1455,20 +1596,18 @@
             if (gameState.commands[i]) {
               slot.classList.add("filled");
               slot.innerHTML = ARROW_ICONS[gameState.commands[i]];
-              slot.setAttribute("title", "Клік — видалити команду");
-              slot.addEventListener("click", () => {
-                if (!gameState.isExecuting) {
-                  vibrateDevice([30]);
-                  sounds.click();
-                  gameState.commands[i] = null;
-                  renderCommandSlots();
-                }
-              });
+              slot.setAttribute("title", "Команда додана");
+              // ПОКРАЩЕННЯ UX:
+              // Ми свідомо видалили addEventListener для кліку по заповненому слоту.
+              // Для дітей 4-5 років простіше мати одну дію (додати)
+              // та окремі кнопки для видалення ("Очистити", "Відмінити").
+              // Це спрощує модель взаємодії.
             }
             wrap.appendChild(slot);
           }
         }
 
+        // Підсвічування наступного кроку (тільки для перших рівнів)
         function showNextStepHint() {
           document
             .querySelectorAll(".pulse-hint-animation")
@@ -1490,7 +1629,11 @@
           }
         }
 
-        // ===== Add Command =====
+        // ===== 8. ЛОГІКА ГРИ =====
+        // Основні дії: додати/очистити команду, виконати, перевірити
+        // ============================
+
+        // Додавання команди у перший вільний слот
         async function addCommand(direction) {
           if (gameState.isExecuting) return;
           await ensureAudio();
@@ -1502,12 +1645,13 @@
             gameState.commands[firstEmpty] = direction;
             renderCommandSlots();
           }
+          // Прибираємо підказку після першого кліку
           document
             .querySelectorAll(".pulse-hint-animation")
             .forEach((el) => el.classList.remove("pulse-hint-animation"));
         }
 
-        // ===== Clear Commands =====
+        // Очищення всіх команд
         async function clearCommands() {
           if (gameState.isExecuting) return;
           await ensureAudio();
@@ -1516,16 +1660,17 @@
           const level = LEVELS[gameState.currentLevel];
           gameState.commands = Array(level.maxCommands).fill(null);
           renderCommandSlots();
-          showNextStepHint();
+          showNextStepHint(); // Показати підказку знову, якщо потрібно
         }
 
-        // ===== Get Cell Element =====
+        // Отримання DOM-елемента клітинки за її позицією [r, c]
         function getCellElement(pos) {
           return elements.gameGrid.querySelector(
             `[data-row="${pos[0]}"][data-col="${pos[1]}"]`
           );
         }
 
+        // Підсвічування перешкод, коли пожежник поруч
         function highlightNearObstacles(pos, level) {
           elements.gameGrid
             .querySelectorAll(".near-obstacle")
@@ -1549,7 +1694,7 @@
           }
         }
 
-        // ===== Update Character Position =====
+        // Оновлення позиції пожежника на сітці (візуально)
         function updateCharacterPosition(newPos, noJump = false) {
           const level = LEVELS[gameState.currentLevel];
           const oldCell = getCellElement(gameState.currentPos);
@@ -1588,7 +1733,7 @@
           gameState.currentPos = newPos;
         }
 
-        // ===== Execute Commands =====
+        // Виконання послідовності команд
         async function executeCommands() {
           if (gameState.isExecuting) return;
           await ensureAudio();
@@ -1613,13 +1758,14 @@
 
           for (let i = 0; i < gameState.commands.length; i++) {
             const cmd = gameState.commands[i];
-            if (!cmd) break;
+            if (!cmd) break; // Зупиняємось на першому порожньому слоті
 
             const [dr, dc] = DIRECTION_VECTORS[cmd];
             const newPos = [pos[0] + dr, pos[1] + dc];
 
             await utils.sleep(ANIMATION_SPEED);
 
+            // Перевірка на зіткнення
             if (!utils.isValidPosition(newPos, level)) {
               sounds.error();
               elements.gameGrid.classList.add("grid-shaking");
@@ -1643,10 +1789,12 @@
               return;
             }
 
+            // Рух
             sounds.move();
             updateCharacterPosition(newPos);
             pos = newPos;
 
+            // Перевірка на збір вогню
             const gemIdx = remainingGems.findIndex((g) =>
               utils.arraysEqual(g, pos)
             );
@@ -1664,14 +1812,17 @@
             }
           }
 
+          // Перевірка на перемогу
           if (remainingGems.length === 0) {
             sounds.win();
             gameState.totalGems += collectedGems;
             elements.gemsCount.textContent = gameState.totalGems;
+            checkAchievements(); // Перевірка досягнень перенесена сюди
             saveProgress();
             await utils.sleep(400);
             showWin(collectedGems);
           } else {
+            // Не весь вогонь зібрано
             sounds.error();
             const leftGems = remainingGems.length;
             const fireWord =
@@ -1687,9 +1838,19 @@
           elements.runBtn.disabled = false;
         }
 
-        // ===== Show Win =====
+        // ===== 9. МОДАЛЬНІ ВІКНА =====
+        // Показ вікон перемоги, помилки, підказок
+        // =================================
+
+        // Показ вікна перемоги
         function showWin(firesExtinguished) {
-          createConfetti();
+          if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
+            // Остання перемога - показуємо нове модальне вікно
+            showGameComplete();
+            return; // Виходимо, щоб не показувати звичайне вікно
+          }
+
+          createConfetti(elements.winConfetti); // Використовуємо контейнер для звичайного вікна
           elements.encouragement.textContent =
             utils.randomChoice(ENCOURAGEMENTS);
 
@@ -1701,20 +1862,22 @@
               : "осередків";
           elements.winMessage.textContent = `Ти загасив ${firesExtinguished} ${fireWord}! 💪 Безпека гарантована!`;
 
-          if (gameState.currentLevel === TOTAL_LEVELS_COUNT - 1) {
-            elements.nextLevelBtn.innerHTML = "Вітаємо! 🎊";
-            elements.winMessage.textContent = `Ти пройшов всі ${TOTAL_LEVELS_COUNT} рівнів! Загашено осередків вогню: ${gameState.totalGems} 🔥`;
-            speak("Неймовірно! Ти пройшов усі рівні! Ти справжній герой!");
-          } else {
-            elements.nextLevelBtn.innerHTML =
-              'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
-            speak("Молодець! Ти загасив весь вогонь!");
-          }
+          elements.nextLevelBtn.innerHTML =
+            'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
+          speak("Молодець! Ти загасив весь вогонь!");
 
           elements.winModal.classList.remove("hidden");
         }
 
-        // ===== Show Error =====
+        // Нова функція для показу фінального вікна
+        function showGameComplete() {
+          createConfetti(elements.completeConfetti); // Використовуємо контейнер для фінального вікна
+          elements.finalGemsCount.textContent = gameState.totalGems;
+          elements.gameCompleteModal.classList.remove("hidden");
+          speak("Неймовірно! Ти пройшов усі рівні! Ти справжній герой!");
+        }
+
+        // Показ "позитивного" вікна помилки
         function showError(msg, canRetry) {
           const encouragingMsg = utils.randomChoice(POSITIVE_ERRORS);
           elements.errorMessage.innerHTML = `
@@ -1727,7 +1890,7 @@
           elements.errorModal.classList.remove("hidden");
         }
 
-        // ===== REFACTORED: showObstacleIntro =====
+        // Показ інтро-повідомлення про воду
         function showObstacleIntro() {
           const modal = document.createElement("div");
           modal.className =
@@ -1753,7 +1916,11 @@
           speak("Обережно! Це вода. Знайди інший шлях!");
         }
 
-        // ===== Fullscreen =====
+        // ===== 10. ДОДАТКОВІ ФУНКЦІЇ =====
+        // Повний екран, таймер сесії, пошук шляху
+        // ===================================
+
+        // Керування іконкою повного екрану
         function updateFullscreenIcon() {
           const icon = elements.fullscreenBtn.querySelector("i");
           if (document.fullscreenElement) {
@@ -1778,6 +1945,7 @@
           }
         }
 
+        // Перевірка часу сесії для батьківського контролю
         function checkSessionTime() {
           const elapsed = Date.now() - sessionStartTime;
 
@@ -1791,7 +1959,7 @@
           elements.parentTime.textContent = `${Math.floor(elapsed / 60000)} хв`;
         }
 
-        // ===== REFACTORED: showBreakReminder =====
+        // Показ нагадування про перерву
         function showBreakReminder() {
           const modal = document.createElement("div");
           modal.className =
@@ -1821,17 +1989,18 @@
           modal
             .querySelector("#breakEndGameBtn")
             .addEventListener("click", () => {
-              location.reload();
+              location.reload(); // Простий спосіб "закінчити"
             });
 
           document.body.appendChild(modal);
           speak("Час відпочити! Ти чудово попрацював!");
         }
 
+        // Пошук найпростішого шляху (BFS) для підказок
         function findSimplestPath(level) {
           const queue = [[level.start, []]]; // [position, path_array]
           const visited = new Set([level.start.toString()]);
-          const target = level.gems[0];
+          const target = level.gems[0]; // Шукаємо шлях до першого вогню
 
           if (!target) return [];
 
@@ -1839,7 +2008,7 @@
             const [currentPos, path] = queue.shift();
 
             if (utils.arraysEqual(currentPos, target)) {
-              return path;
+              return path; // Знайшли
             }
 
             for (const direction in DIRECTION_VECTORS) {
@@ -1855,24 +2024,24 @@
               }
             }
           }
-          return [];
+          return []; // Шлях не знайдено
         }
 
+        // Додавання кнопок "Підказка" та "Відмінити"
         function addExtraButtons() {
           const helpBtn = document.createElement("button");
+          helpBtn.id = "hintBtn"; // Додано ID для легкого доступу
           helpBtn.innerHTML = '<i class="fas fa-lightbulb"></i>';
           helpBtn.className =
             "bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
           helpBtn.title = "Підказка";
 
-          // ЗМІНЕНО: Логіка кнопки підказки
           helpBtn.addEventListener("click", async () => {
             vibrateDevice([50, 50, 50]);
             await ensureAudio();
             sounds.click();
 
             const level = LEVELS[gameState.currentLevel];
-            // Використовуємо підказку з рівня або стандартну
             const hint =
               level.hint || "Спробуй спланувати маршрут до вогню! 🚒";
 
@@ -1881,7 +2050,7 @@
             elements.hintModal.classList.remove("hidden");
             speak(hint); // Озвучуємо підказку
 
-            // Ця логіка показує перші 3 кроки рішення
+            // Авто-заповнення перших 3 кроків
             const solution = findSimplestPath(LEVELS[gameState.currentLevel]);
             if (solution.length > 0) {
               for (let i = 0; i < Math.min(3, solution.length); i++) {
@@ -1900,12 +2069,14 @@
           });
 
           const undoBtn = document.createElement("button");
+          undoBtn.id = "undoBtn"; // Додано ID для легкого доступу
           undoBtn.innerHTML = '<i class="fas fa-undo"></i>';
           undoBtn.className =
             "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded-xl text-base sm:text-lg md:text-xl shadow-lg";
           undoBtn.title = "Відмінити останню команду";
 
           undoBtn.addEventListener("click", () => {
+            // Знаходимо останню додану команду і видаляємо її
             for (let i = gameState.commands.length - 1; i >= 0; i--) {
               if (gameState.commands[i] !== null) {
                 gameState.commands[i] = null;
@@ -1916,12 +2087,19 @@
             }
           });
 
+          // ЗМІНЕНО: Додаємо кнопки у вертикальний flex-контейнер
           const panel = elements.mainControls;
+          // Вставляємо "Підказку" після "Гасити!"
           panel.insertBefore(helpBtn, panel.children[1]);
+          // Додаємо "Відмінити" в кінець (після "Очистити")
           panel.appendChild(undoBtn);
         }
 
-        // ===== Event Listeners =====
+        // ===== 11. СЛУХАЧІ ПОДІЙ =====
+        // Прив'язка функцій до натискань кнопок
+        // ================================
+
+        // Кнопки-стрілки
         elements.upBtn.addEventListener("click", () => {
           addCommand("up");
         });
@@ -1934,6 +2112,7 @@
         elements.rightBtn.addEventListener("click", () => {
           addCommand("right");
         });
+        // Кнопки керування
         elements.clearBtn.addEventListener("click", () => {
           clearCommands();
         });
@@ -1941,47 +2120,62 @@
           executeCommands();
         });
 
+        // Кнопки модальних вікон
         elements.nextLevelBtn.addEventListener("click", async () => {
           await ensureAudio();
           elements.winModal.classList.add("hidden");
-          checkAchievements();
+          // checkAchievements(); // Перенесено в executeCommands
           if (gameState.currentLevel < TOTAL_LEVELS_COUNT - 1) {
             gameState.currentLevel++;
             initLevel();
-          } else {
-            gameState.currentLevel = 0;
-            gameState.totalGems = 0;
-            gameState.shownAchievements.clear();
-            elements.gemsCount.textContent = "0";
-            elements.nextLevelBtn.innerHTML =
-              'Наступний виклик <i class="fas fa-fire-extinguisher" aria-hidden="true"></i>';
-            initLevel();
           }
+          // Блок 'else' для фінального рівня більше не потрібен тут
           saveProgress();
         });
 
         elements.retryBtn.addEventListener("click", async () => {
           await ensureAudio();
           elements.errorModal.classList.add("hidden");
-          initLevel();
+          initLevel(); // Перезапускаємо рівень
         });
 
         elements.closeErrBtn.addEventListener("click", async () => {
           await ensureAudio();
           elements.errorModal.classList.add("hidden");
+          // Повертаємо пожежника на старт (але не скидаємо команди)
           const level = LEVELS[gameState.currentLevel];
           updateCharacterPosition(level.start, true);
           gameState.currentPos = [...level.start];
           highlightNearObstacles(level.start, level);
         });
 
-        // ДОДАНО: Слухач для кнопки закриття модального вікна підказки
         elements.closeHintBtn.addEventListener("click", async () => {
           await ensureAudio();
           sounds.click();
           elements.hintModal.classList.add("hidden");
         });
 
+        // Нові слухачі для фінального вікна
+        elements.restartGameBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.gameCompleteModal.classList.add("hidden");
+          // Гра пройдена, починаємо спочатку
+          gameState.currentLevel = 0;
+          gameState.totalGems = 0;
+          gameState.shownAchievements.clear();
+          elements.gemsCount.textContent = "0";
+          initLevel();
+          saveProgress(); // Зберігаємо скидання
+        });
+
+        elements.goHomeBtn.addEventListener("click", async () => {
+          await ensureAudio();
+          elements.gameCompleteModal.classList.add("hidden");
+          // Поки що "На головну" просто перезавантажує гру
+          location.reload();
+        });
+
+        // Кнопки в хедері
         elements.soundBtn.addEventListener("click", async () => {
           await ensureAudio();
           gameState.soundEnabled = !gameState.soundEnabled;
@@ -2004,13 +2198,16 @@
         });
         document.addEventListener("fullscreenchange", updateFullscreenIcon);
 
+        // Туторіал та Батьківський режим
         elements.startTutorial.addEventListener("click", () => {
           elements.tutorialOverlay.style.display = "none";
-          ensureAudio();
+          ensureAudio(); // Перший дотик користувача
         });
 
         elements.parentBtn.addEventListener("click", () => {
-          elements.parentLevels.textContent = `${gameState.currentLevel}/${TOTAL_LEVELS_COUNT}`;
+          elements.parentLevels.textContent = `${
+            gameState.currentLevel + 1
+          }/${TOTAL_LEVELS_COUNT}`;
           elements.parentGems.textContent = gameState.totalGems;
           checkSessionTime();
           elements.parentModal.classList.remove("hidden");
@@ -2020,10 +2217,9 @@
           elements.parentModal.classList.add("hidden");
         });
 
-        // Keyboard support
+        // Підтримка клавіатури (для тестування та доступності)
         document.addEventListener("keydown", (e) => {
           if (gameState.isExecuting) return;
-          // ЗМІНЕНО: Додано перевірку на модальне вікно підказки
           if (
             !elements.winModal.classList.contains("hidden") ||
             !elements.errorModal.classList.contains("hidden") ||
@@ -2060,7 +2256,7 @@
           }
         });
 
-        // Responsive reflow
+        // Адаптація сітки при зміні розміру вікна
         let resizeTimeout;
         window.addEventListener("resize", () => {
           clearTimeout(resizeTimeout);
@@ -2071,15 +2267,19 @@
           }, 250);
         });
 
-        // ===== Initialize Game =====
+        // ===== 12. ІНІЦІАЛІЗАЦІЯ ГРИ =====
+        // Запуск гри
+        // =================================
+
         if (localStorage.getItem("firefighterProgress")) {
+          // Якщо гравець вже грав, ховаємо туторіал
           elements.tutorialOverlay.style.display = "none";
         }
 
-        loadProgress();
-        initLevel();
-        addExtraButtons();
-        setInterval(checkSessionTime, 2 * 60 * 1000);
+        loadProgress(); // Завантажуємо збережений прогрес
+        initLevel(); // Ініціалізуємо поточний рівень
+        addExtraButtons(); // Додаємо кнопки 'Підказка' та 'Відмінити'
+        setInterval(checkSessionTime, 2 * 60 * 1000); // Перевіряємо час сесії кожні 2 хв
       })(); // Кінець IIFE
     </script>
   </body>
