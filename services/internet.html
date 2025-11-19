@@ -3,319 +3,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Як працює інтернет: Покрокова аналогія з піцою</title>
+    <title>Як працює інтернет | Комп'ютерна наука</title>
     <!-- Підключення Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Підключення шрифту Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Стилі для кастомних елементів та анімацій */
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
-        .step-transition {
-            transition: background-color 0.4s ease-in-out, border-color 0.4s ease-in-out, transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        .step-card {
+            transition: all 0.3s ease;
         }
-        .visual-item-transition {
-            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        .step-active {
+            background-color: #eff6ff; /* blue-50 */
+            border-color: #3b82f6; /* blue-500 */
+            transform: scale(1.02);
+            opacity: 1 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .visual-icon {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
         }
         #packet {
-            transition: left 1s ease-in-out, top 1s ease-in-out, opacity 0.3s ease-in-out, transform 1s ease-in-out;
-        }
-        .progress-bar-fill {
-            transition: width 0.5s ease-in-out;
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            font-size: 2rem;
         }
         .arrow {
             opacity: 0.2;
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            transition: all 0.5s ease;
         }
         .arrow.active {
             opacity: 1;
             color: #2563eb; /* blue-600 */
+            filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.3));
+        }
+        /* Стилі для квізу */
+        .quiz-option:hover {
+            background-color: #f1f5f9;
+        }
+        .quiz-option.correct {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #15803d; /* green-700 */
+        }
+        .quiz-option.wrong {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+            color: #b91c1c; /* red-700 */
+        }
+        .explanation-box {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 p-4 sm:p-6 md:p-8">
+<body class="text-slate-800">
 
-    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-        <!-- Заголовок -->
-        <header class="p-8 text-center bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-            <h1 class="text-4xl md:text-5xl font-bold mb-2"><span role="img" aria-label="піца">🍕</span> Як працює Інтернет? <span role="img" aria-label="глобус">🌐</span></h1>
-            <p class="text-lg md:text-xl text-indigo-100">Пояснення на прикладі замовлення піци!</p>
+    <div class="max-w-5xl mx-auto bg-white min-h-screen sm:min-h-0 sm:my-8 sm:rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+        
+        <!-- Header -->
+        <header class="p-8 text-center bg-gradient-to-br from-blue-600 to-indigo-700 text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <h1 class="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight drop-shadow-sm">
+                    <span role="img" aria-label="піца">🍕</span> Як працює інтернет <span role="img" aria-label="глобус">🌐</span>
+                </h1>
+                <p class="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+                    Дізнайся, як працює мережа, що таке безпечне з'єднання 🔒 та чому не можна вірити кожному листу.
+                </p>
+            </div>
+            <!-- Декоративні кола -->
+            <div class="absolute top-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full translate-x-1/3 translate-y-1/3"></div>
         </header>
 
-        <main class="p-6 md:p-10">
-            <!-- Аналогія -->
-            <div class="grid md:grid-cols-2 gap-8 mb-8">
-                <!-- Секція: Замовлення піци -->
-                <section class="bg-gray-100 p-6 rounded-xl border border-gray-200">
-                    <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
-                        <span class="text-3xl" role="img" aria-label="піца">🍕</span>
-                        <span>Замовлення піци</span>
-                    </h2>
-                    <div class="space-y-4">
-                        <div id="pizza-step-1" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-blue-600">Крок 1: Пошук номеру</span>
-                            <p class="text-sm italic text-gray-700">Ви шукаєте номер піцерії в телефонній книзі.</p>
-                        </div>
-                        <div id="pizza-step-2" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-blue-600">Крок 2: Дзвінок</span>
-                            <p class="text-sm italic text-gray-700">Телефонуєте та робите замовлення: "Хочу піцу 'Маргарита'".</p>
-                        </div>
-                        <div id="pizza-step-3" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-blue-600">Крок 3: Приготування</span>
-                            <p class="text-sm italic text-gray-700">На кухні піцерії готують вашу піцу.</p>
-                        </div>
-                        <div id="pizza-step-4" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-blue-600">Крок 4: Доставка</span>
-                            <p class="text-sm italic text-gray-700">Кур'єр везе готову піцу на вашу адресу.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Секція: Як працює Інтернет -->
-                <section class="bg-gray-100 p-6 rounded-xl border border-gray-200">
-                    <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
-                        <span class="text-3xl" role="img" aria-label="глобус">🌐</span>
-                        <span>Робота Інтернету</span>
-                    </h2>
-                    <div class="space-y-4">
-                        <div id="internet-step-1" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-indigo-600">Крок 1: DNS-запит</span>
-                            <p class="text-sm">Браузер шукає IP-адресу сайту в "телефонній книзі" Інтернету — DNS.</p>
-                        </div>
-                        <div id="internet-step-2" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-indigo-600">Крок 2: HTTP-запит</span>
-                            <p class="text-sm">Браузер надсилає запит на сервер: "Хочу отримати цю веб-сторінку".</p>
-                        </div>
-                        <div id="internet-step-3" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-indigo-600">Крок 3: Обробка сервером</span>
-                            <p class="text-sm">Сервер знаходить і "готує" веб-сторінку для вас.</p>
-                        </div>
-                        <div id="internet-step-4" class="step-transition p-4 rounded-lg border-l-4 border-gray-300 opacity-60">
-                            <span class="font-bold text-indigo-600">Крок 4: HTTP-відповідь</span>
-                            <p class="text-sm">Сервер надсилає готову сторінку назад у ваш браузер.</p>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Управління та прогрес -->
-            <div class="text-center mb-8">
-                <div class="flex justify-center items-center gap-4 mb-4">
-                    <button id="nextBtn" class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                        🎬 Почати
-                    </button>
-                    <button id="resetBtn" class="px-8 py-3 bg-gray-600 text-white font-semibold rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-300 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                        🔄 Спочатку
-                    </button>
-                </div>
-                <div class="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2.5 mt-4">
-                    <div id="progressBar" class="progress-bar-fill bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
+        <main class="p-6 md:p-10 space-y-12">
             
-            <!-- Візуальна демонстрація -->
-            <div class="bg-gray-100 p-6 md:p-8 rounded-xl text-center border border-gray-200">
-                <div id="visual-demo-container" class="relative w-full min-h-[150px] flex items-center justify-center">
-                     <div class="flex flex-col md:flex-row justify-around w-full items-center gap-8 md:gap-4">
-                        <div id="browser" class="visual-item-transition opacity-40 flex flex-col items-center gap-2">
-                            <div class="text-4xl" role="img" aria-label="комп'ютер">💻</div>
-                            <span class="font-semibold">Ваш Комп'ютер</span>
-                        </div>
-                        <div class="arrow text-3xl font-light rotate-90 md:rotate-0" id="arrow1">→</div>
-                        <div id="dns" class="visual-item-transition opacity-40 flex flex-col items-center gap-2">
-                            <div class="text-4xl" role="img" aria-label="книга">📖</div>
-                            <span class="font-semibold">DNS Сервер</span>
-                        </div>
-                         <div class="arrow text-3xl font-light rotate-90 md:rotate-0" id="arrow2">→</div>
-                        <div id="server" class="visual-item-transition opacity-40 flex flex-col items-center gap-2">
-                            <div class="text-4xl" role="img" aria-label="будівля">🏢</div>
-                            <span class="font-semibold">Веб-Сервер</span>
-                        </div>
-                     </div>
-                     <div id="packet" class="absolute text-3xl opacity-0" style="left: 10%; top: 50%; transform: translateY(-50%);" aria-hidden="true"></div>
+            <!-- Частина 1: Словничок -->
+            <section class="bg-indigo-50 rounded-2xl p-6 border border-indigo-100">
+                <h2 class="text-2xl font-bold text-indigo-900 mb-6 flex items-center gap-2">
+                    <span class="text-2xl">🎓</span> Словничок Інтернету
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 text-sm md:text-base">
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">💻 Клієнт (Браузер)</h3>
+                        <p class="text-slate-600">Програма (Chrome, Safari), яка показує сайти. Це <b>Ти</b>, коли робиш замовлення.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">🏢 Сервер</h3>
+                        <p class="text-slate-600">Потужний комп'ютер у дата-центрі, де зберігаються сайти. Це <b>Кухня піцерії</b>.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">📘 DNS (Система імен)</h3>
+                        <p class="text-slate-600">Глобальна система, яка перекладає назви (google.com) у цифри (IP-адреси), щоб техніка розуміла куди йти.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">📦 Пакети</h3>
+                        <p class="text-slate-600">Інформація розбивається на дрібні частини для передачі, а в кінці збирається назад як пазл.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">🏠 IP-адреса</h3>
+                        <p class="text-slate-600">Унікальна адреса в мережі (наприклад, <b>172.217.16.142</b>). Без неї лист не знайде отримувача.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm info-card transition-all duration-200 border border-slate-100">
+                        <h3 class="font-bold text-indigo-600 mb-2 text-lg">🔌 Провайдер</h3>
+                        <p class="text-slate-600">Компанія, яка забезпечує доступ до мережі через кабелі або обладнання.</p>
+                    </div>
                 </div>
-                <p id="animation-status" class="mt-4 text-gray-600 h-12 flex items-center justify-center transition-opacity duration-300 leading-relaxed">Натисніть "Почати", щоб побачити магію!</p>
+            </section>
+
+            <!-- Частина 2: Анімація процесу -->
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-800">Як відбувається "замовлення" сайту?</h2>
+                
+                <!-- Сцена анімації -->
+                <div class="bg-slate-100 p-6 md:p-10 rounded-2xl border border-slate-200 mb-8 relative select-none overflow-hidden shadow-inner" id="demo-container">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0 px-4 md:px-16 min-h-[200px] relative z-10">
+                        
+                        <!-- Елемент: Комп'ютер -->
+                        <div id="browser" class="visual-icon opacity-50 flex flex-col items-center gap-3 w-24">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-md border-4 border-transparent transition-colors">💻</div>
+                            <span class="font-bold text-sm text-slate-600 text-center">Твій ПК</span>
+                        </div>
+
+                        <!-- Стрілка 1 -->
+                        <div class="arrow text-4xl font-bold text-slate-300 rotate-90 md:rotate-0 transition-transform duration-500" id="arrow1">➜</div>
+
+                        <!-- Елемент: DNS -->
+                        <div id="dns" class="visual-icon opacity-50 flex flex-col items-center gap-3 w-24">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-md border-4 border-transparent transition-colors">📘</div>
+                            <span class="font-bold text-sm text-slate-600 text-center">DNS</span>
+                        </div>
+
+                        <!-- Стрілка 2 -->
+                        <div class="arrow text-4xl font-bold text-slate-300 rotate-90 md:rotate-0 transition-transform duration-500" id="arrow2">➜</div>
+
+                        <!-- Елемент: Сервер -->
+                        <div id="server" class="visual-icon opacity-50 flex flex-col items-center gap-3 w-24">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-md border-4 border-transparent transition-colors">🏢</div>
+                            <span class="font-bold text-sm text-slate-600 text-center">Сервер</span>
+                        </div>
+                    </div>
+
+                    <!-- Літаючий пакет -->
+                    <div id="packet" class="opacity-0 flex items-center justify-center w-12 h-12 bg-amber-400 rounded-full shadow-lg border-2 border-amber-600 text-2xl" aria-hidden="true">❓</div>
+                    
+                    <!-- Статус бар з підтримкою a11y -->
+                    <div class="mt-8 bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-center min-h-[80px] flex flex-col items-center justify-center relative z-10" aria-live="polite">
+                         <p id="status-text" class="text-lg text-slate-700 transition-all duration-300">Натисни <b>"Почати"</b>, щоб зробити замовлення!</p>
+                    </div>
+                </div>
+
+                <!-- Кнопки керування -->
+                <div class="flex flex-col items-center gap-4 mb-10">
+                    <div class="flex gap-4">
+                        <button id="nextBtn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-full shadow-lg transform transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ring-offset-2 focus:ring-2 ring-blue-400">
+                            🎬 Почати
+                        </button>
+                        <button id="resetBtn" disabled class="px-8 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔄 Знову
+                        </button>
+                    </div>
+                    <!-- Прогрес бар -->
+                    <div class="w-full max-w-xs bg-slate-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Пояснення кроків (Порівняння) -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Колонка: Аналогія з піцою -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-xl text-slate-700 mb-4 flex items-center gap-2">
+                            <span class="bg-orange-100 p-2 rounded-lg">🍕</span> Життя
+                        </h3>
+                        <div id="pizza-step-1" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Крок 1</div>
+                            <p class="font-medium text-slate-700">Шукаємо номер піцерії.</p>
+                        </div>
+                        <div id="pizza-step-2" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Крок 2</div>
+                            <p class="font-medium text-slate-700">Дзвонимо: "Хочу піцу!"</p>
+                        </div>
+                        <div id="pizza-step-3" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Крок 3</div>
+                            <p class="font-medium text-slate-700">Кухар готує піцу.</p>
+                        </div>
+                        <div id="pizza-step-4" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Крок 4</div>
+                            <p class="font-medium text-slate-700">Кур'єр привозить коробку.</p>
+                        </div>
+                    </div>
+
+                    <!-- Колонка: Як працює інтернет -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-xl text-slate-700 mb-4 flex items-center gap-2">
+                            <span class="bg-blue-100 p-2 rounded-lg">🌐</span> Інтернет
+                        </h3>
+                        <div id="net-step-1" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">DNS-запит</div>
+                            <p class="font-medium text-slate-700">Браузер шукає IP (172.217.x.x).</p>
+                        </div>
+                        <div id="net-step-2" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">HTTP-запит</div>
+                            <p class="font-medium text-slate-700">Сигнал летить на Сервер.</p>
+                        </div>
+                        <div id="net-step-3" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Обробка</div>
+                            <p class="font-medium text-slate-700">Сервер знаходить файли.</p>
+                        </div>
+                        <div id="net-step-4" class="step-card opacity-60 p-4 rounded-xl border-l-4 border-slate-300 bg-white">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1">Відповідь (Пакети)</div>
+                            <p class="font-medium text-slate-700">Пакети летять назад і збираються.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Частина 3: Технології та Безпека -->
+            <section class="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+                <h2 class="text-2xl font-bold text-amber-900 mb-6 flex items-center gap-2">
+                    <span class="text-2xl">🛡️</span> Технології та Безпека
+                </h2>
+                <div class="grid md:grid-cols-2 gap-8 text-sm md:text-base">
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-lg text-amber-700 border-b border-amber-200 pb-2">Як працює з'єднання?</h3>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">📡</span>
+                                <div><b>Wi-Fi:</b> Це не магія, а радіохвилі (як у радіоприймачі), що передають дані від роутера до твого телефону.</div>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">🌊</span>
+                                <div><b>Магістралі:</b> Континенти з'єднані товстими кабелями на дні океанів та супутниками в космосі.</div>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">📥</span>
+                                <div><b>Завантаження (Download):</b> Отримання файлів з сервера собі. <b>Upload</b> — відправка файлів від себе в інтернет.</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-lg text-amber-700 border-b border-amber-200 pb-2">Кібер-щит</h3>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">🔒</span>
+                                <div><b>HTTPS:</b> Шукай замочок біля адреси сайту. Це значить, що твоє з'єднання зашифроване і ніхто не підслухає.</div>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">🎣</span>
+                                <div><b>Фішинг:</b> Шахраї можуть надіслати лист "Ти виграв iPhone!". Ніколи не вір таким обіцянкам і не натискай на посилання.</div>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-xl">🔑</span>
+                                <div><b>Пароль:</b> Не використовуй "123456". Хороший пароль — це довга фраза з цифрами та символами.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Квіз -->
+            <section class="pt-10 border-t border-slate-200">
+                <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-slate-800">🧠 Перевір себе!</h2>
+                <p class="text-center text-slate-500 mb-8">Дай правильні відповіді на 5 випадкових питань.</p>
+                
+                <div id="quiz-container" class="max-w-2xl mx-auto space-y-4">
+                    <!-- Питання будуть згенеровані тут через JS -->
+                </div>
+                
+                <div id="quiz-result" class="hidden mt-8 p-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl text-center text-white shadow-xl transform scale-95 transition-all">
+                    <h3 class="text-3xl font-bold mb-2">Чудова робота! 🎉</h3>
+                    <p class="text-xl mb-6">Твій результат: <span id="score-display" class="font-black text-yellow-300 text-2xl">0/5</span></p>
+                    <button onclick="initQuiz()" class="px-8 py-3 bg-white text-green-700 font-bold rounded-full hover:bg-green-50 shadow-lg transition hover:scale-105">
+                        Спробувати ще раз
+                    </button>
+                </div>
+            </section>
+
         </main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-50 p-8 text-center text-slate-400 text-sm border-t border-slate-200 mt-8">
+            <p>© 2025 Комп'ютерна наука з паном Артемом</p>
+        </footer>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const elements = {
-                nextBtn: document.getElementById('nextBtn'),
-                resetBtn: document.getElementById('resetBtn'),
-                progressBar: document.getElementById('progressBar'),
-                packet: document.getElementById('packet'),
-                demoContainer: document.getElementById('visual-demo-container'),
-                status: document.getElementById('animation-status'),
-                visualItems: {
-                    browser: document.getElementById('browser'),
-                    dns: document.getElementById('dns'),
-                    server: document.getElementById('server'),
-                },
-                arrows: {
-                    arrow1: document.getElementById('arrow1'),
-                    arrow2: document.getElementById('arrow2'),
-                }
+        // ==========================================
+        // 1. ЛОГІКА АНІМАЦІЇ
+        // ==========================================
+        const dom = {
+            nextBtn: document.getElementById('nextBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            progressBar: document.getElementById('progressBar'),
+            packet: document.getElementById('packet'),
+            statusText: document.getElementById('status-text'),
+            container: document.getElementById('demo-container'),
+            visuals: {
+                browser: document.getElementById('browser'),
+                dns: document.getElementById('dns'),
+                server: document.getElementById('server')
+            },
+            arrows: {
+                arrow1: document.getElementById('arrow1'),
+                arrow2: document.getElementById('arrow2')
+            }
+        };
+
+        // Оновлені описи кроків
+        const steps = [
+            {
+                ids: ['pizza-step-1', 'net-step-1'],
+                from: 'browser', to: 'dns',
+                arrowsToActivate: ['arrow1'],
+                packetContent: '❓',
+                status: "<b>Крок 1:</b> Браузер питає у DNS: \"Яка IP-адреса у цього сайту?\""
+            },
+            {
+                ids: [], // Повернення
+                from: 'dns', to: 'browser',
+                arrowsToActivate: ['arrow1'],
+                packetContent: '💡',
+                status: "<b>Відповідь DNS:</b> \"Тримай адресу: 172.217.16.142 (Google)\""
+            },
+            {
+                ids: ['pizza-step-2', 'net-step-2'],
+                from: 'browser', to: 'server',
+                arrowsToActivate: ['arrow1', 'arrow2'],
+                packetContent: '✉️',
+                status: "<b>Крок 2:</b> Браузер дзвонить на Сервер за отриманою IP-адресою."
+            },
+            {
+                ids: ['pizza-step-3', 'net-step-3'],
+                from: 'server', to: 'server', // На місці
+                arrowsToActivate: [],
+                packetContent: '⚙️',
+                status: "<b>Крок 3:</b> Сервер шукає файли сайту у себе на диску."
+            },
+            {
+                ids: ['pizza-step-4', 'net-step-4'],
+                from: 'server', to: 'browser',
+                arrowsToActivate: ['arrow1', 'arrow2'],
+                packetContent: '📦',
+                status: "<b>Крок 4:</b> Сервер надсилає пакети даних, а браузер збирає їх як пазл у цілу сторінку."
+            },
+            {
+                ids: [],
+                from: null, to: null,
+                status: "<b>Ура!</b> Сайт завантажено. Перевір, чи є замочок безпеки 🔒!"
+            }
+        ];
+
+        let currentStepIndex = -1;
+        let isAnimating = false;
+
+        function getCenter(element) {
+            const rect = element.getBoundingClientRect();
+            const containerRect = dom.container.getBoundingClientRect();
+            return {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2
             };
+        }
+
+        // НОВА ФУНКЦІЯ: Оновлення стрілок при зміні розміру екрана або кроку
+        function updateArrowStyles(step) {
+            if (!step || !step.arrowsToActivate) return;
+
+            const isBackwards = (step.from === 'dns' && step.to === 'browser') || (step.from === 'server' && step.to === 'browser');
+            // Якщо екран мобільний (< 768px), то вертикально (90/-90), інакше горизонтально (0/180)
+            const rotation = window.innerWidth < 768 ? (isBackwards ? -90 : 90) : (isBackwards ? 180 : 0);
             
-            const animationSteps = [
-                { text_ids: ['pizza-step-1', 'internet-step-1'], from: 'browser', to: 'dns', arrows: ['arrow1'], direction: 1, packet_icon: '❓', status: "<b>Запит до DNS:</b>&nbsp;'Де знайти сайт?' <i>Це як шукати адресу піцерії в довіднику.</i>" },
-                { text_ids: [], from: 'dns', to: 'browser', arrows: ['arrow1'], direction: -1, packet_icon: '💡', status: "<b>Відповідь від DNS:</b>&nbsp;'Ось його IP-адреса!' <i>Довідник дав вам точну адресу.</i>" },
-                { text_ids: ['pizza-step-2', 'internet-step-2'], from: 'browser', to: 'server', arrows: ['arrow1', 'arrow2'], direction: 1, packet_icon: '✉️', status: "<b>Запит до сервера:</b>&nbsp;'Будь ласка, дай мені сторінку.' <i>Це як зателефонувати і замовити піцу.</i>" },
-                { text_ids: ['pizza-step-3', 'internet-step-3'], from: 'server', to: 'server', status: "<b>Обробка сервером:</b>&nbsp;'Готую сторінку...' <i>Піцайоло почав готувати вашу піцу.</i>" },
-                { text_ids: ['pizza-step-4', 'internet-step-4'], from: 'server', to: 'browser', arrows: ['arrow1', 'arrow2'], direction: -1, packet_icon: '📄', status: "<b>Відповідь від сервера:</b>&nbsp;'Тримай свою сторінку!' <i>Кур'єр доставив вам гарячу піцу.</i>" },
-                { text_ids: [], status: "<b>Готово!</b>&nbsp;Сторінка завантажена у вашому браузері.&nbsp;<i>Смачного!</i>"}
-            ];
+            step.arrowsToActivate.forEach(id => {
+                const arrow = dom.arrows[id];
+                arrow.classList.add('active');
+                arrow.style.transform = `rotate(${rotation}deg)`;
+            });
+        }
+
+        // СЛУХАЧ ПОДІЙ: Зміна розміру екрана
+        window.addEventListener('resize', () => {
+            if (currentStepIndex >= 0 && currentStepIndex < steps.length) {
+                const step = steps[currentStepIndex];
+                // Спочатку скидаємо трансформації для активних стрілок, щоб перерахувати
+                if(step.arrowsToActivate) {
+                    updateArrowStyles(step);
+                }
+            }
+        });
+
+        async function animatePacket(fromId, toId, icon) {
+            const start = getCenter(dom.visuals[fromId]);
+            const end = getCenter(dom.visuals[toId]);
             
-            let currentStep = -1;
-            const isMobile = () => window.innerWidth < 768;
+            dom.packet.innerHTML = icon;
+            dom.packet.style.transition = 'none'; 
+            dom.packet.style.left = `${start.x}px`;
+            dom.packet.style.top = `${start.y}px`;
+            dom.packet.style.transform = 'translate(-50%, -50%) scale(0.5)';
+            dom.packet.style.opacity = '1';
 
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            // Force reflow
+            dom.packet.offsetHeight; 
 
-            function updateStatus(html) {
-                elements.status.style.opacity = '0';
-                setTimeout(() => {
-                    elements.status.innerHTML = html;
-                    elements.status.style.opacity = '1';
-                }, 300);
-            }
+            dom.packet.style.transition = 'all 1s ease-in-out';
+            dom.packet.style.left = `${end.x}px`;
+            dom.packet.style.top = `${end.y}px`;
+            dom.packet.style.transform = 'translate(-50%, -50%) scale(1.2)';
+
+            await new Promise(r => setTimeout(r, 1000));
             
-            function deactivateAll() {
-                 Object.values(elements.visualItems).forEach(item => {
-                    item.classList.remove('opacity-100', 'scale-110');
-                    item.classList.add('opacity-40');
-                });
-                Object.values(elements.arrows).forEach(arrow => {
-                    arrow.classList.remove('active');
-                    arrow.style.transform = ''; // Reset to CSS default
-                });
-            }
+            dom.packet.style.opacity = '0';
+            dom.packet.style.transform = 'translate(-50%, -50%) scale(0.5)';
+        }
 
-            async function executeStep(stepIndex) {
-                if (stepIndex < 0 || stepIndex >= animationSteps.length) return;
+        async function playStep(index) {
+            if (isAnimating) return;
+            isAnimating = true;
+            dom.nextBtn.disabled = true;
 
-                const step = animationSteps[stepIndex];
-                deactivateAll();
-                updateStatus(step.status);
-                
-                step.text_ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.classList.replace('opacity-60', 'opacity-100');
-                        el.classList.replace('border-gray-300', 'border-blue-500');
-                        el.classList.add('bg-blue-50', 'scale-105');
-                    }
-                });
+            const step = steps[index];
 
-                const fromItem = elements.visualItems[step.from];
-                const toItem = elements.visualItems[step.to];
+            dom.statusText.innerHTML = step.status;
+            dom.progressBar.style.width = `${((index + 1) / steps.length) * 100}%`;
 
-                if (fromItem) fromItem.classList.replace('opacity-40', 'opacity-100');
-                if (toItem) toItem.classList.replace('opacity-40', 'opacity-100');
-                
-                // Оновлена уніфікована логіка стрілок
-                if (step.arrows) {
-                    const transform = (step.direction === -1) 
-                                        ? (isMobile() ? 'rotate(-90deg)' : 'scaleX(-1)') 
-                                        : ''; // 'rotate(90deg)' or 'scaleX(1)' - не потрібні, це default
-                    
-                    step.arrows.forEach(arrowId => {
-                        const arrowEl = elements.arrows[arrowId];
-                        if (arrowEl) {
-                            arrowEl.classList.add('active');
-                            arrowEl.style.transform = transform;
-                        }
-                    });
-                }
+            document.querySelectorAll('.step-card').forEach(el => el.classList.remove('step-active'));
+            step.ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.add('step-active');
+            });
 
-                if (step.from && step.to && step.from !== step.to) {
-                    await movePacket(step.from, step.to, step.packet_icon);
-                } else if (step.from && step.from === step.to) {
-                    fromItem.classList.add('animate-pulse');
-                    await sleep(1200);
-                    fromItem.classList.remove('animate-pulse');
-                }
-                
-                elements.progressBar.style.width = `${((stepIndex + 1) / animationSteps.length) * 100}%`;
-                
-                if (stepIndex === animationSteps.length - 1) {
-                    elements.nextBtn.disabled = true;
-                }
-            }
-
-             async function movePacket(fromId, toId, icon) {
-                elements.packet.innerHTML = icon;
-                const fromEl = elements.visualItems[fromId];
-                const toEl = elements.visualItems[toId];
-                if (!fromEl || !toEl) return;
-
-                const containerRect = elements.demoContainer.getBoundingClientRect();
-                const fromRect = fromEl.getBoundingClientRect();
-                const toRect = toEl.getBoundingClientRect();
-                
-                elements.packet.style.opacity = '1';
-
-                if (isMobile()) {
-                    const startY = fromRect.top - containerRect.top + fromRect.height / 2;
-                    elements.packet.style.left = `50%`;
-                    elements.packet.style.top = `${startY}px`;
-                    elements.packet.style.transform = `translateX(-50%) translateY(-50%) scale(1)`;
-                    await sleep(50);
-                    const endY = toRect.top - containerRect.top + toRect.height / 2;
-                    elements.packet.style.top = `${endY}px`;
-                    elements.packet.style.transform = `translateX(-50%) translateY(-50%) scale(1.2)`;
-                } else {
-                    const startX = fromRect.left - containerRect.left + fromRect.width / 2;
-                    elements.packet.style.top = `50%`;
-                    elements.packet.style.left = `${startX}px`;
-                    elements.packet.style.transform = `translateY(-50%) scale(1)`;
-                    await sleep(50);
-                    const endX = toRect.left - containerRect.left + toRect.width / 2;
-                    elements.packet.style.left = `${endX}px`;
-                    elements.packet.style.transform = `translateY(-50%) scale(1.2)`;
-                }
-
-                await sleep(1000);
-                elements.packet.style.opacity = '0';
-                elements.packet.style.transform = (isMobile() ? 'translateX(-50%) ' : '') + `translateY(-50%) scale(0.5)`;
-            }
-
-            function resetAnimationState() {
-                currentStep = -1;
-                deactivateAll();
-                elements.progressBar.style.width = '0%';
-                updateStatus('Натисніть "Почати", щоб побачити магію!');
-                
-                document.querySelectorAll('.step-transition').forEach(el => {
-                    el.classList.replace('opacity-100', 'opacity-60');
-                    el.classList.replace('border-blue-500', 'border-gray-300');
-                    el.classList.remove('bg-blue-50', 'scale-105');
-                });
-                                
-                elements.packet.style.opacity = '0';
-                elements.nextBtn.disabled = false;
-                elements.resetBtn.disabled = true;
-                elements.nextBtn.textContent = '🎬 Почати';
-            }
-
-            elements.nextBtn.addEventListener('click', () => {
-                if (currentStep < animationSteps.length - 1) {
-                    currentStep++;
-                    if(currentStep === 0) {
-                        elements.nextBtn.textContent = 'Наступний крок';
-                        elements.resetBtn.disabled = false;
-                    }
-                    executeStep(currentStep);
-                }
+            Object.values(dom.visuals).forEach(v => {
+                v.classList.remove('opacity-100', 'scale-110');
+                v.classList.add('opacity-50');
+                v.querySelector('div').classList.remove('border-blue-500');
             });
             
-            elements.resetBtn.addEventListener('click', resetAnimationState);
-            resetAnimationState();
+            if (step.from) {
+                const el = dom.visuals[step.from];
+                el.classList.remove('opacity-50');
+                el.classList.add('opacity-100');
+            }
+            if (step.to && step.to !== step.from) {
+                const el = dom.visuals[step.to];
+                el.classList.remove('opacity-50');
+                el.classList.add('opacity-100');
+            }
+
+            // Скидання стрілок перед оновленням
+            dom.arrows.arrow1.classList.remove('active');
+            dom.arrows.arrow2.classList.remove('active');
+            
+            // Виклик нової функції для повороту стрілок
+            updateArrowStyles(step);
+
+            if (step.from && step.to) {
+                if (step.from === step.to) {
+                    const el = dom.visuals[step.from];
+                    el.classList.remove('opacity-50');
+                    el.classList.add('opacity-100', 'scale-110');
+                    el.querySelector('div').classList.add('border-blue-500');
+                    await new Promise(r => setTimeout(r, 1000));
+                    el.classList.remove('scale-110');
+                } else {
+                    await animatePacket(step.from, step.to, step.packetContent);
+                }
+            }
+
+            isAnimating = false;
+            
+            if (index < steps.length - 1) {
+                dom.nextBtn.textContent = 'Далі ➡️';
+                dom.nextBtn.disabled = false;
+            } else {
+                dom.nextBtn.textContent = 'Готово! 🎉';
+                dom.nextBtn.disabled = true;
+            }
+        }
+
+        function reset() {
+            currentStepIndex = -1;
+            dom.progressBar.style.width = '0%';
+            dom.statusText.innerHTML = 'Натисни <b>"Почати"</b>, щоб зробити замовлення!';
+            dom.nextBtn.textContent = '🎬 Почати';
+            dom.nextBtn.disabled = false;
+            dom.resetBtn.disabled = true;
+            document.querySelectorAll('.step-card').forEach(el => el.classList.remove('step-active'));
+            Object.values(dom.visuals).forEach(v => {
+                v.classList.remove('opacity-100', 'scale-110');
+                v.classList.add('opacity-50');
+            });
+            dom.arrows.arrow1.classList.remove('active');
+            dom.arrows.arrow2.classList.remove('active');
+        }
+
+        dom.nextBtn.addEventListener('click', () => {
+            currentStepIndex++;
+            dom.resetBtn.disabled = false;
+            playStep(currentStepIndex);
+        });
+
+        dom.resetBtn.addEventListener('click', reset);
+
+        // ==========================================
+        // 2. ЛОГІКА КВІЗУ (Оновлена база питань з поясненнями)
+        // ==========================================
+        
+        const questionsDB = [
+            { 
+                q: "Що таке Браузер?", 
+                a: ["Програма, що показує сайти", "Сервер у дата-центрі", "Тип підводного кабелю"], 
+                correct: 0,
+                explanation: "Правильно! Браузер (Chrome, Safari) — це твоє вікно в інтернет. Сервери зберігають сайти, а кабелі їх передають."
+            },
+            { 
+                q: "Тобі прийшов лист: 'Ти виграв iPhone! Натисни тут'. Що робити?", 
+                a: ["Видалити і сказати батькам", "Натиснути, це ж iPhone!", "Переслати друзям"], 
+                correct: 0,
+                explanation: "Молодець! Це 'фішинг' (шахрайство). Ніхто не роздає телефони просто так. Посилання може містити вірус."
+            },
+            { 
+                q: "Що робить DNS?", 
+                a: ["Перетворює назви (google.com) в IP-адреси", "Очищує комп'ютер від пилу", "Роздає Wi-Fi"], 
+                correct: 0,
+                explanation: "Так! DNS — це як адресна книга. Комп'ютери не розуміють слів, їм потрібні цифрові адреси (IP)."
+            },
+            { 
+                q: "Де фізично знаходяться сайти?", 
+                a: ["На серверах у дата-центрах", "У мене на моніторі", "У повітрі (в хмарах)"], 
+                correct: 0,
+                explanation: "Вірно! Сайти — це файли, що лежать на потужних комп'ютерах (серверах), які працюють 24/7."
+            },
+            { 
+                q: "Що означає замочок 🔒 біля адреси сайту?", 
+                a: ["З'єднання зашифроване (безпечне)", "Сайт заблоковано", "Потрібно купити ключ"], 
+                correct: 0,
+                explanation: "Супер! Замочок (HTTPS) означає, що ніхто не зможе підслухати твій пароль чи побачити, що ти робиш."
+            },
+            { 
+                q: "Що таке 'Завантаження' (Download)?", 
+                a: ["Отримання файлів з інтернету собі", "Видалення файлів", "Відправка файлів другу"], 
+                correct: 0,
+                explanation: "Точно! Download — це коли ти забираєш гру чи картинку з інтернету на свій пристрій."
+            },
+            { 
+                q: "Який пароль найнадійніший?", 
+                a: ["K#7mP9$vL2", "12345678", "password123"], 
+                correct: 0,
+                explanation: "Абсолютно вірно! Чим складніший пароль (букви, цифри, знаки), тим важче хакерам його зламати."
+            },
+            { 
+                q: "Що таке Wi-Fi?", 
+                a: ["Передача даних радіохвилями", "Магічний промінь", "Кабель, який не видно"], 
+                correct: 0,
+                explanation: "Так! Wi-Fi працює як радіо — передає інформацію через повітря за допомогою невидимих хвиль."
+            },
+            { 
+                q: "Як інтернет з'єднує континенти?", 
+                a: ["Підводними кабелями та супутниками", "Тільки через космос", "Через великі вежі"], 
+                correct: 0,
+                explanation: "Правильно! Більшість інтернету проходить через товсті кабелі, прокладені дном океанів."
+            },
+            { 
+                q: "Що таке 'Фішинг'?", 
+                a: ["Шахрайство для крадіжки паролів", "Ловля риби в грі", "Пошук інформації"], 
+                correct: 0,
+                explanation: "Вірно! Фішинг — це коли шахраї 'рибалять', намагаючись виманити твої паролі через фальшиві сайти."
+            },
+            { 
+                q: "Навіщо потрібен антивірус?", 
+                a: ["Захищати від шкідливих програм", "Прискорювати ігри", "Щоб екран не гас"], 
+                correct: 0,
+                explanation: "Так! Антивірус — це як охоронець, який не пускає шкідливі програми на твій комп'ютер."
+            },
+            { 
+                q: "Що таке IP-адреса?", 
+                a: ["Унікальна адреса пристрою в мережі", "Поштовий індекс будинку", "Пароль від Wi-Fi"], 
+                correct: 0,
+                explanation: "Молодець! Без унікальної IP-адреси інтернет не знав би, куди саме доставити повідомлення."
+            }
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initQuiz() {
+            const container = document.getElementById('quiz-container');
+            const resultBox = document.getElementById('quiz-result');
+            container.innerHTML = '';
+            resultBox.classList.add('hidden');
+            resultBox.classList.remove('block');
+
+            const randomQuestions = shuffleArray([...questionsDB]).slice(0, 5);
+            let score = 0;
+            let answeredCount = 0;
+
+            randomQuestions.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-xl shadow-sm border border-slate-100 transition-colors';
+                
+                const title = document.createElement('h4');
+                title.className = 'font-bold text-lg mb-3 text-slate-800';
+                title.innerText = `${index + 1}. ${item.q}`;
+                
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'space-y-2';
+
+                // Контейнер для пояснення (спочатку прихований)
+                const explanationDiv = document.createElement('div');
+                explanationDiv.className = 'hidden mt-4 p-4 rounded-lg text-sm border-l-4 explanation-box';
+
+                const optionsWithIndex = item.a.map((text, idx) => ({ text, originalIndex: idx }));
+                const shuffledOptions = shuffleArray(optionsWithIndex);
+
+                shuffledOptions.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-option w-full text-left px-4 py-3 rounded-lg border border-slate-200 transition font-medium text-slate-600';
+                    btn.innerText = opt.text;
+                    
+                    btn.onclick = function() {
+                        const allBtns = optionsContainer.querySelectorAll('button');
+                        allBtns.forEach(b => b.disabled = true);
+
+                        const isCorrect = opt.originalIndex === item.correct;
+                        
+                        if (isCorrect) {
+                            btn.classList.add('correct');
+                            score++;
+                            explanationDiv.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+                            explanationDiv.innerHTML = `<strong>✅ Правильно!</strong> ${item.explanation}`;
+                        } else {
+                            btn.classList.add('wrong');
+                            // Знайти і підсвітити правильну
+                            allBtns.forEach(b => {
+                                if(b.innerText === item.a[item.correct]) b.classList.add('correct');
+                            });
+                            explanationDiv.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                            explanationDiv.innerHTML = `<strong>❌ Не зовсім.</strong> Правильна відповідь: "${item.a[item.correct]}".<br>${item.explanation}`;
+                        }
+
+                        // Показати пояснення
+                        explanationDiv.classList.remove('hidden');
+                        
+                        answeredCount++;
+                        if (answeredCount === 5) {
+                            showResult(score);
+                        }
+                    };
+                    optionsContainer.appendChild(btn);
+                });
+
+                card.appendChild(title);
+                card.appendChild(optionsContainer);
+                card.appendChild(explanationDiv); // Додаємо пояснення в картку
+                container.appendChild(card);
+            });
+        }
+
+        function showResult(score) {
+            const resultBox = document.getElementById('quiz-result');
+            const scoreDisplay = document.getElementById('score-display');
+            
+            resultBox.classList.remove('hidden');
+            resultBox.classList.add('block');
+            scoreDisplay.innerText = `${score}/5`;
+            
+            // Трохи почекати, щоб користувач дочитав пояснення останнього питання
+            setTimeout(() => {
+                resultBox.scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initQuiz();
         });
     </script>
 </body>
