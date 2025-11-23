@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeLogic: Алгоритмічне мислення</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-yellow': '#FFD93D',
+                        'brand-blue': '#6BCB77',
+                        'brand-red': '#FF6B6B',
+                        'brand-purple': '#A29BFE',
+                        'brand-orange': '#FF9F43',
+                        'brand-cyan': '#48DBFB',
+                        'brand-dark': '#2C3E50',
+                        'brand-light': '#F7F9FC'
+                    },
+                    animation: {
+                        'bounce-slight': 'bounce-slight 2s infinite',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pop': 'pop 0.25s ease-out'
+                    },
+                    keyframes: {
+                        'bounce-slight': {
+                            '0%, 100%': { transform: 'translateY(-5%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        'pop': {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #F0F4F8;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+        .card-shadow {
+            box-shadow: 0 8px 0px rgba(0,0,0,0.1);
+            transition: all 0.15s ease;
+        }
+        .card-shadow:active {
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+            transform: translateY(4px);
+        }
+
+        .locked-level {
+            filter: grayscale(100%);
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        .locked-level::after {
+            content: '\f023';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: #4A5568;
+            background: rgba(255,255,255,0.8);
+            padding: 1rem;
+            border-radius: 50%;
+        }
+
+        .bucket-zone {
+            border: 3px dashed #CBD5E0;
+            transition: all 0.3s;
+        }
+        .bucket-zone.active-drop {
+            background-color: #E6FFFA;
+            border-color: #6BCB77;
+            transform: scale(1.02);
+        }
+
+        .mascot-bubble {
+            position: relative;
+            background: #2C3E50;
+            color: white;
+            border-radius: 15px;
+            padding: 10px 15px;
+            font-size: 0.85rem;
+        }
+        .mascot-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #2C3E50;
+        }
+
+        div[tabindex="0"]:focus {
+            outline: 4px solid #A29BFE;
+            outline-offset: 2px;
+        }
+        button:focus {
+            outline: 4px solid #A29BFE;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="bg-brand-light text-brand-dark min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="bg-white p-3 sm:p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3 cursor-pointer group" onclick="goHome()" tabindex="0" role="button" aria-label="Go to Home">
+            <div class="bg-brand-yellow w-10 h-10 rounded-xl flex items-center justify-center border-b-4 border-orange-300 group-active:border-b-0 group-active:translate-y-1 transition-all">
+                <i class="fa-solid fa-brain text-brand-dark"></i>
+            </div>
+            <div class="leading-tight hidden sm:block">
+                <h1 class="text-xl font-bold tracking-wide">LifeLogic</h1>
+                <span class="text-xs text-gray-400 font-bold uppercase tracking-widest">Academy</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 items-center">
+            <div class="flex bg-gray-100 rounded-full p-1 shadow-inner">
+                <button onclick="setLang('ua')" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold transition" id="btn-ua" aria-label="Українська мова">UA</button>
+                <button onclick="setLang('en')" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold transition" id="btn-en" aria-label="English Language">EN</button>
+                <button onclick="setLang('es')" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold transition" id="btn-es" aria-label="Español">ES</button>
+            </div>
+            <button onclick="toggleTeacherAnalytics()" class="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-gray-400 hover:text-brand-dark hover:border-brand-dark transition flex items-center justify-center relative" aria-label="Teacher Analytics">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span id="analytics-dot" class="hidden absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="app" class="flex-grow p-4 max-w-6xl mx-auto w-full pb-24">
+        <!-- Dynamic Content -->
+    </main>
+
+    <!-- MASCOT -->
+    <div id="mascot-container" class="fixed bottom-6 right-4 z-40 flex flex-col items-end pointer-events-none hidden">
+        <div id="mascot-msg" class="mascot-bubble mb-2 max-w-[200px] shadow-lg animate-pop origin-bottom-right">
+            Привіт! Я Чіп!
+        </div>
+        <div class="w-16 h-16 bg-brand-yellow rounded-full border-4 border-white shadow-xl flex items-center justify-center cursor-pointer animate-float pointer-events-auto hover:scale-110 transition" onclick="mascotClick()" role="button" tabindex="0" aria-label="Ask Chip for help">
+            <i class="fa-solid fa-robot text-3xl text-brand-dark"></i>
+        </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <template id="tpl-dashboard">
+        <div class="py-4 animate-pop">
+            <div class="bg-brand-dark text-white rounded-3xl p-6 mb-8 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
+                    <i class="fa-solid fa-rocket text-9xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2" data-key="welcome">Привіт, Інженере!</h2>
+                <div class="flex items-center gap-4">
+                    <div class="flex-grow bg-gray-700 rounded-full h-4 overflow-hidden">
+                        <div id="progress-bar" class="bg-brand-yellow h-full w-0 transition-all duration-1000"></div>
+                    </div>
+                    <span class="font-bold text-brand-yellow" id="progress-text">0/7</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-600 flex gap-4 overflow-x-auto" id="badges-container"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-10">
+                <!-- Levels -->
+                <div id="lvl-card-1" onclick="loadLevel(1)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-blue-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-blue-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-layer-group text-5xl text-blue-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Algorithm</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl1_title">Ранковий Алгоритм</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl1_desc">Побудуй послідовність чищення зубів.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-2" onclick="loadLevel(2)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-yellow-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-yellow-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-cubes-stacked text-5xl text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-yellow-500 uppercase tracking-wider">Decomposition</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" id="dash-lvl2-title">Борщ</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl2_desc">Розподіли дії: Підготовка, Процес, Подача.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-3" onclick="loadLevel(3)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-red-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-red-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-bug-slash text-5xl text-red-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-red-400 uppercase tracking-wider">Debugging</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl3_title">Мульти-Баг</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl3_desc">У коді кілька помилок! Розстав усе в правильному порядку.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-4" onclick="loadLevel(4)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-purple-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-purple-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-shapes text-5xl text-purple-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Pattern</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl4_title">Ритм Патерна</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl4_desc">Продовж складний ряд.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-5" onclick="loadLevel(5)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-teal-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-teal-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-object-group text-5xl text-teal-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-teal-400 uppercase tracking-wider">Abstraction</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl5_title">Спільне</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl5_desc">Обери спільні предмети.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-6" onclick="loadLevel(6)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-orange-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-orange-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-code-branch text-5xl text-orange-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-orange-400 uppercase tracking-wider">If / Else</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl6_title">Логіка</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl6_desc">Умови для різної погоди.</p>
+                    </div>
+                </div>
+                <div id="lvl-card-7" onclick="loadLevel(7)" class="bg-white p-5 rounded-3xl card-shadow cursor-pointer border-b-4 border-gray-200 hover:border-pink-400 group h-full flex flex-col" role="button" tabindex="0">
+                    <div class="h-32 bg-pink-50 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-repeat text-5xl text-pink-400"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span class="text-xs font-bold text-pink-400 uppercase tracking-wider">Loops</span>
+                        <h3 class="text-lg font-bold leading-tight mb-1" data-key="lvl7_title">Цикли</h3>
+                        <p class="text-xs text-gray-500" data-key="lvl7_desc">Повторюй кроки розумно.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-gray-400 text-sm">
+                <i class="fa-solid fa-lock"></i>
+                <span data-key="more_coming">Рівні 8-10 у PRO</span>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-game">
+        <div class="animate-pop max-w-5xl mx-auto">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="goHome()" class="bg-white border-b-4 border-gray-200 text-gray-600 hover:border-gray-300 font-bold px-4 py-2 rounded-xl transition flex items-center gap-2 text-sm" aria-label="Return to Menu">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span data-key="back">Меню</span>
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="showHint()" id="hint-btn" class="bg-yellow-100 text-yellow-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-yellow-200 border-2 border-yellow-300 transition" aria-label="Show Hint">
+                        <i class="fa-regular fa-lightbulb mr-1"></i>
+                        <span data-key="hint">Підказка</span>
+                    </button>
+                    <div class="bg-white px-4 py-2 rounded-xl border-b-4 border-gray-200 font-bold text-brand-dark text-sm">
+                        <i class="fa-solid fa-clock mr-1 text-blue-400"></i>
+                        <span id="timer-display">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Info -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm mb-6 border-l-8 border-brand-dark flex items-center gap-4">
+                <div class="bg-brand-light w-12 h-12 flex items-center justify-center rounded-full shrink-0">
+                    <i id="level-icon" class="fa-solid fa-terminal text-2xl text-brand-dark"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold leading-none mb-2" id="level-title">...</h2>
+                    <p class="text-gray-500 text-sm leading-snug" id="level-instruction">...</p>
+                </div>
+            </div>
+
+            <!-- GAME WORKSPACE -->
+            <div id="game-workspace" class="min-h-[300px] mb-24"></div>
+
+            <!-- CONTROLS -->
+            <div class="fixed bottom-6 left-0 w-full px-4 flex justify-center z-40 pointer-events-none">
+                <button id="run-btn" style="display:none" class="pointer-events-auto bg-brand-blue text-white text-xl font-bold py-4 px-12 rounded-full shadow-2xl hover:bg-green-600 transform hover:scale-105 transition flex items-center gap-3 border-b-8 border-green-700 active:border-b-0 active:translate-y-2" aria-label="Run Solution">
+                    <i class="fa-solid fa-play"></i>
+                    <span data-key="run_code">ПЕРЕВІРИТИ</span>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- TEACHER ANALYTICS -->
+    <div id="analytics-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 animate-pop" role="dialog" aria-modal="true" aria-labelledby="analytics-title">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="analytics-title" class="text-xl font-bold text-brand-dark" data-key="teacher_panel_title">Вчительська Панель</h3>
+                <button onclick="toggleTeacherAnalytics()" class="text-gray-400 hover:text-red-500" aria-label="Close Analytics">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 mb-4 text-sm space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-500" data-key="teacher_label_student">Учень:</span>
+                    <span class="font-bold" data-key="teacher_guest">Гість</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500" data-key="teacher_label_time">Час:</span>
+                    <span class="font-bold" id="stats-total-time">0m</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500" data-key="teacher_label_errors">Помилки:</span>
+                    <span class="font-bold text-red-500" id="stats-errors">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500" data-key="teacher_label_hardest">Найскладніший рівень:</span>
+                    <span class="font-bold text-orange-500" id="stats-hardest">-</span>
+                </div>
+            </div>
+            <h4 class="font-bold text-sm mb-2 text-gray-400 uppercase" data-key="teacher_skills_title">Прогрес навичок</h4>
+            <div class="space-y-3" id="stats-skills"></div>
+            <div id="stats-advice" class="mt-4"></div>
+            <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end">
+                 <button onclick="exportAnalytics()" class="text-blue-500 font-bold text-sm hover:text-blue-700 flex items-center gap-2">
+                     <i class="fa-solid fa-download"></i>
+                     <span data-key="teacher_download_report">Завантажити звіт (CSV)</span>
+                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ONBOARDING MODAL -->
+    <div id="onboarding-modal" class="fixed inset-0 bg-brand-dark/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center animate-pop relative">
+            <div class="w-20 h-20 bg-brand-yellow rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-white shadow-lg -mt-16">
+                <i class="fa-solid fa-robot text-4xl text-brand-dark"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-3" data-key="onboarding_title">Вітаю в LifeLogic!</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed" data-key="onboarding_body">
+                Тут ми вчимося думати як програмісти, вирішуючи життєві задачі. <br><br>
+                🖱️ Клікай на картки.<br>
+                🧩 Збирай алгоритми.<br>
+                🏆 Отримуй бейджі.
+            </p>
+            <button onclick="closeOnboarding()" class="bg-brand-blue text-white text-xl font-bold py-3 px-10 rounded-full shadow-lg hover:bg-green-600 transition w-full" data-key="onboarding_cta">
+                Почати пригоду
+            </button>
+        </div>
+    </div>
+
+    <!-- FEEDBACK MODAL -->
+    <div id="feedback-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center animate-pop shadow-2xl relative overflow-hidden" role="dialog" aria-modal="true">
+            <div id="feedback-bg" class="absolute top-0 left-0 w-full h-32 bg-brand-blue -z-10 rounded-b-[50%] transform -translate-y-16"></div>
+            <div id="feedback-icon" class="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center text-4xl shadow-lg mb-4 mt-2">🎉</div>
+            <h3 id="feedback-title" class="text-2xl font-bold mb-2 text-brand-dark" data-key="feedback_success_title">Чудово!</h3>
+            <p id="feedback-msg" class="text-gray-500 mb-6 text-sm" data-key="feedback_success_msg">Все вірно!</p>
+            <button onclick="nextLevelAction()" class="w-full bg-brand-dark text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-800 transition shadow-lg mb-2" data-key="continue">
+                Продовжити
+            </button>
+            <button onclick="closeModal()" class="text-gray-400 text-xs font-bold hover:text-gray-600 p-2" data-key="close">
+                Закрити
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const TEST_MODE = true; // увімкнений тестовий режим: всі рівні доступні
+
+        const translations = {
+            ua: {
+                welcome: "Привіт, Інженере!",
+                choose_adventure: "Обери завдання:",
+                back: "Меню",
+                hint: "Підказка",
+                run_code: "ПЕРЕВІРИТИ",
+                continue: "Продовжити",
+                close: "Закрити",
+                more_coming: "Рівні 8-10 у PRO",
+
+                badges_empty: "Грай, щоб отримати бейджі...",
+                onboarding_title: "Вітаю в LifeLogic!",
+                onboarding_body: "Тут ми вчимося думати як програмісти, вирішуючи життєві задачі.\n\n🖱️ Клікай на картки.\n🧩 Збирай алгоритми.\n🏆 Отримуй бейджі.",
+                onboarding_cta: "Почати пригоду",
+
+                feedback_success_title: "Чудово!",
+                feedback_success_msg: "Все вірно!",
+                feedback_error_title: "Спробуй ще раз!",
+                feedback_error_msg: "Подумай ще й виправ помилки.",
+
+                run_incomplete_title: "Заповни всі умови",
+                run_incomplete_msg: "Спочатку заповни все!",
+                mascot_select_first: "Спочатку обери предмет!",
+                card_tap: "Натисни",
+
+                cat_selected_prefix: "Обрано:",
+                cat_selected_next: "👇 Тепер натисни на категорію",
+                cat_pick_item_first: "Спочатку натисни на предмет знизу 👇",
+
+                cond_bank: "Банк одягу:",
+                loop_guests: "Гості",
+
+                teacher_panel_title: "Вчительська Панель",
+                teacher_label_student: "Учень:",
+                teacher_label_time: "Час:",
+                teacher_label_errors: "Помилки:",
+                teacher_label_hardest: "Найскладніший рівень:",
+                teacher_guest: "Гість",
+                teacher_skills_title: "Прогрес навичок",
+                teacher_download_report: "Завантажити звіт (CSV)",
+                teacher_level: "Рівень",
+                teacher_attention_title: "⚠️ Зони уваги:",
+                teacher_attention_text: "Учень часто помиляється. Рекомендовано повторити теми на алгоритми та логіку.",
+                teacher_progress_ok: "Прогрес стабільний!",
+
+                skill_alg: "Алгоритмічне мислення",
+                skill_decomp: "Декомпозиція",
+                skill_debug: "Дебагінг",
+                skill_logic: "Логіка (if/else)",
+
+                lvl1_title: "Ранковий Алгоритм",
+                lvl1_desc: "Побудуй послідовність чищення зубів.",
+                lvl1_hint: "Згадай: пасту треба спочатку нанести на щітку.",
+
+                lvl2_title: "Кулінарний Алгоритм",
+                lvl2_desc: "Розподіли дії: Підготовка, Варка, Подача.",
+                lvl2_hint: "Що ми робимо спочатку: ріжемо чи варимо?",
+
+                lvl3_title: "Мульти-Баг",
+                lvl3_desc: "У коді кілька помилок! Розстав усе в правильному порядку.",
+                lvl3_hint: "Спочатку шкарпетки, потім штани, потім взуття.",
+
+                lvl4_title: "Ритм Патерна",
+                lvl4_desc: "Продовж складний ряд: A-A-B-A-A-?",
+                lvl4_hint: "Рахуй предмети: два, один, два...",
+
+                lvl5_title: "Абстракція",
+                lvl5_desc: "Обери предмети для малювання та письма.",
+                lvl5_hint: "Чим ми пишемо і на чому?",
+
+                lvl6_title: "Умови (If/Else)",
+                lvl6_desc: "Заповни умови для дощу і для сонця.",
+                lvl6_hint: "IF дощ → парасоля. IF сонце → кепка.",
+
+                lvl7_title: "Цикли (Loops)",
+                lvl7_desc: "Накрий стіл для 4 гостей одним блоком коду.",
+                lvl7_hint: "Використай REPEAT для набору.",
+
+                dish_ua: "Борщ",
+                dish_en: "Сендвіч",
+                dish_es: "Тако",
+
+                cat_prep: "Підготовка",
+                cat_cook: "Варка",
+                cat_serve: "Подача",
+
+                mascot_intro: "Привіт! Я Чіп, твій помічник!",
+                mascot_l1: "Почнемо з простого алгоритму ранку!",
+                mascot_l3: "Тут хтось переплутав увесь одяг!",
+                mascot_l6: "Умови — це як вибір одягу зранку!",
+
+                badge_first: "Перші кроки",
+                badge_bug: "Баг-хантер",
+                badge_speed: "Спідраннер",
+
+                mascot_idle: ["Працюй далі!", "Ти справляєшся!"],
+                mascot_hint: ["Хочеш підказку?", "Застряг? Клікни лампочку!"],
+                mascot_error: ["Нічого страшного!", "Помилки вчать нас!"]
+            },
+            en: {
+                welcome: "Hello, Engineer!",
+                choose_adventure: "Select mission:",
+                back: "Menu",
+                hint: "Hint",
+                run_code: "CHECK",
+                continue: "Continue",
+                close: "Close",
+                more_coming: "Levels 8-10 in PRO",
+
+                badges_empty: "Play to earn badges...",
+                onboarding_title: "Welcome to LifeLogic!",
+                onboarding_body: "Here we learn to think like programmers by solving real-life tasks.\n\n🖱️ Click on cards.\n🧩 Build algorithms.\n🏆 Earn badges.",
+                onboarding_cta: "Start adventure",
+
+                feedback_success_title: "Great!",
+                feedback_success_msg: "Everything is correct!",
+                feedback_error_title: "Try again!",
+                feedback_error_msg: "Think again and fix the mistakes.",
+
+                run_incomplete_title: "Fill all conditions",
+                run_incomplete_msg: "Finish all steps first!",
+                mascot_select_first: "Choose an item first!",
+                card_tap: "Tap",
+
+                cat_selected_prefix: "Selected:",
+                cat_selected_next: "👇 Now tap a category",
+                cat_pick_item_first: "First tap an item below 👇",
+
+                cond_bank: "Clothes bank:",
+                loop_guests: "Guests",
+
+                teacher_panel_title: "Teacher Panel",
+                teacher_label_student: "Student:",
+                teacher_label_time: "Time:",
+                teacher_label_errors: "Errors:",
+                teacher_label_hardest: "Hardest level:",
+                teacher_guest: "Guest",
+                teacher_skills_title: "Skills progress",
+                teacher_download_report: "Download report (CSV)",
+                teacher_level: "Level",
+                teacher_attention_title: "⚠️ Attention:",
+                teacher_attention_text: "The student makes many mistakes. We recommend revisiting algorithms and logic.",
+                teacher_progress_ok: "Progress is stable!",
+
+                skill_alg: "Algorithmic thinking",
+                skill_decomp: "Decomposition",
+                skill_debug: "Debugging",
+                skill_logic: "Logic (if/else)",
+
+                lvl1_title: "Morning Algorithm",
+                lvl1_desc: "Sequence brushing your teeth.",
+                lvl1_hint: "Remember: paste goes on the brush first.",
+
+                lvl2_title: "Cooking Algorithm",
+                lvl2_desc: "Sort actions: Prep, Cook, Serve.",
+                lvl2_hint: "We chop before we boil.",
+
+                lvl3_title: "Multi-Bug",
+                lvl3_desc: "Multiple errors! Fix the order.",
+                lvl3_hint: "Socks first, then pants, then shoes.",
+
+                lvl4_title: "Rhythm Pattern",
+                lvl4_desc: "Complete the pattern: A-A-B-A-A-?",
+                lvl4_hint: "Count: two, one, two...",
+
+                lvl5_title: "Abstraction",
+                lvl5_desc: "Pick items for drawing and writing.",
+                lvl5_hint: "Think of a tool and a surface.",
+
+                lvl6_title: "Conditionals",
+                lvl6_desc: "Fill conditions for rain and sun.",
+                lvl6_hint: "IF rain → umbrella. IF sun → cap.",
+
+                lvl7_title: "Loops",
+                lvl7_desc: "Set a table for 4 guests with one loop.",
+                lvl7_hint: "Use REPEAT for the set.",
+
+                dish_ua: "Borsch",
+                dish_en: "Sandwich",
+                dish_es: "Tacos",
+
+                cat_prep: "Prep",
+                cat_cook: "Cook",
+                cat_serve: "Serve",
+
+                mascot_intro: "Hi! I'm Chip, your helper!",
+                mascot_l1: "Let's start with a simple morning algorithm!",
+                mascot_l3: "All the clothes are mixed up!",
+                mascot_l6: "Conditionals help us choose in the morning!",
+
+                badge_first: "First Steps",
+                badge_bug: "Bug Hunter",
+                badge_speed: "Speedrunner",
+
+                mascot_idle: ["Keep going!", "You got this!"],
+                mascot_hint: ["Need a hint?", "Look closer..."],
+                mascot_error: ["Don't worry!", "Try once more!"]
+            },
+            es: {
+                welcome: "¡Hola, Ingeniero!",
+                choose_adventure: "Elige misión:",
+                back: "Menú",
+                hint: "Pista",
+                run_code: "VERIFICAR",
+                continue: "Seguir",
+                close: "Cerrar",
+                more_coming: "Niveles 8-10 en PRO",
+
+                badges_empty: "Juega para ganar insignias...",
+                onboarding_title: "¡Bienvenido a LifeLogic!",
+                onboarding_body: "Aquí aprendemos a pensar como programadores resolviendo tareas de la vida diaria.\n\n🖱️ Haz clic en las cartas.\n🧩 Construye algoritmos.\n🏆 Consigue insignias.",
+                onboarding_cta: "Empezar aventura",
+
+                feedback_success_title: "¡Genial!",
+                feedback_success_msg: "¡Todo es correcto!",
+                feedback_error_title: "¡Intenta otra vez!",
+                feedback_error_msg: "Piensa de nuevo y corrige los errores.",
+
+                run_incomplete_title: "Completa todas las condiciones",
+                run_incomplete_msg: "Primero completa todos los pasos.",
+                mascot_select_first: "¡Primero elige un objeto!",
+                card_tap: "Toca",
+
+                cat_selected_prefix: "Elegido:",
+                cat_selected_next: "👇 Ahora toca una categoría",
+                cat_pick_item_first: "Primero toca un objeto abajo 👇",
+
+                cond_bank: "Banco de ropa:",
+                loop_guests: "Invitados",
+
+                teacher_panel_title: "Panel del Profesor",
+                teacher_label_student: "Alumno:",
+                teacher_label_time: "Tiempo:",
+                teacher_label_errors: "Errores:",
+                teacher_label_hardest: "Nivel más difícil:",
+                teacher_guest: "Invitado",
+                teacher_skills_title: "Progreso de habilidades",
+                teacher_download_report: "Descargar informe (CSV)",
+                teacher_level: "Nivel",
+                teacher_attention_title: "⚠️ Atención:",
+                teacher_attention_text: "El alumno comete muchos errores. Recomendamos repasar algoritmos y lógica.",
+                teacher_progress_ok: "¡El progreso es estable!",
+
+                skill_alg: "Pensamiento algorítmico",
+                skill_decomp: "Descomposición",
+                skill_debug: "Depuración",
+                skill_logic: "Lógica (if/else)",
+
+                lvl1_title: "Algoritmo Matutino",
+                lvl1_desc: "Ordena el cepillado de dientes.",
+                lvl1_hint: "Recuerda: la pasta va primero en el cepillo.",
+
+                lvl2_title: "Algoritmo de Cocina",
+                lvl2_desc: "Clasifica: Preparar, Cocinar, Servir.",
+                lvl2_hint: "Primero cortamos, luego hervimos.",
+
+                lvl3_title: "Multi-Error",
+                lvl3_desc: "¡Hay varios errores! Ordena todo.",
+                lvl3_hint: "Calcetines, luego pantalones, luego zapatos.",
+
+                lvl4_title: "Patrón Rítmico",
+                lvl4_desc: "Completa: A-A-B-A-A-?",
+                lvl4_hint: "Cuenta: dos, uno, dos...",
+
+                lvl5_title: "Abstracción",
+                lvl5_desc: "Elige objetos para dibujar y escribir.",
+                lvl5_hint: "Piensa en herramienta y superficie.",
+
+                lvl6_title: "Condicionales",
+                lvl6_desc: "Completa condiciones para lluvia y sol.",
+                lvl6_hint: "SI lluvia → paraguas. SI sol → gorra.",
+
+                lvl7_title: "Bucles",
+                lvl7_desc: "Pon la mesa para 4 invitados con un bucle.",
+                lvl7_hint: "Usa REPEAT para el set.",
+
+                dish_ua: "Borsch",
+                dish_en: "Sándwich",
+                dish_es: "Tacos",
+
+                cat_prep: "Preparar",
+                cat_cook: "Cocinar",
+                cat_serve: "Servir",
+
+                mascot_intro: "¡Hola! Soy Chip, tu ayudante.",
+                mascot_l1: "¡Empecemos con un algoritmo sencillo de la mañana!",
+                mascot_l3: "¡La ropa está desordenada!",
+                mascot_l6: "¡Los condicionales nos ayudan a elegir!",
+
+                badge_first: "Primeros Pasos",
+                badge_bug: "Caza-bugs",
+                badge_speed: "Veloz",
+
+                mascot_idle: ["¡Sigue así!", "¡Tú puedes!"],
+                mascot_hint: ["¿Necesitas pista?", "Mira más de cerca..."],
+                mascot_error: ["¡No pasa nada!", "¡Prueba otra vez!"]
+            }
+        };
+
+        const itemsDB = {
+            brush: { i: 'fa-tooth', c: 'bg-blue-100', n: { ua: 'Щітка', en: 'Brush', es: 'Cepillo' } },
+            paste: { i: 'fa-pump-soap', c: 'bg-pink-100', n: { ua: 'Паста', en: 'Paste', es: 'Pasta' } },
+            water: { i: 'fa-faucet', c: 'bg-blue-200', n: { ua: 'Вода', en: 'Water', es: 'Agua' } },
+            rinse: { i: 'fa-glass-water', c: 'bg-cyan-100', n: { ua: 'Полоскати', en: 'Rinse', es: 'Enjuagar' } },
+            towel: { i: 'fa-rug', c: 'bg-yellow-100', n: { ua: 'Рушник', en: 'Towel', es: 'Toalla' } },
+
+            beet: { i: 'fa-carrot', c: 'bg-purple-200', n: { ua: 'Буряк', en: 'Beet', es: 'Remolacha' } },
+            chop: { i: 'fa-kitchen-set', c: 'bg-gray-200', n: { ua: 'Нарізати', en: 'Chop', es: 'Cortar' } },
+            boil: { i: 'fa-fire-burner', c: 'bg-red-100', n: { ua: 'Варити', en: 'Boil', es: 'Hervir' } },
+            sourcream: { i: 'fa-jar', c: 'bg-white', n: { ua: 'Сметана', en: 'Cream', es: 'Crema' } },
+
+            socks: { i: 'fa-socks', c: 'bg-orange-100', n: { ua: 'Шкарпетки', en: 'Socks', es: 'Calcetines' } },
+            shoes: { i: 'fa-shoe-prints', c: 'bg-gray-300', n: { ua: 'Взуття', en: 'Shoes', es: 'Zapatos' } },
+            pants: { i: 'fa-table-columns', c: 'bg-blue-200', n: { ua: 'Штани', en: 'Pants', es: 'Pantalones' } },
+            shirt: { i: 'fa-shirt', c: 'bg-green-100', n: { ua: 'Футболка', en: 'Shirt', es: 'Camisa' } },
+
+            plate: { i: 'fa-circle', c: 'bg-white', n: { ua: 'Тарілка', en: 'Plate', es: 'Plato' } },
+            fork: { i: 'fa-utensils', c: 'bg-gray-200', n: { ua: 'Виделка', en: 'Fork', es: 'Tenedor' } },
+            spoon: { i: 'fa-spoon', c: 'bg-gray-200', n: { ua: 'Ложка', en: 'Spoon', es: 'Cuchara' } },
+
+            pencil: { i: 'fa-pencil', c: 'bg-yellow-200', n: { ua: 'Олівець', en: 'Pencil', es: 'Lápiz' } },
+            paper: { i: 'fa-note-sticky', c: 'bg-white', n: { ua: 'Папір', en: 'Paper', es: 'Papel' } },
+            brush_art: { i: 'fa-paintbrush', c: 'bg-purple-200', n: { ua: 'Пензель', en: 'Brush', es: 'Pincel' } },
+            book: { i: 'fa-book', c: 'bg-blue-100', n: { ua: 'Книга', en: 'Book', es: 'Libro' } },
+
+            rain: { i: 'fa-cloud-showers-heavy', c: 'bg-gray-200', n: { ua: 'Дощ', en: 'Rain', es: 'Lluvia' } },
+            sun: { i: 'fa-sun', c: 'bg-yellow-100', n: { ua: 'Сонце', en: 'Sun', es: 'Sol' } },
+            umbrella: { i: 'fa-umbrella', c: 'bg-purple-100', n: { ua: 'Парасоля', en: 'Umbrella', es: 'Paraguas' } },
+            cap: { i: 'fa-hat-cowboy', c: 'bg-orange-100', n: { ua: 'Кепка', en: 'Cap', es: 'Gorra' } },
+
+            guest: { i: 'fa-user', c: 'bg-green-100', n: { ua: 'Гість', en: 'Guest', es: 'Invitado' } },
+            set: { i: 'fa-utensils', c: 'bg-blue-100', n: { ua: 'Набір', en: 'Set', es: 'Cubiertos' } }
+        };
+
+        const badges = {
+            first: {
+                icon: '🎯',
+                key: 'badge_first',
+                check: (s) => s.unlocked >= 2
+            },
+            bug: {
+                icon: '🐛',
+                key: 'badge_bug',
+                check: (s) => s.level === 3 && s.errors === 0
+            },
+            speed: {
+                icon: '⚡',
+                key: 'badge_speed',
+                check: (s) => s.totalTime < 300 && s.unlocked >= 4
+            }
+        };
+
+        const levelsConfig = {
+            1: {
+                type: 'sequence',
+                correct: ['water', 'paste', 'brush', 'rinse', 'towel'],
+                pool: ['water', 'paste', 'brush', 'rinse', 'towel', 'shoes']
+            },
+            2: {
+                type: 'category',
+                categories: ['cat_prep', 'cat_cook', 'cat_serve'],
+                correct: {
+                    cat_prep: ['beet', 'chop'],
+                    cat_cook: ['boil'],
+                    cat_serve: ['sourcream']
+                },
+                pool: ['beet', 'chop', 'boil', 'sourcream', 'shoes']
+            },
+            3: {
+                type: 'sequence',
+                subtype: 'debug',
+                prefill: ['shoes', 'socks', 'shirt', 'pants'],
+                correct: ['socks', 'pants', 'shirt', 'shoes'],
+                pool: ['socks', 'shoes', 'pants', 'shirt']
+            },
+            4: {
+                type: 'pattern',
+                sequence: ['plate', 'plate', 'fork', 'plate', 'plate'],
+                correct: 'fork',
+                pool: ['plate', 'fork', 'spoon']
+            },
+            5: {
+                type: 'select_multi',
+                correct: ['pencil', 'paper'],
+                pool: ['pencil', 'paper', 'brush_art', 'book', 'spoon']
+            },
+            6: {
+                type: 'conditional_parallel',
+                scenarios: [
+                    { cond: 'rain', req: 'umbrella' },
+                    { cond: 'sun', req: 'cap' }
+                ],
+                pool: ['umbrella', 'cap', 'socks', 'book']
+            },
+            7: {
+                type: 'loop',
+                targetCount: 4,
+                correctItem: 'set',
+                pool: ['set', 'plate', 'fork']
+            }
+        };
+
+        let state = {
+            lang: 'ua',
+            level: null,
+            unlocked: 1,
+            userSolution: [],
+            userCategories: {},
+            userConditionals: {},
+            startTime: 0,
+            errors: 0,
+            hintsUsed: 0,
+            totalTime: 0,
+            earnedBadges: [],
+            levelAttempts: {}
+        };
+
+        let timerInt;
+        let selectedItemForMove = null;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function beep(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSound(type) {
+            if (type === 'click') beep(400, 'sine', 0.1);
+            if (type === 'success') {
+                beep(600, 'sine', 0.1);
+                setTimeout(() => beep(800, 'sine', 0.2), 100);
+            }
+            if (type === 'error') {
+                beep(200, 'sawtooth', 0.3);
+            }
+        }
+
+        function loadProgress() {
+            if (TEST_MODE) {
+                // У тестовому режимі просто відкриваємо всі рівні
+                state.unlocked = 7;
+                state.earnedBadges = [];
+                state.totalTime = 0;
+                state.levelAttempts = {};
+                return;
+            }
+
+            const saved = localStorage.getItem('lifelogic_state_v2');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                state.unlocked = parsed.unlocked || 1;
+                state.earnedBadges = parsed.earnedBadges || [];
+                state.totalTime = parsed.totalTime || 0;
+                state.levelAttempts = parsed.levelAttempts || {};
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem(
+                'lifelogic_state_v2',
+                JSON.stringify({
+                    unlocked: state.unlocked,
+                    earnedBadges: state.earnedBadges,
+                    totalTime: state.totalTime,
+                    levelAttempts: state.levelAttempts
+                })
+            );
+        }
+
+        function setLang(l) {
+            state.lang = l;
+            updateUI();
+
+            const dashL2 = document.getElementById('dash-lvl2-title');
+            if (dashL2) {
+                dashL2.innerText = translations[l]['dish_' + l] || translations[l].dish_ua;
+            }
+
+            if (state.level) {
+                loadLevel(state.level);
+            }
+
+            showMascotMsg(translations[l].mascot_intro);
+        }
+
+        function updateUI() {
+            ['ua', 'en', 'es'].forEach(lang => {
+                const btn = document.getElementById(`btn-${lang}`);
+                if (!btn) return;
+                btn.className = lang === state.lang
+                    ? "px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-brand-dark text-white shadow-md"
+                    : "px-3 py-1 rounded-full text-xs sm:text-sm font-bold text-gray-500 hover:bg-white";
+            });
+
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const k = el.getAttribute('data-key');
+                const t = translations[state.lang][k];
+                if (typeof t === 'string') {
+                    el.innerText = t;
+                }
+            });
+        }
+
+        function goHome() {
+            clearInterval(timerInt);
+            state.level = null;
+            selectedItemForMove = null;
+
+            const app = document.getElementById('app');
+            const tpl = document.getElementById('tpl-dashboard');
+            app.innerHTML = "";
+            app.appendChild(tpl.content.cloneNode(true));
+
+            document.getElementById('progress-bar').style.width = `${(state.unlocked / 7) * 100}%`;
+            document.getElementById('progress-text').innerText = `${Math.max(state.unlocked - 1, 0)}/7`;
+
+            const badgeCont = document.getElementById('badges-container');
+            badgeCont.innerHTML = "";
+            if (state.earnedBadges.length === 0) {
+                badgeCont.innerHTML = `<span class="text-gray-500 text-xs italic" data-key="badges_empty">${translations[state.lang].badges_empty}</span>`;
+            } else {
+                state.earnedBadges.forEach(bKey => {
+                    const b = badges[bKey];
+                    const title = translations[state.lang][b.key];
+                    badgeCont.innerHTML += `
+                        <div class="flex flex-col items-center min-w-[60px]" title="${title}">
+                            <span class="text-3xl">${b.icon}</span>
+                            <span class="text-[10px] text-gray-300 mt-1">${title}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            for (let i = 1; i <= 7; i++) {
+                const card = document.getElementById(`lvl-card-${i}`);
+                if (!card) continue;
+                card.classList.remove('locked-level');
+                if (!TEST_MODE && i > state.unlocked) {
+                    card.classList.add('locked-level');
+                }
+            }
+
+            document.getElementById('mascot-container').classList.remove('hidden');
+            showMascotMsg(translations[state.lang].mascot_intro);
+            updateUI();
+        }
+
+        function loadLevel(id) {
+            if (!TEST_MODE && id > state.unlocked) return;
+
+            state.level = id;
+            state.userSolution = [];
+            state.userCategories = { cat_prep: [], cat_cook: [], cat_serve: [] };
+            state.userConditionals = {};
+            selectedItemForMove = null;
+
+            if (!state.levelAttempts[id]) state.levelAttempts[id] = 0;
+
+            const app = document.getElementById('app');
+            const tpl = document.getElementById('tpl-game');
+            app.innerHTML = "";
+            app.appendChild(tpl.content.cloneNode(true));
+
+            let title = translations[state.lang][`lvl${id}_title`];
+            if (id === 2) {
+                title = `${translations[state.lang]['dish_' + state.lang]} (${translations[state.lang].lvl2_title})`;
+            }
+
+            document.getElementById('level-title').innerText = title;
+            document.getElementById('level-instruction').innerText = translations[state.lang][`lvl${id}_desc`];
+
+            const cfg = levelsConfig[id];
+            const ws = document.getElementById('game-workspace');
+
+            if (cfg.type === 'sequence') renderSequence(ws, cfg);
+            if (cfg.type === 'category') renderCategory(ws, cfg);
+            if (cfg.type === 'pattern') renderPattern(ws, cfg);
+            if (cfg.type === 'select_multi') renderSelect(ws, cfg);
+            if (cfg.type === 'conditional_parallel') renderConditionalParallel(ws, cfg);
+            if (cfg.type === 'loop') renderLoop(ws, cfg);
+
+            updateRunButton();
+            startTimer();
+
+            if (id === 1) showMascotMsg(translations[state.lang].mascot_l1);
+            if (id === 3) showMascotMsg(translations[state.lang].mascot_l3);
+            if (id === 6) showMascotMsg(translations[state.lang].mascot_l6);
+
+            updateUI();
+        }
+
+        function createCard(itemId, onClick, isTarget = false) {
+            const item = itemsDB[itemId];
+            if (!item) return document.createElement('div');
+
+            const div = document.createElement('div');
+            const size = state.level === 2 ? "w-16 h-20 sm:w-20 sm:h-24" : "w-20 h-24 sm:w-24 sm:h-32";
+            div.className = `${size} bg-white border-2 border-gray-100 rounded-xl flex flex-col items-center justify-center p-1 cursor-pointer hover:-translate-y-1 transition shadow-sm select-none relative animate-pop`;
+            if (isTarget) {
+                div.className += " border-brand-blue bg-blue-50 ring-2 ring-blue-200";
+            }
+
+            div.tabIndex = 0;
+            div.setAttribute('role', 'button');
+            div.setAttribute('aria-label', item.n[state.lang]);
+
+            div.onkeydown = (e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+                    e.preventDefault();
+                    onClick();
+                    updateRunButton();
+                }
+            };
+
+            div.innerHTML = `
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full ${item.c} flex items-center justify-center mb-1 text-brand-dark">
+                    <i class="fa-solid ${item.i} text-sm sm:text-lg"></i>
+                </div>
+                <span class="text-[10px] sm:text-xs font-bold text-center text-gray-600 leading-none">
+                    ${item.n[state.lang]}
+                </span>
+            `;
+
+            if (!isTarget) {
+                div.innerHTML += `
+                    <div class="absolute bottom-0 w-full text-[8px] text-gray-300 text-center pb-1 opacity-0 hover:opacity-100 transition">
+                        ${translations[state.lang].card_tap}
+                    </div>
+                `;
+            }
+
+            if (onClick) {
+                div.onclick = () => {
+                    playSound('click');
+                    onClick();
+                    updateRunButton();
+                };
+            }
+
+            return div;
+        }
+
+        function renderCategory(container, cfg) {
+            const t = translations[state.lang];
+            const selName = selectedItemForMove ? itemsDB[selectedItemForMove].n[state.lang] : "...";
+
+            const indicator = selectedItemForMove
+                ? `
+                    <div class="text-center text-xs text-blue-600 mb-4 font-bold animate-pulse bg-blue-50 inline-block px-4 py-2 rounded-full mx-auto shadow-sm border border-blue-200 ring-2 ring-blue-100">
+                        ${t.cat_selected_prefix}
+                        <span class="font-bold text-lg align-middle ml-1 text-blue-700">${selName}</span>
+                        <div class="text-[10px] text-gray-500 font-normal mt-1">
+                            ${t.cat_selected_next}
+                        </div>
+                    </div>
+                `
+                : `
+                    <div class="text-center text-xs text-gray-400 mb-4 italic py-2 bg-white/50 inline-block px-4 rounded-full">
+                        ${t.cat_pick_item_first}
+                    </div>
+                `;
+
+            container.innerHTML = `
+                <div class="w-full text-center sticky top-0 z-10">${indicator}</div>
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    ${cfg.categories.map(k => `
+                        <div class="bg-white rounded-xl p-2 flex flex-col h-48 card-shadow border-2 border-transparent hover:border-gray-200 transition">
+                            <div class="text-center font-bold text-[10px] sm:text-xs mb-1 bg-gray-100 rounded text-gray-600 py-1">
+                                ${t[k]}
+                            </div>
+                            <div id="buck-${k}" onclick="bucketClick('${k}')" class="bucket-zone flex-grow rounded-lg p-1 flex flex-col gap-1 overflow-y-auto cursor-pointer hover:bg-gray-50 transition relative" role="button" tabindex="0">
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                                    <i class="fa-solid fa-arrow-down text-4xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="bg-gray-100 p-4 rounded-2xl flex flex-wrap gap-2 justify-center min-h-[100px]" id="cat-pool"></div>
+            `;
+
+            cfg.categories.forEach(k => {
+                const b = document.getElementById(`buck-${k}`);
+                state.userCategories[k].forEach(id => {
+                    const card = createCard(id, () => {
+                        state.userCategories[k] = state.userCategories[k].filter(x => x !== id);
+                        loadLevel(2);
+                    }, true);
+                    card.classList.add('scale-75', 'origin-top');
+                    b.appendChild(card);
+                });
+            });
+
+            const pool = document.getElementById('cat-pool');
+            cfg.pool.forEach(id => {
+                let used = false;
+                Object.values(state.userCategories).forEach(arr => {
+                    if (arr.includes(id)) used = true;
+                });
+                if (!used) {
+                    const card = createCard(id, () => {
+                        selectedItemForMove = id;
+                        loadLevel(2);
+                    });
+                    if (selectedItemForMove === id) {
+                        card.classList.add('ring-4', 'ring-brand-blue', 'scale-110', 'z-20');
+                    } else {
+                        card.classList.add('animate-pulse');
+                        setTimeout(() => card.classList.remove('animate-pulse'), 2000);
+                    }
+                    pool.appendChild(card);
+                }
+            });
+        }
+
+        function bucketClick(cat) {
+            if (!selectedItemForMove) {
+                showMascotMsg(translations[state.lang].mascot_select_first);
+                return;
+            }
+            state.userCategories[cat].push(selectedItemForMove);
+            selectedItemForMove = null;
+            loadLevel(2);
+        }
+
+        function renderSequence(container, cfg) {
+            container.innerHTML = `
+                <div id="seq-zone" class="flex flex-wrap gap-2 min-h-[120px] bg-white border-4 border-dashed border-gray-200 rounded-2xl p-4 mb-6 items-center"></div>
+                <div class="bg-gray-100 p-4 rounded-2xl">
+                    <div id="seq-pool" class="flex flex-wrap gap-3 justify-center"></div>
+                </div>
+            `;
+
+            if (cfg.subtype === 'debug' && state.userSolution.length === 0) {
+                state.userSolution = [...cfg.prefill];
+            }
+
+            const zone = document.getElementById('seq-zone');
+            state.userSolution.forEach((id, i) => {
+                zone.appendChild(createCard(id, () => {
+                    state.userSolution.splice(i, 1);
+                    renderSequence(container, cfg);
+                }, true));
+                if (i < state.userSolution.length - 1) {
+                    const arrow = document.createElement('i');
+                    arrow.className = "fa-solid fa-arrow-right text-gray-300 mx-1";
+                    zone.appendChild(arrow);
+                }
+            });
+
+            const pool = document.getElementById('seq-pool');
+            cfg.pool.forEach(id => {
+                if (!state.userSolution.includes(id)) {
+                    pool.appendChild(createCard(id, () => {
+                        state.userSolution.push(id);
+                        renderSequence(container, cfg);
+                    }));
+                }
+            });
+        }
+
+        function renderPattern(container, cfg) {
+            container.innerHTML = `
+                <div class="flex items-center justify-center gap-2 mb-8 p-4 bg-white rounded-3xl shadow-inner overflow-x-auto">
+                    ${cfg.sequence.map(id => `
+                        <div class="w-16 h-20 rounded-xl border-2 border-gray-200 flex items-center justify-center bg-gray-50">
+                            <i class="fa-solid ${itemsDB[id].i} text-3xl text-gray-400"></i>
+                        </div>
+                    `).join('')}
+                    <div id="pat-slot" class="w-16 h-20 rounded-xl border-4 border-dashed border-brand-blue flex items-center justify-center text-brand-blue font-bold text-2xl">
+                        ?
+                    </div>
+                </div>
+                <div class="flex justify-center gap-4" id="pat-pool"></div>
+            `;
+
+            if (state.userSolution.length > 0) {
+                const slot = document.getElementById('pat-slot');
+                slot.innerHTML = "";
+                slot.appendChild(createCard(state.userSolution[0], null, true));
+                slot.classList.remove('border-dashed');
+            }
+
+            const pool = document.getElementById('pat-pool');
+            cfg.pool.forEach(id => {
+                pool.appendChild(createCard(id, () => {
+                    state.userSolution = [id];
+                    loadLevel(4);
+                }));
+            });
+        }
+
+        function renderSelect(container, cfg) {
+            container.innerHTML = `<div class="grid grid-cols-3 gap-4" id="sel-grid"></div>`;
+            const grid = document.getElementById('sel-grid');
+
+            cfg.pool.forEach(id => {
+                const selected = state.userSolution.includes(id);
+                const card = createCard(id, () => {
+                    if (selected) {
+                        state.userSolution = state.userSolution.filter(x => x !== id);
+                    } else {
+                        state.userSolution.push(id);
+                    }
+                    loadLevel(5);
+                }, selected);
+                if (selected) {
+                    card.classList.add('ring-4', 'ring-brand-blue');
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        function renderConditionalParallel(container, cfg) {
+            const t = translations[state.lang];
+            container.innerHTML = `
+                <div class="flex justify-center gap-4 mb-8">
+                    ${cfg.scenarios.map((sc, idx) => {
+                        const condItem = itemsDB[sc.cond];
+                        const userChoice = state.userConditionals[idx];
+                        return `
+                            <div class="bg-white p-3 rounded-2xl shadow-md border-2 border-gray-100 w-1/2 flex flex-col items-center">
+                                <div class="bg-orange-50 text-orange-500 text-[10px] font-bold px-2 rounded-full mb-2">IF</div>
+                                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fa-solid ${condItem.i} text-3xl text-brand-dark"></i>
+                                </div>
+                                <div class="text-xs font-bold mb-4 text-gray-400">THEN:</div>
+                                <div id="slot-cond-${idx}" onclick="clearCond(${idx})" class="w-20 h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                                    ${userChoice ? '' : '<span class="text-gray-300 text-2xl">+</span>'}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="text-center mb-2 text-xs text-gray-400 uppercase font-bold">
+                    ${t.cond_bank}
+                </div>
+                <div class="flex justify-center gap-4" id="cond-pool"></div>
+            `;
+
+            cfg.scenarios.forEach((sc, idx) => {
+                if (state.userConditionals[idx]) {
+                    const slot = document.getElementById(`slot-cond-${idx}`);
+                    slot.innerHTML = "";
+                    slot.appendChild(createCard(state.userConditionals[idx], null, true));
+                    slot.classList.remove('border-dashed');
+                }
+            });
+
+            const pool = document.getElementById('cond-pool');
+            cfg.pool.forEach(id => {
+                pool.appendChild(createCard(id, () => {
+                    const emptyIdx = cfg.scenarios.findIndex((_, i) => !state.userConditionals[i]);
+                    if (emptyIdx !== -1) {
+                        state.userConditionals[emptyIdx] = id;
+                        loadLevel(6);
+                    }
+                }));
+            });
+        }
+
+        function clearCond(idx) {
+            delete state.userConditionals[idx];
+            loadLevel(6);
+        }
+
+        function renderLoop(container, cfg) {
+            const t = translations[state.lang];
+            container.innerHTML = `
+                <div class="flex items-center justify-center gap-4 mb-8 bg-white p-4 rounded-xl border-2 border-gray-100">
+                    <div class="text-right">
+                        <div class="text-xs text-gray-400 font-bold">${t.loop_guests}</div>
+                        <div class="flex gap-1">
+                            <i class="fa-solid fa-user text-gray-300"></i>
+                            <i class="fa-solid fa-user text-gray-300"></i>
+                            <i class="fa-solid fa-user text-gray-300"></i>
+                            <i class="fa-solid fa-user text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl text-gray-300 font-light">→</div>
+                    <div class="font-mono text-lg bg-gray-800 text-green-400 p-4 rounded-lg shadow-lg flex items-center gap-3">
+                        <span class="text-pink-400 font-bold">REPEAT</span>
+                        <span class="bg-gray-700 px-2 rounded text-white">4</span>
+                        <span>TIMES:</span>
+                        <div id="loop-slot" class="w-12 h-12 border-2 border-dashed border-gray-500 rounded flex items-center justify-center bg-gray-700 cursor-pointer"></div>
+                    </div>
+                </div>
+                <div class="flex justify-center gap-4" id="loop-pool"></div>
+            `;
+
+            if (state.userSolution.length > 0) {
+                const slot = document.getElementById('loop-slot');
+                slot.innerHTML = `<i class="fa-solid ${itemsDB[state.userSolution[0]].i} text-white text-xl"></i>`;
+                slot.classList.remove('border-dashed');
+                slot.classList.add('border-white');
+            }
+
+            const pool = document.getElementById('loop-pool');
+            cfg.pool.forEach(id => {
+                pool.appendChild(createCard(id, () => {
+                    state.userSolution = [id];
+                    loadLevel(7);
+                }));
+            });
+        }
+
+        function updateRunButton() {
+            const btn = document.getElementById('run-btn');
+            if (!btn) return;
+
+            let hasAns = false;
+            let isComplete = true;
+
+            if (state.level === 2) {
+                hasAns = Object.values(state.userCategories).some(a => a.length > 0);
+            } else if (state.level === 6) {
+                const count = Object.keys(state.userConditionals).length;
+                hasAns = count > 0;
+                isComplete = count === 2;
+            } else {
+                hasAns = state.userSolution.length > 0;
+            }
+
+            if (hasAns) {
+                btn.style.display = 'flex';
+                if (!isComplete) {
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = translations[state.lang].run_incomplete_title;
+                    btn.onclick = () => showMascotMsg(translations[state.lang].run_incomplete_msg);
+                } else {
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                    btn.title = "";
+                    btn.onclick = checkSolution;
+                }
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInt);
+            let sec = 0;
+            timerInt = setInterval(() => {
+                sec++;
+                state.totalTime++;
+                const t = document.getElementById('timer-display');
+                if (t) {
+                    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                    const s = (sec % 60).toString().padStart(2, '0');
+                    t.innerText = `${m}:${s}`;
+                }
+            }, 1000);
+        }
+
+        function checkSolution() {
+            state.levelAttempts[state.level]++;
+
+            const cfg = levelsConfig[state.level];
+            let valid = false;
+
+            if (cfg.type === 'sequence') {
+                valid = JSON.stringify(state.userSolution) === JSON.stringify(cfg.correct);
+            }
+            if (cfg.type === 'category') {
+                valid = true;
+                for (let k of cfg.categories) {
+                    const user = [...state.userCategories[k]].sort();
+                    const correct = [...cfg.correct[k]].sort();
+                    if (JSON.stringify(user) !== JSON.stringify(correct)) valid = false;
+                }
+            }
+            if (cfg.type === 'pattern') {
+                valid = state.userSolution[0] === cfg.correct;
+            }
+            if (cfg.type === 'select_multi') {
+                const user = [...state.userSolution].sort();
+                const correct = [...cfg.correct].sort();
+                valid = JSON.stringify(user) === JSON.stringify(correct);
+            }
+            if (cfg.type === 'conditional_parallel') {
+                valid = true;
+                cfg.scenarios.forEach((sc, i) => {
+                    if (state.userConditionals[i] !== sc.req) valid = false;
+                });
+                if (Object.keys(state.userConditionals).length < cfg.scenarios.length) valid = false;
+            }
+            if (cfg.type === 'loop') {
+                valid = state.userSolution[0] === cfg.correctItem;
+            }
+
+            if (valid) {
+                playSound('success');
+
+                if (state.level >= 4) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                }
+                if (state.level === 7) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 200,
+                            spread: 120,
+                            origin: { y: 0.6 }
+                        });
+                    }, 500);
+                }
+
+                Object.keys(badges).forEach(bKey => {
+                    const b = badges[bKey];
+                    if (!state.earnedBadges.includes(bKey) && b.check(state)) {
+                        state.earnedBadges.push(bKey);
+                    }
+                });
+
+                if (!TEST_MODE && state.level === state.unlocked) {
+                    state.unlocked++;
+                }
+
+                saveProgress();
+                showModal(true);
+            } else {
+                playSound('error');
+                state.errors++;
+
+                const btn = document.getElementById('run-btn');
+                if (btn) {
+                    btn.classList.add('bg-red-500', 'animate-bounce');
+                    setTimeout(() => btn.classList.remove('bg-red-500', 'animate-bounce'), 500);
+                }
+
+                const errMsgs = translations[state.lang].mascot_error;
+                showMascotMsg(errMsgs[Math.floor(Math.random() * errMsgs.length)]);
+                saveProgress();
+            }
+        }
+
+        function showModal(success) {
+            const t = translations[state.lang];
+            const modal = document.getElementById('feedback-modal');
+            const titleEl = document.getElementById('feedback-title');
+            const msgEl = document.getElementById('feedback-msg');
+            const iconEl = document.getElementById('feedback-icon');
+            const bgEl = document.getElementById('feedback-bg');
+
+            if (success) {
+                titleEl.innerText = t.feedback_success_title;
+                msgEl.innerText = t.feedback_success_msg;
+                iconEl.innerText = '🎉';
+                bgEl.className = "absolute top-0 left-0 w-full h-32 bg-brand-blue -z-10 rounded-b-[50%] transform -translate-y-16";
+            } else {
+                titleEl.innerText = t.feedback_error_title;
+                msgEl.innerText = t.feedback_error_msg;
+                iconEl.innerText = '🤔';
+                bgEl.className = "absolute top-0 left-0 w-full h-32 bg-brand-orange -z-10 rounded-b-[50%] transform -translate-y-16";
+            }
+
+            modal.classList.remove('hidden');
+            updateUI();
+        }
+
+        function nextLevelAction() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+            if (state.level < 7) {
+                loadLevel(state.level + 1);
+            } else {
+                goHome();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+            document.getElementById('analytics-modal').classList.add('hidden');
+        }
+
+        function showHint() {
+            state.hintsUsed++;
+            const key = `lvl${state.level}_hint`;
+            const msg = translations[state.lang][key];
+            if (msg) {
+                showMascotMsg(msg);
+            }
+        }
+
+        function showMascotMsg(text) {
+            const el = document.getElementById('mascot-msg');
+            if (!el) return;
+            el.innerText = text;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function mascotClick() {
+            const responses = state.errors > 0
+                ? translations[state.lang].mascot_hint
+                : translations[state.lang].mascot_idle;
+            showMascotMsg(responses[Math.floor(Math.random() * responses.length)]);
+        }
+
+        function toggleTeacherAnalytics() {
+            const m = document.getElementById('analytics-modal');
+            const t = translations[state.lang];
+
+            if (m.classList.contains('hidden')) {
+                m.classList.remove('hidden');
+
+                document.getElementById('stats-errors').innerText = state.errors;
+                document.getElementById('stats-total-time').innerText = Math.floor(state.totalTime / 60) + 'm';
+
+                let max = 0;
+                let hardest = '-';
+                for (let l in state.levelAttempts) {
+                    if (state.levelAttempts[l] > max) {
+                        max = state.levelAttempts[l];
+                        hardest = l;
+                    }
+                }
+                document.getElementById('stats-hardest').innerText =
+                    hardest === '-' ? '-' : `${t.teacher_level} ${hardest}`;
+
+                const skills = document.getElementById('stats-skills');
+                skills.innerHTML = `
+                    ${skillBar(t.skill_alg, state.unlocked >= 2 ? 100 : 20)}
+                    ${skillBar(t.skill_decomp, state.unlocked >= 3 ? 90 : 10)}
+                    ${skillBar(t.skill_debug, state.unlocked >= 4 ? 85 : 0)}
+                    ${skillBar(t.skill_logic, state.unlocked >= 7 ? 70 : 0)}
+                `;
+
+                const errDiv = document.getElementById('stats-advice');
+                if (state.errors > 3) {
+                    errDiv.innerHTML = `
+                        <div class="mt-4 p-3 bg-red-50 rounded-lg text-xs">
+                            <div class="font-bold text-red-600 mb-1">${t.teacher_attention_title}</div>
+                            ${t.teacher_attention_text}
+                        </div>
+                    `;
+                } else {
+                    errDiv.innerHTML = `
+                        <div class="mt-4 p-3 bg-green-50 rounded-lg text-xs text-green-700 font-bold">
+                            ${t.teacher_progress_ok}
+                        </div>
+                    `;
+                }
+
+                updateUI();
+            } else {
+                m.classList.add('hidden');
+            }
+        }
+
+        function skillBar(name, percent) {
+            return `
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>${name}</span>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 rounded-full">
+                        <div class="h-full bg-brand-blue" style="width:${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportAnalytics() {
+            const headers = ["Metric", "Value"];
+            const data = [
+                ["User", "Guest"],
+                ["Unlocked Level", state.unlocked],
+                ["Total Errors", state.errors],
+                ["Total Time (sec)", state.totalTime],
+                ["Badges", state.earnedBadges.join("; ")]
+            ];
+            let csv = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + data.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csv);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "lifelogic_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function checkOnboarding() {
+            if (!localStorage.getItem('lifelogic_visited_v2')) {
+                document.getElementById('onboarding-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeOnboarding() {
+            document.getElementById('onboarding-modal').classList.add('hidden');
+            localStorage.setItem('lifelogic_visited_v2', 'true');
+            playSound('success');
+        }
+
+        window.onload = () => {
+            loadProgress();
+            setLang('ua');
+            goHome();
+            checkOnboarding();
+        };
+    </script>
+</body>
+</html>
