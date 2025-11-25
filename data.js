@@ -34,7 +34,7 @@ const CATEGORIES = [
       { name: "Обчислювальне мислення", description: "Простими словами про обчислювальне мислення.", link: "services/compthinking.html", image: "images/1.jpg", tags: ["3-7 класи"] },
       { name: "Абстракція для дітей", description: "Інтерактивний урок про рівні абстракції.", link: "services/abstraction.html", image: "images/22.jpg", tags: ["5-7 класи"] },
       { name: "Виявлення шаблонів", description: "Інтерактивний урок про виявлення шаблонів.", link: "services/patterns.html", image: "images/23.jpg", tags: ["5-7 класи"] },
-      { name: "Декомпозиція для дітей", description: "Інтерактивний урок про декомпозицію.", link: "services/decomposition.html", image: "images/24.jpg", tags: ["5-7 класи"],
+      { name: "Декомпозиція для дітей", description: "Інтерактивний урок про декомпозицію.", link: "services/decomposition.html", image: "images/24.jpg", tags: ["5-7 класи"] },
       { name: "Перевір себе", description: "Тест з обчислювального мислення.", link: "services/quiz.html", image: "images/24.jpg", tags: ["5-7 класи"] }
     ]
   },
