@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чарівний Лабіринт</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff;
+            background-image: radial-gradient(circle at 50% 50%, #e0f2fe 0%, #f0f9ff 100%);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #game-canvas {
+            background-color: #e2e8f0;
+            border: 4px solid #65a30d;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .grabbing { cursor: grabbing !important; }
+        .grab { cursor: grab !important; }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .title-shadow {
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center text-slate-800">
+
+    <!-- Заголовок -->
+    <div class="mb-4 text-center z-10">
+        <h1 class="text-4xl md:text-5xl font-black text-indigo-600 mb-2 title-shadow tracking-tight">
+            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Чарівний Лабіринт
+        </h1>
+        
+        <!-- Інфо-панель: Статична HTML структура, JS змінює тільки текст рівня -->
+        <div class="flex gap-4 justify-center items-center text-lg font-bold bg-white/80 px-8 py-3 rounded-full border-2 border-indigo-100 shadow-sm backdrop-blur-sm">
+            <span class="text-indigo-600">
+                Рівень: <span id="level-num">1</span> / 10
+            </span>
+            <span class="text-slate-300">|</span>
+            <span class="text-amber-500 flex items-center gap-2">
+                <i class="fa-solid fa-trophy"></i> Кубок Бажань
+            </span>
+        </div>
+        
+        <p class="text-sm font-bold text-slate-500 mt-3 opacity-90">Затисни іскру та веди до кубка, не торкаючись кущів</p>
+    </div>
+
+    <!-- Контейнер гри -->
+    <div class="relative p-3 bg-white/50 rounded-2xl border-2 border-white shadow-xl backdrop-blur-md">
+        <canvas id="game-canvas" width="600" height="400"></canvas>
+        
+        <!-- Оверлей -->
+        <div id="overlay" class="absolute inset-0 bg-white/95 rounded-xl flex flex-col items-center justify-center z-20 transition-opacity duration-300">
+            <div id="overlay-content" class="text-center p-6 max-w-md">
+                <div class="mb-4 text-7xl text-indigo-500 animate-bounce">
+                    <i class="fa-solid fa-hat-wizard"></i>
+                </div>
+                <h2 id="overlay-title" class="text-3xl font-black text-indigo-800 mb-2">Привіт, Чародію!</h2>
+                <p id="overlay-message" class="text-xl text-slate-600 mb-8 font-bold">Знайди шлях до Кубка Бажань.</p>
+                <button id="start-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-black py-4 px-12 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1">
+                    Почати гру!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const titleEl = document.getElementById('overlay-title');
+        const msgEl = document.getElementById('overlay-message');
+        const startBtn = document.getElementById('start-btn');
+        const levelNumEl = document.getElementById('level-num'); // Тільки цифра
+        
+        const COLS = 15; 
+        const ROWS = 10; 
+        const CELL_SIZE = 40;
+
+        // Дані рівнів (1 = Стіна, 0 = Шлях, S = Старт, E = Фініш)
+        const levels = [
+            // 1. Пряма
+            [
+                "111111111111111",
+                "1S00000000000E1",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 2. Поворот
+            [
+                "111111111111111",
+                "1S0000001111111",
+                "111111101111111",
+                "111111101111111",
+                "1111111000000E1",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 3. Сходинки
+            [
+                "111111111111111",
+                "1S0011111111111",
+                "111001111111111",
+                "111100111111111",
+                "111110011111111",
+                "111111001111111",
+                "1111111000000E1",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 4. Змійка
+            [
+                "111111111111111",
+                "1S0000011111111",
+                "111111000001111",
+                "111111111101111",
+                "111000000001111",
+                "111011111111111",
+                "1110000000000E1",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 5. Вузька змійка
+            [
+                "111111111111111",
+                "1S00000100000E1",
+                "111111010111111",
+                "111111010111111",
+                "111111010111111",
+                "111111000111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 6. Перехрестя
+            [
+                "111111111111111",
+                "1S0011100000011",
+                "111011101111011",
+                "111000001111011",
+                "111111111111011",
+                "110000000000011",
+                "110111111111111",
+                "1100000000000E1",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 7. Спіраль
+            [
+                "111111111111111",
+                "111111111111111",
+                "1S0000000000111",
+                "111111111110111",
+                "111000000010111",
+                "111011111010111",
+                "11101E001010111",
+                "111011111010111",
+                "111000000000111",
+                "111111111111111",
+            ],
+            // 8. Обхід
+            [
+                "111111111111111",
+                "1S0000111111111",
+                "111110111111111",
+                "111110000000001",
+                "111111111111101",
+                "100000000000001",
+                "101111111111111",
+                "100000000011111",
+                "1111111110000E1",
+                "111111111111111",
+            ],
+            // 9. Зигзаг
+            [
+                "111111111111111",
+                "1S0011000001111",
+                "111011011101111",
+                "111011011101111",
+                "1110000111000E1",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+                "111111111111111",
+            ],
+            // 10. Фінал
+            [
+                "111111111111111",
+                "1S0011100000111",
+                "111011101110111",
+                "111000001110001",
+                "111111111111101",
+                "100000000000001",
+                "101111111111111",
+                "100000111000001",
+                "1111100000110E1",
+                "111111111111111",
+            ]
+        ];
+
+        let currentLevel = 0;
+        let isDragging = false;
+        let player = { x: 0, y: 0, r: 12 }; 
+        let startPos = { x: 0, y: 0 };
+        let endPos = { x: 0, y: 0 };
+        let grid = [];
+        let animationId;
+        
+        // --- ІКОНКИ ---
+        // HERO_ICON: Font Awesome Unicode (\uf0d0 = Magic Wand)
+        const HERO_ICON = "\uf0d0"; 
+        // CUP_ICON: Emoji (🏆) - Єдине емодзі в Canvas
+        const CUP_ICON = "🏆"; 
+        
+        function initLevel(levelIndex) {
+            if (levelIndex >= levels.length) {
+                gameWin();
+                return;
+            }
+            
+            grid = levels[levelIndex];
+
+            // Знаходимо координати
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = grid[r][c];
+                    if (cell === 'S') {
+                        startPos = { x: c * CELL_SIZE + CELL_SIZE/2, y: r * CELL_SIZE + CELL_SIZE/2 };
+                        player.x = startPos.x;
+                        player.y = startPos.y;
+                    } else if (cell === 'E') {
+                        endPos = { x: c * CELL_SIZE + CELL_SIZE/2, y: r * CELL_SIZE + CELL_SIZE/2 };
+                    }
+                }
+            }
+            
+            isDragging = false;
+            // Оновлюємо тільки цифру, не ламаючи HTML структуру
+            levelNumEl.textContent = currentLevel + 1;
+            render();
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = grid[r][c];
+                    const x = c * CELL_SIZE;
+                    const y = r * CELL_SIZE;
+
+                    if (cell === '1') {
+                        // Стіни (Кущі)
+                        ctx.fillStyle = "#84cc16"; 
+                        ctx.beginPath();
+                        if (ctx.roundRect) {
+                            ctx.roundRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8);
+                        } else {
+                            ctx.rect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                        }
+                        ctx.fill();
+                        
+                        // Декор
+                        ctx.fillStyle = "#a3e635";
+                        ctx.beginPath();
+                        ctx.arc(x+10, y+10, 4, 0, Math.PI*2);
+                        ctx.arc(x+28, y+30, 5, 0, Math.PI*2);
+                        ctx.fill();
+
+                    } else {
+                        // Стежка
+                        ctx.fillStyle = "#f1f5f9"; 
+                        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // --- КУБОК (EMOJI) ---
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#fbbf24"; 
+            ctx.font = "28px Arial"; // Стандартний шрифт для Емодзі
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(CUP_ICON, endPos.x, endPos.y + 2);
+            ctx.shadowBlur = 0;
+
+            // --- ГРАВЕЦЬ (FONT AWESOME) ---
+            // Світіння
+            ctx.globalCompositeOperation = 'lighter';
+            const gradient = ctx.createRadialGradient(player.x, player.y, 5, player.x, player.y, 40);
+            gradient.addColorStop(0, "rgba(99, 102, 241, 0.4)"); 
+            gradient.addColorStop(1, "rgba(99, 102, 241, 0)");
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 40, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Тіло (Круг)
+            ctx.fillStyle = isDragging ? "#4f46e5" : "#6366f1"; 
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Іконка (Font Awesome)
+            ctx.fillStyle = "#ffffff";
+            // Використовуємо шрифт FA для іконки
+            ctx.font = "900 14px 'Font Awesome 6 Free'";
+            ctx.fillText(HERO_ICON, player.x, player.y); // Центрування автоматичне завдяки textAlign='center' вище
+
+            // Курсор
+            if (isDragging) {
+                canvas.classList.add('grabbing');
+                canvas.classList.remove('grab');
+            } else {
+                canvas.classList.add('grab');
+                canvas.classList.remove('grabbing');
+            }
+        }
+
+        // Логіка колізій
+        function checkCollision(x, y) {
+            const hitBoxR = player.r - 4; 
+            const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+            
+            for (let angle of angles) {
+                const rad = angle * Math.PI / 180;
+                const px = x + Math.cos(rad) * hitBoxR;
+                const py = y + Math.sin(rad) * hitBoxR;
+                
+                const c = Math.floor(px / CELL_SIZE);
+                const r = Math.floor(py / CELL_SIZE);
+
+                if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return true;
+                if (grid[r][c] === '1') return true;
+            }
+            return false;
+        }
+
+        function checkWin(x, y) {
+            const dx = x - endPos.x;
+            const dy = y - endPos.y;
+            return Math.sqrt(dx*dx + dy*dy) < CELL_SIZE / 2;
+        }
+
+        function fail() {
+            isDragging = false;
+            canvas.parentElement.classList.add('shake');
+            setTimeout(() => canvas.parentElement.classList.remove('shake'), 500);
+            player.x = startPos.x;
+            player.y = startPos.y;
+            render();
+        }
+
+        function levelComplete() {
+            isDragging = false;
+            confettiExplosion();
+            
+            setTimeout(() => {
+                if (currentLevel < levels.length - 1) {
+                    currentLevel++;
+                    showOverlay("✨ Чудово!", `Рівень ${currentLevel} пройдено!`, "Далі");
+                } else {
+                    gameWin();
+                }
+            }, 600);
+        }
+
+        function gameWin() {
+            showOverlay("🎉 ПЕРЕМОГА!", "Ти здобув Кубок Бажань! Всі бажання здійсняться!", "Ще раз");
+            currentLevel = 0;
+        }
+
+        // --- ОБРОБНИКИ ПОДІЙ ---
+
+        function getPointerPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handleStart(e) {
+            if(e.target !== canvas) return;
+            const pos = getPointerPos(e);
+            const dx = pos.x - player.x;
+            const dy = pos.y - player.y;
+            
+            // Зона хапання трохи більша за візуальний радіус
+            if (Math.sqrt(dx*dx + dy*dy) < player.r + 20) { 
+                isDragging = true;
+                render();
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDragging) return;
+            e.preventDefault(); 
+
+            const pos = getPointerPos(e);
+            
+            if (checkCollision(pos.x, pos.y)) {
+                fail();
+            } else {
+                player.x = pos.x;
+                player.y = pos.y;
+                render();
+
+                if (checkWin(player.x, player.y)) {
+                    levelComplete();
+                }
+            }
+        }
+
+        function handleEnd() {
+            if (isDragging) {
+                isDragging = false;
+                render();
+            }
+        }
+
+        // Миша
+        window.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // Тач (Мобільні)
+        canvas.addEventListener('touchstart', handleStart, {passive: false});
+        canvas.addEventListener('touchmove', handleMove, {passive: false});
+        window.addEventListener('touchend', handleEnd);
+
+        // --- UI & КОНФЕТІ ---
+
+        function showOverlay(title, msg, btnText) {
+            titleEl.textContent = title;
+            msgEl.textContent = msg;
+            startBtn.textContent = btnText;
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('opacity-100', 'pointer-events-auto');
+        }
+
+        function hideOverlay() {
+            overlay.classList.remove('opacity-100', 'pointer-events-auto');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        startBtn.addEventListener('click', () => {
+            hideOverlay();
+            initLevel(currentLevel);
+        });
+
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const cCtx = confettiCanvas.getContext('2d');
+        let confetti = [];
+
+        function resizeConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfetti);
+        resizeConfetti();
+
+        function confettiExplosion() {
+            for (let i = 0; i < 80; i++) {
+                confetti.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    w: Math.random() * 8 + 4,
+                    h: Math.random() * 8 + 4,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20,
+                    c: `hsl(${Math.random() * 60 + 30}, 100%, 60%)`, 
+                    r: Math.random() * 0.2,
+                    life: 1.2
+                });
+            }
+            if (!animationId) updateConfetti();
+        }
+
+        function updateConfetti() {
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            
+            confetti.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; 
+                p.vx *= 0.94; 
+                p.life -= 0.01; 
+
+                cCtx.globalAlpha = Math.max(0, p.life);
+                cCtx.fillStyle = p.c;
+                cCtx.beginPath();
+                cCtx.arc(p.x, p.y, p.w/2, 0, Math.PI*2);
+                cCtx.fill();
+                cCtx.globalAlpha = 1.0;
+                
+                if (p.life <= 0) {
+                    confetti.splice(index, 1);
+                }
+            });
+
+            if (confetti.length > 0) {
+                animationId = requestAnimationFrame(updateConfetti);
+            } else {
+                animationId = null;
+            }
+        }
+
+        // Запуск
+        initLevel(0);
+
+    </script>
+</body>
+</html>
