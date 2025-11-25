@@ -17,7 +17,7 @@ const CATEGORIES = [
     iconClass: "fas fa-laptop", // Іконка для категорії
     services: [
       { name: "Мишачі перегони", description: "Тренажер для роботи з мишкою.", link: "services/click.html", image: "images/10.jpg", tags: ["1-2 класи"] },
-      { name: "Перші клавіши", description: "Веселий тренажер для роботи з клавіатурою.", link: "services/kids_typing.html", image: "images/48.jpg", tags: ["1-2 класи"] },
+      { name: "Перші клавіши", description: "Веселий тренажер для роботи з клавіатурою.", link: "services/kids_typing.html", image: "images/56.jpg", tags: ["1-2 класи"] },
       { name: "Швидкісні вікна", description: "Практичний тренажер для роботи з вікнами програм.", link: "services/windows/index.html", image: "images/48.jpg", tags: ["1-2 класи"] },
       { name: "Права чи Ліва?", description: "Тренажер для роботи з кнопками миші.", link: "services/mouse_keys/index.html", image: "images/49.jpg", tags: ["1-2 класи"] },
       { name: "Гарячі клавіши", description: "Інтерактивний урок про роботу з клавіатурою.", link: "services/typing.html", image: "images/18.jpg", tags: ["2-4 класи"] },
@@ -35,7 +35,7 @@ const CATEGORIES = [
       { name: "Абстракція для дітей", description: "Інтерактивний урок про рівні абстракції.", link: "services/abstraction.html", image: "images/22.jpg", tags: ["5-7 класи"] },
       { name: "Виявлення шаблонів", description: "Інтерактивний урок про виявлення шаблонів.", link: "services/patterns.html", image: "images/23.jpg", tags: ["5-7 класи"] },
       { name: "Декомпозиція для дітей", description: "Інтерактивний урок про декомпозицію.", link: "services/decomposition.html", image: "images/24.jpg", tags: ["5-7 класи"] },
-      { name: "Перевір себе", description: "Тест з обчислювального мислення.", link: "services/quiz.html", image: "images/24.jpg", tags: ["5-7 класи"] }
+      { name: "Перевір себе", description: "Тест з обчислювального мислення.", link: "services/quiz.html", image: "images/55.jpg", tags: ["5-7 класи"] }
     ]
   },
   {
