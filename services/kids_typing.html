@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Весела Клавіатура</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        /* Default CSS Variables - Will be updated by JS */
+        :root {
+            --key-bg: #ffffff;
+            --key-text-main: #334155;
+            --key-text-sub: #94a3b8;
+            
+            /* Theme colors placeholders */
+            --bg-color: #e0f2fe;
+            --key-shadow: #7dd3fc;
+            --key-border: #0ea5e9;
+            --keyboard-base-bg: #cffafe;
+            --keyboard-base-border: #67e8f9;
+
+            /* Target states */
+            --target-bg: #fde047;
+            --target-shadow: #eab308;
+            --target-border: #ca8a04;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg-color);
+            /* Pattern color will be set by JS */
+            background-size: 24px 24px;
+            overflow: hidden;
+            user-select: none;
+            transition: background-color 0.5s ease;
+        }
+
+        /* 3D Key Styles */
+        .key-cap {
+            background-color: var(--key-bg);
+            /* Added explicit border for sharpness */
+            border: 2px solid var(--key-border);
+            box-shadow: 0 4px 0 var(--key-shadow);
+            transform: translateY(0);
+            transition: all 0.1s ease;
+            position: relative;
+        }
+
+        .key-cap:active, .key-cap.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--key-shadow);
+            border-color: var(--key-shadow); /* Slight visual feedback on press */
+        }
+
+        .key-cap.target {
+            background-color: var(--target-bg);
+            box-shadow: 0 4px 0 var(--target-shadow);
+            border-color: var(--target-border);
+            animation: gentleBounce 2s infinite;
+            z-index: 10; /* Ensure target pops out */
+        }
+        
+        .key-cap.target:active, .key-cap.target.pressed {
+            background-color: #86efac; /* green-300 */
+            box-shadow: 0 0 0 #22c55e;
+            border-color: #16a34a;
+            transform: translateY(4px);
+            animation: none;
+        }
+
+        .key-cap.error {
+            background-color: #fecaca; /* red-200 */
+            border-color: #dc2626;
+            box-shadow: 0 4px 0 #b91c1c;
+        }
+
+        .key-cap.error:active {
+            box-shadow: 0 0 0 #b91c1c;
+            transform: translateY(4px);
+        }
+
+        @keyframes gentleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translateX(-2px); }
+            20%, 80% { transform: translateX(4px); }
+            30%, 50%, 70% { transform: translateX(-6px); }
+            40%, 60% { transform: translateX(6px); }
+        }
+
+        /* Typography for Keys */
+        .key-label-top {
+            font-size: 0.75rem;
+            color: var(--key-text-sub);
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            line-height: 1;
+        }
+        
+        .key-label-bottom {
+            font-size: 1.1rem;
+            color: var(--key-border); /* Use theme color for main letter */
+            font-weight: 700;
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            line-height: 1;
+        }
+
+        /* Specific alignment for func keys */
+        .func-key {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--key-text-sub);
+            background-color: #f8fafc;
+        }
+        
+        /* Dynamic Container Styles */
+        .keyboard-base-outer {
+            background-color: var(--keyboard-base-bg);
+            border-color: var(--keyboard-base-border);
+            transition: all 0.5s ease;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center">
+
+    <canvas id="confetti" class="confetti-canvas"></canvas>
+
+    <!-- Header Panel -->
+    <div class="absolute top-4 w-full flex justify-between px-6 md:px-12 items-center max-w-6xl">
+        <div class="flex items-center gap-3">
+            <div class="bg-white p-2 rounded-xl shadow-sm border-2 border-slate-100">
+                <i id="header-icon" class="fa-solid fa-keyboard text-3xl" style="color: var(--key-border)"></i>
+            </div>
+            <h1 class="hidden md:block text-2xl md:text-3xl text-slate-700 font-bold tracking-tight">
+                Клавіатурний Тренажер
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+             <!-- Mute Button -->
+             <button id="mute-btn" class="bg-white p-3 rounded-full shadow-md border-2 border-slate-100 text-slate-400 hover:text-blue-500 transition-colors" title="Вимкнути звук">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+            
+            <!-- Score -->
+            <div class="bg-white px-6 py-2 rounded-full border-b-4 border-yellow-400 shadow-md flex items-center gap-3 transform transition-transform" id="score-container">
+                <i class="fa-solid fa-star text-yellow-400 text-xl"></i>
+                <span id="score" class="text-2xl font-bold text-slate-700">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Display -->
+    <div class="mb-6 md:mb-10 text-center relative z-10">
+        <div class="bg-white/90 backdrop-blur-sm px-8 py-4 rounded-2xl shadow-lg border-2 border-white inline-block">
+            <p class="text-lg text-slate-500 font-medium mb-1">Натисни клавішу:</p>
+            <div class="flex items-baseline justify-center gap-3">
+                <span id="target-main" class="text-5xl font-bold drop-shadow-sm" style="color: var(--key-border)">-</span>
+                <span id="target-sub" class="text-2xl font-semibold text-slate-400">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Wrapper (Updated with dynamic classes) -->
+    <div class="keyboard-base-outer relative p-2 md:p-6 rounded-[2rem] shadow-xl border-b-8 mx-2 max-w-[98vw] overflow-x-auto">
+        <!-- Keyboard Surface -->
+        <div class="bg-white/40 rounded-xl p-3 inline-block min-w-[850px] backdrop-blur-sm">
+            <div id="keyboard" class="grid gap-2">
+                <!-- Rows injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div class="md:hidden mt-6 text-slate-500 text-sm font-medium">
+        <i class="fa-solid fa-tablet-screen-button mr-1"></i> Рекомендовано планшет або ПК
+    </div>
+
+    <script>
+        /* --- THEME GENERATOR --- */
+        function applyRandomTheme() {
+            const palettes = [
+                // Blue (Яскравий синій)
+                { bg: '#ecfeff', shadow: '#06b6d4', border: '#0891b2', baseBg: '#cffafe', baseBorder: '#22d3ee' },
+                // Green (М'ятний зелений)
+                { bg: '#f0fdf4', shadow: '#22c55e', border: '#16a34a', baseBg: '#dcfce7', baseBorder: '#4ade80' },
+                // Purple (Лавандовий)
+                { bg: '#fdf4ff', shadow: '#a855f7', border: '#9333ea', baseBg: '#f3e8ff', baseBorder: '#c084fc' },
+                // Orange (Сонячний помаранчевий)
+                { bg: '#fff7ed', shadow: '#f97316', border: '#ea580c', baseBg: '#ffedd5', baseBorder: '#fb923c' },
+                // Pink (Цукерковий рожевий)
+                { bg: '#fff1f2', shadow: '#f43f5e', border: '#e11d48', baseBg: '#ffe4e6', baseBorder: '#fb7185' }
+            ];
+
+            const p = palettes[Math.floor(Math.random() * palettes.length)];
+            const root = document.documentElement.style;
+
+            // Apply theme colors to CSS variables
+            root.setProperty('--bg-color', p.bg);
+            root.setProperty('--key-shadow', p.shadow);
+            root.setProperty('--key-border', p.border);
+            root.setProperty('--keyboard-base-bg', p.baseBg);
+            root.setProperty('--keyboard-base-border', p.baseBorder);
+            
+            // Set background pattern with theme color
+            document.body.style.backgroundImage = `radial-gradient(${p.baseBorder} 2px, transparent 2px)`;
+        }
+
+        /* --- DATA STRUCTURE --- */
+        const keyboardData = [
+            // Row 1: Numbers & Symbols
+            [
+                { code: 'Backquote', top: '~', bottom: '`', ua: "'", width: 'w-12' },
+                { code: 'Digit1', top: '!', bottom: '1', width: 'w-12' },
+                { code: 'Digit2', top: '@', bottom: '2', width: 'w-12' },
+                { code: 'Digit3', top: '#', bottom: '3', width: 'w-12' },
+                { code: 'Digit4', top: '$', bottom: '4', width: 'w-12' },
+                { code: 'Digit5', top: '%', bottom: '5', width: 'w-12' },
+                { code: 'Digit6', top: '^', bottom: '6', width: 'w-12' },
+                { code: 'Digit7', top: '&', bottom: '7', width: 'w-12' },
+                { code: 'Digit8', top: '*', bottom: '8', width: 'w-12' },
+                { code: 'Digit9', top: '(', bottom: '9', width: 'w-12' },
+                { code: 'Digit0', top: ')', bottom: '0', width: 'w-12' },
+                { code: 'Minus', top: '_', bottom: '-', width: 'w-12' },
+                { code: 'Equal', top: '+', bottom: '=', width: 'w-12' },
+                { code: 'Backspace', label: '←', width: 'flex-grow', type: 'func' }
+            ],
+            // Row 2
+            [
+                { code: 'Tab', label: 'Tab', width: 'w-20', type: 'func' },
+                { code: 'KeyQ', top: 'Q', bottom: 'Й', width: 'w-12' },
+                { code: 'KeyW', top: 'W', bottom: 'Ц', width: 'w-12' },
+                { code: 'KeyE', top: 'E', bottom: 'У', width: 'w-12' },
+                { code: 'KeyR', top: 'R', bottom: 'К', width: 'w-12' },
+                { code: 'KeyT', top: 'T', bottom: 'Е', width: 'w-12' },
+                { code: 'KeyY', top: 'Y', bottom: 'Н', width: 'w-12' },
+                { code: 'KeyU', top: 'U', bottom: 'Г', width: 'w-12' },
+                { code: 'KeyI', top: 'I', bottom: 'Ш', width: 'w-12' },
+                { code: 'KeyO', top: 'O', bottom: 'Щ', width: 'w-12' },
+                { code: 'KeyP', top: 'P', bottom: 'З', width: 'w-12' },
+                { code: 'BracketLeft', top: '{', bottom: 'Х', width: 'w-12' },
+                { code: 'BracketRight', top: '}', bottom: 'Ї', width: 'w-12' },
+                { code: 'Backslash', top: '|', bottom: '\\', width: 'flex-grow' }
+            ],
+            // Row 3
+            [
+                { code: 'CapsLock', label: 'Caps', width: 'w-24', type: 'func' },
+                { code: 'KeyA', top: 'A', bottom: 'Ф', width: 'w-12' },
+                { code: 'KeyS', top: 'S', bottom: 'І', width: 'w-12' },
+                { code: 'KeyD', top: 'D', bottom: 'В', width: 'w-12' },
+                { code: 'KeyF', top: 'F', bottom: 'А', width: 'w-12' },
+                { code: 'KeyG', top: 'G', bottom: 'П', width: 'w-12' },
+                { code: 'KeyH', top: 'H', bottom: 'Р', width: 'w-12' },
+                { code: 'KeyJ', top: 'J', bottom: 'О', width: 'w-12' },
+                { code: 'KeyK', top: 'K', bottom: 'Л', width: 'w-12' },
+                { code: 'KeyL', top: 'L', bottom: 'Д', width: 'w-12' },
+                { code: 'Semicolon', top: ':', bottom: 'Ж', width: 'w-12' },
+                { code: 'Quote', top: '"', bottom: 'Є', width: 'w-12' },
+                { code: 'Enter', label: 'Enter', width: 'flex-grow', type: 'func' }
+            ],
+            // Row 4
+            [
+                { code: 'ShiftLeft', label: 'Shift', width: 'w-32', type: 'func' },
+                { code: 'KeyZ', top: 'Z', bottom: 'Я', width: 'w-12' },
+                { code: 'KeyX', top: 'X', bottom: 'Ч', width: 'w-12' },
+                { code: 'KeyC', top: 'C', bottom: 'С', width: 'w-12' },
+                { code: 'KeyV', top: 'V', bottom: 'М', width: 'w-12' },
+                { code: 'KeyB', top: 'B', bottom: 'И', width: 'w-12' },
+                { code: 'KeyN', top: 'N', bottom: 'Т', width: 'w-12' },
+                { code: 'KeyM', top: 'M', bottom: 'Ь', width: 'w-12' },
+                { code: 'Comma', top: '<', bottom: 'Б', width: 'w-12' },
+                { code: 'Period', top: '>', bottom: 'Ю', width: 'w-12' },
+                { code: 'Slash', top: '?', bottom: '.', width: 'w-12' },
+                { code: 'ShiftRight', label: 'Shift', width: 'flex-grow', type: 'func' }
+            ],
+            // Row 5
+            [
+                { code: 'ControlLeft', label: 'Ctrl', width: 'w-16', type: 'func' },
+                { code: 'MetaLeft', label: 'Win', width: 'w-16', type: 'func' },
+                { code: 'AltLeft', label: 'Alt', width: 'w-16', type: 'func' },
+                { code: 'Space', label: '', width: 'flex-grow', type: 'std' }, // Space
+                { code: 'AltRight', label: 'Alt', width: 'w-16', type: 'func' },
+                { code: 'ControlRight', label: 'Ctrl', width: 'w-16', type: 'func' }
+            ]
+        ];
+
+        /* --- STATE --- */
+        let currentTargetCode = null;
+        let score = 0;
+        let isMuted = false;
+        let isProcessing = false; // Debounce
+        
+        const validTargets = keyboardData.flat().filter(key => 
+            (key.code.startsWith('Key') || key.code.startsWith('Digit')) && !key.type
+        );
+
+        /* --- SOUND ENGINE --- */
+        const AudioEngine = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            
+            playTone(freq, type, duration, volStart = 0.1) {
+                if (isMuted) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(volStart, this.ctx.currentTime + 0.05); 
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+
+            success() {
+                this.playTone(880, 'sine', 0.6, 0.15);
+                setTimeout(() => this.playTone(1760, 'sine', 0.4, 0.05), 50);
+            },
+
+            error() {
+                this.playTone(150, 'triangle', 0.2, 0.1);
+            }
+        };
+
+        /* --- RENDER --- */
+        function initGame() {
+            applyRandomTheme(); // Apply theme before rendering
+
+            const container = document.getElementById('keyboard');
+            
+            keyboardData.forEach(row => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'flex gap-2 w-full justify-center';
+                
+                row.forEach(key => {
+                    const btn = document.createElement('div');
+                    btn.id = key.code;
+                    btn.className = `key-cap ${key.width} h-14 rounded-lg flex items-center justify-center cursor-pointer select-none`;
+                    
+                    if (key.type === 'func') {
+                        btn.classList.add('func-key');
+                        btn.textContent = key.label;
+                    } else if (key.code === 'Space') {
+                        // Empty space
+                    } else {
+                        btn.innerHTML = `
+                            <span class="key-label-top">${key.top}</span>
+                            <span class="key-label-bottom">${key.bottom}</span>
+                        `;
+                    }
+
+                    btn.addEventListener('mousedown', () => handleInput(key.code));
+                    rowEl.appendChild(btn);
+                });
+                container.appendChild(rowEl);
+            });
+
+            pickTarget();
+            resizeCanvas();
+            animateConfetti();
+        }
+
+        /* --- GAME LOGIC --- */
+        function pickTarget() {
+            if (currentTargetCode) {
+                const prev = document.getElementById(currentTargetCode);
+                if (prev) prev.classList.remove('target');
+            }
+
+            const randomKey = validTargets[Math.floor(Math.random() * validTargets.length)];
+            currentTargetCode = randomKey.code;
+
+            const next = document.getElementById(currentTargetCode);
+            if (next) next.classList.add('target');
+
+            document.getElementById('target-main').textContent = randomKey.bottom;
+            document.getElementById('target-sub').textContent = randomKey.top;
+            
+            const display = document.querySelector('.bg-white\\/90');
+            display.classList.remove('shake');
+        }
+
+        function handleInput(code) {
+            if (isProcessing) return;
+            
+            const btn = document.getElementById(code);
+            if (!btn) return;
+
+            // Ensure AudioContext is resumed on first interaction
+            if (AudioEngine.ctx.state === 'suspended') AudioEngine.ctx.resume();
+
+            btn.classList.add('pressed');
+            setTimeout(() => btn.classList.remove('pressed'), 150);
+
+            if (code === currentTargetCode) {
+                isProcessing = true;
+                score++;
+                document.getElementById('score').textContent = score;
+                
+                const scoreBox = document.getElementById('score-container');
+                scoreBox.classList.add('scale-125');
+                setTimeout(() => scoreBox.classList.remove('scale-125'), 200);
+
+                AudioEngine.success();
+                fireConfetti();
+                
+                setTimeout(() => {
+                    pickTarget();
+                    isProcessing = false;
+                }, 800);
+            } else {
+                btn.classList.add('error');
+                setTimeout(() => btn.classList.remove('error'), 300);
+                
+                const keyboardWrapper = document.querySelector('.keyboard-base-outer');
+                keyboardWrapper.classList.add('shake');
+                setTimeout(() => keyboardWrapper.classList.remove('shake'), 400);
+
+                AudioEngine.error();
+            }
+        }
+
+        /* --- INPUT HANDLERS --- */
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            e.preventDefault();
+            handleInput(e.code);
+        });
+
+        document.getElementById('mute-btn').addEventListener('click', function() {
+            isMuted = !isMuted;
+            this.innerHTML = isMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+            this.classList.toggle('text-red-400', isMuted);
+            this.classList.toggle('text-slate-400', !isMuted);
+        });
+
+        /* --- CONFETTI SYSTEM --- */
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function fireConfetti() {
+            const colors = ['#f472b6', '#60a5fa', '#facc15', '#4ade80', '#a78bfa'];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20 - 5,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 1.0,
+                    decay: Math.random() * 0.02 + 0.01
+                });
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.4; // Gravity
+                p.life -= p.decay;
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+
+                if (p.life <= 0) particles.splice(index, 1);
+            });
+
+            requestAnimationFrame(animateConfetti);
+        }
+
+        // Start
+        initGame();
+
+    </script>
+</body>
+</html>
