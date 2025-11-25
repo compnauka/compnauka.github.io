@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
-        /* Default CSS Variables - Will be updated by JS */
+        /* Default CSS Variables */
         :root {
             --key-bg: #ffffff;
             --key-text-main: #334155;
@@ -31,7 +31,6 @@
         body {
             font-family: 'Fredoka', sans-serif;
             background-color: var(--bg-color);
-            /* Pattern color will be set by JS */
             background-size: 24px 24px;
             overflow: hidden;
             user-select: none;
@@ -41,7 +40,6 @@
         /* 3D Key Styles */
         .key-cap {
             background-color: var(--key-bg);
-            /* Added explicit border for sharpness */
             border: 2px solid var(--key-border);
             box-shadow: 0 4px 0 var(--key-shadow);
             transform: translateY(0);
@@ -49,10 +47,11 @@
             position: relative;
         }
 
-        .key-cap:active, .key-cap.pressed {
+        /* Прибрано :active, тепер тільки клас .pressed (від JS) змінює вигляд */
+        .key-cap.pressed {
             transform: translateY(4px);
             box-shadow: 0 0 0 var(--key-shadow);
-            border-color: var(--key-shadow); /* Slight visual feedback on press */
+            border-color: var(--key-shadow);
         }
 
         .key-cap.target {
@@ -60,11 +59,12 @@
             box-shadow: 0 4px 0 var(--target-shadow);
             border-color: var(--target-border);
             animation: gentleBounce 2s infinite;
-            z-index: 10; /* Ensure target pops out */
+            z-index: 10;
         }
         
-        .key-cap.target:active, .key-cap.target.pressed {
-            background-color: #86efac; /* green-300 */
+        /* Прибрано :active */
+        .key-cap.target.pressed {
+            background-color: #86efac;
             box-shadow: 0 0 0 #22c55e;
             border-color: #16a34a;
             transform: translateY(4px);
@@ -72,14 +72,15 @@
         }
 
         .key-cap.error {
-            background-color: #fecaca; /* red-200 */
+            background-color: #fecaca;
             border-color: #dc2626;
             box-shadow: 0 4px 0 #b91c1c;
         }
 
-        .key-cap.error:active {
-            box-shadow: 0 0 0 #b91c1c;
-            transform: translateY(4px);
+        /* Прибрано :active для error */
+        .key-cap.error.pressed {
+             box-shadow: 0 0 0 #b91c1c;
+             transform: translateY(4px);
         }
 
         @keyframes gentleBounce {
@@ -120,7 +121,7 @@
         
         .key-label-bottom {
             font-size: 1.1rem;
-            color: var(--key-border); /* Use theme color for main letter */
+            color: var(--key-border);
             font-weight: 700;
             position: absolute;
             bottom: 2px;
@@ -128,7 +129,6 @@
             line-height: 1;
         }
 
-        /* Specific alignment for func keys */
         .func-key {
             font-size: 0.85rem;
             font-weight: 600;
@@ -136,17 +136,39 @@
             background-color: #f8fafc;
         }
         
-        /* Dynamic Container Styles */
         .keyboard-base-outer {
             background-color: var(--keyboard-base-bg);
             border-color: var(--keyboard-base-border);
             transition: all 0.5s ease;
+        }
+
+        /* Modal Animation */
+        .modal-enter {
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center">
 
     <canvas id="confetti" class="confetti-canvas"></canvas>
+
+    <!-- Warning Modal -->
+    <div id="warning-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm text-center shadow-2xl border-4 border-orange-300 modal-enter mx-4">
+            <div class="text-6xl text-orange-400 mb-4 animate-bounce">
+                <i class="fa-solid fa-face-thinking"></i>
+            </div>
+            <h2 id="modal-title" class="text-3xl font-bold text-slate-700 mb-2">Не поспішай!</h2>
+            <p class="text-lg text-slate-500 mb-6 leading-tight">Спробуй знайти кнопку очима, а не пальцями.</p>
+            <button onclick="closeWarningModal()" class="bg-orange-400 hover:bg-orange-500 text-white text-xl font-bold py-3 px-10 rounded-full shadow-lg transition-transform active:scale-95 border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 cursor-pointer">
+                Я готовий!
+            </button>
+        </div>
+    </div>
 
     <!-- Header Panel -->
     <div class="absolute top-4 w-full flex justify-between px-6 md:px-12 items-center max-w-6xl">
@@ -161,7 +183,7 @@
         
         <div class="flex items-center gap-4">
              <!-- Mute Button -->
-             <button id="mute-btn" class="bg-white p-3 rounded-full shadow-md border-2 border-slate-100 text-slate-400 hover:text-blue-500 transition-colors" title="Вимкнути звук">
+             <button id="mute-btn" class="bg-white p-3 rounded-full shadow-md border-2 border-slate-100 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer" title="Вимкнути звук">
                 <i class="fa-solid fa-volume-high"></i>
             </button>
             
@@ -184,9 +206,8 @@
         </div>
     </div>
 
-    <!-- Keyboard Wrapper (Updated with dynamic classes) -->
+    <!-- Keyboard Wrapper -->
     <div class="keyboard-base-outer relative p-2 md:p-6 rounded-[2rem] shadow-xl border-b-8 mx-2 max-w-[98vw] overflow-x-auto">
-        <!-- Keyboard Surface -->
         <div class="bg-white/40 rounded-xl p-3 inline-block min-w-[850px] backdrop-blur-sm">
             <div id="keyboard" class="grid gap-2">
                 <!-- Rows injected by JS -->
@@ -195,42 +216,30 @@
     </div>
 
     <div class="md:hidden mt-6 text-slate-500 text-sm font-medium">
-        <i class="fa-solid fa-tablet-screen-button mr-1"></i> Рекомендовано планшет або ПК
+        <i class="fa-solid fa-tablet-screen-button mr-1"></i> Рекомендовано планшет або ПК з фізичною клавіатурою
     </div>
 
     <script>
-        /* --- THEME GENERATOR --- */
-        function applyRandomTheme() {
-            const palettes = [
-                // Blue (Яскравий синій)
-                { bg: '#ecfeff', shadow: '#06b6d4', border: '#0891b2', baseBg: '#cffafe', baseBorder: '#22d3ee' },
-                // Green (М'ятний зелений)
-                { bg: '#f0fdf4', shadow: '#22c55e', border: '#16a34a', baseBg: '#dcfce7', baseBorder: '#4ade80' },
-                // Purple (Лавандовий)
-                { bg: '#fdf4ff', shadow: '#a855f7', border: '#9333ea', baseBg: '#f3e8ff', baseBorder: '#c084fc' },
-                // Orange (Сонячний помаранчевий)
-                { bg: '#fff7ed', shadow: '#f97316', border: '#ea580c', baseBg: '#ffedd5', baseBorder: '#fb923c' },
-                // Pink (Цукерковий рожевий)
-                { bg: '#fff1f2', shadow: '#f43f5e', border: '#e11d48', baseBg: '#ffe4e6', baseBorder: '#fb7185' }
-            ];
+        /* --- VARIABLES & CONFIG --- */
+        let currentTargetCode = null;
+        let score = 0;
+        let wrongAttempts = 0;
+        const MAX_WRONG_ATTEMPTS = 3;
+        
+        let isMuted = false;
+        let isProcessing = false;
+        let isModalOpen = false;
 
-            const p = palettes[Math.floor(Math.random() * palettes.length)];
-            const root = document.documentElement.style;
+        const warningTitles = [
+            "Не поспішай!",
+            "Зосередься!",
+            "Уважніше!",
+            "Стоп-стоп!",
+            "Пошукай очима!"
+        ];
 
-            // Apply theme colors to CSS variables
-            root.setProperty('--bg-color', p.bg);
-            root.setProperty('--key-shadow', p.shadow);
-            root.setProperty('--key-border', p.border);
-            root.setProperty('--keyboard-base-bg', p.baseBg);
-            root.setProperty('--keyboard-base-border', p.baseBorder);
-            
-            // Set background pattern with theme color
-            document.body.style.backgroundImage = `radial-gradient(${p.baseBorder} 2px, transparent 2px)`;
-        }
-
-        /* --- DATA STRUCTURE --- */
+        /* --- THEME & DATA --- */
         const keyboardData = [
-            // Row 1: Numbers & Symbols
             [
                 { code: 'Backquote', top: '~', bottom: '`', ua: "'", width: 'w-12' },
                 { code: 'Digit1', top: '!', bottom: '1', width: 'w-12' },
@@ -247,7 +256,6 @@
                 { code: 'Equal', top: '+', bottom: '=', width: 'w-12' },
                 { code: 'Backspace', label: '←', width: 'flex-grow', type: 'func' }
             ],
-            // Row 2
             [
                 { code: 'Tab', label: 'Tab', width: 'w-20', type: 'func' },
                 { code: 'KeyQ', top: 'Q', bottom: 'Й', width: 'w-12' },
@@ -264,7 +272,6 @@
                 { code: 'BracketRight', top: '}', bottom: 'Ї', width: 'w-12' },
                 { code: 'Backslash', top: '|', bottom: '\\', width: 'flex-grow' }
             ],
-            // Row 3
             [
                 { code: 'CapsLock', label: 'Caps', width: 'w-24', type: 'func' },
                 { code: 'KeyA', top: 'A', bottom: 'Ф', width: 'w-12' },
@@ -280,7 +287,6 @@
                 { code: 'Quote', top: '"', bottom: 'Є', width: 'w-12' },
                 { code: 'Enter', label: 'Enter', width: 'flex-grow', type: 'func' }
             ],
-            // Row 4
             [
                 { code: 'ShiftLeft', label: 'Shift', width: 'w-32', type: 'func' },
                 { code: 'KeyZ', top: 'Z', bottom: 'Я', width: 'w-12' },
@@ -295,7 +301,6 @@
                 { code: 'Slash', top: '?', bottom: '.', width: 'w-12' },
                 { code: 'ShiftRight', label: 'Shift', width: 'flex-grow', type: 'func' }
             ],
-            // Row 5
             [
                 { code: 'ControlLeft', label: 'Ctrl', width: 'w-16', type: 'func' },
                 { code: 'MetaLeft', label: 'Win', width: 'w-16', type: 'func' },
@@ -306,65 +311,63 @@
             ]
         ];
 
-        /* --- STATE --- */
-        let currentTargetCode = null;
-        let score = 0;
-        let isMuted = false;
-        let isProcessing = false; // Debounce
-        
         const validTargets = keyboardData.flat().filter(key => 
             (key.code.startsWith('Key') || key.code.startsWith('Digit')) && !key.type
         );
 
-        /* --- SOUND ENGINE --- */
+        /* --- FUNCTIONS --- */
+        function applyRandomTheme() {
+            const palettes = [
+                { bg: '#ecfeff', shadow: '#06b6d4', border: '#0891b2', baseBg: '#cffafe', baseBorder: '#22d3ee' },
+                { bg: '#f0fdf4', shadow: '#22c55e', border: '#16a34a', baseBg: '#dcfce7', baseBorder: '#4ade80' },
+                { bg: '#fdf4ff', shadow: '#a855f7', border: '#9333ea', baseBg: '#f3e8ff', baseBorder: '#c084fc' },
+                { bg: '#fff7ed', shadow: '#f97316', border: '#ea580c', baseBg: '#ffedd5', baseBorder: '#fb923c' },
+                { bg: '#fff1f2', shadow: '#f43f5e', border: '#e11d48', baseBg: '#ffe4e6', baseBorder: '#fb7185' }
+            ];
+            const p = palettes[Math.floor(Math.random() * palettes.length)];
+            const root = document.documentElement.style;
+            root.setProperty('--bg-color', p.bg);
+            root.setProperty('--key-shadow', p.shadow);
+            root.setProperty('--key-border', p.border);
+            root.setProperty('--keyboard-base-bg', p.baseBg);
+            root.setProperty('--keyboard-base-border', p.baseBorder);
+            document.body.style.backgroundImage = `radial-gradient(${p.baseBorder} 2px, transparent 2px)`;
+        }
+
         const AudioEngine = {
             ctx: new (window.AudioContext || window.webkitAudioContext)(),
-            
             playTone(freq, type, duration, volStart = 0.1) {
                 if (isMuted) return;
                 if (this.ctx.state === 'suspended') this.ctx.resume();
-
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                
                 gain.gain.setValueAtTime(0, this.ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(volStart, this.ctx.currentTime + 0.05); 
                 gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
-                
                 osc.start();
                 osc.stop(this.ctx.currentTime + duration);
             },
-
-            success() {
-                this.playTone(880, 'sine', 0.6, 0.15);
-                setTimeout(() => this.playTone(1760, 'sine', 0.4, 0.05), 50);
-            },
-
-            error() {
-                this.playTone(150, 'triangle', 0.2, 0.1);
-            }
+            success() { this.playTone(880, 'sine', 0.6, 0.15); setTimeout(() => this.playTone(1760, 'sine', 0.4, 0.05), 50); },
+            error() { this.playTone(150, 'triangle', 0.2, 0.1); },
+            alert() { this.playTone(400, 'sine', 0.1, 0.1); setTimeout(() => this.playTone(300, 'sine', 0.3, 0.1), 100); }
         };
 
-        /* --- RENDER --- */
         function initGame() {
-            applyRandomTheme(); // Apply theme before rendering
-
+            applyRandomTheme();
             const container = document.getElementById('keyboard');
             
             keyboardData.forEach(row => {
                 const rowEl = document.createElement('div');
                 rowEl.className = 'flex gap-2 w-full justify-center';
-                
                 row.forEach(key => {
                     const btn = document.createElement('div');
                     btn.id = key.code;
-                    btn.className = `key-cap ${key.width} h-14 rounded-lg flex items-center justify-center cursor-pointer select-none`;
+                    // cursor-default ensures no hand pointer
+                    btn.className = `key-cap ${key.width} h-14 rounded-lg flex items-center justify-center cursor-default select-none`;
                     
                     if (key.type === 'func') {
                         btn.classList.add('func-key');
@@ -372,13 +375,8 @@
                     } else if (key.code === 'Space') {
                         // Empty space
                     } else {
-                        btn.innerHTML = `
-                            <span class="key-label-top">${key.top}</span>
-                            <span class="key-label-bottom">${key.bottom}</span>
-                        `;
+                        btn.innerHTML = `<span class="key-label-top">${key.top}</span><span class="key-label-bottom">${key.bottom}</span>`;
                     }
-
-                    btn.addEventListener('mousedown', () => handleInput(key.code));
                     rowEl.appendChild(btn);
                 });
                 container.appendChild(rowEl);
@@ -389,71 +387,91 @@
             animateConfetti();
         }
 
-        /* --- GAME LOGIC --- */
         function pickTarget() {
             if (currentTargetCode) {
                 const prev = document.getElementById(currentTargetCode);
                 if (prev) prev.classList.remove('target');
             }
-
             const randomKey = validTargets[Math.floor(Math.random() * validTargets.length)];
             currentTargetCode = randomKey.code;
-
             const next = document.getElementById(currentTargetCode);
             if (next) next.classList.add('target');
-
             document.getElementById('target-main').textContent = randomKey.bottom;
             document.getElementById('target-sub').textContent = randomKey.top;
             
-            const display = document.querySelector('.bg-white\\/90');
-            display.classList.remove('shake');
+            wrongAttempts = 0;
+        }
+
+        function showWarningModal() {
+            isModalOpen = true;
+            const modal = document.getElementById('warning-modal');
+            const title = document.getElementById('modal-title');
+            
+            title.textContent = warningTitles[Math.floor(Math.random() * warningTitles.length)];
+            
+            modal.classList.remove('hidden');
+            AudioEngine.alert();
+        }
+
+        window.closeWarningModal = function() {
+            const modal = document.getElementById('warning-modal');
+            modal.classList.add('hidden');
+            isModalOpen = false;
+            wrongAttempts = 0;
         }
 
         function handleInput(code) {
-            if (isProcessing) return;
+            if (isProcessing || isModalOpen) return;
             
             const btn = document.getElementById(code);
             if (!btn) return;
 
-            // Ensure AudioContext is resumed on first interaction
             if (AudioEngine.ctx.state === 'suspended') AudioEngine.ctx.resume();
 
             btn.classList.add('pressed');
             setTimeout(() => btn.classList.remove('pressed'), 150);
 
             if (code === currentTargetCode) {
+                wrongAttempts = 0;
                 isProcessing = true;
                 score++;
                 document.getElementById('score').textContent = score;
-                
                 const scoreBox = document.getElementById('score-container');
                 scoreBox.classList.add('scale-125');
                 setTimeout(() => scoreBox.classList.remove('scale-125'), 200);
-
                 AudioEngine.success();
                 fireConfetti();
-                
                 setTimeout(() => {
                     pickTarget();
                     isProcessing = false;
                 }, 800);
             } else {
+                wrongAttempts++;
+                
+                if (wrongAttempts >= MAX_WRONG_ATTEMPTS) {
+                    btn.classList.add('error');
+                    setTimeout(() => btn.classList.remove('error'), 300);
+                    showWarningModal();
+                    return;
+                }
+
                 btn.classList.add('error');
                 setTimeout(() => btn.classList.remove('error'), 300);
-                
                 const keyboardWrapper = document.querySelector('.keyboard-base-outer');
                 keyboardWrapper.classList.add('shake');
                 setTimeout(() => keyboardWrapper.classList.remove('shake'), 400);
-
                 AudioEngine.error();
             }
         }
 
-        /* --- INPUT HANDLERS --- */
+        /* --- EVENT LISTENERS --- */
         document.addEventListener('keydown', (e) => {
             if (e.repeat) return;
             e.preventDefault();
-            handleInput(e.code);
+            
+            if (!isModalOpen) {
+                handleInput(e.code);
+            }
         });
 
         document.getElementById('mute-btn').addEventListener('click', function() {
@@ -463,7 +481,7 @@
             this.classList.toggle('text-slate-400', !isMuted);
         });
 
-        /* --- CONFETTI SYSTEM --- */
+        /* --- CONFETTI --- */
         const canvas = document.getElementById('confetti');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -492,26 +510,20 @@
 
         function animateConfetti() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             particles.forEach((p, index) => {
                 p.x += p.vx;
                 p.y += p.vy;
-                p.vy += 0.4; // Gravity
+                p.vy += 0.4;
                 p.life -= p.decay;
-
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life;
                 ctx.fillRect(p.x, p.y, p.size, p.size);
-
                 if (p.life <= 0) particles.splice(index, 1);
             });
-
             requestAnimationFrame(animateConfetti);
         }
 
-        // Start
         initGame();
-
     </script>
 </body>
 </html>
