@@ -17,6 +17,8 @@ const CATEGORIES = [
     iconClass: "fas fa-laptop", // Іконка для категорії
     services: [
       { name: "Мишачі перегони", description: "Тренажер для роботи з мишкою.", link: "services/click.html", image: "images/10.jpg", tags: ["1-2 класи"] },
+      { name: "Спіймай світлячка", description: "Тренажер для роботи з мишкою.", link: "services/fireflies.html", image: "images/58.jpg", tags: ["1-2 класи"] },
+      { name: "Полювання на медуз", description: "Тренажер для роботи з мишкою.", link: "services/jailfish.html", image: "images/59.jpg", tags: ["1-2 класи"] },
       { name: "Перші клавіши", description: "Веселий тренажер для роботи з клавіатурою.", link: "services/kids_typing.html", image: "images/56.jpg", tags: ["1-2 класи"] },
       { name: "Швидкісні вікна", description: "Практичний тренажер для роботи з вікнами програм.", link: "services/windows/index.html", image: "images/48.jpg", tags: ["1-2 класи"] },
       { name: "Права чи Ліва?", description: "Тренажер для роботи з кнопками миші.", link: "services/mouse_keys/index.html", image: "images/49.jpg", tags: ["1-2 класи"] },
