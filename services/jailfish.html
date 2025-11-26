@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Полювання на медуз</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Basic Setup */
+        body {
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Nunito', sans-serif;
+            background-color: #020617;
+        }
+
+        /* --- Ocean Effects --- */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 5;
+            animation: rise linear infinite;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* --- Jellyfish Animations --- */
+        @keyframes tentacle-move {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.85); }
+        }
+
+        @keyframes swim-diagonal {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(40px, -60px) rotate(15deg); }
+            50% { transform: translate(0, -100px) rotate(0deg); }
+            75% { transform: translate(-40px, -60px) rotate(-15deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes swim-smooth {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(80px, -40px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes pulse-neon {
+            0%, 100% { filter: drop-shadow(0 0 8px currentColor) brightness(1); }
+            50% { filter: drop-shadow(0 0 15px currentColor) brightness(1.3); }
+        }
+
+        /* --- Classes --- */
+        .jellyfish { will-change: transform, left, top; z-index: 30; }
+        .jellyfish-dragged { z-index: 60 !important; }
+        
+        .move-swim { animation: swim-diagonal 10s ease-in-out infinite, pulse-neon 3s infinite; }
+        .move-smooth { animation: swim-smooth 8s ease-in-out infinite, pulse-neon 4s infinite; }
+
+        .jelly-body { animation: tentacle-move 2s ease-in-out infinite; transform-origin: top center; }
+
+        body.is-paused * { animation-play-state: paused !important; }
+
+        /* --- Tank (Jar) --- */
+        .tank-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            border-radius: 0 0 30px 30px;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.05);
+            transition: box-shadow 0.5s ease, border-color 0.5s ease;
+        }
+
+        .tank-lid {
+            background: #1e293b;
+            border-radius: 4px;
+            width: 110%;
+            height: 16px;
+            position: absolute;
+            top: -16px;
+            left: -5%;
+            border: 1px solid #475569;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+            z-index: 25;
+        }
+
+        /* Active highlight for dropping */
+        .tank-active {
+            border-color: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* --- Particles --- */
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 40;
+        }
+        
+        /* Modal Z-Index Fix */
+        #pause-modal, #win-modal {
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-slate-900 via-indigo-950 to-black h-screen w-screen relative overflow-hidden font-sans select-none text-slate-100">
+
+    <!-- Header -->
+    <div class="absolute top-16 md:top-6 w-full text-center pointer-events-none z-10 px-4">
+        <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 drop-shadow-[0_0_10px_rgba(0,255,255,0.5)] tracking-wide uppercase">
+            Полювання на медуз
+        </h1>
+    </div>
+
+    <!-- Background Layers -->
+    <div class="absolute bottom-0 w-full h-full bg-gradient-to-t from-black via-transparent to-transparent z-0 pointer-events-none"></div>
+    <div id="bubbles-container" class="absolute inset-0 z-0 pointer-events-none overflow-hidden"></div>
+
+    <!-- Sea Floor Decor -->
+    <div class="z-0 pointer-events-none absolute bottom-[-10px] w-full h-64 overflow-hidden opacity-60 mix-blend-screen" aria-hidden="true">
+        <div class="absolute bottom-[10px] left-[5%] text-purple-900/40 text-[5rem] animate-[sway_4s_infinite_ease-in-out]"><i class="fa-solid fa-star-of-life"></i></div>
+        <div class="absolute bottom-[20px] left-[25%] text-teal-900/30 text-[4rem] animate-[sway_5s_infinite_ease-in-out_1s]"><i class="fa-solid fa-fish-fins" style="transform: rotate(-90deg)"></i></div>
+        <div class="absolute bottom-[5px] right-[10%] text-indigo-900/40 text-[6rem] animate-[sway_6s_infinite_ease-in-out_0.5s]"><i class="fa-solid fa-gem"></i></div>
+        <div class="absolute bottom-[15px] right-[30%] text-cyan-900/20 text-[4rem] animate-[sway_7s_infinite_ease-in-out_2s]"><i class="fa-solid fa-ankh"></i></div>
+         <div class="absolute bottom-[0px] left-[50%] text-blue-900/30 text-[7rem] animate-[sway_8s_infinite_ease-in-out_1.5s]"><i class="fa-brands fa-envira" style="transform: scaleY(-1)"></i></div>
+    </div>
+
+    <!-- UI: Score -->
+    <div class="absolute top-4 left-4 z-40 bg-slate-900/80 text-cyan-400 px-4 py-2 rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,255,255,0.2)] flex items-center gap-4 backdrop-blur-md">
+        <div class="flex items-center gap-3 text-xl font-bold" role="status" aria-label="Рахунок">
+            <i class="fa-solid fa-flask" aria-hidden="true"></i>
+            <div><span id="score">0</span><span class="text-sm opacity-60 ml-1">/ 30</span></div>
+        </div>
+        <div class="w-px h-6 bg-cyan-500/30"></div>
+        <div class="flex items-center gap-2" title="Рекорд">
+            <i class="fa-solid fa-trophy text-purple-400 text-sm" aria-hidden="true"></i>
+            <span id="high-score" class="text-purple-200 font-bold">0</span>
+        </div>
+    </div>
+
+    <!-- UI: Pause -->
+    <button onclick="togglePause()" class="absolute top-4 right-4 z-40 bg-slate-900/80 hover:bg-slate-800 text-cyan-100 w-12 h-12 rounded-full border border-cyan-500/30 flex items-center justify-center shadow-lg transition-all active:scale-95" aria-label="Пауза гри" aria-pressed="false">
+        <i class="fa-solid fa-pause" aria-hidden="true"></i>
+    </button>
+
+    <!-- Game Area -->
+    <div id="game-area" class="absolute inset-0 z-30 overflow-hidden"></div>
+
+    <!-- Tank Target -->
+    <div id="tank-container" class="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-44 md:w-40 md:h-60 z-20 transition-all duration-200" role="region" aria-label="Контейнер для збору">
+        <div class="tank-lid"></div>
+        <div id="tank-body" class="tank-glass w-full h-full flex items-end justify-center pb-2 relative overflow-hidden">
+            <div class="text-cyan-100/30 text-xs font-bold absolute top-6 select-none uppercase tracking-widest text-center w-full">ЗБІР<br>ЗРАЗКІВ</div>
+            <div id="tank-fluid-glow" class="absolute bottom-0 left-0 w-full h-3/4 opacity-0 transition-colors duration-700 blur-2xl z-0"></div>
+            <div id="caught-container" class="w-full h-full absolute bottom-0 left-0 p-3 flex flex-wrap-reverse content-start gap-1 z-10 pointer-events-none"></div>
+        </div>
+    </div>
+
+    <!-- Pause Modal -->
+    <div id="pause-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="bg-slate-900 rounded-2xl p-6 border border-cyan-500/30 max-w-sm w-full shadow-[0_0_30px_rgba(0,255,255,0.1)] text-center">
+            <h2 id="pause-title" class="text-2xl font-bold text-white mb-6 tracking-widest">ПАУЗА</h2>
+            <div class="space-y-4">
+                <button onclick="togglePause()" class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-colors">
+                    <i class="fa-solid fa-play mr-2"></i> Продовжити
+                </button>
+                <div class="bg-slate-950/50 rounded-lg p-3 border border-slate-800">
+                    <p class="text-slate-400 text-xs mb-2 uppercase font-bold">Рівень</p>
+                    <div class="flex gap-2">
+                        <button onclick="setDifficulty('easy')" id="btn-easy" class="flex-1 py-1 rounded text-sm transition-colors border border-transparent">Легко</button>
+                        <button onclick="setDifficulty('normal')" id="btn-normal" class="flex-1 py-1 rounded text-sm transition-colors border border-transparent">Норм</button>
+                        <button onclick="setDifficulty('hard')" id="btn-hard" class="flex-1 py-1 rounded text-sm transition-colors border border-transparent">Важко</button>
+                    </div>
+                </div>
+                <button onclick="toggleSound()" class="w-full py-2 bg-slate-800 text-slate-300 rounded-lg text-sm border border-slate-700">
+                    <span id="text-sound">Звук: Увімк</span>
+                </button>
+                <button onclick="restartGame()" class="w-full py-3 border border-red-900/50 text-red-400 hover:bg-red-900/20 rounded-lg font-bold">
+                    Скинути
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="hidden absolute inset-0 bg-black/90 flex items-center justify-center px-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="win-title">
+        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 rounded-3xl p-8 text-center max-w-md w-full border border-cyan-400/50 shadow-[0_0_50px_rgba(0,255,255,0.3)]">
+            <div class="text-cyan-400 text-6xl mb-4 filter drop-shadow-[0_0_10px_rgba(0,255,255,0.8)] animate-pulse">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <h2 id="win-title" class="text-3xl font-extrabold text-white mb-2">Місію Виконано!</h2>
+            <p class="text-indigo-200 mb-6 text-sm">Океан сяє новими барвами завдяки тобі.</p>
+            <div id="final-color-display" class="w-16 h-16 rounded-full mx-auto mb-6 shadow-[0_0_20px_currentColor] border-2 border-white/20"></div>
+            <button onclick="restartGame()" class="bg-cyan-500 hover:bg-cyan-400 text-black text-xl font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 w-full">
+                Пірнути знову
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const CONSTANTS = {
+            TARGET_SCORE: 30,
+            MIN_SIZE: 40,
+            MAX_SIZE_ADD: 20,
+            MIN_LIFETIME: 6000,
+            MAX_LIFETIME_ADD: 4000,
+            STORAGE_KEY: 'neon-jelly-highscore'
+        };
+
+        const NEON_COLORS = [
+            { name: 'Cyan', hex: '#06b6d4', r: 6, g: 182, b: 212 },
+            { name: 'Magenta', hex: '#d946ef', r: 217, g: 70, b: 239 },
+            { name: 'Lime', hex: '#84cc16', r: 132, g: 204, b: 22 },
+            { name: 'ElectricPurple', hex: '#8b5cf6', r: 139, g: 92, b: 246 },
+            { name: 'HotOrange', hex: '#f97316', r: 249, g: 115, b: 22 }
+        ];
+
+        const DIFFICULTY_SETTINGS = {
+            easy: { MAX_JELLIES: 4, SPAWN_RATE_MS: 1800 },
+            normal: { MAX_JELLIES: 7, SPAWN_RATE_MS: 1400 },
+            hard: { MAX_JELLIES: 12, SPAWN_RATE_MS: 900 }
+        };
+
+        // --- State Management ---
+        const state = {
+            score: 0,
+            highScore: 0,
+            active: true,
+            isPaused: false,
+            soundEnabled: true,
+            spawnInterval: null,
+            difficulty: 'normal',
+            colorMix: { r: 0, g: 0, b: 0, count: 0 },
+            jellyfishSet: new Set() // Track active jellyfish objects
+        };
+
+        // --- DOM Elements ---
+        const EL = {
+            gameArea: document.getElementById('game-area'),
+            tankBody: document.getElementById('tank-body'),
+            tankContainer: document.getElementById('tank-container'),
+            tankGlow: document.getElementById('tank-fluid-glow'),
+            score: document.getElementById('score'),
+            highScore: document.getElementById('high-score'),
+            winModal: document.getElementById('win-modal'),
+            pauseModal: document.getElementById('pause-modal'),
+            caughtContainer: document.getElementById('caught-container'),
+            btnSound: document.getElementById('text-sound')
+        };
+
+        // --- Audio Context ---
+        const audio = {
+            ctx: null,
+            init: function() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            playTone: function(freq, type, dur, vol) {
+                if(!state.soundEnabled || !this.ctx) return;
+                this.ctx.resume().catch(() => {});
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + dur);
+            },
+            playBloop: function() { this.playTone(300, 'sine', 0.1, 0.3); this.playTone(600, 'sine', 0.1, 0.1); },
+            playWin: function() { 
+                [400, 500, 600, 800].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.3, 0.2), i*100)); 
+            }
+        };
+
+        // --- Helper: Color Mixer (True Weighted Average) ---
+        function updateTankColor(newColorObj) {
+            const count = state.colorMix.count;
+            // Formula: ((CurrentAvg * Count) + NewValue) / (Count + 1)
+            state.colorMix.r = ((state.colorMix.r * count) + newColorObj.r) / (count + 1);
+            state.colorMix.g = ((state.colorMix.g * count) + newColorObj.g) / (count + 1);
+            state.colorMix.b = ((state.colorMix.b * count) + newColorObj.b) / (count + 1);
+            
+            state.colorMix.count++;
+
+            const r = Math.round(state.colorMix.r);
+            const g = Math.round(state.colorMix.g);
+            const b = Math.round(state.colorMix.b);
+
+            const rgbString = `rgb(${r}, ${g}, ${b})`;
+            
+            EL.tankBody.style.boxShadow = `inset 0 0 30px rgba(${r},${g},${b}, 0.3), 0 0 25px rgba(${r},${g},${b}, 0.6)`;
+            EL.tankBody.style.borderColor = `rgba(${r},${g},${b}, 1)`;
+            EL.tankGlow.style.backgroundColor = `rgba(${r},${g},${b}, 0.4)`;
+            EL.tankGlow.style.opacity = 1;
+
+            return rgbString;
+        }
+
+        // --- Helper: Physics (Circle-Rect Collision) ---
+        function circleRectCollision(circle, rect) {
+            // Find the closest point to the circle within the rectangle
+            const closestX = Math.max(rect.left, Math.min(circle.x, rect.right));
+            const closestY = Math.max(rect.top, Math.min(circle.y, rect.bottom));
+
+            // Calculate the distance between the circle's center and this closest point
+            const distanceX = circle.x - closestX;
+            const distanceY = circle.y - closestY;
+
+            // If the distance is less than the circle's radius, an intersection occurs
+            const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+            return distanceSquared < (circle.radius * circle.radius);
+        }
+
+        // --- Game Logic ---
+        function initBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for(let i=0; i<15; i++) {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                const size = Math.random() * 10 + 5;
+                b.style.width = size + 'px';
+                b.style.height = size + 'px';
+                b.style.left = Math.random() * 100 + '%';
+                b.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                b.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(b);
+            }
+        }
+
+        function createJellyfishSVG(color) {
+            return `
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="jelly-body" style="color:${color}; filter: drop-shadow(0 0 5px ${color}); width:100%; height:100%;">
+                <path d="M12 2C7.58172 2 4 5.58172 4 10C4 11.8867 4.654 13.6206 5.75708 15L7 15C7 16 6 18 5 19C7 20 8 18 8 16V15H10V17C10 19 9 20 8 21C10 22 11 20 11 18V15H13V18C13 20 14 22 16 21C15 20 14 19 14 17V15H16V16C16 18 17 20 19 19C18 18 17 16 17 15L18.2429 15C19.346 13.6206 20 11.8867 20 10C20 5.58172 16.4183 2 12 2Z" fill="currentColor" fill-opacity="0.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`;
+        }
+
+        function spawnJellyfish() {
+            if (!state.active || state.isPaused) return;
+
+            // Adaptive difficulty adjustment for mobile
+            const isMobile = window.innerWidth < 768;
+            const settings = DIFFICULTY_SETTINGS[state.difficulty];
+            const maxJellies = isMobile ? Math.ceil(settings.MAX_JELLIES * 0.7) : settings.MAX_JELLIES;
+
+            if (state.jellyfishSet.size >= maxJellies) return;
+
+            const colorObj = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+            const el = document.createElement('div');
+            const anim = Math.random() > 0.5 ? 'move-swim' : 'move-smooth';
+            const size = CONSTANTS.MIN_SIZE + Math.random() * CONSTANTS.MAX_SIZE_ADD;
+
+            el.className = `jellyfish ${anim} absolute cursor-pointer z-30 touch-none flex justify-center items-center`;
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            el.innerHTML = createJellyfishSVG(colorObj.hex);
+            el.setAttribute('aria-label', `Медуза кольору ${colorObj.name}`);
+            
+            // Metadata
+            const jellyData = {
+                element: el,
+                color: colorObj,
+                timerId: null,
+                radius: size / 2
+            };
+
+            // Safe boundaries
+            const x = Math.random() * (window.innerWidth - size - 20) + 10;
+            const y = Math.random() * (window.innerHeight * 0.6) + 50;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+
+            state.jellyfishSet.add(jellyData);
+            EL.gameArea.appendChild(el);
+
+            const lifeTime = CONSTANTS.MIN_LIFETIME + Math.random() * CONSTANTS.MAX_LIFETIME_ADD;
+            jellyData.timerId = setTimeout(() => removeJellyfish(jellyData), lifeTime);
+
+            setupDrag(jellyData);
+        }
+
+        function removeJellyfish(jellyData) {
+            if (!jellyData || !state.jellyfishSet.has(jellyData)) return;
+
+            const el = jellyData.element;
+            if (jellyData.timerId) clearTimeout(jellyData.timerId);
+
+            // Animate out
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-50px) scale(0.5)';
+            
+            // Clean DOM after animation
+            setTimeout(() => {
+                if (el.parentNode) el.remove();
+                state.jellyfishSet.delete(jellyData);
+            }, 500);
+        }
+
+        function removeAllJellyfish() {
+            state.jellyfishSet.forEach(jelly => {
+                if(jelly.timerId) clearTimeout(jelly.timerId);
+                if(jelly.element.parentNode) jelly.element.remove();
+            });
+            state.jellyfishSet.clear();
+        }
+
+        function setupDrag(jellyData) {
+            const el = jellyData.element;
+            let offset = {x:0, y:0};
+            
+            // AbortController for clean event removal
+            let dragController = null;
+
+            const startDrag = (e) => {
+                if(!state.active || state.isPaused) return;
+                e.preventDefault();
+                audio.init(); 
+
+                if (jellyData.timerId) clearTimeout(jellyData.timerId);
+                
+                // Initialize AbortController
+                dragController = new AbortController();
+                const signal = dragController.signal;
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const rect = el.getBoundingClientRect();
+                
+                offset.x = clientX - rect.left;
+                offset.y = clientY - rect.top;
+
+                el.classList.add('jellyfish-dragged');
+                el.style.transition = 'none';
+                el.style.animation = 'none'; 
+                el.querySelector('svg').style.transform = 'scale(1.2)';
+
+                // Listeners attached to document with AbortSignal
+                document.addEventListener('mousemove', onMove, { signal });
+                document.addEventListener('mouseup', onEnd, { signal });
+                document.addEventListener('touchmove', onMove, { signal, passive: false });
+                document.addEventListener('touchend', onEnd, { signal });
+            };
+
+            const onMove = (e) => {
+                e.preventDefault();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                el.style.left = (cx - offset.x) + 'px';
+                el.style.top = (cy - offset.y) + 'px';
+                
+                checkCollisionVisuals(jellyData);
+            };
+
+            const onEnd = () => {
+                if(dragController) dragController.abort(); // Remove listeners
+                
+                el.classList.remove('jellyfish-dragged');
+                EL.tankBody.classList.remove('tank-active');
+
+                // Physics check
+                const tankRect = EL.tankContainer.getBoundingClientRect();
+                const jellyRect = el.getBoundingClientRect();
+                const jellyCircle = {
+                    x: jellyRect.left + jellyData.radius,
+                    y: jellyRect.top + jellyData.radius,
+                    radius: jellyData.radius
+                };
+
+                if (circleRectCollision(jellyCircle, tankRect)) {
+                    catchJellyfish(jellyData);
+                } else {
+                    // Escape logic
+                    el.style.transition = 'all 0.8s ease';
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-100px)';
+                    setTimeout(() => {
+                        if (el.parentNode) el.remove();
+                        state.jellyfishSet.delete(jellyData);
+                    }, 800);
+                }
+            };
+
+            const checkCollisionVisuals = (j) => {
+                const tankRect = EL.tankContainer.getBoundingClientRect();
+                const r = j.element.getBoundingClientRect();
+                const circle = { x: r.left + j.radius, y: r.top + j.radius, radius: j.radius };
+                
+                if (circleRectCollision(circle, tankRect)) {
+                    EL.tankBody.classList.add('tank-active');
+                } else {
+                    EL.tankBody.classList.remove('tank-active');
+                }
+            };
+
+            el.addEventListener('mousedown', startDrag);
+            el.addEventListener('touchstart', startDrag, {passive:false});
+        }
+
+        function catchJellyfish(jellyData) {
+            audio.playBloop();
+            if(navigator.vibrate) navigator.vibrate(30);
+
+            const el = jellyData.element;
+            createBurst(el.getBoundingClientRect(), jellyData.color.hex);
+            
+            state.score++;
+            EL.score.textContent = state.score;
+            
+            const mini = document.createElement('div');
+            mini.className = 'w-3 h-3 rounded-full mb-1 ml-1';
+            mini.style.backgroundColor = jellyData.color.hex;
+            mini.style.boxShadow = `0 0 5px ${jellyData.color.hex}`;
+            EL.caughtContainer.appendChild(mini);
+
+            updateTankColor(jellyData.color);
+
+            el.remove();
+            state.jellyfishSet.delete(jellyData);
+
+            if(state.score >= CONSTANTS.TARGET_SCORE) winGame();
+        }
+
+        function createBurst(rect, color) {
+            const cx = rect.left + rect.width/2;
+            const cy = rect.top + rect.height/2;
+            
+            for(let i=0; i<8; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.backgroundColor = color;
+                p.style.left = cx + 'px';
+                p.style.top = cy + 'px';
+                document.body.appendChild(p);
+
+                const angle = (Math.PI * 2 * i) / 8;
+                const vel = 30 + Math.random() * 20;
+                
+                p.animate([
+                    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                    { transform: `translate(${Math.cos(angle)*vel}px, ${Math.sin(angle)*vel}px) scale(0)`, opacity: 0 }
+                ], { duration: 500, easing: 'ease-out' }).onfinish = () => p.remove();
+            }
+        }
+
+        function winGame() {
+            state.active = false;
+            if(state.spawnInterval) clearInterval(state.spawnInterval);
+            removeAllJellyfish();
+            audio.playWin();
+
+            if (state.score > state.highScore) {
+                state.highScore = state.score;
+                localStorage.setItem(CONSTANTS.STORAGE_KEY, state.score);
+                EL.highScore.textContent = state.score;
+            }
+
+            const finalRGB = `rgb(${Math.round(state.colorMix.r)},${Math.round(state.colorMix.g)},${Math.round(state.colorMix.b)})`;
+            const display = document.getElementById('final-color-display');
+            display.style.backgroundColor = finalRGB;
+            display.style.color = finalRGB;
+
+            EL.winModal.classList.remove('hidden');
+        }
+
+        function togglePause() {
+            state.isPaused = !state.isPaused;
+            if(state.isPaused) {
+                document.body.classList.add('is-paused');
+                EL.pauseModal.classList.remove('hidden');
+                if(state.spawnInterval) clearInterval(state.spawnInterval);
+            } else {
+                document.body.classList.remove('is-paused');
+                EL.pauseModal.classList.add('hidden');
+                startGameLoop();
+            }
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            EL.btnSound.textContent = state.soundEnabled ? "Звук: Увімк" : "Звук: Вимк";
+            if(state.soundEnabled) audio.init();
+        }
+
+        function setDifficulty(lvl) {
+            state.difficulty = lvl;
+            ['easy','normal','hard'].forEach(d => {
+                const btn = document.getElementById(`btn-${d}`);
+                if(d === lvl) {
+                    btn.className = "flex-1 py-1 bg-cyan-500/20 border border-cyan-400 text-cyan-300 rounded text-sm font-bold";
+                } else {
+                    btn.className = "flex-1 py-1 bg-slate-800 border border-transparent text-slate-400 rounded text-sm hover:bg-slate-700";
+                }
+            });
+            if(!state.isPaused && state.active) startGameLoop();
+        }
+
+        function restartGame() {
+            state.score = 0;
+            state.active = true;
+            state.isPaused = false;
+            state.colorMix = { r:0, g:0, b:0, count:0 };
+
+            EL.score.textContent = '0';
+            EL.caughtContainer.innerHTML = '';
+            EL.tankGlow.style.opacity = 0;
+            EL.tankBody.style.boxShadow = '';
+            EL.tankBody.style.borderColor = '';
+            
+            EL.winModal.classList.add('hidden');
+            EL.pauseModal.classList.add('hidden');
+            document.body.classList.remove('is-paused');
+            
+            removeAllJellyfish();
+            startGameLoop();
+        }
+
+        function startGameLoop() {
+            if(state.spawnInterval) clearInterval(state.spawnInterval);
+            spawnJellyfish();
+            state.spawnInterval = setInterval(spawnJellyfish, DIFFICULTY_SETTINGS[state.difficulty].SPAWN_RATE_MS);
+        }
+
+        window.onload = () => {
+            initBubbles();
+            const stored = localStorage.getItem(CONSTANTS.STORAGE_KEY);
+            if(stored) { state.highScore = parseInt(stored); EL.highScore.textContent = stored; }
+            setDifficulty('normal');
+        };
+
+    </script>
+</body>
+</html>
