@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Space Waves: Neon Edition v3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #050010;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.8);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .title {
+            font-size: 5rem;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff, 0 0 80px #0ff;
+            margin-bottom: 20px;
+            font-weight: bold;
+            display: none;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #ddd;
+            text-shadow: 0 0 5px #0ff;
+            margin-bottom: 40px;
+            display: none;
+        }
+
+        .btn {
+            pointer-events: auto;
+            background: transparent;
+            border: 3px solid #0ff;
+            color: #0ff;
+            padding: 15px 50px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: none;
+            box-shadow: 0 0 15px #0ff, inset 0 0 15px #0ff;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        .btn:hover {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 30px #0ff, inset 0 0 30px #0ff;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #score-hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.8rem;
+            text-shadow: 0 0 10px #0ff;
+            display: none;
+            z-index: 20;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,255,255,0.05) 50%, rgba(0,255,255,0.05));
+            background-size: 100% 3px;
+            pointer-events: none;
+            z-index: 10;
+            mix-blend-mode: overlay;
+        }
+
+        #mute-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: 2px solid #0ff;
+            color: #0ff;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 30;
+            font-weight: bold;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <button id="mute-btn">SOUND: ON</button>
+
+    <div id="ui-layer">
+        <h1 id="main-title" class="title" style="color: #0ff;">NEON WAVE</h1>
+        <p id="sub-title" class="subtitle">Утримуйте для підйому, відпустіть для спуску</p>
+        <button id="start-btn" class="btn">Почати гру</button>
+        <button id="restart-btn" class="btn">Спробувати ще</button>
+    </div>
+
+    <div id="score-hud">Прогрес: 0%</div>
+
+    <script>
+        // --- АУДІО СИСТЕМА (Синтезатор) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isMuted = false;
+
+        const Sound = {
+            playTone: (freq, type, duration, vol = 0.1) => {
+                if (isMuted) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            },
+            
+            // --- НОВЕ: Ambient Loop ---
+            playAmbient: () => {
+                if (isMuted || gameState !== STATE.PLAYING) return;
+                // Відновлюємо контекст, якщо він був призупинений
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(55, audioCtx.currentTime); // Низька A (Bass)
+                gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                setTimeout(() => osc.stop(), 500); // Короткий низькочастотний імпульс
+            },
+
+            playJump: () => {
+                if (isMuted) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            },
+
+            playCrash: () => {
+                if (isMuted) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            },
+
+            playWin: () => {
+                if (isMuted) return;
+                Sound.playTone(440, 'sine', 0.2); // A4
+                setTimeout(() => Sound.playTone(554, 'sine', 0.2), 150); // C#5
+                setTimeout(() => Sound.playTone(659, 'sine', 0.4), 300); // E5
+            }
+        };
+
+        document.getElementById('mute-btn').addEventListener('click', (e) => {
+            isMuted = !isMuted;
+            e.target.innerText = isMuted ? "SOUND: OFF" : "SOUND: ON";
+        });
+
+        // --- КОНСТАНТИ ---
+        const CANVAS = document.getElementById('gameCanvas');
+        const CTX = CANVAS.getContext('2d'); 
+        
+        const UI = {
+            title: document.getElementById('main-title'),
+            subtitle: document.getElementById('sub-title'),
+            startBtn: document.getElementById('start-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            scoreHud: document.getElementById('score-hud')
+        };
+
+        const TILE_SIZE = 40;
+        const SPEED_X = 7;
+        const SPEED_Y = 7;
+        const TRAIL_LENGTH = 20;
+        const CAM_OFFSET_X = 250;
+
+        const TILE = {
+            EMPTY: 0,
+            BLOCK: 1,
+            SPIKE_UP: 2,
+            SPIKE_DOWN: 3,
+            FINISH: 9
+        };
+
+        // --- ГЕНЕРАЦІЯ РІВНЯ ---
+        const LEVEL_HEIGHT = 22;
+        const LEVEL_LENGTH = 600;
+        let levelMap = [];
+
+        function generateLevel() {
+            levelMap = [];
+            for (let x = 0; x < LEVEL_LENGTH; x++) {
+                levelMap[x] = new Array(LEVEL_HEIGHT).fill(TILE.EMPTY);
+                levelMap[x][0] = TILE.BLOCK;
+                levelMap[x][LEVEL_HEIGHT - 1] = TILE.BLOCK;
+            }
+
+            let currentY = LEVEL_HEIGHT / 2;
+            let obstacleCooldown = 0;
+            
+            for (let x = 30; x < LEVEL_LENGTH - 30; x++) {
+                const difficulty = x / LEVEL_LENGTH; 
+                
+                const tunnelHeight = Math.max(4, Math.floor(8 - difficulty * 4));
+                const spikeProbability = difficulty * 0.7;
+
+                // Генерація тунелю
+                if (x % 5 === 0) {
+                    let targetY = Math.floor(Math.random() * (LEVEL_HEIGHT - tunnelHeight - 4)) + 2;
+                    currentY += (targetY - currentY) * 0.3;
+                    
+                    const ceiling = Math.max(1, Math.floor(currentY));
+                    const floor = Math.min(LEVEL_HEIGHT - 2, ceiling + tunnelHeight);
+
+                    if (floor <= ceiling) continue; 
+
+                    for(let y = 1; y < LEVEL_HEIGHT - 1; y++) {
+                        if (y < ceiling || y > floor) {
+                            levelMap[x][y] = TILE.BLOCK;
+                        }
+                    }
+                    
+                    if (Math.random() < spikeProbability) {
+                        if (Math.random() > 0.5) levelMap[x][floor] = TILE.SPIKE_UP;
+                        else levelMap[x][ceiling - 1] = TILE.SPIKE_DOWN;
+                    }
+                }
+
+                // Перешкоди
+                obstacleCooldown--;
+                if (obstacleCooldown <= 0 && Math.random() < 0.15) { 
+                     obstacleCooldown = Math.floor(Math.random() * 10) + 5; 
+                     
+                     const type = Math.random();
+                     let freeSpaceStart = -1, freeSpaceEnd = -1;
+                     for(let y=1; y<LEVEL_HEIGHT-1; y++) {
+                         if(levelMap[x][y] === TILE.EMPTY) {
+                             if(freeSpaceStart === -1) freeSpaceStart = y;
+                             freeSpaceEnd = y;
+                         }
+                     }
+
+                     if (freeSpaceStart !== -1) {
+                        // --- НОВЕ: Перевірка висоти тунелю ---
+                        const freeHeight = freeSpaceEnd - freeSpaceStart;
+                        if (freeHeight < 3) continue; // Запобігаємо блокуванню вузьких проходів
+
+                        if (type < 0.3) { // Стовп
+                            const mid = Math.floor((freeSpaceStart + freeSpaceEnd) / 2);
+                            if (freeSpaceEnd - freeSpaceStart > 4) {
+                                levelMap[x][mid] = TILE.BLOCK;
+                            }
+                        } else if (type < 0.65) { // Шип знизу
+                             levelMap[x][freeSpaceEnd] = TILE.SPIKE_UP;
+                        } else { // Шип зверху
+                             levelMap[x][freeSpaceStart] = TILE.SPIKE_DOWN;
+                        }
+                     }
+                }
+            }
+
+            // Фініш
+            for (let x = LEVEL_LENGTH - 20; x < LEVEL_LENGTH; x++) {
+                for (let y = 1; y < LEVEL_HEIGHT - 1; y++) {
+                    levelMap[x][y] = TILE.EMPTY;
+                }
+            }
+            for (let y = 1; y < LEVEL_HEIGHT - 1; y++) {
+                levelMap[LEVEL_LENGTH - 5][y] = TILE.FINISH;
+            }
+        }
+
+        // --- СТАН ГРИ ---
+        const STATE = { MENU: 0, PLAYING: 1, GAMEOVER: 2, WIN: 3 };
+        let gameState = STATE.MENU;
+        let frames = 0;
+        let particles = [];
+        let startTime = 0;
+
+        const player = {
+            x: 0, y: 0, dy: 0, radius: 10,
+            trail: [], isDead: false, inputActive: false
+        };
+        let camera = { x: 0, y: 0 };
+
+        // --- ВВІД ---
+        function handleInput(active) {
+            if (gameState === STATE.PLAYING) {
+                if (active && !player.inputActive) Sound.playJump();
+                player.inputActive = active;
+            }
+        }
+        
+        ['keydown', 'mousedown', 'touchstart'].forEach(evt => 
+            window.addEventListener(evt, (e) => {
+                if (evt === 'keydown' && e.code !== 'Space' && e.code !== 'ArrowUp') return;
+                if (evt === 'touchstart') e.preventDefault();
+                handleInput(true);
+            }, {passive: false})
+        );
+        
+        ['keyup', 'mouseup', 'touchend'].forEach(evt => 
+            window.addEventListener(evt, (e) => {
+                if (evt === 'keyup' && e.code !== 'Space' && e.code !== 'ArrowUp') return;
+                if (evt === 'touchend') e.preventDefault();
+                handleInput(false);
+            })
+        );
+
+        UI.startBtn.addEventListener('click', () => { 
+            audioCtx.resume(); 
+            startGame(); 
+        });
+        UI.restartBtn.addEventListener('click', startGame);
+
+        // --- ЛОГІКА ---
+        function init() {
+            resize();
+            showMenu();
+            generateLevel();
+            loop();
+        }
+
+        function resize() {
+            CANVAS.width = window.innerWidth;
+            CANVAS.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+
+        function resetPlayer() {
+            player.x = TILE_SIZE * 5;
+            player.y = (LEVEL_HEIGHT / 2) * TILE_SIZE;
+            player.dy = SPEED_Y;
+            player.trail = [];
+            player.isDead = false;
+            player.inputActive = false;
+            particles = [];
+        }
+
+        function startGame() {
+            resetPlayer();
+            generateLevel();
+            gameState = STATE.PLAYING;
+            startTime = Date.now();
+            hideUI();
+            UI.scoreHud.style.display = 'block';
+        }
+
+        function showMenu() {
+            gameState = STATE.MENU;
+            UI.title.style.display = 'block';
+            UI.title.innerText = "NEON WAVE";
+            UI.title.style.color = "#0ff";
+            UI.subtitle.style.display = 'block';
+            UI.subtitle.innerText = "Утримуйте для підйому, відпустіть для спуску";
+            UI.startBtn.style.display = 'inline-block';
+            UI.restartBtn.style.display = 'none';
+            UI.scoreHud.style.display = 'none';
+        }
+
+        function gameOver() {
+            gameState = STATE.GAMEOVER;
+            Sound.playCrash();
+            const survivalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+            createExplosion(player.x, player.y, 100, '#0ff');
+            setTimeout(() => {
+                UI.title.style.display = 'block';
+                UI.title.innerText = "РОЗБИТО";
+                UI.title.style.color = "#f00";
+                UI.subtitle.style.display = 'block';
+                UI.subtitle.innerText = `Ви протримались: ${survivalTime} сек.`;
+                UI.startBtn.style.display = 'none';
+                UI.restartBtn.style.display = 'inline-block';
+            }, 800);
+        }
+
+        function levelComplete() {
+            gameState = STATE.WIN;
+            Sound.playWin();
+            const survivalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+            UI.title.style.display = 'block';
+            UI.title.innerText = "РІВЕНЬ ПРОЙДЕНО!";
+            UI.title.style.color = "#0f0";
+            UI.subtitle.style.display = 'block';
+            UI.subtitle.innerText = `Час проходження: ${survivalTime} сек.`;
+            UI.startBtn.style.display = 'none';
+            UI.restartBtn.style.display = 'inline-block';
+        }
+
+        function hideUI() {
+            UI.title.style.display = 'none';
+            UI.subtitle.style.display = 'none';
+            UI.startBtn.style.display = 'none';
+            UI.restartBtn.style.display = 'none';
+        }
+
+        // --- ФІЗИКА ---
+        function update() {
+            if (gameState !== STATE.PLAYING) return;
+
+            // --- НОВЕ: Ambient Loop ---
+            // 60fps * 2sec = 120 кадрів
+            if (frames % 120 === 0) {
+                Sound.playAmbient();
+            }
+
+            player.x += SPEED_X;
+            player.dy = player.inputActive ? -SPEED_Y : SPEED_Y;
+            player.y += player.dy;
+
+            if (frames % 2 === 0) {
+                player.trail.push({x: player.x, y: player.y});
+                if (player.trail.length > TRAIL_LENGTH) player.trail.shift();
+            }
+
+            checkCollisions();
+            updateCamera();
+            
+            const rawProgress = (player.x / (LEVEL_LENGTH * TILE_SIZE)) * 100;
+            const progress = Math.min(100, Math.max(0, Math.floor(rawProgress)));
+            UI.scoreHud.innerText = `Прогрес: ${progress}%`;
+        }
+
+        function updateCamera() {
+            camera.x = player.x - CAM_OFFSET_X;
+            const levelPixelHeight = LEVEL_HEIGHT * TILE_SIZE;
+            const targetY = player.y - CANVAS.height / 2;
+            
+            camera.y += (targetY - camera.y) * 0.15;
+            
+            if (camera.y < -CANVAS.height * 0.2) camera.y = -CANVAS.height * 0.2;
+            if (camera.y > levelPixelHeight - CANVAS.height * 0.8) camera.y = levelPixelHeight - CANVAS.height * 0.8;
+        }
+
+        function checkCollisions() {
+            if (player.y < 0 || player.y > LEVEL_HEIGHT * TILE_SIZE) {
+                gameOver();
+                return;
+            }
+            const hitBoxSize = player.radius * 0.7; 
+            
+            const points = [
+                {x: player.x + hitBoxSize, y: player.y}, 
+                {x: player.x - hitBoxSize, y: player.y - hitBoxSize}, 
+                {x: player.x - hitBoxSize, y: player.y + hitBoxSize}, 
+                {x: player.x + hitBoxSize, y: player.y - hitBoxSize}
+            ];
+
+            for (let p of points) {
+                const tx = Math.floor(p.x / TILE_SIZE);
+                const ty = Math.floor(p.y / TILE_SIZE);
+
+                if (tx >= 0 && tx < LEVEL_LENGTH && ty >= 0 && ty < LEVEL_HEIGHT) {
+                    const tile = levelMap[tx][ty];
+                    if (tile === TILE.BLOCK || tile === TILE.SPIKE_UP || tile === TILE.SPIKE_DOWN) {
+                        gameOver();
+                        return;
+                    }
+                    if (tile === TILE.FINISH) {
+                        levelComplete();
+                        return;
+                    }
+                }
+            }
+        }
+
+        function createExplosion(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 20 + 5;
+                particles.push({
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.5, color: color,
+                    size: Math.random() * 6 + 2
+                });
+            }
+        }
+
+        function draw() {
+            CTX.fillStyle = '#050010';
+            CTX.fillRect(0, 0, CANVAS.width, CANVAS.height);
+
+            CTX.save();
+            CTX.translate(-camera.x, -camera.y);
+
+            const startCol = Math.floor(camera.x / TILE_SIZE);
+            const endCol = startCol + Math.ceil(CANVAS.width / TILE_SIZE) + 2;
+            
+            CTX.shadowBlur = 15;
+            CTX.shadowColor = '#0ff';
+
+            for (let x = startCol; x < endCol; x++) {
+                if (x < 0 || x >= LEVEL_LENGTH) continue;
+                for (let y = 0; y < LEVEL_HEIGHT; y++) {
+                    const tile = levelMap[x][y];
+                    if (tile === TILE.EMPTY) continue;
+                    const px = x * TILE_SIZE;
+                    const py = y * TILE_SIZE;
+
+                    if (tile === TILE.BLOCK) {
+                        CTX.fillStyle = '#111';
+                        CTX.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        CTX.strokeStyle = '#0ff';
+                        CTX.lineWidth = 2;
+                        CTX.strokeRect(px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
+                    } else if (tile === TILE.SPIKE_UP) {
+                        CTX.shadowColor = '#f0f';
+                        CTX.fillStyle = '#f0f';
+                        CTX.beginPath();
+                        CTX.moveTo(px, py + TILE_SIZE);
+                        CTX.lineTo(px + TILE_SIZE / 2, py);
+                        CTX.lineTo(px + TILE_SIZE, py + TILE_SIZE);
+                        CTX.fill();
+                        CTX.shadowColor = '#0ff'; 
+                    } else if (tile === TILE.SPIKE_DOWN) {
+                        CTX.shadowColor = '#f0f';
+                        CTX.fillStyle = '#f0f';
+                        CTX.beginPath();
+                        CTX.moveTo(px, py);
+                        CTX.lineTo(px + TILE_SIZE / 2, py + TILE_SIZE);
+                        CTX.lineTo(px + TILE_SIZE, py);
+                        CTX.fill();
+                        CTX.shadowColor = '#0ff';
+                    } else if (tile === TILE.FINISH) {
+                        CTX.shadowColor = '#0f0';
+                        CTX.fillStyle = '#0f0';
+                        CTX.globalAlpha = 0.6 + Math.sin(frames * 0.1) * 0.3;
+                        CTX.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        CTX.globalAlpha = 1.0;
+                        CTX.shadowColor = '#0ff';
+                    }
+                }
+            }
+            CTX.shadowBlur = 0;
+
+            if (gameState === STATE.PLAYING) {
+                CTX.shadowBlur = 20;
+                CTX.shadowColor = '#0ff';
+                if (player.trail.length > 1) {
+                    CTX.beginPath();
+                    CTX.moveTo(player.trail[0].x, player.trail[0].y);
+                    for (let i = 1; i < player.trail.length; i++) {
+                        CTX.lineTo(player.trail[i].x, player.trail[i].y);
+                    }
+                    CTX.lineTo(player.x, player.y);
+                    CTX.lineWidth = 6;
+                    CTX.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+                    CTX.lineJoin = 'round';
+                    CTX.stroke();
+                    CTX.lineWidth = 2;
+                    CTX.strokeStyle = '#fff';
+                    CTX.stroke();
+                }
+
+                CTX.save();
+                CTX.translate(player.x, player.y);
+                const angle = Math.atan2(player.dy, SPEED_X);
+                CTX.rotate(angle);
+                CTX.fillStyle = '#fff';
+                CTX.shadowColor = '#0ff';
+                CTX.shadowBlur = 25;
+                CTX.beginPath();
+                CTX.moveTo(12, 0);
+                CTX.lineTo(-10, 8);
+                CTX.lineTo(-6, 0);
+                CTX.lineTo(-10, -8);
+                CTX.fill();
+                CTX.restore();
+                CTX.shadowBlur = 0;
+            }
+
+            if (particles.length > 300) particles.splice(0, particles.length - 300);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.96;
+                p.vy *= 0.96;
+                p.life -= 0.02;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    CTX.shadowBlur = 15 * p.life;
+                    CTX.shadowColor = p.color;
+                    CTX.globalAlpha = p.life;
+                    CTX.fillStyle = p.color;
+                    CTX.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+                    CTX.globalAlpha = 1.0;
+                    CTX.shadowBlur = 0;
+                }
+            }
+            CTX.restore();
+        }
+
+        function loop() {
+            frames++;
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        init();
+    </script>
+</body>
+</html>
