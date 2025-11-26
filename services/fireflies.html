@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Спіймай світлячка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* --- Animations --- */
+        @keyframes flight-figure-eight {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(60px, -40px); }
+            50% { transform: translate(0, 0); }
+            75% { transform: translate(-60px, 40px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes flight-circle {
+            0% { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+        }
+
+        @keyframes flight-chaos {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(40px, -60px) rotate(10deg); }
+            40% { transform: translate(-30px, 40px) rotate(-10deg); }
+            60% { transform: translate(-70px, -20px) rotate(5deg); }
+            80% { transform: translate(20px, 50px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 5px #fde047); opacity: 1; }
+            50% { filter: drop-shadow(0 0 2px #fde047); opacity: 0.7; }
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(720deg); }
+        }
+
+        @keyframes pop-particle {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) scale(0); opacity: 0; }
+        }
+
+        .move-8 { animation: flight-figure-eight 7s ease-in-out infinite, glow 2s ease-in-out infinite; }
+        .move-circle { animation: flight-circle 6s linear infinite, glow 2.5s ease-in-out infinite; }
+        .move-chaos { animation: flight-chaos 6s ease-in-out infinite, glow 1.8s ease-in-out infinite; }
+
+        .firefly { will-change: transform, opacity; }
+
+        /* Freeze animations when paused */
+        body.is-paused * {
+            animation-play-state: paused !important;
+        }
+
+        .jar-glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+            transition: box-shadow 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
+        }
+
+        .jar-lid {
+            background: #374151;
+            border-radius: 3px;
+            width: 110%;
+            height: 12px;
+            position: absolute;
+            top: -12px;
+            left: -5%;
+            border: 1px solid #6b7280;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .jar-active {
+            box-shadow: 0 0 50px #fde047, inset 0 0 40px rgba(253, 224, 71, 0.5) !important;
+            border-color: #fde047 !important;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            animation: fall linear forwards;
+            z-index: 100;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #fde047;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 40;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 h-screen w-screen relative overflow-hidden font-sans select-none text-slate-100">
+
+    <!-- Header: Оптимізовано відступ для мобільних (mt-10) -->
+    <div class="absolute top-16 md:top-6 w-full text-center pointer-events-none z-10 px-4 md:px-4">
+        <h1 class="text-2xl md:text-5xl font-black text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.6)] tracking-wide uppercase leading-tight">
+            Спіймай світлячка
+        </h1>
+    </div>
+
+    <!-- Background Layers -->
+    <div class="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent z-0 pointer-events-none"></div>
+    <div id="forest-glow" class="absolute bottom-0 w-full h-2/3 bg-gradient-to-t from-yellow-900/60 via-yellow-600/10 to-transparent z-0 pointer-events-none transition-opacity duration-1000 opacity-0"></div>
+
+    <div class="z-0 pointer-events-none absolute bottom-[-20px] w-full h-full overflow-hidden opacity-90" aria-hidden="true">
+        <div class="absolute bottom-0 left-[-5%] text-slate-900/60 text-[12rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-0 left-[20%] text-slate-800/50 text-[10rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-0 right-[15%] text-slate-900/60 text-[14rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-[-10px] left-[5%] text-slate-900 text-[11rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-[-20px] left-[35%] text-slate-800 text-[13rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-[-30px] right-[-5%] text-slate-900 text-[15rem]"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-[-10px] right-[40%] text-slate-800 text-[9rem]"><i class="fa-solid fa-tree"></i></div>
+    </div>
+
+    <!-- UI: Score & Highscore -->
+    <div class="absolute top-4 left-4 z-40 bg-slate-800/90 text-yellow-400 px-4 py-2 md:px-6 md:py-3 rounded-full border-2 border-yellow-500/50 shadow-lg flex items-center gap-4 backdrop-blur-sm" role="status">
+        <!-- Current Score -->
+        <div class="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-bold" aria-label="Поточний рахунок">
+            <i class="fa-solid fa-bottle-droplet" aria-hidden="true"></i>
+            <div>
+                <span id="score">0</span><span class="text-sm opacity-70 ml-1">/ 30</span>
+            </div>
+        </div>
+        
+        <!-- Divider -->
+        <div class="w-px h-8 bg-yellow-500/30"></div>
+
+        <!-- High Score -->
+        <div class="flex items-center gap-2" title="Рекорд" aria-label="Рекорд">
+            <i class="fa-solid fa-trophy text-yellow-500 text-sm md:text-base"></i>
+            <span id="high-score" class="text-yellow-200 font-bold text-base md:text-xl">0</span>
+        </div>
+    </div>
+
+    <!-- UI: Pause Button -->
+    <button onclick="togglePause()" class="absolute top-4 right-4 z-40 bg-slate-800/80 hover:bg-slate-700 text-white w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-slate-600 flex items-center justify-center shadow-lg transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-400" aria-label="Пауза та налаштування">
+        <i class="fa-solid fa-pause"></i>
+    </button>
+
+    <!-- Game Area -->
+    <div id="game-area" class="absolute inset-0 z-30 overflow-hidden" role="application" aria-label="Ігрова зона"></div>
+
+    <!-- Jar Target -->
+    <div id="jar-container" class="absolute bottom-4 left-1/2 -translate-x-1/2 w-28 h-40 md:w-36 md:h-52 z-20 transition-all duration-200" role="region" aria-label="Банка для світлячків">
+        <div class="jar-lid"></div>
+        <div id="jar-body" class="jar-glass w-full h-full flex items-end justify-center pb-2 relative overflow-hidden">
+            <div id="caught-counter" class="text-white/40 text-xs md:text-sm font-bold absolute top-4 select-none uppercase tracking-wider">Збирай тут</div>
+            <div id="fireflies-in-jar" class="w-full h-full absolute bottom-0 left-0 p-2 flex flex-wrap-reverse content-start gap-1 opacity-90 pointer-events-none"></div>
+            <div id="jar-inner-glow" class="absolute inset-0 bg-yellow-400/0 blur-xl transition-colors duration-500 pointer-events-none"></div>
+        </div>
+    </div>
+
+    <!-- Pause/Settings Modal -->
+    <div id="pause-modal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center px-4">
+        <div class="bg-slate-900 rounded-3xl p-6 md:p-8 border-2 border-slate-700 max-w-sm w-full shadow-2xl text-center transform scale-100 transition-all">
+            <h2 class="text-3xl font-bold text-white mb-6">Пауза</h2>
+            
+            <div class="space-y-5">
+                <button onclick="togglePause()" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-xl transition-colors text-lg shadow-md">
+                    <i class="fa-solid fa-play mr-2"></i> Продовжити
+                </button>
+                
+                <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <p class="text-slate-400 text-xs mb-3 uppercase tracking-wider font-bold">Складність</p>
+                    <div class="flex justify-center gap-2">
+                        <button onclick="setDifficulty('easy')" id="btn-easy" class="flex-1 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors text-sm">Легко</button>
+                        <button onclick="setDifficulty('normal')" id="btn-normal" class="flex-1 py-2 bg-yellow-600/20 border border-yellow-500 text-yellow-300 rounded-lg text-sm font-bold">Норм</button>
+                        <button onclick="setDifficulty('hard')" id="btn-hard" class="flex-1 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors text-sm">Важко</button>
+                    </div>
+                </div>
+
+                <!-- Sound Toggle -->
+                <button onclick="toggleSound()" id="btn-sound" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 border border-slate-700">
+                    <i id="icon-sound" class="fa-solid fa-volume-high text-yellow-400"></i> <span id="text-sound">Звук: Увімк</span>
+                </button>
+
+                <button onclick="restartGame()" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-colors shadow-md">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Рестарт
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="hidden absolute inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm px-4" role="dialog" aria-modal="true" aria-labelledby="win-title">
+        <div class="bg-gradient-to-br from-white to-slate-100 rounded-3xl p-8 text-center max-w-md w-full shadow-[0_0_50px_rgba(250,204,21,0.5)] border-4 border-yellow-400 transform scale-100 transition-transform">
+            <div class="text-yellow-500 text-7xl mb-4 animate-bounce filter drop-shadow-md" aria-hidden="true">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <h2 id="win-title" class="text-4xl font-extrabold text-slate-800 mb-2">Перемога!</h2>
+            <div id="new-record-badge" class="hidden mb-4 inline-block bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-md">Новий Рекорд!</div>
+            <p class="text-lg text-slate-600 mb-8 leading-tight font-medium">Ліс став світлішим завдяки тобі.<br>Банка повна світлячків!</p>
+            <button onclick="restartGame()" class="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-2xl font-bold py-4 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer w-full flex items-center justify-center gap-3 focus:outline-none focus:ring-4 focus:ring-green-300" aria-label="Почати нову гру">
+                <i class="fa-solid fa-rotate-right group-hover:rotate-180 transition-transform duration-500" aria-hidden="true"></i> 
+                Ще раз
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const CONSTANTS = {
+            TARGET_SCORE: 30,
+            COLLISION_TOLERANCE: 30, 
+            SPAWN_ZONE_Y_LIMIT: 0.45,
+            MIN_SIZE: 24,
+            MAX_SIZE_ADD: 16,
+            MIN_LIFETIME: 5000,
+            MAX_LIFETIME_ADD: 4000,
+            STORAGE_KEY: 'firefly-highscore'
+        };
+
+        const DIFFICULTY_SETTINGS = {
+            easy: { MAX_FIREFLIES: 5, SPAWN_RATE_MS: 1500 },
+            normal: { MAX_FIREFLIES: 7, SPAWN_RATE_MS: 1200 },
+            hard: { MAX_FIREFLIES: 12, SPAWN_RATE_MS: 800 }
+        };
+
+        const state = {
+            score: 0,
+            highScore: 0,
+            active: true,
+            isPaused: false,
+            soundEnabled: true,
+            currentFireflies: 0,
+            spawnInterval: null,
+            difficulty: 'normal'
+        };
+
+        // --- DOM Elements ---
+        const ELEMENTS = {
+            gameArea: document.getElementById('game-area'),
+            jarBody: document.getElementById('jar-body'),
+            jarContainer: document.getElementById('jar-container'),
+            jarInnerGlow: document.getElementById('jar-inner-glow'),
+            forestGlow: document.getElementById('forest-glow'),
+            scoreEl: document.getElementById('score'),
+            highScoreEl: document.getElementById('high-score'),
+            winModal: document.getElementById('win-modal'),
+            pauseModal: document.getElementById('pause-modal'),
+            inJarContainer: document.getElementById('fireflies-in-jar'),
+            newRecordBadge: document.getElementById('new-record-badge'),
+            btnSound: document.getElementById('btn-sound'),
+            iconSound: document.getElementById('icon-sound'),
+            textSound: document.getElementById('text-sound')
+        };
+
+        // --- Utility: Throttle ---
+        function throttle(func, limit) {
+            let inThrottle;
+            return function(...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+
+        // --- Storage Manager ---
+        function loadHighScore() {
+            try {
+                const stored = localStorage.getItem(CONSTANTS.STORAGE_KEY);
+                state.highScore = stored ? parseInt(stored) : 0;
+                ELEMENTS.highScoreEl.textContent = state.highScore;
+            } catch (e) {
+                console.warn('Storage access failed:', e);
+            }
+        }
+
+        function saveHighScore() {
+            try {
+                if (state.score > state.highScore) {
+                    state.highScore = state.score;
+                    localStorage.setItem(CONSTANTS.STORAGE_KEY, state.highScore.toString());
+                    ELEMENTS.highScoreEl.textContent = state.highScore;
+                    return true;
+                }
+            } catch (e) { console.warn('Storage save failed:', e); }
+            return false;
+        }
+
+        // --- Audio Manager ---
+        const audioManager = {
+            ctx: null,
+            init: function() {
+                if (!this.ctx && state.soundEnabled) {
+                    try {
+                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) { console.warn('AudioContext not supported'); }
+                }
+            },
+            resume: function() {
+                if (this.ctx && this.ctx.state === 'suspended' && state.soundEnabled) {
+                    this.ctx.resume().catch(() => {});
+                }
+            },
+            playTone: function(freq, type, duration, volStart, volEnd) {
+                if (!state.soundEnabled) return;
+                this.init(); this.resume();
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, t);
+                gain.gain.setValueAtTime(volStart, t);
+                gain.gain.exponentialRampToValueAtTime(volEnd, t + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(t + duration);
+            },
+            playPop: function() {
+                this.playTone(800, 'sine', 0.15, 0.2, 0.01);
+            },
+            playWin: function() {
+                if (!state.soundEnabled) return;
+                if (!this.ctx) this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => this.playTone(freq, 'triangle', 1.5, 0.1, 0.01), i * 100);
+                });
+            }
+        };
+
+        // --- Visual Effects ---
+        function createParticles(x, y) {
+            const count = 6;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                
+                // Random direction
+                const angle = (i / count) * 2 * Math.PI;
+                const velocity = 20 + Math.random() * 30;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+                
+                p.style.setProperty('--tw-translate-x', `${tx}px`);
+                p.style.setProperty('--tw-translate-y', `${ty}px`);
+                p.style.animation = 'pop-particle 0.4s ease-out forwards';
+                
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 400);
+            }
+        }
+
+        // --- Game Logic ---
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            if (state.soundEnabled) {
+                ELEMENTS.iconSound.className = 'fa-solid fa-volume-high text-yellow-400';
+                ELEMENTS.textSound.textContent = 'Звук: Увімк';
+                ELEMENTS.textSound.className = 'text-slate-200';
+                audioManager.init();
+            } else {
+                ELEMENTS.iconSound.className = 'fa-solid fa-volume-xmark text-slate-500';
+                ELEMENTS.textSound.textContent = 'Звук: Вимк';
+                ELEMENTS.textSound.className = 'text-slate-500';
+                if(audioManager.ctx) audioManager.ctx.suspend();
+            }
+        }
+
+        function setDifficulty(level) {
+            state.difficulty = level;
+            
+            ['easy', 'normal', 'hard'].forEach(d => {
+                const btn = document.getElementById(`btn-${d}`);
+                if (d === level) {
+                    btn.className = "flex-1 py-2 bg-yellow-600/20 border border-yellow-500 text-yellow-300 rounded-lg text-sm font-bold transition-all";
+                } else {
+                    btn.className = "flex-1 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors text-sm";
+                }
+            });
+
+            // Smooth restart if active
+            if (state.active && !state.isPaused) {
+                clearInterval(state.spawnInterval);
+                setTimeout(() => startGameLoop(), 300);
+            }
+        }
+
+        function togglePause() {
+            state.isPaused = !state.isPaused;
+            
+            if (state.isPaused) {
+                clearInterval(state.spawnInterval);
+                document.body.classList.add('is-paused');
+                ELEMENTS.pauseModal.classList.remove('hidden');
+                state.active = false; 
+            } else {
+                document.body.classList.remove('is-paused');
+                ELEMENTS.pauseModal.classList.add('hidden');
+                state.active = true;
+                startGameLoop();
+            }
+        }
+
+        function updateLighting() {
+            const ratio = Math.min(state.score / CONSTANTS.TARGET_SCORE, 1);
+            const shadowSize = 15 + (ratio * 50); 
+            const shadowOpacity = 0.2 + (ratio * 0.6);
+            
+            ELEMENTS.jarBody.style.boxShadow = `
+                inset 0 0 ${15 + ratio * 20}px rgba(253, 224, 71, ${ratio * 0.5}), 
+                0 0 ${shadowSize}px ${ratio * 10}px rgba(251, 191, 36, ${shadowOpacity})
+            `;
+            ELEMENTS.jarBody.style.borderColor = `rgba(253, 224, 71, ${0.4 + ratio * 0.6})`;
+            ELEMENTS.jarInnerGlow.style.backgroundColor = `rgba(253, 224, 71, ${ratio * 0.3})`;
+            ELEMENTS.forestGlow.style.opacity = (ratio * 0.9).toFixed(2);
+        }
+
+        function spawnFirefly() {
+            if (!state.active || state.isPaused) return;
+            
+            const settings = DIFFICULTY_SETTINGS[state.difficulty];
+            if (state.currentFireflies >= settings.MAX_FIREFLIES) return;
+
+            const el = document.createElement('div');
+            const anims = ['move-8', 'move-circle', 'move-chaos'];
+            const randomAnim = anims[Math.floor(Math.random() * anims.length)];
+            
+            el.className = `firefly ${randomAnim} absolute cursor-grab active:cursor-grabbing flex items-center justify-center z-30 touch-none select-none`;
+            el.setAttribute('role', 'button');
+            el.setAttribute('aria-label', 'Світлячок');
+            el.innerHTML = '<i class="fa-solid fa-bug text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.9)] pointer-events-none"></i>';
+            
+            const size = CONSTANTS.MIN_SIZE + Math.random() * CONSTANTS.MAX_SIZE_ADD;
+            el.style.fontSize = `${size}px`;
+
+            const pad = 50;
+            const x = pad + Math.random() * (window.innerWidth - pad * 2);
+            const y = pad + Math.random() * (window.innerHeight * CONSTANTS.SPAWN_ZONE_Y_LIMIT); 
+            
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+
+            state.currentFireflies++;
+            ELEMENTS.gameArea.appendChild(el);
+
+            const lifeTime = CONSTANTS.MIN_LIFETIME + Math.random() * CONSTANTS.MAX_LIFETIME_ADD;
+            
+            const fadeTimer = setTimeout(() => {
+                if (el.dataset.dragged !== 'true') {
+                    removeFirefly(el);
+                }
+            }, lifeTime);
+
+            el.dataset.timerId = fadeTimer;
+            setupDrag(el);
+        }
+
+        function removeFirefly(el) {
+            if (!el || !el.parentNode) return;
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = '0';
+            setTimeout(() => {
+                if (el.parentNode) {
+                    el.remove();
+                    state.currentFireflies = Math.max(0, state.currentFireflies - 1);
+                }
+            }, 500);
+        }
+
+        function setupDrag(el) {
+            let isDragging = false;
+            let offset = { x: 0, y: 0 };
+
+            const checkOverlapThrottled = throttle(() => {
+                if(checkOverlap(el)) {
+                     ELEMENTS.jarBody.classList.add('jar-active');
+                } else {
+                     ELEMENTS.jarBody.classList.remove('jar-active');
+                }
+            }, 50);
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                el.style.left = (cx - offset.x) + 'px';
+                el.style.top = (cy - offset.y) + 'px';
+                
+                checkOverlapThrottled();
+            };
+
+            const endDrag = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', endDrag);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', endDrag);
+
+                // Оптимізація: викликаємо один раз і зберігаємо результат
+                const isOverlapping = checkOverlap(el);
+
+                if (isOverlapping) {
+                    catchFirefly(el);
+                } else {
+                    el.style.transition = 'all 0.4s ease-out';
+                    el.style.opacity = '0';
+                    el.style.transform = 'scale(0.1) rotate(180deg)';
+                    setTimeout(() => {
+                        if (el.parentNode) {
+                            el.remove();
+                            state.currentFireflies = Math.max(0, state.currentFireflies - 1);
+                        }
+                    }, 400);
+                }
+                
+                ELEMENTS.jarBody.classList.remove('jar-active');
+                el.dataset.dragged = 'false';
+            };
+
+            const startDrag = (e) => {
+                if (!state.active || state.isPaused) return;
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                
+                e.preventDefault();
+                audioManager.resume();
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const rect = el.getBoundingClientRect();
+                
+                isDragging = true;
+                el.dataset.dragged = 'true';
+                
+                const tid = Number(el.dataset.timerId);
+                if (tid) clearTimeout(tid);
+
+                offset.x = clientX - rect.left;
+                offset.y = clientY - rect.top;
+
+                el.className = 'absolute cursor-grabbing flex items-center justify-center z-50 touch-none text-yellow-200';
+                el.style.fontSize = '42px';
+                el.style.transform = 'scale(1.2)';
+                el.innerHTML = '<i class="fa-solid fa-bug drop-shadow-[0_0_15px_rgba(253,224,71,1)]"></i>';
+
+                document.body.appendChild(el);
+                
+                el.style.left = (clientX - offset.x) + 'px';
+                el.style.top = (clientY - offset.y) + 'px';
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', endDrag);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', endDrag);
+            };
+
+            el.addEventListener('mousedown', startDrag);
+            el.addEventListener('touchstart', startDrag, { passive: false });
+        }
+
+        function checkOverlap(el) {
+            const bugRect = el.getBoundingClientRect();
+            const jarRect = ELEMENTS.jarContainer.getBoundingClientRect();
+            const t = CONSTANTS.COLLISION_TOLERANCE;
+
+            return !(bugRect.right < jarRect.left + t || 
+                     bugRect.left > jarRect.right - t || 
+                     bugRect.bottom < jarRect.top + t || 
+                     bugRect.top > jarRect.bottom - t);
+        }
+
+        function catchFirefly(el) {
+            // Вібрація (тільки для мобільних)
+            if (navigator.vibrate) navigator.vibrate(40);
+            
+            // Ефекти
+            audioManager.playPop();
+            const rect = el.getBoundingClientRect();
+            createParticles(rect.left + rect.width/2, rect.top + rect.height/2);
+
+            state.score++;
+            ELEMENTS.scoreEl.textContent = state.score;
+            el.remove();
+            state.currentFireflies = Math.max(0, state.currentFireflies - 1);
+
+            const trapped = document.createElement('div');
+            trapped.className = 'text-yellow-300 text-xs animate-pulse';
+            trapped.style.textShadow = '0 0 5px #facc15';
+            trapped.innerHTML = '<i class="fa-solid fa-bug"></i>';
+            ELEMENTS.inJarContainer.appendChild(trapped);
+
+            updateLighting();
+
+            if (state.score >= CONSTANTS.TARGET_SCORE) {
+                winGame();
+            }
+        }
+
+        function winGame() {
+            state.active = false;
+            clearInterval(state.spawnInterval);
+            
+            document.querySelectorAll('.firefly').forEach(el => removeFirefly(el));
+            
+            const isNewRecord = saveHighScore();
+            if (isNewRecord) {
+                ELEMENTS.newRecordBadge.classList.remove('hidden');
+            } else {
+                ELEMENTS.newRecordBadge.classList.add('hidden');
+            }
+
+            audioManager.playWin();
+            triggerConfetti();
+            setTimeout(() => {
+                ELEMENTS.winModal.classList.remove('hidden');
+            }, 800);
+        }
+
+        function restartGame() {
+            state.score = 0;
+            state.currentFireflies = 0;
+            ELEMENTS.scoreEl.textContent = '0';
+            state.active = true;
+            state.isPaused = false;
+            
+            ELEMENTS.inJarContainer.innerHTML = '';
+            
+            ELEMENTS.jarBody.style.boxShadow = '';
+            ELEMENTS.jarBody.style.borderColor = '';
+            ELEMENTS.jarBody.style.backgroundColor = '';
+            ELEMENTS.jarInnerGlow.style.backgroundColor = 'transparent';
+            ELEMENTS.forestGlow.style.opacity = '0';
+            
+            ELEMENTS.winModal.classList.add('hidden');
+            ELEMENTS.pauseModal.classList.add('hidden');
+            document.body.classList.remove('is-paused');
+            
+            startGameLoop();
+        }
+
+        function startGameLoop() {
+            if (state.spawnInterval) clearInterval(state.spawnInterval);
+            const settings = DIFFICULTY_SETTINGS[state.difficulty];
+            state.spawnInterval = setInterval(spawnFirefly, settings.SPAWN_RATE_MS);
+            
+            spawnFirefly();
+            setTimeout(spawnFirefly, 600);
+        }
+
+        function triggerConfetti() {
+            const colors = ['#fde047', '#bef264', '#86efac', '#ffffff'];
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const duration = Math.random() * 2 + 2;
+                confetti.style.animationDuration = duration + 's';
+                confetti.style.top = -20 + 'px';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), duration * 1000);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!ELEMENTS.winModal.classList.contains('hidden')) {
+                    restartGame();
+                } else {
+                    togglePause();
+                }
+            }
+        });
+
+        window.onload = () => {
+            loadHighScore();
+            startGameLoop();
+        };
+    </script>
+</body>
+</html>
