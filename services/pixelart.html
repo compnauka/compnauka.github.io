@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Coordinates Arcade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme (Now Default) */
+            --bg-body: #e0e7ff; 
+            --bg-cabinet: #f3f4f6;
+            --bg-bezel: #d1d5db;
+            --bg-screen: #ffffff; 
+            
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            
+            --accent-green: #16a34a;
+            --accent-pink: #db2777;
+            --accent-blue: #0891b2;
+            
+            --grid-border: #9ca3af;
+            --grid-bg: rgba(0, 0, 0, 0.05);
+            
+            --scanline-opacity: 0.02;
+            --flicker-opacity: 0;
+            
+            --btn-bg: #db2777;
+            --btn-text: #ffffff;
+            --btn-border: #1f2937;
+            --btn-shadow: rgba(0,0,0,0.2);
+        }
+
+        body.dark-mode {
+            /* Dark Theme */
+            --bg-body: #0d0818;
+            --bg-cabinet: #2a2a2a;
+            --bg-bezel: #111;
+            --bg-screen: #000000;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            
+            --accent-green: #4aff29;
+            --accent-pink: #ff33ff;
+            --accent-blue: #33ffff;
+            
+            --grid-border: #666666;
+            --grid-bg: rgba(255, 255, 255, 0.1);
+            
+            --scanline-opacity: 0.1;
+            --flicker-opacity: 0.05;
+            
+            --btn-bg: #ff33ff;
+            --btn-text: #ffffff;
+            --btn-border: #ffffff;
+            --btn-shadow: rgba(0,0,0,0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        /* CRT Effects */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, var(--scanline-opacity)) 50%,
+                rgba(0, 0, 0, var(--scanline-opacity))
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .crt-flicker {
+            animation: flicker 0.15s infinite;
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 16, 16, var(--flicker-opacity));
+            opacity: var(--flicker-opacity);
+            z-index: 49;
+        }
+
+        @keyframes flicker {
+            0% { opacity: calc(var(--flicker-opacity) - 0.01); }
+            50% { opacity: calc(var(--flicker-opacity) + 0.01); }
+            100% { opacity: calc(var(--flicker-opacity) - 0.01); }
+        }
+
+        /* Container */
+        .arcade-cabinet {
+            width: 95%;
+            max-width: 500px;
+            height: 95vh;
+            max-height: 800px;
+            background: var(--bg-cabinet);
+            padding: 10px;
+            border: 4px solid #555;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 0 5px;
+            flex-shrink: 0;
+            height: 20px;
+        }
+
+        .screen-bezel {
+            background-color: var(--bg-bezel);
+            padding: 10px;
+            border-radius: 4px;
+            border: 2px solid #666;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s;
+            position: relative;
+        }
+
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-screen);
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-green);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-shadow: 0 0 2px var(--accent-green);
+            transition: background 0.3s, border 0.3s;
+            overflow: hidden;
+        }
+
+        /* Layout Helpers */
+        .game-header {
+            flex-shrink: 0;
+            text-align: center;
+            width: 100%;
+        }
+
+        .game-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 0;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .game-footer {
+            flex-shrink: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Typography */
+        .title-text {
+            font-size: clamp(16px, 4vh, 24px);
+            color: var(--accent-pink);
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .subtitle-text {
+            font-size: clamp(8px, 1.5vh, 10px);
+            color: var(--accent-blue);
+        }
+
+        .instruction-box {
+            border: 1px solid var(--text-primary);
+            padding: 8px;
+            background: rgba(128, 128, 128, 0.1);
+            margin-top: 5px;
+            width: 100%;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .instruction-text {
+            font-size: clamp(8px, 1.5vh, 10px);
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        /* Grids */
+        .dynamic-grid-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); 
+            grid-template-rows: repeat(10, 1fr);
+            gap: 1px;
+            margin: auto;
+            font-size: clamp(8px, 2.5vmin, 14px); 
+        }
+
+        .setup-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--grid-bg);
+            border: 1px solid var(--grid-border);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .setup-label { color: var(--accent-pink); font-weight: bold; }
+        .setup-header { color: var(--accent-blue); font-weight: bold; }
+
+        .grid-preview {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: var(--grid-border);
+            border: 2px solid var(--text-secondary);
+        }
+        .grid-cell { background: var(--bg-screen); width: 100%; height: 100%; }
+        .grid-cell.filled { background: var(--accent-green); }
+
+        /* Game Elements */
+        .coord-display {
+            font-size: clamp(4rem, 15vh, 8rem);
+            color: var(--accent-pink);
+            text-shadow: 4px 4px 0px var(--bg-screen);
+            line-height: 1;
+        }
+
+        .progress-container {
+            width: 80%;
+            height: 10px;
+            border: 2px solid var(--text-primary);
+            margin-top: 15px;
+            background: var(--bg-cabinet);
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Interactive */
+        .retro-btn {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: 2px solid var(--btn-border);
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(10px, 2vh, 14px);
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px var(--btn-shadow);
+            transition: transform 0.1s, box-shadow 0.1s;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .retro-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--btn-shadow);
+        }
+
+        .control-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 5px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 9px;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+
+    <div class="arcade-cabinet">
+        <header class="header-bar" role="banner">
+            <div class="text-[10px] text-[var(--text-secondary)]">MODEL: PX-909</div>
+            <div class="text-[10px] text-red-500 blink">● REC</div>
+        </header>
+        
+        <main class="screen-bezel">
+            <div id="game-screen" class="screen-content" aria-live="polite">
+                <!-- Content injected via JS -->
+            </div>
+        </main>
+        
+        <footer class="control-bar">
+            <button id="sound-toggle" class="control-btn" aria-label="Toggle sound">[Sound: ON]</button>
+            <button id="theme-toggle" class="control-btn" aria-label="Toggle theme">[Theme: LIGHT]</button>
+        </footer>
+    </div>
+
+    <script>
+        // --- UTILS ---
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // --- AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'start') {
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'blip') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'finish') {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // --- DATA ---
+        const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        const PATTERNS = [
+            { name: "Смайл", grid: [[0,0,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,0],[1,1,0,1,1,1,0,1,1],[1,1,0,1,1,1,0,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,0,0,0,1,1,1],[1,1,0,1,1,1,0,1,1],[0,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,0,0]] },
+            { name: "Серце", grid: [[0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,1,1,0],[1,1,1,1,0,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,0,1,0,0,0,0]] },
+            { name: "Ялинка", grid: [[0,0,0,0,1,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,1,1,1,1,1,0,0],[0,0,0,1,1,1,0,0,0],[0,0,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0]] },
+            { name: "Зілля", grid: [[0,0,0,0,1,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,0,0]] },
+            { name: "Ключ", grid: [[0,0,0,1,1,1,0,0,0],[0,0,1,0,0,0,1,0,0],[0,0,1,0,0,0,1,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,1,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,1,0,0,0],[0,0,0,0,1,0,0,0,0]] },
+            { name: "Привид", grid: [[0,0,0,1,1,1,0,0,0],[0,0,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,0],[0,1,0,1,1,1,0,1,0],[0,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,0],[0,1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1,0]] },
+            { name: "Кораблик", grid: [[0,0,0,0,1,0,0,0,0],[0,0,0,1,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,1,0,0,1,0,0,1,0],[1,1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,0,0],[0,0,0,0,0,0,0,0,0]] },
+            { name: "Метелик", grid: [[0,1,1,0,0,0,1,1,0],[1,1,1,1,0,1,1,1,1],[1,1,1,1,0,1,1,1,1],[0,1,1,1,0,1,1,1,0],[0,0,1,1,1,1,1,0,0],[0,1,1,1,0,1,1,1,0],[1,1,1,1,0,1,1,1,1],[1,1,1,1,0,1,1,1,1],[0,1,1,0,0,0,1,1,0]] },
+            { name: "Гриб", grid: [[0,0,0,1,1,1,0,0,0],[0,0,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0]] },
+            { name: "Хрест", grid: [[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0],[0,0,0,1,1,1,0,0,0]] }
+        ];
+
+        // --- STATE ---
+        const screen = document.getElementById('game-screen');
+        const state = {
+            currentPattern: null,
+            queue: [],
+            index: 0,
+            startTime: 0,
+            timerInterval: null
+        };
+
+        function clearTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        // --- RENDER HELPERS ---
+        function enforceSquareGrid() {
+            const container = document.querySelector('.dynamic-grid-container');
+            const grids = document.querySelectorAll('.setup-grid, .grid-preview');
+            
+            if (container && grids.length > 0) {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                const size = Math.min(w, h); 
+                
+                grids.forEach(grid => {
+                    grid.style.width = `${size}px`;
+                    grid.style.height = `${size}px`;
+                });
+            }
+        }
+
+        // --- VIEW CONTROLLERS ---
+        function renderSetup() {
+            let gridHTML = '<div class="setup-grid" role="img" aria-label="Приклад ігрового поля 9 на 9">';
+            gridHTML += '<div class="setup-cell"></div>';
+            COLS.forEach(c => gridHTML += `<div class="setup-cell setup-header">${c}</div>`);
+            for (let r = 1; r <= 9; r++) {
+                gridHTML += `<div class="setup-cell setup-label">${r}</div>`;
+                for (let c = 0; c < 9; c++) {
+                    gridHTML += `<div class="setup-cell"></div>`;
+                }
+            }
+            gridHTML += '</div>';
+
+            screen.innerHTML = `
+                <div class="game-header">
+                    <h1 class="title-text">PIXEL ARTIST</h1>
+                    <p class="subtitle-text">SYSTEM V 1.0</p>
+                    <div class="instruction-box">
+                        <p class="instruction-text">МІСІЯ: Намалюй таблицю 9x9 на аркуші</p>
+                    </div>
+                </div>
+
+                <div class="game-body">
+                    <div class="dynamic-grid-container">
+                        ${gridHTML}
+                    </div>
+                </div>
+
+                <div class="game-footer">
+                    <button data-action="start" class="retro-btn" aria-label="Почати гру">START GAME</button>
+                </div>
+            `;
+            setTimeout(enforceSquareGrid, 0);
+        }
+
+        function renderGame() {
+            const current = state.queue[state.index];
+            const progress = Math.round((state.index / state.queue.length) * 100);
+            
+            screen.innerHTML = `
+                <div class="game-header">
+                     <div class="flex justify-between w-full text-[10px] sm:text-xs px-2">
+                        <span style="color:var(--text-secondary)">COORD</span>
+                        <span style="color:var(--text-primary)" id="timer" aria-live="off">00:00</span>
+                    </div>
+                </div>
+                
+                <div class="game-body">
+                    <div class="coord-display font-black tracking-widest" aria-live="polite" aria-label="Поточна координата">
+                        ${current.id}
+                    </div>
+                    
+                    <div class="text-xs mb-2 mt-4" style="color:var(--text-primary)">
+                        ${state.index + 1} / ${state.queue.length}
+                    </div>
+                    
+                    <div class="progress-container" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+
+                <div class="game-footer">
+                    <button data-action="next" class="retro-btn" aria-label="${state.index === state.queue.length - 1 ? 'Завершити гру' : 'Наступна координата'}">
+                        ${state.index === state.queue.length - 1 ? 'ФІНІШ' : 'ДАЛІ >>'}
+                    </button>
+                </div>
+            `;
+            setTimeout(enforceSquareGrid, 0); // Re-check if needed, usually redundant here but safe
+        }
+
+        function renderResult() {
+            const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
+            const mins = Math.floor(timeSpent / 60);
+            const secs = timeSpent % 60;
+            const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            let gridHTML = '';
+            state.currentPattern.grid.forEach(row => {
+                row.forEach(cell => {
+                    gridHTML += `<div class="grid-cell ${cell ? 'filled' : ''}"></div>`;
+                });
+            });
+
+            screen.innerHTML = `
+                <div class="game-header">
+                    <h2 class="text-lg md:text-xl font-bold" style="color:var(--accent-green)">COMPLETE!</h2>
+                    <div class="text-xs" style="color:var(--text-primary)">
+                        ЧАС: <span style="color:var(--accent-blue)">${timeStr}</span>
+                    </div>
+                </div>
+                
+                <div class="game-body">
+                    <div class="dynamic-grid-container">
+                        <div class="grid-preview" role="img" aria-label="Результат: ${state.currentPattern.name}">
+                            ${gridHTML}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="game-footer flex-col items-center gap-2">
+                     <div class="text-sm uppercase tracking-widest font-bold mb-2" style="color:var(--accent-pink)">
+                        ${state.currentPattern.name}
+                    </div>
+                    <button data-action="reset" class="retro-btn secondary" aria-label="Грати ще раз">НОВИЙ РІВЕНЬ</button>
+                </div>
+            `;
+            setTimeout(enforceSquareGrid, 0);
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            playSound('start');
+            const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+            const coords = [];
+            
+            pattern.grid.forEach((row, rIndex) => {
+                row.forEach((cell, cIndex) => {
+                    if (cell === 1) {
+                        coords.push({ id: `${COLS[cIndex]}${rIndex + 1}` });
+                    }
+                });
+            });
+
+            // Fisher-Yates Shuffle
+            for (let i = coords.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [coords[i], coords[j]] = [coords[j], coords[i]];
+            }
+
+            state.currentPattern = pattern;
+            state.queue = coords;
+            state.index = 0;
+            state.startTime = Date.now();
+            
+            clearTimer();
+            state.timerInterval = setInterval(updateTimer, 1000);
+
+            renderGame();
+        }
+
+        function nextStep() {
+            playSound('blip');
+            if (state.index < state.queue.length - 1) {
+                state.index++;
+                renderGame();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            playSound('finish');
+            clearTimer();
+            renderResult();
+        }
+
+        function updateTimer() {
+            const el = document.getElementById('timer');
+            if (el) {
+                const diff = Math.floor((Date.now() - state.startTime) / 1000);
+                const m = Math.floor(diff / 60);
+                const s = diff % 60;
+                el.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // --- EVENT HANDLING ---
+        // Delegated listener for game actions
+        screen.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            if (!action) return;
+
+            if (action === 'start') startGame();
+            if (action === 'next') nextStep();
+            if (action === 'reset') renderSetup();
+        });
+
+        // Global controls
+        const soundBtn = document.getElementById('sound-toggle');
+        const themeBtn = document.getElementById('theme-toggle');
+        
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundBtn.innerText = `[Sound: ${soundEnabled ? 'ON' : 'OFF'}]`;
+        });
+
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeBtn.innerText = `[Theme: ${isDark ? 'DARK' : 'LIGHT'}]`;
+        });
+
+        // Initialize
+        window.onload = () => {
+            document.body.addEventListener('click', () => {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }, { once: true });
+            
+            // Debounced resize handler
+            window.addEventListener('resize', debounce(enforceSquareGrid, 150));
+            
+            renderSetup();
+        };
+    </script>
+</body>
+</html>
