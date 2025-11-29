@@ -1,403 +1,306 @@
-// script.js
+// --- APP LOGIC ---
+document.addEventListener("DOMContentLoaded", () => {
+    const sidebarNav = document.getElementById("sidebarNav");
+    const contentArea = document.getElementById("contentArea");
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("mobileOverlay");
+    const assistantToggle = document.getElementById("assistantToggle");
+    const assistantBox = document.getElementById("assistantBox");
+    const assistantClose = document.getElementById("assistantClose");
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = themeToggle.querySelector("i");
+    
+    // Track active category to return to it after clearing filter
+    let currentActiveCategory = CATEGORIES[0].id;
 
-(() => {
-    if (typeof CATEGORIES === 'undefined') {
-        console.error("Critical Error: CATEGORIES data not found. Ensure data.js is loaded before script.js.");
-        document.body.innerHTML = "<p style='text-align:center; padding: 20px; font-size:1.2em; color:red;'>Помилка завантаження даних. Будь ласка, спробуйте оновити сторінку або зверніться до адміністратора.</p>";
-        return;
+    // --- THEME LOGIC ---
+    // Check for saved theme
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+        themeIcon.classList.replace("fa-moon", "fa-sun");
     }
 
-    const IMAGE_LAZY_LOAD_OPTIONS = {
-        threshold: 0.1, 
-        rootMargin: '0px 0px 50px 0px' 
-    };
-    let imageObserver; 
+    themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        const isDark = document.body.classList.contains("dark-mode");
+        
+        // Switch Icon
+        if (isDark) {
+            themeIcon.classList.replace("fa-moon", "fa-sun");
+            localStorage.setItem("theme", "dark");
+        } else {
+            themeIcon.classList.replace("fa-sun", "fa-moon");
+            localStorage.setItem("theme", "light");
+        }
+    });
 
-    const setupImageObserver = () => {
-        const imagesToLazyLoad = document.querySelectorAll('img.service-card__image[data-src]');
-        if (!("IntersectionObserver" in window)) {
-            imagesToLazyLoad.forEach(img => loadImage(img));
-            return;
-        }
-        if (imageObserver) {
-            // imageObserver.disconnect(); // Розкоментуйте, якщо виникають проблеми з повторним додаванням
-        }
-        imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    loadImage(entry.target);
-                    observer.unobserve(entry.target); 
-                }
+    // --- NAVIGATION RENDERING ---
+    const renderSidebar = () => {
+        const ul = document.createElement("ul");
+        CATEGORIES.forEach(cat => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = `#${cat.id}`;
+            a.className = "nav-link";
+            a.dataset.id = cat.id;
+            // Add style to icon directly
+            a.innerHTML = `<i class="${cat.iconClass}" style="color: ${cat.color}"></i> ${cat.name}`;
+            
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                setActiveCategory(cat.id);
+                // Close mobile menu if open
+                closeMobileMenu();
             });
-        }, IMAGE_LAZY_LOAD_OPTIONS);
-        imagesToLazyLoad.forEach(img => imageObserver.observe(img));
+
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+        sidebarNav.innerHTML = '';
+        sidebarNav.appendChild(ul);
     };
 
-    const loadImage = (img) => {
-        const src = img.getAttribute("data-src");
-        if (src) {
-            img.src = src;
-            img.onload = () => {
-                img.classList.remove("skeleton-loading");
-                img.removeAttribute("data-src"); 
-            };
-            img.onerror = () => { 
-                console.error(`Error loading image: ${src}`);
-                img.classList.remove("skeleton-loading"); 
-                img.removeAttribute("data-src");
-            };
+    // --- CONTENT RENDERING ---
+    const renderCategory = (categoryId) => {
+        const category = CATEGORIES.find(c => c.id === categoryId);
+        if (!category) return;
+
+        // Create Header
+        const header = document.createElement("div");
+        header.className = "category-header";
+        header.innerHTML = `<i class="${category.iconClass}" style="color: ${category.color}"></i> ${category.name}`;
+
+        // Create Grid
+        const grid = document.createElement("div");
+        grid.className = "services-grid";
+
+        if (category.services.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--text-secondary);">Сервіси в цій категорії скоро з\'являться.</p>';
+        } else {
+            category.services.forEach(service => createServiceCard(service, grid));
         }
+
+        // Render to DOM with fade effect
+        updateContentArea(header, grid);
     };
 
-    const createServiceCard = (service) => {
+    const createServiceCard = (service, container) => {
         const card = document.createElement("div");
-        card.className = "service-card";
+        card.className = "card";
+        
+        // Image Handling
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "card-img-wrapper skeleton"; // Add skeleton class initially
+        const img = document.createElement("img");
+        img.className = "card-img";
+        img.alt = service.name;
+        
+        // Lazy load simulation / Loading handler
+        const tempImg = new Image();
+        tempImg.src = service.image;
+        tempImg.onload = () => {
+            img.src = service.image;
+            imgWrapper.classList.remove("skeleton");
+        };
+        tempImg.onerror = () => {
+            // Placeholder if image missing
+            img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23e2e8f0"><rect width="100" height="100"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" fill="%2394a3b8">No Image</text></svg>';
+            imgWrapper.classList.remove("skeleton");
+        };
 
-        const imageContainer = document.createElement("div");
-        imageContainer.className = "service-card__image-container";
-        const image = document.createElement("img");
-        image.className = "service-card__image skeleton-loading";
-        image.alt = service.name;
-        if (service.image) { // Перевірка наявності зображення
-            image.setAttribute("data-src", service.image);
-        }
-        image.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; 
-        imageContainer.appendChild(image);
+        imgWrapper.appendChild(img);
 
-        const content = document.createElement("div");
-        content.className = "service-card__content";
+        // Content
+        const body = document.createElement("div");
+        body.className = "card-body";
 
         const title = document.createElement("h3");
-        title.className = "service-card__title";
+        title.className = "card-title";
         title.textContent = service.name;
-        content.appendChild(title);
 
-        const description = document.createElement("p");
-        description.className = "service-card__description";
-        description.textContent = service.description;
-        content.appendChild(description);
+        const desc = document.createElement("p");
+        desc.className = "card-desc";
+        desc.textContent = service.description;
 
-        if (service.tags && Array.isArray(service.tags) && service.tags.length > 0) {
-            const tagsContainer = document.createElement("div");
-            tagsContainer.className = "service-card__tags";
-            service.tags.forEach(tagText => {
-                const tagElement = document.createElement("span");
-                tagElement.className = "service-card__tag";
-                tagElement.textContent = tagText;
-                tagElement.style.cursor = "pointer";
-                tagElement.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    filterServicesByTag(tagText);
-                });
-                tagsContainer.appendChild(tagElement);
+        body.appendChild(title);
+        body.appendChild(desc);
+
+        // Tags
+        if (service.tags && service.tags.length > 0) {
+            const tagsDiv = document.createElement("div");
+            tagsDiv.className = "card-tags";
+            service.tags.forEach(tag => {
+                const span = document.createElement("span");
+                span.className = "tag";
+                span.textContent = tag;
+                span.onclick = (e) => {
+                    e.stopPropagation(); // prevent card click if we add that later
+                    filterByTag(tag);
+                };
+                tagsDiv.appendChild(span);
             });
-            content.appendChild(tagsContainer);
+            body.appendChild(tagsDiv);
         }
 
-        const link = document.createElement("a");
-        link.className = "service-card__link";
-        link.href = service.link;
-        // Якщо це PDF із offline-activities, робимо зелену кнопку з "Завантажити"
-        if (service.link && service.link.endsWith('.pdf') && (service._category === "Безкомп'ютерні активності" || service._category === 'Безкомп\'ютерні активності')) {
-            link.textContent = "Завантажити";
-            link.style.backgroundColor = '#27ae60';
-            link.style.color = '#fff';
-            link.style.border = 'none';
-            link.style.boxShadow = '0 2px 8px rgba(39, 174, 96, 0.15)';
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-        } else {
-            link.textContent = "Відкрити";
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-        }
-        content.appendChild(link);
-
-        card.append(imageContainer, content);
-        return card;
-    };
-
-    const renderServicesForCategory = (categoryId) => {
-        const servicesContentArea = document.getElementById("services-content-area");
-        if (!servicesContentArea) return;
+        // Button
+        const btn = document.createElement("a");
+        btn.href = service.link;
+        btn.target = "_blank";
         
-        servicesContentArea.innerHTML = ''; 
-
-        const category = CATEGORIES.find(cat => cat.id === categoryId);
-        if (!category) {
-            servicesContentArea.innerHTML = "<p>Категорію не знайдено.</p>";
-            return;
-        }
-
-        const categoryHeader = document.createElement("h2");
-        categoryHeader.className = "category-header-main";
-        if (category.iconClass) {
-            const iconElement = document.createElement("i");
-            iconElement.className = category.iconClass; // Наприклад, "fas fa-laptop"
-            iconElement.setAttribute("aria-hidden", "true"); // Для доступності
-            categoryHeader.appendChild(iconElement);
-            // Додаємо невеликий відступ після іконки
-            categoryHeader.appendChild(document.createTextNode(" ")); 
-        }
-        categoryHeader.appendChild(document.createTextNode(category.name)); // Додаємо назву категорії
-
-        servicesContentArea.appendChild(categoryHeader);
-
-        const servicesGrid = document.createElement("div");
-        servicesGrid.className = "services-grid";
-
-        if (category.services && category.services.length > 0) {
-            const fragment = document.createDocumentFragment();
-            category.services.forEach((service) => {
-                // Додаємо _category для коректної логіки кнопки
-                fragment.appendChild(createServiceCard({...service, _category: category.name}));
-            });
-            servicesGrid.appendChild(fragment);
+        // Special styling for PDFs
+        if (service.link && service.link.endsWith('.pdf')) {
+            btn.className = "btn btn-success";
+            btn.innerHTML = '<i class="fas fa-file-download" style="margin-right:8px;"></i> Завантажити';
         } else {
-            servicesGrid.innerHTML = "<p>У цій категорії наразі немає сервісів.</p>";
+            btn.className = "btn btn-primary";
+            btn.innerHTML = 'Відкрити';
         }
-        servicesContentArea.appendChild(servicesGrid);
-        setupImageObserver();
+        
+        body.appendChild(btn);
+
+        card.appendChild(imgWrapper);
+        card.appendChild(body);
+        container.appendChild(card);
     };
 
-    // --- Фільтрація по тегу ---
-    function filterServicesByTag(tag) {
-        const servicesContentArea = document.getElementById("services-content-area");
-        if (!servicesContentArea) return;
-        servicesContentArea.innerHTML = '';
+    const filterByTag = (tagName) => {
+         // Close mobile menu if needed
+         closeMobileMenu();
 
-        // Збираємо всі сервіси з усіх категорій
+        // Flatten all services
         let allServices = [];
         CATEGORIES.forEach(cat => {
-            if (Array.isArray(cat.services)) {
-                allServices = allServices.concat(cat.services.map(service => ({...service, _category: cat.name})));
-            }
+            allServices = [...allServices, ...cat.services];
         });
-        // Фільтруємо сервіси за тегом
-        const filtered = allServices.filter(service => Array.isArray(service.tags) && service.tags.includes(tag));
 
-        // Додаємо заголовок
-        const header = document.createElement("h2");
-        header.className = "category-header-main";
-        header.textContent = `Тег: ${tag}`;
-        servicesContentArea.appendChild(header);
+        const filtered = allServices.filter(s => s.tags && s.tags.includes(tagName));
+        
+        // Header with Badge Chip
+        const header = document.createElement("div");
+        header.className = "category-header";
+        
+        const chip = document.createElement("div");
+        chip.className = "filter-chip";
+        chip.innerHTML = `<span>${tagName}</span>`;
+        
+        const closeBtn = document.createElement("div");
+        closeBtn.className = "filter-chip-close";
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.title = "Скинути фільтр";
+        closeBtn.onclick = () => {
+            // Reset to previous category
+            setActiveCategory(currentActiveCategory);
+        };
+        
+        chip.appendChild(closeBtn);
+        header.appendChild(chip);
 
-        const servicesGrid = document.createElement("div");
-        servicesGrid.className = "services-grid";
-        if (filtered.length > 0) {
-            filtered.forEach(service => {
-                servicesGrid.appendChild(createServiceCard(service));
-            });
+        const grid = document.createElement("div");
+        grid.className = "services-grid";
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<p>Нічого не знайдено.</p>';
         } else {
-            servicesGrid.innerHTML = `<p>Немає карток з тегом "${tag}".</p>`;
+            filtered.forEach(service => createServiceCard(service, grid));
         }
-        servicesContentArea.appendChild(servicesGrid);
-        setupImageObserver();
+        
+        updateContentArea(header, grid);
+
+         // Update Active State in Sidebar (remove all active)
+         document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+    };
+
+    const updateContentArea = (header, grid) => {
+        contentArea.style.opacity = '0';
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        
+        setTimeout(() => {
+            contentArea.innerHTML = '';
+            contentArea.appendChild(header);
+            contentArea.appendChild(grid);
+            contentArea.style.opacity = '1';
+        }, 200);
+    };
+
+    const setActiveCategory = (id) => {
+        // Update tracker
+        currentActiveCategory = id;
+        
+        // Update Sidebar UI
+        document.querySelectorAll(".nav-link").forEach(l => {
+            l.classList.remove("active");
+            if (l.dataset.id === id) l.classList.add("active");
+        });
+
+        // Render Content
+        renderCategory(id);
+
+        // Update URL Hash
+        if(history.pushState) {
+            history.pushState(null, null, `#${id}`);
+        } else {
+            window.location.hash = id;
+        }
+    };
+
+    // --- MOBILE MENU LOGIC ---
+    const openMobileMenu = () => {
+        sidebar.classList.add("active");
+        overlay.classList.add("active");
+        document.body.style.overflow = "hidden"; // Prevent scrolling
+    };
+
+    const closeMobileMenu = () => {
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+    };
+
+    menuToggle.addEventListener("click", () => {
+        if (sidebar.classList.contains("active")) closeMobileMenu();
+        else openMobileMenu();
+    });
+
+    overlay.addEventListener("click", closeMobileMenu);
+
+    // --- ASSISTANT LOGIC ---
+    assistantToggle.addEventListener("click", () => {
+        assistantBox.classList.toggle("open");
+    });
+
+    assistantClose.addEventListener("click", () => {
+        assistantBox.classList.remove("open");
+    });
+
+    // Using localStorage instead of sessionStorage for persistent memory across sessions
+    const ASST_KEY = "assistantShown_v2";
+    if (!localStorage.getItem(ASST_KEY)) {
+        setTimeout(() => {
+            assistantBox.classList.add("open");
+            localStorage.setItem(ASST_KEY, "true");
+        }, 2500);
     }
 
-    const createSidebarNavigation = () => {
-        const sidebarNavContainer = document.getElementById("sidebar-categories-nav");
-        if (!sidebarNavContainer) return;
-
-        sidebarNavContainer.innerHTML = ''; 
-        const navList = document.createElement("ul");
-        navList.className = "sidebar-nav__list";
-
-        CATEGORIES.forEach((category) => {
-            const listItem = document.createElement("li");
-            listItem.className = "sidebar-nav__item";
-            const link = document.createElement("a");
-            link.href = `#${category.id}`; 
-            link.className = "sidebar-nav__link";
-            link.setAttribute("data-category-id", category.id);
-
-            if (category.iconClass) {
-                const icon = document.createElement("i");
-                icon.className = category.iconClass;
-                icon.setAttribute("aria-hidden", "true"); // Для доступності
-                link.appendChild(icon);
-                link.appendChild(document.createTextNode(" " + category.name));
-            } else {
-                link.textContent = category.name;
-            }
-
-            link.addEventListener("click", (event) => {
-                event.preventDefault();
-                const currentCategoryId = category.id;
-                renderServicesForCategory(currentCategoryId);
-
-                document.querySelectorAll('.sidebar-nav__link.active').forEach(activeLink => {
-                    activeLink.classList.remove('active');
-                });
-                link.classList.add('active');
-                
-                if (history.pushState) {
-                    history.pushState({ categoryId: currentCategoryId }, null, `#${currentCategoryId}`);
-                } else {
-                    window.location.hash = currentCategoryId;
-                }
-            });
-            listItem.appendChild(link);
-            navList.appendChild(listItem);
-        });
-        sidebarNavContainer.appendChild(navList);
-    };
+    // --- INITIALIZATION ---
+    renderSidebar();
     
-    const handleNavigation = () => {
-        let categoryToDisplay = CATEGORIES[0].id; 
-        const hashId = window.location.hash.substring(1);
-
-        if (hashId) {
-            const categoryExists = CATEGORIES.find(cat => cat.id === hashId);
-            if (categoryExists) {
-                categoryToDisplay = hashId;
-            } else {
-                // Якщо хеш не валідний, встановлюємо хеш першої категорії
-                if (history.replaceState) {
-                    history.replaceState({ categoryId: CATEGORIES[0].id }, null, `#${CATEGORIES[0].id}`);
-                } else {
-                    window.location.hash = CATEGORIES[0].id;
-                }
-            }
-        } else if (CATEGORIES.length > 0) {
-            // Якщо хешу немає, встановлюємо для першої категорії
-            if (history.replaceState) {
-                 history.replaceState({ categoryId: CATEGORIES[0].id }, null, `#${CATEGORIES[0].id}`);
-            } else {
-                 window.location.hash = CATEGORIES[0].id;
-            }
-        }
-        
-        renderServicesForCategory(categoryToDisplay);
-        
-        document.querySelectorAll('.sidebar-nav__link.active').forEach(link => link.classList.remove('active'));
-        const activeLink = document.querySelector(`.sidebar-nav__link[data-category-id="${categoryToDisplay}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-    };
-
-    const initializeApp = () => {
-        const sidebarNavContainer = document.getElementById("sidebar-categories-nav");
-        const servicesContentArea = document.getElementById("services-content-area");
-        const mobileNavToggleButton = document.querySelector(".mobile-nav-toggle");
-
-        if (!sidebarNavContainer || !servicesContentArea) {
-            console.error("Critical application containers not found.");
-            document.body.innerHTML = "<p style='text-align:center; padding:20px; font-size:1.2em; color:red;'>Помилка завантаження компонентів сторінки.</p>";
-            return;
-        }
-        if (typeof CATEGORIES === 'undefined' || CATEGORIES.length === 0) {
-            console.error("CATEGORIES data not found or empty.");
-            servicesContentArea.innerHTML = "<p style='text-align:center; padding:20px; font-size:1.2em; color:red;'>Дані категорій не завантажено.</p>";
-            return;
-        }
-
-        createSidebarNavigation();
-        handleNavigation(); // Обробка початкового стану та хешу
-
-        if (mobileNavToggleButton && sidebarNavContainer) {
-            mobileNavToggleButton.addEventListener("click", () => {
-                const isVisible = sidebarNavContainer.getAttribute("data-visible") === "true";
-                sidebarNavContainer.setAttribute("data-visible", !isVisible ? "true" : "false");
-                mobileNavToggleButton.setAttribute("aria-expanded", !isVisible ? "true" : "false");
-                document.body.classList.toggle("mobile-nav-active", !isVisible);
-            });
-
-            sidebarNavContainer.addEventListener('click', (e) => {
-                if (e.target.closest('.sidebar-nav__link')) {
-                    if (window.innerWidth <= 768 && sidebarNavContainer.getAttribute("data-visible") === "true") { 
-                        sidebarNavContainer.setAttribute("data-visible", "false");
-                        mobileNavToggleButton.setAttribute("aria-expanded", "false");
-                        document.body.classList.remove("mobile-nav-active");
-                    }
-                }
-            });
-
-            // Додаємо закриття меню при кліку поза ним (по overlay)
-            document.addEventListener('click', function(e) {
-                const isMobile = window.innerWidth <= 768;
-                const menuVisible = sidebarNavContainer.getAttribute("data-visible") === "true";
-                if (isMobile && menuVisible) {
-                    if (!sidebarNavContainer.contains(e.target) && !mobileNavToggleButton.contains(e.target)) {
-                        sidebarNavContainer.setAttribute("data-visible", "false");
-                        mobileNavToggleButton.setAttribute("aria-expanded", "false");
-                        document.body.classList.remove("mobile-nav-active");
-                    }
-                }
-            });
-        }
-
-        window.addEventListener('popstate', (event) => {
-             // Якщо є стан в історії (для pushState), використовуємо його, інакше - звичайний hashchange
-            if (event.state && event.state.categoryId) {
-                handleNavigation();
-            } else if (window.location.hash) { // Для сумісності з hashchange
-                 handleNavigation();
-            }
-        });
-         // Для першого завантаження, якщо немає pushState, але є hash
-        if (!history.pushState && window.location.hash) {
-            window.addEventListener('hashchange', handleNavigation);
-        } else if (!history.pushState && !window.location.hash && CATEGORIES.length > 0) {
-            // Якщо немає ні pushState, ні hash, емулюємо hashchange для першої категорії
-            window.location.hash = `#${CATEGORIES[0].id}`; // Це викличе hashchange, якщо слухач вже є
-        }
-    };
-
-    // Функціонал для помічника (Пана Артема)
-    const initializeAssistant = () => {
-        const toggleBtn = document.getElementById('assistant-toggle');
-        const closeBtn = document.getElementById('assistant-close');
-        const assistantBox = document.getElementById('assistant-box');
-
-        // Визначаємо чи має бути асистент відкритий в сесії
-        const assistantShown = sessionStorage.getItem('assistantShown');
-
-        // Перевіряємо чи елементи існують
-        if (toggleBtn && closeBtn && assistantBox) {
-            // Автоматично показуємо новим відвідувачам
-            if (!assistantShown) {
-                // Затримуємо показ на 2 секунди, щоб не виникав одразу при завантаженні
-                setTimeout(() => {
-                    assistantBox.classList.add('active');
-                    sessionStorage.setItem('assistantShown', 'true');
-                }, 2000);
-            }
-
-            // Показ асистента при натисканні на кнопку
-            toggleBtn.addEventListener('click', () => {
-                assistantBox.classList.toggle('active');
-            });
-
-            // Закриття асистента при натисканні на хрестик
-            closeBtn.addEventListener('click', () => {
-                assistantBox.classList.remove('active');
-            });
-
-            // Приховуємо асистента при кліку поза його межами
-            document.addEventListener('click', (e) => {
-                if (assistantBox.classList.contains('active') && 
-                    !assistantBox.contains(e.target) && 
-                    e.target !== toggleBtn && 
-                    !toggleBtn.contains(e.target)) {
-                    assistantBox.classList.remove('active');
-                }
-            });
-        } else {
-            console.error('Assistant elements not found in DOM');
-        }
-    };
-
-    // Додаємо ініціалізацію асистента до загальної ініціалізації
-    const init = () => {
-        initializeApp();
-        initializeAssistant();
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
+    // Check hash or default to first category
+    const hash = window.location.hash.substring(1);
+    if (hash && CATEGORIES.some(c => c.id === hash)) {
+        setActiveCategory(hash);
+    } else if (CATEGORIES.length > 0) {
+        setActiveCategory(CATEGORIES[0].id);
     }
-})();
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', () => {
+        const h = window.location.hash.substring(1);
+        if (h && CATEGORIES.some(c => c.id === h)) {
+            setActiveCategory(h);
+        }
+    });
+});
