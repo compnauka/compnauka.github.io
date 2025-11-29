@@ -44,28 +44,28 @@ const CATEGORIES = [
       },
       { 
         name: "Спіймай світлячка", 
-        description: "Тренажер для роботи з мишкою.", 
+        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
         link: "services/fireflies.html", 
         image: "images/58.jpg", 
         tags: ["1-2 класи"] 
       },
       { 
         name: "Полювання на медуз", 
-        description: "Тренажер для роботи з мишкою.", 
+        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
         link: "services/jailfish.html", 
         image: "images/59.jpg", 
         tags: ["1-2 класи"] 
       },
       { 
         name: "Перші клавіші", 
-        description: "Веселий тренажер для роботи з клавіатурою.", 
+        description: "Тренажер для роботи з клавіатурою. Вивчаємо розташування клавіш.", 
         link: "services/kids_typing.html", 
         image: "images/56.jpg", 
         tags: ["1-2 класи"] 
       },
       { 
         name: "Швидкісні вікна", 
-        description: "Практичний тренажер для роботи з вікнами програм.", 
+        description: "Тренажер для роботи з вікнами програм.", 
         link: "services/windows/index.html", 
         image: "images/48.jpg", 
         tags: ["1-2 класи"] 
@@ -79,7 +79,7 @@ const CATEGORIES = [
       },
       { 
         name: "Чарівний лабіринт", 
-        description: "Тренажер для роботи з перетягуванням миші.", 
+        description: "Тренажер для роботи з перетягуванням об'єктів.", 
         link: "services/mouse_maze.html", 
         image: "images/57.jpg", 
         tags: ["1-2 класи"] 
@@ -89,28 +89,28 @@ const CATEGORIES = [
         description: "Інтерактивний урок про роботу з клавіатурою.", 
         link: "services/typing.html", 
         image: "images/18.jpg", 
-        tags: ["2-4 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Спритні пальчики", 
-        description: "Веселий тренажер для роботи з клавіатурою.", 
+        description: "Тренажер для роботи з клавіатурою.", 
         link: "services/keys.html", 
         image: "images/11.jpg", 
-        tags: ["2-4 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Веселі адреси", 
-        description: "Практичний тренажер для введення URL-адрес.", 
+        description: "Тренажер дляроботи з клавіатурою: введення URL-адрес.", 
         link: "services/urls.html", 
         image: "images/38.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Шукаємо в Інтернеті", 
         description: "Інтерактивне опанування пошукових систем.", 
         link: "services/se/index.html", 
         image: "images/39.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       }
     ]
   },
@@ -125,14 +125,14 @@ const CATEGORIES = [
         description: "Простими словами про обчислювальне мислення.", 
         link: "services/compthinking.html", 
         image: "images/1.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Алгоритми для дітей", 
         description: "Як програмувати роботів та комп'ютери.", 
         link: "services/algorithm.html", 
         image: "images/12.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Абстракція для дітей", 
@@ -160,7 +160,7 @@ const CATEGORIES = [
         description: "Тест з обчислювального мислення.", 
         link: "services/quiz.html", 
         image: "images/55.jpg", 
-        tags: ["2-4 класи"] 
+        tags: ["3-4 класи"] 
       }
     ]
   },
@@ -175,14 +175,14 @@ const CATEGORIES = [
         description: "Як програмувати роботів та комп'ютери.", 
         link: "services/algorithm.html", 
         image: "images/12.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Конструктор блок-схем", 
         description: "Простий редактор для створення блок-схем.", 
         link: "services/blocks/index.html", 
         image: "images/37.jpg", 
-        tags: ["5-7 класи"] 
+        tags: ["3-4 класи", "5-7 класи"] 
       },
       { 
         name: "Програмування з Равликом", 
