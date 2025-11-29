@@ -1,645 +1,706 @@
-/* style.css */
-
+/* --- CSS VARIABLES & RESET --- */
 :root {
-    --primary-color: #3498db;
-    --secondary-color: #2980b9;
-    --background-color: #f4f7f6;
-    --text-color: #333;
-    --card-bg-color: white;
-    --header-text-color: white;
-    --card-title-color: #2c3e50;
-    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    --footer-shadow: 0 -4px 8px rgba(0, 0, 0, 0.05);
-    --border-radius: 10px;
-    --transition-duration: 0.3s;
+    /* Palette - Light Mode (Default) */
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #eff6ff;
     
-    /* Категорії та навігація */
-    --category-bg-color: #e8f4fc;
-    --category-text-color: #2c3e50;
-    --sidebar-bg-color: #ffffff;
-    --sidebar-width: 260px; /* Ширина бічної панелі на десктопі */
-    --sidebar-link-color: #454f5b;
-    --sidebar-link-hover-bg: #f0f4f8;
-    --sidebar-link-active-bg: var(--primary-color);
-    --sidebar-link-active-color: white;
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-sidebar: rgba(255, 255, 255, 0.95);
+    
+    --text-main: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    
+    /* UI Elements */
+    --card-hover-shadow: rgba(0, 0, 0, 0.1);
+    --tag-bg: #f1f5f9;
+    --tag-text: #64748b;
+    --tag-hover-bg: #e2e8f0;
+    --tag-hover-text: #1e293b;
+    
+    /* Spacing & UI */
+    --header-height: 70px;
+    --sidebar-width: 280px;
+    --border-radius-lg: 16px;
+    --border-radius-md: 10px;
+    --border-radius-sm: 6px;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    /* Теги */
-    --tag-bg-color: #e0e7ef;
-    --tag-text-color: #4a5568;
+/* --- DARK MODE (High Contrast) --- */
+body.dark-mode {
+    --primary-color: #60a5fa;
+    --primary-dark: #3b82f6;
+    --primary-light: #1e293b;
+    
+    /* High Contrast Backgrounds */
+    --bg-body: #020617;
+    --bg-surface: #1e293b;
+    --bg-sidebar: #1e293b;
+    
+    /* High Contrast Text */
+    --text-main: #ffffff;
+    --text-secondary: #e2e8f0;
+    --border-color: #475569;
 
-    /* Шрифти */
-    --font-family-headings: 'Nunito', sans-serif;
-    --font-family-body: 'Open Sans', sans-serif;
+    --card-hover-shadow: rgba(0, 0, 0, 0.6);
+    --tag-bg: #334155;
+    --tag-text: #f1f5f9;
+    --tag-hover-bg: #475569;
+    --tag-hover-text: #ffffff;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: var(--font-family-body);
-    background-color: var(--background-color);
-    line-height: 1.65;
-    color: var(--text-color);
-    overflow-x: hidden; /* Запобігає горизонтальній прокрутці на рівні body */
+    font-family: 'Open Sans', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-body.mobile-nav-active {
-    overflow-y: hidden; /* Запобігає прокрутці основного контенту, коли мобільне меню відкрите */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', sans-serif;
+    color: var(--text-main);
 }
 
-/* Затемнення основного контенту, коли мобільне меню відкрите */
-body.mobile-nav-active::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999; /* Нижче, ніж саме меню */
-    transition: opacity var(--transition-duration) ease;
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
-
-
-
-.header {
-    text-align: center;
-    padding: 25px 20px;
-    background-color: var(--primary-color);
-    color: var(--header-text-color);
-    position: relative; 
-}
-
-.mobile-nav-toggle {
-    display: none; 
-    position: absolute;
-    top: 50%;
-    right: 15px; /* Переміщено праворуч */
-    transform: translateY(-50%);
-    background-color: rgba(255, 255, 255, 0.15);
-    border: none;
-    border-radius: 5px;
-    color: var(--header-text-color);
-    font-size: 1.6rem;
+button {
     cursor: pointer;
-    padding: 10px; /* Збільшено область кліку для зручності */
-    z-index: 1100; 
-    line-height: 1;
-    transition: background-color 0.2s ease;
+    border: none;
+    font-family: inherit;
 }
 
-.mobile-nav-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.25);
-}
-
-.mobile-nav-toggle .fa-times {
-    display: none;
-}
-
-.mobile-nav-toggle[aria-expanded="true"] .fa-times {
-    display: block;
-}
-
-.header h1 {
-    font-family: var(--font-family-headings);
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin-bottom: 5px;
-    text-align: center;
-}
-
-.header p {
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-.main-layout {
+/* --- LAYOUT STRUCTURE --- */
+.app-container {
     display: flex;
-    max-width: 1200px;
-    margin: 30px auto;
-    gap: 30px;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.sidebar-nav {
-    width: var(--sidebar-width);
-    background-color: var(--sidebar-bg-color);
-    padding: 20px 0;
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    flex-shrink: 0;
-    height: fit-content;
+/* --- HEADER --- */
+.header {
+    height: var(--header-height);
+    background-color: var(--bg-surface);
     position: sticky;
-    top: 30px;
-    transition: transform 0.35s ease-in-out, box-shadow 0.35s ease-in-out; /* Плавність для анімацій */
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: var(--shadow-sm);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.sidebar-nav__list {
-    list-style: none;
-    padding: 0; /* Забрано внутрішній padding, щоб посилання займали всю ширину */
-    margin: 0;
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.sidebar-nav__link {
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 25px;
-    text-decoration: none;
-    color: var(--sidebar-link-color);
-    border-left: 4px solid transparent;
-    transition: background-color var(--transition-duration) ease, color var(--transition-duration) ease, border-left-color var(--transition-duration) ease;
+}
+
+.brand-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-text h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(90deg, var(--text-main) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.brand-text p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    background-color: transparent;
+    transition: var(--transition);
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.mobile-toggle-btn {
+    display: none;
+    font-size: 1.5rem;
+    color: var(--text-main);
+    background: transparent;
+    padding: 8px;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+}
+
+.mobile-toggle-btn:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* --- MAIN CONTENT AREA --- */
+.main-wrapper {
+    display: flex;
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 30px;
+    position: relative;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    background: var(--bg-sidebar);
+    border-radius: var(--border-radius-lg);
+    padding: 20px 10px;
+    height: calc(100vh - var(--header-height) - 40px);
+    position: sticky;
+    top: calc(var(--header-height) + 20px);
+    overflow-y: auto;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--border-radius-md);
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 0.95rem;
+    transition: var(--transition);
 }
 
-.sidebar-nav__link i {
-    width: 22px;
+.nav-link i {
+    font-size: 1.2rem;
+    width: 24px;
     text-align: center;
-    color: var(--primary-color);
-    font-size: 1.2em;
-    transition: color var(--transition-duration) ease;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    transition: color 0.2s;
 }
 
-.sidebar-nav__link:hover {
-    background-color: var(--sidebar-link-hover-bg);
-    color: var(--secondary-color);
-    border-left-color: var(--secondary-color);
+.nav-link:hover {
+    background-color: var(--primary-light);
+    color: var(--text-main);
 }
 
-.sidebar-nav__link:hover i {
-    color: var(--secondary-color);
+.nav-link.active {
+    background-color: var(--primary-light);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
 }
 
-.sidebar-nav__link.active {
-    background-color: var(--sidebar-link-active-bg);
-    color: var(--sidebar-link-active-color);
-    font-weight: 700;
-    font-family: var(--font-family-headings);
-    border-left-color: var(--secondary-color);
+.nav-link.active i {
+     opacity: 1;
 }
 
-.sidebar-nav__link.active i {
-    color: var(--sidebar-link-active-color);
+/* --- CONTENT GRID --- */
+.content-area {
+    flex: 1;
+    min-width: 0;
 }
 
-.main-content {
-    flex-grow: 1;
-    min-width: 0; /* Для правильної роботи flex-grow з потенційно широким вмістом */
-}
-
-.category-header-main {
-    font-family: var(--font-family-headings);
-    background-color: transparent;
-    padding: 0 0 20px 0;
-    margin-bottom: 25px;
-    border-bottom: 2px solid var(--primary-color);
-    color: var(--card-title-color);
-    font-weight: 800;
+.category-header {
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-main);
+    transition: border-color 0.3s ease;
+}
+
+/* Chip for Reset Filter */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    cursor: default;
+}
+
+.filter-chip-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.filter-chip-close:hover {
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
 }
 
-.service-card {
-    background-color: var(--card-bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
+/* --- SERVICE CARD --- */
+.card {
+    background: var(--bg-surface);
+    border-radius: var(--border-radius-lg);
     overflow: hidden;
-    transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    height: 100%;
-}
-
-.service-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.service-card__image-container {
+    transition: var(--transition);
     position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-    background-color: #e9ecef;
 }
 
-.service-card__image {
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-color);
+}
+
+.card-img-wrapper {
+    position: relative;
+    padding-top: 56.25%;
+    background-color: var(--border-color);
+    overflow: hidden;
+}
+
+.card-img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity var(--transition-duration) ease, transform var(--transition-duration) ease;
+    transition: transform 0.5s ease;
 }
 
-.service-card:hover .service-card__image {
+.card:hover .card-img {
     transform: scale(1.05);
 }
 
-.service-card__content {
-    padding: 20px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.service-card__title {
-    font-family: var(--font-family-headings);
-    margin-bottom: 8px;
-    color: var(--card-title-color);
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-.service-card__tags {
-    margin-bottom: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.service-card__tag {
-    background-color: var(--tag-bg-color);
-    color: var(--tag-text-color);
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.service-card__description {
-    margin-bottom: 20px;
-    flex-grow: 1;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: #5a6778;
-}
-
-.service-card__link {
-    font-family: var(--font-family-headings);
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: var(--header-text-color);
-    text-decoration: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    align-self: flex-start;
-    transition: background-color var(--transition-duration) ease, transform var(--transition-duration) ease;
-    margin-top: auto;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
-.service-card__link:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-2px);
-}
-
-/* --- Адаптивність --- */
-@media screen and (max-width: 992px) {
-    .main-layout {
-        gap: 20px;
-        margin: 20px auto;
-    }
-    :root {
-        --sidebar-width: 220px; /* Вужча панель на планшетах */
-    }
-    .sidebar-nav__link {
-        padding: 12px 20px;
-    }
-    .category-header-main {
-        font-size: 1.6rem;
-    }
-}
-
-@media screen and (max-width: 768px) {
-    .header {
-        padding: 20px 15px; /* Адаптуємо відступи шапки */
-    }
-    .header h1 {
-        font-size: 1.5rem; /* Менший заголовок на мобільних */
-        text-align: center; /* Центрування заголовка */
-        margin-left: 10px; 
-        margin-right: 40px; /* Відступ для кнопки меню */
-    }
-    .header p {
-        font-size: 0.85rem;
-        text-align: center; /* Центрування підзаголовка */
-    }
-
-    .mobile-nav-toggle {
-        display: block; /* Показуємо кнопку "сендвіч" */
-    }
-
-    .main-layout {
-        flex-direction: column;
-        margin: 20px 15px;
-        gap: 20px;
-        position: relative; 
-        /* overflow-x: clip; Забрано, щоб тінь від меню була видна */
-    }
-    
-    .sidebar-nav {
-        position: fixed; 
-        top: 0;
-        right: 0; /* Змінено з left: 0 на right: 0 для розміщення справа */
-        width: min(75vw, 280px);
-        height: 100%;
-        background-color: var(--sidebar-bg-color);
-        z-index: 1000; 
-        transform: translateX(100%); /* Змінено на 100%, щоб меню висувалось справа */
-        overflow-y: auto; 
-        padding-top: 60px;
-        border-radius: 0;
-        box-shadow: -3px 0px 15px rgba(0,0,0,0.2); /* Змінено тінь для правого боку */
-    }
-
-    .sidebar-nav[data-visible="true"] {
-        transform: translateX(0); /* Показати меню */
-    }
-
-    .sidebar-nav__list {
-        display: flex; 
-        flex-direction: column; 
-        padding: 0; 
-    }
-
-    .sidebar-nav__link {
-        white-space: normal; 
-        border-left: 4px solid transparent; 
-        border-bottom: 1px solid #eef2f7; /* Світліший розділювач */
-        padding: 15px 25px; 
-    }
-     .sidebar-nav__link:last-child {
-        border-bottom: none; 
-     }
-
-    .sidebar-nav__link.active {
-        border-left-color: var(--secondary-color); 
-        /* border-bottom-color: #eef2f7; */ /* Колір фону вже встановлений */
-    }
-    
-    
-    .category-header-main { 
-        font-size: 1.5rem; 
-        padding-bottom: 15px; 
-        margin-left: 0; /* Скидаємо відступи, якщо були */
-        margin-right: 0;
-    }
-    .services-grid { 
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-        gap: 20px; 
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .main-layout { 
-        margin: 15px 10px; 
-    }
-    .header h1 {
-        font-size: 1.3rem;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    .header p {
-        font-size: 0.8rem;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    .mobile-nav-toggle {
-        font-size: 1.4rem;
-        right: 10px; /* Переміщено праворуч */
-    }
-    .services-grid {
-        grid-template-columns: 1fr; /* Одна колонка на дуже малих екранах */
-    }
-     .service-card__title { 
-        font-size: 1.15rem; 
-    }
-     .service-card__description { 
-        font-size: 0.85rem; 
-    }
-}
-
-/* --- Старі стилі, які більше не потрібні --- */
-/* Видалено невикористовувані класи .categories-nav, .category, .category-header */
-
-/* --- Skeleton Loading --- */
-.skeleton-loading {
-    background: linear-gradient(90deg, #e9ecef 25%, #f5f7fa 50%, #e9ecef 75%);
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-surface) 50%, var(--border-color) 75%);
     background-size: 200% 100%;
-    animation: loading 1.5s infinite ease-in-out;
+    animation: shimmer 1.5s infinite;
 }
-@keyframes loading {
+
+@keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
 
-footer {
-    background-color: #34495e; 
-    color: var(--header-text-color);
-    text-align: center;
-    padding: 2rem 0;
-    border-radius: 20px 20px 0 0; 
-    margin-top: 40px;
-    box-shadow: var(--footer-shadow);
-    position: relative;
-}
-footer p {
-    font-size: 1rem;
-    font-weight: 600;
+.card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-/* --- Пан Артем (Асистент) --- */
-.assistant-container {
+.card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    color: var(--text-main);
+}
+
+.card-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background-color: var(--tag-bg);
+    color: var(--tag-text);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tag:hover {
+    background-color: var(--tag-hover-bg);
+    color: var(--tag-hover-text);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    width: 100%;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
+/* --- FOOTER --- */
+.footer {
+    background-color: var(--bg-surface);
+    padding: 40px 20px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.footer-socials {
+    display: flex;
+    gap: 15px;
+}
+
+/* --- ASSISTANT WIDGET --- */
+.assistant-wrapper {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    z-index: 950;
+    z-index: 100;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.assistant-toggle {
-    background-color: var(--primary-color);
-    color: white;
-    width: 60px;
-    height: 60px;
+.assistant-btn {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
+    background-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
     display: flex;
-    justify-content: center;
     align-items: center;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    border: none;
-    font-size: 1.5rem;
-    transition: transform 0.3s ease, background-color 0.3s ease;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    transition: var(--transition);
+    border: 3px solid white;
+}
+
+.assistant-btn:hover {
+    transform: scale(1.1) rotate(5deg);
+    background-color: var(--primary-dark);
+}
+
+.assistant-btn-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
     background-image: url('pan_artem.png');
-    background-size: 35px 35px;
+    background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
 }
 
-.assistant-toggle:hover {
-    background-color: var(--secondary-color);
-    transform: scale(1.05);
-}
-
-.assistant-box {
+.chat-box {
     position: absolute;
-    bottom: 75px;
+    bottom: 80px;
     right: 0;
-    width: 300px;
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
-    padding: 0;
+    width: 320px;
+    background: var(--bg-surface);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     overflow: hidden;
-    transform: scale(0);
     transform-origin: bottom right;
-    transition: transform 0.3s ease;
+    transform: scale(0);
     opacity: 0;
+    transition: var(--transition);
     pointer-events: none;
+    border: 1px solid var(--border-color);
 }
 
-.assistant-box.active {
+.chat-box.open {
     transform: scale(1);
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: all;
 }
 
-.assistant-header {
-    background-color: var(--primary-color);
-    padding: 15px;
+.chat-header {
+    background: var(--primary-color);
+    padding: 16px;
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.assistant-title {
-    font-family: var(--font-family-headings);
-    font-weight: 700;
-    font-size: 1.1rem;
+.chat-header h3 {
+    color: white;
+    font-size: 1rem;
     margin: 0;
 }
 
-.assistant-close {
-    background: none;
-    border: none;
+.chat-close {
+    background: rgba(255,255,255,0.2);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
-    cursor: pointer;
-    font-size: 1.1rem;
-}
-
-.assistant-content {
-    padding: 20px;
     font-size: 0.9rem;
-    color: var(--text-color);
-    line-height: 1.6;
+    transition: 0.2s;
 }
 
-.assistant-content p {
-    margin-bottom: 16px;
+.chat-close:hover {
+    background: rgba(255,255,255,0.4);
 }
 
-.assistant-content .greeting {
-    font-size: 1.05rem;
-    font-weight: 600;
+.chat-content {
+    padding: 20px;
+    font-size: 0.95rem;
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--text-main);
+}
+
+.chat-content .highlight {
     color: var(--primary-color);
-    margin-bottom: 18px;
-}
-
-.assistant-content .highlight {
-    font-weight: 600;
-    color: var(--secondary-color);
-}
-
-/* Стилі для соціальних мереж пана Артема */
-.social-links {
-    margin-top: 15px;
-    border-top: 1px solid #eee;
-    padding-top: 15px;
-}
-
-.social-links p {
-    margin-bottom: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .social-icons {
     display: flex;
-    gap: 15px;
+    gap: 12px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
 }
 
-.social-icons a {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.social-link {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
-    text-decoration: none;
-    transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.social-icons a:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-3px);
-}
-
-.assistant-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5rem;
+    background: var(--tag-bg);
     color: var(--primary-color);
-    margin-right: 10px;
-    background-image: url('pan_artem.png');
-    background-size: 25px 25px;
-    background-position: center;
-    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
 }
 
-@media screen and (max-width: 768px) {
-    .assistant-container {
+.social-link:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Custom Social Colors */
+.social-link.tiktok:hover { 
+    background: #000000; 
+    color: white; 
+}
+
+body.dark-mode .social-link.tiktok:hover { 
+    background: #ffffff; 
+    color: black; 
+}
+
+.social-link.facebook:hover { background: #1877F2; }
+.social-link.instagram:hover { background: #E4405F; }
+.social-link.linkedin:hover { background: #0A66C2; }
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 992px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-toggle-btn {
+        display: block;
+    }
+
+    .main-wrapper {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        border-radius: 0;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+        background-color: var(--bg-surface);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Overlay for mobile menu */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.3s;
+    }
+
+    .overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .header {
+        padding: 0 15px;
+    }
+
+    .brand-text h1 {
+        font-size: 1.1rem;
+    }
+
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assistant-wrapper {
         bottom: 20px;
         right: 20px;
     }
     
-    .assistant-box {
-        width: 280px;
-        bottom: 70px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .assistant-toggle {
-        width: 50px;
-        height: 50px;
-        font-size: 1.3rem;
-    }
-    
-    .assistant-box {
+    .chat-box {
         width: calc(100vw - 40px);
-        max-height: 70vh;
-        overflow-y: auto;
+        right: 0;
+        bottom: 75px;
     }
 }
