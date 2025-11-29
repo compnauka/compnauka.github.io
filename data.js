@@ -26,6 +26,27 @@ const CATEGORIES = [
         link: "pdfs/Pre_CodingActivity_Ravlyk_UA.pdf", 
         image: "images/41.jpg", 
         tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперовий Планшет", 
+        description: "Створи власний планшет з улюбленими іграми та застосунками.", 
+        link: "pdfs/Paper_Tablet_UA.pdf", 
+        image: "images/60.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперовий Ноутбук", 
+        description: "Збкри та розфарбуй власний ноутбук.", 
+        link: "pdfs/Paper_Laptop_UA.pdf", 
+        image: "images/61.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Шифр Цезаря", 
+        description: "Створи свій шифрувальний диск.", 
+        link: "pdfs/Cesar_Cipher_Disk_UA.pdf", 
+        image: "images/62.jpg", 
+        tags: ["3-4 класи"] 
       }
     ]
   },
