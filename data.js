@@ -47,6 +47,13 @@ const CATEGORIES = [
         link: "pdfs/Cesar_Cipher_Disk_UA.pdf", 
         image: "images/62.jpg", 
         tags: ["3-4 класи"] 
+      },
+      { 
+        name: "Піксель Арт", 
+        description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.", 
+        link: "games/snake.html", 
+        image: "images/65.jpg", 
+        tags: ["1-2 класи", "3-4 класи"] 
       }
     ]
   },
@@ -464,6 +471,20 @@ const CATEGORIES = [
         description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", 
         link: "games/spaceinviders.html", 
         image: "images/53.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Руйнівник блоків", 
+        description: "Класична аркада для одного гравця! Розвиває просторове мислення та швидкість реакції.", 
+        link: "games/arkanoid.html", 
+        image: "images/63.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Неонова хвиля", 
+        description: "ТІЛЬКИ ДЛЯ ГРАВЦІВ З МІЦНИМИ НЕРВАМИ! Розвиває просторове мислення та швидкість реакції.", 
+        link: "games/neon_wave.html", 
+        image: "images/64.jpg", 
         tags: [] 
       }
     ]
