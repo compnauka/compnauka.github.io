@@ -51,7 +51,7 @@ const CATEGORIES = [
       { 
         name: "Піксель Арт", 
         description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.", 
-        link: "games/snake.html", 
+        link: "services/pixelart.html", 
         image: "images/65.jpg", 
         tags: ["1-2 класи", "3-4 класи"] 
       }
