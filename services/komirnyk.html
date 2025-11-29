@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комірник | Табличний процесор</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8fafc;
+            user-select: none;
+            transition: background-color 0.3s;
+        }
+
+        /* --- Theme Colors CSS Variables (Default Blue) --- */
+        :root {
+            --primary-color: #2563eb; /* Blue-600 */
+            --primary-hover: #1d4ed8; /* Blue-700 */
+            --header-bg: #eff6ff;     /* Blue-50 */
+            --th-bg: #dbeafe;         /* Blue-100 */
+            --th-text: #1e40af;       /* Blue-800 */
+            --border-color: #cbd5e1;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        th {
+            background-color: var(--th-bg);
+            color: var(--th-text);
+            font-weight: 800;
+            border: 1px solid var(--border-color);
+            padding: 5px;
+            text-align: center;
+            width: 60px;
+            height: 40px;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+        }
+
+        td {
+            border: 1px solid var(--border-color);
+            height: 50px;
+            padding: 0;
+            position: relative;
+            background-color: white;
+            min-width: 80px;
+            transition: background-color 0.2s;
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            text-align: center;
+            background: transparent;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #334155;
+            cursor: cell;
+        }
+
+        .cell-input:focus {
+            cursor: text;
+            background-color: #fff;
+        }
+
+        td.selected-cell {
+            outline: 3px solid var(--primary-color);
+            outline-offset: -3px;
+            z-index: 20;
+        }
+
+        td.in-range {
+            background-color: rgba(37, 99, 235, 0.15); 
+        }
+
+        /* Animation for result insertion */
+        @keyframes result-pop {
+            0% { background-color: #fde047; transform: scale(1.05); }
+            100% { background-color: white; transform: scale(1); }
+        }
+        .highlight-result {
+            animation: result-pop 1s ease-out;
+        }
+
+        /* Custom Styles */
+        td.style-border-all { border: 3px solid #0f172a !important; }
+        td.style-bg-yellow { background-color: #fef08a !important; }
+        td.style-bg-green { background-color: #bbf7d0 !important; }
+        td.style-bg-red { background-color: #fecaca !important; }
+
+        .tool-btn {
+            transition: all 0.2s;
+        }
+        .tool-btn:active { transform: scale(0.95); }
+        
+        /* Tooltip container */
+        .tooltip-wrap { position: relative; }
+        .tooltip-wrap:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #334155;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 50;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- Header -->
+    <div id="mainHeader" class="shadow-lg z-30 flex flex-col transition-colors duration-300 bg-blue-600">
+        
+        <!-- Top Bar -->
+        <div class="p-3 flex justify-between items-center text-white">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-shapes text-2xl"></i>
+                <h1 class="font-black text-2xl tracking-wide">Юний Аналітик</h1>
+            </div>
+            
+            <div class="flex gap-2">
+                 <!-- Theme Switcher -->
+                <div class="flex bg-white/20 rounded-lg p-1 gap-1">
+                    <button onclick="setTheme('blue')" class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white cursor-pointer hover:scale-110 transition" title="Тема: Наука"></button>
+                    <button onclick="setTheme('green')" class="w-6 h-6 rounded-full bg-green-500 border-2 border-white/50 cursor-pointer hover:scale-110 transition" title="Тема: Природа"></button>
+                    <button onclick="setTheme('pink')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white/50 cursor-pointer hover:scale-110 transition" title="Тема: Творчість"></button>
+                </div>
+
+                <button onclick="loadExample()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg font-bold transition border border-white/40 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb"></i> Приклад
+                </button>
+                <button onclick="clearGrid()" class="bg-white/20 hover:bg-red-500/80 text-white px-3 py-1.5 rounded-lg font-bold transition border border-white/40 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="p-2 flex flex-wrap gap-3 bg-slate-50 border-b border-slate-200 items-center justify-center sm:justify-start">
+            
+            <!-- Math Tools -->
+            <div class="flex gap-1 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+                <div class="tooltip-wrap" data-tip="Додати числа (+)">
+                    <button onclick="insertOperator('+')" class="tool-btn w-10 h-10 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 font-bold text-xl"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="tooltip-wrap" data-tip="Відняти числа (-)">
+                    <button onclick="insertOperator('-')" class="tool-btn w-10 h-10 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 font-bold text-xl"><i class="fa-solid fa-minus"></i></button>
+                </div>
+            </div>
+
+            <div class="h-10 w-px bg-slate-300"></div>
+
+            <!-- Smart Functions -->
+            <div class="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+                <div class="tooltip-wrap" data-tip="1️⃣ Виділи → 2️⃣ Натисни = ✨ Результат">
+                    <button id="btnSum" onclick="smartMath('SUM')" class="tool-btn px-4 h-10 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-calculator"></i> СУМА
+                    </button>
+                </div>
+                <div class="tooltip-wrap" data-tip="Знайди середнє значення">
+                    <button id="btnAvg" onclick="smartMath('AVG')" class="tool-btn px-4 h-10 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-scale-balanced"></i> Середнє
+                    </button>
+                </div>
+            </div>
+
+            <div class="h-10 w-px bg-slate-300"></div>
+
+            <!-- Visuals -->
+            <div class="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+                <div class="tooltip-wrap" data-tip="Намалювати рамку">
+                    <button onclick="toggleStyle('style-border-all')" class="tool-btn w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-lg">
+                        <i class="fa-solid fa-border-all"></i>
+                    </button>
+                </div>
+                <div class="tooltip-wrap" data-tip="Зафарбувати комірку">
+                    <button onclick="cycleColor()" class="tool-btn w-10 h-10 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-lg">
+                        <i class="fa-solid fa-fill-drip"></i>
+                    </button>
+                </div>
+                <div class="tooltip-wrap" data-tip="1️⃣ Виділи дані → 2️⃣ Натисни = 📈 Графік">
+                    <button id="btnChart" onclick="generateChart()" class="tool-btn px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md flex items-center gap-2 ml-2 transition-colors">
+                        <i class="fa-solid fa-chart-pie"></i> Графік
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Bar -->
+        <div class="flex items-center px-2 py-1 bg-white border-b border-slate-200">
+            <div class="bg-slate-100 text-slate-500 font-mono font-bold px-3 py-1 rounded border border-slate-300 w-16 text-center" id="activeCellLabel">A1</div>
+            <span class="text-slate-400 mx-2 text-lg">ƒx</span>
+            <input type="text" id="formulaInput" placeholder="Тут буде формула..." 
+                   class="flex-1 p-1 bg-transparent border-none outline-none font-mono text-lg text-slate-700 placeholder-slate-300">
+            <span id="saveStatus" class="text-xs text-green-600 font-bold px-2 opacity-0 transition-opacity"><i class="fa-solid fa-check"></i> Збережено</span>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="flex-1 overflow-auto p-4 bg-slate-100 flex justify-center items-start">
+        <div class="bg-white shadow-2xl rounded-lg overflow-hidden border border-slate-300 inline-block">
+            <table id="mainTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th class="bg-slate-200 text-slate-500">#</th>
+                        <!-- Headers JS -->
+                    </tr>
+                </thead>
+                <tbody id="gridBody">
+                    <!-- Rows JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Chart Modal -->
+    <div id="chartModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-5/6 flex flex-col animate-[bounceIn_0.3s_ease-out]">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100">
+                <div class="flex items-center gap-4">
+                    <h3 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-chart-simple text-blue-500 mr-2"></i> Результат</h3>
+                    <!-- Chart Type Switcher -->
+                    <div class="flex bg-slate-100 rounded-lg p-1">
+                        <button onclick="switchChartType('bar')" id="btnTypeBar" class="px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-blue-600 transition">Стовпчики</button>
+                        <button onclick="switchChartType('pie')" id="btnTypePie" class="px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition">Пиріг</button>
+                    </div>
+                </div>
+                <button onclick="closeChart()" class="text-slate-400 hover:text-red-500 text-3xl transition">&times;</button>
+            </div>
+            <div class="flex-1 p-4 relative flex items-center justify-center bg-slate-50">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const ROWS = 10;
+        
+        let cellData = {}; 
+        let cellStyles = {}; 
+        
+        let isDragging = false;
+        let selectionStart = { col: 0, row: 1 };
+        let selectionEnd = { col: 0, row: 1 };
+        let activeCellId = 'A1';
+        
+        let chartInstance = null;
+        let currentChartType = 'bar';
+        let currentChartLabels = [];
+        let currentChartData = [];
+
+        // Themes configuration
+        const themes = {
+            blue: { header: 'bg-blue-600', th: '#dbeafe', thText: '#1e40af', select: '#2563eb' },
+            green: { header: 'bg-green-600', th: '#dcfce7', thText: '#166534', select: '#16a34a' },
+            pink: { header: 'bg-pink-500', th: '#fce7f3', thText: '#9d174d', select: '#db2777' }
+        };
+
+        // --- Init & Storage ---
+
+        function initGrid() {
+            const headerRow = document.getElementById('headerRow');
+            const gridBody = document.getElementById('gridBody');
+
+            // Headers
+            COLS.forEach(col => {
+                const th = document.createElement('th');
+                th.innerText = col;
+                headerRow.appendChild(th);
+            });
+
+            // Rows
+            for (let r = 1; r <= ROWS; r++) {
+                const tr = document.createElement('tr');
+                const thNum = document.createElement('th');
+                thNum.innerText = r;
+                tr.appendChild(thNum);
+
+                COLS.forEach((c, colIndex) => {
+                    const td = document.createElement('td');
+                    const cellId = `${c}${r}`;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = cellId;
+                    input.className = 'cell-input';
+                    input.autocomplete = 'off';
+                    
+                    td.dataset.colIdx = colIndex;
+                    td.dataset.rowIdx = r;
+                    td.dataset.id = cellId;
+
+                    // Events
+                    td.addEventListener('mousedown', (e) => handleMouseDown(e, colIndex, r, cellId));
+                    td.addEventListener('mouseenter', (e) => handleMouseEnter(e, colIndex, r));
+                    
+                    input.addEventListener('focus', () => { if(!isDragging) setActiveCell(colIndex, r, cellId); });
+                    input.addEventListener('input', (e) => { 
+                        cellData[cellId] = e.target.value; 
+                        saveState(); 
+                    });
+                    input.addEventListener('keydown', (e) => handleKeyNav(e, colIndex, r));
+                    input.addEventListener('blur', evaluateSheet);
+
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                });
+                gridBody.appendChild(tr);
+            }
+
+            document.addEventListener('mouseup', () => isDragging = false);
+            
+            loadState();
+        }
+
+        // --- Save/Load System ---
+
+        function saveState() {
+            localStorage.setItem('junior-sheet-data', JSON.stringify(cellData));
+            
+            const styles = {};
+            document.querySelectorAll('td').forEach(td => {
+                // Save custom styles and if it was highlighted
+                const cls = td.className.replace('highlight-result', '').trim();
+                if (cls.includes('style-')) {
+                    styles[td.dataset.id] = cls;
+                }
+            });
+            localStorage.setItem('junior-sheet-styles', JSON.stringify(styles));
+            localStorage.setItem('junior-sheet-theme', currentThemeName);
+
+            const badge = document.getElementById('saveStatus');
+            badge.style.opacity = '1';
+            setTimeout(() => badge.style.opacity = '0', 1000);
+        }
+
+        function loadState() {
+            const savedTheme = localStorage.getItem('junior-sheet-theme');
+            if (savedTheme) setTheme(savedTheme);
+
+            const savedData = localStorage.getItem('junior-sheet-data');
+            if (savedData) {
+                cellData = JSON.parse(savedData);
+                evaluateSheet();
+            }
+
+            const savedStyles = localStorage.getItem('junior-sheet-styles');
+            if (savedStyles) {
+                const styles = JSON.parse(savedStyles);
+                for (const [id, cls] of Object.entries(styles)) {
+                    const el = document.querySelector(`td[data-id="${id}"]`);
+                    if (el) el.className = cls;
+                }
+            }
+        }
+
+        // --- Theme System ---
+        let currentThemeName = 'blue';
+
+        function setTheme(name) {
+            currentThemeName = name;
+            const theme = themes[name];
+            const header = document.getElementById('mainHeader');
+            
+            // Update Header BG regex
+            header.className = header.className.replace(/bg-\w+-\d+/, theme.header);
+
+            const root = document.documentElement;
+            root.style.setProperty('--th-bg', theme.th);
+            root.style.setProperty('--th-text', theme.thText);
+            root.style.setProperty('--primary-color', theme.select);
+            
+            saveState();
+        }
+
+        // --- Selection Logic ---
+
+        function handleMouseDown(e, cIdx, rIdx, id) {
+            if (e.button !== 0) return; 
+            isDragging = true;
+            selectionStart = { col: cIdx, row: rIdx };
+            selectionEnd = { col: cIdx, row: rIdx };
+            setActiveCell(cIdx, rIdx, id);
+            updateSelectionUI();
+        }
+
+        function handleMouseEnter(e, cIdx, rIdx) {
+            if (isDragging) {
+                selectionEnd = { col: cIdx, row: rIdx };
+                updateSelectionUI();
+            }
+        }
+
+        function setActiveCell(cIdx, rIdx, id) {
+            activeCellId = id;
+            document.getElementById('activeCellLabel').innerText = id;
+            document.getElementById('formulaInput').value = cellData[id] || '';
+            if (!isDragging) {
+                selectionStart = selectionEnd = { col: cIdx, row: rIdx };
+                updateSelectionUI();
+            }
+        }
+
+        function updateSelectionUI() {
+            const b = getSelectionBounds();
+            document.querySelectorAll('td').forEach(td => {
+                const c = parseInt(td.dataset.colIdx);
+                const r = parseInt(td.dataset.rowIdx);
+                
+                // Keep styles, remove transient states
+                const customClasses = Array.from(td.classList).filter(cls => cls.startsWith('style-'));
+                td.className = customClasses.join(' ');
+
+                if (td.dataset.id === activeCellId) td.classList.add('selected-cell');
+                if (c >= b.cMin && c <= b.cMax && r >= b.rMin && r <= b.rMax) td.classList.add('in-range');
+            });
+        }
+
+        function getSelectionBounds() {
+            return {
+                cMin: Math.min(selectionStart.col, selectionEnd.col),
+                cMax: Math.max(selectionStart.col, selectionEnd.col),
+                rMin: Math.min(selectionStart.row, selectionEnd.row),
+                rMax: Math.max(selectionStart.row, selectionEnd.row)
+            };
+        }
+
+        // --- Math & Formulas ---
+
+        function smartMath(funcName) {
+            const b = getSelectionBounds();
+            if (b.cMin === b.cMax && b.rMin === b.rMax) {
+                alert("Спочатку виділіть декілька клітинок з числами!");
+                return;
+            }
+
+            const startCell = `${COLS[b.cMin]}${b.rMin}`;
+            const endCell = `${COLS[b.cMax]}${b.rMax}`;
+            
+            let tC = b.cMin, tR = b.rMax + 1; 
+            if (b.rMin === b.rMax && b.cMax > b.cMin) { 
+                tC = b.cMax + 1; tR = b.rMin;
+            }
+
+            if (tC >= COLS.length || tR > ROWS) {
+                alert("Немає місця для результату.");
+                return;
+            }
+
+            const tId = `${COLS[tC]}${tR}`;
+            cellData[tId] = `=${funcName}(${startCell}:${endCell})`;
+            
+            evaluateSheet();
+            setActiveCell(tC, tR, tId);
+            document.getElementById(tId).focus();
+            
+            // Animation trigger
+            const resTd = document.querySelector(`td[data-id="${tId}"]`);
+            if (resTd) {
+                resTd.classList.remove('highlight-result');
+                void resTd.offsetWidth; // trigger reflow
+                resTd.classList.add('highlight-result');
+            }
+
+            saveState();
+        }
+
+        function evaluateSheet() {
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c of COLS) {
+                    const id = `${c}${r}`;
+                    const raw = cellData[id];
+                    const input = document.getElementById(id);
+
+                    if (!raw) {
+                        if (document.activeElement !== input) input.value = '';
+                        continue;
+                    }
+
+                    if (String(raw).startsWith('=')) {
+                        try {
+                            const res = parseFormula(raw.substring(1));
+                            input.value = res;
+                        } catch { input.value = 'Помилка'; }
+                    } else {
+                        input.value = raw;
+                    }
+                }
+            }
+        }
+
+        function parseFormula(f) {
+            let p = f.toUpperCase();
+            p = p.replace(/([A-J])([1-9]|10):([A-J])([1-9]|10)/g, (m, c1, r1, c2, r2) => {
+                return expandRangeToValues(c1, parseInt(r1), c2, parseInt(r2)).join(',');
+            });
+            p = p.replace(/SUM\((.*?)\)/g, (m, a) => simpleMath(a, 'sum'));
+            p = p.replace(/AVG\((.*?)\)/g, (m, a) => simpleMath(a, 'avg'));
+            p = p.replace(/[A-J]([1-9]|10)/g, (m) => getCellValue(m));
+
+            if (/[^0-9+\-*/().\s]/.test(p)) return "ERR";
+            try {
+                // eslint-disable-next-line no-eval
+                const r = eval(p);
+                return Number.isInteger(r) ? r : parseFloat(r.toFixed(1)); 
+            } catch { return "ERR"; }
+        }
+
+        function simpleMath(args, type) {
+            const nums = args.split(',').map(n => n.trim()).filter(n => n !== '').map(n => parseFloat(n) || 0);
+            if (!nums.length) return 0;
+            const sum = nums.reduce((a,b)=>a+b, 0);
+            return type === 'sum' ? sum : sum / nums.length;
+        }
+
+        function expandRangeToValues(c1, r1, c2, r2) {
+            const list = [];
+            const cMin = Math.min(COLS.indexOf(c1), COLS.indexOf(c2));
+            const cMax = Math.max(COLS.indexOf(c1), COLS.indexOf(c2));
+            const rMin = Math.min(r1, r2);
+            const rMax = Math.max(r1, r2);
+            for(let c=cMin; c<=cMax; c++) for(let r=rMin; r<=rMax; r++) list.push(`${COLS[c]}${r}`);
+            return list;
+        }
+
+        function getCellValue(id) {
+            const val = parseFloat(document.getElementById(id).value);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function insertOperator(op) {
+            const inp = document.getElementById('formulaInput');
+            if(!inp.value.startsWith('=')) inp.value = '=' + inp.value;
+            inp.value += op;
+            cellData[activeCellId] = inp.value;
+            inp.focus();
+        }
+
+        // --- Styles & Tools ---
+
+        function toggleStyle(cls) {
+            applyToSelection(td => {
+                td.classList.toggle(cls);
+            });
+            saveState();
+        }
+
+        function cycleColor() {
+            const colors = ['style-bg-yellow', 'style-bg-green', 'style-bg-red', ''];
+            applyToSelection(td => {
+                let idx = -1;
+                colors.forEach((c, i) => { if(c && td.classList.contains(c)) idx = i; });
+                colors.forEach(c => { if(c) td.classList.remove(c); });
+                const next = colors[(idx + 1) % colors.length];
+                if(next) td.classList.add(next);
+            });
+            saveState();
+        }
+
+        function applyToSelection(cb) {
+            const b = getSelectionBounds();
+            for(let c=b.cMin; c<=b.cMax; c++) for(let r=b.rMin; r<=b.rMax; r++) {
+                const el = document.querySelector(`td[data-id="${COLS[c]}${r}"]`);
+                if(el) cb(el);
+            }
+        }
+
+        // --- Example Templates ---
+        function loadExample() {
+            if(!confirm("Завантажити приклад? Поточна робота буде замінена.")) return;
+            
+            // Clear styles
+            document.querySelectorAll('td').forEach(td => td.className = '');
+            
+            // Example Data: Fruits
+            cellData = {
+                'A1': 'Фрукти', 'B1': 'Кількість',
+                'A2': 'Яблука', 'B2': '10',
+                'A3': 'Груші',  'B3': '5',
+                'A4': 'Банани', 'B4': '12',
+                'A5': 'Сливи',  'B5': '8',
+                'A6': 'Всього:', 'B6': '=SUM(B2:B5)'
+            };
+            
+            setTimeout(() => {
+                document.querySelector('td[data-id="A1"]').classList.add('style-bg-yellow', 'style-border-all');
+                document.querySelector('td[data-id="B1"]').classList.add('style-bg-yellow', 'style-border-all');
+                document.querySelector('td[data-id="B6"]').classList.add('style-bg-green');
+            }, 100);
+
+            evaluateSheet();
+            saveState();
+
+            // Instruction Alert
+            setTimeout(() => {
+                alert("Спробуй:\n1. Виділи клітинки B2:B5 (числа)\n2. Натисни 'СУМА'\n3. Натисни 'Графік' 📊");
+            }, 600);
+        }
+
+        function clearGrid() {
+            if(!confirm("Очистити все?")) return;
+            cellData = {};
+            document.querySelectorAll('.cell-input').forEach(i => i.value = '');
+            document.querySelectorAll('td').forEach(td => td.className = '');
+            saveState();
+        }
+
+        // --- Charting ---
+
+        function generateChart() {
+            const b = getSelectionBounds();
+            currentChartLabels = [];
+            currentChartData = [];
+
+            const isTwoCols = (b.cMax - b.cMin) === 1; 
+
+            for(let r=b.rMin; r<=b.rMax; r++) {
+                if (isTwoCols) {
+                    const idLabel = `${COLS[b.cMin]}${r}`;
+                    const idVal = `${COLS[b.cMax]}${r}`;
+                    const val = getCellValue(idVal);
+                    if (document.getElementById(idVal).value.trim() !== '') {
+                        currentChartLabels.push(document.getElementById(idLabel).value || `Ряд ${r}`);
+                        currentChartData.push(val);
+                    }
+                } else {
+                    for(let c=b.cMin; c<=b.cMax; c++) {
+                        const id = `${COLS[c]}${r}`;
+                        const val = getCellValue(id);
+                        if (document.getElementById(id).value.trim() !== '') {
+                            currentChartLabels.push(id);
+                            currentChartData.push(val);
+                        }
+                    }
+                }
+            }
+
+            if(currentChartData.length === 0) {
+                alert("Виділіть клітинки з числами!");
+                return;
+            }
+
+            document.getElementById('chartModal').classList.remove('hidden');
+            renderChart();
+        }
+
+        function switchChartType(type) {
+            currentChartType = type;
+            const btnBar = document.getElementById('btnTypeBar');
+            const btnPie = document.getElementById('btnTypePie');
+            
+            if (type === 'bar') {
+                btnBar.className = "px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-blue-600 transition";
+                btnPie.className = "px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition";
+            } else {
+                btnPie.className = "px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-pink-600 transition";
+                btnBar.className = "px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition";
+            }
+            renderChart();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const isPie = currentChartType === 'pie';
+            // Expanded colors for Pie
+            const bgColors = isPie ? 
+                ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#14b8a6'] : 
+                '#3b82f6';
+
+            chartInstance = new Chart(ctx, {
+                type: currentChartType,
+                data: {
+                    labels: currentChartLabels,
+                    datasets: [{
+                        label: 'Значення',
+                        data: currentChartData,
+                        backgroundColor: bgColors,
+                        borderRadius: isPie ? 0 : 8,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: isPie, position: 'bottom' }
+                    },
+                    scales: isPie ? {} : { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function closeChart() {
+            document.getElementById('chartModal').classList.add('hidden');
+        }
+
+        function handleKeyNav(e, c, r) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                const nR = Math.min(r+1, ROWS);
+                const id = `${COLS[c]}${nR}`;
+                setActiveCell(c, nR, id);
+                document.getElementById(id).focus();
+            }
+        }
+
+        initGrid();
+        setActiveCell(0,1,'A1');
+
+    </script>
+</body>
+</html>
