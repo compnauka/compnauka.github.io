@@ -189,28 +189,28 @@ const CATEGORIES = [
         description: "Онлайн редактор для текстової мови програмування РАВЛИК", 
         link: "https://ravlyk.org", 
         image: "images/2.jpg", 
-        tags: ["2-3 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Посібник з програмування Равлика", 
         description: "Знайомство з мовою програмування РАВЛИК.", 
         link: "https://ravlyk.org/manual.html", 
         image: "images/3.jpg", 
-        tags: ["2-3 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Фермер Бот", 
         description: "Програмування робота за допомогою блоків.", 
         link: "services/farmbot/index.html", 
         image: "images/25.jpg", 
-        tags: ["2-3 класи"] 
+        tags: ["1-2 класи"] 
       },
       { 
         name: "Фермер Бот Плюс", 
         description: "Програмування робота за допомогою текстових команд.", 
         link: "services/farmbot_plus/index.html", 
         image: "images/26.jpg", 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Що таке змінні", 
@@ -246,35 +246,35 @@ const CATEGORIES = [
         description: "Дізнайся, як захистити себе в інтернеті.", 
         link: "services/cyber.html", 
         image: "images/9.jpg", 
-        tags: ["2-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Криптографія для дітей", 
         description: "Інтерактивний сайт про шифрування інформації.", 
         link: "services/crypto.html", 
         image: "images/8.jpg", 
-        tags: ["4-6 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Шифр Цезаря", 
         description: "Зашифруй своє повідомлення одним з найдавніших шифрів.", 
         link: "services/caesar_encrypt.html", 
         image: "images/6.jpg", 
-        tags: ["4-7 класи"] 
+        tags: ["3-4 класи", "5-7 класи"] 
       },
       { 
         name: "Розшифрування шифру Цезаря", 
         description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.", 
         link: "services/caesar_decrypt.html", 
         image: "images/7.jpg", 
-        tags: ["4-7 класи"] 
+        tags: ["4-7 класи", "5-7 класи"] 
       },
       { 
         name: "Перевіряй інформацію!", 
         description: "Інтерактивний тренажер з критичного оцінювання інформації.", 
         link: "services/critic.html", 
         image: "images/13.jpg", 
-        tags: ["2-4 класи"] 
+        tags: ["3-4 класи", "5-7 класи"] 
       }
     ]
   },
@@ -289,14 +289,14 @@ const CATEGORIES = [
         description: "Дізнайтесь, якими були чат-боти на початку розвитку ШІ.", 
         link: "games/eliza.html", 
         image: "images/50.jpg", 
-        tags: ["4-6 класи"] 
+        tags: ["3-4 класи", "5-7 класи"] 
       },
       { 
         name: "Штучний інтелект", 
         description: "Інтерактивний сайт про те, як працює ШІ.", 
         link: "services/ai.html", 
         image: "images/32.jpg", 
-        tags: ["4-6 класи"] 
+        tags: ["3-4 класи", "5-7 класи"] 
       },
       { 
         name: "Привіт, ШІ!", 
@@ -318,35 +318,35 @@ const CATEGORIES = [
         description: "Веселий текстовий редактор для дітей.", 
         link: "services/drukaryk.html", 
         image: "images/28.jpg", 
-        tags: ["2- класи"] 
+        tags: ["1-2 класи"] 
       },
       { 
         name: "Піксель", 
         description: "Простий піксельний графічний редактор для дітей.", 
         link: "services/pixel.html", 
         image: "images/36.jpg", 
-        tags: ["1 класи"] 
+        tags: ["1-2 класи"] 
       },
       { 
         name: "Пензлик", 
         description: "Яскравий графічний редактор для дітей.", 
         link: "services/penslyk.html", 
         image: "images/27.jpg", 
-        tags: ["2-4 класи"] 
+        tags: ["1-2 класи"] 
       },
       { 
         name: "Пензлик Плюс", 
         description: "Функціональний графічний редактор для дітей.", 
         link: "services/penslykplus.html", 
         image: "images/35.jpg" , 
-        tags: ["3-5 класи"] 
+        tags: ["3-4 класи"] 
       },
       { 
         name: "Бітовий конвертер", 
         description: "Простий конвертер з двійкової в десяткову систему.", 
         link: "services/bitconverter.html", 
         image: "images/5.jpg", 
-        tags: ["8-9 класи"] 
+        tags: ["5-6 класи"] 
       }
     ]
   },
