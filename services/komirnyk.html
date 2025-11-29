@@ -14,19 +14,15 @@
     <style>
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             user-select: none;
-            transition: background-color 0.3s;
         }
 
-        /* --- Theme Colors CSS Variables (Default Blue) --- */
         :root {
-            --primary-color: #2563eb; /* Blue-600 */
-            --primary-hover: #1d4ed8; /* Blue-700 */
-            --header-bg: #eff6ff;     /* Blue-50 */
-            --th-bg: #dbeafe;         /* Blue-100 */
-            --th-text: #1e40af;       /* Blue-800 */
-            --border-color: #cbd5e1;
+            --primary: #3b82f6;
+            --th-bg: #e2e8f0;
+            --th-text: #334155;
+            --border: #cbd5e1;
         }
 
         table {
@@ -39,23 +35,20 @@
             background-color: var(--th-bg);
             color: var(--th-text);
             font-weight: 800;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             padding: 5px;
             text-align: center;
             width: 60px;
             height: 40px;
-            font-size: 1.1rem;
-            transition: background-color 0.3s;
         }
 
         td {
-            border: 1px solid var(--border-color);
-            height: 50px;
+            border: 1px solid var(--border);
+            height: 45px;
             padding: 0;
             position: relative;
             background-color: white;
             min-width: 80px;
-            transition: background-color 0.2s;
         }
 
         .cell-input {
@@ -65,672 +58,677 @@
             outline: none;
             text-align: center;
             background: transparent;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 700;
-            color: #334155;
-            cursor: cell;
+            color: #1e293b;
         }
 
-        .cell-input:focus {
-            cursor: text;
-            background-color: #fff;
-        }
+        .cell-input:focus { background-color: #fff; }
 
         td.selected-cell {
-            outline: 3px solid var(--primary-color);
+            outline: 3px solid var(--primary);
             outline-offset: -3px;
             z-index: 20;
         }
 
-        td.in-range {
-            background-color: rgba(37, 99, 235, 0.15); 
-        }
-
-        /* Animation for result insertion */
-        @keyframes result-pop {
-            0% { background-color: #fde047; transform: scale(1.05); }
-            100% { background-color: white; transform: scale(1); }
-        }
-        .highlight-result {
-            animation: result-pop 1s ease-out;
-        }
-
-        /* Custom Styles */
-        td.style-border-all { border: 3px solid #0f172a !important; }
-        td.style-bg-yellow { background-color: #fef08a !important; }
-        td.style-bg-green { background-color: #bbf7d0 !important; }
-        td.style-bg-red { background-color: #fecaca !important; }
-
-        .tool-btn {
-            transition: all 0.2s;
-        }
-        .tool-btn:active { transform: scale(0.95); }
+        td.in-range { background-color: rgba(59, 130, 246, 0.15); }
         
-        /* Tooltip container */
-        .tooltip-wrap { position: relative; }
+        td.error-cell input { color: #dc2626; }
+        td.error-cell { background-color: #fee2e2 !important; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 1rem;
+            max-width: 400px; width: 90%; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalPop 0.2s ease-out;
+        }
+        @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
         .tooltip-wrap:hover::after {
             content: attr(data-tip);
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #334155;
-            color: white;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            z-index: 50;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            pointer-events: none;
+            position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 4px 8px;
+            border-radius: 4px; font-size: 0.75rem; white-space: nowrap; z-index: 50; pointer-events: none;
         }
+        .tooltip-wrap { position: relative; }
+
+        /* User Styles */
+        .style-border-all { border: 3px solid #0f172a !important; }
+        .style-bg-yellow { background-color: #fef08a !important; }
+        .style-bg-green { background-color: #bbf7d0 !important; }
+        .style-bg-red { background-color: #fecaca !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-800">
 
     <!-- Header -->
-    <div id="mainHeader" class="shadow-lg z-30 flex flex-col transition-colors duration-300 bg-blue-600">
-        
-        <!-- Top Bar -->
-        <div class="p-3 flex justify-between items-center text-white">
+    <div id="header" class="bg-blue-600 text-white shadow-md z-30 transition-colors duration-300">
+        <div class="p-3 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-shapes text-2xl"></i>
-                <h1 class="font-black text-2xl tracking-wide">Юний Аналітик</h1>
+                <i class="fa-solid fa-boxes-stacked text-2xl"></i>
+                <h1 class="font-black text-2xl tracking-wide">Комірник</h1>
             </div>
-            
             <div class="flex gap-2">
-                 <!-- Theme Switcher -->
                 <div class="flex bg-white/20 rounded-lg p-1 gap-1">
-                    <button onclick="setTheme('blue')" class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white cursor-pointer hover:scale-110 transition" title="Тема: Наука"></button>
-                    <button onclick="setTheme('green')" class="w-6 h-6 rounded-full bg-green-500 border-2 border-white/50 cursor-pointer hover:scale-110 transition" title="Тема: Природа"></button>
-                    <button onclick="setTheme('pink')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white/50 cursor-pointer hover:scale-110 transition" title="Тема: Творчість"></button>
+                    <button onclick="changeTheme('blue')" class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white/80" title="Наука"></button>
+                    <button onclick="changeTheme('green')" class="w-6 h-6 rounded-full bg-green-500 border-2 border-white/50" title="Природа"></button>
+                    <button onclick="changeTheme('pink')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white/50" title="Творчість"></button>
                 </div>
-
-                <button onclick="loadExample()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg font-bold transition border border-white/40 text-sm flex items-center gap-2">
+                <button onclick="askConfirm('Завантажити приклад? Поточні дані зникнуть.', loadExample)" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-bold text-sm transition border border-white/30">
                     <i class="fa-solid fa-lightbulb"></i> Приклад
                 </button>
-                <button onclick="clearGrid()" class="bg-white/20 hover:bg-red-500/80 text-white px-3 py-1.5 rounded-lg font-bold transition border border-white/40 text-sm flex items-center gap-2">
+                <button onclick="askConfirm('Очистити всю таблицю?', clearAll)" class="px-3 py-1 bg-white/20 hover:bg-red-500/80 rounded font-bold text-sm transition border border-white/30">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
         </div>
 
         <!-- Toolbar -->
-        <div class="p-2 flex flex-wrap gap-3 bg-slate-50 border-b border-slate-200 items-center justify-center sm:justify-start">
+        <div class="bg-slate-50 p-2 border-b border-slate-200 flex flex-wrap gap-3 items-center text-slate-700">
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="insertChar('+')" class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg" title="Плюс"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="insertChar('-')" class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg" title="Мінус"><i class="fa-solid fa-minus"></i></button>
+                <button onclick="insertChar('*')" class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg" title="Помножити"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="insertChar('/')" class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg" title="Поділити"><i class="fa-solid fa-divide"></i></button>
+            </div>
             
-            <!-- Math Tools -->
-            <div class="flex gap-1 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
-                <div class="tooltip-wrap" data-tip="Додати числа (+)">
-                    <button onclick="insertOperator('+')" class="tool-btn w-10 h-10 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 font-bold text-xl"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                <div class="tooltip-wrap" data-tip="Відняти числа (-)">
-                    <button onclick="insertOperator('-')" class="tool-btn w-10 h-10 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 font-bold text-xl"><i class="fa-solid fa-minus"></i></button>
-                </div>
+            <div class="w-px h-8 bg-slate-300"></div>
+
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="applyFunc('SUM')" class="px-3 h-9 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition">СУМА</button>
+                <button onclick="applyFunc('AVG')" class="px-3 h-9 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition">СЕР</button>
+                <button onclick="applyFunc('MAX')" class="px-3 h-9 rounded hover:bg-purple-100 text-purple-700 font-bold text-sm transition">МАКС</button>
+                <button onclick="applyFunc('MIN')" class="px-3 h-9 rounded hover:bg-purple-100 text-purple-700 font-bold text-sm transition">МІН</button>
             </div>
 
-            <div class="h-10 w-px bg-slate-300"></div>
+            <div class="w-px h-8 bg-slate-300"></div>
 
-            <!-- Smart Functions -->
-            <div class="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
-                <div class="tooltip-wrap" data-tip="1️⃣ Виділи → 2️⃣ Натисни = ✨ Результат">
-                    <button id="btnSum" onclick="smartMath('SUM')" class="tool-btn px-4 h-10 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold flex items-center gap-2 transition-colors">
-                        <i class="fa-solid fa-calculator"></i> СУМА
-                    </button>
-                </div>
-                <div class="tooltip-wrap" data-tip="Знайди середнє значення">
-                    <button id="btnAvg" onclick="smartMath('AVG')" class="tool-btn px-4 h-10 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold flex items-center gap-2 transition-colors">
-                        <i class="fa-solid fa-scale-balanced"></i> Середнє
-                    </button>
-                </div>
-            </div>
-
-            <div class="h-10 w-px bg-slate-300"></div>
-
-            <!-- Visuals -->
-            <div class="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-200">
-                <div class="tooltip-wrap" data-tip="Намалювати рамку">
-                    <button onclick="toggleStyle('style-border-all')" class="tool-btn w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-lg">
-                        <i class="fa-solid fa-border-all"></i>
-                    </button>
-                </div>
-                <div class="tooltip-wrap" data-tip="Зафарбувати комірку">
-                    <button onclick="cycleColor()" class="tool-btn w-10 h-10 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-lg">
-                        <i class="fa-solid fa-fill-drip"></i>
-                    </button>
-                </div>
-                <div class="tooltip-wrap" data-tip="1️⃣ Виділи дані → 2️⃣ Натисни = 📈 Графік">
-                    <button id="btnChart" onclick="generateChart()" class="tool-btn px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md flex items-center gap-2 ml-2 transition-colors">
-                        <i class="fa-solid fa-chart-pie"></i> Графік
-                    </button>
-                </div>
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="toggleStyle('style-border-all')" class="w-9 h-9 rounded hover:bg-gray-100 text-gray-700"><i class="fa-solid fa-border-all"></i></button>
+                <button onclick="cycleColor()" class="w-9 h-9 rounded hover:bg-yellow-100 text-yellow-600"><i class="fa-solid fa-fill-drip"></i></button>
+                <button onclick="makeChart()" class="px-3 h-9 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm ml-2"><i class="fa-solid fa-chart-pie"></i> Графік</button>
             </div>
         </div>
 
         <!-- Formula Bar -->
-        <div class="flex items-center px-2 py-1 bg-white border-b border-slate-200">
-            <div class="bg-slate-100 text-slate-500 font-mono font-bold px-3 py-1 rounded border border-slate-300 w-16 text-center" id="activeCellLabel">A1</div>
-            <span class="text-slate-400 mx-2 text-lg">ƒx</span>
-            <input type="text" id="formulaInput" placeholder="Тут буде формула..." 
-                   class="flex-1 p-1 bg-transparent border-none outline-none font-mono text-lg text-slate-700 placeholder-slate-300">
-            <span id="saveStatus" class="text-xs text-green-600 font-bold px-2 opacity-0 transition-opacity"><i class="fa-solid fa-check"></i> Збережено</span>
+        <div class="bg-white p-2 border-b border-slate-200 flex items-center">
+            <div class="w-12 text-center font-bold text-slate-400 border rounded bg-slate-50 mr-2 py-1" id="activeCellRef">A1</div>
+            <span class="text-slate-400 font-serif italic mr-2">fx</span>
+            <input id="formulaBar" type="text" class="flex-1 bg-transparent outline-none font-mono text-slate-700 placeholder-slate-300" placeholder="Введіть число або формулу...">
+            <span id="saveBadge" class="text-xs font-bold text-green-600 opacity-0 transition px-2">Збережено</span>
         </div>
     </div>
 
     <!-- Grid -->
-    <div class="flex-1 overflow-auto p-4 bg-slate-100 flex justify-center items-start">
-        <div class="bg-white shadow-2xl rounded-lg overflow-hidden border border-slate-300 inline-block">
-            <table id="mainTable">
-                <thead>
-                    <tr id="headerRow">
-                        <th class="bg-slate-200 text-slate-500">#</th>
-                        <!-- Headers JS -->
-                    </tr>
-                </thead>
-                <tbody id="gridBody">
-                    <!-- Rows JS -->
-                </tbody>
+    <div class="flex-1 overflow-auto bg-slate-100 p-4 flex justify-center items-start">
+        <div class="bg-white shadow-xl rounded overflow-hidden">
+            <table id="grid">
+                <thead><tr id="headRow"><th class="bg-slate-200">#</th></tr></thead>
+                <tbody id="bodyRows"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- Chart Modal -->
-    <div id="chartModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-5/6 flex flex-col animate-[bounceIn_0.3s_ease-out]">
-            <div class="flex justify-between items-center p-4 border-b border-slate-100">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-chart-simple text-blue-500 mr-2"></i> Результат</h3>
-                    <!-- Chart Type Switcher -->
-                    <div class="flex bg-slate-100 rounded-lg p-1">
-                        <button onclick="switchChartType('bar')" id="btnTypeBar" class="px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-blue-600 transition">Стовпчики</button>
-                        <button onclick="switchChartType('pie')" id="btnTypePie" class="px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition">Пиріг</button>
-                    </div>
-                </div>
-                <button onclick="closeChart()" class="text-slate-400 hover:text-red-500 text-3xl transition">&times;</button>
-            </div>
-            <div class="flex-1 p-4 relative flex items-center justify-center bg-slate-50">
-                <canvas id="myChart"></canvas>
+    <!-- Modals -->
+    <div id="msgModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="mb-4 text-4xl text-blue-500"><i class="fa-solid fa-circle-info"></i></div>
+            <h3 id="msgTitle" class="text-xl font-bold mb-2">Інфо</h3>
+            <p id="msgText" class="text-slate-600 mb-6"></p>
+            <button onclick="closeModal('msgModal')" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">Гаразд</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-slate-800">Підтвердження</h3>
+            <p id="confirmText" class="text-slate-600 mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button id="confirmBtnYes" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Так</button>
+                <button onclick="closeModal('confirmModal')" class="bg-slate-400 text-white px-6 py-2 rounded font-bold hover:bg-slate-500">Ні</button>
             </div>
         </div>
     </div>
 
+    <div id="chartModal" class="modal-overlay">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col p-4 animate-[modalPop_0.3s]">
+            <div class="flex justify-between items-center border-b pb-2 mb-2">
+                <div class="flex gap-2">
+                    <button onclick="setChartType('bar')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded font-bold text-sm">Стовпчики</button>
+                    <button onclick="setChartType('pie')" class="px-3 py-1 bg-pink-100 text-pink-700 rounded font-bold text-sm">Пиріг</button>
+                </div>
+                <button onclick="closeModal('chartModal')" class="text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 relative"><canvas id="theChart"></canvas></div>
+        </div>
+    </div>
+
     <script>
-        const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const COLS = ['A','B','C','D','E','F','G','H','I','J'];
         const ROWS = 10;
         
         let cellData = {}; 
-        let cellStyles = {}; 
-        
-        let isDragging = false;
-        let selectionStart = { col: 0, row: 1 };
-        let selectionEnd = { col: 0, row: 1 };
-        let activeCellId = 'A1';
-        
-        let chartInstance = null;
-        let currentChartType = 'bar';
-        let currentChartLabels = [];
-        let currentChartData = [];
+        let selStart = {c:0, r:1};
+        let selEnd = {c:0, r:1};
+        let activeId = 'A1';
+        let isDrag = false;
+        let chartObj = null;
+        let chartType = 'bar';
+        let confirmFn = null;
+        let calcDepth = 0;
+        const MAX_CALC_DEPTH = 50;
 
-        // Themes configuration
-        const themes = {
-            blue: { header: 'bg-blue-600', th: '#dbeafe', thText: '#1e40af', select: '#2563eb' },
-            green: { header: 'bg-green-600', th: '#dcfce7', thText: '#166534', select: '#16a34a' },
-            pink: { header: 'bg-pink-500', th: '#fce7f3', thText: '#9d174d', select: '#db2777' }
-        };
-
-        // --- Init & Storage ---
-
-        function initGrid() {
-            const headerRow = document.getElementById('headerRow');
-            const gridBody = document.getElementById('gridBody');
-
-            // Headers
-            COLS.forEach(col => {
-                const th = document.createElement('th');
-                th.innerText = col;
-                headerRow.appendChild(th);
+        function init() {
+            const hRow = document.getElementById('headRow');
+            const bRows = document.getElementById('bodyRows');
+            
+            COLS.forEach(c => {
+                let th = document.createElement('th');
+                th.innerText = c;
+                hRow.appendChild(th);
             });
 
-            // Rows
-            for (let r = 1; r <= ROWS; r++) {
-                const tr = document.createElement('tr');
-                const thNum = document.createElement('th');
-                thNum.innerText = r;
-                tr.appendChild(thNum);
+            for(let r=1; r<=ROWS; r++) {
+                let tr = document.createElement('tr');
+                let th = document.createElement('th');
+                th.innerText = r;
+                tr.appendChild(th);
 
-                COLS.forEach((c, colIndex) => {
-                    const td = document.createElement('td');
-                    const cellId = `${c}${r}`;
+                COLS.forEach((c, cIdx) => {
+                    let td = document.createElement('td');
+                    let id = `${c}${r}`;
+                    td.dataset.id = id;
+                    td.dataset.c = cIdx;
+                    td.dataset.r = r;
                     
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.id = cellId;
-                    input.className = 'cell-input';
-                    input.autocomplete = 'off';
+                    let inp = document.createElement('input');
+                    inp.id = `inp_${id}`;
+                    inp.className = 'cell-input';
+                    inp.autocomplete = 'off';
                     
-                    td.dataset.colIdx = colIndex;
-                    td.dataset.rowIdx = r;
-                    td.dataset.id = cellId;
+                    td.onmousedown = (e) => startSel(e, cIdx, r, id);
+                    td.onmouseenter = () => updateSel(cIdx, r);
+                    inp.onfocus = () => { if(!isDrag) setActive(cIdx, r, id); };
+                    
+                    inp.oninput = (e) => { 
+                        // Validation: Length Limit
+                        if (e.target.value.length > 100) {
+                            e.target.value = e.target.value.substring(0, 100);
+                        }
+                        cellData[id] = e.target.value; 
+                        
+                        // Sync formula bar safely
+                        if(activeId === id) {
+                            document.getElementById('formulaBar').value = e.target.value;
+                        }
+                        saveData(); 
+                    };
+                    
+                    inp.onkeydown = (e) => handleKey(e, cIdx, r);
+                    inp.onblur = () => recalculateAll();
 
-                    // Events
-                    td.addEventListener('mousedown', (e) => handleMouseDown(e, colIndex, r, cellId));
-                    td.addEventListener('mouseenter', (e) => handleMouseEnter(e, colIndex, r));
-                    
-                    input.addEventListener('focus', () => { if(!isDragging) setActiveCell(colIndex, r, cellId); });
-                    input.addEventListener('input', (e) => { 
-                        cellData[cellId] = e.target.value; 
-                        saveState(); 
-                    });
-                    input.addEventListener('keydown', (e) => handleKeyNav(e, colIndex, r));
-                    input.addEventListener('blur', evaluateSheet);
-
-                    td.appendChild(input);
+                    td.appendChild(inp);
                     tr.appendChild(td);
                 });
-                gridBody.appendChild(tr);
+                bRows.appendChild(tr);
             }
 
-            document.addEventListener('mouseup', () => isDragging = false);
+            document.onmouseup = () => isDrag = false;
             
-            loadState();
-        }
-
-        // --- Save/Load System ---
-
-        function saveState() {
-            localStorage.setItem('junior-sheet-data', JSON.stringify(cellData));
-            
-            const styles = {};
-            document.querySelectorAll('td').forEach(td => {
-                // Save custom styles and if it was highlighted
-                const cls = td.className.replace('highlight-result', '').trim();
-                if (cls.includes('style-')) {
-                    styles[td.dataset.id] = cls;
-                }
-            });
-            localStorage.setItem('junior-sheet-styles', JSON.stringify(styles));
-            localStorage.setItem('junior-sheet-theme', currentThemeName);
-
-            const badge = document.getElementById('saveStatus');
-            badge.style.opacity = '1';
-            setTimeout(() => badge.style.opacity = '0', 1000);
-        }
-
-        function loadState() {
-            const savedTheme = localStorage.getItem('junior-sheet-theme');
-            if (savedTheme) setTheme(savedTheme);
-
-            const savedData = localStorage.getItem('junior-sheet-data');
-            if (savedData) {
-                cellData = JSON.parse(savedData);
-                evaluateSheet();
-            }
-
-            const savedStyles = localStorage.getItem('junior-sheet-styles');
-            if (savedStyles) {
-                const styles = JSON.parse(savedStyles);
-                for (const [id, cls] of Object.entries(styles)) {
-                    const el = document.querySelector(`td[data-id="${id}"]`);
-                    if (el) el.className = cls;
-                }
-            }
-        }
-
-        // --- Theme System ---
-        let currentThemeName = 'blue';
-
-        function setTheme(name) {
-            currentThemeName = name;
-            const theme = themes[name];
-            const header = document.getElementById('mainHeader');
-            
-            // Update Header BG regex
-            header.className = header.className.replace(/bg-\w+-\d+/, theme.header);
-
-            const root = document.documentElement;
-            root.style.setProperty('--th-bg', theme.th);
-            root.style.setProperty('--th-text', theme.thText);
-            root.style.setProperty('--primary-color', theme.select);
-            
-            saveState();
-        }
-
-        // --- Selection Logic ---
-
-        function handleMouseDown(e, cIdx, rIdx, id) {
-            if (e.button !== 0) return; 
-            isDragging = true;
-            selectionStart = { col: cIdx, row: rIdx };
-            selectionEnd = { col: cIdx, row: rIdx };
-            setActiveCell(cIdx, rIdx, id);
-            updateSelectionUI();
-        }
-
-        function handleMouseEnter(e, cIdx, rIdx) {
-            if (isDragging) {
-                selectionEnd = { col: cIdx, row: rIdx };
-                updateSelectionUI();
-            }
-        }
-
-        function setActiveCell(cIdx, rIdx, id) {
-            activeCellId = id;
-            document.getElementById('activeCellLabel').innerText = id;
-            document.getElementById('formulaInput').value = cellData[id] || '';
-            if (!isDragging) {
-                selectionStart = selectionEnd = { col: cIdx, row: rIdx };
-                updateSelectionUI();
-            }
-        }
-
-        function updateSelectionUI() {
-            const b = getSelectionBounds();
-            document.querySelectorAll('td').forEach(td => {
-                const c = parseInt(td.dataset.colIdx);
-                const r = parseInt(td.dataset.rowIdx);
-                
-                // Keep styles, remove transient states
-                const customClasses = Array.from(td.classList).filter(cls => cls.startsWith('style-'));
-                td.className = customClasses.join(' ');
-
-                if (td.dataset.id === activeCellId) td.classList.add('selected-cell');
-                if (c >= b.cMin && c <= b.cMax && r >= b.rMin && r <= b.rMax) td.classList.add('in-range');
-            });
-        }
-
-        function getSelectionBounds() {
-            return {
-                cMin: Math.min(selectionStart.col, selectionEnd.col),
-                cMax: Math.max(selectionStart.col, selectionEnd.col),
-                rMin: Math.min(selectionStart.row, selectionEnd.row),
-                rMax: Math.max(selectionStart.row, selectionEnd.row)
+            // Formula Bar Sync
+            const fb = document.getElementById('formulaBar');
+            fb.oninput = (e) => {
+                if(e.target.value.length > 100) e.target.value = e.target.value.substring(0, 100);
+                cellData[activeId] = e.target.value;
+                saveData();
             };
+            fb.onkeydown = (e) => {
+                if(e.key === 'Enter') {
+                    recalculateAll();
+                    document.getElementById(`inp_${activeId}`).focus();
+                }
+            };
+
+            // Global Delete Handling
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'Delete') {
+                    const active = document.activeElement;
+                    const isFormulaBar = active.id === 'formulaBar';
+                    
+                    // Fixed Delete Logic: ALWAYS delete selection if not in formula bar.
+                    // This allows clearing single cells easily, satisfying user expectation.
+                    // Editing text inside cell will require Backspace.
+                    if (!isFormulaBar) {
+                        e.preventDefault(); 
+                        deleteSelection();
+                    }
+                }
+            });
+
+            loadData();
         }
 
-        // --- Math & Formulas ---
+        // --- Safe Math Engine ---
 
-        function smartMath(funcName) {
-            const b = getSelectionBounds();
-            if (b.cMin === b.cMax && b.rMin === b.rMax) {
-                alert("Спочатку виділіть декілька клітинок з числами!");
-                return;
-            }
+        function recalculateAll() {
+            for(let r=1; r<=ROWS; r++) {
+                for(let c of COLS) {
+                    let id = `${c}${r}`;
+                    let raw = cellData[id];
+                    let input = document.getElementById(`inp_${id}`);
+                    
+                    input.parentElement.classList.remove('error-cell');
 
-            const startCell = `${COLS[b.cMin]}${b.rMin}`;
-            const endCell = `${COLS[b.cMax]}${b.rMax}`;
-            
-            let tC = b.cMin, tR = b.rMax + 1; 
-            if (b.rMin === b.rMax && b.cMax > b.cMin) { 
-                tC = b.cMax + 1; tR = b.rMin;
-            }
-
-            if (tC >= COLS.length || tR > ROWS) {
-                alert("Немає місця для результату.");
-                return;
-            }
-
-            const tId = `${COLS[tC]}${tR}`;
-            cellData[tId] = `=${funcName}(${startCell}:${endCell})`;
-            
-            evaluateSheet();
-            setActiveCell(tC, tR, tId);
-            document.getElementById(tId).focus();
-            
-            // Animation trigger
-            const resTd = document.querySelector(`td[data-id="${tId}"]`);
-            if (resTd) {
-                resTd.classList.remove('highlight-result');
-                void resTd.offsetWidth; // trigger reflow
-                resTd.classList.add('highlight-result');
-            }
-
-            saveState();
-        }
-
-        function evaluateSheet() {
-            for (let r = 1; r <= ROWS; r++) {
-                for (let c of COLS) {
-                    const id = `${c}${r}`;
-                    const raw = cellData[id];
-                    const input = document.getElementById(id);
-
-                    if (!raw) {
-                        if (document.activeElement !== input) input.value = '';
+                    if(!raw) {
+                        if(document.activeElement !== input) input.value = '';
                         continue;
                     }
 
-                    if (String(raw).startsWith('=')) {
+                    if(String(raw).startsWith('=')) {
                         try {
-                            const res = parseFormula(raw.substring(1));
-                            input.value = res;
-                        } catch { input.value = 'Помилка'; }
+                            calcDepth = 0; 
+                            let val = evaluateFormula(raw.substring(1));
+                            input.value = val;
+                        } catch(e) {
+                            input.value = e.message;
+                            input.parentElement.classList.add('error-cell');
+                        }
                     } else {
                         input.value = raw;
                     }
                 }
             }
+            saveData();
         }
 
-        function parseFormula(f) {
-            let p = f.toUpperCase();
-            p = p.replace(/([A-J])([1-9]|10):([A-J])([1-9]|10)/g, (m, c1, r1, c2, r2) => {
-                return expandRangeToValues(c1, parseInt(r1), c2, parseInt(r2)).join(',');
-            });
-            p = p.replace(/SUM\((.*?)\)/g, (m, a) => simpleMath(a, 'sum'));
-            p = p.replace(/AVG\((.*?)\)/g, (m, a) => simpleMath(a, 'avg'));
-            p = p.replace(/[A-J]([1-9]|10)/g, (m) => getCellValue(m));
+        function evaluateFormula(expr) {
+            calcDepth++;
+            if(calcDepth > MAX_CALC_DEPTH) {
+                calcDepth = 0;
+                throw new Error("♻️ Циклічне посилання");
+            }
 
-            if (/[^0-9+\-*/().\s]/.test(p)) return "ERR";
             try {
-                // eslint-disable-next-line no-eval
-                const r = eval(p);
-                return Number.isInteger(r) ? r : parseFloat(r.toFixed(1)); 
-            } catch { return "ERR"; }
+                let clean = expr.toUpperCase();
+
+                // 1. Expand Ranges: A1:A3 -> A1,A2,A3
+                clean = clean.replace(/([A-J])([0-9]+)\s*:\s*([A-J])([0-9]+)/g, (m, c1, r1, c2, r2) => {
+                    return expandRange(c1, parseInt(r1), c2, parseInt(r2)).join(',');
+                });
+
+                // 2. Resolve Functions
+                clean = clean.replace(/(SUM|AVG|MAX|MIN)\((.*?)\)/g, (m, func, args) => {
+                    let vals = args.split(',').map(resolveValue).filter(v => !isNaN(v) && isFinite(v));
+                    if(vals.length === 0) return 0;
+                    
+                    if(func === 'SUM') return vals.reduce((a,b)=>a+b, 0);
+                    if(func === 'AVG') return vals.reduce((a,b)=>a+b, 0) / vals.length;
+                    if(func === 'MAX') return Math.max(...vals);
+                    if(func === 'MIN') return Math.min(...vals);
+                    return 0;
+                });
+
+                // 3. Resolve simple Cell References (A1, B2)
+                clean = clean.replace(/[A-J]([0-9]+)/g, (m) => resolveValue(m));
+
+                // 4. Safe Eval with strict validation
+                if(/[^0-9+\-*/().\s]/.test(clean)) throw new Error("⚠️ Помилка у формулі");
+                
+                // Prevent dangerous patterns
+                if(/\d{15,}/.test(clean)) throw new Error("🔢 Число завелике");
+                
+                let res = Function('"use strict"; return (' + clean + ')')();
+                
+                if(!isFinite(res)) throw new Error("♾️ Занадто велике");
+                
+                calcDepth--;
+                return Number.isInteger(res) ? res : parseFloat(res.toFixed(2));
+            } catch(e) {
+                calcDepth = 0;
+                // Return user-friendly error or original message
+                throw new Error(e.message || "❌ Помилка");
+            }
         }
 
-        function simpleMath(args, type) {
-            const nums = args.split(',').map(n => n.trim()).filter(n => n !== '').map(n => parseFloat(n) || 0);
-            if (!nums.length) return 0;
-            const sum = nums.reduce((a,b)=>a+b, 0);
-            return type === 'sum' ? sum : sum / nums.length;
+        function resolveValue(ref) {
+            ref = ref.trim();
+            if(!isNaN(ref)) return parseFloat(ref);
+
+            let raw = cellData[ref];
+            if(!raw) return 0;
+            
+            if(String(raw).startsWith('=')) {
+                return evaluateFormula(raw.substring(1));
+            }
+            return parseFloat(raw) || 0;
         }
 
-        function expandRangeToValues(c1, r1, c2, r2) {
-            const list = [];
-            const cMin = Math.min(COLS.indexOf(c1), COLS.indexOf(c2));
-            const cMax = Math.max(COLS.indexOf(c1), COLS.indexOf(c2));
-            const rMin = Math.min(r1, r2);
-            const rMax = Math.max(r1, r2);
-            for(let c=cMin; c<=cMax; c++) for(let r=rMin; r<=rMax; r++) list.push(`${COLS[c]}${r}`);
+        function expandRange(c1, r1, c2, r2) {
+            let list = [];
+            let ci1 = COLS.indexOf(c1), ci2 = COLS.indexOf(c2);
+            let cMin = Math.min(ci1, ci2), cMax = Math.max(ci1, ci2);
+            let rMin = Math.min(r1, r2), rMax = Math.max(r1, r2);
+
+            for(let c=cMin; c<=cMax; c++) {
+                for(let r=rMin; r<=rMax; r++) {
+                    list.push(`${COLS[c]}${r}`);
+                }
+            }
             return list;
         }
 
-        function getCellValue(id) {
-            const val = parseFloat(document.getElementById(id).value);
-            return isNaN(val) ? 0 : val;
-        }
+        // --- Interaction ---
 
-        function insertOperator(op) {
-            const inp = document.getElementById('formulaInput');
-            if(!inp.value.startsWith('=')) inp.value = '=' + inp.value;
-            inp.value += op;
-            cellData[activeCellId] = inp.value;
-            inp.focus();
-        }
-
-        // --- Styles & Tools ---
-
-        function toggleStyle(cls) {
-            applyToSelection(td => {
-                td.classList.toggle(cls);
-            });
-            saveState();
-        }
-
-        function cycleColor() {
-            const colors = ['style-bg-yellow', 'style-bg-green', 'style-bg-red', ''];
-            applyToSelection(td => {
-                let idx = -1;
-                colors.forEach((c, i) => { if(c && td.classList.contains(c)) idx = i; });
-                colors.forEach(c => { if(c) td.classList.remove(c); });
-                const next = colors[(idx + 1) % colors.length];
-                if(next) td.classList.add(next);
-            });
-            saveState();
-        }
-
-        function applyToSelection(cb) {
-            const b = getSelectionBounds();
-            for(let c=b.cMin; c<=b.cMax; c++) for(let r=b.rMin; r<=b.rMax; r++) {
-                const el = document.querySelector(`td[data-id="${COLS[c]}${r}"]`);
-                if(el) cb(el);
-            }
-        }
-
-        // --- Example Templates ---
-        function loadExample() {
-            if(!confirm("Завантажити приклад? Поточна робота буде замінена.")) return;
+        function startSel(e, c, r, id) {
+            if(e.button !== 0) return;
+            const bar = document.getElementById('formulaBar');
             
-            // Clear styles
-            document.querySelectorAll('td').forEach(td => td.className = '');
-            
-            // Example Data: Fruits
-            cellData = {
-                'A1': 'Фрукти', 'B1': 'Кількість',
-                'A2': 'Яблука', 'B2': '10',
-                'A3': 'Груші',  'B3': '5',
-                'A4': 'Банани', 'B4': '12',
-                'A5': 'Сливи',  'B5': '8',
-                'A6': 'Всього:', 'B6': '=SUM(B2:B5)'
-            };
-            
-            setTimeout(() => {
-                document.querySelector('td[data-id="A1"]').classList.add('style-bg-yellow', 'style-border-all');
-                document.querySelector('td[data-id="B1"]').classList.add('style-bg-yellow', 'style-border-all');
-                document.querySelector('td[data-id="B6"]').classList.add('style-bg-green');
-            }, 100);
-
-            evaluateSheet();
-            saveState();
-
-            // Instruction Alert
-            setTimeout(() => {
-                alert("Спробуй:\n1. Виділи клітинки B2:B5 (числа)\n2. Натисни 'СУМА'\n3. Натисни 'Графік' 📊");
-            }, 600);
-        }
-
-        function clearGrid() {
-            if(!confirm("Очистити все?")) return;
-            cellData = {};
-            document.querySelectorAll('.cell-input').forEach(i => i.value = '');
-            document.querySelectorAll('td').forEach(td => td.className = '');
-            saveState();
-        }
-
-        // --- Charting ---
-
-        function generateChart() {
-            const b = getSelectionBounds();
-            currentChartLabels = [];
-            currentChartData = [];
-
-            const isTwoCols = (b.cMax - b.cMin) === 1; 
-
-            for(let r=b.rMin; r<=b.rMax; r++) {
-                if (isTwoCols) {
-                    const idLabel = `${COLS[b.cMin]}${r}`;
-                    const idVal = `${COLS[b.cMax]}${r}`;
-                    const val = getCellValue(idVal);
-                    if (document.getElementById(idVal).value.trim() !== '') {
-                        currentChartLabels.push(document.getElementById(idLabel).value || `Ряд ${r}`);
-                        currentChartData.push(val);
-                    }
-                } else {
-                    for(let c=b.cMin; c<=b.cMax; c++) {
-                        const id = `${COLS[c]}${r}`;
-                        const val = getCellValue(id);
-                        if (document.getElementById(id).value.trim() !== '') {
-                            currentChartLabels.push(id);
-                            currentChartData.push(val);
-                        }
-                    }
-                }
-            }
-
-            if(currentChartData.length === 0) {
-                alert("Виділіть клітинки з числами!");
+            if (document.activeElement === bar && bar.value.startsWith('=')) {
+                e.preventDefault(); e.stopPropagation();
+                insertChar(id);
                 return;
             }
 
-            document.getElementById('chartModal').classList.remove('hidden');
-            renderChart();
+            isDrag = true;
+            selStart = {c, r};
+            selEnd = {c, r};
+            setActive(c, r, id);
+            renderSel();
         }
 
-        function switchChartType(type) {
-            currentChartType = type;
-            const btnBar = document.getElementById('btnTypeBar');
-            const btnPie = document.getElementById('btnTypePie');
-            
-            if (type === 'bar') {
-                btnBar.className = "px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-blue-600 transition";
-                btnPie.className = "px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition";
-            } else {
-                btnPie.className = "px-3 py-1 rounded-md text-sm font-bold bg-white shadow text-pink-600 transition";
-                btnBar.className = "px-3 py-1 rounded-md text-sm font-bold text-slate-500 hover:bg-white/50 transition";
+        function updateSel(c, r) {
+            if(isDrag) {
+                selEnd = {c, r};
+                renderSel();
             }
-            renderChart();
         }
 
-        function renderChart() {
-            const ctx = document.getElementById('myChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
+        function setActive(c, r, id) {
+            activeId = id;
+            document.getElementById('activeCellRef').innerText = id;
+            document.getElementById('formulaBar').value = cellData[id] || '';
+            
+            if(!isDrag) {
+                selStart = selEnd = {c, r};
+                renderSel();
+            }
+        }
 
-            const isPie = currentChartType === 'pie';
-            // Expanded colors for Pie
-            const bgColors = isPie ? 
-                ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#14b8a6'] : 
-                '#3b82f6';
+        function renderSel() {
+            let cMin = Math.min(selStart.c, selEnd.c), cMax = Math.max(selStart.c, selEnd.c);
+            let rMin = Math.min(selStart.r, selEnd.r), rMax = Math.max(selStart.r, selEnd.r);
 
-            chartInstance = new Chart(ctx, {
-                type: currentChartType,
+            document.querySelectorAll('td').forEach(td => {
+                let c = parseInt(td.dataset.c), r = parseInt(td.dataset.r);
+                td.classList.remove('selected-cell', 'in-range');
+                if(td.dataset.id === activeId) td.classList.add('selected-cell');
+                if(c>=cMin && c<=cMax && r>=rMin && r<=rMax) td.classList.add('in-range');
+            });
+        }
+
+        function handleKey(e, c, r) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                recalculateAll();
+                let nextR = Math.min(r+1, ROWS);
+                let nextId = `${COLS[c]}${nextR}`;
+                document.getElementById(`inp_${nextId}`).focus();
+            }
+        }
+
+        function insertChar(char) {
+            let bar = document.getElementById('formulaBar');
+            let start = bar.selectionStart;
+            let end = bar.selectionEnd;
+            let val = bar.value;
+            
+            if(!val.startsWith('=')) {
+                val = '=' + val;
+                start++; end++;
+            }
+            
+            let newVal = val.slice(0, start) + char + val.slice(end);
+            if(newVal.length > 100) return; // Limit here too
+            
+            bar.value = newVal;
+            cellData[activeId] = newVal;
+            saveData();
+            
+            bar.focus();
+            let newPos = start + char.length;
+            bar.setSelectionRange(newPos, newPos);
+        }
+
+        function deleteSelection() {
+            let b = getBounds();
+            for(let c=b.cMin; c<=b.cMax; c++) {
+                for(let r=b.rMin; r<=b.rMax; r++) {
+                    let id = `${COLS[c]}${r}`;
+                    cellData[id] = '';
+                    document.getElementById(`inp_${id}`).value = '';
+                }
+            }
+            document.getElementById('formulaBar').value = '';
+            saveData();
+        }
+
+        // --- Helpers ---
+
+        function getBounds() {
+            return {
+                cMin: Math.min(selStart.c, selEnd.c),
+                cMax: Math.max(selStart.c, selEnd.c),
+                rMin: Math.min(selStart.r, selEnd.r),
+                rMax: Math.max(selStart.r, selEnd.r)
+            };
+        }
+
+        function applyFunc(name) {
+            recalculateAll();
+            let b = getBounds();
+            
+            if(b.cMin === b.cMax && b.rMin === b.rMax) {
+                alertModal("Виділіть більше однієї клітинки!");
+                return;
+            }
+
+            let tC = b.cMin, tR = b.rMax + 1;
+            if(b.rMin === b.rMax && b.cMax > b.cMin) {
+                tC = b.cMax + 1; tR = b.rMin;
+            }
+
+            // Fixed bounds check using COLS.length
+            if(tC >= COLS.length || tR > ROWS) {
+                alertModal("Немає місця для результату.");
+                return;
+            }
+
+            let range = `${COLS[b.cMin]}${b.rMin}:${COLS[b.cMax]}${b.rMax}`;
+            let targetId = `${COLS[tC]}${tR}`;
+            
+            cellData[targetId] = `=${name}(${range})`;
+            recalculateAll();
+            document.getElementById(`inp_${targetId}`).focus();
+        }
+
+        function toggleStyle(cls) {
+            applyStyle(td => td.classList.toggle(cls));
+        }
+
+        function cycleColor() {
+            let colors = ['style-bg-yellow', 'style-bg-green', 'style-bg-red', ''];
+            applyStyle(td => {
+                let curr = -1;
+                colors.forEach((c, i) => { if(c && td.classList.contains(c)) curr = i; });
+                colors.forEach(c => { if(c) td.classList.remove(c); });
+                let next = colors[(curr+1)%colors.length];
+                if(next) td.classList.add(next);
+            });
+        }
+
+        function applyStyle(fn) {
+            let b = getBounds();
+            for(let c=b.cMin; c<=b.cMax; c++) {
+                for(let r=b.rMin; r<=b.rMax; r++) {
+                    let td = document.querySelector(`td[data-id="${COLS[c]}${r}"]`);
+                    fn(td);
+                }
+            }
+            saveData();
+        }
+
+        function makeChart() {
+            recalculateAll();
+            let b = getBounds();
+            let labels = [], data = [];
+            let isTwoCols = (b.cMax - b.cMin) === 1;
+
+            for(let r=b.rMin; r<=b.rMax; r++) {
+                let valId = isTwoCols ? `${COLS[b.cMax]}${r}` : `${COLS[b.cMin]}${r}`;
+                let lblId = isTwoCols ? `${COLS[b.cMin]}${r}` : null;
+                
+                let val = parseFloat(document.getElementById(`inp_${valId}`).value);
+                
+                if(!isNaN(val)) {
+                    data.push(val);
+                    let lbl = lblId ? document.getElementById(`inp_${lblId}`).value : `R${r}`;
+                    labels.push(lbl || `R${r}`);
+                }
+            }
+
+            if(data.length === 0) {
+                alertModal("Виділіть клітинки з числами!");
+                return;
+            }
+
+            openModal('chartModal');
+            renderChart(labels, data);
+        }
+
+        function renderChart(lbls, dats) {
+            if(chartObj) chartObj.destroy();
+            let ctx = document.getElementById('theChart').getContext('2d');
+            let isPie = chartType === 'pie';
+            
+            chartObj = new Chart(ctx, {
+                type: chartType,
                 data: {
-                    labels: currentChartLabels,
+                    labels: lbls,
                     datasets: [{
                         label: 'Значення',
-                        data: currentChartData,
-                        backgroundColor: bgColors,
-                        borderRadius: isPie ? 0 : 8,
-                        borderWidth: 2,
-                        borderColor: '#fff'
+                        data: dats,
+                        backgroundColor: isPie ? ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] : '#3b82f6',
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: isPie, position: 'bottom' }
-                    },
                     scales: isPie ? {} : { y: { beginAtZero: true } }
                 }
             });
         }
-
-        function closeChart() {
-            document.getElementById('chartModal').classList.add('hidden');
-        }
-
-        function handleKeyNav(e, c, r) {
-            if(e.key === 'Enter') {
-                e.preventDefault();
-                const nR = Math.min(r+1, ROWS);
-                const id = `${COLS[c]}${nR}`;
-                setActiveCell(c, nR, id);
-                document.getElementById(id).focus();
+        
+        function setChartType(t) {
+            chartType = t;
+            if(chartObj) {
+                renderChart(chartObj.data.labels, chartObj.data.datasets[0].data);
             }
         }
 
-        initGrid();
-        setActiveCell(0,1,'A1');
+        // --- Data Persistence ---
 
+        function saveData() {
+            localStorage.setItem('kom_data', JSON.stringify(cellData));
+            let styles = {};
+            document.querySelectorAll('td').forEach(td => {
+                if(td.className.includes('style-')) styles[td.dataset.id] = td.className;
+            });
+            localStorage.setItem('kom_styles', JSON.stringify(styles));
+            
+            const badge = document.getElementById('saveBadge');
+            badge.style.opacity = 1;
+            setTimeout(()=>badge.style.opacity=0, 1000);
+        }
+
+        function loadData() {
+            let d = localStorage.getItem('kom_data');
+            if(d) { cellData = JSON.parse(d); recalculateAll(); }
+            
+            let s = localStorage.getItem('kom_styles');
+            if(s) {
+                let styles = JSON.parse(s);
+                for(let id in styles) {
+                    let td = document.querySelector(`td[data-id="${id}"]`);
+                    if(td) td.className = styles[id];
+                }
+            }
+        }
+
+        function loadExample() {
+            clearAll(false);
+            cellData = {
+                'A1': 'Товар', 'B1': 'Ціна', 'C1': 'Шт', 'D1': 'Разом',
+                'A2': 'Ручка', 'B2': '15', 'C2': '2', 'D2': '=B2*C2',
+                'A3': 'Зошит', 'B3': '10', 'C3': '5', 'D3': '=B3*C3',
+                'A4': 'Гумка', 'B4': '5',  'C4': '1', 'D4': '=B4*C4',
+                'C5': 'СУМА:', 'D5': '=SUM(D2:D4)'
+            };
+            recalculateAll();
+            alertModal("Приклад завантажено. Спробуйте змінити кількість!");
+        }
+
+        function clearAll(ask=true) {
+            cellData = {};
+            document.querySelectorAll('input').forEach(i => { if(i.id !== 'formulaBar') i.value=''; });
+            document.querySelectorAll('td').forEach(t => t.className='');
+            saveData();
+        }
+
+        // --- UI ---
+
+        function alertModal(txt) {
+            document.getElementById('msgText').innerText = txt;
+            openModal('msgModal');
+        }
+        function askConfirm(txt, cb) {
+            document.getElementById('confirmText').innerText = txt;
+            confirmFn = cb;
+            openModal('confirmModal');
+        }
+        document.getElementById('confirmBtnYes').onclick = () => {
+            if(confirmFn) confirmFn();
+            closeModal('confirmModal');
+        };
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        const themes = {
+            blue: { header: 'bg-blue-600', th: '#e2e8f0', text: '#334155' },
+            green: { header: 'bg-green-600', th: '#dcfce7', text: '#14532d' },
+            pink: { header: 'bg-pink-500', th: '#fce7f3', text: '#831843' }
+        };
+        function changeTheme(name) {
+            let t = themes[name];
+            let h = document.getElementById('header');
+            h.className = h.className.replace(/bg-\w+-\d+/, t.header);
+            document.documentElement.style.setProperty('--th-bg', t.th);
+            document.documentElement.style.setProperty('--th-text', t.text);
+        }
+
+        init();
+        setActive(0,1,'A1');
     </script>
 </body>
 </html>
