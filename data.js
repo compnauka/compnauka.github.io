@@ -36,7 +36,7 @@ const CATEGORIES = [
       },
       { 
         name: "Паперовий Ноутбук", 
-        description: "Збкри та розфарбуй власний ноутбук.", 
+        description: "Збери та розфарбуй власний ноутбук.", 
         link: "pdfs/Paper_Laptop_UA.pdf", 
         image: "images/61.jpg", 
         tags: ["1-2 класи"] 
