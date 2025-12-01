@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Інформатика: Файли та Програми (3-4 клас)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --z-zone: 10;
+            --z-spawn: 20;
+            --z-card-idle: 30;
+            --z-card-drag: 100;
+            --z-modal: 150;
+            --z-feedback: 200;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+            background-color: #fff7ed; /* orange-50 */
+            color: #44403c; /* stone-700 */
+            overflow: hidden;
+        }
+
+        .draggable-card {
+            cursor: grab;
+            touch-action: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+            z-index: var(--z-card-idle);
+        }
+
+        .draggable-card:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: var(--z-card-drag);
+        }
+
+        .drop-zone {
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: var(--z-zone);
+        }
+
+        .drop-zone:focus-visible {
+            outline: 4px solid #f97316; /* orange-500 */
+            outline-offset: -4px;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #ffedd5; /* orange-100 */
+            border-color: #f97316; /* orange-500 */
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+        }
+        
+        .feedback-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: var(--z-feedback);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10rem;
+        }
+        .feedback-correct { background-color: rgba(34, 197, 94, 0.2); color: #16a34a; }
+        .feedback-wrong { background-color: rgba(239, 68, 68, 0.2); color: #dc2626; }
+
+        .correct-anim { animation: pulse-green 0.4s ease-in-out; }
+        .wrong-anim { animation: shake-red 0.4s ease-in-out; }
+
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: #dcfce7; }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake-red {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); background-color: #fee2e2; }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 640px) {
+            .draggable-card {
+                width: 10rem;
+                height: 10rem;
+            }
+            #card-icon {
+                font-size: 3rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col no-select">
+
+    <div id="feedback-correct" class="feedback-overlay feedback-correct" aria-hidden="true"><i class="fas fa-check-circle"></i></div>
+    <div id="feedback-wrong" class="feedback-overlay feedback-wrong" aria-hidden="true"><i class="fas fa-times-circle"></i></div>
+
+    <!-- Header -->
+    <header class="bg-orange-600 text-white p-3 shadow-md flex justify-between items-center z-30 shrink-0 relative">
+        <div class="flex items-center gap-2">
+            <div class="bg-white text-orange-600 p-2 rounded-lg">
+                <i class="fas fa-laptop-code text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-bold leading-tight">ІнфоСорт</h1>
+                <p class="text-xs text-orange-100 hidden md:block">Тренажер для 3-4 класу</p>
+            </div>
+        </div>
+        
+        <div id="game-controls" class="hidden flex items-center gap-3">
+            <div class="text-right">
+                <div class="text-xs text-orange-100">Прогрес</div>
+                <div class="font-bold text-lg"><span id="current-count">0</span> / <span id="total-count">10</span></div>
+            </div>
+            <button id="menu-btn" class="bg-orange-500 hover:bg-orange-400 text-white px-3 py-2 rounded-lg transition shadow-sm" aria-label="Повернутися до меню">
+                <i class="fas fa-home"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Menu -->
+    <main id="main-menu" class="flex-grow flex flex-col items-center justify-center p-4 bg-orange-50 overflow-y-auto z-10">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-stone-800 mb-2">Привіт! 👋</h2>
+            <p class="text-stone-500">Обери тему для тренування:</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+            <!-- Mode 1: File Types -->
+            <button onclick="Game.start('extensions')" class="group bg-white border border-orange-200 p-6 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-bl-full -mr-4 -mt-4 transition group-hover:bg-rose-100"></div>
+                <div class="relative z-10 flex flex-col items-center gap-4">
+                    <div class="w-20 h-20 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-600 shadow-inner">
+                        <i class="fas fa-file-circle-question text-4xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">Типи файлів</h3>
+                        <p class="text-stone-500 text-sm">Текстові, графічні, звукові чи відео?</p>
+                    </div>
+                </div>
+            </button>
+
+            <!-- Mode 2: Programs -->
+            <button onclick="Game.start('programs')" class="group bg-white border border-orange-200 p-6 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-teal-50 rounded-bl-full -mr-4 -mt-4 transition group-hover:bg-teal-100"></div>
+                <div class="relative z-10 flex flex-col items-center gap-4">
+                    <div class="w-20 h-20 bg-teal-100 rounded-2xl flex items-center justify-center text-teal-600 shadow-inner">
+                        <i class="fas fa-window-maximize text-4xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">Обери програму</h3>
+                        <p class="text-stone-500 text-sm">У чому відкрити файл?</p>
+                    </div>
+                </div>
+            </button>
+
+            <!-- Mode 3: Devices -->
+            <button onclick="Game.start('devices')" class="group bg-white border border-orange-200 p-6 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-violet-50 rounded-bl-full -mr-4 -mt-4 transition group-hover:bg-violet-100"></div>
+                <div class="relative z-10 flex flex-col items-center gap-4">
+                    <div class="w-20 h-20 bg-violet-100 rounded-2xl flex items-center justify-center text-violet-600 shadow-inner">
+                        <i class="fas fa-computer text-4xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">Пристрої</h3>
+                        <p class="text-stone-500 text-sm">Введення, виведення чи збереження?</p>
+                    </div>
+                </div>
+            </button>
+        </div>
+    </main>
+
+    <!-- Game Area -->
+    <main id="game-area" class="hidden flex-grow flex flex-col relative h-full overflow-hidden bg-orange-50">
+        <!-- Zones -->
+        <div id="zones-container" class="grid gap-2 p-2 h-[45%] w-full bg-white border-b shadow-sm relative" style="z-index: 10;">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Spawn Area -->
+        <div class="flex-grow relative flex items-center justify-center bg-orange-50" id="spawn-area" style="z-index: 20;">
+            <div class="absolute top-10 left-10 text-stone-200 text-8xl opacity-20 pointer-events-none"><i class="fas fa-folder-open"></i></div>
+            <div class="absolute bottom-10 right-10 text-stone-200 text-8xl opacity-20 pointer-events-none"><i class="fas fa-desktop"></i></div>
+
+            <div id="placeholder-msg" class="text-stone-400 font-bold text-xl animate-pulse absolute flex flex-col items-center">
+                <i class="fas fa-spinner fa-spin mb-2 text-3xl"></i>
+                Завантажую завдання...
+            </div>
+
+            <!-- Active Card -->
+            <div id="active-card" 
+                 role="button" 
+                 aria-grabbed="false"
+                 class="hidden draggable-card absolute w-48 h-48 bg-white border-b-4 border-teal-500 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] flex flex-col items-center justify-center p-4 select-none touch-none hover:scale-105">
+                <div class="w-full flex justify-end mb-1">
+                    <i class="fas fa-grip-lines text-stone-300"></i>
+                </div>
+                <i id="card-icon" class="fas fa-question text-6xl mb-4 text-teal-600" aria-hidden="true"></i>
+                <span id="card-text" class="text-center font-bold text-stone-800 text-lg leading-tight">...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Results Modal -->
+    <div id="result-modal" class="hidden fixed inset-0 bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300" style="z-index: 150;">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-90 transition-transform duration-300" id="modal-content">
+            <div id="modal-icon-container" class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-500 text-5xl shadow-lg ring-8 ring-yellow-50">
+                <i class="fas fa-star"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-stone-800 mb-2">Чудова робота!</h2>
+            <div class="bg-orange-50 rounded-xl p-4 mb-6 border border-orange-100">
+                <p class="text-stone-500 text-sm mb-1">Твій результат</p>
+                <div class="text-4xl font-black text-orange-600"><span id="final-score">0</span><span class="text-lg text-stone-400 font-normal">/10</span></div>
+            </div>
+            <button onclick="Game.returnToMenu()" class="w-full bg-orange-600 text-white font-bold py-4 rounded-xl hover:bg-orange-700 active:scale-95 transition shadow-lg shadow-orange-200">
+                До меню
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants ---
+        const CONSTANTS = {
+            CARDS_PER_GAME: 10,
+            ANIMATION_DURATION: 300,
+            FEEDBACK_DURATION: 600,
+            Z_INDEX: {
+                NORMAL: '30',
+                DRAG: '100'
+            }
+        };
+
+        // --- Audio System ---
+        const AudioSystem = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            
+            async play(type) {
+                try {
+                    if (this.ctx.state === 'suspended') {
+                        await this.ctx.resume();
+                    }
+                    
+                    const oscillator = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    const now = this.ctx.currentTime;
+
+                    if (type === 'correct') {
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(523.25, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(1046.5, now + 0.1);
+                        gainNode.gain.setValueAtTime(0.3, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.5);
+                    } else if (type === 'wrong') {
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(150, now);
+                        oscillator.frequency.linearRampToValueAtTime(100, now + 0.3);
+                        gainNode.gain.setValueAtTime(0.3, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.4);
+                    } else if (type === 'end') {
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(400, now);
+                        oscillator.frequency.setValueAtTime(600, now + 0.1);
+                        oscillator.frequency.setValueAtTime(800, now + 0.2);
+                        gainNode.gain.setValueAtTime(0.2, now);
+                        gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.6);
+                    }
+                } catch (error) {
+                    console.warn('Audio playback failed:', error);
+                }
+            }
+        };
+
+        // --- Data ---
+        const GameData = {
+            extensions: {
+                zones: [
+                    { id: 'text', label: 'Текстові', icon: 'fa-file-lines', color: 'border-rose-500 text-rose-700 bg-rose-50' },
+                    { id: 'image', label: 'Графічні', icon: 'fa-image', color: 'border-emerald-500 text-emerald-700 bg-emerald-50' },
+                    { id: 'audio', label: 'Звукові', icon: 'fa-music', color: 'border-violet-500 text-violet-700 bg-violet-50' },
+                    { id: 'video', label: 'Відео', icon: 'fa-video', color: 'border-sky-500 text-sky-700 bg-sky-50' }
+                ],
+                items: [
+                    { text: 'Реферат.docx', icon: 'fa-file-word', type: 'text' },
+                    { text: 'Замітка.txt', icon: 'fa-file-lines', type: 'text' },
+                    { text: 'Книга.pdf', icon: 'fa-file-pdf', type: 'text' },
+                    { text: 'Фото.jpg', icon: 'fa-file-image', type: 'image' },
+                    { text: 'Логотип.png', icon: 'fa-image', type: 'image' },
+                    { text: 'Малюнок.bmp', icon: 'fa-palette', type: 'image' },
+                    { text: 'Пісня.mp3', icon: 'fa-file-audio', type: 'audio' },
+                    { text: 'Голос.wav', icon: 'fa-microphone', type: 'audio' },
+                    { text: 'Фільм.mp4', icon: 'fa-file-video', type: 'video' },
+                    { text: 'Кліп.avi', icon: 'fa-film', type: 'video' }
+                ]
+            },
+            programs: {
+                zones: [
+                    { id: 'editor', label: 'Текстовий редактор', icon: 'fa-pen-to-square', color: 'border-indigo-500 text-indigo-700 bg-indigo-50' },
+                    { id: 'paint', label: 'Графічний редактор', icon: 'fa-palette', color: 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' },
+                    { id: 'browser', label: 'Браузер', icon: 'fa-globe', color: 'border-cyan-500 text-cyan-700 bg-cyan-50' },
+                    { id: 'player', label: 'Медіаплеєр', icon: 'fa-play', color: 'border-amber-500 text-amber-700 bg-amber-50' }
+                ],
+                items: [
+                    { text: 'Твір про літо', icon: 'fa-file-word', type: 'editor' },
+                    { text: 'Список покупок', icon: 'fa-list', type: 'editor' },
+                    { text: 'Написати вірш', icon: 'fa-pen', type: 'editor' },
+                    { text: 'Домашнє завдання', icon: 'fa-school', type: 'editor' },
+                    { text: 'Малюнок кота', icon: 'fa-cat', type: 'paint' },
+                    { text: 'Фотографія класу', icon: 'fa-camera', type: 'paint' },
+                    { text: 'Сайт школи', icon: 'fa-school', type: 'browser' },
+                    { text: 'Вікіпедія', icon: 'fa-earth-europe', type: 'browser' },
+                    { text: 'Пошук в Google', icon: 'fa-magnifying-glass', type: 'browser' },
+                    { text: 'Мультфільм', icon: 'fa-film', type: 'player' },
+                    { text: 'Улюблена пісня', icon: 'fa-music', type: 'player' }
+                ]
+            },
+            devices: {
+                zones: [
+                    { id: 'input', label: 'Введення', icon: 'fa-keyboard', color: 'border-lime-600 text-lime-800 bg-lime-50' },
+                    { id: 'output', label: 'Виведення', icon: 'fa-desktop', color: 'border-blue-500 text-blue-700 bg-blue-50' },
+                    { id: 'storage', label: 'Збереження', icon: 'fa-hard-drive', color: 'border-stone-500 text-stone-700 bg-stone-50' }
+                ],
+                items: [
+                    { text: 'Клавіатура', icon: 'fa-keyboard', type: 'input' },
+                    { text: 'Мишка', icon: 'fa-computer-mouse', type: 'input' },
+                    { text: 'Мікрофон', icon: 'fa-microphone', type: 'input' },
+                    { text: 'Веб-камера', icon: 'fa-video', type: 'input' },
+                    { text: 'Монітор', icon: 'fa-desktop', type: 'output' },
+                    { text: 'Принтер', icon: 'fa-print', type: 'output' },
+                    { text: 'Навушники', icon: 'fa-headphones', type: 'output' },
+                    { text: 'Колонки', icon: 'fa-volume-high', type: 'output' },
+                    { text: 'Флешка', icon: 'fa-usb', type: 'storage' },
+                    { text: 'Жорсткий диск', icon: 'fa-hard-drive', type: 'storage' }
+                ]
+            }
+        };
+
+        // --- Game Engine ---
+        const Game = {
+            state: {
+                currentMode: null,
+                score: 0,
+                queue: [],
+                currentCard: null,
+                totalQuestions: 0,
+                isDragging: false,
+                startX: 0,
+                startY: 0,
+                hasMistakeOnCard: false // Added flag for tracking mistakes
+            },
+            
+            els: {
+                mainMenu: document.getElementById('main-menu'),
+                gameArea: document.getElementById('game-area'),
+                zonesContainer: document.getElementById('zones-container'),
+                activeCard: document.getElementById('active-card'),
+                gameControls: document.getElementById('game-controls'),
+                currentCount: document.getElementById('current-count'),
+                totalCount: document.getElementById('total-count'),
+                resultModal: document.getElementById('result-modal'),
+                modalContent: document.getElementById('modal-content'),
+                finalScore: document.getElementById('final-score'),
+                cardIcon: document.getElementById('card-icon'),
+                cardText: document.getElementById('card-text'),
+                fbCorrect: document.getElementById('feedback-correct'),
+                fbWrong: document.getElementById('feedback-wrong')
+            },
+
+            start(modeKey) {
+                this.state.currentMode = modeKey;
+                this.state.score = 0;
+                
+                // Shuffle items
+                const allItems = [...GameData[modeKey].items];
+                for (let i = allItems.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allItems[i], allItems[j]] = [allItems[j], allItems[i]];
+                }
+                
+                this.state.queue = allItems.slice(0, CONSTANTS.CARDS_PER_GAME);
+                this.state.totalQuestions = this.state.queue.length;
+                
+                // Update UI
+                this.els.currentCount.innerText = "0";
+                this.els.totalCount.innerText = this.state.totalQuestions;
+                
+                this.els.mainMenu.classList.add('hidden');
+                this.els.gameArea.classList.remove('hidden');
+                this.els.gameControls.classList.remove('hidden');
+
+                this.renderZones();
+                this.nextCard();
+            },
+
+            renderZones() {
+                this.els.zonesContainer.innerHTML = '';
+                const zones = GameData[this.state.currentMode].zones;
+                
+                let gridClass = zones.length === 5 
+                    ? "grid grid-cols-3 md:grid-cols-5 gap-2" 
+                    : (zones.length === 3 ? "grid grid-cols-3 gap-2" : "grid grid-cols-2 md:grid-cols-4 gap-2");
+                
+                this.els.zonesContainer.className = `${gridClass} p-2 h-[45%] w-full bg-white border-b shadow-sm relative z-10`;
+
+                zones.forEach(zone => {
+                    const div = document.createElement('div');
+                    // Accessibility
+                    div.setAttribute('role', 'button');
+                    div.setAttribute('aria-label', `Категорія: ${zone.label}`);
+                    div.setAttribute('tabindex', '0');
+                    
+                    div.className = `drop-zone flex flex-col items-center justify-center p-1 md:p-2 border-2 ${zone.color} border-dashed rounded-xl h-full select-none transition-all duration-200 outline-none`;
+                    div.dataset.type = zone.id;
+                    div.innerHTML = `
+                        <div class="text-2xl md:text-3xl mb-1 opacity-80" aria-hidden="true"><i class="fas ${zone.icon}"></i></div>
+                        <span class="text-xs md:text-sm font-bold text-center leading-tight">${zone.label}</span>
+                    `;
+                    this.els.zonesContainer.appendChild(div);
+                });
+            },
+
+            nextCard() {
+                if (this.state.queue.length === 0) {
+                    this.endGame();
+                    return;
+                }
+
+                // Reset mistake flag for new card
+                this.state.hasMistakeOnCard = false;
+
+                this.els.currentCount.innerText = this.state.totalQuestions - this.state.queue.length + 1;
+                this.state.currentCard = this.state.queue.pop();
+                
+                this.els.cardText.innerText = this.state.currentCard.text;
+                this.els.cardIcon.className = `fas ${this.state.currentCard.icon} text-6xl mb-4 text-teal-600`;
+                
+                this.els.activeCard.classList.remove('hidden');
+                this.els.activeCard.setAttribute('aria-label', `Картка: ${this.state.currentCard.text}`);
+                
+                this.els.activeCard.style.opacity = '0';
+                this.els.activeCard.style.transform = 'scale(0.8)';
+                
+                this.resetCardPosition();
+                
+                requestAnimationFrame(() => {
+                    this.els.activeCard.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    this.els.activeCard.style.opacity = '1';
+                    this.els.activeCard.style.transform = 'translate(0, 0) scale(1)';
+                });
+            },
+
+            resetCardPosition() {
+                this.els.activeCard.style.left = '50%';
+                this.els.activeCard.style.top = '50%';
+                this.els.activeCard.style.marginLeft = '-6rem';
+                this.els.activeCard.style.marginTop = '-6rem';
+                this.els.activeCard.style.transform = 'translate(0, 0)';
+                this.els.activeCard.style.zIndex = CONSTANTS.Z_INDEX.NORMAL;
+            },
+
+            handleDrop(zone, isCorrect) {
+                if (isCorrect) {
+                    // Only increment score if no mistakes were made on this card
+                    if (!this.state.hasMistakeOnCard) {
+                        this.state.score++;
+                    }
+                    
+                    AudioSystem.play('correct');
+                    this.showFeedback(true);
+                    
+                    zone.classList.add('correct-anim');
+                    setTimeout(() => zone.classList.remove('correct-anim'), 400);
+                    
+                    this.els.activeCard.style.transition = 'transform 0.2s';
+                    this.els.activeCard.style.transform = 'scale(0)';
+                    
+                    setTimeout(() => this.nextCard(), 200);
+                } else {
+                    // Mark this card as having a mistake
+                    this.state.hasMistakeOnCard = true;
+
+                    AudioSystem.play('wrong');
+                    this.showFeedback(false);
+                    
+                    zone.classList.add('wrong-anim');
+                    setTimeout(() => zone.classList.remove('wrong-anim'), 400);
+                    
+                    this.els.activeCard.classList.add('wrong-anim');
+                    setTimeout(() => {
+                        this.els.activeCard.classList.remove('wrong-anim');
+                        this.resetCardPosition();
+                    }, 400);
+                }
+            },
+
+            showFeedback(isCorrect) {
+                const overlay = isCorrect ? this.els.fbCorrect : this.els.fbWrong;
+                overlay.style.opacity = '1';
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                }, CONSTANTS.FEEDBACK_DURATION);
+            },
+
+            endGame() {
+                AudioSystem.play('end');
+                this.els.activeCard.classList.add('hidden');
+                this.els.finalScore.innerText = this.state.score;
+                this.els.resultModal.classList.remove('hidden');
+                setTimeout(() => {
+                    this.els.resultModal.classList.remove('opacity-0');
+                    this.els.modalContent.classList.remove('scale-90');
+                    this.els.modalContent.classList.add('scale-100');
+                }, 50);
+            },
+
+            returnToMenu() {
+                this.els.resultModal.classList.add('opacity-0');
+                setTimeout(() => {
+                    this.els.resultModal.classList.add('hidden');
+                    this.els.gameArea.classList.add('hidden');
+                    this.els.gameControls.classList.add('hidden');
+                    this.els.mainMenu.classList.remove('hidden');
+                    this.resetCardPosition();
+                }, 300);
+            },
+
+            // Input Handlers
+            onStart(e) {
+                if (e.target.closest('#active-card')) {
+                    if (AudioSystem.ctx.state === 'suspended') {
+                        AudioSystem.ctx.resume().catch(console.warn);
+                    }
+                    
+                    this.state.isDragging = true;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    this.state.startX = clientX;
+                    this.state.startY = clientY;
+                    
+                    this.els.activeCard.style.transition = 'none';
+                    this.els.activeCard.style.zIndex = CONSTANTS.Z_INDEX.DRAG;
+                    this.els.activeCard.style.cursor = 'grabbing';
+                    this.els.activeCard.setAttribute('aria-grabbed', 'true');
+                }
+            },
+
+            onMove(e) {
+                if (!this.state.isDragging) return;
+                e.preventDefault();
+                
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                const deltaX = clientX - this.state.startX;
+                const deltaY = clientY - this.state.startY;
+                
+                this.els.activeCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05) rotate(${deltaX * 0.05}deg)`;
+                
+                this.checkHover(clientX, clientY);
+            },
+
+            onEnd(e) {
+                if (!this.state.isDragging) return;
+                this.state.isDragging = false;
+                
+                this.els.activeCard.style.cursor = 'grab';
+                this.els.activeCard.setAttribute('aria-grabbed', 'false');
+
+                // Collision Detection
+                const rect = this.els.activeCard.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const zones = document.querySelectorAll('.drop-zone');
+                let dropped = false;
+
+                zones.forEach(zone => {
+                    const zoneRect = zone.getBoundingClientRect();
+                    if (centerX >= zoneRect.left && centerX <= zoneRect.right &&
+                        centerY >= zoneRect.top && centerY <= zoneRect.bottom) {
+                        
+                        dropped = true;
+                        const isCorrect = zone.dataset.type === this.state.currentCard.type;
+                        this.handleDrop(zone, isCorrect);
+                    }
+                    zone.classList.remove('drag-over');
+                });
+
+                if (!dropped) {
+                    this.els.activeCard.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    this.els.activeCard.style.transform = 'translate(0, 0)';
+                    this.els.activeCard.style.zIndex = CONSTANTS.Z_INDEX.NORMAL;
+                }
+            },
+
+            checkHover(x, y) {
+                const zones = document.querySelectorAll('.drop-zone');
+                zones.forEach(zone => {
+                    const rect = zone.getBoundingClientRect();
+                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                        if (!zone.classList.contains('drag-over')) {
+                            zone.classList.add('drag-over');
+                        }
+                    } else {
+                        zone.classList.remove('drag-over');
+                    }
+                });
+            }
+        };
+
+        // Event Listeners
+        document.getElementById('menu-btn').addEventListener('click', () => Game.returnToMenu());
+
+        const card = document.getElementById('active-card');
+        card.addEventListener('mousedown', (e) => Game.onStart(e));
+        card.addEventListener('touchstart', (e) => Game.onStart(e), { passive: false });
+
+        document.addEventListener('mousemove', (e) => Game.onMove(e));
+        document.addEventListener('touchmove', (e) => Game.onMove(e), { passive: false });
+
+        document.addEventListener('mouseup', (e) => Game.onEnd(e));
+        document.addEventListener('touchend', (e) => Game.onEnd(e));
+
+    </script>
+</body>
+</html>
