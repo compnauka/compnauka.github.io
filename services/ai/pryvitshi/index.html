@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Привіт, ШІ! | Інтерактивна книга</title>
+    <title>Привіт, ШІ! - Інтерактивна книга</title>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Інтерактивна книга про штучний інтелект для дітей. Дізнайся, що таке ШІ, як він працює та як безпечно його використовувати.">
@@ -18,6 +18,12 @@
     <style>
         body { font-family: 'Nunito', sans-serif; }
         
+        /* Fix for mobile height issues */
+        .h-dvh {
+            height: 100vh; /* Fallback */
+            height: 100dvh; /* Dynamic viewport height */
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -44,10 +50,10 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 h-full flex flex-col md:flex-row overflow-hidden text-slate-900">
+<body class="bg-slate-100 h-dvh flex flex-col md:flex-row overflow-hidden text-slate-900">
 
     <!-- Mobile Header -->
-    <header class="md:hidden bg-white border-b border-slate-300 p-4 flex justify-between items-center z-20 shrink-0 shadow-sm">
+    <header class="md:hidden bg-white border-b border-slate-300 p-4 flex justify-between items-center z-20 shrink-0 shadow-sm fixed top-0 left-0 right-0 h-16">
         <div class="flex items-center gap-2">
             <div class="w-9 h-9 rounded-full bg-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-sm">AI</div>
             <h1 class="font-extrabold text-slate-900 tracking-tight">Привіт, ШІ!</h1>
@@ -60,7 +66,7 @@
     </header>
 
     <!-- Sidebar / Navigation -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-300 ease-in-out z-30 w-80 bg-white border-r border-slate-300 flex flex-col shadow-2xl md:shadow-none">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-300 ease-in-out z-40 w-80 bg-white border-r border-slate-300 flex flex-col shadow-2xl md:shadow-none h-dvh">
         <div class="p-6 border-b border-slate-200 hidden md:flex items-center gap-3 bg-slate-50">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -86,17 +92,18 @@
     </aside>
 
     <!-- Overlay for mobile menu -->
-    <div id="overlay" class="fixed inset-0 bg-slate-900/60 z-20 hidden md:hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
+    <div id="overlay" class="fixed inset-0 bg-slate-900/60 z-30 hidden md:hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-full relative w-full bg-[#f3f6f9]">
+    <main class="flex-1 flex flex-col h-full relative w-full bg-[#f3f6f9] pt-16 md:pt-0">
         <!-- Chat Container -->
-        <div id="chatWindow" aria-live="polite" aria-atomic="false" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
+        <!-- Added pb-24 for mobile to ensure content isn't hidden behind fixed nav -->
+        <div id="chatWindow" aria-live="polite" aria-atomic="false" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth pb-28 md:pb-8">
             <!-- Messages will appear here -->
         </div>
 
-        <!-- Sticky Bottom Navigation (Hidden on Cover Page) -->
-        <div id="bottomNav" class="p-4 bg-white border-t border-slate-300 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-transform duration-300">
+        <!-- Sticky Bottom Navigation (Fixed on Mobile, Flex on Desktop) -->
+        <div id="bottomNav" class="fixed bottom-0 left-0 w-full md:relative md:w-auto md:inset-auto p-4 bg-white border-t border-slate-300 shrink-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-transform duration-300">
             <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
                 <button id="prevBtn" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-700 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-bold text-base border border-slate-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
