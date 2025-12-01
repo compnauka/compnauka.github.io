@@ -370,6 +370,13 @@ const CATEGORIES = [
         tags: ["3-4 класи"] 
       },
       { 
+        name: "Комірник", 
+        description: "Спрощщений табличний процесор для дітей.", 
+        link: "services/komirnyk.html", 
+        image: "images/66.jpg" , 
+        tags: ["3-4 класи"] 
+      },
+      { 
         name: "Бітовий конвертер", 
         description: "Простий конвертер з двійкової в десяткову систему.", 
         link: "services/bitconverter.html", 
