@@ -32,8 +32,11 @@
                     },
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
-                        'btn': '0 4px 0 0 rgba(0,0,0,0.1)',
+                        'btn': '0 3px 0 0 rgba(0,0,0,0.1)',
                         'btn-active': '0 0 0 0 rgba(0,0,0,0)',
+                    },
+                    screens: {
+                        'xs': '480px',
                     }
                 }
             }
@@ -46,20 +49,17 @@
             background-color: #DBEAFE;
             background-image: radial-gradient(#93C5FD 2px, transparent 2px);
             background-size: 24px 24px;
-            overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
         }
         
-        /* Custom scrollbar */
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Hide scrollbar logic */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* Editor focus */
         #text-area:focus { outline: none; }
 
         /* Button interactions */
-        .tool-btn { transition: all 0.15s ease; }
+        .tool-btn { transition: transform 0.1s ease, box-shadow 0.1s ease; }
         .tool-btn:active { transform: translateY(2px); box-shadow: none !important; }
         
         /* Color swatch selected state */
@@ -75,18 +75,12 @@
             color: #94a3b8;
             font-style: italic;
         }
-
-        /* Mobile Adjustments */
-        @media (max-width: 640px) {
-            .tool-btn { padding: 6px; height: 36px; width: 36px; font-size: 14px; }
-            h1 { font-size: 1.5rem; }
-        }
     </style>
 </head>
-<body class="font-sans text-gray-900 h-dvh flex flex-col items-center py-2 sm:py-4 px-2 sm:px-4 overflow-hidden">
+<body class="font-sans text-gray-900 min-h-screen flex flex-col items-center pb-24 sm:pb-8">
 
     <!-- Header -->
-    <header class="flex items-center gap-3 mb-2 shrink-0">
+    <header class="flex items-center gap-3 py-4 px-4 w-full justify-center max-w-5xl">
         <div class="bg-white p-2 rounded-full shadow-md border-2 border-indigo-500">
             <i class="fas fa-feather-alt text-xl text-indigo-600"></i>
         </div>
@@ -94,97 +88,105 @@
     </header>
 
     <!-- Main Workspace -->
-    <main class="w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col border-4 border-indigo-100 flex-grow overflow-hidden relative">
+    <main class="w-full max-w-4xl bg-white sm:rounded-2xl shadow-xl flex flex-col border-y-4 sm:border-4 border-indigo-100 relative overflow-hidden">
         
-        <!-- TOOLBAR -->
-        <div class="bg-indigo-50/80 p-2 border-b-2 border-indigo-100 flex flex-wrap gap-2 items-center justify-between shrink-0 overflow-x-auto custom-scroll">
+        <!-- TOOLBAR (Sticky Top) -->
+        <div class="bg-indigo-50/95 backdrop-blur-sm p-2 border-b-2 border-indigo-100 sticky top-0 z-20">
             
-            <div class="flex items-center gap-2">
-                <!-- History -->
-                <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
-                    <button onclick="document.execCommand('undo')" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn" title="Назад"><i class="fas fa-undo"></i></button>
-                    <button onclick="document.execCommand('redo')" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn" title="Вперед"><i class="fas fa-redo"></i></button>
-                </div>
-
-                <!-- Formatting -->
-                <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
-                    <button id="bold-btn" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 font-bold text-lg shadow-btn">Ж</button>
-                    <button id="italic-btn" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 italic text-lg shadow-btn">К</button>
-                    <button id="underline-btn" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 underline text-lg shadow-btn">Ч</button>
-                </div>
+            <!-- Tools Row -->
+            <!-- md:justify-between ensures items spread out on larger screens -->
+            <div class="flex items-center gap-3 overflow-x-auto no-scrollbar px-1 py-1 md:justify-between">
                 
-                <!-- Alignment (Hidden on very small screens if needed, or scrollable) -->
-                <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm hidden sm:flex">
-                     <button id="align-left-btn" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 shadow-btn"><i class="fas fa-align-left"></i></button>
-                     <button id="align-center-btn" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 shadow-btn"><i class="fas fa-align-center"></i></button>
+                <!-- LEFT GROUP: Edit Tools -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <!-- History -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button onclick="document.execCommand('undo')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn flex items-center justify-center" title="Назад"><i class="fas fa-undo"></i></button>
+                        <button onclick="document.execCommand('redo')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn flex items-center justify-center" title="Вперед"><i class="fas fa-redo"></i></button>
+                    </div>
+
+                    <!-- Formatting (Increased size) -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button id="bold-btn" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-bold text-xl shadow-btn text-gray-800">Ж</button>
+                        <button id="italic-btn" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 italic text-xl shadow-btn text-gray-800">К</button>
+                        <button id="underline-btn" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 underline text-xl shadow-btn text-gray-800">Ч</button>
+                    </div>
+
+                    <!-- Size (Increased size) -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button id="decrease-font" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-bold shadow-btn text-base text-gray-800 flex items-center justify-center"><i class="fas fa-minus"></i></button>
+                        <button id="increase-font" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-bold shadow-btn text-base text-gray-800 flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                    </div>
                 </div>
 
-                <!-- Size -->
-                <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
-                    <button id="decrease-font" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 font-bold shadow-btn text-sm"><i class="fas fa-minus"></i></button>
-                    <button id="increase-font" class="tool-btn w-9 h-9 rounded bg-gray-50 hover:bg-indigo-100 font-bold shadow-btn text-sm"><i class="fas fa-plus"></i></button>
+                <!-- RIGHT GROUP: Colors -->
+                <!-- ml-auto forces it to the right on mobile if there's space, and definitely on desktop -->
+                <div class="flex gap-2 items-center bg-white px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm shrink-0 ml-auto">
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-gray-900 active" data-color="#111827"></button>
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-red-500" data-color="#EF4444"></button>
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-blue-500" data-color="#3B82F6"></button>
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-green-500" data-color="#22C55E"></button>
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-purple-500" data-color="#A855F7"></button>
+                    <button class="color-swatch tool-btn w-8 h-8 rounded-full bg-orange-500" data-color="#F97316"></button>
                 </div>
             </div>
 
-            <!-- Colors -->
-            <div class="flex gap-2 items-center bg-white px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm ml-auto">
-                <button class="color-swatch tool-btn w-6 h-6 rounded-full bg-gray-900 active" data-color="#111827"></button>
-                <button class="color-swatch tool-btn w-6 h-6 rounded-full bg-red-500" data-color="#EF4444"></button>
-                <button class="color-swatch tool-btn w-6 h-6 rounded-full bg-blue-500" data-color="#3B82F6"></button>
-                <button class="color-swatch tool-btn w-6 h-6 rounded-full bg-green-500" data-color="#22C55E"></button>
-                <button class="color-swatch tool-btn w-6 h-6 rounded-full bg-purple-500" data-color="#A855F7"></button>
+            <!-- EMOJI BAR -->
+            <!-- md:justify-center centers emojis on larger screens -->
+            <div id="emoji-container" class="mt-2 flex gap-3 overflow-x-auto no-scrollbar items-center px-1 pb-1 md:justify-center">
+                <!-- Populated via JS -->
             </div>
-        </div>
-
-        <!-- EMOJI BAR -->
-        <div id="emoji-container" class="bg-indigo-50/30 border-b border-indigo-100 px-3 py-2 flex gap-3 overflow-x-auto custom-scroll shrink-0 min-h-[48px] items-center">
-            <!-- Populated via JS -->
         </div>
 
         <!-- EDITOR AREA -->
-        <div class="bg-gray-100 flex-grow flex justify-center overflow-hidden relative">
-            <div class="w-full h-full overflow-y-auto custom-scroll p-4 md:p-6 flex flex-col items-center">
+        <div class="bg-gray-100 flex-grow relative w-full">
+            <div class="w-full p-4 md:p-8 flex flex-col items-center min-h-[500px]">
+                
+                <!-- Paper Sheet -->
                 <div id="text-area" 
                      contenteditable="true" 
-                     class="w-full max-w-3xl bg-white min-h-[60vh] p-8 text-xl leading-relaxed text-gray-900 shadow-soft rounded-lg"
+                     class="w-full max-w-3xl bg-white p-6 md:p-10 text-xl leading-relaxed text-gray-900 shadow-soft rounded-lg transition-all"
+                     style="min-height: 300px;"
                      data-placeholder="Привіт! Напиши тут свою історію..."></div>
                 
-                <!-- Word Count (Under the sheet) -->
-                <div class="mt-4 text-gray-400 text-sm font-semibold bg-gray-200/50 px-4 py-1 rounded-full select-none">
+                <!-- Stats Badge -->
+                <div class="mt-6 mb-4 text-gray-500 text-xs sm:text-sm font-bold bg-white/80 border border-gray-200 px-4 py-1.5 rounded-full select-none shadow-sm">
                     <span id="stats-words">0 слів</span> &bull; <span id="stats-chars">0 символів</span>
                 </div>
-                
-                <!-- Bottom spacer for scrolling -->
-                <div class="h-8 shrink-0"></div>
             </div>
         </div>
+    </main>
 
-        <!-- FOOTER ACTIONS -->
-        <div class="bg-white p-3 border-t border-indigo-100 flex flex-wrap justify-between items-center gap-3 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    <!-- FOOTER ACTIONS (Sticky Bottom) -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-indigo-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-30 flex justify-center">
+        <div class="w-full max-w-5xl flex justify-between items-center px-2 sm:px-4 gap-3">
             
             <div class="flex gap-2">
-                <button id="clear-btn" class="tool-btn px-4 py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 font-bold border-2 border-transparent hover:border-red-200 shadow-btn flex items-center gap-2 text-sm">
-                    <i class="fas fa-trash-alt"></i> <span class="hidden sm:inline">Стерти</span>
+                <button id="clear-btn" class="tool-btn px-3 sm:px-4 h-11 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 font-bold border-2 border-transparent hover:border-red-200 shadow-btn flex items-center justify-center gap-2 text-lg sm:text-sm" title="Стерти">
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="hidden sm:inline">Стерти</span>
                 </button>
                 
-                <label class="tool-btn cursor-pointer px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold border-2 border-transparent hover:border-blue-200 shadow-btn flex items-center gap-2 text-sm">
-                    <i class="fas fa-folder-open"></i> <span class="hidden sm:inline">Відкрити</span>
+                <label class="tool-btn cursor-pointer px-3 sm:px-4 h-11 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold border-2 border-transparent hover:border-blue-200 shadow-btn flex items-center justify-center gap-2 text-lg sm:text-sm" title="Відкрити">
+                    <i class="fas fa-folder-open"></i>
                     <input type="file" id="file-upload" accept=".txt" class="hidden">
+                    <span class="hidden sm:inline">Відкрити</span>
                 </label>
             </div>
 
             <div class="flex gap-2 items-center">
-                <button id="copy-btn" class="tool-btn px-4 py-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 font-bold border-2 border-transparent hover:border-gray-200 shadow-btn hidden sm:flex items-center gap-2 text-sm">
+                <button id="copy-btn" class="tool-btn px-4 h-11 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 font-bold border-2 border-transparent hover:border-gray-200 shadow-btn hidden sm:flex items-center gap-2 text-sm">
                     <i class="fas fa-copy"></i> Копіювати
                 </button>
                 
                 <!-- Main Save Button -->
-                <button id="main-save-btn" class="tool-btn px-6 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-[0_4px_0_0_#3730a3] active:shadow-none active:translate-y-1 transition-all flex items-center gap-2 text-base">
-                    <i class="fas fa-save"></i> Зберегти
+                <button id="main-save-btn" class="tool-btn px-6 h-11 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-[0_4px_0_0_#3730a3] active:shadow-none active:translate-y-1 transition-all flex items-center gap-2 text-base">
+                    <i class="fas fa-save"></i> 
+                    <span class="hidden sm:inline">Зберегти</span>
                 </button>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- UI Components (Toasts/Modals) -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -204,12 +206,12 @@
                 <button id="modal-confirm" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">Так!</button>
             </div>
 
-            <!-- Save Options Buttons (Hidden by default) -->
+            <!-- Save Options Buttons -->
             <div id="modal-actions-save" class="hidden flex flex-col gap-3">
                 <button id="save-html-opt" class="w-full px-4 py-3 rounded-xl bg-indigo-100 text-indigo-700 font-bold hover:bg-indigo-200 flex items-center justify-center gap-3 border-2 border-indigo-200 text-left transition">
                     <span class="text-2xl">🎨</span>
                     <div class="flex flex-col items-start">
-                        <span>Як казку</span>
+                        <span>Як історію</span>
                         <span class="text-xs font-normal opacity-75">Зберегти кольори (.html)</span>
                     </div>
                 </button>
@@ -245,7 +247,6 @@
                 }, 3000);
             },
 
-            // Універсальне модальне вікно
             showModal(options) {
                 const overlay = document.getElementById('modal-overlay');
                 const title = document.getElementById('modal-title');
@@ -257,46 +258,28 @@
                 title.textContent = options.title || 'Повідомлення';
                 msg.textContent = options.message || '';
                 
-                // Reset views
                 standardActions.classList.add('hidden');
                 saveActions.classList.add('hidden');
                 
                 const close = () => {
                     overlay.classList.add('hidden');
-                    // Cleanup listeners
                     const newOverlay = overlay.cloneNode(true);
                     overlay.parentNode.replaceChild(newOverlay, overlay);
                 };
 
-                // Type: Confirm (Yes/No)
                 if (options.type === 'confirm') {
                     standardActions.classList.remove('hidden');
                     icon.innerHTML = '<i class="fas fa-question"></i>';
-                    
-                    document.getElementById('modal-confirm').onclick = () => {
-                        if(options.onConfirm) options.onConfirm();
-                        close();
-                    };
+                    document.getElementById('modal-confirm').onclick = () => { if(options.onConfirm) options.onConfirm(); close(); };
                     document.getElementById('modal-cancel').onclick = close;
-                }
-                
-                // Type: Save Selection
-                else if (options.type === 'save') {
+                } else if (options.type === 'save') {
                     saveActions.classList.remove('hidden');
                     icon.innerHTML = '<i class="fas fa-save"></i>';
-                    
-                    document.getElementById('save-html-opt').onclick = () => {
-                        if(options.onHtml) options.onHtml();
-                        close();
-                    };
-                    document.getElementById('save-txt-opt').onclick = () => {
-                        if(options.onTxt) options.onTxt();
-                        close();
-                    };
+                    document.getElementById('save-html-opt').onclick = () => { if(options.onHtml) options.onHtml(); close(); };
+                    document.getElementById('save-txt-opt').onclick = () => { if(options.onTxt) options.onTxt(); close(); };
                     document.getElementById('modal-close-save').onclick = close;
                 }
 
-                // Show
                 overlay.classList.remove('hidden');
                 overlay.onclick = (e) => { if (e.target === overlay) close(); };
             }
@@ -312,7 +295,6 @@
                     statsChars: document.getElementById('stats-chars'),
                     emojiContainer: document.getElementById('emoji-container')
                 };
-                
                 this.init();
             }
 
@@ -320,21 +302,17 @@
                 this.setupEmojis();
                 this.bindEvents();
                 this.loadDraft();
-                this.updateStats(); // Initial count
-                
-                // Auto-save every 30s
+                this.updateStats();
                 setInterval(() => this.saveDraft(), 30000);
             }
 
             setupEmojis() {
                 const emojis = ['🐶','🐱','🐭','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🦄','🐞','🦋','🦖','🚀','🏰','🌈','🍕','🍦','🎈'];
-                // Shuffle and pick 10
                 const picks = emojis.sort(() => 0.5 - Math.random()).slice(0, 10);
-                
                 this.els.emojiContainer.innerHTML = '';
                 picks.forEach(e => {
                     const btn = document.createElement('button');
-                    btn.className = 'text-2xl hover:scale-125 transition cursor-pointer p-1 select-none';
+                    btn.className = 'text-2xl hover:scale-125 transition cursor-pointer p-1 select-none shrink-0';
                     btn.textContent = e;
                     btn.onclick = () => {
                         this.els.area.focus();
@@ -346,10 +324,8 @@
             }
 
             bindEvents() {
-                // Input handling & Stats
                 this.els.area.addEventListener('input', () => this.updateStats());
                 
-                // Character limit enforcement
                 this.els.area.addEventListener('keydown', (e) => {
                     const len = this.els.area.innerText.length;
                     const navKeys = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
@@ -359,7 +335,6 @@
                     }
                 });
 
-                // Paste Handling (Plain text only)
                 this.els.area.addEventListener('paste', (e) => {
                     e.preventDefault();
                     const text = (e.clipboardData || window.clipboardData).getData('text');
@@ -367,19 +342,12 @@
                     this.updateStats();
                 });
 
-                // Toolbar Actions
-                const cmds = ['bold','italic','underline','justifyLeft','justifyCenter'];
-                // Bind standard commands (ids must match standard: bold-btn, etc.)
                 document.getElementById('bold-btn').onclick = () => this.cmd('bold');
                 document.getElementById('italic-btn').onclick = () => this.cmd('italic');
                 document.getElementById('underline-btn').onclick = () => this.cmd('underline');
-                if(document.getElementById('align-left-btn')) document.getElementById('align-left-btn').onclick = () => this.cmd('justifyLeft');
-                if(document.getElementById('align-center-btn')) document.getElementById('align-center-btn').onclick = () => this.cmd('justifyCenter');
-                
                 document.getElementById('increase-font').onclick = () => document.execCommand('fontSize', false, '5');
                 document.getElementById('decrease-font').onclick = () => document.execCommand('fontSize', false, '3');
 
-                // Colors
                 document.querySelectorAll('.color-swatch').forEach(btn => {
                     btn.onclick = () => {
                         document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
@@ -389,7 +357,6 @@
                     };
                 });
 
-                // File Operations
                 document.getElementById('clear-btn').onclick = () => {
                     if(!this.els.area.innerText.trim()) return;
                     UI.showModal({
@@ -413,10 +380,8 @@
 
                 document.getElementById('file-upload').onchange = (e) => this.loadFile(e);
 
-                // --- NEW SAVE LOGIC ---
                 document.getElementById('main-save-btn').onclick = () => {
                     if (!this.els.area.innerText.trim()) return UI.toast('Напиши щось спочатку!', 'warning');
-                    
                     UI.showModal({
                         type: 'save',
                         title: 'Зберегти роботу',
@@ -435,9 +400,7 @@
             updateStats() {
                 const text = this.els.area.innerText || '';
                 const chars = text.length;
-                // Count words avoiding empty strings
                 const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-                
                 this.els.statsWords.textContent = `${words} слів`;
                 this.els.statsChars.textContent = `${chars} символів`;
             }
@@ -446,20 +409,15 @@
                 const content = this.els.area.innerHTML;
                 const plainText = this.els.area.innerText;
                 let blob, filename, ext;
-
                 if (type === 'txt') {
                     blob = new Blob([plainText], { type: 'text/plain' });
                     ext = 'txt';
                 } else {
-                    const fullHtml = `
-<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Моя казка</title>
-<style>body{font-family:sans-serif;padding:40px;background:#f0f9ff;color:#111827}.paper{background:white;padding:40px;border-radius:20px;box-shadow:0 4px 15px rgba(0,0,0,0.1);font-size:20px;line-height:1.6;max-width:800px;margin:0 auto}</style>
-</head><body><div class="paper">${content}</div></body></html>`;
+                    const fullHtml = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Моя історія</title><style>body{font-family:sans-serif;padding:40px;background:#f0f9ff;color:#111827}.paper{background:white;padding:40px;border-radius:20px;box-shadow:0 4px 15px rgba(0,0,0,0.1);font-size:20px;line-height:1.6;max-width:800px;margin:0 auto}</style></head><body><div class="paper">${content}</div></body></html>`;
                     blob = new Blob([fullHtml], { type: 'text/html' });
                     ext = 'html';
                 }
-
-                filename = `казка_${new Date().toLocaleDateString()}.${ext}`;
+                filename = `історія_${new Date().toLocaleDateString()}.${ext}`;
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = filename;
@@ -472,8 +430,7 @@
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    const text = evt.target.result;
-                    this.els.area.innerText = text;
+                    this.els.area.innerText = evt.target.result;
                     this.updateStats();
                     UI.toast('Файл відкрито!', 'success');
                     e.target.value = '';
@@ -504,7 +461,6 @@
             }
         }
 
-        // Start
         document.addEventListener('DOMContentLoaded', () => window.editor = new Editor());
     </script>
 </body>
