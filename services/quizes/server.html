@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Місія: Порятунок Сервера</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'pixel': ['"Press Start 2P"', 'cursive'],
+                        'body': ['"Nunito"', 'sans-serif'],
+                    },
+                    colors: {
+                        'terminal-green': '#0f0',
+                        'terminal-bg': '#0d1117',
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-short': 'bounce 0.5s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Nunito', sans-serif; user-select: none; }
+        .typing-effect::after { content: '|'; animation: blink 1s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .spark {
+            position: absolute; width: 4px; height: 4px; background-color: #ff4500;
+            border-radius: 50%; pointer-events: none; z-index: 100;
+        }
+
+        .key-hint {
+            display: inline-block; width: 20px; height: 20px; border: 1px solid #aaa;
+            border-radius: 4px; text-align: center; line-height: 18px; font-size: 10px;
+            color: #aaa; margin-right: 8px;
+        }
+
+        /* Маленькі екрани по висоті (типу iPhone SE) */
+        @media (max-height: 600px) {
+            #game-container {
+                max-height: 100vh;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-terminal-bg text-slate-200 min-h-screen flex flex-col items-center justify-center p-2 md:p-4 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-blend-overlay">
+
+    <div id="game-container" class="w-full max-w-3xl bg-slate-900/95 border-2 border-slate-600 rounded-xl shadow-2xl overflow-hidden backdrop-blur-sm relative transition-colors duration-200 flex flex-col max-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="bg-slate-800 p-3 md:p-4 flex justify-between items-center border-b border-slate-700 shrink-0">
+            <div class="flex items-center gap-4 w-1/2">
+                <div class="flex flex-col w-full">
+                    <div class="flex justify-between items-end mb-1">
+                        <span class="font-bold text-slate-400 text-[10px] md:text-xs uppercase">Здоров'я системи</span>
+                        <span id="timer-display" 
+                              class="hidden text-yellow-400 font-pixel text-xs"
+                              role="timer"
+                              aria-live="polite"
+                              aria-atomic="true">45s</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
+                        <div id="health-bar" 
+                             role="progressbar" 
+                             aria-valuenow="100" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100"
+                             aria-label="Здоровʼя системи"
+                             class="h-full bg-green-500 transition-all duration-500" 
+                             style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="resetProgress()" class="text-xs text-slate-500 hover:text-red-400 mr-2 p-2" title="Скинути гру" aria-label="Скинути прогрес"><i class="fas fa-trash"></i></button>
+                <span class="text-xs md:text-sm text-slate-400">Рівень:</span>
+                <span id="level-indicator" class="font-bold text-white bg-blue-600 px-3 py-1 rounded shadow-lg shadow-blue-500/30 text-xs md:text-sm">1/13</span>
+            </div>
+        </div>
+
+        <!-- Main Content (Scrollable) -->
+        <div class="p-4 md:p-8 flex-1 overflow-y-auto flex flex-col relative scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            
+            <!-- Character Area -->
+            <div class="flex gap-4 mb-4 items-start animate-fade-in shrink-0">
+                <div class="relative group">
+                    <div id="robot-avatar" class="w-14 h-14 md:w-16 md:h-16 bg-blue-900 rounded-full flex items-center justify-center border-2 border-blue-400 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.5)] z-10 relative transition-all duration-300">
+                        <i id="robot-icon" class="fas fa-robot text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <div id="robot-glow" class="absolute inset-0 bg-blue-500 rounded-full blur-lg opacity-30 animate-pulse transition-colors duration-300"></div>
+                </div>
+                
+                <div class="bg-slate-700/50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500 flex-1 shadow-inner relative">
+                    <h3 class="text-blue-400 font-bold text-xs md:text-sm mb-1 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-terminal text-xs"></i> Бот БАЙТ:
+                    </h3>
+                    <p id="dialogue-text" class="text-base md:text-lg leading-relaxed typing-effect font-medium text-slate-100 min-h-[3rem] whitespace-pre-wrap"></p>
+                    <button id="skip-dialogue-btn" class="hidden text-[10px] md:text-xs text-slate-400 hover:text-white mt-1 flex items-center gap-1">
+                        <i class="fas fa-forward text-[9px]"></i>
+                        Пропустити текст
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interaction Area -->
+            <div id="interaction-area" class="flex-1 flex flex-col justify-center items-center gap-3 transition-all duration-300 w-full pb-4"></div>
+
+            <!-- Feedback Message -->
+            <div id="feedback-msg" class="hidden mt-4 p-4 rounded-lg text-left font-bold text-white w-full shadow-lg transform transition-all duration-300 scale-95 opacity-0 border-l-4 shrink-0"></div>
+
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="h-2 md:h-3 bg-slate-800 w-full relative shrink-0">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-green-600 to-green-400 w-[0%] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
+        <div class="text-center max-w-lg relative w-full">
+            <div class="absolute -inset-10 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
+            <i class="fas fa-school text-5xl md:text-6xl text-blue-500 mb-6 animate-bounce drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]"></i>
+            <h1 class="text-2xl md:text-4xl font-pixel text-yellow-400 mb-4 leading-tight drop-shadow-md">МІСІЯ:<br>Порятунок Сервера</h1>
+            <p id="welcome-text" class="text-lg md:text-xl text-slate-300 mb-6 font-light">
+                <span class="text-red-400 font-bold">УВАГА!</span> Критичний збій на шкільному сервері.<br>
+                Якщо ми не відновимо систему, можуть зникнути всі оцінки та домашні завдання.
+            </p>
+            
+            <div class="bg-slate-800/80 p-4 rounded-xl mb-8 border border-slate-600 inline-block text-left w-full max-w-sm">
+                <h3 class="text-slate-400 text-xs uppercase font-bold mb-3">Налаштування місії:</h3>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative">
+                        <input type="checkbox" id="timer-toggle" class="sr-only peer">
+                        <div class="w-10 h-6 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </div>
+                    <span class="text-slate-200 group-hover:text-white transition-colors">Увімкнути таймер (45 сек)</span>
+                </label>
+            </div>
+
+            <button onclick="startGame()" class="w-full md:w-auto group relative bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-10 rounded-full text-lg md:text-xl shadow-lg transform hover:scale-105 transition-all border-b-4 border-green-800 active:border-0 active:translate-y-1">
+                <i class="fas fa-power-off mr-2"></i> ЗАПУСТИТИ СИСТЕМУ
+            </button>
+            <p class="mt-4 text-xs md:text-sm text-slate-500 hidden md:block"><i class="fas fa-keyboard mr-1"></i> Клавіші: 1-4 та Space</p>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="hidden fixed inset-0 bg-slate-900/98 z-50 flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
+        <div class="max-w-2xl w-full py-8">
+            <i class="fas fa-trophy text-yellow-300 text-5xl md:text-6xl mb-4 drop-shadow-lg animate-bounce-short"></i>
+            <h2 class="text-2xl md:text-3xl font-pixel text-white mb-2">МІСІЮ ВИКОНАНО!</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6 text-left">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold">Результат</h3>
+                    <div class="flex justify-between mb-2 pb-2 border-b border-slate-700">
+                        <span>Здоровʼя сервера:</span> 
+                        <span id="final-health" class="font-bold text-blue-400">100%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Помилок:</span> 
+                        <span id="stats-errors" class="font-bold text-red-400">0</span>
+                    </div>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold">Зони для покращення</h3>
+                    <div id="failed-topics-list" class="text-sm space-y-2 text-slate-300 max-h-40 overflow-y-auto pr-2">
+                        <!-- JS injected -->
+                    </div>
+                    <div id="perfect-score-msg" class="hidden text-green-400 text-sm font-bold flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> Жодних помилок!
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="resetProgress()" class="bg-white text-green-900 font-bold py-3 px-8 rounded-full hover:bg-gray-100 shadow-xl transition-transform hover:-translate-y-1">
+                <i class="fas fa-redo mr-2"></i> Нова гра
+            </button>
+
+            <p id="victory-summary" class="mt-6 text-sm md:text-base text-slate-300"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- SOUND ENGINE ---
+        const SoundFX = {
+            ctx: null,
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+            playTone: function(freq, type, startTime, duration, vol = 0.1) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(vol, startTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            },
+            playClick: function() { 
+                if (!this.ctx) return;
+                this.playTone(800, 'sine', this.ctx.currentTime, 0.1, 0.05); 
+            },
+            playSuccess: function() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    this.playTone(freq, 'sine', now + (i * 0.1), 0.3, 0.1);
+                });
+            },
+            playZap: function() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        };
+
+        // --- PARTICLE SYSTEM ---
+        function createSparks(x, y) {
+            const colors = ['#ff0000', '#ff4500', '#ffd700', '#ffffff'];
+            for (let i = 0; i < 20; i++) {
+                const spark = document.createElement('div');
+                spark.classList.add('spark');
+                document.body.appendChild(spark);
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 60 + 20;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity + 50;
+                spark.style.left = x + 'px';
+                spark.style.top = y + 'px';
+                spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const animation = spark.animate([
+                    { transform: `translate(0,0) scale(1)`, opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                ], { duration: 500 + Math.random() * 300, easing: 'cubic-bezier(0, .9, .57, 1)' });
+                animation.onfinish = () => spark.remove();
+            }
+        }
+
+        // --- DATABASE OF QUESTIONS ---
+        const missionDatabase = [
+            {
+                topic: "Обладнання сервера",
+                variations: [
+                    {
+                        dialogue: "Етап 1. Спочатку перевіримо «залізо» сервера.\n\nШкільний сервер не запускається. Нам потрібно знайти «мозок» сервера — головну деталь, яка виконує всі обчислення. Що це за частина?",
+                        options: [
+                            { text: "Монітор", icon: "fa-desktop", correct: false, feedback: "Монітор лише показує зображення. Без нього сервер може працювати." },
+                            { text: "Процесор", icon: "fa-microchip", correct: true, feedback: "Так! Процесор — це «мозок» сервера, який виконує всі обчислення." },
+                            { text: "Мишка", icon: "fa-computer-mouse", correct: false, feedback: "Мишка — це пристрій керування, але не «мозок» сервера." },
+                            { text: "Принтер", icon: "fa-print", correct: false, feedback: "Принтер друкує документи, але сервер без нього працює." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 1. Сервер гальмує.\n\nПрограми працюють повільно, коли їм не вистачає місця для зберігання даних прямо під час роботи. Яка деталь відповідає за швидку памʼять, з якою сервер працює «тут і зараз»?",
+                        options: [
+                            { text: "RAM (оперативна памʼять)", icon: "fa-memory", correct: true, feedback: "Так! RAM — це швидка памʼять для роботи програм прямо зараз." },
+                            { text: "Жорсткий диск", icon: "fa-hard-drive", correct: false, feedback: "Жорсткий диск зберігає файли «надовго», але працює повільніше." },
+                            { text: "Блок живлення", icon: "fa-plug", correct: false, feedback: "Блок живлення дає електроенергію, але не зберігає дані." },
+                            { text: "Вентилятор (кулер)", icon: "fa-fan", correct: false, feedback: "Кулер охолоджує, але не зберігає інформацію." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Передача даних на сервер",
+                variations: [
+                    {
+                        dialogue: "Етап 2. Переносимо дані у систему.\n\nУчитель має оцінки на папері й хоче зберегти їх на шкільному сервері у вигляді файлу. Як правильно перенести таблицю з паперу в електронний вигляд?",
+                        options: [
+                            { text: "Відсканувати листок і зберегти файл на сервер", icon: "fa-print", correct: true, feedback: "Так! Сканер оцифровує (переводить папір → файл), який можна зберегти на сервері." },
+                            { text: "Сфотографувати телефоном і викинути листок", icon: "fa-camera", correct: false, feedback: "Фото може бути корисним, але краще мати чіткий файл у потрібному форматі." },
+                            { text: "Покласти листок на системний блок", icon: "fa-file", correct: false, feedback: "Так сервер про оцінки не «дізнається»." },
+                            { text: "Увімкнути колонки й прочитати оцінки вголос", icon: "fa-volume-high", correct: false, feedback: "Сервер не розуміє голос без спеціальних програм." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 2. Завантажуємо домашні завдання.\n\nУчитель зберіг файл з домашнім завданням на своєму компʼютері й хоче, щоб учні бачили його на шкільному порталі. Що потрібно зробити?",
+                        options: [
+                            { text: "Передати файл на сервер (upload)", icon: "fa-cloud-arrow-up", correct: true, feedback: "Так! Upload — це коли ти передаєш файл зі свого компʼютера НА сервер, щоб інші могли його відкрити." },
+                            { text: "Перейменувати файл на «Домашка» і нічого більше не робити", icon: "fa-pen", correct: false, feedback: "Назва важлива, але файл треба ще завантажити на сервер." },
+                            { text: "Роздрукувати файл і роздати учням", icon: "fa-print", correct: false, feedback: "Так можна, але тоді файл не зʼявиться на порталі." },
+                            { text: "Показати файл на екрані і вимкнути компʼютер", icon: "fa-display", correct: false, feedback: "Після вимкнення компʼютера учні нічого не побачать удома." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Типи файлів на сервері",
+                variations: [
+                    {
+                        dialogue: "Етап 3. Розбираємося з форматами файлів.\n\nНа сервері зберігаються різні файли: підручники, фотографії, відеоуроки. Який файл містить і рухоме зображення, і звук (наприклад, відеоурок з поясненням учителя)?",
+                        options: [
+                            { text: "Пісня.mp3", icon: "fa-music", correct: false, feedback: "Це лише звук, без картинки." },
+                            { text: "Фото.jpg", icon: "fa-image", correct: false, feedback: "Це нерухома картинка, без звуку." },
+                            { text: "Відеоурок.mp4", icon: "fa-video", correct: true, feedback: "Так! Відеофайл містить і рухоме зображення, і звук." },
+                            { text: "Текстовий файл.txt", icon: "fa-book", correct: false, feedback: "Це тільки текст." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 3. Файли мають правильні розширення.\n\nАдміністратор шукає файл із розкладом уроків у вигляді текстової таблиці. Яке розширення файлу найімовірніше?",
+                        options: [
+                            { text: "Розклад.mp4", icon: "fa-video", correct: false, feedback: "Це відео, а не таблиця." },
+                            { text: "Розклад.jpg", icon: "fa-image", correct: false, feedback: "Це зображення, а не таблиця." },
+                            { text: "Розклад.docx", icon: "fa-file-word", correct: true, feedback: "Правильно! Це текстовий документ, у якому може бути таблиця." },
+                            { text: "Розклад.mp3", icon: "fa-music", correct: false, feedback: "Це аудіофайл, а не розклад." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Пошук на шкільному порталі",
+                variations: [
+                    {
+                        dialogue: "Етап 4. Шукаємо потрібні дані.\n\nУчень хоче знайти свою домашню роботу на шкільному сервері в електронному щоденнику. Який інструмент на сайті йому найбільше допоможе?",
+                        options: [
+                            { text: "Рядок пошуку на сайті", icon: "fa-magnifying-glass", correct: true, feedback: "Так! Рядок пошуку допомагає швидко знаходити потрібні файли й сторінки." },
+                            { text: "Калькулятор", icon: "fa-calculator", correct: false, feedback: "Калькулятор рахує числа, але не шукає файли." },
+                            { text: "Програма для малювання", icon: "fa-palette", correct: false, feedback: "Малювання не допоможе знайти домашнє завдання." },
+                            { text: "Кнопка «Вихід із сайту»", icon: "fa-door-open", correct: false, feedback: "Ця кнопка навпаки — завершує роботу на сайті." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 4. Фільтруємо інформацію.\n\nНа шкільному порталі дуже багато файлів. Учень хоче знайти тільки домашні завдання з інформатики. Як зробити пошук точнішим?",
+                        options: [
+                            { text: "У пошуку написати: «домашнє завдання з інформатики»", icon: "fa-filter", correct: true, feedback: "Так! Ключові слова (домашнє завдання + назва предмета) допомагають швидше знайти потрібний файл." },
+                            { text: "Переглядати всі файли підряд", icon: "fa-list", correct: false, feedback: "Це дуже довго, якщо файлів багато." },
+                            { text: "Натиснути на випадковий файл", icon: "fa-dice", correct: false, feedback: "Так можна натрапити зовсім не на те, що потрібно." },
+                            { text: "Оновити сторінку 10 разів", icon: "fa-rotate-right", correct: false, feedback: "Оновлення не змінить результат пошуку." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Порядок у файловій системі",
+                variations: [
+                    {
+                        dialogue: "Етап 5. Наводимо порядок у файлах.\n\nНа сервері створили багато файлів із домашніми завданнями всіх класів. Як навести порядок, щоб нічого не загубилося?",
+                        options: [
+                            { text: "Створити папку «Домашні завдання» і підпапки за класами", icon: "fa-folder-plus", correct: true, feedback: "Чудово! Структура папок допомагає швидко знаходити потрібні файли." },
+                            { text: "Зберігати всі файли просто в одній папці «Різне»", icon: "fa-boxes-stacked", correct: false, feedback: "Так дуже легко щось загубити." },
+                            { text: "Видалити частину файлів, щоб було менше", icon: "fa-trash", correct: false, feedback: "Можна видаляти тільки те, що справді не потрібно." },
+                            { text: "Назвати всі файли однаково", icon: "fa-pen", correct: false, feedback: "Якщо всі файли мають однакову назву, розібратися буде складно." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 5. Розумні назви папок.\n\nАдміністратор створює папки для зберігання контрольних робіт. Яка назва папки буде найзрозумілішою?",
+                        options: [
+                            { text: "Нові файли 1", icon: "fa-folder", correct: false, feedback: "З такою назвою складно зрозуміти, що всередині." },
+                            { text: "Контрольні_4Б_Інформатика", icon: "fa-folder-open", correct: true, feedback: "Правильно! У назві є тип роботи, клас і предмет." },
+                            { text: "Крута папка", icon: "fa-face-grin-stars", correct: false, feedback: "Весело, але не зрозуміло для інших." },
+                            { text: "Фото_собак", icon: "fa-dog", correct: false, feedback: "Це точно не про контрольні роботи." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Зв'язок з адміном",
+                variations: [
+                    {
+                        dialogue: "Етап 6. Повідомляємо про проблему.\n\nСервер завис, і учні не можуть зайти в електронний щоденник. Учитель хоче повідомити системного адміністратора про проблему. Як краще це зробити, щоб повідомлення точно дійшло?",
+                        options: [
+                            { text: "Надіслати листа на службову електронну пошту", icon: "fa-envelope", correct: true, feedback: "Правильно! Електронний лист — надійний спосіб офіційно повідомити про проблему із сервером." },
+                            { text: "Написати коментар під відео в YouTube", icon: "fa-youtube", correct: false, feedback: "Адмін може цей коментар навіть не побачити." },
+                            { text: "Покласти записку на стіл у кабінеті інформатики", icon: "fa-note-sticky", correct: false, feedback: "Адміна може не бути в кабінеті, а проблема — термінова." },
+                            { text: "Написати в чат гри", icon: "fa-gamepad", correct: false, feedback: "Чат гри не призначений для шкільних технічних проблем." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 6. Описуємо збій правильно.\n\nУчні не можуть завантажити домашнє завдання з сервера. Яке повідомлення для адміністратора буде найкориснішим?",
+                        options: [
+                            { text: "«У нас нічого не працює!!!»", icon: "fa-bullhorn", correct: false, feedback: "Незрозуміло, що саме не працює." },
+                            { text: "«Не відкривається сторінка з домашнім завданням з математики для 4-Б. Пише: помилка 404»", icon: "fa-circle-info", correct: true, feedback: "Чудово! Є клас, предмет і текст помилки — адмін швидко знайде причину." },
+                            { text: "«Зробіть щось, будь ласка»", icon: "fa-hands-praying", correct: false, feedback: "Немає жодних деталей про проблему." },
+                            { text: "Нічого не писати, воно колись саме виправиться", icon: "fa-bed", correct: false, feedback: "Якщо не повідомити, адмін може навіть не знати про збій." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Логічні умови на сервері",
+                variations: [
+                    {
+                        dialogue: "Етап 7. Сервер перевіряє умови.\n\nСистема входу на сервер налаштована так: «Користувач має правильний логін» І «Користувач має правильний пароль». Учень ввів правильний логін, але помилився в паролі. Що зробить сервер?",
+                        options: [
+                            { text: "Пустить у систему, бо логін правильний", icon: "fa-check", correct: false, feedback: "Ні. Для умови «І» мають бути правильними і логін, і пароль." },
+                            { text: "Не пустить у систему", icon: "fa-xmark", correct: true, feedback: "Правильно! Якщо хоч одна умова не виконана, сервер доступ не дає." },
+                            { text: "Увімкне музику", icon: "fa-music", correct: false, feedback: "Так сервер не реагує на помилки." },
+                            { text: "Пропустить тільки в ігри, але не в щоденник", icon: "fa-gamepad", correct: false, feedback: "Сервер не вигадує свої правила, він працює за заданою умовою." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 7. Доступ з дому або зі школи.\n\nУ правилах сервера записано: «Пустити користувача, якщо він заходить ЗІ ШКОЛИ АБО має домашній доступ з паролем». Учень заходить з дому й вводить правильний пароль. Що зробить сервер?",
+                        options: [
+                            { text: "Не пустить, бо він не в школі", icon: "fa-door-closed", correct: false, feedback: "Для умови «АБО» достатньо виконання однієї з умов." },
+                            { text: "Пустить у систему", icon: "fa-door-open", correct: true, feedback: "Так! Є одна виконана умова: правильний пароль для доступу з дому." },
+                            { text: "Запитає ще раз імʼя вчителя", icon: "fa-chalkboard-teacher", correct: false, feedback: "Це не записано в умові." },
+                            { text: "Улаштує вікторину замість входу", icon: "fa-question", correct: false, feedback: "Було б весело, але сервер так не працює." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Цикли резервного копіювання",
+                variations: [
+                    {
+                        dialogue: "Етап 8. Захищаємо дані резервними копіями.\n\nЩоб оцінки й домашні завдання не зникли, сервер щоночі робить резервну копію (запасну копію даних). Як краще записати команду для сервера?",
+                        options: [
+                            { text: "Щоночі повторювати: «Зробити резервну копію бази даних»", icon: "fa-rotate", correct: true, feedback: "Так! Це цикл: команда, яка виконується автоматично знову і знову." },
+                            { text: "Раз на рік зробити копію всіх файлів", icon: "fa-calendar", correct: false, feedback: "Це занадто рідко, можна втратити багато нових оцінок." },
+                            { text: "Ніколи не робити копії — і так збережеться", icon: "fa-bed", correct: false, feedback: "Без резервних копій будь-який збій може все знищити." },
+                            { text: "Скопіювати файли один раз і забути", icon: "fa-copy", correct: false, feedback: "Резервні копії потрібно робити регулярно, а не один раз." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 8. Перевіряємо сервер за розкладом.\n\nАдміністратор хоче, щоб сервер сам щотижня перевіряв себе на віруси. Як це налаштувати?",
+                        options: [
+                            { text: "Створити завдання: «Щопонеділка запускати перевірку на віруси»", icon: "fa-shield-virus", correct: true, feedback: "Так! Це приклад циклу за розкладом — команда повторюється щотижня." },
+                            { text: "Памʼятати й запускати перевірку вручну, коли згадаєш", icon: "fa-brain", correct: false, feedback: "Люди можуть забути, а автоматичний цикл — ні." },
+                            { text: "Перевірити один раз і більше не перевіряти", icon: "fa-check-double", correct: false, feedback: "Нові файли теж можуть містити віруси, потрібні регулярні перевірки." },
+                            { text: "Взагалі не перевіряти на віруси", icon: "fa-bug", correct: false, feedback: "Це небезпечно для всіх даних на сервері." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Де зберігати дані",
+                variations: [
+                    {
+                        dialogue: "Етап 9. Обираємо безпечне місце для даних.\n\nАдміністратор хоче, щоб оцінки й домашні завдання були доступні зі школи й з дому (через інтернет). Де краще зберігати резервні копії даних?",
+                        options: [
+                            { text: "У хмарному сховищі (cloud)", icon: "fa-cloud-arrow-up", correct: true, feedback: "Так! Хмарне сховище дозволяє отримати доступ до даних через інтернет." },
+                            { text: "Тільки на флешці в кабінеті", icon: "fa-usb", correct: false, feedback: "Флешку можна загубити або зламати, а доступ з дому буде неможливий." },
+                            { text: "Тільки на одному компʼютері вдома в учителя", icon: "fa-hard-drive", correct: false, feedback: "Якщо цей компʼютер зламається, дані можуть зникнути." },
+                            { text: "Записати оцінки на аркуш паперу", icon: "fa-note-sticky", correct: false, feedback: "Папір не є резервною копією сервера, і його легко втратити." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 9. Не тримаємо все в одному місці.\n\nРезервні копії зберігаються тільки на тому ж самому жорсткому диску, де й основні дані. Чому це погано?",
+                        options: [
+                            { text: "Якщо диск зламається, зникнуть і дані, і копія", icon: "fa-triangle-exclamation", correct: true, feedback: "Так! Копію треба зберігати ще й в іншому місці — наприклад, у хмарі або на іншому диску." },
+                            { text: "Бо резервні копії займають занадто мало місця", icon: "fa-compact-disc", correct: false, feedback: "Проблема не в розмірі, а в безпеці." },
+                            { text: "Бо сервер стане веселішим", icon: "fa-face-grin-beam", correct: false, feedback: "Це ніяк не впливає на безпеку даних на сервері." },
+                            { text: "Бо тоді не можна нічого видаляти", icon: "fa-eraser", correct: false, feedback: "Іноді старі непотрібні файли якраз видаляти потрібно." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Алгоритм перезапуску сервера",
+                variations: [
+                    {
+                        dialogue: "Етап 10. Перезапускаємо сервер без втрати даних.\n\nСервер почав працювати з помилками, і потрібно правильно його перезапустити. Який порядок дій буде найправильнішим?",
+                        options: [
+                            { text: "Одразу вимкнути живлення з розетки", icon: "fa-plug-circle-xmark", correct: false, feedback: "Різко вимикати сервер небезпечно — можна пошкодити дані." },
+                            { text: "Зупинити програми → Зберегти дані → Завершити роботу системи → Увімкнути знову", icon: "fa-power-off", correct: true, feedback: "Так! Це безпечний алгоритм перезапуску сервера." },
+                            { text: "Натиснути на всі кнопки підряд", icon: "fa-keyboard", correct: false, feedback: "Хаос із кнопками може тільки погіршити ситуацію." },
+                            { text: "Залишити все як є й сподіватися, що «само пройде»", icon: "fa-bed", correct: false, feedback: "Проблему з сервером потрібно розвʼязувати, а не ігнорувати." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 10. Що робити після раптового вимкнення світла.\n\nУ школі раптово вимкнули світло, сервер вимкнувся. Коли електроенергію увімкнули, що потрібно зробити адміністратору?",
+                        options: [
+                            { text: "Одразу запустити всі ігри на сервері", icon: "fa-gamepad", correct: false, feedback: "Спочатку треба перевірити, чи всі системи справні." },
+                            { text: "Перевірити цілісність даних і журнали подій (логи), а потім спокійно запустити сервіси", icon: "fa-magnifying-glass", correct: true, feedback: "Так! Після аварійного вимкнення треба переконатися, що з даними все гаразд." },
+                            { text: "Видалити всі старі файли «про всяк випадок»", icon: "fa-trash", correct: false, feedback: "Видалення всіх файлів може тільки погіршити ситуацію." },
+                            { text: "Змінити тему оформлення порталу на яскравішу", icon: "fa-paintbrush", correct: false, feedback: "Оформлення не впливає на роботу сервера." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Безпека: шахраї",
+                variations: [
+                    {
+                        dialogue: "Етап 11. Захищаємо сервер від шахраїв.\n\nНа електронну пошту школи приходить лист: «Я адміністратор сервера. Негайно надішліть мені логін і пароль від журналу, інакше всі дані зникнуть». Що потрібно зробити?",
+                        options: [
+                            { text: "Надіслати логін і пароль, щоб нічого не зникло", icon: "fa-key", correct: false, feedback: "Нікому не можна надсилати паролі! Це може бути шахрай." },
+                            { text: "Не відповідати на лист, повідомити справжнього адміністратора або директора", icon: "fa-shield-halved", correct: true, feedback: "Правильно! Потрібно повідомити дорослих і не давати нікому доступ до паролів." },
+                            { text: "Переслати лист усім однокласникам", icon: "fa-paper-plane", correct: false, feedback: "Так тільки більше людей побачать небезпечний лист." },
+                            { text: "Спробувати вгадати, хто це написав", icon: "fa-user-secret", correct: false, feedback: "Головне — нікому не давати паролі й одразу сказати про це дорослим." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 11. Фальшиві сайти.\n\nУчень отримав два посилання:\n\n❌ shk0la-portal.com (підозріло)\n✅ shkola-portal.edu.ua (офіційний портал школи)\n\nПерший сайт просить ввести логін і пароль. Що це може бути?",
+                        options: [
+                            { text: "Новий дизайн шкільного сайту", icon: "fa-brush", correct: false, feedback: "Зовнішній вигляд може бути схожим, але адреса сайту дуже важлива." },
+                            { text: "Фальшивий сайт-шахрай, який хоче вкрасти пароль", icon: "fa-triangle-exclamation", correct: true, feedback: "Правильно! Завжди перевіряй адресу сайту, перш ніж вводити пароль." },
+                            { text: "Секретний портал для відмінників", icon: "fa-star", correct: false, feedback: "У справжніх шкільних порталів немає «секретних» додаткових адрес." },
+                            { text: "Сторінка з мультиками", icon: "fa-film", correct: false, feedback: "Ні, сторінка просить логін і пароль — це підозріло." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Безпека: паролі до сервера",
+                variations: [
+                    {
+                        dialogue: "Етап 12. Охороняємо облікові записи.\n\nДруг просить у тебе пароль від твого облікового запису на шкільному сервері, щоб «швидко виправити оцінку». Що ти зробиш?",
+                        options: [
+                            { text: "Не дам пароль нікому", icon: "fa-key", correct: true, feedback: "Молодець! Пароль від облікового запису — тільки твій особистий секрет." },
+                            { text: "Дам пароль, він же друг", icon: "fa-user-group", correct: false, feedback: "Навіть друзі не мають знати твій пароль." },
+                            { text: "Напишу пароль на дошці, щоб був під рукою", icon: "fa-chalkboard", correct: false, feedback: "Так його побачать усі." },
+                            { text: "Зроблю пароль дуже простим, наприклад «123456»", icon: "fa-lock-open", correct: false, feedback: "Такий пароль легко зламати." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 12. Створюємо надійний пароль.\n\nПотрібно придумати новий пароль до шкільного порталу. Який із цих паролів буде найнадійнішим?",
+                        options: [
+                            { text: "12345", icon: "fa-unlock", correct: false, feedback: "Такий пароль легко вгадати." },
+                            { text: "qwerty", icon: "fa-unlock-keyhole", correct: false, feedback: "Це дуже популярна й слабка комбінація." },
+                            { text: "M@th4_Б_2025", icon: "fa-lock", correct: true, feedback: "Чудово! Пароль містить літери, цифри, символи й не є очевидним." },
+                            { text: "імʼя_учня", icon: "fa-user", correct: false, feedback: "Пароль, який повторює імʼя, легко вгадати." }
+                        ]
+                    }
+                ]
+            },
+            {
+                topic: "Перевірка інформації про сервер",
+                variations: [
+                    {
+                        dialogue: "Етап 13. Не віримо чуткам.\n\nХтось написав у чаті класу: «Ура! Шкільний сервер зламався, уроків більше не буде!». Що варто зробити?",
+                        options: [
+                            { text: "Одразу зрадіти й нічого не робити", icon: "fa-face-grin-stars", correct: false, feedback: "Це може бути просто жарт або вигадка." },
+                            { text: "Перевірити інформацію в офіційному джерелі: на сайті школи або запитати вчителя", icon: "fa-magnifying-glass", correct: true, feedback: "Правильно! Важливу інформацію завжди перевіряють в офіційних джерелах." },
+                            { text: "Розповісти всім друзям, не перевіряючи", icon: "fa-bullhorn", correct: false, feedback: "Так поширюються чутки й фейкові новини." },
+                            { text: "Видалити всі свої домашні завдання", icon: "fa-trash", correct: false, feedback: "Навіть якщо сервер зламається, завжди краще зберегти свою роботу." }
+                        ]
+                    },
+                    {
+                        dialogue: "Етап 13. Чи справді зникли оцінки?\n\nУчень прочитав у соцмережі: «У всіх школах видалили всі оцінки з електронних журналів!». Як правильно перевірити, чи це правда про ваш сервер?",
+                        options: [
+                            { text: "Зайти на офіційний шкільний портал і подивитися свої оцінки", icon: "fa-globe", correct: true, feedback: "Так! Спершу варто перевірити інформацію на офіційному сайті." },
+                            { text: "Одразу повірити повідомленню й більше ніколи не вчитися", icon: "fa-face-tired", correct: false, feedback: "Це може бути неправдою. Важливо перевіряти такі заяви." },
+                            { text: "Писати гнівні коментарі в інтернеті", icon: "fa-comment-dots", correct: false, feedback: "Спершу треба зʼясувати, що відбувається насправді." },
+                            { text: "Видалити свій обліковий запис на порталі", icon: "fa-user-slash", correct: false, feedback: "Це може тільки ускладнити ситуацію." }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // --- GAME LOGIC ---
+        let gameSession = [];
+        let totalErrors = 0;
+        let currentHealth = 100;
+        let failedTopics = []; // Масив обʼєктів { topic, question }
+        let timerInterval;
+        let isTimerEnabled = false;
+        const TIME_PER_QUESTION = 45;
+
+        const gameState = {
+            currentLevelIndex: 0
+        };
+
+        const dialogueText = document.getElementById('dialogue-text');
+        const skipDialogueBtn = document.getElementById('skip-dialogue-btn');
+        const interactionArea = document.getElementById('interaction-area');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const progressBar = document.getElementById('progress-bar');
+        const levelIndicator = document.getElementById('level-indicator');
+        const gameContainer = document.getElementById('game-container');
+        const healthBar = document.getElementById('health-bar');
+        const robotAvatar = document.getElementById('robot-avatar');
+        const robotIcon = document.getElementById('robot-icon');
+        const robotGlow = document.getElementById('robot-glow');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerToggle = document.getElementById('timer-toggle');
+        const victorySummary = document.getElementById('victory-summary');
+
+        function initGameSession() {
+            const savedSession = localStorage.getItem('serverRescue_session');
+            if (savedSession) {
+                gameSession = JSON.parse(savedSession);
+                if (gameSession.length !== missionDatabase.length) {
+                    gameSession = []; 
+                } else {
+                    return;
+                }
+            }
+
+            if (gameSession.length === 0) {
+                gameSession = [];
+                missionDatabase.forEach(topicData => {
+                    const randomVarIndex = Math.floor(Math.random() * topicData.variations.length);
+                    const levelData = {
+                        title: topicData.topic,
+                        ...topicData.variations[randomVarIndex]
+                    };
+                    gameSession.push(levelData);
+                });
+                localStorage.setItem('serverRescue_session', JSON.stringify(gameSession));
+            }
+        }
+
+        function startGame() {
+            SoundFX.init();
+            SoundFX.playClick();
+            
+            isTimerEnabled = timerToggle.checked;
+            if (isTimerEnabled) {
+                timerDisplay.classList.remove('hidden');
+            }
+
+            initGameSession();
+            
+            const savedData = localStorage.getItem('serverRescue_progress');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                if(parsed.level < gameSession.length && parsed.health > 0) {
+                    gameState.currentLevelIndex = parsed.level;
+                    totalErrors = parsed.errors || 0;
+                    currentHealth = parsed.health || 100;
+                    failedTopics = Array.isArray(parsed.failedTopics) ? parsed.failedTopics : [];
+                    updateHealthUI();
+                } else {
+                    resetGameState();
+                }
+            } else {
+                resetGameState();
+            }
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('victory-screen').classList.add('hidden');
+            setupKeyboardListener();
+            loadLevel(gameState.currentLevelIndex);
+        }
+
+        function resetGameState() {
+            gameState.currentLevelIndex = 0;
+            totalErrors = 0;
+            currentHealth = 100;
+            failedTopics = [];
+            updateHealthUI();
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('serverRescue_progress');
+            localStorage.removeItem('serverRescue_session');
+            location.reload();
+        }
+
+        function updateRobotEmotion(state) {
+            robotAvatar.className = "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-2 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.5)] z-10 relative transition-all duration-300";
+            robotIcon.className = "fas text-2xl md:text-3xl transition-colors";
+            
+            if (state === 'happy') {
+                robotAvatar.classList.add('bg-green-900', 'border-green-400');
+                robotIcon.classList.add('fa-face-smile', 'text-green-200');
+                robotGlow.className = "absolute inset-0 bg-green-500 rounded-full blur-lg opacity-40 animate-pulse";
+            } else if (state === 'sad') {
+                robotAvatar.classList.add('bg-red-900', 'border-red-400');
+                robotIcon.classList.add('fa-face-frown-open', 'text-red-200');
+                robotGlow.className = "absolute inset-0 bg-red-500 rounded-full blur-lg opacity-40 animate-pulse";
+            } else {
+                robotAvatar.classList.add('bg-blue-900', 'border-blue-400');
+                robotIcon.classList.add('fa-robot', 'text-white');
+                robotGlow.className = "absolute inset-0 bg-blue-500 rounded-full blur-lg opacity-30 animate-pulse";
+            }
+        }
+
+        function updateHealthUI() {
+            healthBar.style.width = `${currentHealth}%`;
+            healthBar.setAttribute('aria-valuenow', currentHealth);
+            
+            if (currentHealth > 70) healthBar.className = "h-full bg-green-500 transition-all duration-500";
+            else if (currentHealth > 30) healthBar.className = "h-full bg-yellow-500 transition-all duration-500";
+            else healthBar.className = "h-full bg-red-500 transition-all duration-500";
+        }
+
+        function typeWriter(text, element, speed = 20) {
+            element.innerHTML = "";
+            let i = 0;
+            element.classList.add('typing-effect');
+            if(element.timeoutID) clearTimeout(element.timeoutID);
+
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    element.timeoutID = setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing-effect');
+                    if (skipDialogueBtn) skipDialogueBtn.classList.add('hidden');
+                }
+            }
+            type();
+        }
+
+        function startTimer() {
+            if (!isTimerEnabled) return;
+            let timeLeft = TIME_PER_QUESTION;
+            timerDisplay.innerText = timeLeft + 's';
+            timerDisplay.classList.remove('text-red-500', 'animate-pulse');
+            timerDisplay.classList.add('text-yellow-400');
+            timerDisplay.setAttribute('aria-label', `Залишилось ${timeLeft} секунд`);
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft + 's';
+                timerDisplay.setAttribute('aria-label', `Залишилось ${timeLeft} секунд`);
+                
+                if (timeLeft <= 10) {
+                    timerDisplay.classList.remove('text-yellow-400');
+                    timerDisplay.classList.add('text-red-500', 'animate-pulse');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            const buttons = interactionArea.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            
+            SoundFX.playZap();
+            updateRobotEmotion('sad');
+            totalErrors++;
+            currentHealth = Math.max(0, currentHealth - 10);
+            updateHealthUI();
+
+            const levelData = gameSession[gameState.currentLevelIndex];
+            registerFailedQuestion(levelData);
+
+            feedbackMsg.classList.remove('hidden', 'scale-95', 'opacity-0');
+            feedbackMsg.classList.add('scale-100', 'opacity-100', 'bg-red-600/90', 'border-red-400');
+            feedbackMsg.innerHTML = `<div><i class="fas fa-hourglass-end mr-2"></i> Час вийшов! Система пошкоджена.</div>`;
+
+            showNextButton();
+        }
+
+        function loadLevel(index) {
+            updateRobotEmotion('neutral');
+            if (timerInterval) clearInterval(timerInterval);
+            
+            if (index >= gameSession.length) {
+                setTimeout(showVictory, 500);
+                return;
+            }
+
+            localStorage.setItem('serverRescue_progress', JSON.stringify({
+                level: index,
+                errors: totalErrors,
+                health: currentHealth,
+                failedTopics: failedTopics
+            }));
+
+            gameState.currentLevelIndex = index;
+            const levelData = gameSession[index];
+
+            levelIndicator.innerText = `${index + 1}/${gameSession.length}`;
+            const progressPct = (index / gameSession.length) * 100;
+            progressBar.style.width = `${progressPct}%`;
+            
+            interactionArea.innerHTML = '';
+            feedbackMsg.classList.add('hidden');
+            feedbackMsg.className = "hidden mt-4 p-4 rounded-lg text-left font-bold text-white w-full shadow-lg transform scale-95 opacity-0 border-l-4 shrink-0";
+
+            if (skipDialogueBtn) {
+                skipDialogueBtn.classList.add('hidden');
+                if (skipDialogueBtn.onclick) skipDialogueBtn.onclick = null;
+            }
+
+            const typingSpeed = isTimerEnabled ? 15 : 20;
+            typeWriter(levelData.dialogue, dialogueText, typingSpeed);
+
+            if (skipDialogueBtn) {
+                skipDialogueBtn.classList.remove('hidden');
+                skipDialogueBtn.onclick = () => {
+                    if (dialogueText.timeoutID) clearTimeout(dialogueText.timeoutID);
+                    dialogueText.innerHTML = levelData.dialogue;
+                    dialogueText.classList.remove('typing-effect');
+                    skipDialogueBtn.classList.add('hidden');
+                };
+            }
+
+            const delay = Math.min(levelData.dialogue.length * 15 + 200, 3000);
+
+            setTimeout(() => {
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full animate-fade-in-up";
+                
+                const shuffledOptions = [...levelData.options].sort(() => Math.random() - 0.5);
+
+                shuffledOptions.forEach((option, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "relative overflow-hidden bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white p-3 md:p-4 min-h-[70px] rounded-xl border-2 border-slate-600 transition-all flex items-center gap-3 text-left group shadow-md hover:shadow-blue-500/20";
+                    
+                    btn.setAttribute('role', 'button');
+                    btn.setAttribute('aria-label', `Варіант ${idx + 1}: ${option.text}`);
+                    btn.dataset.key = idx + 1;
+
+                    btn.innerHTML = `
+                        <div class="hidden md:block absolute top-2 right-2 opacity-30 text-xs border border-white/30 rounded px-1.5">${idx + 1}</div>
+                        <div class="w-10 h-10 md:w-12 md:h-12 bg-slate-800 rounded-full flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors border border-slate-600 shrink-0">
+                            <i class="fas ${option.icon} text-lg md:text-xl text-blue-400 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <span class="font-bold text-sm md:text-lg z-10 leading-tight">${option.text}</span>
+                    `;
+                    btn.addEventListener('click', (e) => checkAnswer(option, btn, e, levelData));
+                    grid.appendChild(btn);
+                });
+                interactionArea.appendChild(grid);
+                startTimer();
+            }, delay);
+        }
+
+        function registerFailedQuestion(levelData) {
+            const topicTitle = levelData.title;
+            const snippet = levelData.dialogue.replace(/\s+/g, ' ').trim().slice(0, 90) + '...';
+            const exists = failedTopics.some(item => item && item.topic === topicTitle);
+            if (!exists) {
+                failedTopics.push({ topic: topicTitle, question: snippet });
+            }
+        }
+
+        function checkAnswer(option, btnElement, event, levelData) {
+            if (timerInterval) clearInterval(timerInterval);
+            const buttons = interactionArea.querySelectorAll('button');
+            
+            feedbackMsg.classList.remove('hidden', 'scale-95', 'opacity-0');
+            feedbackMsg.classList.add('scale-100', 'opacity-100');
+            
+            let feedbackHTML = `<div>${option.feedback}</div>`;
+            if (!option.correct && option.hint) {
+                feedbackHTML += `<div class="mt-2 text-sm font-normal bg-white/10 p-2 rounded"><i class="fas fa-lightbulb text-yellow-300 mr-2"></i>${option.hint}</div>`;
+            }
+            feedbackMsg.innerHTML = feedbackHTML;
+
+            if (option.correct) {
+                SoundFX.playSuccess();
+                updateRobotEmotion('happy');
+                buttons.forEach(b => b.disabled = true);
+                
+                btnElement.classList.remove('bg-slate-700', 'border-slate-600');
+                btnElement.classList.add('bg-green-600', 'border-green-400', 'ring-4', 'ring-green-400/50');
+                feedbackMsg.classList.add('bg-green-600/90', 'border-green-400');
+                
+                showNextButton();
+
+            } else {
+                SoundFX.playZap();
+                updateRobotEmotion('sad');
+                totalErrors++;
+                currentHealth = Math.max(0, currentHealth - 10);
+                updateHealthUI();
+                
+                registerFailedQuestion(levelData);
+
+                const rect = btnElement.getBoundingClientRect();
+                const x = event && event.clientX ? event.clientX : (rect.left + rect.width / 2);
+                const y = event && event.clientY ? event.clientY : (rect.top + rect.height / 2);
+                createSparks(x, y);
+
+                btnElement.classList.remove('bg-slate-700', 'border-slate-600');
+                btnElement.classList.add('bg-red-900', 'border-red-500', 'text-red-200');
+                feedbackMsg.classList.add('bg-red-600/90', 'border-red-400');
+                
+                gameContainer.classList.add('shake', 'border-red-500');
+                setTimeout(() => {
+                    gameContainer.classList.remove('shake', 'border-red-500');
+                }, 500);
+
+                btnElement.disabled = true;
+                btnElement.style.opacity = "0.7";
+            }
+        }
+
+        function showNextButton() {
+            const existing = document.getElementById('next-btn');
+            if (existing) existing.remove();
+
+            const nextBtn = document.createElement('button');
+            nextBtn.id = "next-btn";
+            nextBtn.className = "mt-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-10 rounded-full animate-bounce shadow-[0_0_20px_rgba(234,179,8,0.5)] border-b-4 border-yellow-700 active:border-0 active:translate-y-1 transition-all w-full md:w-auto text-lg";
+            nextBtn.innerHTML = `НАСТУПНИЙ РІВЕНЬ <span class="hidden md:inline text-xs opacity-60 ml-1">(Space)</span> <i class="fas fa-arrow-right ml-2"></i>`;
+            nextBtn.onclick = () => {
+                SoundFX.playClick();
+                loadLevel(gameState.currentLevelIndex + 1);
+            };
+            interactionArea.appendChild(nextBtn);
+            
+            setTimeout(() => nextBtn.scrollIntoView({behavior: 'smooth', block: 'center'}), 100);
+        }
+
+        let keyboardListenerAttached = false;
+        function setupKeyboardListener() {
+            if (keyboardListenerAttached) return;
+            keyboardListenerAttached = true;
+
+            document.addEventListener('keydown', (e) => {
+                if (['1', '2', '3', '4'].includes(e.key)) {
+                    const btn = document.querySelector(`button[data-key="${e.key}"]`);
+                    if (btn && !btn.disabled) btn.click();
+                }
+                if ((e.code === 'Space' || e.code === 'Enter') && document.getElementById('next-btn')) {
+                    e.preventDefault();
+                    document.getElementById('next-btn').click();
+                }
+            });
+        }
+
+        function showVictory() {
+            SoundFX.playSuccess();
+            localStorage.removeItem('serverRescue_progress');
+            localStorage.removeItem('serverRescue_session');
+            
+            document.getElementById('victory-screen').classList.remove('hidden');
+            progressBar.style.width = '100%';
+            
+            document.getElementById('final-health').innerText = `${currentHealth}%`;
+            document.getElementById('stats-errors').innerText = totalErrors;
+            
+            const topicsList = document.getElementById('failed-topics-list');
+            if (failedTopics.length > 0) {
+                topicsList.innerHTML = failedTopics.map(item => {
+                    if (typeof item === 'string') {
+                        return `<div class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                                    <div>${item}</div>
+                                </div>`;
+                    } else {
+                        return `<div class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                                    <div>
+                                        <div class="font-semibold">${item.topic}</div>
+                                        <div class="text-xs text-slate-400">${item.question}</div>
+                                    </div>
+                                </div>`;
+                    }
+                }).join('');
+            } else {
+                topicsList.classList.add('hidden');
+                document.getElementById('perfect-score-msg').classList.remove('hidden');
+            }
+
+            victorySummary.innerHTML = `
+                <strong>Бот БАЙТ:</strong> Ти врятував шкільний сервер! 💾<br>
+                Оцінки, домашні завдання та електронний щоденник в безпеці.<br>
+                Тепер ти краще розумієш, як працює сервер і як його захищати.
+            `;
+        }
+    </script>
+</body>
+</html>
