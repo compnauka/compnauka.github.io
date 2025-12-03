@@ -329,7 +329,7 @@ const CATEGORIES = [
       { 
         name: "Привіт, ШІ!", 
         description: "Інтерактивна книга для дітей про штучний інтелект.", 
-        link: "https://pryvitshi.github.io/", 
+        link: "services/ai/pryvitshi/index.html", 
         image: "images/4.jpg", 
         tags: ["3-4 класи"] 
       }
