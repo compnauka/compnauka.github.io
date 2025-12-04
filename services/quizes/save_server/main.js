@@ -129,15 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GAME LOGIC ---
 
     function initGameSession() {
-        const savedSession = localStorage.getItem('serverRescue_session');
-        if (savedSession) {
-            try {
-                gameSession = JSON.parse(savedSession);
-                if (gameSession.length === missionDatabase.length) return;
-            } catch (e) { console.error("Session parse error", e); }
-        }
-
-        // Generate new session if none exists or invalid
+        // Шкільний режим: завжди генеруємо нову сесію, ігноруємо збережену
+        localStorage.removeItem('serverRescue_session');
+        
         gameSession = missionDatabase.map(topicData => {
             const randomVarIndex = Math.floor(Math.random() * topicData.variations.length);
             return {
@@ -145,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...topicData.variations[randomVarIndex]
             };
         });
-        localStorage.setItem('serverRescue_session', JSON.stringify(gameSession));
+        
+        // Можемо не зберігати сесію взагалі, або зберігати для поточної гри
+        // localStorage.setItem('serverRescue_session', JSON.stringify(gameSession));
     }
 
     function startGame() {
@@ -156,26 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isTimerEnabled) elements.timerDisplay.classList.remove('hidden');
         else elements.timerDisplay.classList.add('hidden');
 
+        // Шкільний режим: завжди скидаємо прогрес перед стартом
+        resetGameState();
+        localStorage.removeItem('serverRescue_progress');
+
         initGameSession();
         
-        const savedData = localStorage.getItem('serverRescue_progress');
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                if(parsed.level < gameSession.length && parsed.health > 0) {
-                    gameState.currentLevelIndex = parsed.level;
-                    totalErrors = parsed.errors || 0;
-                    currentHealth = parsed.health || 100;
-                    failedTopics = Array.isArray(parsed.failedTopics) ? parsed.failedTopics : [];
-                    updateHealthUI();
-                } else {
-                    resetGameState();
-                }
-            } catch (e) { resetGameState(); }
-        } else {
-            resetGameState();
-        }
-
         elements.startScreen.classList.add('hidden');
         elements.victoryScreen.classList.add('hidden');
         elements.characterArea.classList.remove('hidden');
@@ -188,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalErrors = 0;
         currentHealth = 100;
         failedTopics = [];
+        shownCheckpoints = {}; // Скидаємо показані чекпойнти
         updateHealthUI();
     }
 
@@ -198,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRobotEmotion(state) {
-        // Reset classes safely
         elements.robotAvatar.className = "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-2 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.5)] z-10 relative transition-all duration-300";
         elements.robotIcon.className = "fas text-2xl md:text-3xl transition-colors";
         
@@ -351,6 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Зберігаємо прогрес тільки під час активної сесії (щоб не втратити при випадковому оновленні),
+        // але при старті нової гри він буде затиратися.
         localStorage.setItem('serverRescue_progress', JSON.stringify({
             level: index,
             errors: totalErrors,
@@ -380,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupSkipButton(fullText) {
         elements.skipDialogueBtn.classList.remove('hidden');
-        // Remove old listeners by cloning
         const newBtn = elements.skipDialogueBtn.cloneNode(true);
         elements.skipDialogueBtn.parentNode.replaceChild(newBtn, elements.skipDialogueBtn);
         elements.skipDialogueBtn = newBtn;
@@ -394,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderOptions(options) {
-        // Check if options are already rendered to avoid duplicates
         if (elements.interactionArea.hasChildNodes()) return;
 
         const grid = document.createElement('div');
@@ -476,7 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 else loadLevel(gameState.currentLevelIndex + 1);
             });
             elements.interactionArea.appendChild(nextBtn);
-            // Auto scroll to bottom
             elements.interactionArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 1000);
     }
