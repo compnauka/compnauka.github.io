@@ -493,6 +493,13 @@ const CATEGORIES = [
         link: "games/neon_wave.html", 
         image: "images/64.jpg", 
         tags: [] 
+      },
+      { 
+        name: "Місія: Порятунок сервера", 
+        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
+        link: "services/quizes/save_server/index.html", 
+        image: "images/64.jpg", 
+        tags: ["Тест"] 
       }
     ]
   }
