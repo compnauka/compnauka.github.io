@@ -18,24 +18,25 @@ const STORAGE_KEYS = {
     styles: 'kom_styles'
 };
 
-/* --- LocalStorage Utils --- */
+/* --- SessionStorage Utils --- */
+// Використовуємо sessionStorage замість localStorage, щоб дані очищувались при закритті вкладки
 function safeSetItem(key, value) {
     if (!storageAvailable) return;
     try {
-        localStorage.setItem(key, value);
+        sessionStorage.setItem(key, value);
     } catch (e) {
         storageAvailable = false;
-        console.warn('LocalStorage disabled:', e);
+        console.warn('SessionStorage disabled:', e);
     }
 }
 
 function safeGetItem(key) {
     if (!storageAvailable) return null;
     try {
-        return localStorage.getItem(key);
+        return sessionStorage.getItem(key);
     } catch (e) {
         storageAvailable = false;
-        console.warn('LocalStorage disabled:', e);
+        console.warn('SessionStorage disabled:', e);
         return null;
     }
 }
