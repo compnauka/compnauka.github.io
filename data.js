@@ -346,35 +346,35 @@ const CATEGORIES = [
         description: "Веселий текстовий редактор для дітей.", 
         link: "services/drukaryk.html", 
         image: "images/28.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Текст"] 
       },
       { 
         name: "Піксель", 
         description: "Простий піксельний графічний редактор для дітей.", 
         link: "services/pixel.html", 
         image: "images/36.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Графіка"] 
       },
       { 
         name: "Пензлик", 
         description: "Яскравий графічний редактор для дітей.", 
         link: "services/penslyk.html", 
         image: "images/27.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Графіка"] 
       },
       { 
         name: "Пензлик Плюс", 
         description: "Функціональний графічний редактор для дітей.", 
         link: "services/penslykplus.html", 
         image: "images/35.jpg" , 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи", "Графіка"] 
       },
       { 
         name: "Комірник", 
         description: "Спрощщений табличний процесор для дітей.", 
-        link: "services/komirnyk.html", 
+        link: "services/komirnyk/index.html", 
         image: "images/66.jpg" , 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи", "Таблиці"] 
       },
       { 
         name: "Бітовий конвертер", 
