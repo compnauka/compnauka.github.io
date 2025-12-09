@@ -12,10 +12,10 @@
     <style>
         :root {
             --line-height: 40px;
-            --paper-padding-top: 60px; /* Збільшений відступ зверху */
+            --paper-padding-top: 60px;
             --paper-color: #ffffff;
-            --line-color: #ddd6fe; /* violet-200 */
-            --primary-color: #7c3aed; /* violet-600 */
+            --line-color: #ddd6fe;
+            --primary-color: #7c3aed;
         }
 
         body {
@@ -27,7 +27,6 @@
             flex-direction: column;
         }
 
-        /* --- PAPER STYLE --- */
         #paper-wrapper {
             background-color: #f5f3ff;
             background-image: radial-gradient(#ddd6fe 1px, transparent 1px);
@@ -48,22 +47,18 @@
             border-radius: 0 0 16px 16px;
         }
 
-        /* Лінії зошита */
         .pattern-lines {
             background-image: linear-gradient(var(--line-color) 1px, transparent 1px);
             background-size: 100% var(--line-height);
             background-attachment: local;
-            /* Зсув ліній, щоб текст лягав на них з урахуванням padding-top */
-            background-position: 0 calc(var(--paper-padding-top) - 8px); 
+            background-position: 0 calc(var(--paper-padding-top) - 8px);
         }
         
-        /* --- LAYERS --- */
         #text-layer {
             position: absolute;
             inset: 0;
             z-index: 10;
-            /* Відступи: зверху більше, збоку стандартно */
-            padding: var(--paper-padding-top) 3rem 0 3rem; 
+            padding: var(--paper-padding-top) 3rem 0 3rem;
             line-height: var(--line-height);
             font-size: 22px;
             outline: none;
@@ -83,14 +78,12 @@
             touch-action: none;
         }
 
-        /* --- MODES BEHAVIOR --- */
         body[data-mode="text"] #drawing-layer { pointer-events: none; }
         body[data-mode="text"] #text-layer { pointer-events: auto; cursor: text; }
         
         body[data-mode="draw"] #drawing-layer { pointer-events: auto; cursor: crosshair; }
         body[data-mode="draw"] #text-layer { pointer-events: none; user-select: none; }
 
-        /* --- UI COMPONENTS --- */
         .tool-btn {
             transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -101,7 +94,6 @@
             box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
         }
 
-        /* Групи кнопок в тулбарі */
         .btn-group {
             display: flex;
             background: #f1f5f9;
@@ -123,7 +115,6 @@
         .icon-btn:hover { background: #e2e8f0; color: #0f172a; }
         .icon-btn.active { background: white; color: var(--primary-color); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-        /* Кольорові крапки */
         .color-dot {
             width: 28px;
             height: 28px;
@@ -135,12 +126,10 @@
         }
         .color-dot.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--primary-color); border-color: white; }
 
-        /* Скролбар */
         #text-layer::-webkit-scrollbar { width: 8px; }
         #text-layer::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         #text-layer::-webkit-scrollbar-track { margin-top: 20px; margin-bottom: 20px; }
 
-        /* Утиліти видимості */
         .toolbar-section { display: none; width: 100%; justify-content: center; align-items: center; gap: 1rem; }
         .toolbar-section.visible { display: flex; animation: fadeIn 0.3s ease-out; }
 
@@ -152,9 +141,7 @@
 </head>
 <body data-mode="text">
 
-    <!-- HEADER -->
     <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 z-50 no-print flex-shrink-0 border-b border-violet-100">
-        <!-- Logo -->
         <div class="flex items-center gap-3 select-none">
             <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg transform -rotate-2">
                 <i class="fas fa-paint-brush"></i>
@@ -162,7 +149,6 @@
             <h1 class="font-extrabold text-xl text-violet-800 tracking-tight">Друпензлик</h1>
         </div>
         
-        <!-- Mode Switcher -->
         <div class="flex bg-slate-100 p-1.5 rounded-2xl gap-1 shadow-inner">
             <button onclick="App.setMode('text')" class="tool-btn active px-5 py-2 rounded-xl flex items-center gap-2 text-slate-600" id="btn-mode-text">
                 <i class="fas fa-font"></i> <span class="hidden sm:inline text-sm font-bold">Писати</span>
@@ -172,7 +158,6 @@
             </button>
         </div>
 
-        <!-- Global Actions -->
         <div class="flex gap-2">
             <button onclick="UI.toggleModal(true)" class="w-10 h-10 flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition" title="Очистити">
                 <i class="fas fa-trash-alt"></i>
@@ -183,19 +168,15 @@
         </div>
     </header>
 
-    <!-- TOOLBAR -->
     <div class="bg-white border-b border-slate-200 z-40 no-print min-h-[64px] flex items-center justify-center px-4 overflow-x-auto shadow-sm">
         
-        <!-- Text Toolbar -->
         <div id="text-toolbar" class="toolbar-section visible">
-            <!-- Style -->
             <div class="btn-group">
                 <button onclick="TextTool.format('bold')" class="icon-btn" title="Жирний"><i class="fas fa-bold"></i></button>
                 <button onclick="TextTool.format('italic')" class="icon-btn" title="Курсив"><i class="fas fa-italic"></i></button>
                 <button onclick="TextTool.format('underline')" class="icon-btn" title="Підкреслений"><i class="fas fa-underline"></i></button>
             </div>
 
-            <!-- Align -->
             <div class="btn-group">
                 <button onclick="TextTool.format('justifyLeft')" class="icon-btn" title="Ліворуч"><i class="fas fa-align-left"></i></button>
                 <button onclick="TextTool.format('justifyCenter')" class="icon-btn" title="Центр"><i class="fas fa-align-center"></i></button>
@@ -204,7 +185,6 @@
 
             <div class="w-px h-8 bg-slate-200"></div>
 
-            <!-- Size -->
             <div class="btn-group">
                 <button onclick="TextTool.setSize(3)" class="icon-btn font-bold text-sm" id="fs-3" title="Малий">М</button>
                 <button onclick="TextTool.setSize(5)" class="icon-btn font-bold text-lg" id="fs-5" title="Середній">С</button>
@@ -213,11 +193,9 @@
             
             <div class="w-px h-8 bg-slate-200"></div>
 
-            <!-- Palette -->
             <div class="flex gap-2 items-center" id="text-colors"></div>
         </div>
 
-        <!-- Drawing Toolbar -->
         <div id="draw-toolbar" class="toolbar-section">
             <button onclick="DrawTool.undo()" class="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 flex items-center justify-center transition" title="Скасувати">
                 <i class="fas fa-undo"></i>
@@ -225,13 +203,11 @@
 
             <div class="w-px h-8 bg-slate-200"></div>
 
-            <!-- Tools -->
             <div class="btn-group">
                 <button onclick="DrawTool.setTool('brush')" class="icon-btn active" id="tool-brush" title="Пензель"><i class="fas fa-paint-brush"></i></button>
                 <button onclick="DrawTool.setTool('eraser')" class="icon-btn" id="tool-eraser" title="Гумка"><i class="fas fa-eraser"></i></button>
             </div>
 
-            <!-- Size Slider -->
             <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
                 <i class="fas fa-circle text-[6px] text-slate-400"></i>
                 <input type="range" id="brushSize" min="2" max="30" value="5" oninput="DrawTool.updateSize(this.value)" class="w-24 accent-violet-600 h-2 bg-slate-200 rounded-lg cursor-pointer">
@@ -240,20 +216,17 @@
 
             <div class="w-px h-8 bg-slate-200"></div>
 
-            <!-- Palette -->
             <div class="flex gap-2 items-center" id="brush-colors"></div>
         </div>
     </div>
 
-    <!-- MAIN WORKSPACE -->
     <div id="paper-wrapper" class="flex-1 overflow-hidden flex justify-center py-2 px-2 md:py-4">
         <div id="paper-container" class="pattern-lines bg-white">
-            <div id="text-layer" contenteditable="true" spellcheck="false" placeholder="Тут починається твоя історія..." aria-label="Текстове поле"></div>
+            <div id="text-layer" contenteditable="true" spellcheck="false" aria-label="Текстове поле"></div>
             <canvas id="drawing-layer" aria-label="Полотно для малювання"></canvas>
         </div>
     </div>
 
-    <!-- MODAL -->
     <div id="clear-modal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full transform scale-95 transition-transform">
             <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Що хочеш стерти?</h3>
@@ -272,21 +245,18 @@
         </div>
     </div>
 
-    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[200] hidden flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600 mb-4"></div>
         <p class="text-violet-800 font-bold animate-pulse">Зберігаємо твій шедевр...</p>
     </div>
 
 <script>
-    /* --- CONFIGURATION --- */
     const Config = {
         colors: ['#1e293b', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899'],
         defaultBrushColor: '#1e293b',
         defaultBrushSize: 5
     };
 
-    /* --- APP STATE --- */
     const State = {
         mode: 'text',
         brush: { tool: 'brush', color: Config.defaultBrushColor, size: Config.defaultBrushSize },
@@ -294,9 +264,24 @@
         historyStep: -1
     };
 
-    /* --- MODULES --- */
+    // --- NEW: Selection manager to keep caret & selection ---
+    const SelectionManager = {
+        savedRange: null,
+        save() {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+            if (!UI.els.textLayer.contains(range.commonAncestorContainer)) return;
+            this.savedRange = range.cloneRange();
+        },
+        restore() {
+            if (!this.savedRange) return;
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(this.savedRange);
+        }
+    };
     
-    // UI Manager
     const UI = {
         els: {
             textLayer: document.getElementById('text-layer'),
@@ -307,16 +292,18 @@
         },
 
         init() {
-            // Render Palettes
-            this.renderPalette('text-colors', (c) => TextTool.format('foreColor', c));
+            this.renderPalette('text-colors', (c) => TextTool.setColor(c));
             this.renderPalette('brush-colors', (c) => DrawTool.setColor(c));
             
-            // Set default font size UI
             document.getElementById('fs-5').classList.add('active');
             
-            // Canvas Sizing
             this.resizeCanvas();
             window.addEventListener('resize', this.debounce(() => this.resizeCanvas(), 200));
+
+            // слухаємо зміну виділення в тексті
+            ['mouseup', 'keyup', 'touchend'].forEach(ev => {
+                this.els.textLayer.addEventListener(ev, () => SelectionManager.save());
+            });
         },
 
         renderPalette(id, callback) {
@@ -369,7 +356,6 @@
         }
     };
 
-    // Drawing Logic
     const DrawTool = {
         ctx: null,
         isDrawing: false,
@@ -477,32 +463,49 @@
         }
     };
 
-    // Text Logic
     const TextTool = {
+        currentColor: Config.colors[0],
+
+        // застосувати будь-який формат (жирний, вирівнювання, колір)
         format(cmd, val = null) {
-            document.execCommand(cmd, false, val);
             UI.els.textLayer.focus();
+            SelectionManager.restore();
+
+            if (cmd === 'foreColor') {
+                document.execCommand('styleWithCSS', false, true);
+                document.execCommand('foreColor', false, val || this.currentColor);
+            } else {
+                document.execCommand(cmd, false, val);
+            }
+
+            SelectionManager.save();
             Storage.save();
+        },
+
+        // окремо вибір кольору з палітри
+        setColor(color) {
+            this.currentColor = color;
+            this.format('foreColor', color);
         },
         
         setSize(size) {
-            // Використовуємо нативний execCommand для простоти та сумісності
+            UI.els.textLayer.focus();
+            SelectionManager.restore();
+
             document.execCommand('styleWithCSS', false, true);
             document.execCommand('fontSize', false, size);
             
-            // UI Update
             [3, 5, 7].forEach(s => {
                 const btn = document.getElementById(`fs-${s}`);
                 btn.classList.toggle('active', s === size);
-                btn.classList.toggle('bg-violet-100', s === size); // visual aid
+                btn.classList.toggle('bg-violet-100', s === size);
             });
             
-            UI.els.textLayer.focus();
+            SelectionManager.save();
             Storage.save();
         }
     };
 
-    // Storage Manager
     const Storage = {
         save() {
             localStorage.setItem('dp_text', UI.els.textLayer.innerHTML);
@@ -515,7 +518,7 @@
             
             if (txt) UI.els.textLayer.innerHTML = txt;
             if (img) {
-                App.pushHistory(); // blank base
+                App.pushHistory();
                 const image = new Image();
                 image.onload = () => {
                     DrawTool.ctx.drawImage(image, 0, 0);
@@ -524,12 +527,11 @@
                 };
                 image.src = img;
             } else {
-                App.pushHistory(); // blank base
+                App.pushHistory();
             }
         }
     };
 
-    // Main App Controller
     const App = {
         init() {
             UI.init();
@@ -542,14 +544,12 @@
             State.mode = mode;
             document.body.setAttribute('data-mode', mode);
 
-            // Toggle Buttons
             const btnText = document.getElementById('btn-mode-text');
             const btnDraw = document.getElementById('btn-mode-draw');
             
             btnText.className = `tool-btn px-5 py-2 rounded-xl flex items-center gap-2 ${mode === 'text' ? 'active text-white' : 'text-slate-600'}`;
             btnDraw.className = `tool-btn px-5 py-2 rounded-xl flex items-center gap-2 ${mode === 'draw' ? 'active text-white' : 'text-slate-600'}`;
 
-            // Toggle Toolbars
             const textToolbar = document.getElementById('text-toolbar');
             const drawToolbar = document.getElementById('draw-toolbar');
 
@@ -587,7 +587,6 @@
             loader.classList.add('flex');
 
             try {
-                // Ensure UI rendering is complete
                 await new Promise(r => setTimeout(r, 100));
 
                 const canvasResult = await html2canvas(UI.els.paper, {
@@ -610,7 +609,6 @@
         }
     };
 
-    // Boot
     window.onload = () => App.init();
 
 </script>
