@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мульти-Сортування Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Comic Neue', sans-serif;
+            background-color: #f8fafc;
+            touch-action: pan-y;
+            overflow: hidden; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .pool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1rem;
+            padding-bottom: 4rem;
+        }
+        
+        @media (min-width: 640px) {
+            .pool-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+
+        .emoji-item {
+            cursor: grab;
+            touch-action: pan-y; 
+            will-change: transform, opacity; 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            -webkit-user-drag: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1;
+            background: white;
+            border-radius: 1rem;
+            font-size: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.2s;
+        }
+
+        .emoji-item.ghost-source {
+            opacity: 0.3;
+            transform: scale(0.95);
+        }
+
+        .dragging-clone {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+            transform-origin: center center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            opacity: 0.9;
+        }
+
+        .bin {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s;
+        }
+
+        .bin.drag-over {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+            background-color: #f0f9ff;
+        }
+
+        .bin.wrong-drop {
+            animation: flash-red 0.4s ease-in-out;
+        }
+
+        @keyframes flash-red {
+            0%, 100% { background-color: inherit; }
+            50% { background-color: #fecaca; }
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px) rotate(-5deg); }
+            40% { transform: translateX(6px) rotate(5deg); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            z-index: 2000;
+            animation: fall linear forwards;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col bg-slate-50 text-slate-800">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center px-4 py-2 bg-white shadow-sm border-b border-slate-200 z-20 shrink-0 h-16">
+        <div class="flex items-center gap-3 md:gap-4">
+            <span class="text-slate-400 font-bold uppercase text-xs md:text-sm">Рівень <span id="lvl-num" class="text-blue-600 text-lg md:text-xl">1</span></span>
+            <div class="w-24 md:w-32 h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                <div id="progress" class="h-full bg-green-500 w-0 transition-all duration-300 ease-out"></div>
+            </div>
+        </div>
+        <div class="font-bold text-xl text-orange-500 flex items-center gap-1">
+            ⭐ <span id="score">0</span>
+        </div>
+    </header>
+
+    <!-- Game Board -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <div id="bins-area" class="h-40 md:h-48 w-full bg-white/50 border-b border-slate-200 flex justify-around items-center p-2 gap-2 md:gap-4 shadow-sm z-10 shrink-0"></div>
+        <div class="absolute top-[9rem] md:top-[11rem] left-0 w-full flex justify-center z-0 pointer-events-none">
+            <div id="instruction" class="bg-white/90 backdrop-blur px-6 py-2 rounded-full shadow-md text-slate-700 font-bold text-lg md:text-xl border border-white">
+                Завантаження...
+            </div>
+        </div>
+        <div id="pool-area" class="flex-1 overflow-y-auto bg-slate-50 relative overscroll-contain">
+            <div id="grid-container" class="pool-grid max-w-5xl mx-auto"></div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm w-[90%] transform scale-90 transition-transform duration-300">
+            <div class="text-7xl mb-4 animate-bounce">✨</div>
+            <h2 class="text-3xl font-bold mb-2 text-slate-800">Чудово!</h2>
+            <p class="text-slate-500 mb-6">Ти впорався із завданням</p>
+            <button onclick="Game.nextLevel()" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">Далі ➜</button>
+        </div>
+    </div>
+
+    <script>
+        const ITEM_DB = {
+            'apple': { emoji: '🍎', tags: ['red', 'food', 'round', 'plant'] },
+            'chili': { emoji: '🌶️', tags: ['red', 'food', 'plant', 'spicy'] },
+            'firetruck': { emoji: '🚒', tags: ['red', 'transport', 'machine'] },
+            'balloon': { emoji: '🎈', tags: ['red', 'round', 'toy'] },
+            'banana': { emoji: '🍌', tags: ['yellow', 'food', 'plant'] },
+            'lemon': { emoji: '🍋', tags: ['yellow', 'food', 'round', 'plant'] },
+            'sun': { emoji: '☀️', tags: ['yellow', 'nature', 'round'] },
+            'cheese': { emoji: '🧀', tags: ['yellow', 'food'] },
+            'leaf': { emoji: '🍃', tags: ['green', 'plant', 'nature'] },
+            'broccoli': { emoji: '🥦', tags: ['green', 'food', 'plant'] },
+            'frog': { emoji: '🐸', tags: ['green', 'animal', 'nature'] },
+            'turtle': { emoji: '🐢', tags: ['green', 'animal', 'slow'] },
+            'water': { emoji: '💧', tags: ['blue', 'nature', 'liquid'] },
+            'whale': { emoji: '🐋', tags: ['blue', 'animal', 'water'] },
+            'jeans': { emoji: '👖', tags: ['blue', 'clothing'] },
+            'diamond': { emoji: '💎', tags: ['blue', 'hard'] },
+            'car': { emoji: '🚗', tags: ['transport', 'machine', 'red'] },
+            'plane': { emoji: '✈️', tags: ['transport', 'machine', 'white'] },
+            'bike': { emoji: '🚲', tags: ['transport', 'machine', 'slow'] },
+            'cat': { emoji: '🐱', tags: ['animal', 'pet'] },
+            'dog': { emoji: '🐕', tags: ['animal', 'pet'] },
+            'ball': { emoji: '⚽', tags: ['round', 'toy', 'sport'] },
+            'clock': { emoji: '⏰', tags: ['round', 'machine', 'red'] },
+            'donut': { emoji: '🍩', tags: ['round', 'food'] },
+            'shirt': { emoji: '👕', tags: ['clothing', 'blue'] },
+            'socks': { emoji: '🧦', tags: ['clothing', 'red'] }
+        };
+
+        const LEVELS = [
+            {
+                instruction: "Розклади за кольором",
+                bins: [
+                    { id: 'red', label: '🔴 Червоне', color: 'bg-red-50 border-red-300 text-red-600' },
+                    { id: 'green', label: '🟢 Зелене', color: 'bg-green-50 border-green-300 text-green-600' }
+                ],
+                pool: ['apple', 'chili', 'firetruck', 'balloon', 'leaf', 'broccoli', 'frog', 'turtle', 'car', 'socks']
+            },
+            {
+                instruction: "Їжа чи Тварини?",
+                bins: [
+                    { id: 'food', label: '🍔 Їжа', color: 'bg-orange-50 border-orange-300 text-orange-600' },
+                    { id: 'animal', label: '🐾 Тварини', color: 'bg-stone-50 border-stone-300 text-stone-600' }
+                ],
+                pool: ['apple', 'banana', 'cheese', 'donut', 'cat', 'dog', 'whale', 'frog', 'broccoli', 'lemon']
+            },
+            {
+                instruction: "Природа, Техніка чи Одяг?",
+                bins: [
+                    { id: 'nature', label: '🌿 Природа', color: 'bg-emerald-50 border-emerald-300 text-emerald-600' },
+                    { id: 'machine', label: '⚙️ Техніка', color: 'bg-gray-50 border-gray-300 text-gray-600' },
+                    { id: 'clothing', label: '👕 Одяг', color: 'bg-pink-50 border-pink-300 text-pink-600' }
+                ],
+                pool: ['leaf', 'sun', 'water', 'frog', 'car', 'clock', 'plane', 'jeans', 'firetruck', 'shirt', 'socks']
+            }
+        ];
+
+        const AudioSys = {
+            ctx: null,
+            init() { 
+                if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); 
+            },
+            play(type) {
+                if(!this.ctx || this.ctx.state === 'suspended') this.ctx?.resume();
+                if(!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.connect(g); g.connect(this.ctx.destination);
+                const now = this.ctx.currentTime;
+
+                if(type === 'good') {
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                } else if (type === 'bad') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    [400, 600, 800, 1000].forEach((f, i) => {
+                        const o = this.ctx.createOscillator();
+                        const gn = this.ctx.createGain();
+                        o.connect(gn); gn.connect(this.ctx.destination);
+                        o.frequency.value = f;
+                        gn.gain.setValueAtTime(0.05, now + i*0.1);
+                        gn.gain.linearRampToValueAtTime(0, now + i*0.1 + 0.3);
+                        o.start(now + i*0.1); o.stop(now + i*0.1 + 0.3);
+                    });
+                }
+            }
+        };
+
+        const DragManager = {
+            clone: null,
+            sourceEl: null,
+            startX: 0, startY: 0,
+            active: false,
+            isDragging: false,
+            dragThreshold: 10,
+
+            init(el, onDrop, onFail) {
+                const onStart = (e) => {
+                    if(this.active) return;
+                    
+                    const touch = e.touches ? e.touches[0] : e;
+                    this.startX = touch.clientX;
+                    this.startY = touch.clientY;
+                    this.sourceEl = el;
+                    this.active = true;
+                    this.isDragging = false;
+                    
+                    // Listeners defined inside onStart to capture context and ensure proper removal
+                    const onMove = (evt) => {
+                        if (!this.active) return;
+                        
+                        const t = evt.touches ? evt.touches[0] : evt;
+                        const dx = t.clientX - this.startX;
+                        const dy = t.clientY - this.startY;
+                        
+                        if (!this.isDragging) {
+                            const distance = Math.sqrt(dx*dx + dy*dy);
+                            if (distance < this.dragThreshold) {
+                                return; // Allow scroll
+                            }
+                            this.isDragging = true;
+                            this.createClone(this.sourceEl);
+                        }
+                        
+                        if (this.isDragging) {
+                            if (evt.cancelable) evt.preventDefault();
+                            if (this.clone) {
+                                this.clone.style.transform = `translate(${dx}px, ${dy}px) scale(1.1)`;
+                                
+                                const elBelow = document.elementFromPoint(t.clientX, t.clientY);
+                                const bin = elBelow?.closest('.bin');
+                                document.querySelectorAll('.bin').forEach(b => b.classList.remove('drag-over'));
+                                if(bin) bin.classList.add('drag-over');
+                            }
+                        }
+                    };
+
+                    const onEnd = (evt) => {
+                        // Remove listeners immediately using local references
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('touchmove', onMove);
+                        document.removeEventListener('mouseup', onEnd);
+                        document.removeEventListener('touchend', onEnd);
+
+                        if (!this.active) return;
+                        this.active = false;
+                        
+                        const wasDragging = this.isDragging;
+                        const currentClone = this.clone;
+                        
+                        document.querySelectorAll('.bin').forEach(b => b.classList.remove('drag-over'));
+
+                        if (wasDragging && currentClone) {
+                            const t = evt.changedTouches ? evt.changedTouches[0] : evt;
+                            const elBelow = document.elementFromPoint(t.clientX, t.clientY);
+                            const bin = elBelow?.closest('.bin');
+
+                            if(bin) {
+                                onDrop(this.sourceEl, bin, currentClone);
+                            } else {
+                                onFail(this.sourceEl, currentClone);
+                            }
+                        } else {
+                            if (currentClone) this.destroyClone(currentClone);
+                        }
+                        
+                        this.isDragging = false;
+                    };
+                    
+                    document.addEventListener('mousemove', onMove, {passive: false});
+                    document.addEventListener('touchmove', onMove, {passive: false});
+                    document.addEventListener('mouseup', onEnd);
+                    document.addEventListener('touchend', onEnd);
+                    
+                    AudioSys.init();
+                };
+
+                el.addEventListener('mousedown', onStart);
+                el.addEventListener('touchstart', onStart, {passive: false});
+            },
+
+            createClone(original) {
+                const rect = original.getBoundingClientRect();
+                
+                this.clone = original.cloneNode(true);
+                this.clone.classList.remove('animate-pop-in');
+                this.clone.classList.add('dragging-clone');
+                
+                this.clone.style.width = `${rect.width}px`;
+                this.clone.style.height = `${rect.height}px`;
+                this.clone.style.left = `${rect.left}px`;
+                this.clone.style.top = `${rect.top}px`;
+                this.clone.style.margin = '0';
+                this.clone.style.transition = 'none';
+                
+                document.body.appendChild(this.clone);
+                original.classList.add('ghost-source');
+            },
+
+            destroyClone(clone) {
+                if(clone && clone.parentNode) clone.parentNode.removeChild(clone);
+                if (this.clone === clone) {
+                    this.clone = null;
+                }
+            }
+        };
+
+        const Game = {
+            lvl: 0,
+            score: 0,
+            currentItems: [],
+            totalItems: 0,
+
+            el: {
+                bins: document.getElementById('bins-area'),
+                grid: document.getElementById('grid-container'),
+                inst: document.getElementById('instruction'),
+                prog: document.getElementById('progress'),
+                lvl: document.getElementById('lvl-num'),
+                score: document.getElementById('score'),
+                modal: document.getElementById('modal')
+            },
+
+            init() {
+                this.loadLevel();
+            },
+
+            loadLevel() {
+                if(this.lvl >= LEVELS.length) {
+                    this.lvl = 0; this.score = 0;
+                }
+                
+                const data = LEVELS[this.lvl];
+                this.currentItems = [...data.pool].sort(() => Math.random() - 0.5);
+                this.totalItems = this.currentItems.length;
+
+                this.el.bins.innerHTML = '';
+                this.el.grid.innerHTML = '';
+                this.el.inst.textContent = data.instruction;
+                this.el.lvl.textContent = this.lvl + 1;
+                this.el.prog.style.width = '0%';
+                this.el.score.textContent = this.score;
+
+                data.bins.forEach(b => {
+                    const div = document.createElement('div');
+                    div.className = `bin ${b.color} border-2 md:border-4 rounded-xl md:rounded-2xl flex flex-col items-center justify-center p-1 md:p-2 h-full flex-1 mx-1 select-none cursor-default`;
+                    div.dataset.cat = b.id;
+                    div.innerHTML = `<span class="text-2xl md:text-5xl font-bold pointer-events-none text-center">${b.label.split(' ')[0]}</span>
+                                     <span class="text-xs md:text-sm font-bold uppercase mt-1 pointer-events-none">${b.label.split(' ').slice(1).join(' ')}</span>`;
+                    this.el.bins.appendChild(div);
+                });
+
+                this.currentItems.forEach((itemId, idx) => {
+                    const itemData = ITEM_DB[itemId];
+                    const div = document.createElement('div');
+                    div.className = 'emoji-item animate-pop-in';
+                    div.style.animationDelay = `${idx * 0.05}s`;
+                    div.textContent = itemData.emoji;
+                    div.dataset.id = itemId;
+                    
+                    this.el.grid.appendChild(div);
+                    
+                    DragManager.init(
+                        div, 
+                        (src, bin, clone) => this.handleDrop(src, bin, clone),
+                        (src, clone) => this.handleFail(src, clone)
+                    );
+                });
+            },
+
+            checkMatch(itemId, binCategory) {
+                return ITEM_DB[itemId].tags.includes(binCategory);
+            },
+
+            handleDrop(source, bin, clone) {
+                if (!clone) return;
+
+                const isMatch = this.checkMatch(source.dataset.id, bin.dataset.cat);
+
+                if (isMatch) {
+                    AudioSys.play('good');
+                    this.score += 10;
+                    this.el.score.textContent = this.score;
+
+                    clone.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    clone.style.transform = `translate(0,0) scale(0)`; 
+                    clone.style.opacity = '0';
+                    const binRect = bin.getBoundingClientRect();
+                    const cloneRect = clone.getBoundingClientRect();
+                    
+                    const tx = binRect.left + binRect.width/2 - (cloneRect.left + cloneRect.width/2);
+                    const ty = binRect.top + binRect.height/2 - (cloneRect.top + cloneRect.height/2);
+                    clone.style.transform = `translate(${tx}px, ${ty}px) scale(0)`;
+
+                    source.style.opacity = '0'; 
+                    
+                    setTimeout(() => {
+                        source.remove();
+                        DragManager.destroyClone(clone);
+                        this.updateProgress();
+                    }, 300);
+
+                } else {
+                    this.handleFail(source, clone, bin);
+                }
+            },
+
+            handleFail(source, clone, bin = null) {
+                if (!clone) return;
+
+                AudioSys.play('bad');
+                
+                if(bin) {
+                    bin.classList.add('wrong-drop');
+                    setTimeout(() => bin.classList.remove('wrong-drop'), 400);
+                }
+
+                clone.style.transition = 'transform 0.3s ease-out';
+                clone.style.transform = 'translate(0,0) scale(1)'; 
+                
+                clone.classList.add('animate-shake');
+                
+                setTimeout(() => {
+                    DragManager.destroyClone(clone);
+                    if (source && source.classList) source.classList.remove('ghost-source');
+                }, 300);
+            },
+
+            updateProgress() {
+                this.currentItems = Array.from(this.el.grid.children).map(el => el.dataset.id);
+                
+                const total = this.totalItems;
+                const remaining = this.currentItems.length;
+                const pct = ((total - remaining) / total) * 100;
+                this.el.prog.style.width = `${pct}%`;
+
+                if(remaining === 0) {
+                    AudioSys.play('win');
+                    this.confetti();
+                    const m = this.el.modal;
+                    m.classList.remove('hidden');
+                    void m.offsetWidth;
+                    m.classList.remove('opacity-0');
+                    m.querySelector('div').classList.remove('scale-90');
+                }
+            },
+
+            nextLevel() {
+                const m = this.el.modal;
+                m.classList.add('opacity-0');
+                m.querySelector('div').classList.add('scale-90');
+                
+                setTimeout(() => {
+                    m.classList.add('hidden');
+                    this.lvl++;
+                    this.loadLevel();
+                }, 300);
+            },
+
+            confetti() {
+                const colors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#ec4899'];
+                for(let i=0; i<40; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+                    c.style.left = Math.random()*100+'vw';
+                    c.style.top = '-10px';
+                    c.style.animationDuration = (2+Math.random()*3)+'s';
+                    document.body.appendChild(c);
+                    setTimeout(()=>c.remove(), 5000);
+                }
+            }
+        };
+
+        Game.init();
+    </script>
+</body>
+</html>
