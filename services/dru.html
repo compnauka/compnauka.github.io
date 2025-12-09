@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Друкарик - простий текстовий редактор для створення та збереження історій">
+    <title>Друкарик | Текстовий редактор</title>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <!-- Plausible -->
+    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- html2canvas для PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --primary-soft: #eef2ff;
+            --paper-color: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: #f5f3ff;
+            background-image: radial-gradient(#ddd6fe 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            padding: 16px;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 960px;
+            background: var(--paper-color);
+            border-radius: 24px;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.18);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        .app-header {
+            height: 64px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            user-select: none;
+        }
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+            transform: rotate(-4deg);
+            font-size: 1.2rem;
+        }
+        .brand-title {
+            display: flex;
+            flex-direction: column;
+        }
+        .brand-title h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            color: #4c1d95;
+        }
+        .brand-title span {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        .header-pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f5f3ff;
+            color: #6b21a8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-pill i { font-size: 0.8rem; }
+
+        /* MAIN */
+        .editor-body {
+            padding: 16px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: linear-gradient(to bottom, #f5f3ff 0, #fefce8 260px, #fefce8 100%);
+        }
+        @media (min-width: 768px) {
+            .editor-body { padding: 20px 24px 24px; }
+        }
+
+        /* TOOLBAR */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            background: rgba(248, 250, 252, 0.9);
+            border-radius: 18px;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 6px;
+            padding: 4px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            align-items: center;
+        }
+        .toolbar-separator {
+            width: 1px;
+            height: 32px;
+            background: #e2e8f0;
+            margin: 0 4px;
+        }
+        .tool-btn,
+        .icon-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #475569;
+            background: #e5e7eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 32px;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .icon-btn { padding: 8px; font-size: 0.9rem; }
+        .tool-btn:hover,
+        .icon-btn:hover {
+            background: #cbd5f5;
+            transform: translateY(-1px);
+        }
+        .tool-btn:active,
+        .icon-btn:active { transform: scale(0.96); }
+        .tool-btn:focus-visible,
+        .icon-btn:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        .tool-btn.active-size,
+        .icon-btn.active-button {
+            background: var(--primary-color);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        /* COLORS */
+        .color-row { display: flex; gap: 6px; align-items: center; }
+        .color-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #6b7280;
+            margin-right: 2px;
+        }
+        .color-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 0 1px #cbd5e1;
+            cursor: pointer;
+            transition: transform 0.18s, box-shadow 0.18s;
+            padding: 0;
+        }
+        .color-btn:hover { transform: scale(1.05); }
+        .color-btn.active-color {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        /* EMOJI */
+        .emoji-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 6px 4px 2px;
+        }
+        .emoji-btn {
+            font-size: 1.1rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            border: none;
+            background: #fef3c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+        }
+        .emoji-btn:hover {
+            transform: translateY(-1px) scale(1.05);
+            background: #fde68a;
+            box-shadow: 0 6px 14px rgba(251, 191, 36, 0.35);
+        }
+        .emoji-btn:active { transform: scale(0.95); }
+
+        /* EDITOR CARD */
+        .editor-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 12px 14px 14px;
+            border: 2px dashed #e2e8f0;
+            box-shadow: 0 8px 18px rgba(148, 163, 184, 0.18);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        #text-area {
+            width: 100%;
+            min-height: 260px;
+            max-height: 500px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #111827;
+            background: repeating-linear-gradient(
+                to bottom,
+                #f9fafb,
+                #f9fafb 34px,
+                #e5e7eb 35px
+            );
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #text-area:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        .word-count {
+            text-align: right;
+            color: #6b7280;
+            font-size: 0.8rem;
+            padding: 0 2px;
+        }
+
+        /* FOOTER BUTTONS */
+        .editor-footer {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .footer-group-left,
+        .footer-group-right {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn {
+            border: none;
+            border-radius: 14px;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn i { font-size: 0.9rem; }
+        .btn-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .btn-danger:hover {
+            background: #fecaca;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #e0edff;
+            color: #1d4ed8;
+        }
+        .btn-secondary:hover {
+            background: #d0e2ff;
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.45);
+        }
+        .btn-primary:hover {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        #message {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            min-height: 20px;
+            margin-top: 4px;
+            color: #16a34a;
+        }
+        .error-message { color: #dc2626 !important; }
+
+        @media (max-width: 640px) {
+            .app-header { padding: 0 12px; }
+            .editor-body { padding: 12px; }
+            #text-area { min-height: 200px; font-size: 1rem; }
+            .editor-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .footer-group-left,
+            .footer-group-right {
+                justify-content: space-between;
+            }
+        }
+
+        /* MODALS (save + clear) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-backdrop.hidden { display: none; }
+        .modal {
+            width: 100%;
+            max-width: 360px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px 22px 18px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+            text-align: center;
+        }
+        .modal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 999px;
+            background: #eef2ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: #4f46e5;
+            font-size: 1.4rem;
+        }
+        .modal h2 {
+            margin: 4px 0 4px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #111827;
+        }
+        .modal p {
+            margin: 0 0 12px;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .save-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .save-option {
+            border-radius: 14px;
+            border: none;
+            padding: 10px 12px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.18s;
+        }
+        .save-option-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .save-option-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .save-option-sub {
+            font-size: 0.78rem;
+            color: #6b7280;
+        }
+        .save-option-primary {
+            background: #eef2ff;
+            color: #312e81;
+        }
+        .save-option-primary:hover {
+            background: #e0e7ff;
+            transform: translateY(-1px);
+        }
+        .save-option-plain {
+            background: #f9fafb;
+            color: #111827;
+        }
+        .save-option-plain:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+        .save-option-image {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .save-option-image:hover {
+            background: #fde68a;
+            transform: translateY(-1px);
+        }
+        .modal-cancel {
+            margin-top: 2px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .modal-cancel:hover { color: #111827; }
+
+        /* окрема стилізація ікони для Стерти */
+        .modal-icon-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell" aria-label="Редактор Друкарик">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fas fa-keyboard"></i>
+                </div>
+                <div class="brand-title">
+                    <h1>Друкарик</h1>
+                    <span>Твій текстовий зошит</span>
+                </div>
+            </div>
+            <div class="header-pill">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <span>Створи свою історію</span>
+            </div>
+        </header>
+
+        <main class="editor-body">
+            <!-- TOOLBAR -->
+            <div class="toolbar" role="toolbar" aria-label="Панель форматування тексту">
+                <div class="toolbar-group" aria-label="Стиль тексту">
+                    <button id="bold-btn" class="icon-btn" title="Жирний шрифт" aria-label="Жирний шрифт">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button id="italic-btn" class="icon-btn" title="Курсив" aria-label="Курсив">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button id="underline-btn" class="icon-btn" title="Підкреслений" aria-label="Підкреслений">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group" aria-label="Розмір шрифту">
+                    <button class="tool-btn" id="font-small" title="Малий розмір">М</button>
+                    <button class="tool-btn active-size" id="font-medium" title="Середній розмір">С</button>
+                    <button class="tool-btn" id="font-large" title="Великий розмір">В</button>
+                </div>
+
+                <div class="toolbar-group" aria-label="Вирівнювання тексту">
+                    <button id="align-left-btn" class="icon-btn" title="Вирівняти ліворуч" aria-label="Вирівняти ліворуч">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button id="align-center-btn" class="icon-btn" title="Вирівняти по центру" aria-label="Вирівняти по центру">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button id="align-right-btn" class="icon-btn" title="Вирівняти праворуч" aria-label="Вирівняти праворуч">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group" aria-label="Скасувати / Повернути">
+                    <button id="undo-btn" class="icon-btn" title="Скасувати (Undo)" aria-label="Скасувати дію">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button id="redo-btn" class="icon-btn" title="Повернути (Redo)" aria-label="Повернути дію">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-separator" aria-hidden="true"></div>
+
+                <div class="toolbar-group" aria-label="Колір тексту">
+                    <span class="color-label">Колір:</span>
+                    <div class="color-row">
+                        <button class="color-btn active-color" style="background-color: #000000;" data-color="#000000" title="Чорний колір" aria-label="Чорний колір"></button>
+                        <button class="color-btn" style="background-color: #e11d48;" data-color="#e11d48" title="Червоний колір" aria-label="Червоний колір"></button>
+                        <button class="color-btn" style="background-color: #22c55e;" data-color="#22c55e" title="Зелений колір" aria-label="Зелений колір"></button>
+                        <button class="color-btn" style="background-color: #3b82f6;" data-color="#3b82f6" title="Синій колір" aria-label="Синій колір"></button>
+                        <button class="color-btn" style="background-color: #eab308;" data-color="#eab308" title="Жовтий колір" aria-label="Жовтий колір"></button>
+                        <button class="color-btn" style="background-color: #a855f7;" data-color="#a855f7" title="Фіолетовий колір" aria-label="Фіолетовий колір"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMOJI PANEL -->
+            <div class="emoji-panel" id="emoji-panel" role="toolbar" aria-label="Емодзі"></div>
+
+            <!-- EDITOR CARD -->
+            <section class="editor-card" id="editor-card">
+                <div id="text-area"
+                     contenteditable="true"
+                     role="textbox"
+                     aria-multiline="true"
+                     aria-label="Редактор тексту">Напиши тут свою історію...</div>
+
+                <div class="word-count" id="word-count">Слова: 0 | Символи: 0 / 3333</div>
+
+                <div class="editor-footer">
+                    <div class="footer-group-left">
+                        <button id="clear-btn" class="btn btn-danger" type="button">
+                            <i class="fas fa-trash"></i>
+                            Стерти
+                        </button>
+                    </div>
+                    <div class="footer-group-right">
+                        <button id="open-btn" class="btn btn-secondary" type="button">
+                            <i class="fas fa-folder-open"></i>
+                            Відкрити
+                        </button>
+                        <button id="save-main-btn" class="btn btn-primary" type="button">
+                            <i class="fas fa-save"></i>
+                            Зберегти
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="upload-input" accept=".txt,text/plain" style="display:none">
+
+                <div id="message" role="status" aria-live="polite"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SAVE MODAL -->
+    <div id="save-modal" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+            <div class="modal-icon">
+                <i class="fas fa-save"></i>
+            </div>
+            <h2 id="save-modal-title">Зберегти роботу</h2>
+            <p>Як ти хочеш зберегти свою історію?</p>
+
+            <div class="save-options">
+                <button id="save-html-btn" class="save-option save-option-primary" type="button">
+                    <div class="save-option-main">
+                        <i class="fas fa-palette"></i>
+                        <div>
+                            <div class="save-option-title">Як історію</div>
+                            <div class="save-option-sub">Зберегти кольори та формат (.html)</div>
+                        </div>
+                    </div>
+                    <span class="save-option-sub">&gt;</span>
+                </button>
+
+                <button id="save-txt-btn" class="save-option save-option-plain" type="button">
+                    <div class="save-option-main">
+                        <i class="fas fa-file-lines"></i>
+                        <div>
+                            <div class="save-option-title">Простий текст</div>
+                            <div class="save-option-sub">Тільки літери (.txt)</div>
+                        </div>
+                    </div>
+                    <span class="save-option-sub">&gt;</span>
+                </button>
+
+                <button id="save-png-btn" class="save-option save-option-image" type="button">
+                    <div class="save-option-main">
+                        <i class="fas fa-image"></i>
+                        <div>
+                            <div class="save-option-title">Картинка</div>
+                            <div class="save-option-sub">Сторінка як зошит (.png)</div>
+                        </div>
+                    </div>
+                    <span class="save-option-sub">&gt;</span>
+                </button>
+            </div>
+
+            <button id="save-cancel-btn" class="modal-cancel" type="button">Скасувати</button>
+        </div>
+    </div>
+
+    <!-- CLEAR MODAL -->
+    <div id="clear-modal" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-modal-title">
+            <div class="modal-icon modal-icon-danger">
+                <i class="fas fa-trash"></i>
+            </div>
+            <h2 id="clear-modal-title">Стерти текст?</h2>
+            <p>Увесь текст у зошиті буде видалено. Продовжити?</p>
+
+            <div class="save-options">
+                <button id="clear-confirm-btn" class="save-option save-option-plain" type="button">
+                    <div class="save-option-main">
+                        <i class="fas fa-trash"></i>
+                        <div>
+                            <div class="save-option-title">Так, стерти все</div>
+                            <div class="save-option-sub">Почати сторінку спочатку</div>
+                        </div>
+                    </div>
+                    <span class="save-option-sub">&gt;</span>
+                </button>
+            </div>
+
+            <button id="clear-cancel-btn" class="modal-cancel" type="button">Скасувати</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Менеджер виділення (щоб колір / розмір не скидали каретку) ---
+        const SelectionManager = {
+            savedRange: null,
+            save(container) {
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) return;
+                const range = sel.getRangeAt(0);
+                if (!container.contains(range.commonAncestorContainer)) return;
+                this.savedRange = range.cloneRange();
+            },
+            restore(container) {
+                if (!this.savedRange) return;
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(this.savedRange);
+                if (!container.contains(sel.anchorNode)) {
+                    sel.removeAllRanges();
+                    this.savedRange = null;
+                }
+            }
+        };
+
+        // --- Історія для Undo / Redo ---
+        const HistoryManager = {
+            stack: [],
+            index: -1,
+            max: 100,
+            save(snapshot) {
+                if (snapshot === null || snapshot === undefined) return;
+                if (this.index >= 0 && this.stack[this.index] === snapshot) return;
+
+                this.stack = this.stack.slice(0, this.index + 1);
+                this.stack.push(snapshot);
+
+                if (this.stack.length > this.max) {
+                    this.stack.shift();
+                    this.index--;
+                }
+                this.index = this.stack.length - 1;
+            },
+            current() {
+                return this.index >= 0 ? this.stack[this.index] : null;
+            },
+            canUndo() { return this.index > 0; },
+            canRedo() { return this.index < this.stack.length - 1; },
+            undo() {
+                if (!this.canUndo()) return null;
+                this.index--;
+                return this.stack[this.index];
+            },
+            redo() {
+                if (!this.canRedo()) return null;
+                this.index++;
+                return this.stack[this.index];
+            }
+        };
+
+        const editor = {
+            textArea: document.getElementById('text-area'),
+            message: document.getElementById('message'),
+            wordCount: document.getElementById('word-count'),
+            placeholderText: 'Напиши тут свою історію...',
+            charLimit: 3333,
+            messageTimer: null,
+            allEmojis: [
+                "😊","😂","🤣","😍","🥰","😎","🤩","😇","🤓","😺",
+                "🐶","🐱","🐼","🐸","🐧","🐵","🐯","🦄","🐙","🐳",
+                "🌈","☀️","🌙","⭐","⚡","🔥","🌸","🌻","🍀","🍎",
+                "🍕","🍿","🎂","🎉","🎈","⚽","🏀","🎵","🎧","🎮"
+            ],
+            emojiCount: 10,
+
+            init() {
+                // placeholder і події
+                this.textArea.addEventListener('focus', this.handleFocus.bind(this));
+                this.textArea.addEventListener('blur', this.handleBlur.bind(this));
+                this.textArea.addEventListener('input', this.handleInput.bind(this));
+
+                ['mouseup', 'keyup', 'touchend'].forEach(ev => {
+                    this.textArea.addEventListener(ev, () => SelectionManager.save(this.textArea));
+                });
+                ['mouseup', 'keyup'].forEach(ev => {
+                    this.textArea.addEventListener(ev, this.updateButtonStates.bind(this));
+                });
+
+                // Стиль тексту
+                document.getElementById('bold-btn')
+                    .addEventListener('click', () => this.execSimple('bold'));
+                document.getElementById('italic-btn')
+                    .addEventListener('click', () => this.execSimple('italic'));
+                document.getElementById('underline-btn')
+                    .addEventListener('click', () => this.execSimple('underline'));
+
+                // Розмір
+                document.getElementById('font-small')
+                    .addEventListener('click', () => this.setFontSize(3, 'font-small'));
+                document.getElementById('font-medium')
+                    .addEventListener('click', () => this.setFontSize(4, 'font-medium'));
+                document.getElementById('font-large')
+                    .addEventListener('click', () => this.setFontSize(6, 'font-large'));
+
+                // Вирівнювання
+                document.getElementById('align-left-btn')
+                    .addEventListener('click', () => this.execSimple('justifyLeft'));
+                document.getElementById('align-center-btn')
+                    .addEventListener('click', () => this.execSimple('justifyCenter'));
+                document.getElementById('align-right-btn')
+                    .addEventListener('click', () => this.execSimple('justifyRight'));
+
+                // Undo / Redo
+                document.getElementById('undo-btn')
+                    .addEventListener('click', () => this.undo());
+                document.getElementById('redo-btn')
+                    .addEventListener('click', () => this.redo());
+
+                // Кольори
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.addEventListener('click', () => this.changeColor(btn.dataset.color, btn));
+                });
+
+                // Емодзі
+                this.renderRandomEmojis();
+
+                // Нижні кнопки
+                document.getElementById('clear-btn')
+                    .addEventListener('click', () => this.showClearModal(true));
+
+                const uploadInput = document.getElementById('upload-input');
+                document.getElementById('open-btn')
+                    .addEventListener('click', () => uploadInput.click());
+                uploadInput.addEventListener('change', this.loadFromFile.bind(this));
+
+                document.getElementById('save-main-btn')
+                    .addEventListener('click', () => this.showSaveModal(true));
+
+                // Модалки
+                document.getElementById('save-html-btn')
+                    .addEventListener('click', () => { this.saveAs('html'); this.showSaveModal(false); });
+                document.getElementById('save-txt-btn')
+                    .addEventListener('click', () => { this.saveAs('text'); this.showSaveModal(false); });
+                document.getElementById('save-png-btn')
+                    .addEventListener('click', () => { this.saveAs('png'); this.showSaveModal(false); });
+                document.getElementById('save-cancel-btn')
+                    .addEventListener('click', () => this.showSaveModal(false));
+
+                document.getElementById('clear-confirm-btn')
+                    .addEventListener('click', () => this.clearAll());
+                document.getElementById('clear-cancel-btn')
+                    .addEventListener('click', () => this.showClearModal(false));
+
+                // Клік по фону для закриття
+                document.getElementById('save-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'save-modal') this.showSaveModal(false);
+                });
+                document.getElementById('clear-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'clear-modal') this.showClearModal(false);
+                });
+
+                this.addKeyboardShortcuts();
+                this.loadDraft();
+
+                // встановити сірий колір плейсхолдера на старті
+                if (this.textArea.textContent.trim() === this.placeholderText) {
+                    this.textArea.style.color = '#6b7280';
+                }
+                this.updateCountsAndLimit(false);
+            },
+
+            /* --- Helpers --- */
+            handleFocus(e) {
+                const text = e.target.textContent.trim();
+                if (text === this.placeholderText) {
+                    e.target.textContent = '';
+                    e.target.style.color = '#000000';
+                }
+            },
+
+            handleBlur(e) {
+                if (e.target.textContent.trim() === '') {
+                    e.target.textContent = this.placeholderText;
+                    e.target.style.color = '#6b7280';
+                }
+            },
+
+            handleInput() {
+                this.updateCountsAndLimit(true);
+            },
+
+            getContentInfo() {
+                const raw = this.textArea.textContent || '';
+                const trimmed = raw.trim();
+                const isPlaceholder = trimmed === this.placeholderText;
+                const content = isPlaceholder ? '' : raw;
+                return {
+                    raw,
+                    content,
+                    length: content.length,
+                    wordCount: content.trim() ? content.trim().split(/\s+/).length : 0
+                };
+            },
+
+            updateCountsAndLimit(saveHistory = true) {
+                let info = this.getContentInfo();
+
+                if (info.length > this.charLimit) {
+                    const prev = HistoryManager.current();
+                    this.showMessage(`Досягнуто максимум ${this.charLimit} символів. Зайвий текст не додано.`, true);
+                    if (prev !== null) {
+                        this.textArea.innerHTML = prev;
+                    } else {
+                        this.textArea.textContent = this.placeholderText;
+                        this.textArea.style.color = '#6b7280';
+                    }
+                    info = this.getContentInfo();
+                }
+
+                this.wordCount.textContent = `Слова: ${info.wordCount} | Символи: ${info.length} / ${this.charLimit}`;
+
+                if (saveHistory) {
+                    this.captureSnapshot();
+                }
+            },
+
+            captureSnapshot() {
+                const info = this.getContentInfo();
+                if (!info.content.trim()) return;
+                if (info.length > this.charLimit) return;
+                HistoryManager.save(this.textArea.innerHTML);
+                this.saveDraft();
+            },
+
+            /* --- Форматування --- */
+            execSimple(command) {
+                try {
+                    this.textArea.focus();
+                    SelectionManager.restore(this.textArea);
+                    document.execCommand(command, false, null);
+                    SelectionManager.save(this.textArea);
+                    this.updateButtonStates();
+                    this.updateCountsAndLimit(true);
+                } catch (error) {
+                    this.showMessage('Помилка при форматуванні тексту', true);
+                    console.error('Помилка форматування:', error);
+                }
+            },
+
+            setFontSize(size, btnId) {
+                try {
+                    this.textArea.focus();
+                    SelectionManager.restore(this.textArea);
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('fontSize', false, size);
+                    SelectionManager.save(this.textArea);
+
+                    ['font-small','font-medium','font-large'].forEach(id => {
+                        const b = document.getElementById(id);
+                        if (!b) return;
+                        b.classList.toggle('active-size', id === btnId);
+                    });
+
+                    this.updateCountsAndLimit(true);
+                } catch (error) {
+                    this.showMessage('Помилка при зміні розміру тексту', true);
+                    console.error('Помилка зміни розміру:', error);
+                }
+            },
+
+            updateButtonStates() {
+                const btnBold = document.getElementById('bold-btn');
+                const btnItalic = document.getElementById('italic-btn');
+                const btnUnderline = document.getElementById('underline-btn');
+                const btnLeft = document.getElementById('align-left-btn');
+                const btnCenter = document.getElementById('align-center-btn');
+                const btnRight = document.getElementById('align-right-btn');
+
+                btnBold.classList.toggle('active-button', document.queryCommandState('bold'));
+                btnItalic.classList.toggle('active-button', document.queryCommandState('italic'));
+                btnUnderline.classList.toggle('active-button', document.queryCommandState('underline'));
+
+                btnLeft.classList.toggle('active-button', document.queryCommandState('justifyLeft'));
+                btnCenter.classList.toggle('active-button', document.queryCommandState('justifyCenter'));
+                btnRight.classList.toggle('active-button', document.queryCommandState('justifyRight'));
+            },
+
+            changeColor(color, btnEl) {
+                try {
+                    this.textArea.focus();
+                    SelectionManager.restore(this.textArea);
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, color);
+                    SelectionManager.save(this.textArea);
+
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active-color'));
+                    if (btnEl) btnEl.classList.add('active-color');
+
+                    this.updateCountsAndLimit(true);
+                } catch (error) {
+                    this.showMessage('Помилка при зміні кольору тексту', true);
+                    console.error('Помилка зміни кольору:', error);
+                }
+            },
+
+            /* --- Емодзі --- */
+            renderRandomEmojis() {
+                const panel = document.getElementById('emoji-panel');
+                panel.innerHTML = '';
+                let set = null;
+
+                try {
+                    const saved = localStorage.getItem('drukaryk_emoji_set');
+                    if (saved) set = JSON.parse(saved);
+                } catch (e) { set = null; }
+
+                if (!Array.isArray(set) || set.length === 0) {
+                    const shuffled = [...this.allEmojis].sort(() => Math.random() - 0.5);
+                    set = shuffled.slice(0, this.emojiCount);
+                    try {
+                        localStorage.setItem('drukaryk_emoji_set', JSON.stringify(set));
+                    } catch (e) {}
+                }
+
+                set.forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.className = 'emoji-btn';
+                    btn.textContent = emoji;
+                    btn.dataset.emoji = emoji;
+                    btn.title = 'Емодзі';
+                    btn.setAttribute('aria-label', 'Додати емодзі ' + emoji);
+                    btn.addEventListener('click', () => this.addEmoji(emoji));
+                    panel.appendChild(btn);
+                });
+            },
+
+            addEmoji(emoji) {
+                try {
+                    this.textArea.focus();
+                    SelectionManager.restore(this.textArea);
+                    document.execCommand('insertText', false, emoji);
+                    SelectionManager.save(this.textArea);
+                    this.updateCountsAndLimit(true);
+                } catch (error) {
+                    this.showMessage('Помилка при додаванні емодзі', true);
+                    console.error('Помилка додавання емодзі:', error);
+                }
+            },
+
+            /* --- Undo / Redo --- */
+            undo() {
+                const snapshot = HistoryManager.undo();
+                if (snapshot !== null) {
+                    this.textArea.innerHTML = snapshot;
+                    this.updateCountsAndLimit(false);
+                    this.showMessage('Дію скасовано');
+                }
+            },
+            redo() {
+                const snapshot = HistoryManager.redo();
+                if (snapshot !== null) {
+                    this.textArea.innerHTML = snapshot;
+                    this.updateCountsAndLimit(false);
+                    this.showMessage('Дію повернено');
+                }
+            },
+
+            /* --- Стерти --- */
+            clearAll() {
+                this.textArea.innerHTML = '';
+                this.textArea.style.color = '#000000';
+                localStorage.removeItem('drukaryk_draft_content');
+                localStorage.removeItem('drukaryk_draft_time');
+                this.showClearModal(false);
+                this.handleBlur({target: this.textArea});
+                this.updateCountsAndLimit(true);
+                this.showMessage('Текст очищено!');
+            },
+
+            /* --- Збереження / завантаження --- */
+            saveAs(format) {
+                if (format === 'png') {
+                    this.saveAsImage();
+                } else if (format === 'html' || format === 'text') {
+                    this.saveText(format);
+                }
+            },
+
+            saveText(format) {
+                try {
+                    const info = this.getContentInfo();
+                    if (!info.content.trim()) {
+                        this.showMessage('Немає тексту для збереження!', true);
+                        return;
+                    }
+
+                    let content, mimeType, fileName;
+
+                    if (format === 'text') {
+                        content = info.content;
+                        mimeType = 'text/plain';
+                        fileName = 'моя_історія.txt';
+                    } else {
+                        content = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Моя історія</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    ${this.textArea.innerHTML}
+</body>
+</html>`;
+                        mimeType = 'text/html';
+                        fileName = 'моя_історія.html';
+                    }
+
+                    const blob = new Blob([content], {type: mimeType});
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    this.showMessage('Твоя історія збережена як ' + fileName + '!');
+                } catch (error) {
+                    console.error('Помилка при збереженні:', error);
+                    this.showMessage('Помилка при збереженні файлу', true);
+                }
+            },
+
+            async saveAsImage() {
+                try {
+                    const info = this.getContentInfo();
+                    if (!info.content.trim()) {
+                        this.showMessage('Немає тексту для збереження як картинку!', true);
+                        return;
+                    }
+
+                    const card = document.getElementById('editor-card');
+                    const canvas = await html2canvas(card, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true
+                    });
+
+                    const link = document.createElement('a');
+                    link.download = 'моя_історія.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    this.showMessage('Історію збережено як картинку!');
+                } catch (err) {
+                    console.error('Помилка збереження картинки:', err);
+                    this.showMessage('Помилка при збереженні картинки', true);
+                }
+            },
+
+            loadFromFile(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('text/')) {
+                    this.showMessage('Можна завантажувати лише TXT файли', true);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    let text = reader.result || '';
+                    if (text.length > this.charLimit) {
+                        text = text.slice(0, this.charLimit);
+                        this.showMessage(`Файл обрізано до ${this.charLimit} символів.`, true);
+                    }
+                    this.textArea.textContent = text;
+                    this.textArea.style.color = '#000000';
+                    this.updateCountsAndLimit(true);
+                };
+                reader.readAsText(file, 'utf-8');
+                event.target.value = '';
+            },
+
+            /* --- Модалки --- */
+            showSaveModal(show) {
+                const modal = document.getElementById('save-modal');
+                modal.classList.toggle('hidden', !show);
+                modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+            },
+            showClearModal(show) {
+                const modal = document.getElementById('clear-modal');
+                modal.classList.toggle('hidden', !show);
+                modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+            },
+
+            /* --- Повідомлення --- */
+            showMessage(msg, isError = false) {
+                this.message.textContent = msg;
+                this.message.className = isError ? 'error-message' : '';
+
+                clearTimeout(this.messageTimer);
+                this.messageTimer = setTimeout(() => {
+                    this.message.textContent = '';
+                    this.message.className = '';
+                }, 3000);
+            },
+
+            /* --- Клавіатура --- */
+            addKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    const isEditorFocused = document.activeElement === this.textArea;
+                    const key = e.key.toLowerCase();
+
+                    if (e.ctrlKey && key === 's') {
+                        e.preventDefault();
+                        this.showSaveModal(true);
+                    } else if (e.ctrlKey && key === 'p') {
+                        e.preventDefault();
+                        // друк з форматуванням
+                        this.printText();
+                    }
+
+                    if (isEditorFocused) {
+                        if (e.ctrlKey && key === 'z' && !e.shiftKey) {
+                            e.preventDefault();
+                            this.undo();
+                        } else if ((e.ctrlKey && key === 'y') || (e.ctrlKey && e.shiftKey && key === 'z')) {
+                            e.preventDefault();
+                            this.redo();
+                        } else if (e.ctrlKey && key === ' ') {
+                            e.preventDefault();
+                            this.execSimple('removeFormat');
+                        }
+                    }
+                });
+            },
+
+            printText(asPDF = false) {
+                try {
+                    const info = this.getContentInfo();
+                    if (!info.content.trim()) {
+                        this.showMessage('Немає тексту для друку!', true);
+                        return;
+                    }
+
+                    const content = this.textArea.innerHTML;
+                    const win = window.open('', '', 'height=600,width=800');
+                    win.document.write(`
+                        <!DOCTYPE html>
+                        <html lang="uk">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Моя історія</title>
+                            <style>
+                                @media print {
+                                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                                    @page { size: A4; margin: 2cm; }
+                                }
+                                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                            </style>
+                        </head>
+                        <body>
+                            ${content}
+                        </body>
+                        </html>
+                    `);
+                    win.document.close();
+
+                    win.onload = function() {
+                        if (asPDF) win.document.title = 'моя_історія.pdf';
+                        win.print();
+                        if (!asPDF) win.close();
+                    };
+
+                    this.showMessage(asPDF ? 'Підготовлено до збереження як PDF!' : 'Готово до друку!');
+                } catch (error) {
+                    console.error('Помилка при підготовці до друку:', error);
+                    this.showMessage('Помилка при підготовці до друку', true);
+                }
+            },
+
+            /* --- Чернетки --- */
+            saveDraft() {
+                const info = this.getContentInfo();
+                if (info.content.trim()) {
+                    try {
+                        localStorage.setItem('drukaryk_draft_content', this.textArea.innerHTML);
+                        localStorage.setItem('drukaryk_draft_time', new Date().toISOString());
+                    } catch (error) {
+                        console.error('Помилка автозбереження:', error);
+                    }
+                }
+            },
+
+            loadDraft() {
+                try {
+                    const savedContent = localStorage.getItem('drukaryk_draft_content');
+                    const savedTime = localStorage.getItem('drukaryk_draft_time');
+
+                    if (savedContent && savedTime) {
+                        const timeAgo = this.getTimeAgo(new Date(savedTime));
+
+                        if (confirm(`Знайдено збережену чернетку (${timeAgo}). Завантажити її?`)) {
+                            this.textArea.innerHTML = savedContent;
+                            this.textArea.style.color = '#000000';
+                            this.updateCountsAndLimit(true);
+                            this.showMessage('Чернетку завантажено!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Помилка завантаження чернетки:', error);
+                }
+            },
+
+            getTimeAgo(date) {
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+
+                if (diffMins < 1) return 'щойно';
+                if (diffMins < 60) return `${diffMins} хв тому`;
+
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours} год тому`;
+
+                const diffDays = Math.floor(diffHours / 24);
+                return `${diffDays} днів тому`;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            editor.init();
+        });
+    </script>
+</body>
+</html>
