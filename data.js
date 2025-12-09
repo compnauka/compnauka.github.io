@@ -529,6 +529,20 @@ const CATEGORIES = [
         link: "services/infosort.html", 
         image: "images/55.jpg", 
         tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Перевір себе", 
+        description: "Тест з обчислювального мислення.", 
+        link: "services/quiz.html", 
+        image: "images/55.jpg", 
+        tags: ["1-2 класи", "3-4 класи"] 
+      },
+      { 
+        name: "Місія: Порятунок сервера", 
+        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
+        link: "services/quizes/save_server/index.html", 
+        image: "images/64.jpg", 
+        tags: ["3-4 класи"] 
       }
     ]
   }
