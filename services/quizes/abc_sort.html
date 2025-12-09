@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Гра: Розумне Сортування</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Comic Neue', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-image: radial-gradient(#eff6ff 10%, #dbeafe 90%);
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        .emoji-item {
+            cursor: grab;
+            touch-action: none;
+            will-change: transform, left, top; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+            -webkit-user-drag: none;
+        }
+
+        .emoji-item:active {
+            cursor: grabbing;
+            z-index: 100;
+        }
+
+        .pointer-events-none {
+            pointer-events: none !important;
+        }
+
+        .bin {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, filter 0.2s;
+        }
+
+        .bin.drag-over {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.05);
+            z-index: 10;
+        }
+
+        @keyframes appear {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            60% { transform: scale(1.1) rotate(10deg); }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        @keyframes shake-nope {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px) rotate(-5deg); }
+            40% { transform: translateX(8px) rotate(5deg); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        @keyframes success-pop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.15); filter: brightness(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes combo-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; color: #f59e0b; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-appear { animation: appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-shake { animation: shake-nope 0.5s ease-in-out; }
+        .animate-pop { animation: success-pop 0.3s ease-out; }
+        .animate-combo { animation: combo-pulse 0.4s ease-out; }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            animation: gravity linear forwards;
+            z-index: 40;
+        }
+
+        @keyframes gravity {
+            to { transform: translateY(110vh) rotate(720deg); }
+        }
+
+        #task-instruction h1 {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-between p-2 md:p-6 relative text-slate-800">
+
+    <!-- Header -->
+    <header class="w-full max-w-5xl flex justify-between items-center bg-white rounded-3xl px-3 py-2 md:px-4 md:py-3 shadow-xl border-b-4 border-blue-200 z-20 shrink-0">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+            <span class="text-xs md:text-xl text-slate-400 font-bold uppercase tracking-wider">Рівень</span>
+            <span class="text-xl md:text-3xl font-extrabold text-blue-600" id="level-display">1</span>
+        </div>
+        
+        <div class="flex-1 mx-3 md:mx-8 h-3 md:h-6 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200 relative">
+            <div id="progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-green-500 w-0 transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+        </div>
+        
+        <div class="flex flex-col items-end">
+            <div class="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-xl border border-yellow-200">
+                <span class="text-xl md:text-2xl">⭐</span>
+                <span class="text-xl md:text-3xl font-black text-orange-500 transition-transform" id="score-display">0</span>
+            </div>
+            <div id="combo-display" class="text-xs font-bold text-orange-600 h-4 opacity-0 transition-opacity mt-1">COMBO x0</div>
+        </div>
+    </header>
+
+    <!-- Instruction Area -->
+    <div id="task-instruction" class="mt-2 md:mt-4 text-center z-10 w-full px-2 shrink-0">
+        <h1 class="text-xl md:text-4xl font-black text-slate-700 px-6 py-2 md:py-3 rounded-2xl shadow-sm inline-block border-2 border-white/50">
+            Завантаження...
+        </h1>
+    </div>
+
+    <!-- Game Area -->
+    <main class="flex-1 w-full max-w-5xl flex flex-col justify-center items-center gap-2 md:gap-8 relative z-10 min-h-0">
+        <div id="source-area" class="h-28 md:h-40 w-full flex justify-center items-center relative shrink-0"></div>
+        <div id="bins-container" class="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-4xl h-auto md:h-64 px-2 transition-all duration-300"></div>
+    </main>
+
+    <!-- Level Complete Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[2rem] p-6 md:p-8 max-w-sm w-[90%] text-center shadow-2xl transform scale-90 transition-transform duration-300 border-b-8 border-yellow-400">
+            <div class="text-6xl md:text-7xl mb-4 animate-bounce">🏆</div>
+            <h2 class="text-2xl md:text-4xl font-black text-slate-800 mb-2">Чудово!</h2>
+            <p class="text-base md:text-lg text-slate-500 mb-6 font-bold">Рівень пройдено!</p>
+            <button onclick="Game.nextLevel()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-xl md:text-2xl font-bold py-3 md:py-4 rounded-2xl shadow-lg transform active:scale-95 transition-all">
+                Далі ➜
+            </button>
+        </div>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="win-screen" class="fixed inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center z-50 hidden text-white text-center p-4">
+        <div class="bg-white/10 backdrop-blur-md p-8 md:p-10 rounded-[3rem] border border-white/30 shadow-2xl max-w-lg w-full">
+            <div class="text-8xl md:text-9xl mb-6 filter drop-shadow-lg">🎉</div>
+            <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight">ПЕРЕМОГА!</h1>
+            <p class="text-xl md:text-3xl mb-8 font-bold opacity-90">Всі завдання виконано!</p>
+            <div class="flex flex-col gap-4">
+                <button onclick="location.reload()" class="bg-white text-indigo-600 hover:bg-indigo-50 text-xl md:text-2xl font-black py-3 md:py-4 px-10 rounded-full shadow-xl transform hover:-translate-y-1 active:scale-95 transition-all">
+                    Грати знову ↺
+                </button>
+                <button onclick="Game.resetProgress()" class="text-white/80 hover:text-white underline text-sm">
+                    Скинути прогрес
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LEVELS = [
+            {
+                instruction: "Що можна їсти?",
+                bins: [
+                    { id: 'eat', label: '😋 Їстівне', color: 'bg-green-100', border: 'border-green-400', text: 'text-green-700' },
+                    { id: 'no-eat', label: '🚫 Неїстівне', color: 'bg-red-100', border: 'border-red-400', text: 'text-red-700' }
+                ],
+                items: [
+                    { emoji: '🍕', id: 'eat' }, { emoji: '🎩', id: 'no-eat' },
+                    { emoji: '🍓', id: 'eat' }, { emoji: '🧱', id: 'no-eat' },
+                    { emoji: '🧀', id: 'eat' }, { emoji: '⏰', id: 'no-eat' },
+                    { emoji: '🍎', id: 'eat' }, { emoji: '⚽', id: 'no-eat' }
+                ]
+            },
+            {
+                instruction: "Який це транспорт?",
+                bins: [
+                    { id: 'air', label: '✈️ Повітря', color: 'bg-sky-100', border: 'border-sky-400', text: 'text-sky-700' },
+                    { id: 'water', label: '⛵ Вода', color: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-700' },
+                    { id: 'land', label: '🚗 Земля', color: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-700' }
+                ],
+                items: [
+                    { emoji: '🚁', id: 'air' }, { emoji: '🚢', id: 'water' }, { emoji: '🚌', id: 'land' },
+                    { emoji: '🚀', id: 'air' }, { emoji: '⛵', id: 'water' }, { emoji: '🚲', id: 'land' },
+                    { emoji: '🚤', id: 'water' }, { emoji: '🚂', id: 'land' }, { emoji: '🦅', id: 'air' }
+                ]
+            },
+            {
+                instruction: "Яка це форма?",
+                bins: [
+                    { id: 'circle', label: '⭕ Кругле', color: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-700' },
+                    { id: 'square', label: '🟥 Кутасте', color: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-700' }
+                ],
+                items: [
+                    { emoji: '⚽', id: 'circle' }, { emoji: '📺', id: 'square' },
+                    { emoji: '🌕', id: 'circle' }, { emoji: '🖼️', id: 'square' },
+                    { emoji: '🍕', id: 'circle' }, { emoji: '🧊', id: 'square' }
+                ]
+            },
+            {
+                instruction: "Велике чи Маленьке?",
+                bins: [
+                    { id: 'big', label: '🐘 Велике', color: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-700' },
+                    { id: 'small', label: '🐭 Маленьке', color: 'bg-teal-100', border: 'border-teal-400', text: 'text-teal-700' }
+                ],
+                items: [
+                    { emoji: '🐋', id: 'big' }, { emoji: '🐜', id: 'small' },
+                    { emoji: '🏠', id: 'big' }, { emoji: '📌', id: 'small' },
+                    { emoji: '🚌', id: 'big' }, { emoji: '🍬', id: 'small' }
+                ]
+            },
+            {
+                instruction: "Швидке чи Повільне?",
+                bins: [
+                    { id: 'fast', label: '⚡ Швидке', color: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
+                    { id: 'slow', label: '🐌 Повільне', color: 'bg-slate-100', border: 'border-slate-400', text: 'text-slate-600' }
+                ],
+                items: [
+                    { emoji: '🐆', id: 'fast' }, { emoji: '🐢', id: 'slow' },
+                    { emoji: '🏎️', id: 'fast' }, { emoji: '🚜', id: 'slow' },
+                    { emoji: '🚀', id: 'fast' }, { emoji: '🦥', id: 'slow' }
+                ]
+            }
+        ];
+
+        const AudioSystem = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playTone(freq, type, duration) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            success() { 
+                this.init();
+                this.playTone(600, 'sine', 0.1);
+                setTimeout(() => this.playTone(800, 'sine', 0.2), 100);
+            },
+            fail() {
+                this.init();
+                this.playTone(200, 'sawtooth', 0.3);
+            },
+            win() {
+                this.init();
+                [400, 500, 600, 800].forEach((f, i) => setTimeout(() => this.playTone(f, 'triangle', 0.2), i*100));
+            }
+        };
+
+        const Game = {
+            state: {
+                levelIdx: 0,
+                score: 0,
+                combo: 0,
+                stack: [],
+                initialStackCount: 0,
+                activeItem: null
+            },
+
+            elements: {
+                source: document.getElementById('source-area'),
+                bins: document.getElementById('bins-container'),
+                instruction: document.querySelector('#task-instruction h1'),
+                progress: document.getElementById('progress-bar'),
+                levelNum: document.getElementById('level-display'),
+                scoreNum: document.getElementById('score-display'),
+                comboDisplay: document.getElementById('combo-display'),
+                modal: document.getElementById('modal'),
+                win: document.getElementById('win-screen')
+            },
+
+            init() {
+                // Initialize Audio Context on first interaction
+                const startAudio = () => {
+                    AudioSystem.init();
+                    document.removeEventListener('click', startAudio);
+                    document.removeEventListener('touchstart', startAudio);
+                };
+                document.addEventListener('click', startAudio);
+                document.addEventListener('touchstart', startAudio);
+
+                this.loadProgress();
+                this.loadLevel();
+            },
+
+            loadProgress() {
+                const saved = localStorage.getItem('sortGame');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        this.state.levelIdx = data.levelIdx || 0;
+                        this.state.score = data.score || 0;
+                        this.elements.scoreNum.textContent = this.state.score;
+                    } catch (e) { console.error('Save file corrupt'); }
+                }
+            },
+
+            saveProgress() {
+                localStorage.setItem('sortGame', JSON.stringify({
+                    levelIdx: this.state.levelIdx,
+                    score: this.state.score
+                }));
+            },
+
+            resetProgress() {
+                localStorage.removeItem('sortGame');
+                location.reload();
+            },
+
+            loadLevel() {
+                if (this.state.levelIdx >= LEVELS.length) {
+                    this.showWin();
+                    return;
+                }
+
+                const levelData = LEVELS[this.state.levelIdx];
+                
+                this.state.stack = [...levelData.items].sort(() => Math.random() - 0.5);
+                this.state.initialStackCount = this.state.stack.length;
+                this.state.combo = 0;
+                this.updateComboDisplay();
+                
+                this.elements.source.innerHTML = '';
+                this.elements.bins.innerHTML = '';
+                this.elements.instruction.textContent = levelData.instruction;
+                this.elements.levelNum.textContent = this.state.levelIdx + 1;
+                this.setProgressBar(0);
+
+                // Grid config
+                if (levelData.bins.length === 3) {
+                    this.elements.bins.classList.remove('grid-cols-2');
+                    this.elements.bins.classList.add('grid-cols-3');
+                } else {
+                    this.elements.bins.classList.remove('grid-cols-3');
+                    this.elements.bins.classList.add('grid-cols-2');
+                }
+
+                levelData.bins.forEach(bin => {
+                    const binEl = document.createElement('div');
+                    binEl.className = `bin ${bin.color} border-4 ${bin.border} rounded-[1.5rem] md:rounded-[2rem] flex flex-col items-center justify-center p-1 md:p-2 relative overflow-hidden shadow-lg select-none transition-transform`;
+                    binEl.dataset.id = bin.id;
+                    
+                    const labelParts = bin.label.split(' ');
+                    const icon = labelParts[0];
+                    const text = labelParts.slice(1).join(' ');
+                    
+                    const textSizeClass = levelData.bins.length === 3 ? 'text-sm md:text-2xl' : 'text-xl md:text-3xl';
+                    const iconSizeClass = levelData.bins.length === 3 ? 'text-3xl md:text-5xl' : 'text-4xl md:text-6xl';
+
+                    binEl.innerHTML = `
+                        <span class="${iconSizeClass} font-bold mb-1 md:mb-2 pointer-events-none drop-shadow-sm">${icon}</span>
+                        <span class="${textSizeClass} font-bold pointer-events-none ${bin.text} text-center leading-tight">${text}</span>
+                    `;
+                    this.elements.bins.appendChild(binEl);
+                });
+
+                this.spawnItem();
+            },
+
+            spawnItem() {
+                // Check if level complete based on stack emptiness
+                if (this.state.stack.length === 0) {
+                    // All items spawned and processed (since logic is in handleSuccess)
+                    // Wait for last item animation to finish roughly
+                    return; 
+                }
+
+                const data = this.state.stack.pop();
+                
+                const item = document.createElement('div');
+                item.className = 'emoji-item text-7xl md:text-9xl absolute animate-appear z-20';
+                item.textContent = data.emoji;
+                item.dataset.targetId = data.id;
+
+                this.elements.source.appendChild(item);
+                this.enableDrag(item);
+            },
+
+            updateProgress() {
+                // Correct logic: Total - Remaining Stack.
+                // Since spawnItem pops from stack, stack.length is remaining UNSPAWNED items.
+                // When we call this in handleSuccess, the current item is destroyed.
+                // So solved = Total - Stack.
+                const remaining = this.state.stack.length;
+                const solved = this.state.initialStackCount - remaining;
+                const percent = (solved / this.state.initialStackCount) * 100;
+                this.setProgressBar(percent);
+            },
+            
+            setProgressBar(percent) {
+                 this.elements.progress.style.width = `${percent}%`;
+            },
+
+            triggerHaptic(type) {
+                if (navigator.vibrate) {
+                    if (type === 'success') navigator.vibrate(50);
+                    if (type === 'fail') navigator.vibrate([50, 50, 50]);
+                }
+            },
+
+            updateComboDisplay() {
+                const el = this.elements.comboDisplay;
+                if (this.state.combo > 1) {
+                    el.textContent = `COMBO x${this.state.combo}`;
+                    el.classList.remove('opacity-0');
+                    el.classList.add('animate-combo');
+                    setTimeout(() => el.classList.remove('animate-combo'), 400);
+                } else {
+                    el.classList.add('opacity-0');
+                }
+            },
+
+            enableDrag(el) {
+                let isDragging = false;
+
+                const moveAt = (pageX, pageY) => {
+                    el.style.left = pageX - el.offsetWidth / 2 + 'px';
+                    el.style.top = pageY - el.offsetHeight / 2 + 'px';
+                };
+
+                const onStart = (e) => {
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    isDragging = true;
+                    this.state.activeItem = el;
+
+                    const rect = el.getBoundingClientRect();
+                    el.style.position = 'fixed';
+                    el.style.zIndex = 1000;
+                    el.style.width = rect.width + 'px';
+                    el.style.height = rect.height + 'px';
+                    
+                    el.classList.add('pointer-events-none');
+                    moveAt(clientX, clientY);
+
+                    window.addEventListener('mousemove', onMove);
+                    window.addEventListener('touchmove', onMove, { passive: false });
+                    window.addEventListener('mouseup', onEnd);
+                    window.addEventListener('touchend', onEnd);
+                };
+
+                const onMove = (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault(); 
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    moveAt(clientX, clientY);
+                    this.checkHover(clientX, clientY);
+                };
+
+                const onEnd = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    this.state.activeItem = null;
+                    
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('mouseup', onEnd);
+                    window.removeEventListener('touchend', onEnd);
+
+                    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+                    document.querySelectorAll('.bin').forEach(b => b.classList.remove('drag-over'));
+                    
+                    const bin = this.getBinFromPoint(clientX, clientY);
+                    el.classList.remove('pointer-events-none');
+
+                    if (bin) {
+                        this.validateSort(el, bin);
+                    } else {
+                        this.resetItemPosition(el);
+                    }
+                };
+
+                el.addEventListener('mousedown', onStart);
+                el.addEventListener('touchstart', onStart, { passive: false });
+            },
+
+            getBinFromPoint(x, y) {
+                const elBelow = document.elementFromPoint(x, y);
+                return elBelow ? elBelow.closest('.bin') : null;
+            },
+
+            checkHover(x, y) {
+                document.querySelectorAll('.bin').forEach(b => b.classList.remove('drag-over'));
+                const bin = this.getBinFromPoint(x, y);
+                if (bin) bin.classList.add('drag-over');
+            },
+
+            validateSort(item, bin) {
+                const isCorrect = item.dataset.targetId === bin.dataset.id;
+                
+                if (isCorrect) {
+                    this.handleSuccess(item, bin);
+                } else {
+                    this.handleFail(item, bin);
+                }
+            },
+
+            handleSuccess(item, bin) {
+                this.state.combo++;
+                const bonus = this.state.combo > 1 ? this.state.combo * 5 : 0;
+                this.state.score += (10 + bonus);
+                
+                this.elements.scoreNum.textContent = this.state.score;
+                this.elements.scoreNum.parentElement.classList.add('scale-110'); 
+                setTimeout(() => this.elements.scoreNum.parentElement.classList.remove('scale-110'), 200);
+                
+                this.updateComboDisplay();
+                this.triggerHaptic('success');
+                AudioSystem.success();
+                
+                bin.classList.add('animate-pop');
+                item.style.transition = 'transform 0.2s, opacity 0.2s';
+                item.style.transform = 'scale(0)';
+                item.style.opacity = '0';
+
+                setTimeout(() => {
+                    bin.classList.remove('animate-pop');
+                    item.remove();
+                    
+                    // Logic fix: Update progress AFTER item removal and before spawn
+                    this.updateProgress();
+
+                    if (this.state.stack.length === 0) {
+                        this.levelComplete();
+                    } else {
+                        this.spawnItem();
+                    }
+                }, 200);
+            },
+
+            handleFail(item, bin) {
+                this.state.combo = 0; 
+                this.updateComboDisplay();
+                this.triggerHaptic('fail');
+                AudioSystem.fail();
+
+                bin.style.backgroundColor = '#fee2e2'; 
+                item.classList.add('animate-shake');
+                
+                this.resetItemPosition(item);
+                
+                setTimeout(() => {
+                    bin.style.backgroundColor = ''; 
+                    item.classList.remove('animate-shake');
+                }, 500);
+            },
+
+            resetItemPosition(item) {
+                item.style.transition = 'all 0.4s ease-out';
+                const sourceRect = this.elements.source.getBoundingClientRect();
+                const centerX = sourceRect.left + sourceRect.width/2 - item.offsetWidth/2;
+                const centerY = sourceRect.top + sourceRect.height/2 - item.offsetHeight/2;
+                
+                item.style.left = centerX + 'px';
+                item.style.top = centerY + 'px';
+                
+                setTimeout(() => {
+                    item.style.transition = '';
+                }, 400);
+            },
+
+            levelComplete() {
+                AudioSystem.win();
+                this.confetti();
+                const m = this.elements.modal;
+                m.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    m.classList.remove('opacity-0');
+                    m.querySelector('div').classList.remove('scale-90');
+                    m.querySelector('div').classList.add('scale-100');
+                });
+            },
+
+            nextLevel() {
+                this.state.levelIdx++;
+                this.saveProgress(); // Auto-save
+
+                const m = this.elements.modal;
+                m.classList.add('opacity-0');
+                setTimeout(() => {
+                    m.classList.add('hidden');
+                    this.loadLevel();
+                }, 300);
+            },
+
+            showWin() {
+                AudioSystem.win();
+                this.elements.win.classList.remove('hidden');
+                this.confetti(100);
+                this.resetProgress(); // Optional: reset after full completion or keep high score
+            },
+
+            confetti(amount = 40) {
+                const colors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7'];
+                for (let i = 0; i < amount; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.top = -20 + 'px';
+                    c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 4000);
+                }
+            }
+        };
+
+        Game.init();
+
+    </script>
+</body>
+</html>
