@@ -502,5 +502,34 @@ const CATEGORIES = [
         tags: ["Тест"] 
       }
     ]
+  },
+  {
+    id: "quiz",
+    name: "Перевір знання",
+    iconClass: "fas fa-clipboard-question",
+    color: "#A3E635",
+    services: [
+      { 
+        name: "Сортування 1", 
+        description: "Відсортуй об'єкти за ознаками.", 
+        link: "services/quizes/abc_sort.html", 
+        image: "images/50.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Сортування 2", 
+        description: "Відсортуй об'єкти за ознаками.", 
+        link: "services/quizes/sort.html", 
+        image: "images/32.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Сортування 3", 
+        description: "Інтерактивна книга для дітей про штучний інтелект.", 
+        link: "services/infosort.html", 
+        image: "images/4.jpg", 
+        tags: ["1-2 класи"] 
+      }
+    ]
   }
 ];
