@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Пензлик | Графічний редактор для дітей</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},
+    plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #7c3aed;
+      --paper-color: #ffffff;
+    }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f5f3ff;
+      background-image: radial-gradient(#ddd6fe 1px, transparent 1px);
+      background-size: 20px 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 960px;
+      background: var(--paper-color);
+      border-radius: 24px;
+      box-shadow: 0 12px 35px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* HEADER */
+    .app-header {
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+      transform: rotate(-4deg);
+      font-size: 1.2rem;
+    }
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      color: #4c1d95;
+    }
+    .brand-title span {
+      font-size: 0.75rem;
+      color: #6b7280;
+      font-weight: 600;
+    }
+    .header-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f5f3ff;
+      color: #6b21a8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-pill i { font-size: 0.8rem; }
+
+    /* MAIN */
+    .editor-body {
+      padding: 16px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(to bottom, #f5f3ff 0, #e0f2fe 260px, #fefce8 100%);
+    }
+    @media (min-width: 768px) {
+      .editor-body { padding: 20px 24px 24px; }
+    }
+
+    /* TOOLBAR */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      background: rgba(248, 250, 252, 0.9);
+      border-radius: 18px;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+    }
+    .toolbar-group {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      align-items: center;
+    }
+    .toolbar-separator {
+      width: 1px;
+      height: 32px;
+      background: #e2e8f0;
+      margin: 0 4px;
+    }
+
+    .tool-btn,
+    .icon-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #475569;
+      background: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 36px;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .icon-btn { padding: 8px; font-size: 0.95rem; }
+    .tool-btn i,
+    .icon-btn i { font-size: 0.95rem; }
+    .tool-btn:hover,
+    .icon-btn:hover {
+      background: #cbd5f5;
+      transform: translateY(-1px);
+    }
+    .tool-btn:active,
+    .icon-btn:active { transform: scale(0.96); }
+    .tool-btn:focus-visible,
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+    .tool-btn.active,
+    .icon-btn.active {
+      background: var(--primary-color);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    /* COLORS */
+    .color-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .color-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #6b7280;
+      margin-right: 2px;
+    }
+    .color {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 0 1px #cbd5e1;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .color:hover { transform: scale(1.05); }
+    .color.active {
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px var(--primary-color);
+    }
+
+    /* SIZE SLIDER */
+    .size-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    #size-slider {
+      width: 140px;
+      accent-color: #6366f1;
+    }
+    @media (min-width: 768px) {
+      #size-slider { width: 180px; }
+    }
+
+    /* SHAPES / STAMPS PANELS */
+    .shapes-container,
+    #stamps-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .shape-btn {
+      font-size: 1.1rem;
+      background-color: #e5e7eb;
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      color: #1f2933;
+    }
+    .shape-btn:hover {
+      background-color: #cbd5f5;
+      transform: translateY(-1px);
+    }
+    .shape-btn.active {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    .stamp {
+      font-size: 1.4rem;
+      padding: 6px 8px;
+      background-color: #fef3c7;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.18s, box-shadow 0.18s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+    }
+    .stamp:hover {
+      transform: translateY(-1px) scale(1.05);
+      background-color: #fde68a;
+      box-shadow: 0 6px 14px rgba(251, 191, 36, 0.35);
+    }
+    .stamp.active {
+      background-color: #facc15;
+      transform: translateY(-1px) scale(1.05);
+    }
+
+    /* CANVAS CARD */
+    .canvas-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 12px 14px 14px;
+      border: 2px dashed #e2e8f0;
+      box-shadow: 0 8px 18px rgba(148, 163, 184, 0.18);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #canvas-container {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px #e5e7eb;
+    }
+    #drawing-canvas {
+      background-color: #ffffff;
+      cursor: crosshair;
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .editor-footer {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .footer-group-left,
+    .footer-group-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn i { font-size: 0.9rem; }
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+      transform: translateY(-1px);
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.45);
+    }
+    .btn-primary:hover {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+    .btn-secondary:hover {
+      background: #e0e7ff;
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
+    }
+    .btn[disabled] {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #message {
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      min-height: 20px;
+      margin-top: 2px;
+      color: #16a34a;
+    }
+    .error-message { color: #dc2626 !important; }
+
+    @media (max-width: 640px) {
+      .app-header { padding: 0 12px; }
+      .editor-body { padding: 12px; }
+      .editor-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .footer-group-left,
+      .footer-group-right {
+        justify-content: space-between;
+      }
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 24px 22px 18px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+      text-align: center;
+    }
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 1.4rem;
+    }
+    .modal-icon.danger {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+    .modal-icon.save {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+    .modal-title {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #111827;
+    }
+    .modal-text {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-btn-cancel {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .modal-btn-cancel:hover { background: #e5e7eb; }
+    .modal-btn-primary {
+      background: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.4);
+    }
+    .modal-btn-primary:hover { background: #4338ca; }
+  </style>
+</head>
+<body>
+  <div class="app-shell" aria-label="Графічний редактор Пензлик">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fas fa-paint-brush"></i>
+        </div>
+        <div class="brand-title">
+          <h1>Пензлик</h1>
+          <span>Графічний редактор для дітей</span>
+        </div>
+      </div>
+      <div class="header-pill">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        <span>Малюй свій світ</span>
+      </div>
+    </header>
+
+    <main class="editor-body">
+      <!-- TOOLBAR -->
+      <div class="toolbar" role="toolbar" aria-label="Панель інструментів малювання">
+        <div class="toolbar-group" aria-label="Інструменти">
+          <button id="pencil" class="tool-btn active" aria-label="Інструмент олівця">
+            <i class="fas fa-pencil-alt"></i>
+            <span>Олівець</span>
+          </button>
+          <button id="eraser" class="tool-btn" aria-label="Інструмент гумки">
+            <i class="fas fa-eraser"></i>
+            <span>Гумка</span>
+          </button>
+          <button id="shapes" class="tool-btn" aria-label="Інструмент фігур">
+            <i class="fas fa-draw-polygon"></i>
+            <span>Фігури</span>
+          </button>
+          <button id="stamps" class="tool-btn" aria-label="Інструмент штампів">
+            <i class="fas fa-stamp"></i>
+            <span>Штампи</span>
+          </button>
+        </div>
+
+        <div class="toolbar-group" aria-label="Розмір пензля">
+          <div class="size-wrapper">
+            <span>Розмір:</span>
+            <input
+              type="range"
+              id="size-slider"
+              min="1"
+              max="50"
+              value="5"
+              aria-label="Розмір пензлика"
+            />
+          </div>
+        </div>
+
+        <div class="toolbar-separator" aria-hidden="true"></div>
+
+        <div class="toolbar-group" aria-label="Колір пензля">
+          <span class="color-label">Колір:</span>
+          <div class="color-row">
+            <div class="color active" style="background-color:#000000" aria-label="Чорний"></div>
+            <div class="color" style="background-color:#ff0000" aria-label="Червоний"></div>
+            <div class="color" style="background-color:#ff9900" aria-label="Оранжевий"></div>
+            <div class="color" style="background-color:#ffff00" aria-label="Жовтий"></div>
+            <div class="color" style="background-color:#00ff00" aria-label="Зелений"></div>
+            <div class="color" style="background-color:#00ffff" aria-label="Блакитний"></div>
+            <div class="color" style="background-color:#0000ff" aria-label="Синій"></div>
+            <div class="color" style="background-color:#9900ff" aria-label="Фіолетовий"></div>
+            <div class="color" style="background-color:#ff00ff" aria-label="Рожевий"></div>
+            <div class="color" style="background-color:#ff6b6b" aria-label="Світло-червоний"></div>
+            <div class="color" style="background-color:#7aa5f8" aria-label="Світло-синій"></div>
+            <div class="color" style="background-color:#ffffff" aria-label="Білий"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHAPES / STAMPS PANELS -->
+      <div class="shapes-container" style="display:none" aria-label="Вибір фігури">
+        <button class="shape-btn active" data-shape="line" aria-label="Лінія">╱</button>
+        <button class="shape-btn" data-shape="rect" aria-label="Прямокутник">□</button>
+        <button class="shape-btn" data-shape="circle" aria-label="Коло">○</button>
+        <button class="shape-btn" data-shape="triangle" aria-label="Трикутник">△</button>
+        <button class="shape-btn" data-shape="star" aria-label="Зірка">★</button>
+      </div>
+
+      <div id="stamps-container" style="display:none" aria-label="Вибір штампа">
+        <button class="stamp" data-emoji="🦄" aria-label="Єдиноріг">🦄</button>
+        <button class="stamp" data-emoji="🐱" aria-label="Кішка">🐱</button>
+        <button class="stamp" data-emoji="🐶" aria-label="Собака">🐶</button>
+        <button class="stamp" data-emoji="🦖" aria-label="Динозавр">🦖</button>
+        <button class="stamp" data-emoji="🌈" aria-label="Веселка">🌈</button>
+        <button class="stamp" data-emoji="🌟" aria-label="Зірка">🌟</button>
+        <button class="stamp" data-emoji="🍕" aria-label="Піца">🍕</button>
+        <button class="stamp" data-emoji="🚀" aria-label="Ракета">🚀</button>
+        <button class="stamp" data-emoji="🎮" aria-label="Ігровий контролер">🎮</button>
+        <button class="stamp" data-emoji="🏀" aria-label="Баскетбольний м'яч">🏀</button>
+        <button class="stamp" data-emoji="🌸" aria-label="Квітка">🌸</button>
+        <button class="stamp" data-emoji="🌞" aria-label="Сонце">🌞</button>
+      </div>
+
+      <!-- CANVAS CARD -->
+      <section class="canvas-card">
+        <div id="canvas-container">
+          <canvas id="drawing-canvas" width="600" height="400"></canvas>
+        </div>
+
+        <div class="editor-footer">
+          <div class="footer-group-left">
+            <button id="undo" class="btn btn-secondary" type="button" aria-label="Скасувати останню дію">
+              <i class="fas fa-undo"></i>
+              АнДУ
+            </button>
+            <button id="redo" class="btn btn-secondary" type="button" aria-label="Повернути дію">
+              <i class="fas fa-redo"></i>
+              РеДУ
+            </button>
+            <button id="clear" class="btn btn-danger" type="button" aria-label="Очистити полотно">
+              <i class="fas fa-trash"></i>
+              Стерти
+            </button>
+          </div>
+          <div class="footer-group-right">
+            <button id="save" class="btn btn-primary" type="button" aria-label="Зберегти малюнок">
+              <i class="fas fa-save"></i>
+              Зберегти
+            </button>
+          </div>
+        </div>
+
+        <div id="message" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL CONFIRM -->
+  <div id="confirm-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <div class="modal-card">
+      <div id="confirm-icon" class="modal-icon">
+        <i class="fas fa-question"></i>
+      </div>
+      <h2 id="confirm-title" class="modal-title">Підтвердження</h2>
+      <p id="confirm-text" class="modal-text">Ти впевнений?</p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="modal-btn modal-btn-cancel" type="button">
+          Скасувати
+        </button>
+        <button id="confirm-ok" class="modal-btn modal-btn-primary" type="button">
+          <span>Так</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const canvas = document.getElementById("drawing-canvas");
+      const messageEl = document.getElementById("message");
+
+      if (!canvas || !canvas.getContext) {
+        alert("Ваш браузер не підтримує HTML5 Canvas!");
+        return;
+      }
+      const ctx = canvas.getContext("2d");
+
+      const state = {
+        isDrawing: false,
+        lastX: 0,
+        lastY: 0,
+        currentTool: "pencil",
+        currentColor: "#000000",
+        currentSize: 5,
+        currentShape: "line",
+        startX: 0,
+        startY: 0,
+        currentStamp: null,
+        canvasSnapshot: null,
+        history: [],
+        historyStep: -1
+      };
+
+      const elements = {
+        pencilBtn: document.getElementById("pencil"),
+        eraserBtn: document.getElementById("eraser"),
+        shapesBtn: document.getElementById("shapes"),
+        stampsBtn: document.getElementById("stamps"),
+        clearBtn: document.getElementById("clear"),
+        saveBtn: document.getElementById("save"),
+        undoBtn: document.getElementById("undo"),
+        redoBtn: document.getElementById("redo"),
+        colors: document.querySelectorAll(".color"),
+        sizeSlider: document.getElementById("size-slider"),
+        shapesContainer: document.querySelector(".shapes-container"),
+        shapeButtons: document.querySelectorAll(".shape-btn"),
+        stampsContainer: document.getElementById("stamps-container"),
+        stamps: document.querySelectorAll(".stamp")
+      };
+
+      const confirmModal = {
+        backdrop: document.getElementById("confirm-modal"),
+        icon: document.getElementById("confirm-icon"),
+        title: document.getElementById("confirm-title"),
+        text: document.getElementById("confirm-text"),
+        ok: document.getElementById("confirm-ok"),
+        cancel: document.getElementById("confirm-cancel"),
+        currentAction: null
+      };
+
+      function showMessage(msg, isError = false) {
+        messageEl.textContent = msg;
+        messageEl.className = isError ? "error-message" : "";
+        clearTimeout(showMessage._timer);
+        showMessage._timer = setTimeout(() => {
+          messageEl.textContent = "";
+          messageEl.className = "";
+        }, 2500);
+      }
+
+      function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            func.apply(this, args);
+          }, delay);
+        };
+      }
+
+      function autoSave() {
+        try {
+          localStorage.setItem("autosave_penzlyk", canvas.toDataURL());
+        } catch (e) {
+          console.error("Помилка збереження малюнка: ", e);
+        }
+      }
+      const debouncedAutoSave = debounce(autoSave, 800);
+
+      function pushHistory() {
+        try {
+          const dataUrl = canvas.toDataURL();
+          state.historyStep++;
+          state.history = state.history.slice(0, state.historyStep);
+          state.history.push(dataUrl);
+          updateUndoRedoState();
+        } catch (e) {
+          console.error("Помилка збереження історії:", e);
+        }
+      }
+
+      function restoreFromHistory(step) {
+        const dataUrl = state.history[step];
+        if (!dataUrl) return;
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = dataUrl;
+      }
+
+      function undo() {
+        if (state.historyStep <= 0) return;
+        state.historyStep--;
+        restoreFromHistory(state.historyStep);
+        debouncedAutoSave();
+        updateUndoRedoState();
+      }
+
+      function redo() {
+        if (state.historyStep >= state.history.length - 1) return;
+        state.historyStep++;
+        restoreFromHistory(state.historyStep);
+        debouncedAutoSave();
+        updateUndoRedoState();
+      }
+
+      function updateUndoRedoState() {
+        elements.undoBtn.disabled = state.historyStep <= 0;
+        elements.redoBtn.disabled = state.historyStep >= state.history.length - 1;
+      }
+
+      function loadAutoSave() {
+        try {
+          const dataURL = localStorage.getItem("autosave_penzlyk");
+          if (dataURL) {
+            const img = new Image();
+            img.onload = function () {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              pushHistory();
+            };
+            img.src = dataURL;
+            return true;
+          }
+        } catch (e) {
+          console.error("Помилка завантаження збереженого малюнка: ", e);
+        }
+        return false;
+      }
+
+      function resizeCanvas() {
+        const container = document.getElementById("canvas-container");
+        const rect = container.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = Math.min(rect.width * 0.66, 400);
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      resizeCanvas();
+      const hadSaved = loadAutoSave();
+      if (!hadSaved) {
+        pushHistory();
+      }
+
+      window.addEventListener("resize", () => {
+        const saved = state.history[state.historyStep] || localStorage.getItem("autosave_penzlyk");
+        resizeCanvas();
+        if (saved) {
+          const img = new Image();
+          img.onload = function () {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          };
+          img.src = saved;
+        } else {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+      });
+
+      function getMousePos(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        if (e.touches) {
+          return [
+            (e.touches[0].clientX - rect.left) * scaleX,
+            (e.touches[0].clientY - rect.top) * scaleY
+          ];
+        }
+        return [
+          (e.clientX - rect.left) * scaleX,
+          (e.clientY - rect.top) * scaleY
+        ];
+      }
+
+      function startDrawing(e) {
+        state.isDrawing = true;
+        [state.lastX, state.lastY] = getMousePos(canvas, e);
+        state.startX = state.lastX;
+        state.startY = state.lastY;
+        if (state.currentTool === "stamps" && state.currentStamp) {
+          placeStamp(state.lastX, state.lastY);
+          state.isDrawing = false;
+          debouncedAutoSave();
+          pushHistory();
+        }
+        if (state.currentTool === "shapes") {
+          takeCanvasSnapshot();
+        }
+      }
+
+      function takeCanvasSnapshot() {
+        try {
+          state.canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        } catch (e) {
+          console.error("Помилка збереження знімку полотна: ", e);
+        }
+      }
+
+      function restoreCanvasSnapshot() {
+        if (state.canvasSnapshot) {
+          try {
+            ctx.putImageData(state.canvasSnapshot, 0, 0);
+          } catch (e) {
+            console.error("Помилка відновлення знімку полотна: ", e);
+          }
+        }
+      }
+
+      function draw(e) {
+        if (!state.isDrawing) return;
+        const [currentX, currentY] = getMousePos(canvas, e);
+        if (state.currentTool === "pencil") {
+          drawFreehand(currentX, currentY);
+        } else if (state.currentTool === "eraser") {
+          erase(currentX, currentY);
+        } else if (state.currentTool === "shapes") {
+          restoreCanvasSnapshot();
+          drawShape(currentX, currentY);
+        }
+      }
+
+      function drawFreehand(currentX, currentY) {
+        try {
+          ctx.strokeStyle = state.currentColor;
+          ctx.lineWidth = state.currentSize;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(state.lastX, state.lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          [state.lastX, state.lastY] = [currentX, currentY];
+        } catch (e) {
+          console.error("Помилка малювання: ", e);
+        }
+      }
+
+      function erase(currentX, currentY) {
+        try {
+          ctx.strokeStyle = "white";
+          ctx.lineWidth = state.currentSize;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(state.lastX, state.lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          [state.lastX, state.lastY] = [currentX, currentY];
+        } catch (e) {
+          console.error("Помилка при використанні гумки: ", e);
+        }
+      }
+
+      function drawShape(currentX, currentY) {
+        try {
+          ctx.strokeStyle = state.currentColor;
+          ctx.fillStyle = state.currentColor;
+          ctx.lineWidth = state.currentSize;
+          switch (state.currentShape) {
+            case "line":
+              drawLine(state.startX, state.startY, currentX, currentY);
+              break;
+            case "rect":
+              drawRectangle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "circle":
+              drawCircle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "triangle":
+              drawTriangle(state.startX, state.startY, currentX, currentY);
+              break;
+            case "star":
+              drawStar(state.startX, state.startY, currentX, currentY);
+              break;
+          }
+        } catch (e) {
+          console.error("Помилка малювання фігури: ", e);
+        }
+      }
+
+      function drawLine(startX, startY, endX, endY) {
+        try {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        } catch (e) {
+          console.error("Помилка малювання лінії: ", e);
+        }
+      }
+
+      function drawRectangle(startX, startY, endX, endY) {
+        try {
+          const x = Math.min(startX, endX);
+          const y = Math.min(startY, endY);
+          const width = Math.abs(endX - startX);
+          const height = Math.abs(endY - startY);
+          ctx.beginPath();
+          ctx.rect(x, y, width, height);
+          ctx.fill();
+          ctx.stroke();
+        } catch (e) {
+          console.error("Помилка малювання прямокутника: ", e);
+        }
+      }
+
+      function drawCircle(startX, startY, endX, endY) {
+        try {
+          const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+          ctx.beginPath();
+          ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } catch (e) {
+          console.error("Помилка малювання кола: ", e);
+        }
+      }
+
+      function drawTriangle(startX, startY, endX, endY) {
+        try {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.lineTo(startX - (endX - startX), endY);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } catch (e) {
+          console.error("Помилка малювання трикутника: ", e);
+        }
+      }
+
+      function drawStar(startX, startY, endX, endY) {
+        try {
+          const spikes = 5;
+          const outerRadius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+          const innerRadius = outerRadius / 2;
+          const cx = startX;
+          const cy = startY;
+          let rot = (Math.PI / 2) * 3;
+          const step = Math.PI / spikes;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - outerRadius);
+          for (let i = 0; i < spikes; i++) {
+            ctx.lineTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
+            rot += step;
+            ctx.lineTo(cx + Math.cos(rot) * innerRadius, cy + Math.sin(rot) * innerRadius);
+            rot += step;
+          }
+          ctx.lineTo(cx, cy - outerRadius);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } catch (e) {
+          console.error("Помилка малювання зірки: ", e);
+        }
+      }
+
+      function placeStamp(x, y) {
+        try {
+          if (!state.currentStamp) return;
+          ctx.font = `${state.currentSize * 5}px Arial`;
+          ctx.fillStyle = state.currentColor;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(state.currentStamp, x, y);
+        } catch (e) {
+          console.error("Помилка розміщення штампа: ", e);
+        }
+      }
+
+      function stopDrawing() {
+        if (state.isDrawing) {
+          state.isDrawing = false;
+          if (state.currentTool === "shapes") {
+            state.canvasSnapshot = null;
+          }
+          debouncedAutoSave();
+          pushHistory();
+        }
+      }
+
+      function clearCanvas() {
+        try {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          state.canvasSnapshot = null;
+          localStorage.removeItem("autosave_penzlyk");
+          pushHistory();
+          showMessage("Полотно очищено!");
+        } catch (e) {
+          console.error("Помилка очищення полотна: ", e);
+        }
+      }
+
+      function saveCanvas() {
+        try {
+          const link = document.createElement("a");
+          link.download = "my-drawing.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          showMessage("Малюнок збережено!");
+        } catch (e) {
+          console.error("Помилка збереження малюнка: ", e);
+          showMessage("Помилка збереження малюнка", true);
+        }
+      }
+
+      function setActiveTool(tool) {
+        state.currentTool = tool;
+        elements.pencilBtn.classList.remove("active");
+        elements.eraserBtn.classList.remove("active");
+        elements.shapesBtn.classList.remove("active");
+        elements.stampsBtn.classList.remove("active");
+        elements.shapesContainer.style.display = "none";
+        elements.stampsContainer.style.display = "none";
+
+        switch (tool) {
+          case "pencil":
+            elements.pencilBtn.classList.add("active");
+            break;
+          case "eraser":
+            elements.eraserBtn.classList.add("active");
+            break;
+          case "shapes":
+            elements.shapesBtn.classList.add("active");
+            elements.shapesContainer.style.display = "flex";
+            takeCanvasSnapshot();
+            break;
+          case "stamps":
+            elements.stampsBtn.classList.add("active");
+            elements.stampsContainer.style.display = "flex";
+            break;
+        }
+      }
+
+      function openConfirm(action) {
+        confirmModal.currentAction = action;
+        confirmModal.backdrop.classList.add("show");
+        confirmModal.backdrop.setAttribute("aria-hidden", "false");
+
+        if (action === "clear") {
+          confirmModal.icon.className = "modal-icon danger";
+          confirmModal.icon.innerHTML = '<i class="fas fa-trash"></i>';
+          confirmModal.title.textContent = "Стерти полотно?";
+          confirmModal.text.textContent = "Усі мазки та штампи зникнуть безповоротно.";
+          confirmModal.ok.innerHTML = '<i class="fas fa-trash"></i><span>Так, стерти</span>';
+        } else if (action === "save") {
+          confirmModal.icon.className = "modal-icon save";
+          confirmModal.icon.innerHTML = '<i class="fas fa-save"></i>';
+          confirmModal.title.textContent = "Зберегти малюнок?";
+          confirmModal.text.textContent = "Малюнок буде завантажено як картинка (.png) на твій пристрій.";
+          confirmModal.ok.innerHTML = '<i class="fas fa-save"></i><span>Завантажити PNG</span>';
+        }
+
+        confirmModal.ok.focus();
+      }
+
+      function closeConfirm() {
+        confirmModal.backdrop.classList.remove("show");
+        confirmModal.backdrop.setAttribute("aria-hidden", "true");
+      }
+
+      confirmModal.cancel.addEventListener("click", closeConfirm);
+      confirmModal.backdrop.addEventListener("click", (e) => {
+        if (e.target === confirmModal.backdrop) {
+          closeConfirm();
+        }
+      });
+      confirmModal.ok.addEventListener("click", () => {
+        if (confirmModal.currentAction === "clear") {
+          clearCanvas();
+        } else if (confirmModal.currentAction === "save") {
+          saveCanvas();
+        }
+        closeConfirm();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && confirmModal.backdrop.classList.contains("show")) {
+          closeConfirm();
+        }
+      });
+
+      elements.pencilBtn.addEventListener("click", () => setActiveTool("pencil"));
+      elements.eraserBtn.addEventListener("click", () => setActiveTool("eraser"));
+      elements.shapesBtn.addEventListener("click", () => setActiveTool("shapes"));
+      elements.stampsBtn.addEventListener("click", () => setActiveTool("stamps"));
+
+      elements.clearBtn.addEventListener("click", () => openConfirm("clear"));
+      elements.saveBtn.addEventListener("click", () => openConfirm("save"));
+
+      elements.undoBtn.addEventListener("click", undo);
+      elements.redoBtn.addEventListener("click", redo);
+
+      elements.colors.forEach((color) => {
+        color.addEventListener("click", function () {
+          elements.colors.forEach((c) => c.classList.remove("active"));
+          this.classList.add("active");
+          state.currentColor = this.style.backgroundColor;
+        });
+      });
+
+      elements.sizeSlider.addEventListener("input", function () {
+        state.currentSize = Number(this.value);
+      });
+
+      elements.shapeButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          elements.shapeButtons.forEach((btn) => btn.classList.remove("active"));
+          this.classList.add("active");
+          state.currentShape = this.dataset.shape;
+        });
+      });
+
+      elements.stamps.forEach((stamp) => {
+        stamp.addEventListener("click", function () {
+          elements.stamps.forEach((s) => s.classList.remove("active"));
+          this.classList.add("active");
+          state.currentStamp = this.dataset.emoji;
+        });
+      });
+
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", draw);
+      canvas.addEventListener("mouseup", stopDrawing);
+      canvas.addEventListener("mouseout", stopDrawing);
+
+      canvas.addEventListener(
+        "touchstart",
+        function (e) {
+          e.preventDefault();
+          startDrawing(e);
+        },
+        { passive: false }
+      );
+      canvas.addEventListener(
+        "touchmove",
+        function (e) {
+          e.preventDefault();
+          draw(e);
+        },
+        { passive: false }
+      );
+      canvas.addEventListener("touchend", stopDrawing);
+
+      // Початкове біле полотно, якщо ще нічого не намальовано
+      if (state.history.length === 0) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        pushHistory();
+      }
+      updateUndoRedoState();
+    });
+  </script>
+</body>
+</html>
