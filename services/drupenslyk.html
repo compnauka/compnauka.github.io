@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Друпензлик | Текстово-графічний редактор для дітей</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --line-height: 40px;
+            --paper-padding-top: 60px;
+            --paper-color: #ffffff;
+            --line-color: #ddd6fe;
+            --primary-color: #7c3aed;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff;
+            overscroll-behavior: none;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #paper-wrapper {
+            background-color: #f5f3ff;
+            background-image: radial-gradient(#ddd6fe 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #paper-container {
+            position: relative;
+            background: var(--paper-color);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            margin: 0 auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0 0 0 0;
+        }
+
+        .pattern-lines {
+            background-image: linear-gradient(var(--line-color) 1px, transparent 1px);
+            background-size: 100% var(--line-height);
+            background-attachment: local;
+            background-position: 0 calc(var(--paper-padding-top) - 8px);
+        }
+
+        #text-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            padding: var(--paper-padding-top) 3rem 0 3rem;
+            line-height: var(--line-height);
+            font-size: 22px;
+            outline: none;
+            overflow-y: auto;
+            color: #334155;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        #drawing-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            touch-action: none;
+        }
+
+        body[data-mode="text"] #drawing-layer { pointer-events: none; }
+        body[data-mode="text"] #text-layer { pointer-events: auto; cursor: text; }
+        body[data-mode="draw"] #drawing-layer { pointer-events: auto; cursor: crosshair; }
+        body[data-mode="draw"] #text-layer { pointer-events: none; user-select: none; }
+
+        .tool-btn { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .tool-btn:active { transform: scale(0.95); }
+        .tool-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .icon-btn {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            color: #64748b;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .icon-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .icon-btn.active { background: white; color: var(--primary-color); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+        .color-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 1px #cbd5e1;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .color-dot.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--primary-color); border-color: white; }
+
+        #text-layer::-webkit-scrollbar { width: 8px; }
+        #text-layer::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        #text-layer::-webkit-scrollbar-track { margin-top: 20px; margin-bottom: 20px; }
+
+        .toolbar-section { display: none; width: 100%; justify-content: center; align-items: center; gap: 1rem; }
+        .toolbar-section.visible { display: flex; animation: fadeIn 0.3s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease-out;
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast-error { background-color: #ef4444; }
+        .toast-warning { background-color: #f59e0b; }
+        .toast-success { background-color: #22c55e; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Icon Fallbacks */
+        @supports not (font-family: "Font Awesome 6 Free") {
+            .fa-paint-brush::before { content: "🖌️"; }
+            .fa-font::before { content: "A"; }
+            .fa-pencil-alt::before { content: "✏️"; }
+            .fa-trash-alt::before, .fa-trash::before { content: "🗑️"; }
+            .fa-download::before { content: "💾"; }
+            .fa-bold::before { content: "B"; }
+            .fa-italic::before { content: "I"; }
+            .fa-underline::before { content: "U"; }
+            .fa-align-left::before { content: "⬅️"; }
+            .fa-align-center::before { content: "↔️"; }
+            .fa-align-right::before { content: "➡️"; }
+            .fa-undo::before { content: "↩️"; }
+            .fa-eraser::before { content: "🧽"; }
+            .fa-palette::before { content: "🎨"; }
+        }
+    </style>
+</head>
+<body data-mode="text">
+
+    <!-- Loading Check -->
+    <div id="lib-error" class="fixed inset-0 bg-white z-[9999] hidden flex-col items-center justify-center text-red-500 font-bold text-center p-4">
+        <div class="text-4xl mb-4">⚠️</div>
+        <p>Помилка завантаження бібліотек безпеки.<br>Перевірте інтернет та оновіть сторінку.</p>
+    </div>
+
+    <header class="h-16 bg-white shadow-sm flex items-center justify-between px-4 z-50 no-print flex-shrink-0 border-b border-violet-100">
+        <div class="flex items-center gap-3 select-none">
+            <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg transform -rotate-2">
+                <i class="fas fa-paint-brush"></i>
+            </div>
+            <h1 class="font-extrabold text-xl text-violet-800 tracking-tight hidden sm:block">Друпензлик</h1>
+        </div>
+        
+        <div class="flex bg-slate-100 p-1.5 rounded-2xl gap-1 shadow-inner">
+            <button onclick="App.setMode('text')" class="tool-btn active px-4 sm:px-5 py-2 rounded-xl flex items-center gap-2 text-slate-600" id="btn-mode-text">
+                <i class="fas fa-font"></i> <span class="hidden sm:inline text-sm font-bold">Писати</span>
+            </button>
+            <button onclick="App.setMode('draw')" class="tool-btn px-4 sm:px-5 py-2 rounded-xl flex items-center gap-2 text-slate-600" id="btn-mode-draw">
+                <i class="fas fa-pencil-alt"></i> <span class="hidden sm:inline text-sm font-bold">Малювати</span>
+            </button>
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="UI.toggleModal(true)" class="w-10 h-10 flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition" title="Очистити">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            <button onclick="App.saveAsImage()" class="w-auto px-4 h-10 flex items-center justify-center text-white bg-violet-500 hover:bg-violet-600 rounded-xl transition shadow-md gap-2" title="Зберегти">
+                <i class="fas fa-download"></i> <span class="hidden md:inline font-bold text-sm">Зберегти</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="bg-white border-b border-slate-200 z-40 no-print min-h-[64px] flex items-center justify-center px-4 overflow-x-auto shadow-sm">
+        <div id="text-toolbar" class="toolbar-section visible">
+            <div class="flex bg-fuchsia-50 p-1 rounded-xl gap-1">
+                <button onclick="TextEngine.format('bold')" class="icon-btn" title="Жирний"><i class="fas fa-bold"></i></button>
+                <button onclick="TextEngine.format('italic')" class="icon-btn" title="Курсив"><i class="fas fa-italic"></i></button>
+                <button onclick="TextEngine.format('underline')" class="icon-btn" title="Підкреслений"><i class="fas fa-underline"></i></button>
+            </div>
+
+            <div class="w-px h-8 bg-slate-200 mx-2"></div>
+
+            <div class="flex bg-fuchsia-50 p-1 rounded-xl gap-1">
+                <button onclick="TextEngine.setSize(3)" class="icon-btn font-bold text-sm" id="fs-3">М</button>
+                <button onclick="TextEngine.setSize(5)" class="icon-btn font-bold text-lg" id="fs-5">С</button>
+                <button onclick="TextEngine.setSize(7)" class="icon-btn font-bold text-xl" id="fs-7">В</button>
+            </div>
+            
+            <div class="w-px h-8 bg-slate-200 mx-2"></div>
+            <div class="flex gap-2 items-center" id="text-colors"></div>
+        </div>
+
+        <div id="draw-toolbar" class="toolbar-section">
+            <button onclick="DrawEngine.undo()" class="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 flex items-center justify-center transition" title="Скасувати (Ctrl+Z)">
+                <i class="fas fa-undo"></i>
+            </button>
+
+            <div class="w-px h-8 bg-slate-200 mx-2"></div>
+
+            <div class="flex bg-indigo-50 p-1 rounded-xl gap-1">
+                <button onclick="DrawEngine.setTool('brush')" class="icon-btn active" id="tool-brush" title="Пензель"><i class="fas fa-paint-brush"></i></button>
+                <button onclick="DrawEngine.setTool('eraser')" class="icon-btn" id="tool-eraser" title="Гумка"><i class="fas fa-eraser"></i></button>
+            </div>
+
+            <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 mx-2">
+                <i class="fas fa-circle text-[6px] text-slate-400"></i>
+                <input type="range" id="brushSize" min="2" max="30" value="5" oninput="DrawEngine.updateSize(this.value)" class="w-24 accent-violet-600 h-2 bg-slate-200 rounded-lg cursor-pointer">
+                <i class="fas fa-circle text-lg text-slate-400"></i>
+            </div>
+
+            <div class="w-px h-8 bg-slate-200 mx-2"></div>
+            <div class="flex gap-2 items-center" id="brush-colors"></div>
+        </div>
+    </div>
+
+    <div id="paper-wrapper" class="flex-1 overflow-hidden flex justify-center py-2 px-2 md:py-4">
+        <div id="paper-container" class="pattern-lines bg-white">
+            <div id="text-layer" contenteditable="true" spellcheck="false" aria-label="Текстове поле"></div>
+            <canvas id="drawing-layer" aria-label="Полотно для малювання"></canvas>
+        </div>
+    </div>
+
+    <div id="clear-modal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full transform scale-95 transition-transform">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Що хочеш стерти?</h3>
+            <div class="space-y-3">
+                <button onclick="App.clear('canvas')" class="w-full py-3 bg-violet-50 text-violet-700 rounded-xl font-bold hover:bg-violet-100 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-palette"></i> Тільки малюнок
+                </button>
+                <button onclick="App.clear('text')" class="w-full py-3 bg-orange-50 text-orange-700 rounded-xl font-bold hover:bg-orange-100 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-font"></i> Тільки текст
+                </button>
+                <button onclick="App.clear('all')" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition flex items-center justify-center gap-2 shadow-md">
+                    <i class="fas fa-trash"></i> Все разом
+                </button>
+            </div>
+            <button onclick="UI.toggleModal(false)" class="w-full mt-5 text-slate-400 text-sm hover:text-slate-600 font-semibold">Ні, я передумав</button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[200] hidden flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600 mb-4"></div>
+        <p class="text-violet-800 font-bold animate-pulse">Зберігаємо твій шедевр...</p>
+    </div>
+
+    <div id="toast-container"></div>
+
+<script>
+    const Config = {
+        colors: ['#1e293b', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899'],
+        defaultBrushColor: '#1e293b',
+        defaultBrushSize: 5
+    };
+
+    const State = {
+        mode: 'text',
+        brush: { tool: 'brush', color: Config.defaultBrushColor, size: Config.defaultBrushSize },
+        drawHistory: [],
+        cachedRect: null
+    };
+
+    const UI = {
+        els: {},
+
+        init() {
+            this.els = {
+                textLayer: document.getElementById('text-layer'),
+                canvas: document.getElementById('drawing-layer'),
+                paper: document.getElementById('paper-container'),
+                modal: document.getElementById('clear-modal'),
+                loader: document.getElementById('loading-overlay'),
+                textToolbar: document.getElementById('text-toolbar'),
+                drawToolbar: document.getElementById('draw-toolbar'),
+                toastContainer: document.getElementById('toast-container')
+            };
+
+            this.renderPalette('text-colors', (c) => TextEngine.setColor(c));
+            this.renderPalette('brush-colors', (c) => DrawEngine.setColor(c));
+            document.getElementById('fs-5').classList.add('active');
+
+            // Resize handling with throttle
+            window.addEventListener('resize', this.throttle(() => {
+                this.resizeCanvas();
+            }, 50)); // Fast response
+
+            // Invalidate cache immediately on resize start
+            window.addEventListener('resize', () => State.cachedRect = null);
+
+            ['mouseup', 'keyup', 'touchend'].forEach(ev => {
+                this.els.textLayer.addEventListener(ev, () => TextEngine.saveSelection());
+            });
+        },
+
+        renderPalette(id, callback) {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            Config.colors.forEach((color, i) => {
+                const dot = document.createElement('div');
+                dot.className = `color-dot ${i === 0 ? 'active' : ''}`;
+                dot.style.backgroundColor = color;
+                dot.onclick = () => {
+                    container.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+                    callback(color);
+                };
+                container.appendChild(dot);
+            });
+        },
+
+        toggleModal(show) {
+            const cl = this.els.modal.classList;
+            if (show) {
+                cl.remove('hidden');
+                setTimeout(() => cl.remove('opacity-0'), 10);
+            } else {
+                cl.add('opacity-0');
+                setTimeout(() => cl.add('hidden'), 300);
+            }
+        },
+
+        resizeCanvas() {
+            const { canvas, paper } = this.els;
+            const newWidth = paper.clientWidth;
+            const newHeight = paper.clientHeight;
+
+            if (canvas.width === newWidth && canvas.height === newHeight) return;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            State.cachedRect = null;
+            DrawEngine.redraw();
+        },
+
+        showToast(msg, type = 'success') {
+            const toasts = this.els.toastContainer.children;
+            if (toasts.length >= 3) {
+                toasts[0].remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = msg;
+            this.els.toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s ease-out';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        },
+
+        throttle(func, limit) {
+            let inThrottle;
+            return function(...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        },
+
+        debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    };
+
+    const DrawEngine = {
+        ctx: null,
+        isDrawing: false,
+        currentPath: [],
+        boundStart: null,
+        boundMove: null,
+        boundEnd: null,
+        boundBlur: null,
+        
+        cleanup() {
+            // Safety first: end any active drawing
+            if (this.isDrawing) {
+                this.end();
+            }
+
+            if (this.boundMove) {
+                window.removeEventListener('mousemove', this.boundMove);
+                window.removeEventListener('mouseup', this.boundEnd);
+                window.removeEventListener('blur', this.boundBlur); // Cleanup blur listener
+                const canvas = UI.els.canvas;
+                if (canvas) {
+                    canvas.removeEventListener('mousedown', this.boundStart);
+                    canvas.removeEventListener('touchstart', this.boundStart);
+                    canvas.removeEventListener('touchmove', this.boundMove);
+                    canvas.removeEventListener('touchend', this.boundEnd);
+                }
+            }
+        },
+
+        init() {
+            const canvas = UI.els.canvas;
+            this.cleanup();
+
+            if (!canvas.getContext) {
+                UI.showToast('Ваш браузер не підтримує малювання', 'error');
+                return;
+            }
+
+            this.ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            this.boundStart = this.start.bind(this);
+            this.boundMove = this.move.bind(this);
+            this.boundEnd = this.end.bind(this);
+            // Handle window focus loss
+            this.boundBlur = () => { if(this.isDrawing) this.end(); };
+
+            canvas.addEventListener('mousedown', this.boundStart);
+            canvas.addEventListener('touchstart', this.boundStart, { passive: false });
+            
+            window.addEventListener('mousemove', this.boundMove);
+            window.addEventListener('mouseup', this.boundEnd);
+            window.addEventListener('blur', this.boundBlur);
+
+            canvas.addEventListener('touchmove', this.boundMove, { passive: false });
+            canvas.addEventListener('touchend', this.boundEnd);
+        },
+
+        getPos(e) {
+            if (!State.cachedRect) {
+                State.cachedRect = UI.els.canvas.getBoundingClientRect();
+            }
+            const rect = State.cachedRect;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { 
+                x: clientX - rect.left, 
+                y: clientY - rect.top 
+            };
+        },
+
+        start(e) {
+            if (State.mode !== 'draw') return;
+            if (e.type === 'touchstart') e.preventDefault();
+            
+            this.isDrawing = true;
+            State.cachedRect = UI.els.canvas.getBoundingClientRect();
+            
+            const pos = this.getPos(e);
+            this.currentPath = [pos];
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(pos.x, pos.y);
+            this.setupContext();
+        },
+
+        move(e) {
+            if (!this.isDrawing || State.mode !== 'draw') return;
+            if (e.type === 'touchmove') e.preventDefault();
+
+            const pos = this.getPos(e);
+            this.currentPath.push(pos);
+            
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+        },
+
+        end() {
+            if (this.isDrawing) {
+                this.isDrawing = false;
+                this.ctx.closePath();
+                
+                if (this.currentPath.length > 1) {
+                    State.drawHistory.push({
+                        tool: State.brush.tool,
+                        color: State.brush.color,
+                        size: State.brush.size,
+                        points: this.currentPath
+                    });
+                    StorageManager.save();
+                }
+                this.currentPath = [];
+            }
+        },
+
+        undo() {
+            if (State.drawHistory.length > 0) {
+                State.drawHistory.pop();
+                this.redraw();
+                StorageManager.save();
+                UI.showToast('Дію скасовано', 'success');
+            } else {
+                UI.showToast('Нічого скасовувати', 'warning');
+            }
+        },
+
+        setTool(tool) {
+            State.brush.tool = tool;
+            document.getElementById('tool-brush')?.classList.toggle('active', tool === 'brush');
+            document.getElementById('tool-eraser')?.classList.toggle('active', tool === 'eraser');
+        },
+
+        setColor(color) { State.brush.color = color; },
+        updateSize(val) { State.brush.size = parseInt(val); },
+
+        setupContext(isEraser = false, size = null, color = null) {
+            const tool = isEraser ? 'eraser' : State.brush.tool;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.lineWidth = size || State.brush.size;
+
+            if (tool === 'eraser') {
+                this.ctx.globalCompositeOperation = 'destination-out';
+                this.ctx.lineWidth = (size || State.brush.size) * 1.5; 
+            } else {
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.strokeStyle = color || State.brush.color;
+            }
+        },
+
+        redraw() {
+            if (!this.ctx) return;
+            this.ctx.clearRect(0, 0, UI.els.canvas.width, UI.els.canvas.height);
+            
+            State.drawHistory.forEach(path => {
+                this.setupContext(path.tool === 'eraser', path.size, path.color);
+                this.ctx.beginPath();
+                if(path.points.length > 0) {
+                    this.ctx.moveTo(path.points[0].x, path.points[0].y);
+                    for (let i = 1; i < path.points.length; i++) {
+                        this.ctx.lineTo(path.points[i].x, path.points[i].y);
+                    }
+                }
+                this.ctx.stroke();
+            });
+        }
+    };
+
+    const TextEngine = {
+        savedRange: null,
+        currentColor: Config.colors[0],
+
+        saveSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0 && UI.els.textLayer.contains(sel.anchorNode)) {
+                this.savedRange = sel.getRangeAt(0).cloneRange();
+            }
+        },
+
+        restoreSelection() {
+            if (this.savedRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(this.savedRange);
+            }
+            UI.els.textLayer.focus();
+        },
+
+        format(cmd, val = null) {
+            this.restoreSelection();
+            try {
+                if (cmd === 'foreColor') {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, val || this.currentColor);
+                } else {
+                    document.execCommand(cmd, false, val);
+                }
+            } catch (e) {
+                console.error('Text format error:', e);
+                UI.showToast('Помилка форматування', 'warning');
+            }
+            this.saveSelection();
+            StorageManager.save();
+        },
+
+        setColor(color) {
+            this.currentColor = color;
+            this.format('foreColor', color);
+        },
+
+        setSize(size) {
+            this.restoreSelection();
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand('fontSize', false, size);
+            
+            [3, 5, 7].forEach(s => {
+                const btn = document.getElementById(`fs-${s}`);
+                const isActive = s === size;
+                if(btn) {
+                    btn.classList.toggle('active', isActive);
+                    btn.classList.toggle('bg-violet-100', isActive);
+                }
+            });
+            
+            this.saveSelection();
+            StorageManager.save();
+        }
+    };
+
+    const StorageManager = {
+        KEY_TEXT: 'dp_text_v3',
+        KEY_DRAW: 'dp_draw_v3',
+
+        save() {
+            try {
+                localStorage.setItem(this.KEY_TEXT, UI.els.textLayer.innerHTML);
+                localStorage.setItem(this.KEY_DRAW, JSON.stringify(State.drawHistory));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    UI.showToast('Пам\'ять переповнена! Збережіть як картинку.', 'error');
+                } else {
+                    console.warn('Storage error', e);
+                }
+            }
+        },
+
+        load() {
+            if (typeof DOMPurify === 'undefined') {
+                document.getElementById('lib-error').classList.remove('hidden');
+                document.getElementById('lib-error').classList.add('flex');
+                return;
+            }
+
+            this.migrate();
+
+            const txt = localStorage.getItem(this.KEY_TEXT);
+            const drawData = localStorage.getItem(this.KEY_DRAW);
+
+            if (txt) {
+                UI.els.textLayer.innerHTML = DOMPurify.sanitize(txt, {
+                    ALLOWED_TAGS: ['b', 'i', 'u', 'span', 'div', 'br', 'font'],
+                    ALLOWED_ATTR: ['style', 'color', 'size', 'face'],
+                    KEEP_CONTENT: true
+                });
+            }
+
+            if (drawData) {
+                try {
+                    const parsed = JSON.parse(drawData);
+                    if (this.validateHistory(parsed)) {
+                        State.drawHistory = parsed;
+                        DrawEngine.redraw();
+                    } else {
+                        console.warn('Invalid drawing data structure, resetting history.');
+                    }
+                } catch (e) {
+                    console.error('Corrupt drawing data', e);
+                }
+            }
+        },
+
+        validateHistory(data) {
+            if (!Array.isArray(data)) return false;
+            return data.every(path => {
+                if (!path || typeof path.tool !== 'string') return false;
+                // Allow 'eraser' or hex color
+                if (path.tool !== 'eraser' && typeof path.color !== 'string') return false;
+                if (typeof path.size !== 'number' || !isFinite(path.size) || path.size <= 0) return false;
+                if (!Array.isArray(path.points) || path.points.length === 0) return false;
+                
+                // Deep validation of points
+                return path.points.every(p => 
+                    p && 
+                    typeof p.x === 'number' && isFinite(p.x) &&
+                    typeof p.y === 'number' && isFinite(p.y)
+                );
+            });
+        },
+
+        migrate() {
+            const MIGRATION_FLAG = 'dp_migrated_v3_done';
+            if (localStorage.getItem(MIGRATION_FLAG)) return;
+            
+            const oldText = localStorage.getItem('dp_text_v2');
+            const oldDraw = localStorage.getItem('dp_draw_v2');
+            
+            if (oldText && !localStorage.getItem(this.KEY_TEXT)) {
+                localStorage.setItem(this.KEY_TEXT, oldText);
+                localStorage.removeItem('dp_text_v2');
+            }
+            
+            if (oldDraw && !localStorage.getItem(this.KEY_DRAW)) {
+                localStorage.setItem(this.KEY_DRAW, oldDraw);
+                localStorage.removeItem('dp_draw_v2');
+            }
+            
+            localStorage.setItem(MIGRATION_FLAG, 'true');
+        }
+    };
+
+    const App = {
+        _scrollHandler: null,
+
+        init() {
+            UI.init();
+            DrawEngine.init();
+            UI.resizeCanvas();
+            StorageManager.load();
+            this.setMode('text');
+            
+            // Auto-save logic
+            UI.els.textLayer.addEventListener('input', UI.debounce(() => StorageManager.save(), 1000));
+
+            // Ctrl+Z Undo
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && State.mode === 'draw') {
+                    e.preventDefault();
+                    DrawEngine.undo();
+                }
+            });
+        },
+
+        setMode(mode) {
+            State.mode = mode;
+            document.body.setAttribute('data-mode', mode);
+
+            const btnText = document.getElementById('btn-mode-text');
+            const btnDraw = document.getElementById('btn-mode-draw');
+            
+            const activeClass = 'active text-white';
+            const inactiveClass = 'text-slate-600';
+            
+            if (mode === 'text') {
+                btnText.classList.add(...activeClass.split(' '));
+                btnText.classList.remove(...inactiveClass.split(' '));
+                btnDraw.classList.remove(...activeClass.split(' '));
+                btnDraw.classList.add(...inactiveClass.split(' '));
+                
+                UI.els.textToolbar.classList.add('visible');
+                UI.els.drawToolbar.classList.remove('visible');
+                UI.els.textLayer.focus();
+
+                if (this._scrollHandler) {
+                    window.removeEventListener('scroll', this._scrollHandler);
+                    this._scrollHandler = null;
+                }
+            } else {
+                btnDraw.classList.add(...activeClass.split(' '));
+                btnDraw.classList.remove(...inactiveClass.split(' '));
+                btnText.classList.remove(...activeClass.split(' '));
+                btnText.classList.add(...inactiveClass.split(' '));
+
+                UI.els.drawToolbar.classList.add('visible');
+                UI.els.textToolbar.classList.remove('visible');
+
+                this._scrollHandler = () => { State.cachedRect = null; };
+                window.addEventListener('scroll', this._scrollHandler, { passive: true });
+            }
+        },
+
+        clear(type) {
+            if (type === 'canvas' || type === 'all') {
+                State.drawHistory = [];
+                DrawEngine.redraw();
+            }
+            if (type === 'text' || type === 'all') {
+                UI.els.textLayer.innerHTML = '';
+            }
+            StorageManager.save();
+            UI.toggleModal(false);
+        },
+
+        async saveAsImage() {
+            const loader = UI.els.loader;
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
+
+            try {
+                if (window.getSelection) { window.getSelection().removeAllRanges(); }
+                
+                await new Promise(resolve => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(resolve);
+                    });
+                });
+
+                // Calculate safe scale for huge screens/canvases
+                const rect = UI.els.paper.getBoundingClientRect();
+                const maxDim = Math.max(rect.width, rect.height);
+                const maxPixels = 4096; // 4K cap
+                const safeScale = Math.min(2, maxPixels / maxDim);
+
+                const canvasResult = await html2canvas(UI.els.paper, {
+                    scale: safeScale,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    ignoreElements: (element) => element.classList.contains('no-print')
+                });
+
+                const link = document.createElement('a');
+                link.download = `drupenzlyk-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
+                link.href = canvasResult.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Помилка збереження', 'error');
+            } finally {
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+            }
+        }
+    };
+
+    window.onload = () => App.init();
+
+</script>
+</body>
+</html>
