@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Друкарик - безпечний текстовий редактор для дітей">
+    <title>Друкарик | Текстовий редактор для дітей</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    colors: {
+                        'kids-bg': '#eef2ff',   /* Indigo-50 */
+                        'kids-paper': '#FFFFFF',
+                        'kids-accent': '#4f46e5', /* Indigo-600 */
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
+                        'btn': '0 3px 0 0 rgba(0,0,0,0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-pattern: #c7d2fe; /* Indigo-200 */
+            --accent-color: #4f46e5; /* Indigo-600 */
+        }
+
+        body {
+            background-color: #eef2ff;
+            background-image: radial-gradient(var(--bg-pattern) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        #text-area:focus { outline: none; }
+
+        .tool-btn { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .tool-btn:active { transform: scale(0.95); box-shadow: none !important; }
+        
+        /* Стиль активної кнопки розміру */
+        .size-btn.active {
+            background-color: #e0e7ff; /* Indigo-100 */
+            color: var(--accent-color);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .color-swatch.active {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 3px white, 0 0 0 5px var(--accent-color);
+            z-index: 10;
+        }
+
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+            font-style: italic;
+            pointer-events: none;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast { animation: slideIn 0.3s ease-out; }
+        
+        /* Icon Fallbacks */
+        @supports not (font-family: "Font Awesome 6 Free") {
+            .fa-bold::before { content: "B"; }
+            .fa-italic::before { content: "I"; }
+            .fa-underline::before { content: "U"; }
+            .fa-undo::before { content: "↩"; }
+            .fa-redo::before { content: "↪"; }
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-900 min-h-screen flex flex-col items-center pb-24 sm:pb-8">
+
+    <!-- Loading Check -->
+    <div id="lib-error" class="fixed inset-0 bg-white z-[9999] hidden flex-col items-center justify-center text-red-500 font-bold text-center p-4">
+        <div class="text-4xl mb-4">⚠️</div>
+        <p>Помилка завантаження бібліотек безпеки.<br>Перевірте інтернет та оновіть сторінку.</p>
+    </div>
+
+    <!-- Header -->
+    <header class="flex items-center gap-3 py-4 px-4 w-full justify-center max-w-5xl z-50">
+        <div class="flex items-center gap-3 select-none">
+            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg transform -rotate-2">
+                <i class="fas fa-feather-alt"></i>
+            </div>
+            <h1 class="font-extrabold text-2xl sm:text-3xl text-indigo-800 tracking-tight drop-shadow-sm">Друкарик</h1>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="w-full max-w-4xl bg-white sm:rounded-2xl shadow-xl flex flex-col border-y-4 sm:border-4 border-indigo-100 relative overflow-hidden">
+        
+        <!-- TOOLBAR -->
+        <div class="bg-indigo-50/95 backdrop-blur-sm p-2 border-b-2 border-indigo-100 sticky top-0 z-20">
+            <div class="flex items-center gap-3 overflow-x-auto no-scrollbar px-1 py-1 md:justify-between">
+                
+                <!-- Tools Group -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <!-- History -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button onclick="EditorEngine.exec('undo')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-600 shadow-btn flex items-center justify-center" title="Назад"><i class="fas fa-undo"></i></button>
+                        <button onclick="EditorEngine.exec('redo')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-600 shadow-btn flex items-center justify-center" title="Вперед"><i class="fas fa-redo"></i></button>
+                    </div>
+
+                    <!-- Formatting (B I U) -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button onclick="EditorEngine.exec('bold')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn flex items-center justify-center text-lg" title="Жирний"><i class="fas fa-bold"></i></button>
+                        <button onclick="EditorEngine.exec('italic')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn flex items-center justify-center text-lg" title="Курсив"><i class="fas fa-italic"></i></button>
+                        <button onclick="EditorEngine.exec('underline')" class="tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 text-gray-700 shadow-btn flex items-center justify-center text-lg" title="Підкреслений"><i class="fas fa-underline"></i></button>
+                    </div>
+
+                    <!-- Font Size (М С В) -->
+                    <div class="flex gap-1 bg-white p-1 rounded-lg border border-indigo-100 shadow-sm">
+                        <button onclick="EditorEngine.setSize(3)" id="fs-3" class="size-btn tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-extrabold shadow-btn text-sm text-gray-700 flex items-center justify-center" title="Малий">М</button>
+                        <button onclick="EditorEngine.setSize(5)" id="fs-5" class="size-btn tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-extrabold shadow-btn text-lg text-gray-700 flex items-center justify-center" title="Середній">С</button>
+                        <button onclick="EditorEngine.setSize(7)" id="fs-7" class="size-btn tool-btn w-10 h-10 rounded bg-gray-50 hover:bg-indigo-100 font-extrabold shadow-btn text-xl text-gray-700 flex items-center justify-center" title="Великий">В</button>
+                    </div>
+                </div>
+
+                <!-- Colors -->
+                <div id="color-palette" class="flex gap-2 items-center bg-white px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm shrink-0 ml-auto">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Emojis -->
+            <div id="emoji-container" class="mt-2 flex gap-3 overflow-x-auto no-scrollbar items-center px-1 pb-1 md:justify-center">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- EDITOR AREA -->
+        <div class="bg-slate-50 flex-grow relative w-full">
+            <div class="w-full p-4 md:p-8 flex flex-col items-center min-h-[500px]">
+                <div id="text-area" 
+                     contenteditable="true" 
+                     class="w-full max-w-3xl bg-white p-6 md:p-10 text-xl leading-relaxed text-gray-800 shadow-soft rounded-lg transition-all"
+                     style="min-height: 300px;"
+                     data-placeholder="Привіт! Напиши тут свою історію..."></div>
+                
+                <div class="mt-6 mb-4 text-gray-500 text-xs sm:text-sm font-bold bg-white/80 border border-gray-200 px-4 py-1.5 rounded-full select-none shadow-sm">
+                    <span id="stats-words">0 слів</span> &bull; <span id="stats-chars">0 символів</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER ACTIONS -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-indigo-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-30 flex justify-center">
+        <div class="w-full max-w-5xl flex justify-between items-center px-2 sm:px-4 gap-3">
+            <div class="flex gap-2">
+                <button onclick="App.clear()" class="tool-btn px-3 sm:px-4 h-11 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 font-bold border-2 border-transparent hover:border-red-200 shadow-btn flex items-center justify-center gap-2 text-lg sm:text-sm" title="Стерти">
+                    <i class="fas fa-trash-alt"></i> <span class="hidden sm:inline">Стерти</span>
+                </button>
+                <label class="tool-btn cursor-pointer px-3 sm:px-4 h-11 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold border-2 border-transparent hover:border-blue-200 shadow-btn flex items-center justify-center gap-2 text-lg sm:text-sm" title="Відкрити">
+                    <i class="fas fa-folder-open"></i>
+                    <input type="file" id="file-upload" accept=".txt" class="hidden" onchange="App.loadFile(this)">
+                    <span class="hidden sm:inline">Відкрити</span>
+                </label>
+            </div>
+            
+            <button onclick="App.askSave()" class="tool-btn px-6 h-11 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-[0_4px_0_0_#3730a3] active:shadow-none active:translate-y-1 transition-all flex items-center gap-2 text-base">
+                <i class="fas fa-save"></i> <span class="hidden sm:inline">Зберегти</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div id="modal-icon" class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 text-2xl"></div>
+            <h3 id="modal-title" class="text-xl font-bold text-gray-900 mb-2"></h3>
+            <p id="modal-message" class="text-gray-600 mb-6"></p>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+<script>
+    const Config = {
+        maxChars: 10000,
+        colors: ['#1e293b', '#ef4444', '#3b82f6', '#22c55e', '#a855f7', '#f97316'],
+        emojis: ['🐶','🐱','🐭','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🦄','🐞','🦋','🦖','🚀','🏰','🌈','🍕','🍦','🎈']
+    };
+
+    const UI = {
+        els: {
+            toastContainer: document.getElementById('toast-container'),
+            modalOverlay: document.getElementById('modal-overlay'),
+            modalIcon: document.getElementById('modal-icon'),
+            modalTitle: document.getElementById('modal-title'),
+            modalMessage: document.getElementById('modal-message'),
+            modalContent: document.getElementById('modal-content'),
+            textArea: document.getElementById('text-area')
+        },
+
+        toast(msg, type = 'info') {
+            if (this.els.toastContainer.children.length >= 3) {
+                this.els.toastContainer.firstElementChild.remove();
+            }
+
+            const div = document.createElement('div');
+            // Indigo-600 base for info
+            const colors = { info: 'bg-indigo-600', success: 'bg-green-600', error: 'bg-red-500', warning: 'bg-orange-500' };
+            const icons = { info: 'info-circle', success: 'star', error: 'exclamation-circle', warning: 'exclamation-triangle' };
+            
+            div.className = `${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 min-w-[260px] toast border-2 border-white/20`;
+            div.innerHTML = `<i class="fas fa-${icons[type]}"></i> <span class="font-bold">${msg}</span>`;
+            
+            this.els.toastContainer.appendChild(div);
+            
+            setTimeout(() => {
+                div.style.transition = 'all 0.3s ease-out';
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(100%)';
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        },
+
+        showModal(type, title, message, actions) {
+            this.els.modalIcon.innerHTML = type === 'confirm' ? '<i class="fas fa-question"></i>' : '<i class="fas fa-save"></i>';
+            this.els.modalTitle.textContent = title;
+            this.els.modalMessage.textContent = message;
+            this.els.modalContent.innerHTML = '';
+
+            const btnContainer = document.createElement('div');
+            
+            if (type === 'confirm') {
+                btnContainer.className = 'flex justify-center gap-3';
+                btnContainer.innerHTML = `
+                    <button class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition" onclick="UI.closeModal()">Ні</button>
+                    <button id="modal-confirm-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition">Так!</button>
+                `;
+                this.els.modalContent.appendChild(btnContainer);
+                document.getElementById('modal-confirm-btn').onclick = () => { actions.onConfirm(); this.closeModal(); };
+            } else if (type === 'save') {
+                btnContainer.className = 'flex flex-col gap-3';
+                btnContainer.innerHTML = `
+                    <button id="save-html" class="w-full px-4 py-3 rounded-xl bg-indigo-100 text-indigo-700 font-bold hover:bg-indigo-200 flex items-center justify-center gap-3 border-2 border-indigo-200 text-left transition">
+                        <span class="text-2xl">🎨</span> <div class="flex flex-col items-start"><span>Як історію</span><span class="text-xs font-normal opacity-75">Зберегти кольори (.html)</span></div>
+                    </button>
+                    <button id="save-txt" class="w-full px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 flex items-center justify-center gap-3 border-2 border-gray-200 text-left transition">
+                        <span class="text-2xl">📄</span> <div class="flex flex-col items-start"><span>Простий текст</span><span class="text-xs font-normal opacity-75">Тільки літери (.txt)</span></div>
+                    </button>
+                    <button onclick="UI.closeModal()" class="mt-2 text-gray-400 hover:text-gray-600 text-sm font-semibold">Скасувати</button>
+                `;
+                this.els.modalContent.appendChild(btnContainer);
+                document.getElementById('save-html').onclick = () => { actions.onHtml(); this.closeModal(); };
+                document.getElementById('save-txt').onclick = () => { actions.onTxt(); this.closeModal(); };
+            }
+
+            this.els.modalOverlay.classList.remove('hidden');
+        },
+
+        closeModal() {
+            this.els.modalOverlay.classList.add('hidden');
+        }
+    };
+
+    const StorageManager = {
+        KEY: 'drukarik_content_v2',
+
+        save(content) {
+            try {
+                localStorage.setItem(this.KEY, content);
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    UI.toast('Пам\'ять переповнена! Збережи файл.', 'error');
+                }
+            }
+        },
+
+        load() {
+            if (typeof DOMPurify === 'undefined') {
+                document.getElementById('lib-error').classList.remove('hidden');
+                document.getElementById('lib-error').classList.add('flex');
+                return null;
+            }
+
+            const content = localStorage.getItem(this.KEY);
+            if (!content) return null;
+
+            return DOMPurify.sanitize(content, {
+                ALLOWED_TAGS: ['b', 'i', 'u', 'span', 'div', 'br', 'font', 'p'],
+                ALLOWED_ATTR: ['style', 'color', 'size', 'face'],
+                KEEP_CONTENT: true
+            });
+        }
+    };
+
+    const EditorEngine = {
+        init() {
+            this.renderColors();
+            this.renderEmojis();
+            this.bindEvents();
+            this.updateStats();
+            this.setSize(5);
+        },
+
+        renderColors() {
+            const container = document.getElementById('color-palette');
+            Config.colors.forEach((c, i) => {
+                const btn = document.createElement('button');
+                btn.className = `color-swatch tool-btn w-8 h-8 rounded-full ${i === 0 ? 'active' : ''}`;
+                btn.style.backgroundColor = c;
+                btn.onclick = () => {
+                    document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.exec('foreColor', c);
+                };
+                container.appendChild(btn);
+            });
+        },
+
+        renderEmojis() {
+            const container = document.getElementById('emoji-container');
+            const picks = [...Config.emojis].sort(() => 0.5 - Math.random()).slice(0, 10);
+            picks.forEach(e => {
+                const btn = document.createElement('button');
+                btn.className = 'text-2xl hover:scale-125 transition cursor-pointer p-1 select-none shrink-0';
+                btn.textContent = e;
+                btn.onclick = () => {
+                    UI.els.textArea.focus();
+                    this.exec('insertText', e);
+                };
+                container.appendChild(btn);
+            });
+        },
+
+        bindEvents() {
+            const area = UI.els.textArea;
+            area.addEventListener('input', () => {
+                this.updateStats();
+                App.debouncedSave();
+            });
+
+            area.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                this.exec('insertText', text);
+            });
+
+            area.addEventListener('keydown', (e) => {
+                const navKeys = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+                if (area.innerText.length >= Config.maxChars && !navKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    UI.toast('Ой! Аркуш закінчився!', 'warning');
+                }
+            });
+        },
+
+        exec(cmd, val = null) {
+            UI.els.textArea.focus();
+            try {
+                if (cmd === 'foreColor' || cmd === 'fontSize') {
+                    document.execCommand('styleWithCSS', false, true);
+                }
+                document.execCommand(cmd, false, val);
+                App.debouncedSave();
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        setSize(size) {
+            this.exec('fontSize', size);
+            
+            // Visual toggle
+            [3, 5, 7].forEach(s => {
+                const btn = document.getElementById(`fs-${s}`);
+                if (btn) {
+                    if (s === size) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+        },
+
+        updateStats() {
+            const text = UI.els.textArea.innerText || '';
+            document.getElementById('stats-words').textContent = `${text.trim() === '' ? 0 : text.trim().split(/\s+/).length} слів`;
+            document.getElementById('stats-chars').textContent = `${text.length} символів`;
+        },
+
+        setContent(html) {
+            UI.els.textArea.innerHTML = html;
+            this.updateStats();
+        },
+
+        getContent() { return UI.els.textArea.innerHTML; },
+        getText() { return UI.els.textArea.innerText; }
+    };
+
+    const App = {
+        init() {
+            EditorEngine.init();
+            this.load();
+        },
+
+        debouncedSave: (() => {
+            let timer;
+            return () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    StorageManager.save(EditorEngine.getContent());
+                }, 1000);
+            };
+        })(),
+
+        load() {
+            const content = StorageManager.load();
+            if (content) {
+                UI.showModal('confirm', 'З поверненням!', 'Ми знайшли твою минулу історію. Продовжити її?', {
+                    onConfirm: () => {
+                        EditorEngine.setContent(content);
+                        UI.toast('Ура! Продовжуємо!', 'success');
+                    }
+                });
+            }
+        },
+
+        clear() {
+            if (!EditorEngine.getText().trim()) return;
+            UI.showModal('confirm', 'Стерти все?', 'Ти точно хочеш почати спочатку? Весь текст зникне.', {
+                onConfirm: () => {
+                    EditorEngine.setContent('');
+                    StorageManager.save('');
+                    UI.toast('Аркуш чистий!', 'success');
+                }
+            });
+        },
+
+        askSave() {
+            if (!EditorEngine.getText().trim()) return UI.toast('Напиши щось спочатку!', 'warning');
+            UI.showModal('save', 'Зберегти роботу', 'Як ти хочеш зберегти свою історію?', {
+                onHtml: () => this.download('html'),
+                onTxt: () => this.download('txt')
+            });
+        },
+
+        download(type) {
+            const content = type === 'txt' ? EditorEngine.getText() : EditorEngine.getContent();
+            let blob, filename;
+            
+            if (type === 'txt') {
+                blob = new Blob([content], { type: 'text/plain' });
+                filename = `історія_${new Date().toLocaleDateString()}.txt`;
+            } else {
+                const fullHtml = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Моя історія</title><style>body{font-family:sans-serif;padding:40px;background:#f0f9ff;color:#111827}.paper{background:white;padding:40px;border-radius:20px;box-shadow:0 4px 15px rgba(0,0,0,0.1);font-size:20px;line-height:1.6;max-width:800px;margin:0 auto}</style></head><body><div class="paper">${content}</div></body></html>`;
+                blob = new Blob([fullHtml], { type: 'text/html' });
+                filename = `історія_${new Date().toLocaleDateString()}.html`;
+            }
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            UI.toast('Збережено!', 'success');
+        },
+
+        loadFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                EditorEngine.exec('insertText', e.target.result);
+                UI.toast('Файл відкрито!', 'success');
+                input.value = ''; 
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    window.onload = () => App.init();
+</script>
+</body>
+</html>
