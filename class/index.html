@@ -397,7 +397,7 @@
             }
 
             async handleStudentConnected(studentId, data) {
-                console.log(`Student ${data.name} connecting...`);
+                console.log(`🔵 Student ${data.name} connecting... ID: ${studentId}`);
                 
                 // 1. Створюємо WebRTC з'єднання
                 const pc = new RTCPeerConnection(rtcConfig);
@@ -409,46 +409,73 @@
                 // 2. Створюємо UI елемент для відео
                 this.createVideoElement(studentId, data.name);
 
+                // Логування стану з'єднання
+                pc.onconnectionstatechange = () => {
+                    console.log(`📡 Connection state (${data.name}):`, pc.connectionState);
+                };
+
+                pc.oniceconnectionstatechange = () => {
+                    console.log(`🧊 ICE connection state (${data.name}):`, pc.iceConnectionState);
+                };
+
                 // 3. Обробка вхідного потоку (коли приходить відео)
                 pc.ontrack = (event) => {
+                    console.log(`🎥 Received track from ${data.name}:`, event.track.kind);
                     const videoEl = document.getElementById(`vid-${studentId}`);
                     if (videoEl && event.streams[0]) {
                         videoEl.srcObject = event.streams[0];
-                        // Прибираємо лоадер, якщо він є (можна додати логіку пізніше)
+                        console.log(`✅ Video element updated for ${data.name}`);
                     }
                 };
 
                 // 4. Обмін кандидатами (ICE Candidates)
-                // Відправляємо свої кандидати учню
                 const candidatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentId, 'candidates');
                 
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
+                        console.log(`🔄 Sending ICE candidate to ${data.name}`);
                         addDoc(candidatesCollection, {
                             candidate: event.candidate.toJSON(),
                             from: 'teacher',
                             createdAt: serverTimestamp()
-                        });
+                        }).catch(e => console.error('❌ Error sending ICE:', e));
+                    } else {
+                        console.log(`✔️ All ICE candidates sent for ${data.name}`);
                     }
                 };
 
                 // 5. Встановлюємо опис з'єднання від учня (Offer)
                 if (data.offer) {
-                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-                    
-                    // Обробляємо чергу кандидатів, які могли прийти раніше
-                    while (iceQueue.length > 0) {
-                        await pc.addIceCandidate(iceQueue.shift());
+                    try {
+                        console.log(`📨 Setting remote description from ${data.name}`);
+                        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                        console.log(`✅ Remote description set for ${data.name}`);
+                        
+                        // Обробляємо чергу кандидатів
+                        console.log(`🔄 Processing ${iceQueue.length} queued ICE candidates`);
+                        while (iceQueue.length > 0) {
+                            try {
+                                await pc.addIceCandidate(iceQueue.shift());
+                            } catch (e) {
+                                console.warn('⚠️ Error adding queued ICE candidate:', e);
+                            }
+                        }
+
+                        // Генеруємо відповідь (Answer)
+                        console.log(`📤 Creating answer for ${data.name}`);
+                        const answer = await pc.createAnswer();
+                        await pc.setLocalDescription(answer);
+                        console.log(`✅ Local description set for ${data.name}`);
+
+                        // Записуємо відповідь
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentId), {
+                            answer: { type: answer.type, sdp: answer.sdp }
+                        });
+                        console.log(`✅ Answer sent to ${data.name}`);
+                    } catch (e) {
+                        console.error(`❌ Error in WebRTC handshake for ${data.name}:`, e);
+                        this.showError(`Помилка з'єднання з ${data.name}`);
                     }
-
-                    // Генеруємо відповідь (Answer)
-                    const answer = await pc.createAnswer();
-                    await pc.setLocalDescription(answer);
-
-                    // Записуємо відповідь в документ учня, щоб він її прочитав
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentId), {
-                        answer: { type: answer.type, sdp: answer.sdp }
-                    });
                 }
 
                 // 6. Слухаємо кандидати від учня
@@ -456,19 +483,25 @@
                 const unsubIce = onSnapshot(q, (snapshot) => {
                     snapshot.docChanges().forEach(async (change) => {
                         if (change.type === 'added') {
-                            const candidateData = change.doc.data().candidate;
-                            const candidate = new RTCIceCandidate(candidateData);
-                            
-                            if (pc.remoteDescription) {
-                                try {
+                            try {
+                                const candidateData = change.doc.data().candidate;
+                                const candidate = new RTCIceCandidate(candidateData);
+                                console.log(`🔽 Received ICE candidate from ${data.name}`);
+                                
+                                if (pc.remoteDescription) {
                                     await pc.addIceCandidate(candidate);
-                                } catch (e) { console.warn("ICE error", e); }
-                            } else {
-                                // Якщо опис ще не встановлено, додаємо в чергу
-                                iceQueue.push(candidate);
+                                    console.log(`✅ ICE candidate added for ${data.name}`);
+                                } else {
+                                    console.log(`⏳ Queueing ICE candidate (no remote description yet)`);
+                                    iceQueue.push(candidate);
+                                }
+                            } catch (e) {
+                                console.warn("⚠️ ICE candidate error:", e);
                             }
                         }
                     });
+                }, (error) => {
+                    console.error('❌ Error listening to ICE candidates:', error);
                 });
                 state.unsubscribeFuncs.push(unsubIce);
             }
@@ -516,6 +549,7 @@
 
                 try {
                     // 1. Шукаємо сесію за кодом
+                    console.log("🔍 Searching for session:", codeInput);
                     const sessionsRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
                     const q = query(sessionsRef, where("code", "==", codeInput));
                     const querySnapshot = await getDocs(q);
@@ -526,35 +560,38 @@
                     const sessionData = sessionDoc.data();
                     state.sessionId = sessionDoc.id;
 
-                    // Перевірка часу дії (клієнтська валідація)
                     if (Date.now() > sessionData.expiresAt) throw new Error("Термін дії цієї сесії минув");
+                    console.log("✅ Session found:", state.sessionId);
 
                     // 2. Запитуємо доступ до екрану
                     let stream;
                     try {
                         stream = await navigator.mediaDevices.getDisplayMedia({
-                            video: { cursor: "always", frameRate: 15 }, // Оптимізація FPS для екранів
+                            video: { cursor: "always", frameRate: 15 },
                             audio: false
                         });
+                        console.log("✅ Screen stream acquired");
                     } catch (err) {
                         throw new Error("Ви відхилили запит на трансляцію екрану");
                     }
 
                     state.localStream = stream;
-                    
-                    // Якщо користувач натиснув "Зупинити" в браузері
                     stream.getVideoTracks()[0].onended = () => location.reload();
 
                     // 3. Ініціалізуємо WebRTC
                     const pc = new RTCPeerConnection(rtcConfig);
-                    state.pcs['teacher'] = pc; // У учня лише один пір - вчитель
+                    state.pcs['teacher'] = pc;
+                    const iceQueue = [];
 
-                    // Додаємо треки до з'єднання
+                    pc.onconnectionstatechange = () => console.log("📡 Student connection state:", pc.connectionState);
+                    pc.oniceconnectionstatechange = () => console.log("🧊 Student ICE state:", pc.iceConnectionState);
+
                     stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-                    // 4. Створення Offer (Пропозиції)
+                    // 4. Створення Offer
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
+                    console.log("✅ Offer created and local desc set");
 
                     // 5. Реєстрація учня в Firestore
                     const studentRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students'), {
@@ -562,12 +599,14 @@
                         offer: { type: offer.type, sdp: offer.sdp },
                         joinedAt: serverTimestamp()
                     });
+                    console.log("✅ Student registered in DB:", studentRef.id);
 
-                    // 6. Обробка ICE кандидатів
+                    // 6. Обробка ICE кандидатів (відправка вчителю)
                     const candidatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentRef.id, 'candidates');
 
                     pc.onicecandidate = (event) => {
                         if (event.candidate) {
+                            console.log("🔄 Sending ICE to teacher");
                             addDoc(candidatesCollection, {
                                 candidate: event.candidate.toJSON(),
                                 from: 'student',
@@ -577,17 +616,20 @@
                     };
 
                     // 7. Очікування відповіді (Answer) від вчителя
-                    const iceQueue = [];
-                    
                     onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentRef.id), async (snap) => {
                         const data = snap.data();
                         if (data && data.answer && !pc.currentRemoteDescription) {
+                            console.log("📨 Received answer from teacher");
                             const answer = new RTCSessionDescription(data.answer);
                             await pc.setRemoteDescription(answer);
+                            console.log("✅ Remote description set (Answer)");
                             
-                            // Додаємо відкладені кандидати
+                            // Обробка черги ICE
+                            console.log(`🔄 Processing ${iceQueue.length} queued ICE candidates from teacher`);
                             while (iceQueue.length > 0) {
-                                await pc.addIceCandidate(iceQueue.shift());
+                                try {
+                                    await pc.addIceCandidate(iceQueue.shift());
+                                } catch (e) { console.warn("Queued ICE error", e); }
                             }
                         }
                     });
@@ -597,22 +639,26 @@
                     onSnapshot(qIce, (snapshot) => {
                         snapshot.docChanges().forEach(async (change) => {
                             if (change.type === 'added') {
-                                const cand = new RTCIceCandidate(change.doc.data().candidate);
+                                const candData = change.doc.data().candidate;
+                                const cand = new RTCIceCandidate(candData);
+                                console.log("🔽 Received ICE from teacher");
+                                
                                 if (pc.remoteDescription) {
                                     await pc.addIceCandidate(cand);
                                 } else {
+                                    console.log("⏳ Queueing Teacher ICE");
                                     iceQueue.push(cand);
                                 }
                             }
                         });
                     });
 
-                    // Успіх - перемикаємо UI
+                    // Успіх
                     document.getElementById('student-login-form').classList.add('hidden');
                     document.getElementById('student-broadcasting').classList.remove('hidden');
 
                 } catch (err) {
-                    console.error(err);
+                    console.error("Student error:", err);
                     this.showError(err.message);
                     btn.disabled = false;
                     btn.innerHTML = 'Почати трансляцію';
