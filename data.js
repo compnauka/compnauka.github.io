@@ -342,6 +342,12 @@ const CATEGORIES = [
     color: "#ec4899",
     services: [
       { 
+        name: "Онлайн-дошка", 
+        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
+        link: "doshka/", 
+        image: "images/47.jpg" 
+      },
+      { 
         name: "Друкарик", 
         description: "Веселий текстовий редактор для дітей.", 
         link: "services/drukaryk.html", 
@@ -439,12 +445,6 @@ const CATEGORIES = [
         link: "services/quizes/save_server/index.html", 
         image: "images/64.jpg", 
         tags: ["Тест"] 
-      },
-      { 
-        name: "Онлайн-дошка", 
-        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
-        link: "doshka/", 
-        image: "images/47.jpg" 
       },
       { 
         name: "Пікселізатор", 
