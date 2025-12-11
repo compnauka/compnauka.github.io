@@ -376,6 +376,13 @@ const CATEGORIES = [
         tags: ["3-4 класи", "Графіка"] 
       },
       { 
+        name: "Друпензлик", 
+        description: "Текстово-графічний редактор для дітей.", 
+        link: "services/drupenslyk.html", 
+        image: "images/67.jpg" , 
+        tags: ["1-2 класи", "Графіка"] 
+      },
+      { 
         name: "Комірник", 
         description: "Спрощщений табличний процесор для дітей.", 
         link: "services/komirnyk/index.html", 
