@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Класна Кімната: Спільний Екран</title>
+    <!-- Підключення Tailwind CSS для стилізації -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Іконки FontAwesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Стилі для контейнера відео */
+        .video-wrapper {
+            position: relative;
+            background: #0f172a; /* Темний фон */
+            border-radius: 0.75rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        /* Ефект при наведенні - підсвітка */
+        .video-wrapper:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Зберігаємо пропорції екрану */
+        }
+
+        /* Бейдж з іменем учня */
+        .student-badge {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        /* Повноекранний режим */
+        #fullscreen-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Анімація завантаження */
+        .loader {
+            border-top-color: #3b82f6;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- Навігаційна панель -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight">ClassView</span>
+                </div>
+                <button id="logout-btn" class="hidden text-sm font-medium text-slate-500 hover:text-red-600 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Вийти
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Глобальні сповіщення про помилки -->
+    <div id="error-toast" class="fixed top-20 right-4 max-w-sm bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-500"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700 font-medium" id="error-message">Помилка</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основний контент -->
+    <main class="flex-grow container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
+        
+        <!-- ЕКРАН 1: Вибір ролі -->
+        <div id="screen-role" class="w-full max-w-4xl animate-fade-in">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Демонстрація екранів у реальному часі</h1>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Простий інструмент для вчителів та учнів. Без реєстрації, лише код сесії.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <!-- Картка Вчителя -->
+                <button onclick="app.setupTeacher()" class="group relative bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-slate-100 hover:border-blue-500 transition-all duration-300 text-left">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-arrow-right text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-chalkboard-user text-2xl text-blue-600 group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Я Вчитель</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">Створити нову сесію, отримати код доступу та переглядати екрани учнів.</p>
+                </button>
+
+                <!-- Картка Учня -->
+                <button onclick="app.setupStudent()" class="group relative bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-slate-100 hover:border-green-500 transition-all duration-300 text-left">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-arrow-right text-green-500 text-xl"></i>
+                    </div>
+                    <div class="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition-colors">
+                        <i class="fas fa-laptop-code text-2xl text-green-600 group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Я Учень</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">Приєднатися до існуючої сесії за кодом та поділитися своїм екраном.</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- ЕКРАН 2: Інтерфейс Вчителя -->
+        <div id="screen-teacher" class="hidden w-full">
+            <!-- Панель керування сесією -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-6">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Код доступу</p>
+                        <div class="flex items-center gap-3">
+                            <span id="session-code" class="text-5xl font-mono font-bold text-blue-600 tracking-wider">...</span>
+                            <button onclick="app.copyCode()" class="p-2 text-slate-400 hover:text-blue-600 transition" title="Копіювати">
+                                <i class="fas fa-copy text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="h-12 w-px bg-slate-200 hidden md:block"></div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Статус</p>
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            <span class="font-medium text-slate-700">Активна сесія</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Авто-закриття через 45 хв</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-lg border border-slate-100">
+                    <i class="fas fa-users text-slate-400"></i>
+                    <span class="text-slate-600 font-medium">Підключено: <strong id="student-count" class="text-slate-900">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Сітка екранів -->
+            <div id="screens-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Сюди динамічно додаються відео -->
+            </div>
+
+            <!-- Повідомлення про очікування (порожній стан) -->
+            <div id="waiting-state" class="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-wifi text-3xl text-slate-300"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-900">Немає підключених учнів</h3>
+                <p class="text-slate-500 mt-2">Повідомте учням код <span class="font-mono font-bold bg-slate-100 px-2 py-1 rounded">...</span></p>
+            </div>
+        </div>
+
+        <!-- ЕКРАН 3: Інтерфейс Учня -->
+        <div id="screen-student" class="hidden w-full max-w-md">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
+                
+                <!-- Форма входу -->
+                <div id="student-login-form">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-slate-900">Приєднатися</h2>
+                        <p class="text-slate-500">Введіть код, який надав вчитель</p>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Ваше ім'я</label>
+                            <input type="text" id="student-name" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Олександр П.">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Код сесії</label>
+                            <input type="text" id="join-code" maxlength="4" class="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase transition" placeholder="0000">
+                        </div>
+
+                        <button id="join-btn" onclick="app.joinSession()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                            <span>Почати трансляцію</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Стан трансляції -->
+                <div id="student-broadcasting" class="hidden text-center py-6">
+                    <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-20"></span>
+                        <i class="fas fa-broadcast-tower text-4xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-2">Ви в ефірі!</h3>
+                    <p class="text-slate-500 mb-8">Ваш екран зараз транслюється вчителю.</p>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg text-left text-sm text-blue-800 mb-6">
+                        <i class="fas fa-info-circle mr-2"></i> Не закривайте цю вкладку, щоб підтримувати з'єднання.
+                    </div>
+
+                    <button onclick="location.reload()" class="w-full py-3 border-2 border-red-100 text-red-600 font-bold rounded-lg hover:bg-red-50 transition">
+                        Зупинити трансляцію
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Модальне вікно повного екрану -->
+    <div id="fullscreen-modal">
+        <div class="absolute top-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
+            <span id="fs-student-name" class="text-white text-xl font-bold px-4">Ім'я учня</span>
+            <button onclick="app.closeFullscreen()" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition backdrop-blur-sm">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <video id="fs-video" autoplay playsinline muted class="max-w-full max-h-full"></video>
+    </div>
+
+    <!-- Модуль Firebase та Логіки -->
+    <script type="module">
+        // Імпорт необхідних функцій Firebase (Modular SDK v9+)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, onSnapshot, updateDoc, serverTimestamp, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // КОНФІГУРАЦІЯ
+        // Отримуємо конфігурацію з середовища виконання
+        const firebaseConfig = {
+          apiKey: "AIzaSyASg6XwiqAflGj8Lhr1QvONaIiwg-KyeJ8",
+          authDomain: "classview-64b87.firebaseapp.com",
+          projectId: "classview-64b87",
+          storageBucket: "classview-64b87.firebasestorage.app",
+          messagingSenderId: "874387554954",
+          appId: "1:874387554954:web:aaff431cec6d88a63f6373",
+          measurementId: "G-5GCW9TRRRP"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app'; // Унікальний ID для ізоляції даних
+
+        // Глобальні змінні
+        let auth, db, currentUser;
+        
+        // STUN сервери від Google (потрібні для проходження NAT/Firewall)
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
+
+        // Стан додатку
+        const state = {
+            role: null,         // 'teacher' або 'student'
+            sessionId: null,    // ID документа сесії в Firestore
+            pcs: {},            // Об'єкт для зберігання RTCPeerConnection (ключ: studentId)
+            localStream: null,  // Потік екрану учня
+            unsubscribeFuncs: [] // Масив функцій для відписки від слухачів Firestore
+        };
+
+        class ClassroomApp {
+            constructor() {
+                this.initFirebase();
+                this.bindEvents();
+            }
+
+            // --- 1. Ініціалізація ---
+
+            async initFirebase() {
+                try {
+                    // Ініціалізація Firebase
+                    const config = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : firebaseConfig;
+                    const app = initializeApp(config);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Анонімна авторизація (не вимагає паролів, але дає User ID)
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInAnonymously(auth); // Спрощено для цього середовища
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    // Слухаємо стан авторизації
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            currentUser = user;
+                            console.log("Auth success:", user.uid);
+                        } else {
+                            this.showError("Не вдалося авторизуватися");
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Firebase init error", e);
+                    this.showError("Помилка підключення до бази даних");
+                }
+            }
+
+            bindEvents() {
+                // Кнопка виходу
+                document.getElementById('logout-btn').addEventListener('click', () => location.reload());
+            }
+
+            // --- 2. Логіка Вчителя ---
+
+            async setupTeacher() {
+                if (!currentUser) return this.showError("Зачекайте на з'єднання...");
+                
+                state.role = 'teacher';
+                this.switchScreen('screen-teacher');
+                
+                try {
+                    // Генеруємо випадковий 4-значний код
+                    const code = Math.floor(1000 + Math.random() * 9000).toString();
+                    document.getElementById('session-code').innerText = code;
+                    
+                    // Створюємо запис сесії в базі даних
+                    // Використовуємо шлях public/data для простоти прав доступу в цьому демо
+                    const sessionRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'sessions'));
+                    state.sessionId = sessionRef.id;
+
+                    const expiresAt = Date.now() + (45 * 60 * 1000); // 45 хвилин
+
+                    await setDoc(sessionRef, {
+                        code: code,
+                        teacherId: currentUser.uid,
+                        createdAt: serverTimestamp(),
+                        expiresAt: expiresAt
+                    });
+
+                    // Запускаємо таймер перевірки завершення сесії
+                    this.startExpiryCheck(expiresAt);
+
+                    // Підписуємося на зміни в колекції студентів цієї сесії
+                    const studentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students');
+                    
+                    const unsub = onSnapshot(studentsRef, (snapshot) => {
+                        this.updateStudentCount(snapshot.size);
+                        
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === "added") {
+                                this.handleStudentConnected(change.doc.id, change.doc.data());
+                            }
+                            if (change.type === "removed") {
+                                this.handleStudentDisconnected(change.doc.id);
+                            }
+                        });
+                    }, (error) => this.showError("Втрачено зв'язок зі списком учнів"));
+
+                    state.unsubscribeFuncs.push(unsub);
+
+                } catch (e) {
+                    console.error(e);
+                    this.showError("Не вдалося створити сесію");
+                }
+            }
+
+            async handleStudentConnected(studentId, data) {
+                console.log(`Student ${data.name} connecting...`);
+                
+                // 1. Створюємо WebRTC з'єднання
+                const pc = new RTCPeerConnection(rtcConfig);
+                state.pcs[studentId] = pc;
+
+                // Черга для ICE кандидатів, які прийшли до встановлення remoteDescription
+                const iceQueue = [];
+
+                // 2. Створюємо UI елемент для відео
+                this.createVideoElement(studentId, data.name);
+
+                // 3. Обробка вхідного потоку (коли приходить відео)
+                pc.ontrack = (event) => {
+                    const videoEl = document.getElementById(`vid-${studentId}`);
+                    if (videoEl && event.streams[0]) {
+                        videoEl.srcObject = event.streams[0];
+                        // Прибираємо лоадер, якщо він є (можна додати логіку пізніше)
+                    }
+                };
+
+                // 4. Обмін кандидатами (ICE Candidates)
+                // Відправляємо свої кандидати учню
+                const candidatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentId, 'candidates');
+                
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        addDoc(candidatesCollection, {
+                            candidate: event.candidate.toJSON(),
+                            from: 'teacher',
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                };
+
+                // 5. Встановлюємо опис з'єднання від учня (Offer)
+                if (data.offer) {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    
+                    // Обробляємо чергу кандидатів, які могли прийти раніше
+                    while (iceQueue.length > 0) {
+                        await pc.addIceCandidate(iceQueue.shift());
+                    }
+
+                    // Генеруємо відповідь (Answer)
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+
+                    // Записуємо відповідь в документ учня, щоб він її прочитав
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentId), {
+                        answer: { type: answer.type, sdp: answer.sdp }
+                    });
+                }
+
+                // 6. Слухаємо кандидати від учня
+                const q = query(candidatesCollection, where("from", "==", "student"));
+                const unsubIce = onSnapshot(q, (snapshot) => {
+                    snapshot.docChanges().forEach(async (change) => {
+                        if (change.type === 'added') {
+                            const candidateData = change.doc.data().candidate;
+                            const candidate = new RTCIceCandidate(candidateData);
+                            
+                            if (pc.remoteDescription) {
+                                try {
+                                    await pc.addIceCandidate(candidate);
+                                } catch (e) { console.warn("ICE error", e); }
+                            } else {
+                                // Якщо опис ще не встановлено, додаємо в чергу
+                                iceQueue.push(candidate);
+                            }
+                        }
+                    });
+                });
+                state.unsubscribeFuncs.push(unsubIce);
+            }
+
+            handleStudentDisconnected(studentId) {
+                // Видаляємо DOM елемент
+                const el = document.getElementById(`wrap-${studentId}`);
+                if (el) el.remove();
+                
+                // Закриваємо з'єднання
+                if (state.pcs[studentId]) {
+                    state.pcs[studentId].close();
+                    delete state.pcs[studentId];
+                }
+
+                // Якщо був відкритий на повний екран
+                const fsModal = document.getElementById('fullscreen-modal');
+                if (fsModal.style.display === 'flex') {
+                    this.closeFullscreen();
+                }
+
+                // Перевіряємо чи є ще учні для відображення заглушки
+                const count = document.getElementById('screens-grid').childElementCount;
+                this.updateStudentCount(count);
+            }
+
+            // --- 3. Логіка Учня ---
+
+            async setupStudent() {
+                if (!currentUser) return this.showError("Зачекайте на з'єднання...");
+                state.role = 'student';
+                this.switchScreen('screen-student');
+            }
+
+            async joinSession() {
+                const btn = document.getElementById('join-btn');
+                const codeInput = document.getElementById('join-code').value.trim();
+                const nameInput = document.getElementById('student-name').value.trim();
+
+                if (codeInput.length !== 4) return this.showError("Код повинен містити 4 цифри");
+                if (nameInput.length < 2) return this.showError("Введіть ваше ім'я");
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Підключення...';
+
+                try {
+                    // 1. Шукаємо сесію за кодом
+                    const sessionsRef = collection(db, 'artifacts', appId, 'public', 'data', 'sessions');
+                    const q = query(sessionsRef, where("code", "==", codeInput));
+                    const querySnapshot = await getDocs(q);
+
+                    if (querySnapshot.empty) throw new Error("Сесію з таким кодом не знайдено");
+
+                    const sessionDoc = querySnapshot.docs[0];
+                    const sessionData = sessionDoc.data();
+                    state.sessionId = sessionDoc.id;
+
+                    // Перевірка часу дії (клієнтська валідація)
+                    if (Date.now() > sessionData.expiresAt) throw new Error("Термін дії цієї сесії минув");
+
+                    // 2. Запитуємо доступ до екрану
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getDisplayMedia({
+                            video: { cursor: "always", frameRate: 15 }, // Оптимізація FPS для екранів
+                            audio: false
+                        });
+                    } catch (err) {
+                        throw new Error("Ви відхилили запит на трансляцію екрану");
+                    }
+
+                    state.localStream = stream;
+                    
+                    // Якщо користувач натиснув "Зупинити" в браузері
+                    stream.getVideoTracks()[0].onended = () => location.reload();
+
+                    // 3. Ініціалізуємо WebRTC
+                    const pc = new RTCPeerConnection(rtcConfig);
+                    state.pcs['teacher'] = pc; // У учня лише один пір - вчитель
+
+                    // Додаємо треки до з'єднання
+                    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+                    // 4. Створення Offer (Пропозиції)
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+
+                    // 5. Реєстрація учня в Firestore
+                    const studentRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students'), {
+                        name: nameInput,
+                        offer: { type: offer.type, sdp: offer.sdp },
+                        joinedAt: serverTimestamp()
+                    });
+
+                    // 6. Обробка ICE кандидатів
+                    const candidatesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentRef.id, 'candidates');
+
+                    pc.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            addDoc(candidatesCollection, {
+                                candidate: event.candidate.toJSON(),
+                                from: 'student',
+                                createdAt: serverTimestamp()
+                            });
+                        }
+                    };
+
+                    // 7. Очікування відповіді (Answer) від вчителя
+                    const iceQueue = [];
+                    
+                    onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', state.sessionId, 'students', studentRef.id), async (snap) => {
+                        const data = snap.data();
+                        if (data && data.answer && !pc.currentRemoteDescription) {
+                            const answer = new RTCSessionDescription(data.answer);
+                            await pc.setRemoteDescription(answer);
+                            
+                            // Додаємо відкладені кандидати
+                            while (iceQueue.length > 0) {
+                                await pc.addIceCandidate(iceQueue.shift());
+                            }
+                        }
+                    });
+
+                    // Слухаємо кандидати від вчителя
+                    const qIce = query(candidatesCollection, where("from", "==", "teacher"));
+                    onSnapshot(qIce, (snapshot) => {
+                        snapshot.docChanges().forEach(async (change) => {
+                            if (change.type === 'added') {
+                                const cand = new RTCIceCandidate(change.doc.data().candidate);
+                                if (pc.remoteDescription) {
+                                    await pc.addIceCandidate(cand);
+                                } else {
+                                    iceQueue.push(cand);
+                                }
+                            }
+                        });
+                    });
+
+                    // Успіх - перемикаємо UI
+                    document.getElementById('student-login-form').classList.add('hidden');
+                    document.getElementById('student-broadcasting').classList.remove('hidden');
+
+                } catch (err) {
+                    console.error(err);
+                    this.showError(err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Почати трансляцію';
+                    if (state.localStream) {
+                        state.localStream.getTracks().forEach(t => t.stop());
+                    }
+                }
+            }
+
+
+            // --- Допоміжні функції UI ---
+
+            createVideoElement(id, name) {
+                const grid = document.getElementById('screens-grid');
+                if (document.getElementById(`wrap-${id}`)) return;
+
+                const wrap = document.createElement('div');
+                wrap.id = `wrap-${id}`;
+                wrap.className = 'video-wrapper animate-fade-in';
+                wrap.onclick = () => this.openFullscreen(id, name);
+
+                wrap.innerHTML = `
+                    <video id="vid-${id}" autoplay playsinline muted></video>
+                    <div class="student-badge">
+                        <i class="fas fa-user-graduate text-xs"></i> ${name}
+                    </div>
+                `;
+                
+                grid.appendChild(wrap);
+                this.updateStudentCount(document.getElementById('screens-grid').children.length);
+            }
+
+            openFullscreen(id, name) {
+                const sourceVid = document.getElementById(`vid-${id}`);
+                const fsModal = document.getElementById('fullscreen-modal');
+                const fsVideo = document.getElementById('fs-video');
+                
+                if (sourceVid && sourceVid.srcObject) {
+                    fsVideo.srcObject = sourceVid.srcObject;
+                    document.getElementById('fs-student-name').innerText = name;
+                    fsModal.style.display = 'flex';
+                }
+            }
+
+            closeFullscreen() {
+                const fsModal = document.getElementById('fullscreen-modal');
+                const fsVideo = document.getElementById('fs-video');
+                fsModal.style.display = 'none';
+                fsVideo.srcObject = null;
+            }
+
+            switchScreen(screenId) {
+                ['screen-role', 'screen-teacher', 'screen-student'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden');
+                });
+                document.getElementById(screenId).classList.remove('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+            }
+
+            updateStudentCount(count) {
+                const num = typeof count === 'number' ? count : 0;
+                document.getElementById('student-count').innerText = num;
+                
+                const emptyState = document.getElementById('waiting-state');
+                if (num > 0) emptyState.classList.add('hidden');
+                else emptyState.classList.remove('hidden');
+            }
+
+            showError(msg) {
+                const toast = document.getElementById('error-toast');
+                document.getElementById('error-message').innerText = msg;
+                toast.classList.remove('translate-x-full');
+                setTimeout(() => toast.classList.add('translate-x-full'), 4000);
+            }
+
+            copyCode() {
+                const code = document.getElementById('session-code').innerText;
+                navigator.clipboard.writeText(code);
+                // Можна додати візуальне підтвердження
+            }
+
+            startExpiryCheck(expiresAt) {
+                // Перевірка кожну хвилину
+                setInterval(() => {
+                    if (Date.now() > expiresAt) {
+                        alert("Час сесії (45 хв) вичерпано. Сесію завершено.");
+                        location.reload();
+                    }
+                }, 60000);
+            }
+        }
+
+        // Запуск додатку
+        window.app = new ClassroomApp();
+    </script>
+</body>
+</html>
