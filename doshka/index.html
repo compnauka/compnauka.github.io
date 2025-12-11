@@ -10,8 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <meta name="theme-color" content="#111827" />
-
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
     <script>
@@ -26,8 +24,9 @@
     <script>
       window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
       plausible.init()
-    </script>
-  
+    </script>  
+
+  <meta name="theme-color" content="#111827" />
   <style>
     body { 
       font-family: 'Inter', sans-serif; 
@@ -176,6 +175,7 @@
       </div>
     </div>
 
+    <!-- QR Modal (Small) -->
     <div id="dlg-qr" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
       <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
         <div class="flex justify-between items-center mb-4">
@@ -183,11 +183,20 @@
           <button data-close class="text-gray-400 hover:text-gray-900 text-2xl transition-colors">&times;</button>
         </div>
         <input id="qr-input" type="text" placeholder="URL або текст" class="w-full border border-gray-300 p-2.5 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-        <div id="qr-output" class="flex justify-center bg-gray-50 p-6 rounded-lg min-h-[180px] items-center border border-dashed border-gray-300">
+        
+        <!-- Output container, clickable -->
+        <div id="qr-output" class="flex justify-center bg-gray-50 p-6 rounded-lg min-h-[180px] items-center border border-dashed border-gray-300 transition-colors hover:bg-gray-100" title="Натисніть для збільшення">
           <span class="text-gray-400 text-sm">QR код з'явиться тут</span>
         </div>
+        
         <button id="qr-gen-btn" class="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-sm">Згенерувати</button>
       </div>
+    </div>
+
+    <!-- QR Modal (Zoomed) -->
+    <div id="dlg-qr-zoom" class="hidden fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center cursor-zoom-out">
+        <div id="qr-zoom-content" class="p-4 bg-white"></div>
+        <div class="absolute bottom-10 text-gray-500 font-medium animate-pulse">Натисніть будь-де, щоб закрити</div>
     </div>
 
     <div id="dlg-timer" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
@@ -667,6 +676,10 @@
         $('#btn-qr').addEventListener('click', () => {
             $('#qr-input').value = window.location.href;
             $('#qr-output').innerHTML = '<span class="text-gray-400 text-sm">Натисніть "Згенерувати"</span>';
+            // Reset click handlers or visual cues if needed
+            $('#qr-output').dataset.val = "";
+            $('#qr-output').classList.remove('cursor-pointer', 'hover:bg-gray-100');
+            $('#qr-output').title = "";
             toggleModal('#dlg-qr', true);
         });
         
@@ -676,9 +689,36 @@
             out.innerHTML = '';
             if(window.QRCode) {
                 new QRCode(out, { text: val, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
+                // Make clickable for zoom
+                out.dataset.val = val;
+                out.classList.add('cursor-pointer', 'hover:bg-gray-100');
+                out.title = "Натисніть для збільшення";
             } else {
                 out.textContent = "Помилка завантаження бібліотеки";
             }
+        });
+
+        // Click handler for small QR code to trigger zoom
+        $('#qr-output').addEventListener('click', () => {
+            const val = $('#qr-output').dataset.val;
+            if (!val) return;
+            
+            const zoomDlg = $('#dlg-qr-zoom');
+            const zoomContent = $('#qr-zoom-content');
+            
+            zoomContent.innerHTML = '';
+            // 80% of smallest screen dimension
+            const size = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+            
+            if(window.QRCode) {
+                new QRCode(zoomContent, { text: val, width: size, height: size, correctLevel: QRCode.CorrectLevel.H });
+                zoomDlg.classList.remove('hidden');
+            }
+        });
+
+        // Close zoom overlay on click
+        $('#dlg-qr-zoom').addEventListener('click', () => {
+            $('#dlg-qr-zoom').classList.add('hidden');
         });
 
         $('#btn-timer').addEventListener('click', () => toggleModal('#dlg-timer', true));
@@ -703,6 +743,7 @@
             }
             if (e.key === 'Escape') {
                 $$('.modal-backdrop:not(.hidden)').forEach(el => el.classList.add('hidden'));
+                $('#dlg-qr-zoom').classList.add('hidden');
             }
         });
     });
