@@ -386,11 +386,60 @@ const CATEGORIES = [
     ]
   },
   {
-    id: "experiments",
-    name: "Експерименти",
-    iconClass: "fas fa-flask",
+    id: "games",
+    name: "Ігри та експерименти",
+    iconClass: "fas fa-gamepad",
     color: "#14b8a6",
     services: [
+      { 
+        name: "Змійка", 
+        description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.", 
+        link: "games/snake.html", 
+        image: "images/51.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Теніс", 
+        description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", 
+        link: "games/tenis.html", 
+        image: "images/52.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Морський бій", 
+        description: "Класична онлайн-гра для двох гравців. Розвиває стратегічне та критичне мислення.", 
+        link: "games/seabattle.html", 
+        image: "images/54.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Космічні заарбники", 
+        description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", 
+        link: "games/spaceinviders.html", 
+        image: "images/53.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Руйнівник блоків", 
+        description: "Класична аркада для одного гравця! Розвиває просторове мислення та швидкість реакції.", 
+        link: "games/arkanoid.html", 
+        image: "images/63.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Неонова хвиля", 
+        description: "ТІЛЬКИ ДЛЯ ГРАВЦІВ З МІЦНИМИ НЕРВАМИ! Розвиває просторове мислення та швидкість реакції.", 
+        link: "games/neon_wave.html", 
+        image: "images/64.jpg", 
+        tags: [] 
+      },
+      { 
+        name: "Місія: Порятунок сервера", 
+        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
+        link: "services/quizes/save_server/index.html", 
+        image: "images/64.jpg", 
+        tags: ["Тест"] 
+      },
       { 
         name: "Онлайн-дошка", 
         description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
@@ -443,63 +492,6 @@ const CATEGORIES = [
         link: "apps/", 
         image: "images/43.jpg", 
         tags: [] 
-      }
-    ]
-  },
-  {
-    id: "games",
-    name: "Ігри",
-    iconClass: "fas fa-gamepad",
-    color: "#f59e0b",
-    services: [
-      { 
-        name: "Змійка", 
-        description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.", 
-        link: "games/snake.html", 
-        image: "images/51.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Теніс", 
-        description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", 
-        link: "games/tenis.html", 
-        image: "images/52.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Морський бій", 
-        description: "Класична онлайн-гра для двох гравців. Розвиває стратегічне та критичне мислення.", 
-        link: "games/seabattle.html", 
-        image: "images/54.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Космічні заарбники", 
-        description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", 
-        link: "games/spaceinviders.html", 
-        image: "images/53.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Руйнівник блоків", 
-        description: "Класична аркада для одного гравця! Розвиває просторове мислення та швидкість реакції.", 
-        link: "games/arkanoid.html", 
-        image: "images/63.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Неонова хвиля", 
-        description: "ТІЛЬКИ ДЛЯ ГРАВЦІВ З МІЦНИМИ НЕРВАМИ! Розвиває просторове мислення та швидкість реакції.", 
-        link: "games/neon_wave.html", 
-        image: "images/64.jpg", 
-        tags: [] 
-      },
-      { 
-        name: "Місія: Порятунок сервера", 
-        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
-        link: "services/quizes/save_server/index.html", 
-        image: "images/64.jpg", 
-        tags: ["Тест"] 
       }
     ]
   },
