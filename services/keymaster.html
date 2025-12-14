@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Володар комбінацій | Тренажер Гарячих Клавіш Windows</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .key-cap {
+            box-shadow: 0 3px 0 #94a3b8; /* slate-400 */
+            transition: all 0.05s;
+        }
+        .key-cap:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #94a3b8;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+
+        @keyframes pop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-screen flex flex-col overflow-hidden selection:bg-blue-500 selection:text-white">
+
+    <!-- Header -->
+    <nav class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 p-4 z-20 shadow-md flex-shrink-0">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3 select-none">
+                <i class="fa-brands fa-windows text-3xl text-blue-500"></i>
+                <h1 class="text-xl font-bold tracking-tight">KeyMaster <span class="text-blue-400 font-light">Pro Edition</span></h1>
+            </div>
+            
+            <div class="flex bg-slate-700/50 p-1 rounded-lg">
+                <button onclick="app.switchTab('trainer')" id="btn-trainer" class="px-5 py-2 rounded-md text-sm font-semibold transition-all bg-blue-600 text-white shadow-sm">
+                    <i class="fa-solid fa-gamepad mr-2"></i>Тренажер
+                </button>
+                <button onclick="app.switchTab('reference')" id="btn-reference" class="px-5 py-2 rounded-md text-sm font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700">
+                    <i class="fa-solid fa-book mr-2"></i>Довідник
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content Area -->
+    <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center overflow-hidden relative max-h-full">
+
+        <!-- TRAINER MODE -->
+        <div id="trainer-view" class="w-full max-w-2xl flex flex-col gap-6 animate-pop transition-all duration-300">
+            
+            <!-- HUD -->
+            <div class="flex justify-between items-center text-sm font-medium px-4 select-none bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                <div class="flex gap-4">
+                    <div class="text-slate-400">Рахунок: <span id="score-display" class="text-white ml-1 font-bold">0</span></div>
+                    <div class="text-slate-400">Серія: <span id="streak-display" class="text-orange-400 ml-1 font-bold">0</span> 🔥</div>
+                </div>
+                <div class="text-slate-400">Точність: <span id="accuracy-display" class="text-blue-400 ml-1 font-bold">100%</span></div>
+            </div>
+
+            <!-- Game Card -->
+            <div class="bg-slate-800 rounded-2xl p-8 md:p-10 shadow-2xl border border-slate-700 text-center relative overflow-hidden group">
+                <!-- Top Decor Line -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                
+                <!-- Category Label -->
+                <div id="category-badge" class="inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-700/50 text-slate-400">
+                    Готові до тренування?
+                </div>
+
+                <!-- Task Description -->
+                <h2 id="task-desc" class="text-2xl md:text-3xl font-bold mb-10 text-white min-h-[4rem] flex items-center justify-center leading-tight">
+                    Натисніть "Старт"
+                </h2>
+
+                <!-- Input Visualizer -->
+                <div id="visualizer" class="h-16 flex items-center justify-center gap-2 mb-8 select-none">
+                    <span class="text-slate-600 text-sm italic">Клавіші з'являться тут...</span>
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback" class="h-6 mb-6 font-semibold text-lg empty:hidden"></div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-center gap-3">
+                    <button id="start-btn" onclick="app.nextTask()" class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-900/20 flex items-center">
+                        <i class="fa-solid fa-play mr-2"></i> Старт
+                    </button>
+                    <button id="hint-btn" onclick="app.showHint()" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 px-6 py-3 rounded-xl font-medium transition border border-slate-600">
+                        <i class="fa-regular fa-lightbulb mr-2"></i> Підказка
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center text-slate-500 text-xs mt-2 select-none">
+                <p>Клацніть у вікні браузера для фокусу • Повна підтримка розкладок</p>
+            </div>
+        </div>
+
+        <!-- REFERENCE MODE -->
+        <div id="reference-view" class="w-full max-w-5xl hidden animate-pop max-h-full flex flex-col bg-slate-800 rounded-xl border border-slate-700 shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-slate-700 bg-slate-800/80 flex flex-col md:flex-row items-center justify-between flex-shrink-0 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-keyboard text-blue-500"></i> Довідник
+                    </h2>
+                    <p class="text-slate-400 text-xs mt-1">Повний перелік стандартних скорочень</p>
+                </div>
+                
+                <!-- Category Filter -->
+                <select id="category-filter" onchange="app.filterTable(this.value)" class="bg-slate-700 text-white text-sm px-3 py-2 rounded border border-slate-600 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+                    <option value="all">Всі категорії</option>
+                    <option value="Навігація">Навігація</option>
+                    <option value="Виділення">Виділення</option>
+                    <option value="Редагування">Редагування</option>
+                    <option value="Форматування">Форматування</option>
+                    <option value="Файли">Файли</option>
+                    <option value="Пошук">Пошук</option>
+                </select>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 bg-slate-900/30 min-h-0">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-slate-900 shadow-sm z-10">
+                        <tr class="text-slate-400 uppercase text-xs tracking-wider">
+                            <th class="p-4 font-semibold border-b border-slate-700 w-1/3">Комбінація</th>
+                            <th class="p-4 font-semibold border-b border-slate-700">Дія</th>
+                            <th class="p-4 font-semibold border-b border-slate-700 text-right">Категорія</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reference-table" class="text-sm divide-y divide-slate-700/50">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-24 right-5 bg-slate-800 border-l-4 border-green-500 text-white px-5 py-3 rounded shadow-2xl translate-x-[150%] transition-transform duration-300 z-50 flex items-center gap-3">
+        <div class="bg-green-500/20 p-2 rounded-full">
+            <i class="fa-solid fa-check text-green-500 text-sm"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm">Вірно!</h4>
+            <p class="text-xs text-slate-400" id="toast-msg">...</p>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Shortcuts Data Source - PRO EDITION
+         */
+        const SHORTCUTS = [
+            // --- Navigation (Навігація) ---
+            { keys: { code: 'Home' }, label: 'Home', desc: 'На початок рядка', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { code: 'End' }, label: 'End', desc: 'В кінець рядка', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { ctrl: true, code: 'Home' }, label: 'Ctrl + Home', desc: 'На початок документа', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { ctrl: true, code: 'End' }, label: 'Ctrl + End', desc: 'В кінець документа', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { code: 'PageUp' }, label: 'PgUp', desc: 'На сторінку вгору', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { code: 'PageDown' }, label: 'PgDn', desc: 'На сторінку вниз', cat: 'Навігація', color: 'text-yellow-400' },
+            
+            { keys: { ctrl: true, code: 'ArrowLeft' }, label: 'Ctrl + ←', desc: 'Початок попереднього слова', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { ctrl: true, code: 'ArrowRight' }, label: 'Ctrl + →', desc: 'Початок наступного слова', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { ctrl: true, code: 'ArrowUp' }, label: 'Ctrl + ↑', desc: 'Початок попереднього абзацу', cat: 'Навігація', color: 'text-yellow-400' },
+            { keys: { ctrl: true, code: 'ArrowDown' }, label: 'Ctrl + ↓', desc: 'Початок наступного абзацу', cat: 'Навігація', color: 'text-yellow-400' },
+
+            // --- Selection (Виділення) ---
+            { keys: { shift: true, code: 'Home' }, label: 'Shift + Home', desc: 'Виділити до початку рядка', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, code: 'End' }, label: 'Shift + End', desc: 'Виділити до кінця рядка', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, ctrl: true, code: 'Home' }, label: 'Shift + Ctrl + Home', desc: 'Виділити до початку документа', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, ctrl: true, code: 'End' }, label: 'Shift + Ctrl + End', desc: 'Виділити до кінця документа', cat: 'Виділення', color: 'text-purple-400' },
+            
+            { keys: { shift: true, code: 'ArrowLeft' }, label: 'Shift + ←', desc: 'Виділити символ назад', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, code: 'ArrowRight' }, label: 'Shift + →', desc: 'Виділити символ вперед', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, code: 'ArrowUp' }, label: 'Shift + ↑', desc: 'Виділити рядок вгору', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, code: 'ArrowDown' }, label: 'Shift + ↓', desc: 'Виділити рядок вниз', cat: 'Виділення', color: 'text-purple-400' },
+            
+            { keys: { shift: true, ctrl: true, code: 'ArrowLeft' }, label: 'Shift + Ctrl + ←', desc: 'Виділити слово назад', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { shift: true, ctrl: true, code: 'ArrowRight' }, label: 'Shift + Ctrl + →', desc: 'Виділити слово вперед', cat: 'Виділення', color: 'text-purple-400' },
+            { keys: { ctrl: true, code: 'KeyA' }, label: 'Ctrl + A', desc: 'Виділити весь текст', cat: 'Виділення', color: 'text-purple-400' },
+
+            // --- Files (Робота з файлами) ---
+            { keys: { ctrl: true, code: 'KeyS' }, label: 'Ctrl + S', desc: 'Зберегти документ', cat: 'Файли', color: 'text-orange-400' },
+            { keys: { ctrl: true, code: 'KeyO' }, label: 'Ctrl + O', desc: 'Відкрити файл', cat: 'Файли', color: 'text-orange-400' },
+            { keys: { ctrl: true, code: 'KeyN' }, label: 'Ctrl + N', desc: 'Новий документ', cat: 'Файли', color: 'text-orange-400' },
+            { keys: { ctrl: true, code: 'KeyP' }, label: 'Ctrl + P', desc: 'Друк', cat: 'Файли', color: 'text-orange-400' },
+            { keys: { ctrl: true, code: 'KeyW' }, label: 'Ctrl + W', desc: 'Закрити документ', cat: 'Файли', color: 'text-orange-400' },
+
+            // --- Editing (Редагування) ---
+            { keys: { ctrl: true, code: 'Backspace' }, label: 'Ctrl + Backspace', desc: 'Видалити слово зліва', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, code: 'Delete' }, label: 'Ctrl + Del', desc: 'Видалити слово справа', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { alt: true, code: 'Backspace' }, label: 'Alt + Backspace', desc: 'Скасувати видалення', cat: 'Редагування', color: 'text-green-400' },
+            
+            { keys: { ctrl: true, code: 'KeyC' }, label: 'Ctrl + C', desc: 'Копіювати', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, code: 'KeyX' }, label: 'Ctrl + X', desc: 'Вирізати', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, code: 'KeyV' }, label: 'Ctrl + V', desc: 'Вставити', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, shift: true, code: 'KeyV' }, label: 'Ctrl + Shift + V', desc: 'Вставити без форматування', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, code: 'KeyZ' }, label: 'Ctrl + Z', desc: 'Скасувати (Undo)', cat: 'Редагування', color: 'text-green-400' },
+            { keys: { ctrl: true, code: 'KeyY' }, label: 'Ctrl + Y', desc: 'Повторити (Redo)', cat: 'Редагування', color: 'text-green-400' },
+            
+            { keys: { code: 'Tab' }, label: 'Tab', desc: 'Вставити відступ', cat: 'Редагування', color: 'text-green-400' },
+
+            // --- Formatting (Форматування) ---
+            { keys: { ctrl: true, code: 'KeyB' }, label: 'Ctrl + B', desc: 'Жирний шрифт', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'KeyI' }, label: 'Ctrl + I', desc: 'Курсив', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'KeyU' }, label: 'Ctrl + U', desc: 'Підкреслення', cat: 'Форматування', color: 'text-pink-400' },
+            
+            { keys: { ctrl: true, code: 'KeyE' }, label: 'Ctrl + E', desc: 'Вирівняти по центру', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'KeyL' }, label: 'Ctrl + L', desc: 'Вирівняти ліворуч', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'KeyR' }, label: 'Ctrl + R', desc: 'Вирівняти праворуч', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'KeyJ' }, label: 'Ctrl + J', desc: 'Вирівняти по ширині', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'BracketRight' }, label: 'Ctrl + ]', desc: 'Збільшити шрифт', cat: 'Форматування', color: 'text-pink-400' },
+            { keys: { ctrl: true, code: 'BracketLeft' }, label: 'Ctrl + [', desc: 'Зменшити шрифт', cat: 'Форматування', color: 'text-pink-400' },
+
+            // --- Search (Пошук) ---
+            { keys: { ctrl: true, code: 'KeyF' }, label: 'Ctrl + F', desc: 'Знайти', cat: 'Пошук', color: 'text-blue-400' },
+            { keys: { ctrl: true, code: 'KeyH' }, label: 'Ctrl + H', desc: 'Знайти та замінити', cat: 'Пошук', color: 'text-blue-400' }
+        ];
+
+        class ShortcutsTrainer {
+            constructor() {
+                this.state = {
+                    currentIndex: null,
+                    lastIndex: -1,
+                    score: 0,
+                    streak: 0,
+                    totalAttempts: 0,
+                    correctAttempts: 0,
+                    attemptOnTask: 0, // NEW: Track attempts per specific task
+                    isBlocked: false
+                };
+
+                this.dom = {
+                    trainerView: document.getElementById('trainer-view'),
+                    referenceView: document.getElementById('reference-view'),
+                    btnTrainer: document.getElementById('btn-trainer'),
+                    btnReference: document.getElementById('btn-reference'),
+                    
+                    taskDesc: document.getElementById('task-desc'),
+                    catBadge: document.getElementById('category-badge'),
+                    visualizer: document.getElementById('visualizer'),
+                    feedback: document.getElementById('feedback'),
+                    
+                    score: document.getElementById('score-display'),
+                    streak: document.getElementById('streak-display'),
+                    accuracy: document.getElementById('accuracy-display'),
+                    
+                    startBtn: document.getElementById('start-btn'),
+                    hintBtn: document.getElementById('hint-btn'),
+                    
+                    toast: document.getElementById('toast'),
+                    toastMsg: document.getElementById('toast-msg'),
+                    
+                    refTable: document.getElementById('reference-table')
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.renderReferenceTable();
+                
+                // Bind events
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                
+                // Prevent browser shortcuts logic updated
+                window.addEventListener('keydown', (e) => {
+                    const preventWithCtrl = ['KeyS', 'KeyF', 'KeyP', 'KeyH', 'KeyB', 'KeyI', 'KeyU', 'KeyD', 'KeyN', 'KeyO', 'KeyW', 'KeyE', 'KeyJ', 'KeyR', 'KeyL'];
+                    // Tab moved here to be conditional
+                    const trainerOnlyKeys = ['ArrowUp', 'ArrowDown', 'Space', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'];
+
+                    const isTrainerActive = !this.dom.trainerView.classList.contains('hidden');
+
+                    if (
+                        (e.ctrlKey && preventWithCtrl.includes(e.code)) ||
+                        (isTrainerActive && trainerOnlyKeys.includes(e.code))
+                    ) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            switchTab(tab) {
+                const isTrainer = tab === 'trainer';
+                
+                this.dom.trainerView.classList.toggle('hidden', !isTrainer);
+                this.dom.referenceView.classList.toggle('hidden', isTrainer);
+                
+                // Update Button Styles
+                const activeClass = "bg-blue-600 text-white shadow-sm";
+                const inactiveClass = "text-slate-400 hover:text-white hover:bg-slate-700";
+                
+                this.dom.btnTrainer.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${isTrainer ? activeClass : inactiveClass}`;
+                this.dom.btnReference.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${!isTrainer ? activeClass : inactiveClass}`;
+                
+                if (isTrainer) {
+                    this.dom.visualizer.innerHTML = '<span class="text-slate-600 text-sm italic">Клавіші з\'являться тут...</span>';
+                }
+            }
+
+            filterTable(category) {
+                const rows = Array.from(this.dom.refTable.children);
+                rows.forEach(row => {
+                    const rowCat = row.querySelector('.cat-tag').textContent.trim();
+                    if (category === 'all' || rowCat === category) {
+                        row.classList.remove('hidden');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
+            }
+
+            renderReferenceTable() {
+                this.dom.refTable.innerHTML = SHORTCUTS.map(item => `
+                    <tr class="hover:bg-slate-800 transition border-b border-slate-700/50 group">
+                        <td class="p-4 align-middle">
+                            <span class="bg-slate-700/50 text-blue-300 px-2 py-1 rounded border border-slate-600 font-mono text-xs font-bold whitespace-nowrap group-hover:bg-slate-700 group-hover:border-slate-500 transition-colors">
+                                ${item.label}
+                            </span>
+                        </td>
+                        <td class="p-4 text-slate-300 font-medium align-middle">${item.desc}</td>
+                        <td class="p-4 align-middle text-right">
+                            <span class="cat-tag text-[10px] uppercase font-bold px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-500">
+                                ${item.cat}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            nextTask() {
+                this.dom.startBtn.classList.add('hidden');
+                this.dom.hintBtn.classList.add('hidden');
+                this.dom.feedback.innerHTML = '';
+                this.dom.visualizer.innerHTML = '<span class="text-slate-600 text-sm italic">Чекаю введення...</span>';
+                
+                this.state.isBlocked = false;
+                this.state.attemptOnTask = 0; // RESET attempts for new task
+
+                let idx;
+                do {
+                    idx = Math.floor(Math.random() * SHORTCUTS.length);
+                } while (idx === this.state.lastIndex && SHORTCUTS.length > 1);
+                
+                this.state.lastIndex = idx;
+                this.state.currentIndex = idx;
+                
+                const task = SHORTCUTS[idx];
+
+                this.dom.taskDesc.classList.remove('animate-pop');
+                void this.dom.taskDesc.offsetWidth; 
+                this.dom.taskDesc.classList.add('animate-pop');
+                this.dom.taskDesc.textContent = task.desc;
+                
+                this.dom.catBadge.textContent = task.cat;
+                this.dom.catBadge.className = `inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-700/50 ${task.color || 'text-slate-400'}`;
+            }
+
+            handleKeyDown(e) {
+                if (this.state.currentIndex === null || this.state.isBlocked) return;
+                
+                this.renderVisualizer(e);
+                this.checkInput(e);
+            }
+
+            getDisplayLabel(e) {
+                const code = e.code;
+                const specialMap = {
+                    'Space': 'Space',
+                    'Tab': 'Tab',
+                    'Enter': 'Enter',
+                    'Backspace': '<i class="fa-solid fa-delete-left"></i>',
+                    'Delete': 'Del',
+                    'ArrowUp': '<i class="fa-solid fa-arrow-up"></i>',
+                    'ArrowDown': '<i class="fa-solid fa-arrow-down"></i>',
+                    'ArrowLeft': '<i class="fa-solid fa-arrow-left"></i>',
+                    'ArrowRight': '<i class="fa-solid fa-arrow-right"></i>',
+                    'Home': 'Home',
+                    'End': 'End',
+                    'PageUp': 'PgUp',
+                    'PageDown': 'PgDn',
+                    'BracketRight': ']',
+                    'BracketLeft': '[',
+                    'Equal': '=',
+                    'Minus': '-'
+                };
+
+                if (specialMap[code]) return specialMap[code];
+                if (code.startsWith('Key')) return code.replace('Key', '');
+                if (code.startsWith('Digit')) return code.replace('Digit', '');
+                
+                // Handle modifiers display
+                if (['Control', 'Shift', 'Alt', 'Meta'].some(mod => code.includes(mod))) return '';
+
+                return ''; 
+            }
+
+            renderVisualizer(e) {
+                let html = '';
+                const makeCap = (txt) => `
+                    <div class="key-cap bg-slate-200 text-slate-800 rounded px-3 py-2 font-bold min-w-[48px] h-[48px] flex items-center justify-center transform transition mx-1 border-b-4 border-slate-400 text-base">
+                        ${txt}
+                    </div>
+                `;
+
+                if (e.ctrlKey) html += makeCap('Ctrl');
+                if (e.shiftKey) html += makeCap('Shift');
+                if (e.altKey) html += makeCap('Alt');
+                
+                const label = this.getDisplayLabel(e);
+                if (label) html += makeCap(label);
+
+                this.dom.visualizer.innerHTML = html || '<span class="text-slate-600 text-sm italic">...</span>';
+            }
+
+            checkInput(e) {
+                const target = SHORTCUTS[this.state.currentIndex];
+                
+                // Modifier Logic
+                const ctrlReq = !!target.keys.ctrl;
+                const shiftReq = !!target.keys.shift;
+                const altReq = !!target.keys.alt;
+
+                const ctrlPressed = e.ctrlKey;
+                const shiftPressed = e.shiftKey;
+                const altPressed = e.altKey;
+
+                const codeOk = e.code === target.keys.code;
+
+                // Ignore pure modifier presses
+                const isModifierKey = ['Control', 'Shift', 'Alt', 'Meta'].some(k => e.code.includes(k));
+
+                if (!isModifierKey) {
+                    this.state.totalAttempts++;
+                    
+                    if (ctrlReq === ctrlPressed && shiftReq === shiftPressed && altReq === altPressed && codeOk) {
+                        this.success();
+                    } else {
+                        this.fail();
+                    }
+                    this.updateStats();
+                }
+            }
+
+            updateStats() {
+                const accuracy = this.state.totalAttempts === 0 ? 100 : Math.round((this.state.correctAttempts / this.state.totalAttempts) * 100);
+                this.dom.accuracy.textContent = accuracy + '%';
+            }
+
+            success() {
+                this.state.isBlocked = true;
+                this.state.streak++; // Incremented BEFORE score calculation
+                this.state.score += 10 + (this.state.streak * 2); 
+                this.state.correctAttempts++;
+                
+                this.dom.score.textContent = this.state.score;
+                this.dom.streak.textContent = this.state.streak;
+
+                this.dom.feedback.innerHTML = `<span class="text-green-400 flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i> Чудово! ${this.state.streak > 1 ? `x${this.state.streak}` : ''}</span>`;
+                this.dom.feedback.className = "h-6 mb-6 font-bold text-lg animate-pop";
+
+                this.dom.toastMsg.textContent = SHORTCUTS[this.state.currentIndex].label;
+                this.dom.toast.classList.remove('translate-x-[150%]');
+                setTimeout(() => this.dom.toast.classList.add('translate-x-[150%]'), 1500);
+
+                setTimeout(() => this.nextTask(), 1000);
+            }
+
+            fail() {
+                this.state.streak = 0;
+                this.dom.streak.textContent = 0;
+                this.state.attemptOnTask++; // Count specific attempts for hint logic
+
+                this.dom.feedback.innerHTML = '<span class="text-red-400 flex items-center justify-center gap-2"><i class="fa-solid fa-circle-xmark"></i> Не вірно</span>';
+                this.dom.feedback.classList.remove('animate-shake');
+                void this.dom.feedback.offsetWidth; 
+                this.dom.feedback.classList.add('animate-shake');
+
+                // Logic: Show hint only after 2 failed attempts on THIS task
+                if (this.state.attemptOnTask >= 2) {
+                    this.dom.hintBtn.classList.remove('hidden');
+                    this.dom.hintBtn.classList.add('animate-pop');
+                }
+            }
+
+            showHint() {
+                const target = SHORTCUTS[this.state.currentIndex];
+                this.dom.feedback.innerHTML = `
+                    <div class="flex items-center gap-2 text-blue-300 bg-blue-900/30 px-4 py-1 rounded-full border border-blue-500/30">
+                        <i class="fa-solid fa-key"></i> ${target.label}
+                    </div>
+                `;
+                this.dom.feedback.className = "h-6 mb-6 font-bold animate-pop flex justify-center";
+                
+                this.state.score = Math.max(0, this.state.score - 5);
+                this.dom.score.textContent = this.state.score;
+            }
+        }
+
+        const app = new ShortcutsTrainer();
+    </script>
+</body>
+</html>
