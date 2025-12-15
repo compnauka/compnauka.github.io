@@ -253,8 +253,9 @@
                     streak: 0,
                     totalAttempts: 0,
                     correctAttempts: 0,
-                    attemptOnTask: 0, // NEW: Track attempts per specific task
-                    isBlocked: false
+                    attemptOnTask: 0,
+                    isBlocked: false,
+                    isGameActive: false // NEW: Track if game session has started
                 };
 
                 this.dom = {
@@ -287,23 +288,9 @@
             init() {
                 this.renderReferenceTable();
                 
-                // Bind events
-                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
-                
-                // Prevent browser shortcuts logic updated
+                // Unified KeyDown Handler
                 window.addEventListener('keydown', (e) => {
-                    const preventWithCtrl = ['KeyS', 'KeyF', 'KeyP', 'KeyH', 'KeyB', 'KeyI', 'KeyU', 'KeyD', 'KeyN', 'KeyO', 'KeyW', 'KeyE', 'KeyJ', 'KeyR', 'KeyL'];
-                    // Tab moved here to be conditional
-                    const trainerOnlyKeys = ['ArrowUp', 'ArrowDown', 'Space', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'];
-
-                    const isTrainerActive = !this.dom.trainerView.classList.contains('hidden');
-
-                    if (
-                        (e.ctrlKey && preventWithCtrl.includes(e.code)) ||
-                        (isTrainerActive && trainerOnlyKeys.includes(e.code))
-                    ) {
-                        e.preventDefault();
-                    }
+                    this.handleGlobalKeyDown(e);
                 });
             }
 
@@ -313,16 +300,21 @@
                 this.dom.trainerView.classList.toggle('hidden', !isTrainer);
                 this.dom.referenceView.classList.toggle('hidden', isTrainer);
                 
+                // If switching away from trainer, pause game logic
+                if (!isTrainer) {
+                    this.state.isGameActive = false;
+                    this.dom.startBtn.classList.remove('hidden');
+                    this.dom.taskDesc.textContent = 'Натисніть "Старт"';
+                    this.dom.feedback.innerHTML = '';
+                    this.dom.visualizer.innerHTML = '<span class="text-slate-600 text-sm italic">Клавіші з\'являться тут...</span>';
+                }
+
                 // Update Button Styles
                 const activeClass = "bg-blue-600 text-white shadow-sm";
                 const inactiveClass = "text-slate-400 hover:text-white hover:bg-slate-700";
                 
                 this.dom.btnTrainer.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${isTrainer ? activeClass : inactiveClass}`;
                 this.dom.btnReference.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${!isTrainer ? activeClass : inactiveClass}`;
-                
-                if (isTrainer) {
-                    this.dom.visualizer.innerHTML = '<span class="text-slate-600 text-sm italic">Клавіші з\'являться тут...</span>';
-                }
             }
 
             filterTable(category) {
@@ -356,13 +348,14 @@
             }
 
             nextTask() {
+                this.state.isGameActive = true; // START preventing defaults
                 this.dom.startBtn.classList.add('hidden');
                 this.dom.hintBtn.classList.add('hidden');
                 this.dom.feedback.innerHTML = '';
                 this.dom.visualizer.innerHTML = '<span class="text-slate-600 text-sm italic">Чекаю введення...</span>';
                 
                 this.state.isBlocked = false;
-                this.state.attemptOnTask = 0; // RESET attempts for new task
+                this.state.attemptOnTask = 0;
 
                 let idx;
                 do {
@@ -383,8 +376,23 @@
                 this.dom.catBadge.className = `inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-700/50 ${task.color || 'text-slate-400'}`;
             }
 
-            handleKeyDown(e) {
-                if (this.state.currentIndex === null || this.state.isBlocked) return;
+            handleGlobalKeyDown(e) {
+                // 1. Logic to prevent default browser behavior
+                // Only active if the game has started (Start button clicked)
+                if (this.state.isGameActive) {
+                    const navKeys = ['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Home', 'End', 'PageUp', 'PageDown', 'Backspace'];
+                    const allowedKeys = ['F5', 'F11', 'F12']; // Let user refresh or debug
+
+                    if (allowedKeys.includes(e.code)) return;
+
+                    // Prevent if it's a modifier combo (Ctrl/Alt + Anything) OR a nav key
+                    if (e.ctrlKey || e.altKey || navKeys.includes(e.code)) {
+                        e.preventDefault();
+                    }
+                }
+
+                // 2. Game Logic
+                if (this.state.currentIndex === null || this.state.isBlocked || !this.state.isGameActive) return;
                 
                 this.renderVisualizer(e);
                 this.checkInput(e);
@@ -416,7 +424,6 @@
                 if (code.startsWith('Key')) return code.replace('Key', '');
                 if (code.startsWith('Digit')) return code.replace('Digit', '');
                 
-                // Handle modifiers display
                 if (['Control', 'Shift', 'Alt', 'Meta'].some(mod => code.includes(mod))) return '';
 
                 return ''; 
@@ -443,7 +450,6 @@
             checkInput(e) {
                 const target = SHORTCUTS[this.state.currentIndex];
                 
-                // Modifier Logic
                 const ctrlReq = !!target.keys.ctrl;
                 const shiftReq = !!target.keys.shift;
                 const altReq = !!target.keys.alt;
@@ -454,7 +460,6 @@
 
                 const codeOk = e.code === target.keys.code;
 
-                // Ignore pure modifier presses
                 const isModifierKey = ['Control', 'Shift', 'Alt', 'Meta'].some(k => e.code.includes(k));
 
                 if (!isModifierKey) {
@@ -476,7 +481,7 @@
 
             success() {
                 this.state.isBlocked = true;
-                this.state.streak++; // Incremented BEFORE score calculation
+                this.state.streak++; 
                 this.state.score += 10 + (this.state.streak * 2); 
                 this.state.correctAttempts++;
                 
@@ -496,14 +501,13 @@
             fail() {
                 this.state.streak = 0;
                 this.dom.streak.textContent = 0;
-                this.state.attemptOnTask++; // Count specific attempts for hint logic
+                this.state.attemptOnTask++; 
 
                 this.dom.feedback.innerHTML = '<span class="text-red-400 flex items-center justify-center gap-2"><i class="fa-solid fa-circle-xmark"></i> Не вірно</span>';
                 this.dom.feedback.classList.remove('animate-shake');
                 void this.dom.feedback.offsetWidth; 
                 this.dom.feedback.classList.add('animate-shake');
 
-                // Logic: Show hint only after 2 failed attempts on THIS task
                 if (this.state.attemptOnTask >= 2) {
                     this.dom.hintBtn.classList.remove('hidden');
                     this.dom.hintBtn.classList.add('animate-pop');
