@@ -128,10 +128,17 @@ const CATEGORIES = [
       },
       { 
         name: "Веселі адреси", 
-        description: "Тренажер дляроботи з клавіатурою: введення URL-адрес.", 
+        description: "Тренажер для роботи з клавіатурою: введення URL-адрес.", 
         link: "services/urls.html", 
         image: "images/38.jpg", 
         tags: ["3-4 класи"] 
+      },
+      { 
+        name: "Володар комбінацій", 
+        description: "Тренажер для роботи з комбінаціями гарячих клавіш в ОС Windows.", 
+        link: "services/keymaster.html", 
+        image: "images/68.jpg", 
+        tags: ["3-4 класи", "5-7 класи"] 
       },
       { 
         name: "Шукаємо в Інтернеті", 
