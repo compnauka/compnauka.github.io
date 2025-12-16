@@ -11,7 +11,7 @@
     />
     <meta
       name="keywords"
-      content="клавіатурний тренажер,тренажер клавіатури, діти, навчання, комп'ютерна наука, українська, гра, typing, keyboard, kids, education"
+      content="клавіатурний тренажер,тренажер клавіатури, діти, навчання, українська, гра, typing, keyboard, kids, education"
     />
     <meta name="author" content="Пан Артем" />
     <meta name="robots" content="index, follow" />
@@ -30,7 +30,7 @@
     <link rel="icon" href="../../favicon.ico" type="image/x-icon" />
     <meta name="theme-color" content="#667eea" />
 
-    <!-- ✅ Рекомендація: не дублювати трекінг. Залишив лише Plausible (privacy-friendly). -->
+    <!-- (Опційно) Privacy-friendly analytics -->
     <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
     <script>
       window.plausible =
@@ -54,7 +54,7 @@
         font-family: "Roboto", "Arial", sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         margin: 0;
-        padding: 20px;
+        padding: 18px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -64,8 +64,8 @@
       h1 {
         color: white;
         text-align: center;
-        margin: 6px 0 18px 0;
-        font-size: 2.3em;
+        margin: 6px 0 16px 0;
+        font-size: 2.25em;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         animation: glow 2s ease-in-out infinite alternate;
       }
@@ -75,44 +75,66 @@
           text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.5);
         }
         to {
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.8);
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 255, 255, 0.8);
         }
       }
 
       #game-container {
         width: 100%;
-        max-width: 900px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        max-width: 920px;
         background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
+        border-radius: 22px;
         box-shadow: var(--shadow);
-        padding: 25px;
+        padding: 20px 20px 18px 20px;
+
+        /* ✅ резерв місця для кнопки звуку */
+        padding-top: 72px;
+
         backdrop-filter: blur(10px);
         position: relative;
       }
 
+      /* ✅ кнопка звуку не перекриває панель */
+      #sound-toggle {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: linear-gradient(45deg, #9c27b0, #7b1fa2);
+        border: none;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.1em;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+      }
+      #sound-toggle:focus-visible {
+        outline: 3px solid #0d47a1;
+        outline-offset: 2px;
+      }
+
+      /* --- INFO PANEL --- */
       #info-panel {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        width: 100%;
         gap: 12px;
         margin-bottom: 14px;
       }
 
       .pill {
-        font-size: 1.15em;
-        font-weight: 800;
-        color: #333;
+        font-size: 1.12em;
+        font-weight: 900;
+        color: #222;
         background: linear-gradient(45deg, #ffeb3b, #ffc107);
         padding: 12px 14px;
-        border-radius: 15px;
+        border-radius: 16px;
         text-align: center;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-        transition: transform 0.25s;
         user-select: none;
-        min-height: 52px;
+        min-height: 54px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -120,7 +142,7 @@
       }
 
       .pill.animate {
-        transform: scale(1.06);
+        transform: scale(1.04);
         background: linear-gradient(45deg, #4caf50, #81c784);
         color: white;
       }
@@ -128,149 +150,61 @@
       #target-pill {
         background: linear-gradient(45deg, #e3f2fd, #bbdefb);
         color: #0d47a1;
-        font-weight: 900;
       }
-
       #target-pill .target-char {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.78);
         box-shadow: inset 0 0 0 2px rgba(13, 71, 161, 0.25);
         font-size: 1.2em;
+        font-weight: 900;
+      }
+      #target-hint {
+        font-weight: 900;
+        color: #0d47a1;
       }
 
+      /* --- GAME FIELD --- */
       #game-field {
         width: 100%;
-        height: 300px;
+        height: 320px;
         background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
         border: 4px solid #2196f3;
-        border-radius: 20px;
+        border-radius: 22px;
         position: relative;
         overflow: hidden;
-        margin-bottom: 18px;
-        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 16px;
+        box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.08);
       }
 
-      #levels,
-      #speed-control {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 12px;
-        width: 100%;
-        margin: 8px 0;
-      }
-
-      button {
-        background: linear-gradient(45deg, #2196f3, #1976d2);
+      #feedback-message {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #4caf50, #388e3c);
         color: white;
-        border: none;
-        padding: 12px 18px;
+        padding: 10px 18px;
+        border-radius: 999px;
         font-size: 1.05em;
-        border-radius: 15px;
-        cursor: pointer;
-        transition: all 0.25s;
-        font-family: inherit;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
-        position: relative;
-        overflow: hidden;
-        user-select: none;
-      }
-      button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
-      }
-      button:active {
-        transform: translateY(1px);
-      }
-      button:focus-visible {
-        outline: 3px solid #0d47a1;
-        outline-offset: 2px;
-      }
-
-      #start-button {
-        background: linear-gradient(45deg, #43ea4c, #1bcf3b);
         font-weight: 900;
-        font-size: 1.15em;
-        box-shadow: 0 8px 16px rgba(67, 234, 76, 0.35);
-        margin-top: 10px;
-        width: 100%;
+        opacity: 0;
+        transition: opacity 0.22s;
+        z-index: 15;
+        pointer-events: none;
+      }
+      #feedback-message.show {
+        opacity: 1;
+      }
+      #feedback-message.negative {
+        background: linear-gradient(45deg, #f44336, #d32f2f);
       }
 
-      #stop-button {
-        background: linear-gradient(45deg, #ff9800, #f57c00);
-        font-weight: 900;
-        font-size: 1.15em;
-        margin-top: 10px;
-        width: 100%;
-        display: none;
-      }
-
-      .group button.selected {
-        background: linear-gradient(45deg, #9642e6, #7217cd);
-        box-shadow: 0 8px 16px rgba(162, 89, 230, 0.35);
-      }
-      .group button.selected::after {
-        content: "✓";
-        position: absolute;
-        top: 7px;
-        right: 10px;
-        font-size: 0.85em;
-        opacity: 0.95;
-      }
-
-      .toggles {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 10px;
-        margin-top: 10px;
-      }
-
-      .toggle {
-        border-radius: 14px;
-        padding: 12px 14px;
-        background: rgba(255, 255, 255, 0.85);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-
-      .toggle label {
-        font-weight: 800;
-        color: #333;
-      }
-
-      .toggle input[type="checkbox"] {
-        width: 22px;
-        height: 22px;
-        accent-color: #2196f3;
-        cursor: pointer;
-      }
-
-      #sound-toggle {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        background: linear-gradient(45deg, #9c27b0, #7b1fa2);
-        border: none;
-        color: white;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.15em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      /* Letter */
+      /* Letters */
       .letter {
         position: absolute;
         width: var(--letter-size);
@@ -289,7 +223,6 @@
         font-size: 2.25em;
         font-weight: 900;
         color: #333;
-        transform: scale(1);
         transition: transform 0.18s ease, color 0.18s ease;
       }
 
@@ -299,57 +232,33 @@
       }
       .letter.correct .glyph {
         color: #fff;
-        transform: scale(1.18);
+        transform: scale(1.15);
       }
 
       .letter.missed {
         background: linear-gradient(145deg, #f44336, #d32f2f);
         border-color: #c62828;
-        opacity: 0.98;
       }
       .letter.missed .glyph {
         color: #fff;
-        transform: scale(0.86);
+        transform: scale(0.88);
       }
 
-      /* ✅ Urgent без transform, щоб не конфліктувати */
+      /* ✅ Urgent без transform (не конфліктує з correct/missed) */
       .letter.urgent {
         border-color: #ff5722;
-        box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.0), 0 10px 18px rgba(0, 0, 0, 0.22);
         animation: urgentGlow 0.55s ease-in-out infinite alternate;
       }
       @keyframes urgentGlow {
         from {
-          box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.0), 0 10px 18px rgba(0, 0, 0, 0.22);
+          box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.0), 0 6px 12px rgba(0, 0, 0, 0.2);
         }
         to {
-          box-shadow: 0 0 0 10px rgba(255, 87, 34, 0.18), 0 10px 18px rgba(0, 0, 0, 0.22);
+          box-shadow: 0 0 0 10px rgba(255, 87, 34, 0.18), 0 6px 12px rgba(0, 0, 0, 0.2);
         }
       }
 
-      #feedback-message {
-        position: absolute;
-        top: 14px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(45deg, #4caf50, #388e3c);
-        color: white;
-        padding: 10px 18px;
-        border-radius: 20px;
-        font-size: 1.05em;
-        font-weight: 900;
-        opacity: 0;
-        transition: opacity 0.25s;
-        z-index: 15;
-        pointer-events: none;
-      }
-      #feedback-message.show {
-        opacity: 1;
-      }
-      #feedback-message.negative {
-        background: linear-gradient(45deg, #f44336, #d32f2f);
-      }
-
+      /* --- GAME OVER --- */
       #game-over {
         display: none;
         position: absolute;
@@ -359,41 +268,135 @@
         align-items: center;
         justify-content: center;
         z-index: 20;
-        border-radius: 20px;
+        border-radius: 22px;
         backdrop-filter: blur(5px);
         padding: 18px;
         text-align: center;
       }
-
       #game-over h2 {
         color: #2196f3;
         font-size: 2em;
         margin: 4px 0 10px 0;
       }
-
       .final {
-        font-size: 1.15em;
+        font-size: 1.12em;
         margin: 6px 0;
         color: #333;
         font-weight: 800;
       }
-
       .final strong {
         color: #2e7d32;
       }
-
       #achievement {
         margin-top: 10px;
         font-weight: 900;
         color: #ff9800;
       }
 
+      /* --- BUTTONS --- */
+      .grid-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      button.action,
+      .grid-buttons button {
+        background: linear-gradient(45deg, #2196f3, #1976d2);
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        font-size: 1.05em;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+        user-select: none;
+      }
+      .grid-buttons button:hover,
+      button.action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.26);
+      }
+      .grid-buttons button:active,
+      button.action:active {
+        transform: translateY(1px);
+      }
+      .grid-buttons button:focus-visible,
+      button.action:focus-visible {
+        outline: 3px solid #0d47a1;
+        outline-offset: 2px;
+      }
+
+      .grid-buttons button.selected {
+        background: linear-gradient(45deg, #9642e6, #7217cd);
+        box-shadow: 0 8px 16px rgba(162, 89, 230, 0.35);
+      }
+      .grid-buttons button.selected::after {
+        content: "✓";
+        position: absolute;
+        top: 7px;
+        right: 10px;
+        font-size: 0.85em;
+        opacity: 0.95;
+      }
+
+      #start-button {
+        background: linear-gradient(45deg, #43ea4c, #1bcf3b);
+        font-weight: 900;
+        font-size: 1.15em;
+        width: 100%;
+        margin-top: 10px;
+      }
+      #stop-button {
+        background: linear-gradient(45deg, #ff9800, #f57c00);
+        font-weight: 900;
+        font-size: 1.15em;
+        width: 100%;
+        margin-top: 10px;
+        display: none;
+      }
+
+      /* toggles */
+      .toggles {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .toggle {
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 56px;
+      }
+      .toggle label {
+        font-weight: 900;
+        color: #333;
+      }
+      .toggle input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        accent-color: #2196f3;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+
       #instructions {
         background: rgba(255, 255, 255, 0.9);
-        border-radius: 15px;
-        padding: 22px;
-        margin-top: 22px;
-        max-width: 900px;
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 18px;
+        max-width: 920px;
         width: 100%;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
@@ -408,24 +411,22 @@
         line-height: 1.6;
         font-size: 1.05em;
       }
-
       .note-box {
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 14px;
         margin: 10px 0;
         background: linear-gradient(135deg, #f3e5f5, #e1bee7);
         border-left: 5px solid #9c27b0;
-        font-weight: 700;
+        font-weight: 800;
       }
 
       footer {
         text-align: center;
-        margin: 28px 0 10px 0;
+        margin: 26px 0 10px 0;
         color: #fcfcfc;
         font-size: 1em;
       }
 
-      /* ✅ Motion accessibility */
       @media (prefers-reduced-motion: reduce) {
         * {
           animation: none !important;
@@ -434,9 +435,15 @@
         }
       }
 
-      @media (max-width: 720px) {
+      /* ✅ адаптив, щоб нічого не наїжджало */
+      @media (max-width: 820px) {
         #info-panel {
           grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 520px) {
+        #info-panel {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -459,12 +466,9 @@
         <div id="score" class="pill" aria-live="polite">🏆 Бали: <span id="score-num">0</span></div>
         <div id="timer" class="pill" aria-live="polite">⏰ Час: <span id="timer-num">60</span></div>
         <div id="streak" class="pill" aria-live="polite">🔥 Серія: <span id="streak-num">0</span></div>
-
-        <!-- ✅ Навчальна цінність: поточна «ціль» (найнебезпечніший символ) -->
         <div id="target-pill" class="pill" aria-live="polite" title="Найближчий символ до правого краю">
-          🎯 Ціль:
-          <span class="target-char" id="target-char">—</span>
-          <span id="target-hint" style="font-weight: 900;"> </span>
+          🎯 Ціль: <span class="target-char" id="target-char">—</span>
+          <span id="target-hint"></span>
         </div>
       </div>
 
@@ -484,23 +488,23 @@
           <div class="final" id="final-hardest">Складні символи: <strong>—</strong></div>
 
           <div id="achievement"></div>
-          <div style="margin-top: 10px; color:#555; font-weight:800;">
+          <div style="margin-top: 10px; color: #555; font-weight: 900;">
             Порада: дивись на символи на екрані, а не на клавіатуру 😉
           </div>
         </div>
       </div>
 
-      <div id="levels" class="group" aria-label="Рівні складності">
-        <button type="button" data-level="beginner" class="selected">🌟 Дуже простий</button>
-        <button type="button" data-level="easy">😊 Простий</button>
-        <button type="button" data-level="medium">💪 Середній</button>
-        <button type="button" data-level="hard">🔥 Складний</button>
+      <div class="grid-buttons" id="levels" aria-label="Рівні складності">
+        <button type="button" data-level="beginner" class="selected" style="position:relative;">🌟 Дуже простий</button>
+        <button type="button" data-level="easy" style="position:relative;">😊 Простий</button>
+        <button type="button" data-level="medium" style="position:relative;">💪 Середній</button>
+        <button type="button" data-level="hard" style="position:relative;">🔥 Складний</button>
       </div>
 
-      <div id="speed-control" class="group" aria-label="Швидкість">
-        <button type="button" data-speed="slow">🐌 Повільно</button>
-        <button type="button" data-speed="medium" class="selected">🚶 Середньо</button>
-        <button type="button" data-speed="fast">🏃 Швидко</button>
+      <div class="grid-buttons" id="speed-control" aria-label="Швидкість">
+        <button type="button" data-speed="slow" style="position:relative;">🐌 Повільно</button>
+        <button type="button" data-speed="medium" class="selected" style="position:relative;">🚶 Середньо</button>
+        <button type="button" data-speed="fast" style="position:relative;">🏃 Швидко</button>
       </div>
 
       <div class="toggles">
@@ -515,8 +519,8 @@
         </div>
       </div>
 
-      <button id="start-button" type="button">🚀 Почати гру</button>
-      <button id="stop-button" type="button">⏹️ Зупинити гру</button>
+      <button id="start-button" class="action" type="button">🚀 Почати гру</button>
+      <button id="stop-button" class="action" type="button">⏹️ Зупинити гру</button>
     </div>
 
     <div id="instructions">
@@ -545,10 +549,9 @@
        * 1) НАЛАШТУВАННЯ
        ***********************/
       const GAME_DURATION_SECONDS = 60;
-
       const MAX_ACTIVE_LETTERS = 18;
+      const URGENT_THRESHOLD = 0.82;
 
-      const URGENT_THRESHOLD = 0.82; // прогрес (0..1) після якого символ “терміновий”
       const FEEDBACK_HIDE_MS = 1400;
 
       const POINTS_DEFAULT = 1;
@@ -596,49 +599,40 @@
       };
 
       /***********************
-       * 2) STATE
+       * 2) STATE (все у performance.now)
        ***********************/
       const state = {
-        // selections
         level: "beginner",
         speed: "medium",
 
-        // running flags
         running: false,
-        paused: false,
 
-        // timing
+        // ✅ усі таймінги в performance.now()
         endAt: 0,
-        lastFrameAt: 0,
         nextSpawnAt: 0,
 
-        // difficulty (computed)
         durationMs: speedSettings.medium.durationMs,
         spawnMs: speedSettings.medium.spawnMs,
 
-        // score/stats
         score: 0,
         streak: 0,
         maxStreak: 0,
+
         correct: 0,
         wrong: 0,
         missed: 0,
-        reactionTimes: [], // ms
 
-        // per-char stats
-        charStats: new Map(), // char -> {correct, wrong, missed}
+        reactionTimes: [],
+        charStats: new Map(),
 
-        // letters: id -> {id, char, el, startAt, durationMs, yPx, removed}
-        letters: new Map(),
+        letters: new Map(), // id -> letter
         idCounter: 1,
 
-        // audio
-        soundEnabled: true,
-        audioCtx: null,
-
-        // toggles
         trainingMode: true,
         smartMode: true,
+
+        soundEnabled: true,
+        audioCtx: null,
       };
 
       /***********************
@@ -648,6 +642,7 @@
         scoreNum: document.getElementById("score-num"),
         timerNum: document.getElementById("timer-num"),
         streakNum: document.getElementById("streak-num"),
+
         timerPill: document.getElementById("timer"),
         scorePill: document.getElementById("score"),
         streakPill: document.getElementById("streak"),
@@ -658,8 +653,8 @@
 
         gameField: document.getElementById("game-field"),
         feedback: document.getElementById("feedback-message"),
-        gameOver: document.getElementById("game-over"),
 
+        gameOver: document.getElementById("game-over"),
         finalScore: document.getElementById("final-score"),
         finalLevel: document.getElementById("final-level"),
         finalSpeed: document.getElementById("final-speed"),
@@ -683,12 +678,13 @@
       /***********************
        * 4) HELPERS
        ***********************/
+      const nowMs = () => performance.now();
+
       function clamp(n, a, b) {
         return Math.max(a, Math.min(b, n));
       }
 
       function isLetterWithCase(ch) {
-        // Літери мають різні upper/lower; для цифр/символів це не так
         return ch && ch.toLowerCase() !== ch.toUpperCase();
       }
 
@@ -697,40 +693,24 @@
         return state.charStats.get(ch);
       }
 
-      function showFeedback(text, positive = true) {
-        dom.feedback.textContent = text;
-        dom.feedback.className = positive ? "show" : "show negative";
-        clearTimeout(showFeedback._t);
-        showFeedback._t = setTimeout(() => dom.feedback.classList.remove("show", "negative"), FEEDBACK_HIDE_MS);
-      }
-
       function pulsePill(el) {
         el.classList.add("animate");
-        setTimeout(() => el.classList.remove("animate"), 240);
+        setTimeout(() => el.classList.remove("animate"), 220);
       }
 
-      function updateUI() {
-        dom.scoreNum.textContent = state.score;
-        dom.streakNum.textContent = state.streak;
-
-        // timer
-        const now = Date.now();
-        const secondsLeft = state.running ? Math.max(0, Math.ceil((state.endAt - now) / 1000)) : GAME_DURATION_SECONDS;
-        dom.timerNum.textContent = secondsLeft;
-
-        if (state.running && secondsLeft <= 10) {
-          dom.timerPill.style.background = "linear-gradient(45deg, #f44336, #d32f2f)";
-          dom.timerPill.style.color = "white";
-        } else {
-          dom.timerPill.style.background = "linear-gradient(45deg, #ffeb3b, #ffc107)";
-          dom.timerPill.style.color = "#333";
-        }
+      function showFeedback(text, positive = true) {
+        dom.feedback.textContent = text;
+        dom.feedback.classList.add("show");
+        dom.feedback.classList.toggle("negative", !positive);
+        clearTimeout(showFeedback._t);
+        showFeedback._t = setTimeout(() => {
+          dom.feedback.classList.remove("show", "negative");
+        }, FEEDBACK_HIDE_MS);
       }
 
       function computeDifficulty() {
         const base = speedSettings[state.speed];
         const modifier = { beginner: 1.2, easy: 1, medium: 0.92, hard: 0.82 }[state.level];
-
         state.durationMs = Math.round(base.durationMs * modifier);
         state.spawnMs = Math.round(base.spawnMs * modifier);
       }
@@ -746,17 +726,32 @@
         return { width: rect.width, height: rect.height, size };
       }
 
+      function updateUI() {
+        dom.scoreNum.textContent = state.score;
+        dom.streakNum.textContent = state.streak;
+
+        const t = state.running ? Math.max(0, Math.ceil((state.endAt - nowMs()) / 1000)) : GAME_DURATION_SECONDS;
+        dom.timerNum.textContent = t;
+
+        if (state.running && t <= 10) {
+          dom.timerPill.style.background = "linear-gradient(45deg, #f44336, #d32f2f)";
+          dom.timerPill.style.color = "white";
+        } else {
+          dom.timerPill.style.background = "linear-gradient(45deg, #ffeb3b, #ffc107)";
+          dom.timerPill.style.color = "#222";
+        }
+      }
+
       /***********************
        * 5) AUDIO (lazy init)
        ***********************/
       function ensureAudio() {
         if (!state.soundEnabled) return;
         if (state.audioCtx) return;
-
         try {
           state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
-          console.warn("Web Audio API not supported:", e);
+          console.warn("Web Audio not supported:", e);
           state.soundEnabled = false;
           dom.soundBtn.textContent = "🔇";
           dom.soundBtn.title = "Звук не підтримується";
@@ -771,9 +766,7 @@
         if (state.audioCtx.state === "suspended") {
           try {
             await state.audioCtx.resume();
-          } catch (e) {
-            // Нічого страшного: деякі браузери блокують без user gesture
-          }
+          } catch (_) {}
         }
       }
 
@@ -792,9 +785,7 @@
           if (type === "gameOver") { f1 = 420; f2 = 220; d = 0.45; }
 
           o.frequency.setValueAtTime(f1, state.audioCtx.currentTime);
-          if (type !== "miss") {
-            o.frequency.exponentialRampToValueAtTime(f2, state.audioCtx.currentTime + d);
-          }
+          if (type !== "miss") o.frequency.exponentialRampToValueAtTime(f2, state.audioCtx.currentTime + d);
 
           g.gain.setValueAtTime(0.10, state.audioCtx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + d + 0.05);
@@ -824,7 +815,7 @@
           id,
           char,
           el,
-          startAt: Date.now(),
+          startAt: nowMs(),     // ✅ performance.now
           durationMs: state.durationMs,
           yPx: y,
           removed: false,
@@ -832,7 +823,6 @@
 
         state.letters.set(id, letter);
         dom.gameField.appendChild(el);
-
         return letter;
       }
 
@@ -844,7 +834,6 @@
         if (correct) letter.el.classList.add("correct");
         if (missed) letter.el.classList.add("missed");
 
-        // залишимо коротку анімацію і прибираємо
         setTimeout(() => {
           if (letter.el && letter.el.parentNode) letter.el.remove();
         }, 220);
@@ -852,95 +841,86 @@
         state.letters.delete(letter.id);
       }
 
-      function letterProgress(letter, now) {
-        return clamp((now - letter.startAt) / letter.durationMs, 0, 1);
+      function letterProgress(letter, tNow) {
+        return clamp((tNow - letter.startAt) / letter.durationMs, 0, 1);
       }
 
-      function mostUrgentLetter(now) {
+      function mostUrgentLetter(tNow) {
         let best = null;
         let bestP = -1;
         for (const l of state.letters.values()) {
-          const p = letterProgress(l, now);
+          const p = letterProgress(l, tNow);
           if (p > bestP) { bestP = p; best = l; }
         }
         return { best, bestP };
       }
 
-      function updateTargetHUD(now) {
+      function updateTargetHUD(tNow) {
         if (!state.trainingMode || !state.running || state.letters.size === 0) {
           dom.targetChar.textContent = "—";
           dom.targetHint.textContent = "";
-          dom.targetPill.style.opacity = "0.75";
+          dom.targetPill.style.opacity = "0.8";
           return;
         }
 
-        const { best } = mostUrgentLetter(now);
+        const { best } = mostUrgentLetter(tNow);
         if (!best) return;
 
         dom.targetPill.style.opacity = "1";
         dom.targetChar.textContent = best.char;
 
-        // підказка про Shift
         let hint = "";
-        if (isLetterWithCase(best.char) && best.char === best.char.toUpperCase()) {
-          hint = " (Shift)";
-        }
+        if (isLetterWithCase(best.char) && best.char === best.char.toUpperCase()) hint = " (Shift)";
         dom.targetHint.textContent = hint;
       }
 
-      function spawnIfNeeded(now) {
-        if (now < state.nextSpawnAt) return;
+      function spawnIfNeeded(tNow) {
+        if (tNow < state.nextSpawnAt) return;
+
         if (state.letters.size >= MAX_ACTIVE_LETTERS) {
-          // якщо переповнено — спробуємо трохи пізніше
-          state.nextSpawnAt = now + Math.max(180, state.spawnMs * 0.35);
+          state.nextSpawnAt = tNow + Math.max(180, state.spawnMs * 0.35);
           return;
         }
 
         createLetter(getRandomChar());
-        state.nextSpawnAt = now + state.spawnMs;
+        state.nextSpawnAt = tNow + state.spawnMs;
       }
 
       function applySmartDifficulty() {
-        // дуже легка адаптація, щоб не ламати баланс
         if (!state.smartMode) return;
-
-        // якщо серія росте — трохи частіше спавн
         if (state.streak > 0 && state.streak % 10 === 0) {
           state.spawnMs = Math.max(520, Math.round(state.spawnMs * 0.95));
           state.durationMs = Math.max(2400, Math.round(state.durationMs * 0.97));
         }
       }
 
-      function gameLoop(now) {
+      function gameLoop() {
         if (!state.running) return;
 
-        // таймер
-        if (now >= state.endAt) {
+        const tNow = nowMs();
+
+        if (tNow >= state.endAt) {
           endGame();
           return;
         }
 
-        spawnIfNeeded(now);
+        spawnIfNeeded(tNow);
 
         const { width, size } = getFieldMetrics();
         const xStart = -size - 10;
         const xEnd = width + 10;
 
-        // letters update
         for (const l of state.letters.values()) {
-          const p = letterProgress(l, now);
+          const p = letterProgress(l, tNow);
           const x = xStart + (xEnd - xStart) * p;
 
           l.el.style.transform = `translate(${x}px, ${l.yPx}px)`;
 
-          // urgent
           if (p >= URGENT_THRESHOLD) l.el.classList.add("urgent");
 
-          // missed
           if (p >= 1) {
             state.missed++;
             state.streak = 0;
-            state.maxStreak = Math.max(state.maxStreak, state.streak);
 
             ensureCharStat(l.char).missed++;
             showFeedback("Пропущено! 😢", false);
@@ -950,10 +930,9 @@
           }
         }
 
-        updateTargetHUD(now);
+        updateTargetHUD(tNow);
         updateUI();
 
-        state.lastFrameAt = now;
         requestAnimationFrame(gameLoop);
       }
 
@@ -961,12 +940,10 @@
        * 7) INPUT
        ***********************/
       function handleKeydown(e) {
-        // ✅ preventDefault лише під час гри
         if (state.running && ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
           e.preventDefault();
         }
 
-        // shortcuts
         if (!state.running && e.key === "Enter") {
           startGame();
           return;
@@ -981,29 +958,23 @@
         if (e.key === "Shift" || e.key === "Alt" || e.key === "Control" || e.key === "Meta") return;
 
         const pressed = e.key;
+        const tNow = nowMs();
 
-        // 1) знайти всі кандидати за символом (event.key === expectedChar)
-        const now = Date.now();
         const candidates = [];
         for (const l of state.letters.values()) {
           if (l.char === pressed) candidates.push(l);
         }
 
         if (candidates.length > 0) {
-          // 2) прибрати найнебезпечніший (найбільший прогрес)
           let best = candidates[0];
-          let bestP = letterProgress(best, now);
+          let bestP = letterProgress(best, tNow);
 
           for (let i = 1; i < candidates.length; i++) {
-            const p = letterProgress(candidates[i], now);
-            if (p > bestP) {
-              bestP = p;
-              best = candidates[i];
-            }
+            const p = letterProgress(candidates[i], tNow);
+            if (p > bestP) { bestP = p; best = candidates[i]; }
           }
 
-          // scoring by reaction time
-          const reaction = now - best.startAt;
+          const reaction = tNow - best.startAt;
           state.reactionTimes.push(reaction);
 
           let points = POINTS_DEFAULT;
@@ -1036,16 +1007,14 @@
           return;
         }
 
-        // wrong press (тільки для “символьних” клавіш)
         if (pressed && pressed.length === 1) {
           state.wrong++;
           state.streak = 0;
           playSound("miss");
           pulsePill(dom.streakPill);
           showFeedback("Неправильно! 😔", false);
+          updateUI();
         }
-
-        updateUI();
       }
 
       /***********************
@@ -1062,36 +1031,41 @@
         state.score = 0;
         state.streak = 0;
         state.maxStreak = 0;
+
         state.correct = 0;
         state.wrong = 0;
         state.missed = 0;
+
         state.reactionTimes = [];
         state.charStats = new Map();
+      }
+
+      function setSelected(container, attr, value) {
+        const buttons = container.querySelectorAll("button");
+        buttons.forEach((b) => b.classList.remove("selected"));
+        const btn = container.querySelector(`button[${attr}="${value}"]`);
+        if (btn) btn.classList.add("selected");
       }
 
       function startGame() {
         if (state.running) return;
 
-        // analytics (optional)
-        try { plausible("GameStart"); } catch (_) {}
-
-        // audio resume
         resumeAudioIfNeeded();
 
-        // ui
+        try { plausible("GameStart"); } catch (_) {}
+
         dom.gameOver.style.display = "none";
         dom.startBtn.style.display = "none";
         dom.stopBtn.style.display = "block";
 
-        // state
-        state.running = true;
-        state.lastFrameAt = Date.now();
-        state.endAt = Date.now() + GAME_DURATION_SECONDS * 1000;
-
         resetStats();
         clearLetters();
+
         computeDifficulty();
-        state.nextSpawnAt = Date.now() + 600;
+
+        state.running = true;
+        state.endAt = nowMs() + GAME_DURATION_SECONDS * 1000;
+        state.nextSpawnAt = nowMs() + 550;
 
         updateUI();
         requestAnimationFrame(gameLoop);
@@ -1099,28 +1073,24 @@
 
       function stopGame() {
         if (!state.running) return;
-        // зупинка “вручну” (без фінального екрану)
         state.running = false;
         clearLetters();
         dom.gameOver.style.display = "none";
         dom.startBtn.style.display = "block";
         dom.stopBtn.style.display = "none";
-        updateTargetHUD(Date.now());
+        updateTargetHUD(nowMs());
         updateUI();
       }
 
       function endGame() {
         if (!state.running) return;
 
-        // analytics (optional)
         try { plausible("GameEnd", { props: { score: state.score, level: state.level, speed: state.speed } }); } catch (_) {}
 
         state.running = false;
         clearLetters();
-
         playSound("gameOver");
 
-        // final stats
         const totalAttempts = state.correct + state.wrong + state.missed;
         const accuracy = totalAttempts > 0 ? Math.round((state.correct / totalAttempts) * 100) : 0;
 
@@ -1129,17 +1099,13 @@
             ? Math.round(state.reactionTimes.reduce((a, b) => a + b, 0) / state.reactionTimes.length)
             : null;
 
-        // hardest chars: wrong+missed (top 3)
         const hardList = Array.from(state.charStats.entries())
-          .map(([ch, s]) => ({ ch, bad: (s.wrong || 0) + (s.missed || 0), missed: s.missed || 0, wrong: s.wrong || 0 }))
-          .filter(x => x.bad > 0)
+          .map(([ch, s]) => ({ ch, bad: (s.wrong || 0) + (s.missed || 0) }))
+          .filter((x) => x.bad > 0)
           .sort((a, b) => b.bad - a.bad)
           .slice(0, 3);
 
-        const hardestText =
-          hardList.length > 0
-            ? hardList.map(x => `${x.ch}(${x.bad})`).join(" · ")
-            : "—";
+        const hardestText = hardList.length ? hardList.map((x) => `${x.ch}(${x.bad})`).join(" · ") : "—";
 
         dom.finalScore.innerHTML = `Ваш результат: <strong>${state.score}</strong> балів`;
         dom.finalLevel.innerHTML = `Рівень: <strong>${levelNames[state.level]}</strong>`;
@@ -1158,33 +1124,26 @@
 
         if (state.maxStreak >= 20) achievement += " 🔥 Неймовірна серія!";
         else if (state.maxStreak >= 10) achievement += " ⚡ Чудова концентрація!";
-
         if (accuracy >= 90 && totalAttempts >= 20) achievement += " 🎯 Дуже точна гра!";
+
         dom.achievement.textContent = achievement;
 
         dom.gameOver.style.display = "flex";
         dom.startBtn.style.display = "block";
         dom.stopBtn.style.display = "none";
 
-        updateTargetHUD(Date.now());
+        updateTargetHUD(nowMs());
         updateUI();
       }
 
       /***********************
-       * 9) UI EVENTS
+       * 9) EVENTS
        ***********************/
-      function setSelected(container, selector, attr, value) {
-        const buttons = container.querySelectorAll("button");
-        buttons.forEach((b) => b.classList.remove("selected"));
-        const btn = container.querySelector(`${selector}[${attr}="${value}"]`);
-        if (btn) btn.classList.add("selected");
-      }
-
       function onLevelClick(e) {
         const btn = e.target.closest("button[data-level]");
         if (!btn) return;
         state.level = btn.getAttribute("data-level");
-        setSelected(dom.levelsWrap, "button", "data-level", state.level);
+        setSelected(dom.levelsWrap, "data-level", state.level);
         computeDifficulty();
       }
 
@@ -1192,7 +1151,7 @@
         const btn = e.target.closest("button[data-speed]");
         if (!btn) return;
         state.speed = btn.getAttribute("data-speed");
-        setSelected(dom.speedWrap, "button", "data-speed", state.speed);
+        setSelected(dom.speedWrap, "data-speed", state.speed);
         computeDifficulty();
       }
 
@@ -1200,11 +1159,7 @@
         state.soundEnabled = !state.soundEnabled;
         dom.soundBtn.textContent = state.soundEnabled ? "🔊" : "🔇";
         dom.soundBtn.setAttribute("aria-label", state.soundEnabled ? "Вимкнути звук гри" : "Увімкнути звук гри");
-
-        if (state.soundEnabled) {
-          // ✅ важливо: відновити AudioContext у межах user gesture
-          await resumeAudioIfNeeded();
-        }
+        if (state.soundEnabled) await resumeAudioIfNeeded();
       }
 
       function init() {
@@ -1216,11 +1171,12 @@
 
         dom.startBtn.addEventListener("click", startGame);
         dom.stopBtn.addEventListener("click", stopGame);
+
         dom.soundBtn.addEventListener("click", toggleSound);
 
         dom.trainingMode.addEventListener("change", () => {
           state.trainingMode = dom.trainingMode.checked;
-          updateTargetHUD(Date.now());
+          updateTargetHUD(nowMs());
         });
 
         dom.smartMode.addEventListener("change", () => {
@@ -1229,14 +1185,12 @@
 
         document.addEventListener("keydown", handleKeydown);
 
-        // якщо вкладка закривається — чистимо
         window.addEventListener("beforeunload", () => {
           state.running = false;
           clearLetters();
         });
 
-        // стартове значення HUD
-        updateTargetHUD(Date.now());
+        updateTargetHUD(nowMs());
       }
 
       document.addEventListener("DOMContentLoaded", init);
