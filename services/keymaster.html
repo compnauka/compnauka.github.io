@@ -1,23 +1,17 @@
 <!DOCTYPE html>
-<html lang="uk" class="dark">
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Володар комбінацій | Тренажер Гарячих Клавіш Windows</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Володар комбінацій | Тренажер Гарячих Клавіш (Windows)</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
@@ -36,599 +30,690 @@
     </script>
 
     
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* Key Cap Styles - Adaptive Shadows */
-        .key-cap {
-            box-shadow: 0 3px 0 #cbd5e1; /* slate-300 for light mode */
-            transition: all 0.05s;
-        }
-        
-        .dark .key-cap {
-            box-shadow: 0 3px 0 #94a3b8; /* slate-400 for dark mode */
-        }
+  <style>
+    body { font-family: 'Inter', sans-serif; }
 
-        .key-cap:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 transparent; /* Hide shadow on press */
-        }
-        
-        .dark .key-cap:active {
-            box-shadow: 0 0 0 transparent;
-        }
+    .key-cap { box-shadow: 0 3px 0 #cbd5e1; transition: all 0.05s; }
+    .dark .key-cap { box-shadow: 0 3px 0 #475569; border-bottom-color: #334155; }
+    .key-cap:active, .key-cap.pressed { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
 
-        /* Animations */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-        .animate-shake { animation: shake 0.3s ease-in-out; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    .animate-shake { animation: shake 0.3s ease-in-out; }
 
-        @keyframes pop {
-            0% { transform: scale(0.95); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-pop { animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes pop {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop { animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        
-        /* Light/Dark mode scrollbar colors */
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .dark ::-webkit-scrollbar-track { background: #0f172a; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        .dark ::-webkit-scrollbar-track { background: #0f172a; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    </style>
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
 </head>
+
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden selection:bg-blue-500 selection:text-white transition-colors duration-300">
 
-    <!-- Header -->
-    <nav class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 p-4 z-20 shadow-sm dark:shadow-md flex-shrink-0 transition-colors duration-300">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3 select-none">
-                <i class="fa-brands fa-windows text-3xl text-blue-600 dark:text-blue-500"></i>
-                <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">KeyMaster <span class="text-blue-500 dark:text-blue-400 font-light">Pro Edition</span></h1>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="flex bg-slate-200/50 dark:bg-slate-700/50 p-1 rounded-lg">
-                    <button onclick="app.switchTab('trainer')" id="btn-trainer" class="px-5 py-2 rounded-md text-sm font-semibold transition-all bg-blue-600 text-white shadow-sm">
-                        <i class="fa-solid fa-gamepad mr-2"></i>Тренажер
-                    </button>
-                    <button onclick="app.switchTab('reference')" id="btn-reference" class="px-5 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700">
-                        <i class="fa-solid fa-book mr-2"></i>Довідник
-                    </button>
-                </div>
-                
-                <!-- Theme Toggle -->
-                <button id="theme-toggle-btn" onclick="app.toggleTheme()" aria-label="Змінити тему" title="Перемкнути тему" class="w-10 h-10 rounded-full bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
-                    <i class="fa-solid fa-moon hidden dark:block"></i>
-                    <i class="fa-solid fa-sun block dark:hidden text-orange-500"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
+  <nav class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 p-4 z-20 shadow-sm dark:shadow-md flex-shrink-0 transition-colors duration-300">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3 select-none">
+        <i class="fa-solid fa-keyboard text-3xl text-blue-600 dark:text-blue-500"></i>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">
+          KeyMaster <span class="text-blue-500 dark:text-blue-400 font-light">Windows Edition</span>
+        </h1>
+      </div>
 
-    <!-- Content Area -->
-    <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center overflow-hidden relative max-h-full">
-
-        <!-- TRAINER MODE -->
-        <div id="trainer-view" class="w-full max-w-2xl flex flex-col gap-6 animate-pop transition-all duration-300">
-            
-            <!-- HUD -->
-            <div class="flex justify-between items-center text-sm font-medium px-4 select-none bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
-                <div class="flex gap-4">
-                    <div class="text-slate-500 dark:text-slate-400">Рахунок: <span id="score-display" class="text-slate-900 dark:text-white ml-1 font-bold">0</span></div>
-                    <div class="text-slate-500 dark:text-slate-400">Серія: <span id="streak-display" class="text-orange-500 dark:text-orange-400 ml-1 font-bold">0</span> 🔥</div>
-                </div>
-                <div class="text-slate-500 dark:text-slate-400">Точність: <span id="accuracy-display" class="text-blue-600 dark:text-blue-400 ml-1 font-bold">100%</span></div>
-            </div>
-
-            <!-- Game Card -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 md:p-10 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-700 text-center relative overflow-hidden group transition-colors duration-300">
-                <!-- Top Decor Line -->
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-                
-                <!-- Category Label -->
-                <div id="category-badge" class="inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 transition-colors">
-                    Готові до тренування?
-                </div>
-
-                <!-- Task Description -->
-                <h2 id="task-desc" class="text-2xl md:text-3xl font-bold mb-10 text-slate-800 dark:text-white min-h-[4rem] flex items-center justify-center leading-tight transition-colors">
-                    Натисніть "Старт"
-                </h2>
-
-                <!-- Input Visualizer -->
-                <div id="visualizer" class="h-16 flex items-center justify-center gap-2 mb-8 select-none">
-                    <span class="text-slate-400 dark:text-slate-600 text-sm italic">Клавіші з'являться тут...</span>
-                </div>
-
-                <!-- Feedback Message -->
-                <div id="feedback" class="h-6 mb-6 font-semibold text-lg empty:hidden"></div>
-
-                <!-- Action Buttons -->
-                <div class="flex justify-center gap-3">
-                    <button id="start-btn" onclick="app.nextTask()" class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-900/20 dark:shadow-green-900/20 flex items-center">
-                        <i class="fa-solid fa-play mr-2"></i> Старт
-                    </button>
-                    <button id="hint-btn" onclick="app.showHint()" class="hidden bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl font-medium transition border border-slate-300 dark:border-slate-600">
-                        <i class="fa-regular fa-lightbulb mr-2"></i> Підказка
-                    </button>
-                </div>
-            </div>
-
-            <div class="text-center text-slate-400 dark:text-slate-500 text-xs mt-2 select-none">
-                <p>Клацніть у вікні браузера для фокусу • Повна підтримка розкладок</p>
-            </div>
+      <div class="flex items-center gap-4">
+        <div class="flex bg-slate-200/50 dark:bg-slate-700/50 p-1 rounded-lg">
+          <button onclick="app.switchTab('trainer')" id="btn-trainer"
+            class="px-5 py-2 rounded-md text-sm font-semibold transition-all bg-blue-600 text-white shadow-sm">
+            <i class="fa-solid fa-gamepad mr-2"></i>Тренажер
+          </button>
+          <button onclick="app.switchTab('reference')" id="btn-reference"
+            class="px-5 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700">
+            <i class="fa-solid fa-book mr-2"></i>Довідник
+          </button>
         </div>
 
-        <!-- REFERENCE MODE -->
-        <div id="reference-view" class="w-full max-w-5xl hidden animate-pop max-h-full flex flex-col bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl dark:shadow-2xl overflow-hidden transition-colors duration-300">
-            <div class="p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 flex flex-col md:flex-row items-center justify-between flex-shrink-0 gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <i class="fa-solid fa-keyboard text-blue-600 dark:text-blue-500"></i> Довідник
-                    </h2>
-                    <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Повний перелік стандартних скорочень</p>
-                </div>
-                
-                <!-- Category Filter -->
-                <select id="category-filter" onchange="app.filterTable(this.value)" class="bg-white dark:bg-slate-700 text-slate-700 dark:text-white text-sm px-3 py-2 rounded border border-slate-300 dark:border-slate-600 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
-                    <option value="all">Всі категорії</option>
-                    <option value="Навігація">Навігація</option>
-                    <option value="Виділення">Виділення</option>
-                    <option value="Редагування">Редагування</option>
-                    <option value="Форматування">Форматування</option>
-                    <option value="Файли">Файли</option>
-                    <option value="Пошук">Пошук</option>
-                </select>
-            </div>
-            
-            <div class="overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900/30 min-h-0">
-                <table class="w-full text-left border-collapse">
-                    <thead class="sticky top-0 bg-white dark:bg-slate-900 shadow-sm z-10">
-                        <tr class="text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider">
-                            <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700 w-1/3">Комбінація</th>
-                            <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700">Дія</th>
-                            <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700 text-right">Категорія</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reference-table" class="text-sm divide-y divide-slate-200 dark:divide-slate-700/50">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
+        <button id="theme-toggle-btn" onclick="app.toggleTheme()" aria-label="Змінити тему" title="Перемкнути тему"
+          class="w-10 h-10 rounded-full bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+          <i class="fa-solid fa-moon hidden dark:block"></i>
+          <i class="fa-solid fa-sun block dark:hidden text-orange-500"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center overflow-hidden relative max-h-full">
+
+    <!-- TRAINER MODE -->
+    <div id="trainer-view" class="w-full max-w-2xl flex flex-col gap-6 animate-pop transition-all duration-300">
+
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm font-medium px-4 select-none bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+        <div class="flex flex-wrap gap-4 items-center">
+          <div class="text-slate-500 dark:text-slate-400">Рахунок: <span id="score-display" class="text-slate-900 dark:text-white ml-1 font-bold">0</span></div>
+          <div class="text-slate-500 dark:text-slate-400">Серія: <span id="streak-display" class="text-orange-500 dark:text-orange-400 ml-1 font-bold">0</span> 🔥</div>
+          <div class="text-slate-500 dark:text-slate-400">Точність: <span id="accuracy-display" class="text-blue-600 dark:text-blue-400 ml-1 font-bold">100%</span></div>
         </div>
 
-    </main>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 dark:text-slate-400 text-xs hidden md:inline">Категорія:</span>
+          <select id="train-category"
+            class="bg-white dark:bg-slate-700 text-slate-700 dark:text-white text-sm px-3 py-2 rounded border border-slate-300 dark:border-slate-600 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+            <option value="all">Всі</option>
+            <option value="Базові">🌟 Базові</option>
+            <option value="Буфер обміну">📋 Буфер обміну</option>
+            <option value="Навігація">🧭 Навігація</option>
+            <option value="Виділення">✨ Виділення</option>
+            <option value="Редагування">✏️ Редагування</option>
+            <option value="Робота з файлами">📁 Файли</option>
+            <option value="Форматування">🎨 Форматування</option>
+          </select>
+        </div>
+      </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-24 right-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent border-l-4 border-l-green-500 text-slate-800 dark:text-white px-5 py-3 rounded shadow-2xl translate-x-[150%] transition-transform duration-300 z-50 flex items-center gap-3">
-        <div class="bg-green-100 dark:bg-green-500/20 p-2 rounded-full">
-            <i class="fa-solid fa-check text-green-600 dark:text-green-500 text-sm"></i>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 md:p-10 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-700 text-center relative overflow-hidden group transition-colors duration-300">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+
+        <div id="category-badge"
+          class="inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 transition-colors">
+          Готові до тренування?
         </div>
-        <div>
-            <h4 class="font-bold text-sm">Вірно!</h4>
-            <p class="text-xs text-slate-500 dark:text-slate-400" id="toast-msg">...</p>
+
+        <h2 id="task-desc"
+          class="text-2xl md:text-3xl font-bold mb-10 text-slate-800 dark:text-white min-h-[4rem] flex items-center justify-center leading-tight transition-colors">
+          Натисніть "Старт"
+        </h2>
+
+        <div id="visualizer" class="h-16 flex items-center justify-center gap-2 mb-8 select-none" aria-live="polite">
+          <span class="text-slate-400 dark:text-slate-600 text-sm italic">Клавіші з'являться тут...</span>
         </div>
+
+        <div id="feedback" class="h-6 mb-6 font-semibold text-lg empty:hidden" aria-live="polite"></div>
+
+        <div class="flex justify-center gap-3 flex-wrap">
+          <button id="start-btn" onclick="app.startOrResume()"
+            class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-900/20 flex items-center">
+            <i class="fa-solid fa-play mr-2"></i><span id="start-btn-text">Старт</span>
+          </button>
+
+          <button id="pause-btn" onclick="app.togglePause()" class="hidden bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg shadow-amber-900/20 flex items-center">
+            <i class="fa-solid fa-pause mr-2"></i><span id="pause-btn-text">Пауза</span>
+          </button>
+
+          <button id="hint-btn" onclick="app.showHint()"
+            class="hidden bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl font-medium transition border border-slate-300 dark:border-slate-600">
+            <i class="fa-regular fa-lightbulb mr-2"></i>Підказка
+          </button>
+        </div>
+
+        <div id="keyboard-note" class="mt-6 text-xs text-slate-500 dark:text-slate-400 hidden">
+          ℹ️ Для роботи тренажера потрібна фізична клавіатура (на телефонах комбінації можуть не працювати).
+        </div>
+      </div>
+
+      <div class="text-center text-slate-400 dark:text-slate-500 text-xs mt-2 select-none">
+        <p>💡 Windows-комбінації для роботи в програмах • Пауза: <b>Esc</b></p>
+      </div>
     </div>
 
-    <script>
-        /**
-         * Configuration & Constants
-         */
-        const SHORTCUTS = [
-            // --- Navigation ---
-            { keys: { code: 'Home' }, label: 'Home', desc: 'На початок рядка', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { code: 'End' }, label: 'End', desc: 'В кінець рядка', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'Home' }, label: 'Ctrl + Home', desc: 'На початок документа', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'End' }, label: 'Ctrl + End', desc: 'В кінець документа', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { code: 'PageUp' }, label: 'PgUp', desc: 'На сторінку вгору', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { code: 'PageDown' }, label: 'PgDn', desc: 'На сторінку вниз', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'ArrowLeft' }, label: 'Ctrl + ←', desc: 'Початок попереднього слова', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'ArrowRight' }, label: 'Ctrl + →', desc: 'Початок наступного слова', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'ArrowUp' }, label: 'Ctrl + ↑', desc: 'Початок попереднього абзацу', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
-            { keys: { ctrl: true, code: 'ArrowDown' }, label: 'Ctrl + ↓', desc: 'Початок наступного абзацу', cat: 'Навігація', color: 'text-yellow-600 dark:text-yellow-400' },
+    <!-- REFERENCE MODE -->
+    <div id="reference-view"
+      class="w-full max-w-5xl hidden animate-pop max-h-full flex flex-col bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl dark:shadow-2xl overflow-hidden transition-colors duration-300">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 flex flex-col md:flex-row items-center justify-between flex-shrink-0 gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-keyboard text-blue-600 dark:text-blue-500"></i> Довідник
+          </h2>
+          <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Поширені Windows-комбінації (можуть відрізнятися в окремих програмах)</p>
+        </div>
 
-            // --- Selection ---
-            { keys: { shift: true, code: 'Home' }, label: 'Shift + Home', desc: 'Виділити до початку рядка', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, code: 'End' }, label: 'Shift + End', desc: 'Виділити до кінця рядка', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, ctrl: true, code: 'Home' }, label: 'Shift + Ctrl + Home', desc: 'Виділити до початку документа', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, ctrl: true, code: 'End' }, label: 'Shift + Ctrl + End', desc: 'Виділити до кінця документа', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, code: 'ArrowLeft' }, label: 'Shift + ←', desc: 'Виділити символ назад', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, code: 'ArrowRight' }, label: 'Shift + →', desc: 'Виділити символ вперед', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, code: 'ArrowUp' }, label: 'Shift + ↑', desc: 'Виділити рядок вгору', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, code: 'ArrowDown' }, label: 'Shift + ↓', desc: 'Виділити рядок вниз', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, ctrl: true, code: 'ArrowLeft' }, label: 'Shift + Ctrl + ←', desc: 'Виділити слово назад', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { shift: true, ctrl: true, code: 'ArrowRight' }, label: 'Shift + Ctrl + →', desc: 'Виділити слово вперед', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
-            { keys: { ctrl: true, code: 'KeyA' }, label: 'Ctrl + A', desc: 'Виділити весь текст', cat: 'Виділення', color: 'text-purple-600 dark:text-purple-400' },
+        <select id="category-filter" onchange="app.filterTable(this.value)"
+          class="bg-white dark:bg-slate-700 text-slate-700 dark:text-white text-sm px-3 py-2 rounded border border-slate-300 dark:border-slate-600 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+          <option value="all">Всі категорії</option>
+          <option value="Базові">🌟 Базові</option>
+          <option value="Буфер обміну">📋 Буфер обміну</option>
+          <option value="Навігація">🧭 Навігація</option>
+          <option value="Виділення">✨ Виділення</option>
+          <option value="Редагування">✏️ Редагування</option>
+          <option value="Робота з файлами">📁 Файли</option>
+          <option value="Форматування">🎨 Форматування</option>
+        </select>
+      </div>
 
-            // --- Files ---
-            { keys: { ctrl: true, code: 'KeyS' }, label: 'Ctrl + S', desc: 'Зберегти документ', cat: 'Файли', color: 'text-orange-600 dark:text-orange-400' },
-            { keys: { ctrl: true, code: 'KeyO' }, label: 'Ctrl + O', desc: 'Відкрити файл', cat: 'Файли', color: 'text-orange-600 dark:text-orange-400' },
-            { keys: { ctrl: true, code: 'KeyN' }, label: 'Ctrl + N', desc: 'Новий документ', cat: 'Файли', color: 'text-orange-600 dark:text-orange-400' },
-            { keys: { ctrl: true, code: 'KeyP' }, label: 'Ctrl + P', desc: 'Друк', cat: 'Файли', color: 'text-orange-600 dark:text-orange-400' },
-            { keys: { ctrl: true, code: 'KeyW' }, label: 'Ctrl + W', desc: 'Закрити документ', cat: 'Файли', color: 'text-orange-600 dark:text-orange-400' },
+      <div class="overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900/30 min-h-0">
+        <table class="w-full text-left border-collapse">
+          <thead class="sticky top-0 bg-white dark:bg-slate-900 shadow-sm z-10">
+            <tr class="text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider">
+              <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700 w-1/3">Комбінація</th>
+              <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700">Дія</th>
+              <th class="p-4 font-semibold border-b border-slate-200 dark:border-slate-700 text-right">Категорія</th>
+            </tr>
+          </thead>
+          <tbody id="reference-table" class="text-sm divide-y divide-slate-200 dark:divide-slate-700/50"></tbody>
+        </table>
+      </div>
+    </div>
 
-            // --- Editing ---
-            { keys: { ctrl: true, code: 'Backspace' }, label: 'Ctrl + Backspace', desc: 'Видалити слово зліва', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'Delete' }, label: 'Ctrl + Del', desc: 'Видалити слово справа', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { alt: true, code: 'Backspace' }, label: 'Alt + Backspace', desc: 'Скасувати видалення', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'KeyC' }, label: 'Ctrl + C', desc: 'Копіювати', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'KeyX' }, label: 'Ctrl + X', desc: 'Вирізати', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'KeyV' }, label: 'Ctrl + V', desc: 'Вставити', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, shift: true, code: 'KeyV' }, label: 'Ctrl + Shift + V', desc: 'Вставити без форматування', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'KeyZ' }, label: 'Ctrl + Z', desc: 'Скасувати (Undo)', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { ctrl: true, code: 'KeyY' }, label: 'Ctrl + Y', desc: 'Повторити (Redo)', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
-            { keys: { code: 'Tab' }, label: 'Tab', desc: 'Вставити відступ', cat: 'Редагування', color: 'text-green-600 dark:text-green-400' },
+  </main>
 
-            // --- Formatting ---
-            { keys: { ctrl: true, code: 'KeyB' }, label: 'Ctrl + B', desc: 'Жирний шрифт', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyI' }, label: 'Ctrl + I', desc: 'Курсив', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyU' }, label: 'Ctrl + U', desc: 'Підкреслення', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyE' }, label: 'Ctrl + E', desc: 'Вирівняти по центру', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyL' }, label: 'Ctrl + L', desc: 'Вирівняти ліворуч', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyR' }, label: 'Ctrl + R', desc: 'Вирівняти праворуч', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'KeyJ' }, label: 'Ctrl + J', desc: 'Вирівняти по ширині', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'BracketRight' }, label: 'Ctrl + ]', desc: 'Збільшити шрифт', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
-            { keys: { ctrl: true, code: 'BracketLeft' }, label: 'Ctrl + [', desc: 'Зменшити шрифт', cat: 'Форматування', color: 'text-pink-600 dark:text-pink-400' },
+  <div id="toast" role="status" aria-live="polite"
+    class="fixed top-24 right-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent border-l-4 border-l-green-500 text-slate-800 dark:text-white px-5 py-3 rounded shadow-2xl translate-x-[150%] transition-transform duration-300 z-50 flex items-center gap-3">
+    <div class="bg-green-100 dark:bg-green-500/20 p-2 rounded-full">
+      <i class="fa-solid fa-check text-green-600 dark:text-green-500 text-sm"></i>
+    </div>
+    <div>
+      <h4 class="font-bold text-sm">Вірно!</h4>
+      <p class="text-xs text-slate-500 dark:text-slate-400" id="toast-msg">...</p>
+    </div>
+  </div>
 
-            // --- Search ---
-            { keys: { ctrl: true, code: 'KeyF' }, label: 'Ctrl + F', desc: 'Знайти', cat: 'Пошук', color: 'text-blue-600 dark:text-blue-400' },
-            { keys: { ctrl: true, code: 'KeyH' }, label: 'Ctrl + H', desc: 'Знайти та замінити', cat: 'Пошук', color: 'text-blue-600 dark:text-blue-400' }
-        ];
+  <script>
+    // === Коректний функціональний розподіл категорій ===
+    // Базові: Ctrl+A, Ctrl+S, Ctrl+F (пошук як базова навичка), + базові операції з файлами (N/O/P)
+    // Буфер обміну: C/X/V + Shift+V
+    // Редагування: Undo/Redo + word delete + Tab (в редакторах)
+    // Навігація: Home/End + Ctrl+Home/End + Ctrl+стрілки + Alt+Backspace (часто "Назад")
+    // Виділення: Shift/Shift+Ctrl + стрілки/Home/End
+    // Форматування: B/I/U + L/E/R
 
-        // Keys that often conflict with browser behavior
-        const BLOCKED_KEYS = [
-            'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 
-            'Space', 'Home', 'End', 'PageUp', 'PageDown', 'Backspace'
-        ];
+    const SHORTCUTS = [
+      // === БАЗОВІ ===
+      { keys: { ctrl: true, code: 'KeyA' }, label: 'Ctrl + A', desc: 'Виділити все', cat: 'Базові', level: 1, color: 'text-emerald-600 dark:text-emerald-400', icon: '✨' },
+      { keys: { ctrl: true, code: 'KeyS' }, label: 'Ctrl + S', desc: 'Зберегти файл', cat: 'Базові', level: 1, color: 'text-emerald-600 dark:text-emerald-400', icon: '💾' },
+      { keys: { ctrl: true, code: 'KeyF' }, label: 'Ctrl + F', desc: 'Пошук у документі', cat: 'Базові', level: 1, color: 'text-emerald-600 dark:text-emerald-400', icon: '🔍' },
 
-        // Keys allowed to pass through (e.g., Reload, DevTools)
-        const ALLOWED_KEYS = ['F5', 'F11', 'F12'];
+      // === РОБОТА З ФАЙЛАМИ ===
+      { keys: { ctrl: true, code: 'KeyN' }, label: 'Ctrl + N', desc: 'Новий документ', cat: 'Робота з файлами', level: 1, color: 'text-orange-600 dark:text-orange-400', icon: '📄' },
+      { keys: { ctrl: true, code: 'KeyO' }, label: 'Ctrl + O', desc: 'Відкрити файл', cat: 'Робота з файлами', level: 1, color: 'text-orange-600 dark:text-orange-400', icon: '📂' },
+      { keys: { ctrl: true, code: 'KeyP' }, label: 'Ctrl + P', desc: 'Друк документа', cat: 'Робота з файлами', level: 1, color: 'text-orange-600 dark:text-orange-400', icon: '🖨️' },
 
-        // Base Classes for Badges
-        const BADGE_BASE_CLASSES = 'inline-block mb-3 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700/50';
+      // === БУФЕР ОБМІНУ ===
+      { keys: { ctrl: true, code: 'KeyC' }, label: 'Ctrl + C', desc: 'Копіювати', cat: 'Буфер обміну', level: 1, color: 'text-blue-600 dark:text-blue-400', icon: '📋' },
+      { keys: { ctrl: true, code: 'KeyX' }, label: 'Ctrl + X', desc: 'Вирізати', cat: 'Буфер обміну', level: 1, color: 'text-blue-600 dark:text-blue-400', icon: '✂️' },
+      { keys: { ctrl: true, code: 'KeyV' }, label: 'Ctrl + V', desc: 'Вставити', cat: 'Буфер обміну', level: 1, color: 'text-blue-600 dark:text-blue-400', icon: '📋' },
+      { keys: { ctrl: true, shift: true, code: 'KeyV' }, label: 'Ctrl + Shift + V', desc: 'Вставити без форматування', cat: 'Буфер обміну', level: 2, color: 'text-blue-600 dark:text-blue-400', icon: '📄' },
 
-        class ShortcutsTrainer {
-            constructor() {
-                this.state = {
-                    currentIndex: null,
-                    lastIndex: -1,
-                    score: 0,
-                    streak: 0,
-                    totalAttempts: 0,
-                    correctAttempts: 0,
-                    attemptOnTask: 0,
-                    isBlocked: false,
-                    isGameActive: false,
-                    theme: this.getPreferredTheme() // Get theme based on preferences
-                };
+      // === РЕДАГУВАННЯ ===
+      { keys: { ctrl: true, code: 'KeyZ' }, label: 'Ctrl + Z', desc: 'Скасувати останню дію', cat: 'Редагування', level: 1, color: 'text-red-600 dark:text-red-400', icon: '↩️' },
+      { keys: { ctrl: true, code: 'KeyY' }, label: 'Ctrl + Y', desc: 'Повторити дію', cat: 'Редагування', level: 2, color: 'text-red-600 dark:text-red-400', icon: '↪️' },
+      { keys: { ctrl: true, code: 'Backspace' }, label: 'Ctrl + Backspace', desc: 'Видалити слово ліворуч', cat: 'Редагування', level: 2, color: 'text-red-600 dark:text-red-400', icon: '🗑️' },
+      { keys: { ctrl: true, code: 'Delete' }, label: 'Ctrl + Del', desc: 'Видалити слово праворуч', cat: 'Редагування', level: 2, color: 'text-red-600 dark:text-red-400', icon: '🗑️' },
+      { keys: { code: 'Tab' }, label: 'Tab', desc: 'Вставити відступ (в редакторах)', cat: 'Редагування', level: 2, color: 'text-red-600 dark:text-red-400', icon: '➡️' },
 
-                this.dom = {
-                    html: document.documentElement,
-                    trainerView: document.getElementById('trainer-view'),
-                    referenceView: document.getElementById('reference-view'),
-                    btnTrainer: document.getElementById('btn-trainer'),
-                    btnReference: document.getElementById('btn-reference'),
-                    themeBtn: document.getElementById('theme-toggle-btn'), // Cached
-                    
-                    taskDesc: document.getElementById('task-desc'),
-                    catBadge: document.getElementById('category-badge'),
-                    visualizer: document.getElementById('visualizer'),
-                    feedback: document.getElementById('feedback'),
-                    
-                    score: document.getElementById('score-display'),
-                    streak: document.getElementById('streak-display'),
-                    accuracy: document.getElementById('accuracy-display'),
-                    
-                    startBtn: document.getElementById('start-btn'),
-                    hintBtn: document.getElementById('hint-btn'),
-                    
-                    toast: document.getElementById('toast'),
-                    toastMsg: document.getElementById('toast-msg'),
-                    
-                    refTable: document.getElementById('reference-table')
-                };
+      // === НАВІГАЦІЯ ===
+      { keys: { code: 'Home' }, label: 'Home', desc: 'На початок рядка', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '⬅️' },
+      { keys: { code: 'End' }, label: 'End', desc: 'В кінець рядка', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '➡️' },
+      { keys: { ctrl: true, code: 'Home' }, label: 'Ctrl + Home', desc: 'На початок документа', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '⬆️' },
+      { keys: { ctrl: true, code: 'End' }, label: 'Ctrl + End', desc: 'В кінець документа', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '⬇️' },
+      { keys: { ctrl: true, code: 'ArrowLeft' }, label: 'Ctrl + ←', desc: 'Перехід на слово назад', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '⬅️' },
+      { keys: { ctrl: true, code: 'ArrowRight' }, label: 'Ctrl + →', desc: 'Перехід на слово вперед', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '➡️' },
+      { keys: { alt: true, code: 'Backspace' }, label: 'Alt + Backspace', desc: 'Назад (у багатьох програмах/браузерах)', cat: 'Навігація', level: 2, color: 'text-yellow-600 dark:text-yellow-400', icon: '↩️' },
 
-                this.init();
+      // === ВИДІЛЕННЯ ===
+      { keys: { shift: true, code: 'ArrowLeft' }, label: 'Shift + ←', desc: 'Виділити символ ліворуч', cat: 'Виділення', level: 2, color: 'text-purple-600 dark:text-purple-400', icon: '◀️' },
+      { keys: { shift: true, code: 'ArrowRight' }, label: 'Shift + →', desc: 'Виділити символ праворуч', cat: 'Виділення', level: 2, color: 'text-purple-600 dark:text-purple-400', icon: '▶️' },
+      { keys: { shift: true, code: 'ArrowUp' }, label: 'Shift + ↑', desc: 'Виділити рядок вгору', cat: 'Виділення', level: 2, color: 'text-purple-600 dark:text-purple-400', icon: '🔼' },
+      { keys: { shift: true, code: 'ArrowDown' }, label: 'Shift + ↓', desc: 'Виділити рядок вниз', cat: 'Виділення', level: 2, color: 'text-purple-600 dark:text-purple-400', icon: '🔽' },
+      { keys: { shift: true, code: 'Home' }, label: 'Shift + Home', desc: 'Виділити до початку рядка', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '⏮️' },
+      { keys: { shift: true, code: 'End' }, label: 'Shift + End', desc: 'Виділити до кінця рядка', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '⏭️' },
+      { keys: { shift: true, ctrl: true, code: 'ArrowLeft' }, label: 'Shift + Ctrl + ←', desc: 'Виділити слово ліворуч', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '◀️' },
+      { keys: { shift: true, ctrl: true, code: 'ArrowRight' }, label: 'Shift + Ctrl + →', desc: 'Виділити слово праворуч', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '▶️' },
+      { keys: { shift: true, ctrl: true, code: 'Home' }, label: 'Shift + Ctrl + Home', desc: 'Виділити до початку документа', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '⏫' },
+      { keys: { shift: true, ctrl: true, code: 'End' }, label: 'Shift + Ctrl + End', desc: 'Виділити до кінця документа', cat: 'Виділення', level: 3, color: 'text-purple-600 dark:text-purple-400', icon: '⏬' },
+
+      // === ФОРМАТУВАННЯ ===
+      { keys: { ctrl: true, code: 'KeyB' }, label: 'Ctrl + B', desc: 'Жирний шрифт', cat: 'Форматування', level: 2, color: 'text-pink-600 dark:text-pink-400', icon: '🅱️' },
+      { keys: { ctrl: true, code: 'KeyI' }, label: 'Ctrl + I', desc: 'Курсивний шрифт', cat: 'Форматування', level: 2, color: 'text-pink-600 dark:text-pink-400', icon: '🅸' },
+      { keys: { ctrl: true, code: 'KeyU' }, label: 'Ctrl + U', desc: 'Підкреслений текст', cat: 'Форматування', level: 2, color: 'text-pink-600 dark:text-pink-400', icon: 'U̲' },
+      { keys: { ctrl: true, code: 'KeyL' }, label: 'Ctrl + L', desc: 'Вирівняти ліворуч', cat: 'Форматування', level: 3, color: 'text-pink-600 dark:text-pink-400', icon: '⬅️' },
+      { keys: { ctrl: true, code: 'KeyE' }, label: 'Ctrl + E', desc: 'Вирівняти по центру', cat: 'Форматування', level: 3, color: 'text-pink-600 dark:text-pink-400', icon: '↔️' },
+      { keys: { ctrl: true, code: 'KeyR' }, label: 'Ctrl + R', desc: 'Вирівняти праворуч', cat: 'Форматування', level: 3, color: 'text-pink-600 dark:text-pink-400', icon: '➡️' },
+    ];
+
+    const BLOCKED_KEYS = [
+      'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+      'Space', 'Home', 'End', 'PageUp', 'PageDown', 'Backspace', 'Delete'
+    ];
+
+    class ShortcutsTrainer {
+      constructor() {
+        this.state = {
+          currentIndex: null,
+          lastIndex: -1,
+          score: 0,
+          streak: 0,
+          totalAttempts: 0,
+          correctAttempts: 0,
+          isBlocked: false,
+          isGameActive: false,
+          isPaused: false,
+          theme: this.getPreferredTheme(),
+          trainCategory: 'all'
+        };
+
+        this.dom = {
+          html: document.documentElement,
+          trainerView: document.getElementById('trainer-view'),
+          referenceView: document.getElementById('reference-view'),
+          btnTrainer: document.getElementById('btn-trainer'),
+          btnReference: document.getElementById('btn-reference'),
+          themeBtn: document.getElementById('theme-toggle-btn'),
+
+          taskDesc: document.getElementById('task-desc'),
+          catBadge: document.getElementById('category-badge'),
+          visualizer: document.getElementById('visualizer'),
+          feedback: document.getElementById('feedback'),
+
+          score: document.getElementById('score-display'),
+          streak: document.getElementById('streak-display'),
+          accuracy: document.getElementById('accuracy-display'),
+
+          startBtn: document.getElementById('start-btn'),
+          startBtnText: document.getElementById('start-btn-text'),
+          pauseBtn: document.getElementById('pause-btn'),
+          pauseBtnText: document.getElementById('pause-btn-text'),
+          hintBtn: document.getElementById('hint-btn'),
+
+          toast: document.getElementById('toast'),
+          toastMsg: document.getElementById('toast-msg'),
+
+          refTable: document.getElementById('reference-table'),
+          trainCategory: document.getElementById('train-category'),
+
+          keyboardNote: document.getElementById('keyboard-note')
+        };
+
+        this.nextTimer = null;
+        this.toastTimeout = null;
+
+        this.init();
+      }
+
+      getPreferredTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved) return saved;
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      init() {
+        this.applyTheme();
+        this.renderReferenceTable();
+        this.setupTrainerCategory();
+        this.setupKeyboardHint();
+
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mq && mq.addEventListener) {
+          mq.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+              this.state.theme = e.matches ? 'dark' : 'light';
+              this.applyTheme();
             }
-
-            // Determine preferred theme: LocalStorage -> System -> Default Light
-            getPreferredTheme() {
-                const saved = localStorage.getItem('theme');
-                if (saved) return saved;
-                
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    return 'dark';
-                }
-                
-                return 'light'; // Default
-            }
-
-            init() {
-                this.applyTheme();
-                this.renderReferenceTable();
-                
-                // Listen to system theme changes
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    if (!localStorage.getItem('theme')) {
-                        // Only change if user hasn't manually set a preference
-                        this.state.theme = e.matches ? 'dark' : 'light';
-                        this.applyTheme();
-                    }
-                });
-                
-                // Unified KeyDown Handler
-                window.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
-            }
-
-            toggleTheme() {
-                this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('theme', this.state.theme);
-                this.applyTheme();
-            }
-
-            applyTheme() {
-                if (this.state.theme === 'dark') {
-                    this.dom.html.classList.add('dark');
-                } else {
-                    this.dom.html.classList.remove('dark');
-                }
-                
-                // Accessibility: Update title
-                if (this.dom.themeBtn) {
-                    const themeName = this.state.theme === 'dark' ? 'темна' : 'світла';
-                    this.dom.themeBtn.setAttribute('title', `Перемкнути тему (поточна: ${themeName})`);
-                }
-            }
-
-            switchTab(tab) {
-                const isTrainer = tab === 'trainer';
-                
-                this.dom.trainerView.classList.toggle('hidden', !isTrainer);
-                this.dom.referenceView.classList.toggle('hidden', isTrainer);
-                
-                if (!isTrainer) {
-                    this.state.isGameActive = false;
-                    this.dom.startBtn.classList.remove('hidden');
-                    this.dom.taskDesc.textContent = 'Натисніть "Старт"';
-                    this.dom.feedback.innerHTML = ''; // Fixed: use innerHTML
-                    this.dom.visualizer.innerHTML = '<span class="text-slate-400 dark:text-slate-600 text-sm italic">Клавіші з\'являться тут...</span>';
-                }
-
-                // Update Button Styles
-                const activeClass = "bg-blue-600 text-white shadow-sm";
-                const inactiveClass = "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700";
-                
-                this.dom.btnTrainer.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${isTrainer ? activeClass : inactiveClass}`;
-                this.dom.btnReference.className = `px-5 py-2 rounded-md text-sm font-semibold transition-all ${!isTrainer ? activeClass : inactiveClass}`;
-            }
-
-            filterTable(category) {
-                const rows = Array.from(this.dom.refTable.children);
-                rows.forEach(row => {
-                    const rowCat = row.querySelector('.cat-tag').textContent.trim();
-                    if (category === 'all' || rowCat === category) {
-                        row.classList.remove('hidden');
-                    } else {
-                        row.classList.add('hidden');
-                    }
-                });
-            }
-
-            renderReferenceTable() {
-                this.dom.refTable.innerHTML = SHORTCUTS.map(item => `
-                    <tr class="hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-200 dark:border-slate-700/50 group">
-                        <td class="p-4 align-middle">
-                            <span class="bg-white dark:bg-slate-700/50 text-blue-600 dark:text-blue-300 px-2 py-1 rounded border border-slate-300 dark:border-slate-600 font-mono text-xs font-bold whitespace-nowrap group-hover:border-blue-300 dark:group-hover:border-slate-500 transition-colors">
-                                ${item.label}
-                            </span>
-                        </td>
-                        <td class="p-4 text-slate-700 dark:text-slate-300 font-medium align-middle">${item.desc}</td>
-                        <td class="p-4 align-middle text-right">
-                            <span class="cat-tag text-[10px] uppercase font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500">
-                                ${item.cat}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            nextTask() {
-                this.state.isGameActive = true; 
-                this.dom.startBtn.classList.add('hidden');
-                this.dom.hintBtn.classList.add('hidden');
-                this.dom.feedback.innerHTML = ''; // Fixed: use innerHTML
-                this.dom.visualizer.innerHTML = '<span class="text-slate-400 dark:text-slate-600 text-sm italic">Чекаю введення...</span>';
-                
-                this.state.isBlocked = false;
-                this.state.attemptOnTask = 0;
-
-                let idx;
-                // Protection against infinite loop if only 1 shortcut exists
-                if (SHORTCUTS.length > 1) {
-                    do {
-                        idx = Math.floor(Math.random() * SHORTCUTS.length);
-                    } while (idx === this.state.lastIndex);
-                } else {
-                    idx = 0;
-                }
-                
-                this.state.lastIndex = idx;
-                this.state.currentIndex = idx;
-                
-                const task = SHORTCUTS[idx];
-
-                this.dom.taskDesc.classList.remove('animate-pop');
-                void this.dom.taskDesc.offsetWidth; 
-                this.dom.taskDesc.classList.add('animate-pop');
-                this.dom.taskDesc.textContent = task.desc;
-                
-                this.dom.catBadge.textContent = task.cat;
-                // Refactored: Use BADGE_BASE_CLASSES
-                this.dom.catBadge.className = `${BADGE_BASE_CLASSES} ${task.color || 'text-slate-400 dark:text-slate-500'}`;
-            }
-
-            handleGlobalKeyDown(e) {
-                // 1. Browser Blocking Logic (Only when game is active)
-                if (this.state.isGameActive) {
-                    if (ALLOWED_KEYS.includes(e.code)) return;
-
-                    // Block shortcuts if: Modifier keys active OR it is a navigation key
-                    if (e.ctrlKey || e.altKey || BLOCKED_KEYS.includes(e.code)) {
-                        e.preventDefault();
-                    }
-                }
-
-                // 2. Game Input Logic
-                if (this.state.currentIndex === null || this.state.isBlocked || !this.state.isGameActive) return;
-                
-                this.renderVisualizer(e);
-                this.checkInput(e);
-            }
-
-            getDisplayLabel(e) {
-                const code = e.code;
-                const specialMap = {
-                    'Space': 'Space',
-                    'Tab': 'Tab',
-                    'Enter': 'Enter',
-                    'Backspace': '<i class="fa-solid fa-delete-left"></i>',
-                    'Delete': 'Del',
-                    'ArrowUp': '<i class="fa-solid fa-arrow-up"></i>',
-                    'ArrowDown': '<i class="fa-solid fa-arrow-down"></i>',
-                    'ArrowLeft': '<i class="fa-solid fa-arrow-left"></i>',
-                    'ArrowRight': '<i class="fa-solid fa-arrow-right"></i>',
-                    'Home': 'Home',
-                    'End': 'End',
-                    'PageUp': 'PgUp',
-                    'PageDown': 'PgDn',
-                    'BracketRight': ']',
-                    'BracketLeft': '[',
-                    'Equal': '=',
-                    'Minus': '-'
-                };
-
-                if (specialMap[code]) return specialMap[code];
-                if (code.startsWith('Key')) return code.replace('Key', '');
-                if (code.startsWith('Digit')) return code.replace('Digit', '');
-                
-                // Don't print modifiers here, they are handled separately
-                if (['Control', 'Shift', 'Alt', 'Meta'].some(mod => code.includes(mod))) return '';
-
-                return ''; 
-            }
-
-            renderVisualizer(e) {
-                let html = '';
-                const makeCap = (txt) => `
-                    <div class="key-cap bg-slate-100 dark:bg-slate-200 text-slate-800 rounded px-3 py-2 font-bold min-w-[48px] h-[48px] flex items-center justify-center transform transition mx-1 border border-slate-300 dark:border-transparent border-b-4 border-b-slate-300 dark:border-b-slate-400 text-base shadow-sm">
-                        ${txt}
-                    </div>
-                `;
-
-                if (e.ctrlKey) html += makeCap('Ctrl');
-                if (e.shiftKey) html += makeCap('Shift');
-                if (e.altKey) html += makeCap('Alt');
-                
-                const label = this.getDisplayLabel(e);
-                if (label) html += makeCap(label);
-
-                this.dom.visualizer.innerHTML = html || '<span class="text-slate-400 dark:text-slate-600 text-sm italic">...</span>';
-            }
-
-            checkInput(e) {
-                const target = SHORTCUTS[this.state.currentIndex];
-                
-                // Using double negation to convert undefined to false
-                const ctrlReq = !!target.keys.ctrl;
-                const shiftReq = !!target.keys.shift;
-                const altReq = !!target.keys.alt;
-
-                const ctrlPressed = e.ctrlKey;
-                const shiftPressed = e.shiftKey;
-                const altPressed = e.altKey;
-
-                // Check physical code to support different layouts (Ukrainian, English, etc.)
-                const codeOk = e.code === target.keys.code;
-
-                // Ignore if user is only pressing modifiers (waiting for the main key)
-                const isModifierKeyOnly = ['Control', 'Shift', 'Alt', 'Meta'].some(k => e.code.includes(k));
-
-                if (!isModifierKeyOnly) {
-                    this.state.totalAttempts++;
-                    
-                    if (ctrlReq === ctrlPressed && shiftReq === shiftPressed && altReq === altPressed && codeOk) {
-                        this.success();
-                    } else {
-                        this.fail();
-                    }
-                    this.updateStats();
-                }
-            }
-
-            updateStats() {
-                const accuracy = this.state.totalAttempts === 0 ? 100 : Math.round((this.state.correctAttempts / this.state.totalAttempts) * 100);
-                this.dom.accuracy.textContent = accuracy + '%';
-            }
-
-            success() {
-                this.state.isBlocked = true;
-                this.state.streak++; 
-                this.state.score += 10 + (this.state.streak * 2); 
-                this.state.correctAttempts++;
-                
-                this.dom.score.textContent = this.state.score;
-                this.dom.streak.textContent = this.state.streak;
-
-                this.dom.feedback.innerHTML = `<span class="text-green-600 dark:text-green-400 flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i> Чудово! ${this.state.streak > 1 ? `x${this.state.streak}` : ''}</span>`;
-                this.dom.feedback.className = "h-6 mb-6 font-bold text-lg animate-pop";
-
-                this.dom.toastMsg.textContent = SHORTCUTS[this.state.currentIndex].label;
-                this.dom.toast.classList.remove('translate-x-[150%]');
-                setTimeout(() => this.dom.toast.classList.add('translate-x-[150%]'), 1500);
-
-                setTimeout(() => this.nextTask(), 1000);
-            }
-
-            fail() {
-                this.state.streak = 0;
-                this.dom.streak.textContent = 0;
-                this.state.attemptOnTask++; 
-
-                this.dom.feedback.innerHTML = '<span class="text-red-500 dark:text-red-400 flex items-center justify-center gap-2"><i class="fa-solid fa-circle-xmark"></i> Не вірно</span>';
-                this.dom.feedback.classList.remove('animate-shake');
-                void this.dom.feedback.offsetWidth; 
-                this.dom.feedback.classList.add('animate-shake');
-
-                if (this.state.attemptOnTask >= 2) {
-                    this.dom.hintBtn.classList.remove('hidden');
-                    this.dom.hintBtn.classList.add('animate-pop');
-                }
-            }
-
-            showHint() {
-                const target = SHORTCUTS[this.state.currentIndex];
-                this.dom.feedback.innerHTML = `
-                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 px-4 py-1 rounded-full border border-blue-200 dark:border-blue-500/30">
-                        <i class="fa-solid fa-key"></i> ${target.label}
-                    </div>
-                `;
-                this.dom.feedback.className = "h-6 mb-6 font-bold animate-pop flex justify-center";
-                
-                this.state.score = Math.max(0, this.state.score - 5);
-                this.dom.score.textContent = this.state.score;
-            }
+          });
         }
 
-        const app = new ShortcutsTrainer();
-    </script>
+        window.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
+
+        window.addEventListener('blur', () => this.pauseGame(true));
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) this.pauseGame(true);
+        });
+      }
+
+      setupKeyboardHint() {
+        const isTouch =
+          ('ontouchstart' in window) ||
+          (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+
+        if (isTouch) this.dom.keyboardNote.classList.remove('hidden');
+      }
+
+      setupTrainerCategory() {
+        this.dom.trainCategory.value = this.state.trainCategory;
+        this.dom.trainCategory.addEventListener('change', () => {
+          this.state.trainCategory = this.dom.trainCategory.value;
+          if (this.state.isGameActive && !this.state.isPaused && !this.state.isBlocked) {
+            this.nextTask();
+          }
+        });
+      }
+
+      toggleTheme() {
+        this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', this.state.theme);
+        this.applyTheme();
+      }
+
+      applyTheme() {
+        if (this.state.theme === 'dark') this.dom.html.classList.add('dark');
+        else this.dom.html.classList.remove('dark');
+
+        if (this.dom.themeBtn) {
+          const themeName = this.state.theme === 'dark' ? 'темна' : 'світла';
+          this.dom.themeBtn.setAttribute('title', `Перемкнути тему (поточна: ${themeName})`);
+        }
+      }
+
+      switchTab(tab) {
+        const isTrainer = tab === 'trainer';
+
+        this.dom.trainerView.classList.toggle('hidden', !isTrainer);
+        this.dom.referenceView.classList.toggle('hidden', isTrainer);
+
+        if (isTrainer) {
+          this.dom.btnTrainer.className = "px-5 py-2 rounded-md text-sm font-semibold transition-all bg-blue-600 text-white shadow-sm";
+          this.dom.btnReference.className = "px-5 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700";
+        } else {
+          this.pauseGame(true);
+          this.dom.btnTrainer.className = "px-5 py-2 rounded-md text-sm font-semibold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700";
+          this.dom.btnReference.className = "px-5 py-2 rounded-md text-sm font-semibold transition-all bg-blue-600 text-white shadow-sm";
+        }
+      }
+
+      startOrResume() {
+        if (this.state.isGameActive && this.state.isPaused) {
+          this.resumeGame();
+          return;
+        }
+        this.startNewGame();
+      }
+
+      startNewGame() {
+        this.clearNextTimer();
+
+        this.state.score = 0;
+        this.state.streak = 0;
+        this.state.totalAttempts = 0;
+        this.state.correctAttempts = 0;
+        this.state.isGameActive = true;
+        this.state.isPaused = false;
+        this.state.isBlocked = false;
+
+        this.updateStats();
+        this.setGameButtonsState();
+
+        this.dom.catBadge.textContent = "Починаємо!";
+        this.dom.feedback.textContent = "";
+        this.nextTask();
+      }
+
+      togglePause() {
+        if (!this.state.isGameActive) return;
+        if (this.state.isPaused) this.resumeGame();
+        else this.pauseGame(false);
+      }
+
+      pauseGame(soft) {
+        if (!this.state.isGameActive || this.state.isPaused) return;
+
+        this.state.isPaused = true;
+        this.clearNextTimer();
+
+        this.dom.catBadge.textContent = soft ? "Пауза (авто)" : "Пауза";
+        this.dom.feedback.textContent = "Гра на паузі. Натисніть «Продовжити» або Esc.";
+        this.dom.feedback.className = "h-6 mb-6 font-semibold text-sm md:text-lg text-amber-500";
+
+        this.setGameButtonsState();
+      }
+
+      resumeGame() {
+        if (!this.state.isGameActive || !this.state.isPaused) return;
+
+        this.state.isPaused = false;
+        this.state.isBlocked = false;
+
+        this.dom.feedback.textContent = "";
+        this.dom.feedback.className = "h-6 mb-6 font-semibold text-lg empty:hidden";
+
+        this.setGameButtonsState();
+
+        if (this.state.currentIndex === null) this.nextTask();
+      }
+
+      setGameButtonsState() {
+        if (!this.state.isGameActive) {
+          this.dom.startBtn.classList.remove('hidden');
+          this.dom.pauseBtn.classList.add('hidden');
+          this.dom.hintBtn.classList.add('hidden');
+          this.dom.startBtnText.textContent = "Старт";
+          return;
+        }
+
+        if (this.state.isPaused) {
+          this.dom.startBtn.classList.remove('hidden');
+          this.dom.pauseBtn.classList.add('hidden');
+          this.dom.hintBtn.classList.add('hidden');
+          this.dom.startBtnText.textContent = "Продовжити";
+        } else {
+          this.dom.startBtn.classList.add('hidden');
+          this.dom.pauseBtn.classList.remove('hidden');
+          this.dom.hintBtn.classList.remove('hidden');
+          this.dom.pauseBtnText.textContent = "Пауза";
+        }
+      }
+
+      getPoolIndices() {
+        const cat = this.state.trainCategory;
+        const pool = [];
+        for (let i = 0; i < SHORTCUTS.length; i++) {
+          if (cat === 'all' || SHORTCUTS[i].cat === cat) pool.push(i);
+        }
+        return pool.length ? pool : [...Array(SHORTCUTS.length)].map((_, i) => i);
+      }
+
+      nextTask() {
+        this.clearNextTimer();
+
+        const pool = this.getPoolIndices();
+
+        let nextIndex = pool[Math.floor(Math.random() * pool.length)];
+        if (pool.length > 1) {
+          let guard = 0;
+          while (nextIndex === this.state.lastIndex && guard < 20) {
+            nextIndex = pool[Math.floor(Math.random() * pool.length)];
+            guard++;
+          }
+        }
+
+        this.state.currentIndex = nextIndex;
+        this.state.lastIndex = nextIndex;
+        this.state.isBlocked = false;
+
+        const task = SHORTCUTS[nextIndex];
+
+        this.dom.catBadge.textContent = task.cat;
+        this.dom.taskDesc.textContent = task.desc;
+        this.dom.taskDesc.className = `text-2xl md:text-3xl font-bold mb-10 min-h-[4rem] flex items-center justify-center leading-tight transition-colors ${task.color}`;
+
+        this.dom.visualizer.innerHTML = '<div class="animate-pulse text-4xl text-slate-300 dark:text-slate-600">⌨️</div>';
+        this.dom.feedback.textContent = '';
+      }
+
+      handleGlobalKeyDown(e) {
+        if (this.state.isGameActive && e.code === 'Escape') {
+          e.preventDefault();
+          this.togglePause();
+          return;
+        }
+
+        if (!this.state.isGameActive || this.state.isPaused) return;
+
+        const t = e.target;
+        const isTypingTarget = t && (
+          t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable
+        );
+        if (isTypingTarget) return;
+
+        if (e.ctrlKey || e.altKey || BLOCKED_KEYS.includes(e.code) || e.code.startsWith('F')) {
+          e.preventDefault();
+        }
+
+        if (this.state.isBlocked) return;
+        if (e.repeat) return;
+
+        const ignore = ['ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight'];
+        if (ignore.includes(e.code)) return;
+
+        this.checkInput(e);
+      }
+
+      checkInput(e) {
+        const target = SHORTCUTS[this.state.currentIndex];
+        const targetKeys = target.keys;
+
+        const ctrlMatch = !!targetKeys.ctrl === e.ctrlKey;
+        const shiftMatch = !!targetKeys.shift === e.shiftKey;
+        const altMatch = !!targetKeys.alt === e.altKey;
+
+        const codeMatch = targetKeys.code === e.code;
+
+        this.state.totalAttempts++;
+
+        if (ctrlMatch && shiftMatch && altMatch && codeMatch) this.handleSuccess();
+        else this.handleFail();
+      }
+
+      handleSuccess() {
+        this.state.score += 10 + (this.state.streak * 2);
+        this.state.streak++;
+        this.state.correctAttempts++;
+        this.state.isBlocked = true;
+
+        this.updateStats();
+        const task = SHORTCUTS[this.state.currentIndex];
+
+        this.showToast(`Чудово! ${task.label}`);
+        this.renderKeys(task);
+
+        this.dom.feedback.textContent = "Правильно!";
+        this.dom.feedback.className = "h-6 mb-6 font-bold text-lg text-green-500 animate-pop";
+
+        this.clearNextTimer();
+        this.nextTimer = setTimeout(() => {
+          if (this.state.isGameActive && !this.state.isPaused) this.nextTask();
+        }, 1000);
+      }
+
+      handleFail() {
+        this.state.streak = 0;
+        this.updateStats();
+
+        const card = this.dom.taskDesc.parentElement;
+        card.classList.remove('animate-shake');
+        void card.offsetWidth;
+        card.classList.add('animate-shake');
+
+        this.dom.feedback.textContent = "Спробуйте ще раз";
+        this.dom.feedback.className = "h-6 mb-6 font-semibold text-lg text-red-500";
+      }
+
+      showHint() {
+        if (!this.state.isGameActive || this.state.isPaused || this.state.isBlocked) return;
+
+        this.state.score = Math.max(0, this.state.score - 5);
+        this.state.streak = 0;
+        this.updateStats();
+
+        const task = SHORTCUTS[this.state.currentIndex];
+        this.renderKeys(task);
+      }
+
+      renderKeys(task) {
+        const parts = [];
+        if (task.keys.ctrl) parts.push('Ctrl');
+        if (task.keys.shift) parts.push('Shift');
+        if (task.keys.alt) parts.push('Alt');
+
+        let mainKey = task.keys.code.replace('Key', '').replace('Digit', '').replace('Arrow', '');
+
+        const keyNames = {
+          'Left': '←', 'Right': '→', 'Up': '↑', 'Down': '↓',
+          'Escape': 'Esc', 'Delete': 'Del', 'Insert': 'Ins',
+          'Backspace': 'Backspace',
+          'PageUp': 'PgUp', 'PageDown': 'PgDn'
+        };
+
+        if (keyNames[mainKey]) mainKey = keyNames[mainKey];
+        parts.push(mainKey);
+
+        const html = parts.map(k =>
+          `<kbd class="key-cap inline-flex items-center justify-center min-w-[2.5rem] h-10 px-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold text-sm shadow-sm mx-1">${k}</kbd>`
+        ).join('<span class="text-slate-400 mx-1">+</span>');
+
+        this.dom.visualizer.innerHTML = `<div class="animate-pop">${html}</div>`;
+      }
+
+      clearNextTimer() {
+        if (this.nextTimer) {
+          clearTimeout(this.nextTimer);
+          this.nextTimer = null;
+        }
+      }
+
+      showToast(msg) {
+        this.dom.toastMsg.textContent = msg;
+        this.dom.toast.classList.remove('translate-x-[150%]');
+
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => {
+          this.dom.toast.classList.add('translate-x-[150%]');
+        }, 2000);
+      }
+
+      updateStats() {
+        this.dom.score.textContent = this.state.score;
+        this.dom.streak.textContent = this.state.streak;
+
+        const acc = this.state.totalAttempts === 0
+          ? 100
+          : Math.round((this.state.correctAttempts / this.state.totalAttempts) * 100);
+        this.dom.accuracy.textContent = `${acc}%`;
+      }
+
+      renderReferenceTable() {
+        this.dom.refTable.innerHTML = '';
+        SHORTCUTS.forEach(s => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors group';
+          row.innerHTML = `
+            <td class="p-4 border-b border-slate-200 dark:border-slate-700 font-mono text-blue-600 dark:text-blue-400 font-medium">${s.label}</td>
+            <td class="p-4 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">${s.desc}</td>
+            <td class="p-4 border-b border-slate-200 dark:border-slate-700 text-right">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                ${s.cat}
+              </span>
+            </td>
+          `;
+          this.dom.refTable.appendChild(row);
+        });
+      }
+
+      filterTable(category) {
+        const rows = this.dom.refTable.getElementsByTagName('tr');
+        for (let row of rows) {
+          const catCell = row.cells[2].textContent.trim();
+          if (category === 'all' || catCell === category) row.style.display = '';
+          else row.style.display = 'none';
+        }
+      }
+    }
+
+    const app = new ShortcutsTrainer();
+  </script>
 </body>
 </html>
