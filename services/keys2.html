@@ -35,7 +35,7 @@
       :root {
         --letter-size: 64px;
         --shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        --pill-h: 60px; /* ✅ фіксована висота для стабільності */
+        --pill-h: 60px;
       }
 
       * { box-sizing: border-box; }
@@ -54,7 +54,7 @@
       h1 {
         color: white;
         text-align: center;
-        margin: 6px 0 16px 0;
+        margin: 6px 0 14px 0;
         font-size: 2.25em;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         animation: glow 2s ease-in-out infinite alternate;
@@ -64,6 +64,30 @@
         to   { text-shadow: 2px 2px 4px rgba(0,0,0,.3), 0 0 18px rgba(255,255,255,.8); }
       }
 
+      /* ✅ Кнопка звуку тепер НЕ всередині картки — не роздуває висоту */
+      #sound-toggle {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+
+        background: linear-gradient(45deg, #9c27b0, #7b1fa2);
+        border: none;
+        color: white;
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.15em;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.22);
+      }
+      #sound-toggle:focus-visible {
+        outline: 3px solid #0d47a1;
+        outline-offset: 2px;
+      }
+
       #game-container {
         width: 100%;
         max-width: 920px;
@@ -71,45 +95,20 @@
         border-radius: 22px;
         box-shadow: var(--shadow);
         padding: 20px 20px 18px 20px;
-
-        /* ✅ резерв для кнопки звуку */
-        padding-top: 76px;
-
         backdrop-filter: blur(10px);
         position: relative;
-      }
-
-      #sound-toggle {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        background: linear-gradient(45deg, #9c27b0, #7b1fa2);
-        border: none;
-        color: white;
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.15em;
-        display: grid;
-        place-items: center;
-        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
-      }
-      #sound-toggle:focus-visible {
-        outline: 3px solid #0d47a1;
-        outline-offset: 2px;
       }
 
       /* --- INFO PANEL --- */
       #info-panel {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
         margin-bottom: 14px;
       }
 
       .pill {
-        height: var(--pill-h);      /* ✅ фікс, щоб нічого не стрибало */
+        height: var(--pill-h);
         min-height: var(--pill-h);
         font-size: 1.12em;
         font-weight: 900;
@@ -126,53 +125,15 @@
         justify-content: center;
         gap: 10px;
 
-        white-space: nowrap;        /* ✅ не переносимо рядки */
+        white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;    /* ✅ якщо колись стане довго */
+        text-overflow: ellipsis;
       }
 
       .pill.animate {
         transform: scale(1.04);
         background: linear-gradient(45deg, #4caf50, #81c784);
         color: white;
-      }
-
-      #target-pill {
-        background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-        color: #0d47a1;
-        justify-content: flex-start;
-        padding-left: 14px;
-      }
-
-      #target-pill .label {
-        font-weight: 900;
-        flex: 0 0 auto;
-      }
-
-      #target-pill .target-char {
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.82);
-        box-shadow: inset 0 0 0 2px rgba(13, 71, 161, 0.22);
-        font-size: 1.18em;
-        font-weight: 900;
-      }
-
-      /* ✅ Shift-хінт як компактний бейдж, не роздуває блок */
-      #target-pill .hint {
-        flex: 0 0 auto;
-        font-size: 0.95em;
-        font-weight: 900;
-        color: #0d47a1;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.55);
-        box-shadow: inset 0 0 0 1px rgba(13, 71, 161, 0.14);
       }
 
       /* --- GAME FIELD --- */
@@ -210,7 +171,7 @@
         background: linear-gradient(45deg, #f44336, #d32f2f);
       }
 
-      /* ✅ LETTER: flex-центрування + line-height:1 => без зсуву вниз */
+      /* ✅ центрування символу в колі */
       .letter {
         position: absolute;
         width: var(--letter-size);
@@ -233,7 +194,7 @@
         font-size: 2.15em;
         font-weight: 900;
         color: #333;
-        line-height: 1; /* ✅ головний фікс */
+        line-height: 1;
       }
 
       .letter.correct {
@@ -248,7 +209,6 @@
       }
       .letter.missed .glyph { color: #fff; transform: scale(0.92); }
 
-      /* urgent без transform */
       .letter.urgent {
         border-color: #ff5722;
         animation: urgentGlow 0.55s ease-in-out infinite alternate;
@@ -258,7 +218,7 @@
         to   { box-shadow: 0 0 0 10px rgba(255,87,34,.18), 0 6px 12px rgba(0,0,0,.2); }
       }
 
-      /* --- GAME OVER: ✅ scrollable, щоб статистика вміщувалась --- */
+      /* --- GAME OVER: scrollable --- */
       #game-over {
         display: none;
         position: absolute;
@@ -267,14 +227,12 @@
         z-index: 20;
         border-radius: 22px;
         backdrop-filter: blur(5px);
-
-        /* ✅ */
         overflow: auto;
         padding: 18px;
       }
 
       .gameover-wrap {
-        max-width: 620px;
+        max-width: 680px;
         margin: 0 auto;
         text-align: center;
       }
@@ -286,19 +244,20 @@
       }
 
       .final {
-        font-size: 1.08em;
-        margin: 8px 0;
+        font-size: 1.12em;
+        margin: 10px 0;
         color: #333;
-        font-weight: 800;
+        font-weight: 900;
         line-height: 1.25;
       }
-
       .final strong { color: #2e7d32; }
+
       #achievement {
         margin-top: 12px;
         font-weight: 900;
         color: #ff9800;
         line-height: 1.25;
+        font-size: 1.08em;
       }
 
       /* --- BUTTONS --- */
@@ -387,7 +346,7 @@
         gap: 12px;
         min-height: 56px;
       }
-      .toggle label { font-weight: 900; color: #333; }
+      .toggle label { font-weight: 900; color: #333; font-size: 1.05em; }
       .toggle input[type="checkbox"] {
         width: 22px; height: 22px;
         accent-color: #2196f3;
@@ -395,25 +354,39 @@
         flex: 0 0 auto;
       }
 
+      /* ✅ Інструкції: збільшуємо шрифт до розміру UI */
       #instructions {
         background: rgba(255, 255, 255, 0.9);
         border-radius: 16px;
-        padding: 20px;
+        padding: 22px;
         margin-top: 18px;
         max-width: 920px;
         width: 100%;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
+
+        font-size: 1.08em;
+        line-height: 1.55;
       }
-      #instructions h3 { color: #2196f3; margin-top: 0; font-size: 1.5em; }
-      #instructions p { color: #333; line-height: 1.6; font-size: 1.05em; }
+      #instructions h3 {
+        color: #2196f3;
+        margin-top: 0;
+        font-size: 1.55em;
+      }
+      #instructions p {
+        color: #333;
+        margin: 10px 0;
+        font-weight: 600;
+      }
+
       .note-box {
         border-radius: 14px;
-        padding: 14px;
-        margin: 10px 0;
+        padding: 16px;
+        margin: 12px 0;
         background: linear-gradient(135deg, #f3e5f5, #e1bee7);
         border-left: 5px solid #9c27b0;
-        font-weight: 800;
+        font-weight: 900;
+        font-size: 1.05em;
       }
 
       footer {
@@ -433,27 +406,28 @@
       @media (max-width: 520px) {
         #info-panel { grid-template-columns: 1fr; }
         .pill { height: 58px; min-height: 58px; }
-        #target-pill { justify-content: center; }
+        #instructions { font-size: 1.05em; }
       }
     </style>
   </head>
 
   <body>
+    <button
+      id="sound-toggle"
+      type="button"
+      title="Увімкнути/вимкнути звук"
+      aria-label="Вимкнути звук гри"
+    >
+      🔊
+    </button>
+
     <h1>🎮 Клавіатурний тренажер 🎮</h1>
 
     <div id="game-container">
-      <button id="sound-toggle" type="button" title="Увімкнути/вимкнути звук" aria-label="Вимкнути звук гри">🔊</button>
-
       <div id="info-panel">
         <div id="score" class="pill" aria-live="polite">🏆 Бали: <span id="score-num">0</span></div>
         <div id="timer" class="pill" aria-live="polite">⏰ Час: <span id="timer-num">60</span></div>
         <div id="streak" class="pill" aria-live="polite">🔥 Серія: <span id="streak-num">0</span></div>
-
-        <div id="target-pill" class="pill" aria-live="polite" title="Найближчий символ до правого краю">
-          <span class="label">🎯 Ціль:</span>
-          <span class="target-char" id="target-char">—</span>
-          <span class="hint" id="target-hint" style="display:none;">Shift</span>
-        </div>
       </div>
 
       <div id="game-field" aria-label="Ігрове поле">
@@ -495,11 +469,6 @@
       </div>
 
       <div class="toggles">
-        <div class="toggle">
-          <label for="trainingMode">🎓 Навчальний режим (показує «ціль»)</label>
-          <input id="trainingMode" type="checkbox" checked />
-        </div>
-
         <div class="toggle">
           <label for="smartMode">🧠 Розумний режим (легко адаптує складність)</label>
           <input id="smartMode" type="checkbox" checked />
@@ -591,7 +560,6 @@
         letters: new Map(),
         idCounter: 1,
 
-        trainingMode: true,
         smartMode: true,
 
         soundEnabled: true,
@@ -606,9 +574,6 @@
         timerPill: document.getElementById("timer"),
         scorePill: document.getElementById("score"),
         streakPill: document.getElementById("streak"),
-
-        targetChar: document.getElementById("target-char"),
-        targetHint: document.getElementById("target-hint"),
 
         gameField: document.getElementById("game-field"),
         feedback: document.getElementById("feedback-message"),
@@ -630,16 +595,11 @@
         levelsWrap: document.getElementById("levels"),
         speedWrap: document.getElementById("speed-control"),
 
-        trainingMode: document.getElementById("trainingMode"),
         smartMode: document.getElementById("smartMode"),
       };
 
       const nowMs = () => performance.now();
       const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
-      function isLetterWithCase(ch) {
-        return ch && ch.toLowerCase() !== ch.toUpperCase();
-      }
 
       function ensureCharStat(ch) {
         if (!state.charStats.has(ch)) state.charStats.set(ch, { correct: 0, wrong: 0, missed: 0 });
@@ -788,32 +748,6 @@
         return clamp((tNow - letter.startAt) / letter.durationMs, 0, 1);
       }
 
-      function mostUrgentLetter(tNow) {
-        let best = null;
-        let bestP = -1;
-        for (const l of state.letters.values()) {
-          const p = letterProgress(l, tNow);
-          if (p > bestP) { bestP = p; best = l; }
-        }
-        return { best, bestP };
-      }
-
-      function updateTargetHUD(tNow) {
-        if (!state.trainingMode || !state.running || state.letters.size === 0) {
-          dom.targetChar.textContent = "—";
-          dom.targetHint.style.display = "none";
-          return;
-        }
-
-        const { best } = mostUrgentLetter(tNow);
-        if (!best) return;
-
-        dom.targetChar.textContent = best.char;
-
-        const needsShift = isLetterWithCase(best.char) && best.char === best.char.toUpperCase();
-        dom.targetHint.style.display = needsShift ? "inline-flex" : "none";
-      }
-
       function spawnIfNeeded(tNow) {
         if (tNow < state.nextSpawnAt) return;
 
@@ -847,7 +781,6 @@
 
         const { width, size } = getFieldMetrics();
 
-        /* ✅ старт/фініш всередині поля => немає «напівкіл» */
         const xStart = 10;
         const xEnd = Math.max(10, width - size - 10);
 
@@ -871,9 +804,7 @@
           }
         }
 
-        updateTargetHUD(tNow);
         updateUI();
-
         requestAnimationFrame(gameLoop);
       }
 
@@ -1000,7 +931,6 @@
         dom.gameOver.style.display = "none";
         dom.startBtn.style.display = "block";
         dom.stopBtn.style.display = "none";
-        updateTargetHUD(nowMs());
         updateUI();
       }
 
@@ -1054,7 +984,6 @@
         dom.startBtn.style.display = "block";
         dom.stopBtn.style.display = "none";
 
-        updateTargetHUD(nowMs());
         updateUI();
       }
 
@@ -1093,11 +1022,6 @@
 
         dom.soundBtn.addEventListener("click", toggleSound);
 
-        dom.trainingMode.addEventListener("change", () => {
-          state.trainingMode = dom.trainingMode.checked;
-          updateTargetHUD(nowMs());
-        });
-
         dom.smartMode.addEventListener("change", () => {
           state.smartMode = dom.smartMode.checked;
         });
@@ -1108,8 +1032,6 @@
           state.running = false;
           clearLetters();
         });
-
-        updateTargetHUD(nowMs());
       }
 
       document.addEventListener("DOMContentLoaded", init);
