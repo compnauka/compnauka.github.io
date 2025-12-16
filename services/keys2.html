@@ -9,28 +9,19 @@
       name="description"
       content="Безкоштовний онлайн тренажер клавіатури для дітей українською. Вивчайте комп'ютерну грамотність граючи!"
     />
-    <meta
-      name="keywords"
-      content="клавіатурний тренажер,тренажер клавіатури, діти, навчання, українська, гра, typing, keyboard, kids, education"
-    />
     <meta name="author" content="Пан Артем" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://pan-artem-cs-2025.example.com/" />
 
     <meta property="og:title" content="Тренажер клавіатури для дітей" />
-    <meta
-      property="og:description"
-      content="Безкоштовний онлайн тренажер клавіатури для дітей українською. Вивчайте комп'ютерну грамотність граючи!"
-    />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://pan-artem-cs-2025.example.com/" />
     <meta property="og:locale" content="uk_UA" />
     <meta property="og:image" content="./favicon.png" />
 
     <link rel="icon" href="../../favicon.ico" type="image/x-icon" />
     <meta name="theme-color" content="#667eea" />
 
-    <!-- (Опційно) Privacy-friendly analytics -->
+    <!-- (Опційно) Plausible -->
     <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
     <script>
       window.plausible =
@@ -42,13 +33,12 @@
 
     <style>
       :root {
-        --letter-size: 60px;
+        --letter-size: 64px;
         --shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        --pill-h: 60px; /* ✅ фіксована висота для стабільності */
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
 
       body {
         font-family: "Roboto", "Arial", sans-serif;
@@ -69,14 +59,9 @@
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         animation: glow 2s ease-in-out infinite alternate;
       }
-
       @keyframes glow {
-        from {
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-        to {
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 255, 255, 0.8);
-        }
+        from { text-shadow: 2px 2px 4px rgba(0,0,0,.3), 0 0 10px rgba(255,255,255,.5); }
+        to   { text-shadow: 2px 2px 4px rgba(0,0,0,.3), 0 0 18px rgba(255,255,255,.8); }
       }
 
       #game-container {
@@ -87,14 +72,13 @@
         box-shadow: var(--shadow);
         padding: 20px 20px 18px 20px;
 
-        /* ✅ резерв місця для кнопки звуку */
-        padding-top: 72px;
+        /* ✅ резерв для кнопки звуку */
+        padding-top: 76px;
 
         backdrop-filter: blur(10px);
         position: relative;
       }
 
-      /* ✅ кнопка звуку не перекриває панель */
       #sound-toggle {
         position: absolute;
         top: 18px;
@@ -102,11 +86,11 @@
         background: linear-gradient(45deg, #9c27b0, #7b1fa2);
         border: none;
         color: white;
-        width: 50px;
-        height: 50px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         cursor: pointer;
-        font-size: 1.1em;
+        font-size: 1.15em;
         display: grid;
         place-items: center;
         box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
@@ -125,20 +109,26 @@
       }
 
       .pill {
+        height: var(--pill-h);      /* ✅ фікс, щоб нічого не стрибало */
+        min-height: var(--pill-h);
         font-size: 1.12em;
         font-weight: 900;
         color: #222;
         background: linear-gradient(45deg, #ffeb3b, #ffc107);
-        padding: 12px 14px;
+        padding: 10px 14px;
         border-radius: 16px;
         text-align: center;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
         user-select: none;
-        min-height: 54px;
+
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
+
+        white-space: nowrap;        /* ✅ не переносимо рядки */
+        overflow: hidden;
+        text-overflow: ellipsis;    /* ✅ якщо колись стане довго */
       }
 
       .pill.animate {
@@ -150,22 +140,39 @@
       #target-pill {
         background: linear-gradient(45deg, #e3f2fd, #bbdefb);
         color: #0d47a1;
+        justify-content: flex-start;
+        padding-left: 14px;
       }
+
+      #target-pill .label {
+        font-weight: 900;
+        flex: 0 0 auto;
+      }
+
       #target-pill .target-char {
+        flex: 0 0 auto;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.78);
-        box-shadow: inset 0 0 0 2px rgba(13, 71, 161, 0.25);
-        font-size: 1.2em;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: inset 0 0 0 2px rgba(13, 71, 161, 0.22);
+        font-size: 1.18em;
         font-weight: 900;
       }
-      #target-hint {
+
+      /* ✅ Shift-хінт як компактний бейдж, не роздуває блок */
+      #target-pill .hint {
+        flex: 0 0 auto;
+        font-size: 0.95em;
         font-weight: 900;
         color: #0d47a1;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(13, 71, 161, 0.14);
       }
 
       /* --- GAME FIELD --- */
@@ -196,15 +203,14 @@
         transition: opacity 0.22s;
         z-index: 15;
         pointer-events: none;
+        white-space: nowrap;
       }
-      #feedback-message.show {
-        opacity: 1;
-      }
+      #feedback-message.show { opacity: 1; }
       #feedback-message.negative {
         background: linear-gradient(45deg, #f44336, #d32f2f);
       }
 
-      /* Letters */
+      /* ✅ LETTER: flex-центрування + line-height:1 => без зсуву вниз */
       .letter {
         position: absolute;
         width: var(--letter-size);
@@ -213,84 +219,86 @@
         background: linear-gradient(145deg, #ffffff, #f0f0f0);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         border: 3px solid #2196f3;
-        display: grid;
-        place-items: center;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
         will-change: transform;
         user-select: none;
       }
 
       .letter .glyph {
-        font-size: 2.25em;
+        display: block;
+        font-size: 2.15em;
         font-weight: 900;
         color: #333;
-        transition: transform 0.18s ease, color 0.18s ease;
+        line-height: 1; /* ✅ головний фікс */
       }
 
       .letter.correct {
         background: linear-gradient(145deg, #4caf50, #388e3c);
         border-color: #2e7d32;
       }
-      .letter.correct .glyph {
-        color: #fff;
-        transform: scale(1.15);
-      }
+      .letter.correct .glyph { color: #fff; transform: scale(1.12); }
 
       .letter.missed {
         background: linear-gradient(145deg, #f44336, #d32f2f);
         border-color: #c62828;
       }
-      .letter.missed .glyph {
-        color: #fff;
-        transform: scale(0.88);
-      }
+      .letter.missed .glyph { color: #fff; transform: scale(0.92); }
 
-      /* ✅ Urgent без transform (не конфліктує з correct/missed) */
+      /* urgent без transform */
       .letter.urgent {
         border-color: #ff5722;
         animation: urgentGlow 0.55s ease-in-out infinite alternate;
       }
       @keyframes urgentGlow {
-        from {
-          box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.0), 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        to {
-          box-shadow: 0 0 0 10px rgba(255, 87, 34, 0.18), 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
+        from { box-shadow: 0 0 0 0 rgba(255,87,34,0), 0 6px 12px rgba(0,0,0,.2); }
+        to   { box-shadow: 0 0 0 10px rgba(255,87,34,.18), 0 6px 12px rgba(0,0,0,.2); }
       }
 
-      /* --- GAME OVER --- */
+      /* --- GAME OVER: ✅ scrollable, щоб статистика вміщувалась --- */
       #game-over {
         display: none;
         position: absolute;
         inset: 0;
         background: rgba(255, 255, 255, 0.95);
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
         z-index: 20;
         border-radius: 22px;
         backdrop-filter: blur(5px);
+
+        /* ✅ */
+        overflow: auto;
         padding: 18px;
+      }
+
+      .gameover-wrap {
+        max-width: 620px;
+        margin: 0 auto;
         text-align: center;
       }
+
       #game-over h2 {
         color: #2196f3;
         font-size: 2em;
-        margin: 4px 0 10px 0;
+        margin: 6px 0 12px 0;
       }
+
       .final {
-        font-size: 1.12em;
-        margin: 6px 0;
+        font-size: 1.08em;
+        margin: 8px 0;
         color: #333;
         font-weight: 800;
+        line-height: 1.25;
       }
-      .final strong {
-        color: #2e7d32;
-      }
+
+      .final strong { color: #2e7d32; }
       #achievement {
-        margin-top: 10px;
+        margin-top: 12px;
         font-weight: 900;
         color: #ff9800;
+        line-height: 1.25;
       }
 
       /* --- BUTTONS --- */
@@ -315,16 +323,17 @@
         font-family: inherit;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
         user-select: none;
+        position: relative;
       }
+
       .grid-buttons button:hover,
       button.action:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.26);
       }
       .grid-buttons button:active,
-      button.action:active {
-        transform: translateY(1px);
-      }
+      button.action:active { transform: translateY(1px); }
+
       .grid-buttons button:focus-visible,
       button.action:focus-visible {
         outline: 3px solid #0d47a1;
@@ -360,7 +369,6 @@
         display: none;
       }
 
-      /* toggles */
       .toggles {
         width: 100%;
         display: grid;
@@ -379,13 +387,9 @@
         gap: 12px;
         min-height: 56px;
       }
-      .toggle label {
-        font-weight: 900;
-        color: #333;
-      }
+      .toggle label { font-weight: 900; color: #333; }
       .toggle input[type="checkbox"] {
-        width: 22px;
-        height: 22px;
+        width: 22px; height: 22px;
         accent-color: #2196f3;
         cursor: pointer;
         flex: 0 0 auto;
@@ -401,16 +405,8 @@
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
       }
-      #instructions h3 {
-        color: #2196f3;
-        margin-top: 0;
-        font-size: 1.5em;
-      }
-      #instructions p {
-        color: #333;
-        line-height: 1.6;
-        font-size: 1.05em;
-      }
+      #instructions h3 { color: #2196f3; margin-top: 0; font-size: 1.5em; }
+      #instructions p { color: #333; line-height: 1.6; font-size: 1.05em; }
       .note-box {
         border-radius: 14px;
         padding: 14px;
@@ -428,23 +424,16 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
-        * {
-          animation: none !important;
-          transition: none !important;
-          scroll-behavior: auto !important;
-        }
+        * { animation: none !important; transition: none !important; }
       }
 
-      /* ✅ адаптив, щоб нічого не наїжджало */
       @media (max-width: 820px) {
-        #info-panel {
-          grid-template-columns: repeat(2, 1fr);
-        }
+        #info-panel { grid-template-columns: repeat(2, 1fr); }
       }
       @media (max-width: 520px) {
-        #info-panel {
-          grid-template-columns: 1fr;
-        }
+        #info-panel { grid-template-columns: 1fr; }
+        .pill { height: 58px; min-height: 58px; }
+        #target-pill { justify-content: center; }
       }
     </style>
   </head>
@@ -453,22 +442,17 @@
     <h1>🎮 Клавіатурний тренажер 🎮</h1>
 
     <div id="game-container">
-      <button
-        id="sound-toggle"
-        type="button"
-        title="Увімкнути/вимкнути звук"
-        aria-label="Вимкнути звук гри"
-      >
-        🔊
-      </button>
+      <button id="sound-toggle" type="button" title="Увімкнути/вимкнути звук" aria-label="Вимкнути звук гри">🔊</button>
 
       <div id="info-panel">
         <div id="score" class="pill" aria-live="polite">🏆 Бали: <span id="score-num">0</span></div>
         <div id="timer" class="pill" aria-live="polite">⏰ Час: <span id="timer-num">60</span></div>
         <div id="streak" class="pill" aria-live="polite">🔥 Серія: <span id="streak-num">0</span></div>
+
         <div id="target-pill" class="pill" aria-live="polite" title="Найближчий символ до правого краю">
-          🎯 Ціль: <span class="target-char" id="target-char">—</span>
-          <span id="target-hint"></span>
+          <span class="label">🎯 Ціль:</span>
+          <span class="target-char" id="target-char">—</span>
+          <span class="hint" id="target-hint" style="display:none;">Shift</span>
         </div>
       </div>
 
@@ -476,35 +460,38 @@
         <div id="feedback-message" role="status" aria-live="polite"></div>
 
         <div id="game-over" aria-live="polite">
-          <h2>🎉 Час вийшов! 🎉</h2>
+          <div class="gameover-wrap">
+            <h2>🎉 Час вийшов! 🎉</h2>
 
-          <div class="final" id="final-score">Ваш результат: <strong>0</strong> балів</div>
-          <div class="final" id="final-level">Рівень: <strong>Дуже простий</strong></div>
-          <div class="final" id="final-speed">Швидкість: <strong>Середня</strong></div>
+            <div class="final" id="final-score">Ваш результат: <strong>0</strong> балів</div>
+            <div class="final" id="final-level">Рівень: <strong>Дуже простий</strong></div>
+            <div class="final" id="final-speed">Швидкість: <strong>Середня</strong></div>
 
-          <div class="final" id="final-accuracy">Точність: <strong>0%</strong></div>
-          <div class="final" id="final-counts">✅ 0 / ❌ 0 / ⏭️ 0</div>
-          <div class="final" id="final-reaction">Середня реакція: <strong>—</strong></div>
-          <div class="final" id="final-hardest">Складні символи: <strong>—</strong></div>
+            <div class="final" id="final-accuracy">Точність: <strong>0%</strong></div>
+            <div class="final" id="final-counts">✅ 0 / ❌ 0 / ⏭️ 0</div>
+            <div class="final" id="final-reaction">Середня реакція: <strong>—</strong></div>
+            <div class="final" id="final-hardest">Складні символи: <strong>—</strong></div>
 
-          <div id="achievement"></div>
-          <div style="margin-top: 10px; color: #555; font-weight: 900;">
-            Порада: дивись на символи на екрані, а не на клавіатуру 😉
+            <div id="achievement"></div>
+
+            <div style="margin-top: 12px; color: #555; font-weight: 900; line-height:1.3;">
+              Порада: дивись на символи на екрані, а не на клавіатуру 😉
+            </div>
           </div>
         </div>
       </div>
 
       <div class="grid-buttons" id="levels" aria-label="Рівні складності">
-        <button type="button" data-level="beginner" class="selected" style="position:relative;">🌟 Дуже простий</button>
-        <button type="button" data-level="easy" style="position:relative;">😊 Простий</button>
-        <button type="button" data-level="medium" style="position:relative;">💪 Середній</button>
-        <button type="button" data-level="hard" style="position:relative;">🔥 Складний</button>
+        <button type="button" data-level="beginner" class="selected">🌟 Дуже простий</button>
+        <button type="button" data-level="easy">😊 Простий</button>
+        <button type="button" data-level="medium">💪 Середній</button>
+        <button type="button" data-level="hard">🔥 Складний</button>
       </div>
 
       <div class="grid-buttons" id="speed-control" aria-label="Швидкість">
-        <button type="button" data-speed="slow" style="position:relative;">🐌 Повільно</button>
-        <button type="button" data-speed="medium" class="selected" style="position:relative;">🚶 Середньо</button>
-        <button type="button" data-speed="fast" style="position:relative;">🏃 Швидко</button>
+        <button type="button" data-speed="slow">🐌 Повільно</button>
+        <button type="button" data-speed="medium" class="selected">🚶 Середньо</button>
+        <button type="button" data-speed="fast">🏃 Швидко</button>
       </div>
 
       <div class="toggles">
@@ -545,9 +532,6 @@
     <footer>2025 Комп'ютерна наука з паном Артемом</footer>
 
     <script>
-      /***********************
-       * 1) НАЛАШТУВАННЯ
-       ***********************/
       const GAME_DURATION_SECONDS = 60;
       const MAX_ACTIVE_LETTERS = 18;
       const URGENT_THRESHOLD = 0.82;
@@ -573,41 +557,20 @@
         medium:
           "абвгдеєжзиіїйклмнопрстуфхцчшщьюяґАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯҐ",
         hard:
-          "абвгдеєжзиіїйклмнопрстуфхцчшщьюяґАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯҐ0123456789!\"№;%:?*()-_=+",
+          "абвгдеєжзиіїйклмнопрстуфхцчшщьюяґAБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯҐ0123456789!\"№;%:?*()-_=+",
       };
 
       const levelNames = { beginner: "Дуже простий", easy: "Простий", medium: "Середній", hard: "Складний" };
       const speedNames = { slow: "Повільна", medium: "Середня", fast: "Швидка" };
 
-      const motivationalMessages = [
-        "Чудово! 🌟",
-        "Супер! 🎉",
-        "Відмінно! 💪",
-        "Класно! 👏",
-        "Молодець! 🏆",
-        "Круто! 🔥",
-        "Фантастично! ⭐",
-        "Браво! 👍",
-      ];
+      const motivationalMessages = ["Чудово! 🌟","Супер! 🎉","Відмінно! 💪","Класно! 👏","Молодець! 🏆","Круто! 🔥","Фантастично! ⭐","Браво! 👍"];
+      const streakMessages = { 5:"П'ять підряд! 🔥", 10:"Десять підряд! 💪", 15:"П'ятнадцять! 🌟", 20:"Двадцять! 🏆", 25:"Неймовірно! 🎉" };
 
-      const streakMessages = {
-        5: "П'ять підряд! 🔥",
-        10: "Десять підряд! 💪",
-        15: "П'ятнадцять! 🌟",
-        20: "Двадцять! 🏆",
-        25: "Неймовірно! 🎉",
-      };
-
-      /***********************
-       * 2) STATE (все у performance.now)
-       ***********************/
       const state = {
         level: "beginner",
         speed: "medium",
-
         running: false,
 
-        // ✅ усі таймінги в performance.now()
         endAt: 0,
         nextSpawnAt: 0,
 
@@ -625,7 +588,7 @@
         reactionTimes: [],
         charStats: new Map(),
 
-        letters: new Map(), // id -> letter
+        letters: new Map(),
         idCounter: 1,
 
         trainingMode: true,
@@ -635,9 +598,6 @@
         audioCtx: null,
       };
 
-      /***********************
-       * 3) DOM
-       ***********************/
       const dom = {
         scoreNum: document.getElementById("score-num"),
         timerNum: document.getElementById("timer-num"),
@@ -647,7 +607,6 @@
         scorePill: document.getElementById("score"),
         streakPill: document.getElementById("streak"),
 
-        targetPill: document.getElementById("target-pill"),
         targetChar: document.getElementById("target-char"),
         targetHint: document.getElementById("target-hint"),
 
@@ -675,14 +634,8 @@
         smartMode: document.getElementById("smartMode"),
       };
 
-      /***********************
-       * 4) HELPERS
-       ***********************/
       const nowMs = () => performance.now();
-
-      function clamp(n, a, b) {
-        return Math.max(a, Math.min(b, n));
-      }
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
       function isLetterWithCase(ch) {
         return ch && ch.toLowerCase() !== ch.toUpperCase();
@@ -722,7 +675,7 @@
 
       function getFieldMetrics() {
         const rect = dom.gameField.getBoundingClientRect();
-        const size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--letter-size")) || 60;
+        const size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--letter-size")) || 64;
         return { width: rect.width, height: rect.height, size };
       }
 
@@ -742,9 +695,6 @@
         }
       }
 
-      /***********************
-       * 5) AUDIO (lazy init)
-       ***********************/
       function ensureAudio() {
         if (!state.soundEnabled) return;
         if (state.audioCtx) return;
@@ -764,21 +714,17 @@
         ensureAudio();
         if (!state.audioCtx) return;
         if (state.audioCtx.state === "suspended") {
-          try {
-            await state.audioCtx.resume();
-          } catch (_) {}
+          try { await state.audioCtx.resume(); } catch (_) {}
         }
       }
 
       function playSound(type) {
         if (!state.soundEnabled) return;
         if (!state.audioCtx || state.audioCtx.state !== "running") return;
-
         try {
           const o = state.audioCtx.createOscillator();
           const g = state.audioCtx.createGain();
-          o.connect(g);
-          g.connect(state.audioCtx.destination);
+          o.connect(g); g.connect(state.audioCtx.destination);
 
           let f1 = 200, f2 = 100, d = 0.18;
           if (type === "correct") { f1 = 850; f2 = 1250; d = 0.10; }
@@ -798,12 +744,9 @@
         }
       }
 
-      /***********************
-       * 6) LETTERS (RAF loop)
-       ***********************/
       function createLetter(char) {
         const { height, size } = getFieldMetrics();
-        const y = Math.random() * Math.max(1, height - size - 6) + 3;
+        const y = Math.random() * Math.max(1, height - size - 10) + 5;
 
         const el = document.createElement("div");
         el.className = "letter";
@@ -815,7 +758,7 @@
           id,
           char,
           el,
-          startAt: nowMs(),     // ✅ performance.now
+          startAt: nowMs(),
           durationMs: state.durationMs,
           yPx: y,
           removed: false,
@@ -858,20 +801,17 @@
       function updateTargetHUD(tNow) {
         if (!state.trainingMode || !state.running || state.letters.size === 0) {
           dom.targetChar.textContent = "—";
-          dom.targetHint.textContent = "";
-          dom.targetPill.style.opacity = "0.8";
+          dom.targetHint.style.display = "none";
           return;
         }
 
         const { best } = mostUrgentLetter(tNow);
         if (!best) return;
 
-        dom.targetPill.style.opacity = "1";
         dom.targetChar.textContent = best.char;
 
-        let hint = "";
-        if (isLetterWithCase(best.char) && best.char === best.char.toUpperCase()) hint = " (Shift)";
-        dom.targetHint.textContent = hint;
+        const needsShift = isLetterWithCase(best.char) && best.char === best.char.toUpperCase();
+        dom.targetHint.style.display = needsShift ? "inline-flex" : "none";
       }
 
       function spawnIfNeeded(tNow) {
@@ -898,7 +838,6 @@
         if (!state.running) return;
 
         const tNow = nowMs();
-
         if (tNow >= state.endAt) {
           endGame();
           return;
@@ -907,8 +846,10 @@
         spawnIfNeeded(tNow);
 
         const { width, size } = getFieldMetrics();
-        const xStart = -size - 10;
-        const xEnd = width + 10;
+
+        /* ✅ старт/фініш всередині поля => немає «напівкіл» */
+        const xStart = 10;
+        const xEnd = Math.max(10, width - size - 10);
 
         for (const l of state.letters.values()) {
           const p = letterProgress(l, tNow);
@@ -936,22 +877,13 @@
         requestAnimationFrame(gameLoop);
       }
 
-      /***********************
-       * 7) INPUT
-       ***********************/
       function handleKeydown(e) {
         if (state.running && ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
           e.preventDefault();
         }
 
-        if (!state.running && e.key === "Enter") {
-          startGame();
-          return;
-        }
-        if (state.running && e.key === "Escape") {
-          stopGame();
-          return;
-        }
+        if (!state.running && e.key === "Enter") { startGame(); return; }
+        if (state.running && e.key === "Escape") { stopGame(); return; }
 
         if (!state.running) return;
         if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -961,9 +893,7 @@
         const tNow = nowMs();
 
         const candidates = [];
-        for (const l of state.letters.values()) {
-          if (l.char === pressed) candidates.push(l);
-        }
+        for (const l of state.letters.values()) if (l.char === pressed) candidates.push(l);
 
         if (candidates.length > 0) {
           let best = candidates[0];
@@ -1017,9 +947,6 @@
         }
       }
 
-      /***********************
-       * 8) GAME CONTROL
-       ***********************/
       function clearLetters() {
         for (const l of state.letters.values()) {
           if (l.el && l.el.parentNode) l.el.remove();
@@ -1031,18 +958,15 @@
         state.score = 0;
         state.streak = 0;
         state.maxStreak = 0;
-
         state.correct = 0;
         state.wrong = 0;
         state.missed = 0;
-
         state.reactionTimes = [];
         state.charStats = new Map();
       }
 
       function setSelected(container, attr, value) {
-        const buttons = container.querySelectorAll("button");
-        buttons.forEach((b) => b.classList.remove("selected"));
+        container.querySelectorAll("button").forEach((b) => b.classList.remove("selected"));
         const btn = container.querySelector(`button[${attr}="${value}"]`);
         if (btn) btn.classList.add("selected");
       }
@@ -1051,7 +975,6 @@
         if (state.running) return;
 
         resumeAudioIfNeeded();
-
         try { plausible("GameStart"); } catch (_) {}
 
         dom.gameOver.style.display = "none";
@@ -1060,7 +983,6 @@
 
         resetStats();
         clearLetters();
-
         computeDifficulty();
 
         state.running = true;
@@ -1091,8 +1013,8 @@
         clearLetters();
         playSound("gameOver");
 
-        const totalAttempts = state.correct + state.wrong + state.missed;
-        const accuracy = totalAttempts > 0 ? Math.round((state.correct / totalAttempts) * 100) : 0;
+        const total = state.correct + state.wrong + state.missed;
+        const accuracy = total > 0 ? Math.round((state.correct / total) * 100) : 0;
 
         const avgReaction =
           state.reactionTimes.length > 0
@@ -1124,11 +1046,11 @@
 
         if (state.maxStreak >= 20) achievement += " 🔥 Неймовірна серія!";
         else if (state.maxStreak >= 10) achievement += " ⚡ Чудова концентрація!";
-        if (accuracy >= 90 && totalAttempts >= 20) achievement += " 🎯 Дуже точна гра!";
+        if (accuracy >= 90 && total >= 20) achievement += " 🎯 Дуже точна гра!";
 
         dom.achievement.textContent = achievement;
 
-        dom.gameOver.style.display = "flex";
+        dom.gameOver.style.display = "block";
         dom.startBtn.style.display = "block";
         dom.stopBtn.style.display = "none";
 
@@ -1136,9 +1058,6 @@
         updateUI();
       }
 
-      /***********************
-       * 9) EVENTS
-       ***********************/
       function onLevelClick(e) {
         const btn = e.target.closest("button[data-level]");
         if (!btn) return;
