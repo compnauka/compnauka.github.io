@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CS Mobile Course</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Config for Custom Colors/Fonts -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        dark: '#0f172a',
+                        darkSec: '#1e293b',
+                    },
+                    aspectRatio: {
+                        '9/16': '9 / 16',
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Hide scrollbar for clean mobile look but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Smooth transitions for theme switch */
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Video placeholder animation */
+        .video-placeholder {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-dark dark:text-gray-100 font-sans antialiased pb-20 md:pb-0">
+
+    <!-- Main App Container -->
+    <!-- Centered on desktop to mimic mobile app view -->
+    <div id="app" class="max-w-lg mx-auto min-h-screen bg-white dark:bg-darkSec shadow-2xl relative overflow-hidden flex flex-col">
+
+        <!-- HEADER -->
+        <header class="sticky top-0 z-50 bg-white/90 dark:bg-darkSec/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 py-4 flex justify-between items-center h-16 transition-colors">
+            <div class="flex items-center gap-3">
+                <button id="backBtn" class="hidden text-2xl text-primary hover:opacity-80 transition-opacity">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <h1 id="headerTitle" class="text-xl font-bold tracking-tight">CS Course</h1>
+            </div>
+            
+            <button id="themeToggle" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-yellow-400 transition-all active:scale-95">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block"></i>
+            </button>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main id="contentArea" class="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+            <!-- Dynamic Content Injected Here -->
+        </main>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STRUCTURE ---
+        const curriculum = [
+            {
+                id: 0,
+                title: "Модуль 0. Старт і правила",
+                lessons: [
+                    { id: "0.1", title: "Як працює курс" },
+                    { id: "0.2", title: "Навіщо комп’ютерна наука" },
+                    { id: "0.3", title: "Мініпроєкт 0/1: як комп’ютер “рахує”" }
+                ]
+            },
+            {
+                id: 1,
+                title: "Модуль 1. Інформація і дані",
+                lessons: [
+                    { id: "1.1", title: "Інформація крізь віки" },
+                    { id: "1.2", title: "Дані vs інформація" },
+                    { id: "1.3", title: "Моделі та правила" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Модуль 2. Комп’ютер як система",
+                lessons: [
+                    { id: "2.1", title: "Input–Process–Output" },
+                    { id: "2.2", title: "Пристрої введення" },
+                    { id: "2.3", title: "Пристрої виведення" },
+                    { id: "2.4", title: "CPU / RAM / SSD" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Модуль 3. Кодування світу",
+                lessons: [
+                    { id: "3.1", title: "Двійкова система" },
+                    { id: "3.2", title: "Біти, байти, мегабайти" },
+                    { id: "3.3", title: "Текст = числа (ASCII/Unicode)" },
+                    { id: "3.4", title: "Зображення = пікселі" },
+                    { id: "3.5", title: "Звук = вимірювання хвилі" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Модуль 4. ОС, файли, хмара",
+                lessons: [
+                    { id: "4.1", title: "Що робить ОС" },
+                    { id: "4.2", title: "Файли, папки, формати" },
+                    { id: "4.3", title: "Оновлення та бекапи" },
+                    { id: "4.4", title: "Хмара і синхронізація" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Модуль 5. Програми і побут",
+                lessons: [
+                    { id: "5.1", title: "Hardware vs Software" },
+                    { id: "5.2", title: "Системне vs прикладне ПЗ" },
+                    { id: "5.3", title: "Встановлення і дозволи" }
+                ]
+            },
+            {
+                id: 6,
+                title: "Модуль 6. Обчислювальне мислення",
+                lessons: [
+                    { id: "6.1", title: "Декомпозиція" },
+                    { id: "6.2", title: "Алгоритм = рецепт" },
+                    { id: "6.3", title: "Умови (IF)" },
+                    { id: "6.4", title: "Цикли (FOR/WHILE)" },
+                    { id: "6.5", title: "Debug: виправлення помилок" }
+                ]
+            },
+            {
+                id: 7,
+                title: "Модуль 7. Програмування",
+                lessons: [
+                    { id: "7.1", title: "Що таке програма" },
+                    { id: "7.2", title: "Змінні та типи даних" },
+                    { id: "7.3", title: "Функції" },
+                    { id: "7.4", title: "Мініпроєкт: міні-бот" }
+                ]
+            },
+            {
+                id: 8,
+                title: "Модуль 8. Інтернет і веб",
+                lessons: [
+                    { id: "8.1", title: "Клієнт і сервер" },
+                    { id: "8.2", title: "DNS і адреси" },
+                    { id: "8.3", title: "HTTP/HTTPS" },
+                    { id: "8.4", title: "Cookies і сесії" }
+                ]
+            },
+            {
+                id: 9,
+                title: "Модуль 9. Дані",
+                lessons: [
+                    { id: "9.1", title: "Таблиці і фільтри" },
+                    { id: "9.2", title: "Графіки та діаграми" },
+                    { id: "9.3", title: "Бази даних" }
+                ]
+            },
+            {
+                id: 10,
+                title: "Модуль 10. ШІ та критичне мислення",
+                lessons: [
+                    { id: "10.1", title: "Програма vs ШІ" },
+                    { id: "10.2", title: "Галюцинації ШІ" },
+                    { id: "10.3", title: "Безпечне користування ШІ" }
+                ]
+            },
+            {
+                id: 11,
+                title: "Модуль 11. Безпека",
+                lessons: [
+                    { id: "11.1", title: "Паролі та 2FA" },
+                    { id: "11.2", title: "Фішинг і шахрайство" },
+                    { id: "11.3", title: "Приватність" },
+                    { id: "11.4", title: "Цифровий слід" },
+                    { id: "11.5", title: "Медіаграмотність" }
+                ]
+            },
+            {
+                id: 12,
+                title: "Фінал",
+                lessons: [
+                    { id: "F.1", title: "Капстоун-проєкт" }
+                ]
+            }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        const state = {
+            currentView: 'landing', // Changed initial state to landing
+            activeModuleId: null,
+            activeLesson: null,
+            completedLessons: JSON.parse(localStorage.getItem('cs_completed')) || []
+        };
+
+        // --- DOM ELEMENTS ---
+        const app = document.getElementById('app');
+        const contentArea = document.getElementById('contentArea');
+        const headerTitle = document.getElementById('headerTitle');
+        const backBtn = document.getElementById('backBtn');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // --- THEME LOGIC ---
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+
+        // --- RENDER FUNCTIONS ---
+
+        // 0. Render Landing Page (New)
+        function renderLanding() {
+            state.currentView = 'landing';
+            backBtn.classList.add('hidden');
+            headerTitle.textContent = 'CS Course';
+            contentArea.scrollTop = 0;
+
+            const hasProgress = state.completedLessons.length > 0;
+            const btnText = hasProgress ? 'Продовжити навчання' : 'Почати навчання';
+
+            contentArea.innerHTML = `
+                <div class="flex flex-col items-center justify-center min-h-[85vh] p-6 text-center space-y-8 relative">
+                    
+                    <!-- Decorative background blob -->
+                    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-400/20 dark:bg-blue-600/20 rounded-full blur-3xl animate-blob -z-10"></div>
+
+                    <!-- Icon -->
+                    <div class="relative">
+                        <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center transform rotate-3">
+                            <i class="fa-solid fa-microchip text-5xl text-primary"></i>
+                        </div>
+                        <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-darkSec">
+                            <i class="fa-solid fa-bolt text-white text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Hero Text -->
+                    <div class="space-y-4 max-w-xs mx-auto">
+                        <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
+                            Комп'ютерна наука <span class="text-primary block mt-2">без болю</span>
+                        </h1>
+                        <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                            Твій гід у цифровому світі. Вертикальні відео, теорія без води та практика.
+                        </p>
+                    </div>
+
+                    <!-- Features Grid -->
+                    <div class="grid grid-cols-2 gap-3 w-full max-w-sm text-left">
+                        <div class="bg-white/50 dark:bg-slate-800/50 backdrop-blur p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <i class="fa-solid fa-clock text-blue-500 mb-2"></i>
+                            <h3 class="font-bold text-sm">Швидко</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Уроки до 5 хв</p>
+                        </div>
+                        <div class="bg-white/50 dark:bg-slate-800/50 backdrop-blur p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <i class="fa-solid fa-mobile-screen text-purple-500 mb-2"></i>
+                            <h3 class="font-bold text-sm">Зручно</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Mobile-first</p>
+                        </div>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <button onclick="renderHome()" class="w-full max-w-sm bg-dark dark:bg-white text-white dark:text-dark text-xl font-bold py-4 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none transition-all transform hover:scale-[1.02] active:scale-95 group relative overflow-hidden">
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            ${btnText} <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </span>
+                    </button>
+                    
+                    <p class="text-xs text-gray-400">Без реєстрації • Прогрес зберігається</p>
+                </div>
+            `;
+        }
+
+        // 1. Render Module List (Home View)
+        function renderHome() {
+            state.currentView = 'home';
+            // If coming from landing, we usually don't show back button to landing, 
+            // but treat Home as the main dashboard.
+            backBtn.classList.add('hidden'); 
+            headerTitle.textContent = 'Навчальний план';
+            contentArea.scrollTop = 0;
+
+            let html = `<div class="p-4 space-y-4 pb-12 animate-fade-in">`;
+            
+            // Progress Header
+            const progress = Math.round((state.completedLessons.length / 45) * 100); // approx count
+            html += `
+                <div class="bg-primary text-white p-6 rounded-2xl shadow-lg mb-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-white/10 text-9xl">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-end mb-2">
+                            <h2 class="text-2xl font-bold">Ваш прогрес</h2>
+                            <span class="text-3xl font-bold">${progress}%</span>
+                        </div>
+                        <div class="w-full bg-black/20 rounded-full h-2">
+                            <div class="bg-white h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${progress}%"></div>
+                        </div>
+                        <p class="text-sm mt-2 opacity-90 font-medium">
+                            ${progress === 0 ? 'Почніть з Модуля 0!' : 'Чудовий темп, так тримати!'}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Modules Accordion
+            curriculum.forEach(module => {
+                const isOpen = state.activeModuleId === module.id;
+                
+                // Calculate module progress
+                const totalInModule = module.lessons.length;
+                const completedInModule = module.lessons.filter(l => state.completedLessons.includes(l.id)).length;
+                const isModuleDone = totalInModule === completedInModule && totalInModule > 0;
+                
+                html += `
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300">
+                        <button onclick="toggleModule(${module.id})" class="w-full text-left p-5 flex justify-between items-center active:bg-gray-50 dark:active:bg-slate-700 outline-none">
+                            <div class="flex-1 pr-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 leading-tight">${module.title}</h3>
+                                    ${isModuleDone ? '<i class="fa-solid fa-circle-check text-green-500"></i>' : ''}
+                                </div>
+                                <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                    <span>${module.lessons.length} уроків</span>
+                                    <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                                    <span>${completedInModule}/${totalInModule} пройдено</span>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 dark:bg-slate-700 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 bg-blue-50 text-blue-500 dark:bg-blue-900/30' : ''}">
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </div>
+                        </button>
+                        
+                        <div class="${isOpen ? 'block' : 'hidden'} border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-900/50 animate-slide-down">
+                            ${module.lessons.map(lesson => {
+                                const isDone = state.completedLessons.includes(lesson.id);
+                                return `
+                                <button onclick="openLesson('${lesson.id}')" class="w-full p-4 pl-6 text-left flex items-center gap-4 hover:bg-white dark:hover:bg-slate-800 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors group">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isDone ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-gray-400 group-hover:border-primary group-hover:text-primary'}">
+                                        <i class="fa-solid ${isDone ? 'fa-check' : 'fa-play'} text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Урок ${lesson.id}</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-200 text-base leading-snug">${lesson.title}</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            contentArea.innerHTML = html;
+        }
+
+        // 2. Render Lesson View
+        function renderLessonView(lessonId) {
+            const module = curriculum.find(m => m.lessons.some(l => l.id === lessonId));
+            const lesson = module.lessons.find(l => l.id === lessonId);
+            
+            state.currentView = 'lesson';
+            state.activeLesson = lesson;
+            
+            backBtn.classList.remove('hidden');
+            headerTitle.textContent = lesson.id; // Short title for header
+            contentArea.scrollTop = 0;
+
+            // Simulating Lesson Content
+            const isCompleted = state.completedLessons.includes(lessonId);
+            
+            contentArea.innerHTML = `
+                <div class="flex flex-col min-h-full animate-fade-in">
+                    <!-- Vertical Video Container (9:16) -->
+                    <div class="w-full aspect-[9/16] max-h-[75vh] bg-black relative flex items-center justify-center video-placeholder overflow-hidden shadow-lg group">
+                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
+                        
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center z-10">
+                            <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-300 cursor-pointer">
+                                <i class="fa-solid fa-play text-3xl pl-1"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold drop-shadow-md px-4">${lesson.title}</h2>
+                            <p class="mt-2 text-sm opacity-80 font-medium tracking-wide uppercase">Дивитись урок (5 хв)</p>
+                        </div>
+                        
+                        <!-- Video Controls Simulation -->
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                            <div class="w-full bg-white/30 h-1 rounded-full overflow-hidden">
+                                <div class="bg-primary h-full w-1/3"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-white/80 mt-2 font-mono">
+                                <span>1:42</span>
+                                <span>5:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Theory Section -->
+                    <div class="p-6 bg-white dark:bg-darkSec rounded-t-3xl -mt-6 relative z-20 flex-1 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
+                        <div class="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-8"></div>
+                        
+                        <div class="mb-8">
+                            <span class="inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary text-xs font-bold uppercase tracking-wider mb-3">Теорія</span>
+                            <h1 class="text-2xl font-bold mb-4 leading-tight text-gray-900 dark:text-white">${lesson.title}</h1>
+                            
+                            <div class="prose dark:prose-invert prose-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                                <p class="mb-4">
+                                    <strong class="text-gray-900 dark:text-white">Основна думка:</strong> У цьому уроці ми розглядаємо фундаментальні концепції ${lesson.title.toLowerCase()}. Важливо зрозуміти, що це база для всіх подальших тем.
+                                </p>
+                                <ul class="space-y-3 my-6">
+                                    <li class="flex items-start gap-3">
+                                        <i class="fa-solid fa-check text-green-500 mt-1.5 flex-shrink-0"></i>
+                                        <span>Ключовий принцип роботи системи.</span>
+                                    </li>
+                                    <li class="flex items-start gap-3">
+                                        <i class="fa-solid fa-check text-green-500 mt-1.5 flex-shrink-0"></i>
+                                        <span>Чому це важливо для сучасної IT-сфери.</span>
+                                    </li>
+                                    <li class="flex items-start gap-3">
+                                        <i class="fa-solid fa-check text-green-500 mt-1.5 flex-shrink-0"></i>
+                                        <span>Практичний приклад використання у житті.</span>
+                                    </li>
+                                </ul>
+                                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400 text-sm">
+                                    <strong>💡 Запам'ятай:</strong> Комп’ютерна наука — це інструмент для вирішення проблем, а не просто написання коду.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Quiz -->
+                        <div class="bg-gray-50 dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-lg flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><i class="fa-solid fa-brain"></i></span>
+                                    Квіз
+                                </h3>
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">1 питання</span>
+                            </div>
+                            
+                            <p class="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Що є "мозком" комп'ютера, який виконує обчислення?</p>
+                            
+                            <div class="space-y-2.5" id="quizOptions">
+                                <button onclick="checkAnswer(this, false)" class="w-full p-3.5 px-4 rounded-xl border-2 border-transparent bg-white dark:bg-slate-700 text-left hover:border-gray-200 dark:hover:border-gray-600 transition-all font-medium text-sm shadow-sm relative group">
+                                    <span class="inline-block w-6 font-bold text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">A</span>
+                                    Жорсткий диск (SSD)
+                                </button>
+                                <button onclick="checkAnswer(this, true, '${lessonId}')" class="w-full p-3.5 px-4 rounded-xl border-2 border-transparent bg-white dark:bg-slate-700 text-left hover:border-gray-200 dark:hover:border-gray-600 transition-all font-medium text-sm shadow-sm relative group">
+                                    <span class="inline-block w-6 font-bold text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">B</span>
+                                    Процесор (CPU)
+                                </button>
+                                <button onclick="checkAnswer(this, false)" class="w-full p-3.5 px-4 rounded-xl border-2 border-transparent bg-white dark:bg-slate-700 text-left hover:border-gray-200 dark:hover:border-gray-600 transition-all font-medium text-sm shadow-sm relative group">
+                                    <span class="inline-block w-6 font-bold text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">C</span>
+                                    Оперативна пам'ять (RAM)
+                                </button>
+                            </div>
+                            
+                            <div id="quizFeedback" class="hidden mt-4 p-3 rounded-xl text-center font-bold text-sm animate-bounce-in"></div>
+                        </div>
+
+                        <!-- Navigation Footer in Lesson -->
+                        <div class="pb-safe flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
+                             <button onclick="goBack()" class="px-4 py-2 text-gray-500 hover:text-gray-800 dark:hover:text-white font-medium transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-left text-sm"></i> Назад
+                             </button>
+                             ${!isCompleted ? 
+                                `<button id="markDoneBtn" onclick="markComplete('${lessonId}')" class="bg-dark dark:bg-white text-white dark:text-dark px-8 py-3 rounded-full font-bold shadow-xl shadow-gray-200 dark:shadow-none active:scale-95 transition-all flex items-center gap-2">
+                                    Завершити <i class="fa-solid fa-check"></i>
+                                </button>` :
+                                `<span class="px-6 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-bold text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-check"></i> Пройдено
+                                </span>`
+                             }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ACTIONS ---
+
+        window.toggleModule = (id) => {
+            if (state.activeModuleId === id) {
+                state.activeModuleId = null;
+            } else {
+                state.activeModuleId = id;
+            }
+            renderHome();
+        };
+
+        window.openLesson = (id) => {
+            renderLessonView(id);
+        };
+
+        window.goBack = () => {
+            renderHome();
+        };
+
+        // Handle browser back button
+        backBtn.addEventListener('click', goBack);
+
+        window.checkAnswer = (btn, isCorrect, lessonId) => {
+            const parent = document.getElementById('quizOptions');
+            const feedback = document.getElementById('quizFeedback');
+            
+            // Reset styles
+            Array.from(parent.children).forEach(child => {
+                child.classList.remove('ring-2', 'ring-green-500', 'ring-red-500', 'bg-green-50', 'bg-red-50', 'dark:bg-green-900/30', 'dark:bg-red-900/30');
+                child.disabled = true;
+                child.style.opacity = '0.7';
+            });
+            btn.style.opacity = '1';
+
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                btn.classList.add('ring-2', 'ring-green-500', 'bg-green-50', 'dark:bg-green-900/30');
+                // Find icon inside button if we had one, or just text color
+                btn.classList.add('text-green-700', 'dark:text-green-300');
+                
+                feedback.innerHTML = '<i class="fa-regular fa-face-smile text-xl mb-1 block"></i> Правильно! Ти супер!';
+                feedback.classList.add('text-green-600', 'dark:text-green-400', 'bg-green-50', 'dark:bg-green-900/20');
+                
+                // Auto complete effect logic can go here
+            } else {
+                btn.classList.add('ring-2', 'ring-red-500', 'bg-red-50', 'dark:bg-red-900/30');
+                btn.classList.add('text-red-700', 'dark:text-red-300');
+                
+                feedback.innerHTML = '<i class="fa-regular fa-face-frown text-xl mb-1 block"></i> Спробуй ще раз пізніше.';
+                feedback.classList.add('text-red-600', 'dark:text-red-400', 'bg-red-50', 'dark:bg-red-900/20');
+            }
+        };
+
+        window.markComplete = (lessonId) => {
+            if (!state.completedLessons.includes(lessonId)) {
+                state.completedLessons.push(lessonId);
+                localStorage.setItem('cs_completed', JSON.stringify(state.completedLessons));
+            }
+            renderLessonView(lessonId); // Re-render to show "Done" status
+        };
+
+        // --- INIT ---
+        initTheme();
+        // Start with Landing Page
+        renderLanding();
+
+    </script>
+</body>
+</html>
