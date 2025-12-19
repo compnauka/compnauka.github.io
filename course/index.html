@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CS Mobile Course</title>
 
+  <!-- Prevent theme flash: set .dark on <html> BEFORE Tailwind renders -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme'); // 'dark' | 'light' | null
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = saved ? (saved === 'dark') : prefersDark;
+        document.documentElement.classList.toggle('dark', !!isDark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Minimal Tailwind CDN config: only enable dark: via class -->
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = { darkMode: 'class' };
+  </script>
+
   <!-- Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,7 +32,9 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900 dark:bg-slate-900 dark:text-gray-100 font-sans antialiased pb-safe-area">
-  <a href="#contentArea" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:bg-white focus:text-gray-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg">
+  <!-- Skip link (visible only on focus) -->
+  <a href="#contentArea"
+     class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:bg-white focus:text-gray-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg">
     Перейти до контенту
   </a>
 
@@ -22,9 +42,9 @@
     <header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-8 py-4 flex justify-between items-center h-16 transition-colors">
       <div class="flex items-center gap-4">
         <button id="backBtn"
-          class="hidden text-xl text-blue-500 hover:bg-gray-100 dark:hover:bg-slate-800 p-2 rounded-full transition-all"
-          aria-label="Назад">
-          <i class="fa-solid fa-arrow-left"></i>
+                class="hidden text-xl text-blue-500 hover:bg-gray-100 dark:hover:bg-slate-800 p-2 rounded-full transition-all"
+                aria-label="Назад">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
         </button>
         <h1 id="headerTitle" class="text-xl font-bold tracking-tight">CS Course</h1>
       </div>
@@ -33,11 +53,13 @@
         <span id="desktopHint" class="hidden md:block text-xs text-gray-400 font-medium bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full">
           v1.2 Release
         </span>
+
         <button id="themeToggle"
-          class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-yellow-400 transition-all hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95"
-          aria-label="Змінити тему">
-          <i class="fa-solid fa-moon dark:hidden"></i>
-          <i class="fa-solid fa-sun hidden dark:block"></i>
+                class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-yellow-400 transition-all hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95"
+                aria-label="Змінити тему"
+                aria-pressed="false">
+          <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun hidden dark:block" aria-hidden="true"></i>
         </button>
       </div>
     </header>
