@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CS Mobile Course</title>
 
-  <!-- Prevent theme flash: set .dark on <html> BEFORE Tailwind renders -->
+  <!-- Prevent theme flash -->
   <script>
     (function () {
       try {
@@ -17,50 +17,10 @@
     })();
   </script>
 
-  <!-- Tailwind CDN config MUST be defined BEFORE loading https://cdn.tailwindcss.com -->
+  <!-- Tailwind: only darkMode by class -->
   <script>
-    // Most stable for CDN
-    window.tailwind = {
-      config: {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: '#3b82f6',
-              dark: '#0f172a',
-              darkSec: '#1e293b'
-            },
-            aspectRatio: { '9/16': '9 / 16' },
-            animation: {
-              blob: 'blob 7s infinite',
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'slide-down': 'slideDown 0.3s ease-out forwards',
-              'bounce-in': 'bounceIn 0.25s ease-out forwards'
-            },
-            keyframes: {
-              blob: {
-                '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                '100%': { transform: 'translate(0px, 0px) scale(1)' }
-              },
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' }
-              },
-              slideDown: {
-                '0%': { opacity: '0', transform: 'translateY(-10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' }
-              },
-              bounceIn: {
-                '0%': { transform: 'scale(0.98)', opacity: '0' },
-                '100%': { transform: 'scale(1)', opacity: '1' }
-              }
-            }
-          }
-        }
-      }
-    };
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = { darkMode: 'class' };
   </script>
 
   <!-- Libraries -->
@@ -71,20 +31,20 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 
-<body class="bg-gray-50 text-gray-900 dark:bg-dark dark:text-gray-100 font-sans antialiased pb-safe-area">
-  <!-- Skip link (visible only on focus) -->
+<body class="bg-gray-50 text-gray-900 dark:bg-slate-900 dark:text-gray-100 font-sans antialiased pb-safe-area">
   <a href="#contentArea"
      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:bg-white focus:text-gray-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg">
     Перейти до контенту
   </a>
 
-  <div id="app" class="w-full md:max-w-7xl mx-auto min-h-screen bg-white dark:bg-darkSec shadow-2xl relative overflow-hidden flex flex-col transition-all duration-300">
+  <div id="app" class="w-full md:max-w-7xl mx-auto min-h-screen bg-white dark:bg-slate-800 shadow-2xl relative overflow-hidden flex flex-col transition-all duration-300">
 
-    <header class="sticky top-0 z-50 bg-white/90 dark:bg-darkSec/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-8 py-4 flex justify-between items-center h-16 transition-colors">
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-8 py-4 flex justify-between items-center h-16 transition-colors">
       <div class="flex items-center gap-4">
         <button id="backBtn"
-                class="hidden text-xl text-primary hover:bg-gray-100 dark:hover:bg-slate-800 p-2 rounded-full transition-all"
-                aria-label="Назад">
+                class="hidden text-xl text-blue-500 hover:bg-gray-100 dark:hover:bg-slate-800 p-2 rounded-full transition-all"
+                aria-label="Назад"
+                type="button">
           <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
         </button>
         <h1 id="headerTitle" class="text-xl font-bold tracking-tight">CS Course</h1>
@@ -117,7 +77,6 @@
       var btn = document.getElementById('themeToggle');
       if (!btn) return;
 
-      // prevent double-binding
       if (window.__themeToggleBound) return;
       window.__themeToggleBound = true;
 
@@ -127,7 +86,6 @@
         try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
       }
 
-      // sync aria to current state
       apply(document.documentElement.classList.contains('dark'));
 
       btn.addEventListener('click', function () {
