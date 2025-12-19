@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="color-scheme" content="light dark" />
+  <title>CS Mobile Course</title>
+
+  <!-- Prevent theme flash: set .dark on <html> BEFORE Tailwind renders -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme'); // 'dark' | 'light' | null
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = saved ? (saved === 'dark') : prefersDark;
+        document.documentElement.classList.toggle('dark', !!isDark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Tailwind config must come BEFORE CDN script -->
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            dark: '#0f172a',
+            darkSec: '#1e293b',
+          },
+          aspectRatio: { '9/16': '9 / 16' },
+          animation: {
+            blob: 'blob 7s infinite',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'slide-down': 'slideDown 0.3s ease-out forwards',
+            'bounce-in': 'bounceIn 0.35s ease-out forwards',
+          },
+          keyframes: {
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            slideDown: {
+              '0%': { opacity: '0', transform: 'translateY(-10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            bounceIn: {
+              '0%': { opacity: '0', transform: 'scale(0.98) translateY(6px)' },
+              '60%': { opacity: '1', transform: 'scale(1.01) translateY(-2px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            },
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Your styles -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="bg-gray-50 text-gray-900 dark:bg-dark dark:text-gray-100 font-sans antialiased pb-safe-area">
+  <div id="app" class="w-full md:max-w-7xl mx-auto min-h-screen bg-white dark:bg-darkSec shadow-2xl relative overflow-hidden flex flex-col transition-all duration-300">
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-darkSec/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-8 py-4 flex justify-between items-center h-16 transition-colors">
+      <div class="flex items-center gap-4">
+        <button id="backBtn" class="hidden text-xl text-primary hover:bg-gray-100 dark:hover:bg-slate-800 p-2 rounded-full transition-all" aria-label="Назад" type="button">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h1 id="headerTitle" class="text-xl font-bold tracking-tight">CS Course</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span id="desktopHint" class="hidden md:block text-xs text-gray-400 font-medium bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full">v1.2 Release</span>
+        <button id="themeToggle" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-yellow-400 transition-all hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95" aria-label="Змінити тему" type="button">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:block"></i>
+        </button>
+      </div>
+    </header>
+
+    <main id="contentArea" class="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-20 md:pb-0">
+      <!-- Dynamic Content -->
+    </main>
+  </div>
+
+  <!-- Data & App -->
+  <script defer src="js/data/curriculum.js"></script>
+  <script defer src="js/main.js"></script>
+</body>
+</html>
