@@ -1,112 +1,149 @@
-import { renderSidebar, renderWelcomeScreen, renderLesson } from './renderers.js';
-import loadCourseData from './contentLoader.js';
-import { updateProgress } from './utils.js';
-
-export default class AppCore {
+class App {
     constructor() {
-        this.courseData = null;
-        this.currentLessonId = null;
-    }
-
-    init() {
-        this.initializeTheme();
-        this.loadCourseData();
-        this.setupNavigation();
-    }
-
-    initializeTheme() {
-        // 1. Завантаження збереженої теми
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        // 2. Налаштування кнопки
-        const themeToggle = document.getElementById('theme-toggle');
+        this.state = {
+            currentLessonId: null,
+            lessons: [],
+            progress: {},
+            theme: localStorage.getItem('theme') || 'light' // Завантажуємо збережену тему
+        };
         
-        if (themeToggle) {
-            // Клонуємо кнопку, щоб видалити старі слухачі подій (prevent multiple bindings)
-            const newToggle = themeToggle.cloneNode(true);
-            themeToggle.parentNode.replaceChild(newToggle, themeToggle);
-
-            newToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            });
-        }
+        // Ініціалізуємо модулі
+        this.contentLoader = new ContentLoader();
+        this.renderer = new Renderer();
+        this.quiz = new Quiz();
     }
 
-    async loadCourseData() {
+    async init() {
+        console.log('App initialization started...');
+        
         try {
-            this.courseData = await loadCourseData();
-            this.renderSidebar();
-            this.renderWelcomeScreen();
+            // 1. Ініціалізація теми (викликаємо першою, щоб уникнути "миготіння")
+            this.initTheme();
+
+            // 2. Завантаження структури курсу
+            await this.loadCourseStructure();
+
+            // 3. Відновлення прогресу
+            this.loadProgress();
+
+            // 4. Обробники подій навігації
+            this.initNavigation();
+
+            console.log('App initialized successfully');
         } catch (error) {
-            console.error('Failed to load course data:', error);
-            document.querySelector('main').innerHTML = '<p class="error">Помилка завантаження курсу. Перевірте консоль.</p>';
+            console.error('Initialization failed:', error);
+            this.renderer.renderError('Не вдалося завантажити курс. Перевірте консоль.');
         }
     }
 
-    renderSidebar() {
-        if (!this.courseData) return;
-        renderSidebar(this.courseData, (lessonId) => this.navigateToLesson(lessonId));
-    }
-
-    renderWelcomeScreen() {
-        renderWelcomeScreen(this.courseData);
-    }
-
-    navigateToLesson(lessonId) {
-        this.currentLessonId = lessonId;
+    initTheme() {
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const icon = themeToggleBtn.querySelector('i');
         
-        // Знаходимо урок в структурі
-        let foundLesson = null;
-        this.courseData.modules.some(module => {
-            const lesson = module.lessons.find(l => l.id === lessonId);
-            if (lesson) {
-                foundLesson = lesson;
-                return true;
-            }
-            return false;
-        });
-
-        if (foundLesson) {
-            renderLesson(foundLesson, this.courseData);
-            updateProgress(lessonId);
+        // Функція застосування теми
+        const applyTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
             
-            // Оновлення активного стану в сайдбарі
-            document.querySelectorAll('.lesson-link').forEach(link => {
-                link.classList.remove('active');
-                if (link.dataset.id === lessonId) {
-                    link.classList.add('active');
+            // Оновлення іконки
+            if (theme === 'dark') {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            this.state.theme = theme;
+        };
+
+        // Застосувати початкову тему
+        applyTheme(this.state.theme);
+
+        // Обробник кліку
+        themeToggleBtn.addEventListener('click', () => {
+            const newTheme = this.state.theme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        });
+    }
+
+    async loadCourseStructure() {
+        // Припускаємо, що data.js завантажив window.courseData або завантажуємо JSON
+        // Якщо використовується contentLoader:
+        const structure = await this.contentLoader.getStructure();
+        this.state.lessons = structure.lessons;
+        this.renderer.renderSidebar(this.state.lessons);
+        
+        // Завантажити перший урок або останній активний
+        if (this.state.lessons.length > 0) {
+            this.loadLesson(this.state.lessons[0].id);
+        }
+    }
+
+    async loadLesson(lessonId) {
+        this.renderer.showLoading();
+        try {
+            const lessonData = await this.contentLoader.getLesson(lessonId);
+            this.state.currentLessonId = lessonId;
+            this.renderer.renderLesson(lessonData);
+            
+            // Якщо в уроці є тест, ініціалізуємо його
+            if (lessonData.quiz) {
+                this.quiz.init(lessonData.quiz, (score) => this.onQuizComplete(lessonId, score));
+            }
+            
+            // Оновлюємо активний стан в меню
+            this.renderer.updateActiveSidebarItem(lessonId);
+        } catch (error) {
+            console.error(`Error loading lesson ${lessonId}:`, error);
+            this.renderer.renderError('Помилка завантаження уроку.');
+        }
+    }
+
+    onQuizComplete(lessonId, score) {
+        this.state.progress[lessonId] = { completed: true, score: score };
+        this.saveProgress();
+        this.renderer.showNotification(`Урок пройдено! Результат: ${score}%`);
+        this.renderer.markLessonComplete(lessonId);
+    }
+
+    saveProgress() {
+        localStorage.setItem('courseProgress', JSON.stringify(this.state.progress));
+    }
+
+    loadProgress() {
+        const saved = localStorage.getItem('courseProgress');
+        if (saved) {
+            this.state.progress = JSON.parse(saved);
+            // Візуально позначити пройдені уроки
+            Object.keys(this.state.progress).forEach(id => {
+                if (this.state.progress[id].completed) {
+                    this.renderer.markLessonComplete(id);
                 }
             });
-
-            // Мобільна адаптація: закрити сайдбар при виборі уроку
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar')?.classList.remove('active');
-            }
         }
     }
 
-    setupNavigation() {
-        // Делегування подій для навігації
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.nav-button')) {
-                const lessonId = e.target.dataset.id;
-                if (lessonId) {
-                    this.navigateToLesson(lessonId);
+    initNavigation() {
+        // Делегування подій для сайдбару
+        document.querySelector('.sidebar').addEventListener('click', (e) => {
+            const link = e.target.closest('.lesson-link');
+            if (link) {
+                e.preventDefault();
+                const id = link.dataset.id;
+                this.loadLesson(id);
+                
+                // На мобільних закриваємо меню після кліку
+                if (window.innerWidth <= 768) {
+                    document.querySelector('.sidebar').classList.remove('active');
                 }
             }
         });
-        
-        // Тогл сайдбару для мобільних
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-        if (menuToggle && sidebar) {
-             menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
+
+        // Мобільне меню
+        const menuBtn = document.getElementById('menu-toggle');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.toggle('active');
             });
         }
     }
