@@ -1,6 +1,3 @@
-// data.js — тільки дані. Ніякого DOM.
-// Експорт як ES module.
-
 export const curriculum = [
   {
     id: 0,
