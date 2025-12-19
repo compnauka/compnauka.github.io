@@ -1,15 +1,23 @@
 import { curriculum as rawCurriculum } from './data.js';
 
 /**
- * Normalize curriculum:
- * - гарантований quiz
- * - чистимо localStorage прогрес від неіснуючих id
+ * -----------------------------
+ * Curriculum: only structure + titles
+ * Lesson content (theory/video/quiz/...) is fetched from:
+ *   ./content/lessons/<id>.json
+ * -----------------------------
  */
+
+const FALLBACK_QUIZ = { question: "Матеріал засвоєно?", options: ["Ні", "Так", "Частково"], correct: 1 };
+
 function normalizeCurriculum(curr) {
-  const fallbackQuiz = { question: "Матеріал засвоєно?", options: ["Ні", "Так", "Частково"], correct: 1 };
   return curr.map(m => ({
     ...m,
-    lessons: m.lessons.map(l => ({ ...l, quiz: l.quiz ? l.quiz : fallbackQuiz }))
+    lessons: m.lessons.map(l => ({
+      id: String(l.id),
+      title: String(l.title ?? l.id)
+      // quiz is now optional here; primary source is JSON content
+    }))
   }));
 }
 
@@ -17,14 +25,18 @@ const curriculum = normalizeCurriculum(rawCurriculum);
 const allLessonIds = new Set(curriculum.flatMap(m => m.lessons.map(l => l.id)));
 
 /**
+ * -----------------------------
  * STATE
+ * -----------------------------
  */
 const state = {
   currentView: 'landing',
   activeModuleId: null,
   activeLessonId: null,
   completedLessons: loadCompleted(),
-  searchQuery: ''
+  searchQuery: '',
+  lessonContentById: new Map(), // in-memory cache of fetched lesson JSON
+  currentLessonContent: null    // content for currently opened lesson
 };
 
 function loadCompleted() {
@@ -41,7 +53,9 @@ function saveCompleted() {
 }
 
 /**
+ * -----------------------------
  * DOM
+ * -----------------------------
  */
 const dom = {
   content: document.getElementById('contentArea'),
@@ -51,7 +65,9 @@ const dom = {
 };
 
 /**
- * THEME
+ * -----------------------------
+ * THEME (stable)
+ * -----------------------------
  */
 function setTheme(isDark) {
   document.documentElement.classList.toggle('dark', !!isDark);
@@ -63,7 +79,6 @@ function initThemeFromStorageOrSystem() {
   const isDark = saved ? (saved === 'dark') : prefersDark;
   setTheme(isDark);
 }
-
 dom.themeToggle.addEventListener('click', () => {
   const isDark = !document.documentElement.classList.contains('dark');
   setTheme(isDark);
@@ -71,7 +86,9 @@ dom.themeToggle.addEventListener('click', () => {
 });
 
 /**
+ * -----------------------------
  * SAFE DOM HELPERS
+ * -----------------------------
  */
 function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
@@ -82,6 +99,7 @@ function el(tag, attrs = {}, children = []) {
     if (v === null || v === undefined) continue;
     if (k === 'class') node.className = String(v);
     else if (k === 'text') node.textContent = String(v);
+    else if (k === 'style') node.style.cssText = String(v);
     else node.setAttribute(k, String(v));
   }
 
@@ -98,10 +116,14 @@ function icon(className) {
 }
 
 function focusMain() {
-  // допомагає screen reader / keyboard користувачам
   try { dom.content.focus({ preventScroll: true }); } catch {}
 }
 
+/**
+ * -----------------------------
+ * HELPERS
+ * -----------------------------
+ */
 function calculateProgress() {
   const total = curriculum.reduce((acc, m) => acc + m.lessons.length, 0);
   const done = state.completedLessons.length;
@@ -126,17 +148,135 @@ function filterCurriculum(query) {
     .filter(Boolean);
 }
 
+function findLessonBase(lessonId) {
+  const module = curriculum.find(m => m.lessons.some(l => l.id === lessonId));
+  if (!module) return null;
+  const lesson = module.lessons.find(l => l.id === lessonId);
+  if (!lesson) return null;
+  return { module, lesson };
+}
+
+function safeHttpUrl(url) {
+  try {
+    const u = new URL(url, window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
+ * -----------------------------
+ * LESSON CONTENT LOADING
+ * Source of truth: ./content/lessons/<id>.json
+ * Cached: memory + sessionStorage
+ * -----------------------------
+ */
+function sessionKeyForLesson(id) { return `cs_lesson_content_${id}`; }
+
+function normalizeLessonContent(obj, baseLesson) {
+  const safe = (v) => (typeof v === 'string' ? v : '');
+  const safeArr = (a) => Array.isArray(a) ? a.filter(x => typeof x === 'string') : [];
+
+  const quiz = obj?.quiz && typeof obj.quiz === 'object' ? obj.quiz : null;
+  const quizQuestion = safe(quiz?.question) || safe(baseLesson?.quiz?.question) || FALLBACK_QUIZ.question;
+  const quizOptions = Array.isArray(quiz?.options) ? quiz.options.filter(x => typeof x === 'string') : (baseLesson?.quiz?.options || FALLBACK_QUIZ.options);
+  const quizCorrect = Number.isInteger(quiz?.correct) ? quiz.correct : (Number.isInteger(baseLesson?.quiz?.correct) ? baseLesson.quiz.correct : FALLBACK_QUIZ.correct);
+
+  // clamp correct
+  const correctClamped = Math.min(Math.max(0, quizCorrect), Math.max(0, (quizOptions?.length || 1) - 1));
+
+  const videoUrl = safe(obj?.video?.url);
+  const video = {
+    url: videoUrl ? safeHttpUrl(videoUrl) : null,
+    title: safe(obj?.video?.title) || safe(obj?.title) || safe(baseLesson?.title) || baseLesson?.id || ''
+  };
+
+  return {
+    id: safe(obj?.id) || baseLesson?.id || '',
+    title: safe(obj?.title) || safe(baseLesson?.title) || baseLesson?.id || '',
+    theory: safeArr(obj?.theory),
+    key_terms: Array.isArray(obj?.key_terms) ? obj.key_terms
+      .filter(it => it && typeof it === 'object')
+      .map(it => ({ term: safe(it.term), definition: safe(it.definition) }))
+      .filter(it => it.term || it.definition)
+      : [],
+    examples: safeArr(obj?.examples),
+    mini_tasks: safeArr(obj?.mini_tasks),
+    reflection: safeArr(obj?.reflection),
+    callout: safe(obj?.callout) || '',
+
+    quiz: {
+      question: quizQuestion,
+      options: quizOptions?.length ? quizOptions : FALLBACK_QUIZ.options,
+      correct: correctClamped
+    },
+
+    video
+  };
+}
+
+async function loadLessonContent(lessonId, baseLesson) {
+  // 1) memory cache
+  if (state.lessonContentById.has(lessonId)) {
+    return state.lessonContentById.get(lessonId);
+  }
+
+  // 2) sessionStorage cache
+  try {
+    const cached = sessionStorage.getItem(sessionKeyForLesson(lessonId));
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const normalized = normalizeLessonContent(parsed, baseLesson);
+      state.lessonContentById.set(lessonId, normalized);
+      return normalized;
+    }
+  } catch {
+    // ignore cache errors
+  }
+
+  // 3) fetch from /content/lessons/<id>.json
+  const url = `./content/lessons/${encodeURIComponent(lessonId)}.json`;
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const normalized = normalizeLessonContent(data, baseLesson);
+
+    state.lessonContentById.set(lessonId, normalized);
+    try {
+      sessionStorage.setItem(sessionKeyForLesson(lessonId), JSON.stringify(data));
+    } catch {}
+
+    return normalized;
+  } catch {
+    // fallback content (do not break UI)
+    const normalized = normalizeLessonContent({}, baseLesson);
+    normalized.theory = [
+      "Матеріали цього уроку ще не додані або тимчасово недоступні.",
+      "Додай файл: content/lessons/" + lessonId + ".json"
+    ];
+    normalized.callout = "Порада: перевір, що сайт запущений через сервер (не file://), і файл JSON існує.";
+    state.lessonContentById.set(lessonId, normalized);
+    return normalized;
+  }
+}
+
+/**
+ * -----------------------------
  * ROUTER
+ * -----------------------------
  */
 const router = {
   landing: renderLanding,
   home: renderHome,
-  lesson: renderLessonView
+  lesson: (id) => { void renderLessonView(id); } // async-safe
 };
 
 /**
+ * -----------------------------
  * EVENT DELEGATION (no inline handlers)
+ * -----------------------------
  */
 dom.content.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
@@ -171,9 +311,11 @@ dom.content.addEventListener('click', (e) => {
     if (lessonId && Number.isFinite(idx)) return checkAnswer(lessonId, idx);
   }
 
-  if (action === 'play-video') {
-    // Placeholder: тут буде відкриття відео
-    // Нічого не міняємо в UI, лише доступність
+  if (action === 'open-video') {
+    const url = btn.getAttribute('data-video-url');
+    const safe = url ? safeHttpUrl(url) : null;
+    if (!safe) return;
+    window.open(safe, '_blank', 'noopener,noreferrer');
     return;
   }
 });
@@ -185,19 +327,17 @@ dom.content.addEventListener('input', (e) => {
 
 /**
  * Keyboard support:
- * - Play button div (Enter/Space)
+ * - Video play button (role=button) Enter/Space
  * - Quiz radiogroup arrows/Home/End/Enter/Space
  */
 dom.content.addEventListener('keydown', (e) => {
-  // Play video placeholder (role=button, not native)
-  const play = e.target.closest?.('[data-action="play-video"]');
-  if (play && (e.key === 'Enter' || e.key === ' ')) {
+  const openVideo = e.target.closest?.('[data-action="open-video"][role="button"]');
+  if (openVideo && (e.key === 'Enter' || e.key === ' ')) {
     e.preventDefault();
-    play.click();
+    openVideo.click();
     return;
   }
 
-  // Quiz roving focus
   const rg = e.target.closest?.('[data-quiz-radiogroup="true"]');
   if (!rg) return;
 
@@ -246,11 +386,15 @@ function debounceSearch(value) {
 }
 
 /**
+ * -----------------------------
  * RENDERERS
+ * -----------------------------
  */
+
 function renderLanding() {
   state.currentView = 'landing';
   state.activeLessonId = null;
+  state.currentLessonContent = null;
 
   dom.backBtn.classList.add('hidden');
   dom.headerTitle.textContent = 'CS Course';
@@ -304,6 +448,7 @@ function renderLanding() {
 function renderHome(opts = {}) {
   state.currentView = 'home';
   state.activeLessonId = null;
+  state.currentLessonContent = null;
 
   dom.backBtn.classList.add('hidden');
   dom.headerTitle.textContent = 'Навчальний план';
@@ -315,6 +460,7 @@ function renderHome(opts = {}) {
 
   const wrapper = el('div', { class: 'p-4 md:p-8 space-y-6 pb-12 animate-fade-in max-w-4xl mx-auto' });
 
+  // progress widget
   wrapper.appendChild(el('div', { class: 'bg-blue-500 text-white p-6 md:p-8 rounded-2xl shadow-lg relative overflow-hidden' }, [
     el('div', { class: 'absolute -right-4 -top-4 text-white/10 text-9xl' }, [ icon('fa-solid fa-chart-pie') ]),
     el('div', { class: 'relative z-10 max-w-2xl' }, [
@@ -328,6 +474,7 @@ function renderHome(opts = {}) {
     ])
   ]));
 
+  // search
   wrapper.appendChild(el('div', { class: 'relative' }, [
     icon('fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'),
     el('input', {
@@ -414,7 +561,6 @@ function renderHome(opts = {}) {
         ]));
 
         lessonBtn.appendChild(el('i', { class: 'fa-solid fa-chevron-right text-gray-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity', 'aria-hidden': 'true' }));
-
         panel.appendChild(lessonBtn);
       });
 
@@ -435,55 +581,86 @@ function renderHome(opts = {}) {
       return;
     }
   }
-
   focusMain();
 }
 
-function renderLessonView(lessonId) {
-  const module = curriculum.find(m => m.lessons.some(l => l.id === lessonId));
-  if (!module) return renderHome();
-  const lesson = module.lessons.find(l => l.id === lessonId);
-  if (!lesson) return renderHome();
+async function renderLessonView(lessonId) {
+  const base = findLessonBase(lessonId);
+  if (!base) return renderHome();
 
+  const { lesson: baseLesson } = base;
+
+  state.currentView = 'lesson';
+  state.activeLessonId = lessonId;
+  state.currentLessonContent = null;
+
+  dom.backBtn.classList.remove('hidden');
+  dom.headerTitle.textContent = baseLesson.id;
+  dom.content.scrollTop = 0;
+  clear(dom.content);
+
+  // Loading skeleton (stable)
+  dom.content.appendChild(el('div', { class: 'p-6 md:p-10 text-gray-500 dark:text-gray-300' }, [
+    el('div', { class: 'animate-pulse space-y-4 max-w-3xl mx-auto' }, [
+      el('div', { class: 'h-6 bg-gray-200 dark:bg-slate-700 rounded w-2/3' }),
+      el('div', { class: 'h-4 bg-gray-200 dark:bg-slate-700 rounded w-full' }),
+      el('div', { class: 'h-4 bg-gray-200 dark:bg-slate-700 rounded w-11/12' }),
+      el('div', { class: 'h-4 bg-gray-200 dark:bg-slate-700 rounded w-10/12' })
+    ])
+  ]));
+
+  // Load JSON content
+  const content = await loadLessonContent(lessonId, baseLesson);
+
+  // If user navigated away while loading — do nothing
+  if (state.activeLessonId !== lessonId) return;
+
+  state.currentLessonContent = content;
+
+  // Build prev/next
   const flat = curriculum.flatMap(m => m.lessons);
   const idx = flat.findIndex(l => l.id === lessonId);
   const prev = idx > 0 ? flat[idx - 1] : null;
   const next = idx < flat.length - 1 ? flat[idx + 1] : null;
   const isCompleted = state.completedLessons.includes(lessonId);
 
-  state.currentView = 'lesson';
-  state.activeLessonId = lessonId;
-
-  dom.backBtn.classList.remove('hidden');
-  dom.headerTitle.textContent = lesson.id;
-  dom.content.scrollTop = 0;
+  // Render actual UI
   clear(dom.content);
 
   const page = el('div', { class: 'animate-fade-in pb-10' });
   const grid = el('div', { class: 'flex flex-col md:grid md:grid-cols-12 md:gap-8 md:p-8 md:items-start max-w-7xl mx-auto' });
 
-  // Video
+  // Video Section (same look, but now opens URL if present)
   const videoCol = el('div', { class: 'w-full md:col-span-4 lg:col-span-3 order-1 md:sticky md:top-6' });
   const videoBox = el('div', { class: 'w-full aspect-[9/16] bg-black relative flex items-center justify-center video-placeholder overflow-hidden shadow-2xl md:rounded-2xl group' });
-
   videoBox.appendChild(el('div', { class: 'absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors' }));
 
   const videoInner = el('div', { class: 'absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center z-10' });
-  videoInner.appendChild(el('div', {
-    class: 'w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-300 cursor-pointer',
+
+  const canOpenVideo = !!content.video?.url;
+  const playBtn = el('div', {
+    class: `w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-300 ${
+      canOpenVideo ? 'cursor-pointer' : 'opacity-70'
+    }`,
     role: 'button',
     tabindex: '0',
-    'data-action': 'play-video',
-    'aria-label': 'Відтворити відео (плейсхолдер)'
-  }, [ icon('fa-solid fa-play text-3xl pl-1') ]));
+    'data-action': canOpenVideo ? 'open-video' : '',
+    'data-video-url': canOpenVideo ? content.video.url : '',
+    'aria-label': canOpenVideo ? 'Відкрити відео у новій вкладці' : 'Відео ще не додано'
+  }, [ icon('fa-solid fa-play text-3xl pl-1') ]);
 
-  videoInner.appendChild(el('h2', { class: 'text-xl md:text-2xl font-bold drop-shadow-md px-4', text: lesson.title }));
+  videoInner.appendChild(playBtn);
+  videoInner.appendChild(el('h2', { class: 'text-xl md:text-2xl font-bold drop-shadow-md px-4', text: content.title || baseLesson.title }));
+
+  if (!canOpenVideo) {
+    videoInner.appendChild(el('div', { class: 'mt-3 text-xs text-white/80 bg-black/20 px-3 py-1 rounded-full', text: 'Відео скоро' }));
+  }
+
   videoBox.appendChild(videoInner);
-
   videoCol.appendChild(videoBox);
   grid.appendChild(videoCol);
 
-  // Theory
+  // Theory Section (same container, now fills from JSON)
   const theoryCol = el('div', { class: 'md:col-span-8 lg:col-span-9 order-2 flex flex-col h-full' });
   const theoryCard = el('div', {
     class: 'p-6 md:p-8 bg-white dark:bg-slate-800 rounded-t-3xl md:rounded-2xl -mt-6 md:mt-0 relative z-20 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] md:shadow-none md:bg-transparent md:dark:bg-transparent border-0 md:border md:border-gray-100 md:dark:border-gray-700'
@@ -492,6 +669,7 @@ function renderLessonView(lessonId) {
   theoryCard.appendChild(el('div', { class: 'w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-8 md:hidden', 'aria-hidden': 'true' }));
 
   const headerRow = el('div', { class: 'mb-8' });
+
   headerRow.appendChild(el('div', { class: 'flex justify-between items-start' }, [
     el('span', { class: 'inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-3', text: 'Теорія' }),
     isCompleted ? el('span', { class: 'hidden md:inline-flex px-4 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-bold text-xs items-center gap-2' }, [
@@ -499,21 +677,49 @@ function renderLessonView(lessonId) {
     ]) : null
   ]));
 
-  headerRow.appendChild(el('h1', { class: 'text-2xl md:text-4xl font-bold mb-6 leading-tight text-gray-900 dark:text-white', text: lesson.title }));
+  headerRow.appendChild(el('h1', { class: 'text-2xl md:text-4xl font-bold mb-6 leading-tight text-gray-900 dark:text-white', text: content.title || baseLesson.title }));
 
   const prose = el('div', { class: 'prose text-gray-600 dark:text-gray-300 max-w-none' });
-  prose.appendChild(el('p', {}, [
-    document.createTextNode('Тут міститься детальний конспект уроку '),
-    el('strong', { text: lesson.title }),
-    document.createTextNode('. В реальному застосунку цей контент завантажується динамічно.')
-  ]));
 
+  // theory paragraphs
+  (content.theory?.length ? content.theory : [
+    "Матеріал уроку ще в підготовці.",
+    "Додай масив рядків у полі theory в JSON."
+  ]).forEach(p => prose.appendChild(el('p', { text: p })));
+
+  // optional sections (compact, still in same prose area)
+  if (content.key_terms?.length) {
+    prose.appendChild(el('p', { class: 'mt-6 font-bold text-gray-900 dark:text-white', text: 'Ключові терміни' }));
+    const ul = el('ul');
+    content.key_terms.forEach(k => {
+      const line = k.term && k.definition ? `${k.term}: ${k.definition}` : (k.term || k.definition);
+      ul.appendChild(el('li', { text: line }));
+    });
+    prose.appendChild(ul);
+  }
+
+  if (content.examples?.length) {
+    prose.appendChild(el('p', { class: 'mt-6 font-bold text-gray-900 dark:text-white', text: 'Приклади' }));
+    const ul = el('ul');
+    content.examples.forEach(x => ul.appendChild(el('li', { text: x })));
+    prose.appendChild(ul);
+  }
+
+  if (content.mini_tasks?.length) {
+    prose.appendChild(el('p', { class: 'mt-6 font-bold text-gray-900 dark:text-white', text: 'Міні-завдання' }));
+    const ol = el('ol');
+    content.mini_tasks.forEach(x => ol.appendChild(el('li', { text: x })));
+    prose.appendChild(ol);
+  }
+
+  // callout (keeps existing visual style)
+  const calloutText = content.callout || "Засвоївши цей матеріал, ви зможете перейти до наступного етапу.";
   prose.appendChild(el('div', { class: 'bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-xl border-l-4 border-yellow-400 text-sm md:text-base mt-6' }, [
     el('strong', { class: 'block mb-1 text-yellow-800 dark:text-yellow-200' }, [
       icon('fa-regular fa-lightbulb mr-2'),
       document.createTextNode('Важливо:')
     ]),
-    el('span', { text: ' Засвоївши цей матеріал, ви зможете перейти до наступного етапу.' })
+    el('span', { text: ' ' + calloutText })
   ]));
 
   headerRow.appendChild(prose);
@@ -523,13 +729,13 @@ function renderLessonView(lessonId) {
 
   page.appendChild(grid);
 
-  // Quiz
+  // Quiz & Navigation (quiz from JSON!)
   const bottomWrap = el('div', { class: 'max-w-4xl mx-auto px-6 md:px-0 mt-8 md:mt-12 order-3' });
   const quizCard = el('div', { class: 'bg-gray-50 dark:bg-slate-800 p-6 md:p-10 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm' });
 
   quizCard.appendChild(el('h3', { class: 'font-bold text-xl md:text-2xl flex items-center gap-3 mb-6' }, [
     el('span', { class: 'w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg' }, [ icon('fa-solid fa-brain') ]),
-    el('span', { text: `Квіз: ${lesson.quiz.question}` })
+    el('span', { text: `Квіз: ${content.quiz.question}` })
   ]));
 
   const optionsWrap = el('div', {
@@ -540,7 +746,7 @@ function renderLessonView(lessonId) {
     'data-quiz-radiogroup': 'true'
   });
 
-  lesson.quiz.options.forEach((opt, i) => {
+  content.quiz.options.forEach((opt, i) => {
     const btn = el('button', {
       type: 'button',
       class: 'w-full p-4 md:p-5 rounded-xl border-2 border-white dark:border-slate-600 bg-white dark:bg-slate-700 text-left hover:border-gray-200 dark:hover:border-gray-500 transition-all font-medium text-base shadow-sm relative group flex items-center gap-4',
@@ -555,7 +761,6 @@ function renderLessonView(lessonId) {
       }, [ String.fromCharCode(65 + i) ]),
       el('span', { text: String(opt) })
     ]);
-
     optionsWrap.appendChild(btn);
   });
 
@@ -610,23 +815,26 @@ function renderLessonView(lessonId) {
 }
 
 /**
+ * -----------------------------
  * QUIZ LOGIC
- * - при неправильній відповіді блокуємо тільки обраний варіант, щоб можна було спробувати ще
- * - при правильній — блокуємо всі
+ * Uses quiz from loaded lesson JSON: state.currentLessonContent.quiz
+ * -----------------------------
  */
 function checkAnswer(lessonId, chosenIndex) {
-  const module = curriculum.find(m => m.lessons.some(l => l.id === lessonId));
-  if (!module) return;
-  const lesson = module.lessons.find(l => l.id === lessonId);
-  if (!lesson) return;
+  if (state.activeLessonId !== lessonId) return;
+
+  const content = state.currentLessonContent;
+  if (!content || !content.quiz) return;
 
   const optionsWrap = document.getElementById('quizOptions');
   const feedback = document.getElementById('quizFeedback');
   if (!optionsWrap || !feedback) return;
 
   const buttons = Array.from(optionsWrap.querySelectorAll('button[role="radio"]'));
-  const correctIndex = lesson.quiz.correct;
+  const correctIndex = content.quiz.correct;
+
   const chosenBtn = buttons[chosenIndex];
+  if (!chosenBtn) return;
 
   // aria state
   buttons.forEach((b, i) => b.setAttribute('aria-checked', String(i === chosenIndex)));
@@ -654,12 +862,10 @@ function checkAnswer(lessonId, chosenIndex) {
   feedback.classList.remove('hidden');
 
   if (chosenIndex === correctIndex) {
+    // correct: lock all
     buttons.forEach(btn => { btn.disabled = true; btn.classList.add('opacity-60','cursor-not-allowed'); });
-
-    if (chosenBtn) {
-      chosenBtn.classList.remove('opacity-60','cursor-not-allowed');
-      mark(chosenBtn, 'correct');
-    }
+    chosenBtn.classList.remove('opacity-60','cursor-not-allowed');
+    mark(chosenBtn, 'correct');
 
     feedback.textContent = '';
     feedback.appendChild(icon('fa-regular fa-face-smile text-2xl mb-2 block'));
@@ -675,11 +881,10 @@ function checkAnswer(lessonId, chosenIndex) {
       saveCompleted();
     }
   } else {
-    if (chosenBtn) {
-      chosenBtn.disabled = true;
-      chosenBtn.classList.add('opacity-60','cursor-not-allowed');
-      mark(chosenBtn, 'wrong');
-    }
+    // wrong: disable only chosen (allow retry)
+    chosenBtn.disabled = true;
+    chosenBtn.classList.add('opacity-60','cursor-not-allowed');
+    mark(chosenBtn, 'wrong');
 
     feedback.textContent = '';
     feedback.appendChild(icon('fa-regular fa-face-frown text-2xl mb-2 block'));
@@ -689,7 +894,9 @@ function checkAnswer(lessonId, chosenIndex) {
 }
 
 /**
+ * -----------------------------
  * INIT
+ * -----------------------------
  */
 initThemeFromStorageOrSystem();
 router.landing();
