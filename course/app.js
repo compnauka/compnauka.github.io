@@ -1,5 +1,10 @@
 import { curriculum as rawCurriculum } from './data.js';
 
+/**
+ * Normalize curriculum:
+ * - гарантований quiz
+ * - чистимо localStorage прогрес від неіснуючих id
+ */
 function normalizeCurriculum(curr) {
   const fallbackQuiz = { question: "Матеріал засвоєно?", options: ["Ні", "Так", "Частково"], correct: 1 };
   return curr.map(m => ({
@@ -11,6 +16,9 @@ function normalizeCurriculum(curr) {
 const curriculum = normalizeCurriculum(rawCurriculum);
 const allLessonIds = new Set(curriculum.flatMap(m => m.lessons.map(l => l.id)));
 
+/**
+ * STATE
+ */
 const state = {
   currentView: 'landing',
   activeModuleId: null,
@@ -32,6 +40,9 @@ function saveCompleted() {
   localStorage.setItem('cs_completed', JSON.stringify(state.completedLessons));
 }
 
+/**
+ * DOM
+ */
 const dom = {
   content: document.getElementById('contentArea'),
   headerTitle: document.getElementById('headerTitle'),
@@ -39,36 +50,57 @@ const dom = {
   themeToggle: document.getElementById('themeToggle'),
 };
 
-function initTheme() {
-  const isDark =
-    localStorage.theme === 'dark' ||
-    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.classList.toggle('dark', isDark);
+/**
+ * THEME
+ */
+function setTheme(isDark) {
+  document.documentElement.classList.toggle('dark', !!isDark);
+  dom.themeToggle.setAttribute('aria-pressed', String(!!isDark));
+}
+function initThemeFromStorageOrSystem() {
+  const saved = localStorage.getItem('theme'); // 'dark' | 'light' | null
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved ? (saved === 'dark') : prefersDark;
+  setTheme(isDark);
 }
 
 dom.themeToggle.addEventListener('click', () => {
-  document.documentElement.classList.toggle('dark');
-  localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const isDark = !document.documentElement.classList.contains('dark');
+  setTheme(isDark);
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
 });
 
+/**
+ * SAFE DOM HELPERS
+ */
 function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
+
   for (const [k, v] of Object.entries(attrs)) {
     if (v === null || v === undefined) continue;
     if (k === 'class') node.className = String(v);
     else if (k === 'text') node.textContent = String(v);
-    else if (k === 'html') node.innerHTML = String(v); // тільки для власних статичних шматків
     else node.setAttribute(k, String(v));
   }
+
   for (const child of children) {
     if (child === null || child === undefined) continue;
     node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
   }
+
   return node;
 }
-function icon(className) { return el('i', { class: className }); }
+
+function icon(className) {
+  return el('i', { class: className, 'aria-hidden': 'true' });
+}
+
+function focusMain() {
+  // допомагає screen reader / keyboard користувачам
+  try { dom.content.focus({ preventScroll: true }); } catch {}
+}
 
 function calculateProgress() {
   const total = curriculum.reduce((acc, m) => acc + m.lessons.length, 0);
@@ -79,48 +111,70 @@ function calculateProgress() {
 function filterCurriculum(query) {
   if (!query) return curriculum;
   const q = query.toLowerCase();
+
   return curriculum
     .map(mod => {
       const modMatch = mod.title.toLowerCase().includes(q);
       const lessonsMatch = mod.lessons.filter(l =>
         l.title.toLowerCase().includes(q) || l.id.toLowerCase().includes(q)
       );
-      if (modMatch || lessonsMatch.length) return { ...mod, lessons: lessonsMatch.length ? lessonsMatch : mod.lessons };
+      if (modMatch || lessonsMatch.length) {
+        return { ...mod, lessons: lessonsMatch.length ? lessonsMatch : mod.lessons };
+      }
       return null;
     })
     .filter(Boolean);
 }
 
+/**
+ * ROUTER
+ */
 const router = {
   landing: renderLanding,
   home: renderHome,
   lesson: renderLessonView
 };
 
+/**
+ * EVENT DELEGATION (no inline handlers)
+ */
 dom.content.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
+
   const action = btn.getAttribute('data-action');
+  if (!action) return;
 
   if (action === 'go-home') return router.home();
+
   if (action === 'toggle-module') {
     const id = Number(btn.getAttribute('data-module-id'));
-    state.activeModuleId = state.activeModuleId === id ? null : id;
+    state.activeModuleId = (state.activeModuleId === id) ? null : id;
     return renderHome();
   }
+
   if (action === 'open-lesson') {
     const id = btn.getAttribute('data-lesson-id');
     if (id) return router.lesson(id);
   }
+
   if (action === 'go-prev' || action === 'go-next') {
     const id = btn.getAttribute('data-lesson-id');
     if (id) return router.lesson(id);
   }
+
   if (action === 'finish-course') return router.home();
+
   if (action === 'select-answer') {
     const lessonId = btn.getAttribute('data-lesson-id');
     const idx = Number(btn.getAttribute('data-index'));
     if (lessonId && Number.isFinite(idx)) return checkAnswer(lessonId, idx);
+  }
+
+  if (action === 'play-video') {
+    // Placeholder: тут буде відкриття відео
+    // Нічого не міняємо в UI, лише доступність
+    return;
   }
 });
 
@@ -129,9 +183,21 @@ dom.content.addEventListener('input', (e) => {
   if (t instanceof HTMLInputElement && t.id === 'searchInput') debounceSearch(t.value);
 });
 
-dom.backBtn.addEventListener('click', () => router.home());
-
+/**
+ * Keyboard support:
+ * - Play button div (Enter/Space)
+ * - Quiz radiogroup arrows/Home/End/Enter/Space
+ */
 dom.content.addEventListener('keydown', (e) => {
+  // Play video placeholder (role=button, not native)
+  const play = e.target.closest?.('[data-action="play-video"]');
+  if (play && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    play.click();
+    return;
+  }
+
+  // Quiz roving focus
   const rg = e.target.closest?.('[data-quiz-radiogroup="true"]');
   if (!rg) return;
 
@@ -139,20 +205,37 @@ dom.content.addEventListener('keydown', (e) => {
   if (!buttons.length) return;
 
   const currentIndex = buttons.findIndex(b => b === document.activeElement);
+
   const move = (nextIdx) => {
     const clamped = (nextIdx + buttons.length) % buttons.length;
     buttons[clamped].focus();
   };
 
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); move(currentIndex === -1 ? 0 : currentIndex + 1); }
-  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); move(currentIndex === -1 ? 0 : currentIndex - 1); }
-  else if (e.key === 'Home') { e.preventDefault(); buttons[0].focus(); }
-  else if (e.key === 'End') { e.preventDefault(); buttons[buttons.length - 1].focus(); }
-  else if (e.key === 'Enter' || e.key === ' ') {
-    if (document.activeElement?.getAttribute('role') === 'radio') { e.preventDefault(); document.activeElement.click(); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    move(currentIndex === -1 ? 0 : currentIndex + 1);
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    move(currentIndex === -1 ? 0 : currentIndex - 1);
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    buttons[0].focus();
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    buttons[buttons.length - 1].focus();
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    if (document.activeElement?.getAttribute('role') === 'radio') {
+      e.preventDefault();
+      document.activeElement.click();
+    }
   }
 });
 
+dom.backBtn.addEventListener('click', router.home);
+
+/**
+ * Debounced search (perf)
+ */
 let searchT = null;
 function debounceSearch(value) {
   clearTimeout(searchT);
@@ -162,6 +245,9 @@ function debounceSearch(value) {
   }, 120);
 }
 
+/**
+ * RENDERERS
+ */
 function renderLanding() {
   state.currentView = 'landing';
   state.activeLessonId = null;
@@ -169,7 +255,6 @@ function renderLanding() {
   dom.backBtn.classList.add('hidden');
   dom.headerTitle.textContent = 'CS Course';
   dom.content.scrollTop = 0;
-
   clear(dom.content);
 
   const hasProgress = state.completedLessons.length > 0;
@@ -193,7 +278,10 @@ function renderLanding() {
       document.createTextNode("Комп'ютерна наука "),
       el('span', { class: 'text-blue-500 block mt-2', text: 'без болю' })
     ]),
-    el('p', { class: 'text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed', text: 'Твій гід у цифровому світі. Вертикальні відео, теорія без води та практика.' })
+    el('p', {
+      class: 'text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed',
+      text: 'Твій гід у цифровому світі. Вертикальні відео, теорія без води та практика.'
+    })
   ]));
 
   root.appendChild(el('button', {
@@ -210,6 +298,7 @@ function renderLanding() {
   root.appendChild(el('p', { class: 'text-xs text-gray-400', text: 'Без реєстрації • Прогрес зберігається' }));
 
   dom.content.appendChild(root);
+  focusMain();
 }
 
 function renderHome(opts = {}) {
@@ -219,7 +308,6 @@ function renderHome(opts = {}) {
   dom.backBtn.classList.add('hidden');
   dom.headerTitle.textContent = 'Навчальний план';
   dom.content.scrollTop = 0;
-
   clear(dom.content);
 
   const progress = calculateProgress();
@@ -344,8 +432,11 @@ function renderHome(opts = {}) {
     if (input) {
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
+      return;
     }
   }
+
+  focusMain();
 }
 
 function renderLessonView(lessonId) {
@@ -366,12 +457,12 @@ function renderLessonView(lessonId) {
   dom.backBtn.classList.remove('hidden');
   dom.headerTitle.textContent = lesson.id;
   dom.content.scrollTop = 0;
-
   clear(dom.content);
 
   const page = el('div', { class: 'animate-fade-in pb-10' });
   const grid = el('div', { class: 'flex flex-col md:grid md:grid-cols-12 md:gap-8 md:p-8 md:items-start max-w-7xl mx-auto' });
 
+  // Video
   const videoCol = el('div', { class: 'w-full md:col-span-4 lg:col-span-3 order-1 md:sticky md:top-6' });
   const videoBox = el('div', { class: 'w-full aspect-[9/16] bg-black relative flex items-center justify-center video-placeholder overflow-hidden shadow-2xl md:rounded-2xl group' });
 
@@ -382,14 +473,17 @@ function renderLessonView(lessonId) {
     class: 'w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-300 cursor-pointer',
     role: 'button',
     tabindex: '0',
+    'data-action': 'play-video',
     'aria-label': 'Відтворити відео (плейсхолдер)'
   }, [ icon('fa-solid fa-play text-3xl pl-1') ]));
+
   videoInner.appendChild(el('h2', { class: 'text-xl md:text-2xl font-bold drop-shadow-md px-4', text: lesson.title }));
   videoBox.appendChild(videoInner);
 
   videoCol.appendChild(videoBox);
   grid.appendChild(videoCol);
 
+  // Theory
   const theoryCol = el('div', { class: 'md:col-span-8 lg:col-span-9 order-2 flex flex-col h-full' });
   const theoryCard = el('div', {
     class: 'p-6 md:p-8 bg-white dark:bg-slate-800 rounded-t-3xl md:rounded-2xl -mt-6 md:mt-0 relative z-20 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] md:shadow-none md:bg-transparent md:dark:bg-transparent border-0 md:border md:border-gray-100 md:dark:border-gray-700'
@@ -399,7 +493,7 @@ function renderLessonView(lessonId) {
 
   const headerRow = el('div', { class: 'mb-8' });
   headerRow.appendChild(el('div', { class: 'flex justify-between items-start' }, [
-    el('span', { class: 'inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-500 text-xs font-bold uppercase tracking-wider mb-3', text: 'Теорія' }),
+    el('span', { class: 'inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-3', text: 'Теорія' }),
     isCompleted ? el('span', { class: 'hidden md:inline-flex px-4 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-bold text-xs items-center gap-2' }, [
       icon('fa-solid fa-circle-check'), el('span', { text: 'Пройдено' })
     ]) : null
@@ -408,14 +502,15 @@ function renderLessonView(lessonId) {
   headerRow.appendChild(el('h1', { class: 'text-2xl md:text-4xl font-bold mb-6 leading-tight text-gray-900 dark:text-white', text: lesson.title }));
 
   const prose = el('div', { class: 'prose text-gray-600 dark:text-gray-300 max-w-none' });
-  prose.appendChild(el('p', { class: 'mb-4' }, [
+  prose.appendChild(el('p', {}, [
     document.createTextNode('Тут міститься детальний конспект уроку '),
     el('strong', { text: lesson.title }),
     document.createTextNode('. В реальному застосунку цей контент завантажується динамічно.')
   ]));
+
   prose.appendChild(el('div', { class: 'bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-xl border-l-4 border-yellow-400 text-sm md:text-base mt-6' }, [
     el('strong', { class: 'block mb-1 text-yellow-800 dark:text-yellow-200' }, [
-      el('i', { class: 'fa-regular fa-lightbulb mr-2', 'aria-hidden': 'true' }),
+      icon('fa-regular fa-lightbulb mr-2'),
       document.createTextNode('Важливо:')
     ]),
     el('span', { text: ' Засвоївши цей матеріал, ви зможете перейти до наступного етапу.' })
@@ -428,6 +523,7 @@ function renderLessonView(lessonId) {
 
   page.appendChild(grid);
 
+  // Quiz
   const bottomWrap = el('div', { class: 'max-w-4xl mx-auto px-6 md:px-0 mt-8 md:mt-12 order-3' });
   const quizCard = el('div', { class: 'bg-gray-50 dark:bg-slate-800 p-6 md:p-10 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm' });
 
@@ -453,13 +549,13 @@ function renderLessonView(lessonId) {
       'data-action': 'select-answer',
       'data-lesson-id': lessonId,
       'data-index': String(i)
-    });
+    }, [
+      el('span', {
+        class: 'w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-500 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:border-gray-400 dark:group-hover:border-gray-300'
+      }, [ String.fromCharCode(65 + i) ]),
+      el('span', { text: String(opt) })
+    ]);
 
-    btn.appendChild(el('span', {
-      class: 'w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-500 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:border-gray-400 dark:group-hover:border-gray-300'
-    }, [ String.fromCharCode(65 + i) ]));
-
-    btn.appendChild(el('span', { text: String(opt) }));
     optionsWrap.appendChild(btn);
   });
 
@@ -475,6 +571,7 @@ function renderLessonView(lessonId) {
 
   bottomWrap.appendChild(quizCard);
 
+  // Prev/Next
   const navRow = el('div', { class: 'flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-100 dark:border-gray-800 mt-8 gap-4' });
 
   if (prev) {
@@ -509,8 +606,14 @@ function renderLessonView(lessonId) {
   page.appendChild(bottomWrap);
 
   dom.content.appendChild(page);
+  focusMain();
 }
 
+/**
+ * QUIZ LOGIC
+ * - при неправильній відповіді блокуємо тільки обраний варіант, щоб можна було спробувати ще
+ * - при правильній — блокуємо всі
+ */
 function checkAnswer(lessonId, chosenIndex) {
   const module = curriculum.find(m => m.lessons.some(l => l.id === lessonId));
   if (!module) return;
@@ -525,9 +628,10 @@ function checkAnswer(lessonId, chosenIndex) {
   const correctIndex = lesson.quiz.correct;
   const chosenBtn = buttons[chosenIndex];
 
+  // aria state
   buttons.forEach((b, i) => b.setAttribute('aria-checked', String(i === chosenIndex)));
-  feedback.classList.remove('hidden');
 
+  // reset visuals
   buttons.forEach(btn => {
     btn.classList.remove('ring-2','ring-green-500','ring-red-500','bg-green-50','bg-red-50','border-green-500','border-red-500','dark:bg-green-900/30','dark:bg-red-900/30');
     const badge = btn.querySelector('span');
@@ -547,8 +651,11 @@ function checkAnswer(lessonId, chosenIndex) {
     }
   };
 
+  feedback.classList.remove('hidden');
+
   if (chosenIndex === correctIndex) {
     buttons.forEach(btn => { btn.disabled = true; btn.classList.add('opacity-60','cursor-not-allowed'); });
+
     if (chosenBtn) {
       chosenBtn.classList.remove('opacity-60','cursor-not-allowed');
       mark(chosenBtn, 'correct');
@@ -581,5 +688,8 @@ function checkAnswer(lessonId, chosenIndex) {
   }
 }
 
-initTheme();
+/**
+ * INIT
+ */
+initThemeFromStorageOrSystem();
 router.landing();
