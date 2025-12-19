@@ -1,5 +1,5 @@
 import { renderSidebar, renderWelcomeScreen, renderLesson } from './renderers.js';
-import { loadCourseData } from './contentLoader.js';
+import loadCourseData from './contentLoader.js';
 import { updateProgress } from './utils.js';
 
 export default class AppCore {
