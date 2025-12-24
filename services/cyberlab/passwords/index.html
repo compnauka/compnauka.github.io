@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLab Simulator v2.4 (Responsive)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent body scroll */
+        }
+        .font-mono {
+            /* Added fallback fonts */
+            font-family: 'Fira Code', 'Courier New', monospace;
+        }
+        /* Custom Scrollbar for Terminal */
+        .terminal-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+
+        /* Animations */
+        @keyframes bounce-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in {
+            animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .step-active {
+            background-color: #2563eb; /* blue-600 */
+            border-color: #60a5fa; /* blue-400 */
+            color: white;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .8; }
+        }
+
+        .step-done {
+            background-color: #22c55e; /* green-500 */
+            border-color: #22c55e;
+            color: #0f172a;
+        }
+
+        .step-pending {
+            background-color: #1e293b; /* slate-800 */
+            border-color: #475569; /* slate-600 */
+            color: #64748b; /* slate-500 */
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            main { flex-direction: column; }
+            main > div { width: 100%; height: 50%; }
+            /* Adjust terminal font size on mobile */
+            #terminalOutput { font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen bg-slate-900 flex flex-col text-slate-200">
+
+    <!-- MODAL -->
+    <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border-2 border-blue-500 rounded-xl max-w-lg w-full shadow-2xl overflow-hidden relative transform scale-95 transition-transform duration-300" id="modalContent">
+            <!-- Header -->
+            <div class="bg-blue-600 p-4 flex items-center gap-3">
+                <i class="fas fa-book-open text-white text-xl"></i>
+                <h3 class="text-xl font-bold text-white">Як це працює?</h3>
+                <button onclick="closeModal()" class="absolute top-2 right-2 p-2 text-blue-100 hover:text-white hover:bg-blue-700 rounded-full transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+                <h4 id="modalTitle" class="text-lg font-bold text-blue-400">Title</h4>
+                <p id="modalText" class="text-slate-300 text-lg leading-relaxed">Text</p>
+            </div>
+            <!-- Footer -->
+            <div class="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+                <button onclick="closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg transition shadow-lg shadow-blue-900/20">
+                    Зрозуміло!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="bg-slate-950 border-b border-slate-800 shrink-0">
+        <div class="p-3 flex items-center gap-3 border-b border-slate-900">
+            <i class="fas fa-shield-alt text-red-500 text-xl"></i>
+            <span class="font-bold tracking-wider text-lg">CyberLab <span class="text-slate-500 text-sm font-normal">v2.4</span></span>
+        </div>
+        <!-- Progress Bar -->
+        <div class="bg-slate-900 p-4">
+            <div class="flex justify-between items-center max-w-4xl mx-auto" id="progressBar">
+                <!-- Steps will be injected by JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- LEFT PANEL: Victim Browser -->
+        <div class="w-1/2 bg-slate-200 p-4 flex flex-col justify-center items-center border-r border-slate-700 relative">
+            <div class="absolute top-2 left-2 bg-slate-300 text-slate-600 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider z-10">
+                Екран жертви (Монітор)
+            </div>
+
+            <div class="w-full max-w-md h-[500px] shadow-2xl rounded-lg overflow-hidden ring-1 ring-slate-400 flex flex-col bg-white max-h-full" id="browserFrame">
+                <!-- Browser Toolbar -->
+                <div class="bg-slate-100 border-b border-slate-300 p-2 flex items-center gap-2 shrink-0">
+                    <div class="flex gap-1 mr-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                    </div>
+                    <div class="flex gap-2 text-slate-400">
+                        <i id="browserReload" class="fas fa-sync-alt text-sm"></i>
+                    </div>
+                    <div class="flex-1 bg-white border border-slate-300 rounded px-3 py-1 text-xs text-slate-600 flex items-center gap-2">
+                        <i class="fas fa-lock text-green-600 text-[10px]"></i>
+                        <span id="urlBar">192.168.1.10/admin/login</span>
+                    </div>
+                </div>
+
+                <!-- Browser Content -->
+                <div class="flex-1 overflow-y-auto relative bg-slate-50 p-8 flex flex-col items-center justify-center relative">
+                    
+                    <!-- Attack Alert Overlay -->
+                    <div id="attackAlert" class="hidden absolute top-0 right-0 m-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded animate-pulse shadow-lg z-50">
+                        DDoS / BRUTEFORCE DETECTED
+                    </div>
+
+                    <!-- Login Form (Default) -->
+                    <div id="loginView" class="w-full flex flex-col items-center">
+                        <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg">
+                            <i class="fas fa-server text-white text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-1">Admin Portal</h2>
+                        <p class="text-slate-500 text-sm mb-8">Тільки для персоналу</p>
+
+                        <div class="w-full space-y-4">
+                            <div class="bg-white p-4 rounded border border-slate-200 shadow-sm">
+                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Email</label>
+                                <div class="text-slate-800 font-mono">director@school.ua</div>
+                            </div>
+                            <div id="passContainer" class="bg-white p-4 rounded border border-slate-200 shadow-sm transition-colors duration-100">
+                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Пароль</label>
+                                <div class="flex justify-between items-center">
+                                    <div id="passInput" class="font-mono text-slate-400">••••••••</div>
+                                    <i id="passSpinner" class="fas fa-sync-alt animate-spin text-red-500 hidden"></i>
+                                </div>
+                            </div>
+                            <button disabled class="w-full bg-slate-300 text-white font-bold py-3 rounded cursor-not-allowed">
+                                Увійти
+                            </button>
+                            <div id="loginError" class="text-center text-xs text-red-500 font-bold animate-pulse mt-2 hidden">
+                                НЕВІРНИЙ ПАРОЛЬ (401)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hacked View (Success) -->
+                    <div id="hackedView" class="hidden w-full bg-red-50 border-2 border-red-500 rounded-lg p-6 text-center animate-bounce-in">
+                        <div class="mx-auto text-red-600 mb-4">
+                            <i class="fas fa-exclamation-triangle text-5xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-red-600 mb-2">СИСТЕМУ ЗЛАМАНО</h3>
+                        <p class="text-slate-700 mb-4">Адміністративний доступ отримано.</p>
+                        <div class="bg-white p-3 rounded border border-red-200 text-left font-mono text-sm">
+                            <strong>Користувач:</strong> director@school.ua<br>
+                            <strong>Пароль:</strong> <span id="crackedPassDisplay" class="bg-yellow-200 px-1 text-red-900 font-bold"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Hacker Terminal -->
+        <div class="w-1/2 bg-black flex flex-col border-l border-slate-700">
+            <!-- Terminal Header -->
+            <div class="bg-slate-900 p-2 border-b border-slate-800 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-2 text-green-500 text-xs font-mono">
+                    <i class="fas fa-terminal"></i>
+                    root@kali:~
+                </div>
+                <div class="text-slate-500 text-xs font-mono">IP: 192.168.1.55</div>
+            </div>
+
+            <!-- Terminal Output -->
+            <div id="terminalOutput" class="flex-1 p-4 font-mono text-xs md:text-sm overflow-y-auto space-y-1 text-slate-300 terminal-scroll">
+                <div>Kali GNU/Linux Rolling [Version 2025.1]</div>
+                <div>Type commands to start the penetration test.</div>
+                <div class="text-slate-500">root@kali:~# </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+                
+                <!-- Task Box -->
+                <div id="taskBox" class="mb-4 bg-blue-900/20 border border-blue-800 p-3 rounded flex flex-col gap-3 transition-all">
+                    <div class="flex items-start justify-between">
+                        <div class="flex gap-3">
+                            <div class="p-2 bg-blue-900/50 rounded text-blue-400 h-fit">
+                                <i class="fas fa-microchip text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-blue-400 text-xs font-bold uppercase mb-1" id="taskTitle">Завдання: ...</h4>
+                                <p class="text-slate-300 text-xs mb-2" id="taskDesc">...</p>
+                            </div>
+                        </div>
+                        <button onclick="openModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-lg shrink-0">
+                            <i class="fas fa-question-circle"></i>
+                            Що це означає?
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <div class="text-xs text-slate-400 mb-1">Введіть команду:</div>
+                        <code id="taskCmd" class="block bg-black p-2 rounded text-green-400 font-mono text-xs border border-slate-700 select-all cursor-pointer hover:bg-slate-950 transition break-all" onclick="fillCommand()">
+                            ...
+                        </code>
+                    </div>
+                </div>
+
+                <!-- Success Box (Hidden by default) -->
+                <div id="successBox" class="mb-4 bg-green-900/20 border border-green-800 p-4 rounded text-center hidden">
+                    <h4 class="text-green-400 font-bold text-lg mb-2">Місію виконано!</h4>
+                    <p class="text-slate-300 text-sm">
+                        Зламано за 1.2 секунди. Hydra перевірила 8 паролів зі швидкістю 384 спроби/хв.<br>
+                        У реальній атаці на слабкий сервер можна пробувати 1000+ паролів за хвилину.
+                    </p>
+                    <button onclick="resetSim()" class="mt-4 bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wider transition">
+                        Перезапустити симуляцію
+                    </button>
+                </div>
+
+                <!-- Command Input Form -->
+                <form id="cmdForm" class="flex items-center gap-2" onsubmit="handleCommand(event)">
+                    <span class="text-green-500 font-bold font-mono">root@kali:~#</span>
+                    <input id="cmdInput" type="text" autocomplete="off" class="flex-1 bg-transparent border-none text-white focus:ring-0 focus:outline-none font-mono text-sm" placeholder="..." autofocus>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- CONSTANTS & CONFIG ---
+        const TARGET_IP = "192.168.1.10";
+        const TARGET_USER = "director";
+        const WORDLIST_FILE = "passwords.txt";
+        const REAL_PASSWORD = 'princess';
+        const THREADS = 4;
+        
+        const DICTIONARY = [
+            '123456', 'qwerty', 'admin', 'iloveyou', 
+            'master', 'football', 'princess', 'dragon',
+            '111111', 'letmein', 'orange', 'p@ssword',
+            'superman', 'welcome', 'school', 'secret'
+        ];
+
+        const STEPS = [
+            { 
+                id: 'recon', 
+                title: '1. Розвідка', 
+                cmd: `ping ${TARGET_IP}`, 
+                desc: 'Перевірка доступності сервера',
+                kidExpl: {
+                    title: "Чи є хтось вдома?",
+                    text: "Уяви, що ти кидаєш м'ячик у стіну будинку. Якщо м'ячик відскочив назад — значить, стіна на місці! Команда PING робить те саме: вона посилає крихітний сигнал серверу, щоб перевірити, чи він працює і чи можна до нього підключитися."
+                }
+            },
+            { 
+                id: 'install', 
+                title: '2. Інструменти', 
+                cmd: 'apt install hydra', 
+                desc: 'Встановлення програми для злому',
+                kidExpl: {
+                    title: "Збираємо рюкзак",
+                    text: "Хакер не носить усі інструменти в кишенях. Коли йому потрібна спеціальна програма (наприклад, Гідра), він її «завантажує» з магазину. Це як встановити нову гру на телефон, тільки замість красивих іконок ми пишемо текстову команду."
+                }
+            },
+            { 
+                id: 'wordlist', 
+                title: '3. Словник', 
+                cmd: `cat ${WORDLIST_FILE}`, 
+                desc: 'Перегляд бази популярних паролів',
+                kidExpl: {
+                    title: "Книга поганих паролів",
+                    text: "Хакери не вгадують паролі самі. Вони мають величезні списки слів, які люди найчастіше використовують (наприклад, '123456' або 'princess'). Команда CAT просто відкриває цю «книжку», щоб ми могли глянути, які слова там записані."
+                }
+            },
+            { 
+                id: 'attack', 
+                title: '4. Атака', 
+                cmd: `hydra -l ${TARGET_USER} -P ${WORDLIST_FILE} -t ${THREADS} -vV ${TARGET_IP} http-post-form "/admin/login:user=^USER^&pass=^PASS^:F=401"`, 
+                desc: 'Запуск багатопотокового підбору',
+                kidExpl: {
+                    title: "Багатоголовий монстр",
+                    text: "Гідра — це програма-робот, яка має 4 голови (потоки). Кожна голова пробує свій пароль одночасно! Це дозволяє зламати захист у сотні разів швидше, ніж це робить людина."
+                }
+            },
+        ];
+
+        // --- STATE ---
+        let currentStepIndex = 0;
+        let isAttacking = false;
+        let logs = [
+            'Kali GNU/Linux Rolling [Version 2025.1]',
+            'Type commands to start the penetration test.',
+            'root@kali:~# '
+        ];
+
+        // --- DOM ELEMENTS ---
+        const termOutput = document.getElementById('terminalOutput');
+        const cmdInput = document.getElementById('cmdInput');
+        const progressBar = document.getElementById('progressBar');
+        const taskTitle = document.getElementById('taskTitle');
+        const taskDesc = document.getElementById('taskDesc');
+        const taskCmd = document.getElementById('taskCmd');
+        const taskBox = document.getElementById('taskBox');
+        const successBox = document.getElementById('successBox');
+        
+        // Modal
+        const modal = document.getElementById('infoModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalText = document.getElementById('modalText');
+
+        // Browser Elements
+        const passInput = document.getElementById('passInput');
+        const passContainer = document.getElementById('passContainer');
+        const passSpinner = document.getElementById('passSpinner');
+        const loginError = document.getElementById('loginError');
+        const attackAlert = document.getElementById('attackAlert');
+        const browserReload = document.getElementById('browserReload');
+        const browserFrame = document.getElementById('browserFrame');
+        const loginView = document.getElementById('loginView');
+        const hackedView = document.getElementById('hackedView');
+        const crackedPassDisplay = document.getElementById('crackedPassDisplay');
+
+        // --- INIT ---
+        function init() {
+            renderProgressBar();
+            renderTask();
+            updateTerminal();
+        }
+
+        // --- RENDERERS ---
+        function renderProgressBar() {
+            progressBar.innerHTML = STEPS.map((step, idx) => {
+                let styles = '';
+                let icon = '';
+                
+                if (idx < currentStepIndex) {
+                    styles = 'step-done';
+                    icon = '<i class="fas fa-check-circle"></i>';
+                } else if (idx === currentStepIndex) {
+                    styles = 'step-active';
+                    icon = `${idx + 1}`;
+                } else {
+                    styles = 'step-pending';
+                    icon = `${idx + 1}`;
+                }
+
+                // Conditional line
+                const line = idx < STEPS.length - 1 
+                    ? `<div class="w-12 h-0.5 mx-2 ${idx < currentStepIndex ? 'bg-green-500' : 'bg-slate-700'}"></div>` 
+                    : '';
+
+                // Title Logic (Hidden on small screens logic handled by flex/hidden in css if needed, but keeping simple here)
+                const titleColor = idx <= currentStepIndex ? 'text-slate-200' : 'text-slate-600';
+
+                return `
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold text-sm transition-all ${styles}">
+                            ${icon}
+                        </div>
+                        <div class="hidden md:block text-xs font-bold uppercase ${titleColor}">
+                            ${step.title}
+                        </div>
+                        ${line}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTask() {
+            if (currentStepIndex >= STEPS.length) {
+                taskBox.classList.add('hidden');
+                successBox.classList.remove('hidden');
+                return;
+            }
+            const step = STEPS[currentStepIndex];
+            taskTitle.innerText = `Завдання: ${step.title}`;
+            taskDesc.innerText = step.desc;
+            taskCmd.innerText = step.cmd;
+            taskBox.classList.remove('hidden');
+            successBox.classList.add('hidden');
+        }
+
+        function updateTerminal() {
+            termOutput.innerHTML = logs.map(line => {
+                let className = '';
+                if (line.includes('SUCCESS') || line.includes('found') || line.includes('password:')) className = 'text-green-400 font-bold';
+                else if (line.includes('FAILED') || line.includes('bash:')) className = 'text-red-400';
+                else if (line.startsWith('root@kali')) className = 'text-green-500 font-bold mt-2';
+                else if (line.includes('[VERBOSE]')) className = 'text-slate-500';
+                
+                return `<div class="${className}">${line}</div>`;
+            }).join('');
+            
+            termOutput.scrollTop = termOutput.scrollHeight;
+        }
+
+        // --- ACTIONS ---
+        function fillCommand() {
+            if (currentStepIndex < STEPS.length) {
+                cmdInput.value = STEPS[currentStepIndex].cmd;
+                cmdInput.focus();
+            }
+        }
+
+        function handleCommand(e) {
+            e.preventDefault();
+            if (isAttacking) return;
+
+            const input = cmdInput.value.trim();
+            if (!input) return;
+
+            // Remove last prompt
+            logs.pop();
+            logs.push(`root@kali:~# ${input}`);
+
+            const currentStep = STEPS[currentStepIndex];
+
+            if (input === currentStep.cmd) {
+                executeLogic(currentStep.id);
+            } else {
+                logs.push(`bash: ${input}: команда не знайдена (або неправильний крок)`);
+                logs.push(`Підказка: Спробуй ввести команду із завдання`);
+                logs.push('root@kali:~# ');
+                updateTerminal();
+            }
+
+            cmdInput.value = '';
+        }
+
+        function executeLogic(stepId) {
+            switch(stepId) {
+                case 'recon':
+                    logs.push(`PING ${TARGET_IP} (${TARGET_IP}) 56(84) bytes of data.`);
+                    logs.push(`64 bytes from ${TARGET_IP}: icmp_seq=1 ttl=64 time=0.045 ms`);
+                    logs.push(`64 bytes from ${TARGET_IP}: icmp_seq=2 ttl=64 time=0.032 ms`);
+                    logs.push(`--- ${TARGET_IP} ping statistics ---`);
+                    logs.push(`2 packets transmitted, 2 received, 0% packet loss`);
+                    logs.push('Ціль підтверджено. Переходимо до встановлення.');
+                    completeStep();
+                    break;
+                case 'install':
+                    logs.push('Reading package lists... Done');
+                    logs.push('Building dependency tree... Done');
+                    logs.push('The following NEW packages will be installed:');
+                    logs.push('  hydra (v9.5-1)');
+                    logs.push('Unpacking hydra...');
+                    logs.push('Setting up hydra...');
+                    logs.push('Processing triggers for man-db...');
+                    logs.push('Встановлення завершено.');
+                    completeStep();
+                    break;
+                case 'wordlist':
+                    logs.push('--- TOP COMMON PASSWORDS ---');
+                    DICTIONARY.forEach(p => logs.push(p));
+                    logs.push('... (14 million lines hidden) ...');
+                    logs.push('Перевірка словника OK.');
+                    completeStep();
+                    break;
+                case 'attack':
+                    logs.push(`[DATA] Starting hydra (https://github.com/vanhauser-thc/thc-hydra)`);
+                    logs.push(`[DATA] max ${THREADS} tasks per 1 server, overall ${THREADS} tasks`);
+                    logs.push(`[DATA] Service: http-post-form`);
+                    logs.push(`[DATA] Attacking target: ${TARGET_IP}`);
+                    isAttacking = true;
+                    updateTerminal();
+                    startAttackLoop();
+                    break;
+            }
+        }
+
+        function completeStep() {
+            logs.push('root@kali:~# ');
+            updateTerminal();
+            currentStepIndex++;
+            renderProgressBar();
+            renderTask();
+        }
+
+        function startAttackLoop() {
+            let index = 0;
+            
+            // UI State for Attack
+            browserReload.classList.add('animate-spin', 'text-red-500');
+            passSpinner.classList.remove('hidden');
+            loginError.classList.remove('hidden');
+            passContainer.classList.add('bg-red-50', 'border-red-400');
+            passInput.classList.add('text-red-600', 'font-bold');
+            attackAlert.classList.remove('hidden');
+            browserFrame.classList.add('border-4', 'border-red-500');
+
+            const interval = setInterval(() => {
+                if (index >= DICTIONARY.length) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                const currentBatch = DICTIONARY.slice(index, index + THREADS);
+                const matchFound = currentBatch.includes(REAL_PASSWORD);
+
+                // Update Victim UI
+                if (currentBatch.length > 0) {
+                    passInput.innerText = currentBatch[currentBatch.length - 1];
+                }
+
+                if (matchFound) {
+                    // Success!
+                    clearInterval(interval);
+                    isAttacking = false;
+                    
+                    // Cleanup Victim UI
+                    browserReload.classList.remove('animate-spin', 'text-red-500');
+                    passSpinner.classList.add('hidden');
+                    loginError.classList.add('hidden');
+                    attackAlert.classList.add('hidden');
+                    browserFrame.classList.remove('border-4', 'border-red-500');
+
+                    // Show Hacked Screen
+                    loginView.classList.add('hidden');
+                    hackedView.classList.remove('hidden');
+                    crackedPassDisplay.innerText = REAL_PASSWORD;
+
+                    // Logs
+                    logs.push(`[STATUS] 384.00 tries/min, 384 tries in 00:01h`);
+                    logs.push(`[80][http-post-form] host: ${TARGET_IP}   login: ${TARGET_USER}   password: ${REAL_PASSWORD}`);
+                    logs.push(`[STATUS] Attack finished. 1 valid password found.`);
+                    
+                    completeStep(); // Move to Success state
+                } else {
+                    // Fail logs
+                    currentBatch.forEach((pass, i) => {
+                        const threadId = (i % THREADS) + 1;
+                        logs.push(`[VERBOSE] [80][http-post-form] thread ${threadId}: login "${TARGET_USER}" - pass "${pass}" - FAILED (401)`);
+                    });
+                    updateTerminal();
+                }
+
+                index += THREADS;
+
+            }, 80);
+        }
+
+        function resetSim() {
+            // Reset State
+            currentStepIndex = 0;
+            logs = [
+                'Kali GNU/Linux Rolling [Version 2025.1]',
+                'Type commands to start the penetration test.',
+                'root@kali:~# '
+            ];
+            isAttacking = false;
+
+            // Reset UI
+            loginView.classList.remove('hidden');
+            hackedView.classList.add('hidden');
+            passInput.innerText = '••••••••';
+            passInput.classList.remove('text-red-600', 'font-bold');
+            passInput.classList.add('text-slate-400');
+            passContainer.classList.remove('bg-red-50', 'border-red-400');
+            
+            init();
+        }
+
+        // --- MODAL LOGIC ---
+        function openModal() {
+            const step = STEPS[currentStepIndex];
+            if(!step) return;
+
+            modalTitle.innerText = step.kidExpl.title;
+            modalText.innerText = step.kidExpl.text;
+            
+            modal.classList.remove('hidden');
+            // Small timeout for fade transition
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // Escape key listener
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // --- START ---
+        init();
+
+    </script>
+</body>
+</html>
