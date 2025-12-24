@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberLab Simulator</title>
+    <title>CyberLab Simulator v3.5 (Edu Logs)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -104,7 +104,7 @@
         <div class="p-3 flex justify-between items-center border-b border-slate-900">
             <div class="flex items-center gap-3">
                 <i class="fas fa-user-secret text-red-500 text-xl"></i>
-                <span class="font-bold tracking-wider text-lg">CyberLab <span class="text-slate-500 text-sm font-normal">v3.4</span></span>
+                <span class="font-bold tracking-wider text-lg">CyberLab <span class="text-slate-500 text-sm font-normal">v3.5</span></span>
             </div>
             <div class="text-xs text-slate-500 font-mono hidden md:block">
                 <i class="fas fa-exclamation-circle text-yellow-500 mr-1"></i>
@@ -450,21 +450,25 @@
                 case 'recon':
                     addLog(`PING ${TARGET_IP} (${TARGET_IP}) 56(84) bytes of data.`);
                     addLog(`2 packets transmitted, 0% packet loss`);
+                    addLog(`[ПОЯСНЕННЯ] Зв'язок встановлено! Комп'ютер жертви "почув" наш сигнал і відповів.`);
                     nextStep();
                     break;
                 case 'install':
                     addLog('Reading package lists... Done');
                     addLog('hydra (v9.5-1) installed.');
+                    addLog(`[ПОЯСНЕННЯ] Інструмент готовий. Ми завантажили "відмичку" для цифрових замків.`);
                     nextStep();
                     break;
                 case 'wordlist':
                     addLog('--- TOP COMMON PASSWORDS ---');
                     DICTIONARY.forEach(p => addLog(p));
                     addLog('--- END OF LIST ---');
+                    addLog(`[ПОЯСНЕННЯ] Це наш "словник". Саме ці слова програма буде підставляти замість пароля.`);
                     nextStep();
                     break;
                 case 'attack':
                     addLog(`[DATA] Starting hydra (http-post-form)`);
+                    addLog(`[ПОЯСНЕННЯ] Атака почалася! Програма швидко перевіряє кожне слово зі списку.`);
                     state.isAttacking = true;
                     updateTerminal();
                     runAttackAnimation();
@@ -472,6 +476,7 @@
                 case 'defense':
                     addLog('[*] Configuring UFW & Nginx Rate Limiting... Done');
                     addLog('[SECURE] System protected.');
+                    addLog(`[ПОЯСНЕННЯ] Щит увімкнено. Тепер сервер вміє розрізняти звичайних людей і роботів-зломщиків.`);
                     setTimeout(() => {
                         state.isDefended = true;
                         nextStep();
@@ -479,6 +484,7 @@
                     break;
                 case 'verify':
                     addLog(`[DATA] Starting hydra (http-post-form)`);
+                    addLog(`[ПОЯСНЕННЯ] Спробуємо зламати знову. Чи спрацює захист?`);
                     state.isAttacking = true;
                     updateTerminal();
                     runAttackAnimation();
@@ -498,6 +504,7 @@
                     setBrowserState('blocked');
                     addLog(`[ERROR] Connection refused`);
                     addLog(`[ERROR] Job terminated.`);
+                    addLog(`[ПОЯСНЕННЯ] Атаку відбито! Сервер помітив перебір паролів і заблокував нас.`);
                     nextStep();
                     return;
                 }
@@ -520,6 +527,8 @@
                     dom.crackedDisplay.innerText = REAL_PASSWORD;
                     addLog(`[STATUS] 384 tries in 00:00:04`);
                     addLog(`[80][http-post-form] login: ${TARGET_USER}   password: ${REAL_PASSWORD}`);
+                    addLog(`[STATUS] Attack finished. 1 valid password found.`);
+                    addLog(`[ПОЯСНЕННЯ] ПАРОЛЬ ЗНАЙДЕНО! Один із варіантів підійшов. Тепер ми можемо увійти.`);
                     nextStep();
                 } else {
                     batch.forEach((p, i) => addLog(`[VERBOSE] thread ${(i%THREADS)+1}: login "${TARGET_USER}" - pass "${p}" - FAILED`));
@@ -616,6 +625,9 @@
                 else if (l.includes('FAILED') || l.includes('ERROR') || l.includes('refused')) cls = 'text-red-400';
                 else if (l.startsWith('root@kali')) cls = 'text-green-500 font-bold mt-2';
                 else if (l.includes('[VERBOSE]')) cls = 'text-slate-500';
+                else if (l.includes('Enabling')) className = 'text-blue-400';
+                else if (l.includes('[ПОЯСНЕННЯ]')) cls = 'text-cyan-300 italic';
+                
                 return `<div class="${cls}">${l}</div>`;
             }).join('');
             dom.term.scrollTop = dom.term.scrollHeight;
