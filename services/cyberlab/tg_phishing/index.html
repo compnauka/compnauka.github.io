@@ -2,19 +2,23 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Phishing Simulator (Edu) v3.3 Refactored</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Telegram Phishing Simulator (Edu) v3.4 Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        /* Fix for mobile viewports */
+        body { font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; overflow: hidden; }
         .font-mono { font-family: 'Fira Code', monospace; }
+        
+        /* Custom Scrollbar */
         .terminal-scroll::-webkit-scrollbar { width: 6px; }
         .terminal-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .terminal-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
         
+        /* Animations */
         .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
         @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
@@ -27,45 +31,48 @@
         .bg-stripes { background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px); }
     </style>
 </head>
-<body class="h-screen w-screen bg-slate-950 flex flex-col text-slate-200">
+<body class="bg-slate-950 flex flex-col text-slate-200">
 
     <!-- INFO MODAL -->
     <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-blue-500/50 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
-            <div class="bg-slate-800 p-4 flex items-center justify-between border-b border-slate-700">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-info-circle text-blue-400 text-xl"></i>
-                    <h3 class="text-lg font-bold text-white" id="modalTitle">Інформація</h3>
-                </div>
-                <button onclick="ui.closeModal()" class="text-slate-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+        <div class="bg-slate-900 border-2 border-blue-500 rounded-xl max-w-lg w-full shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
+            <div class="bg-blue-600 p-4 flex items-center gap-3">
+                <i class="fas fa-book-open text-white text-xl"></i>
+                <h3 class="text-xl font-bold text-white">Як це працює?</h3>
+                <button onclick="ui.closeModal()" class="absolute top-2 right-2 p-2 text-blue-100 hover:text-white hover:bg-blue-700 rounded-full transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
             <div class="p-6 space-y-4">
-                <div id="modalText" class="text-slate-300 text-sm leading-relaxed space-y-2">...</div>
+                <h4 id="modalTitle" class="text-lg font-bold text-blue-400">...</h4>
+                <div id="modalText" class="text-slate-300 text-lg leading-relaxed">...</div>
                 <div class="bg-yellow-900/20 p-3 rounded-lg border border-yellow-800/50 text-sm text-yellow-200 mt-4 hidden" id="modalWarn">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     <span id="modalWarnText">...</span>
                 </div>
             </div>
-            <div class="p-4 bg-slate-950/50 flex justify-end">
-                <button onclick="ui.closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-6 rounded-lg transition">Зрозуміло</button>
+            <div class="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+                <button onclick="ui.closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg transition shadow-lg shadow-blue-900/20">
+                    Зрозуміло!
+                </button>
             </div>
         </div>
     </div>
 
     <!-- HEADER -->
-    <header class="bg-slate-900 border-b border-slate-800 shrink-0 h-16 flex items-center justify-between px-4">
+    <header class="bg-slate-900 border-b border-slate-800 shrink-0 h-14 flex items-center justify-between px-4 z-50">
         <div class="flex items-center gap-3">
-            <div class="bg-red-500/10 p-2 rounded">
-                <i class="fas fa-user-shield text-red-400 text-xl"></i>
+            <div class="bg-red-500/10 p-1.5 rounded">
+                <i class="fas fa-user-shield text-red-400 text-lg"></i>
             </div>
             <div class="hidden sm:block">
-                <h1 class="font-bold tracking-wide text-lg text-white">PhishSim <span class="text-xs text-slate-500 bg-slate-800 px-1 rounded ml-1">v3.3</span></h1>
+                <h1 class="font-bold tracking-wide text-base text-white">PhishSim <span class="text-[10px] text-slate-500 bg-slate-800 px-1 rounded ml-1 align-middle">v3.4</span></h1>
             </div>
         </div>
         
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded border border-slate-700">
-                <span class="hidden sm:inline text-xs text-slate-400">Config:</span>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-2 py-1 bg-slate-800 rounded border border-slate-700">
+                <span class="hidden sm:inline text-[10px] text-slate-400 uppercase">Config:</span>
                 <span id="envStatus" class="text-xs font-bold text-red-500 font-mono">NO 2FA</span>
             </div>
             <button onclick="core.fullReset()" class="text-xs text-slate-400 hover:text-white flex items-center gap-2 border border-slate-700 px-3 py-1.5 rounded hover:bg-slate-800 transition">
@@ -74,14 +81,14 @@
         </div>
     </header>
 
-    <div class="bg-yellow-600/20 border-b border-yellow-600/30 p-1 text-center">
+    <div class="bg-yellow-600/20 border-b border-yellow-600/30 p-1 text-center shrink-0 z-40">
         <p class="text-[10px] text-yellow-500 font-mono uppercase tracking-widest">
             <i class="fas fa-exclamation-circle mr-1"></i> Тільки для освітніх цілей.
         </p>
     </div>
 
     <!-- MOBILE TABS -->
-    <div class="md:hidden flex border-b border-slate-800 bg-slate-900">
+    <div class="md:hidden flex border-b border-slate-800 bg-slate-900 shrink-0 z-40">
         <button id="tabPhone" onclick="ui.switchTab('phone')" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-2 transition-colors">
             <i class="fas fa-mobile-alt"></i> Жертва
         </button>
@@ -91,17 +98,18 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 flex flex-col md:grid md:grid-cols-2 overflow-hidden relative">
+    <main class="flex-1 flex flex-col md:grid md:grid-cols-2 overflow-hidden relative min-h-0">
         
         <!-- LEFT: VICTIM PHONE -->
-        <div id="panelPhone" class="flex-1 relative bg-stripes flex items-center justify-center p-4 md:p-8 md:flex">
+        <div id="panelPhone" class="flex-1 relative bg-stripes flex items-center justify-center p-2 md:p-6 md:flex overflow-hidden">
             
-            <div class="absolute top-4 left-4 bg-slate-800 text-white text-xs px-3 py-1 rounded-full shadow-lg z-10 font-mono">
-                <i class="fas fa-mobile-alt mr-2"></i>TARGET: iPhone 13
+            <div class="absolute top-2 left-2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded-full shadow-lg z-10 font-mono">
+                <i class="fas fa-mobile-alt mr-1"></i>TARGET: iPhone 13
             </div>
 
             <!-- Phone Frame -->
-            <div class="w-[320px] h-[640px] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl relative overflow-hidden ring-1 ring-slate-900/50 z-20 scale-[0.85] sm:scale-100 transition-transform origin-top md:origin-center">
+            <!-- Adjusted scale logic for fitting on screens -->
+            <div class="w-[320px] h-[640px] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl relative overflow-hidden ring-1 ring-slate-900/50 z-20 transform scale-[0.75] xs:scale-[0.85] sm:scale-100 transition-transform origin-center">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-xl z-20 flex justify-center items-center gap-4">
                     <div class="w-10 h-1 rounded-full bg-slate-800"></div>
                     <div class="w-1 h-1 rounded-full bg-blue-900"></div>
@@ -232,7 +240,7 @@
                             <i class="fas fa-ellipsis-v text-slate-400"></i>
                         </div>
                         
-                        <div class="flex-1 p-6 flex flex-col items-center justify-center bg-slate-50 relative">
+                        <div class="flex-1 p-6 flex flex-col items-center justify-center bg-slate-50 relative overflow-y-auto">
                             <!-- Step A: Enter Phone -->
                             <div id="siteStep1" class="w-full max-w-xs text-center">
                                 <div class="w-20 h-20 bg-[#517da2] rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">
@@ -296,28 +304,43 @@
         </div>
 
         <!-- RIGHT: HACKER TERMINAL -->
-        <div id="panelTerminal" class="flex-1 bg-[#0d1117] flex flex-col border-l border-slate-800 relative hidden md:flex font-mono text-sm leading-tight">
+        <div id="panelTerminal" class="flex-1 bg-[#0d1117] flex flex-col border-l border-slate-800 relative hidden md:flex font-mono text-sm leading-tight min-h-0">
             <div class="bg-[#161b22] p-3 border-b border-slate-800 flex justify-between items-center shrink-0">
                 <span class="text-slate-400 text-xs">root@c2:~/evilginx2#</span>
                 <div class="text-[10px] text-green-500">LISTENING :443</div>
             </div>
+            
             <div id="terminalOutput" class="flex-1 p-4 overflow-y-auto text-slate-300 terminal-scroll font-mono text-xs">
                 <div class="text-slate-500 mb-2">./start_server.sh --phishlets telegram.yaml</div>
                 <div class="text-blue-400">[INFO] Evilginx v3.2.0 initialized</div>
                 <div class="text-green-500">[SUCCESS] Server listening on https://teleg-vote.com</div>
                 <div class="text-slate-500">Waiting for victim...</div>
             </div>
-            <div class="p-4 bg-[#161b22] border-t border-slate-800">
-                <div id="taskBox" class="mb-4 bg-slate-900 border border-slate-700 p-3 rounded flex flex-col gap-2">
+            
+            <div class="p-4 bg-[#161b22] border-t border-slate-800 shrink-0">
+                <div id="taskBox" class="mb-4 bg-blue-900/20 border border-blue-800 p-3 rounded flex flex-col gap-3 transition-all">
                     <div class="flex justify-between items-start">
-                        <h3 class="text-blue-400 font-bold text-xs uppercase tracking-wider"><i class="fas fa-terminal mr-1"></i> Current Task</h3>
-                        <button onclick="ui.showExplanation()" class="text-xs text-slate-400 hover:text-white underline decoration-dotted">Аналіз</button>
+                        <div class="flex gap-3 items-center">
+                            <div class="p-2 bg-blue-900/50 rounded text-blue-400 h-fit">
+                                <i class="fas fa-microchip text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-blue-400 font-bold text-xs uppercase tracking-wider">Current Task</h3>
+                                <p id="missionText" class="text-slate-200 text-xs mt-1">...</p>
+                            </div>
+                        </div>
+                        <button onclick="ui.showExplanation()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-lg shrink-0">
+                            <i class="fas fa-question-circle"></i>
+                            Що це означає?
+                        </button>
                     </div>
-                    <p id="missionText" class="text-slate-200 text-xs">...</p>
+                    
                     <div id="cmdHintBlock" class="mt-1">
+                        <div class="text-[10px] text-slate-500 mb-1">Команда:</div>
                         <code id="cmdHint" class="block bg-black p-2 rounded text-green-400 font-mono text-xs border border-slate-800 cursor-pointer hover:bg-slate-950 hover:border-green-800 transition select-none" onclick="core.fillCommand()" title="Вставити команду">...</code>
                     </div>
                 </div>
+                
                 <form id="cmdForm" class="flex items-center gap-2 bg-black p-2 rounded border border-slate-800 focus-within:border-green-800 transition" onsubmit="core.handleCommand(event)">
                     <span class="text-green-500 font-bold font-mono text-xs shrink-0">root@c2:~#</span>
                     <input id="cmdInput" type="text" autocomplete="off" class="flex-1 bg-transparent border-none text-white focus:ring-0 focus:outline-none font-mono text-xs" placeholder="..." autofocus>
@@ -335,6 +358,7 @@
                     cmd: './deploy.py --template telegram_vote',
                     mission: "Етап 1: Розгортання. Запуск веб-сервера з копією дизайну Telegram.",
                     termLog: `[INFO] Templates loaded: /templates/telegram_vote/\n[INFO] SSL Certificates loaded (LetsEncrypt)\n[SUCCESS] Web Server started on 0.0.0.0:443\n[INFO] Public URL: https://teleg-vote.com`,
+                    termExpl: `[ПОЯСНЕННЯ] Хакери використовують безкоштовні SSL-сертифікати. "Замок" у браузері (HTTPS) означає лише те, що з'єднання зашифроване, а не те, що сайт справжній.`,
                     expl: {
                         title: "Фейковий сайт",
                         text: "Ми розгорнули сайт, що виглядає як Telegram. Ми використовуємо HTTPS. Багато людей думають, що 'замок' означає безпеку, але це лише шифрування каналу.",
@@ -346,6 +370,7 @@
                     cmd: 'python3 send_msg.py --target +380501234567',
                     mission: "Етап 2: Соціальна інженерія. Доставка фішингового посилання.",
                     termLog: `[>] Connecting to MTProto API... OK\n[>] Authenticated as User#7712 (Compromised)\n[>] Sending message to Victim...\n[<] RPC_RESULT: MessageSent (id: 8821)`,
+                    termExpl: `[ПОЯСНЕННЯ] Повідомлення надсилається від зламаного акаунта реальної людини. Це змушує жертву довіряти посиланню.`,
                     expl: {
                         title: "Ланцюгова реакція",
                         text: "Фішинг часто поширюється як вірус. Зламавши одного користувача, скрипт розсилає повідомлення його контактам. Ви довіряєте відправнику, тому клікаєте.",
@@ -357,6 +382,7 @@
                     cmd: 'tail -f access.log',
                     mission: "Етап 3: Очікування переходу жертви.",
                     termLog: `[INFO] Tailing access logs...\n...`,
+                    termExpl: `[ПОЯСНЕННЯ] Сервер очікує підключення. Як тільки жертва відкриє посилання, ми побачимо її IP та дані про пристрій.`,
                     manualTrigger: true,
                     expl: {
                         title: "Перехід за посиланням",
@@ -369,6 +395,7 @@
                     cmd: 'intercepting...',
                     mission: "Етап 4: Перехоплення номера та запит коду.",
                     termLog: `[HTTP] POST /api/login_phone\n[DATA] phone_number: +380...\n[API] Sending AuthRequest to Official Telegram API...\n[API] RESPONSE: 200 OK (type: sentCode)`,
+                    termExpl: `[ПОЯСНЕННЯ] Це атака Man-in-the-Middle. Сервер хакера отримав номер і миттєво передав його справжньому Telegram, ініціюючи вхід.`,
                     manualTrigger: true,
                     expl: {
                         title: "Man-in-the-Middle",
@@ -381,6 +408,7 @@
                     cmd: 'waiting_otp...',
                     mission: "Етап 5: Перехоплення коду.",
                     termLog: `[HTTP] POST /api/login_code\n[DATA] phone_code: XXXXX\n[API] Sending AuthSignIn to Official Telegram API...`,
+                    termExpl: `[ПОЯСНЕННЯ] Жертва ввела код. Хакер використав його для створення сесії. Якщо 2FA вимкнено - акаунт захоплено.`,
                     manualTrigger: true,
                     expl: {
                         title: "Викрадення сесії",
@@ -453,8 +481,13 @@
             log(text, type = 'neutral') {
                 const div = document.createElement('div');
                 div.innerText = text;
-                div.className = 'mb-1 break-all';
-                const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-yellow-500', expl: 'text-blue-300 italic border-l-2 border-blue-500 pl-2 my-2' };
+                div.className = 'mb-1 break-all text-xs';
+                const colors = { 
+                    success: 'text-green-500', 
+                    error: 'text-red-500', 
+                    warning: 'text-yellow-500', 
+                    expl: 'text-cyan-300 italic border-l-2 border-cyan-500 pl-2 my-2 py-1' 
+                };
                 div.classList.add(...(colors[type] || 'text-slate-300').split(' '));
                 this.els.term.appendChild(div);
                 this.els.term.scrollTop = this.els.term.scrollHeight;
@@ -575,7 +608,7 @@
                 this.els.cmdHintBlock.classList.add('hidden');
 
                 const btn = document.createElement('button');
-                btn.className = "w-full font-bold py-3 rounded mt-2 text-sm transition animate-fade-in";
+                btn.className = "w-full font-bold py-3 rounded mt-2 text-sm transition animate-fade-in shadow-lg";
                 
                 if (saved) {
                     this.els.missionText.innerHTML = `<span class="text-green-400 font-bold">АТАКУ ВІДБИТО!</span><br>2FA зупинив хакера.`;
@@ -632,6 +665,7 @@
                 if (step.termLog) {
                     step.termLog.split('\n').forEach((l, i) => setTimeout(() => ui.log(l, l.includes('SUCCESS') || l.includes('OK') ? 'success' : 'neutral'), i * 300));
                 }
+                // FIXED: Using termExpl correctly from CONFIG
                 if (step.termExpl) setTimeout(() => ui.log(step.termExpl, 'expl'), 1500);
 
                 if (step.id === 'send_lure') {
