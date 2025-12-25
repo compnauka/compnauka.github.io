@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Account Phishing Simulator (Edu)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Rajdhani:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; overflow: hidden; background-color: #0f0b15; color: #e2e8f0; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .font-game { font-family: 'Rajdhani', sans-serif; }
+        
+        /* Custom Scrollbar */
+        .terminal-scroll::-webkit-scrollbar { width: 6px; }
+        .terminal-scroll::-webkit-scrollbar-track { background: #0f172a; }
+        .terminal-scroll::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 3px; }
+        
+        /* Animations */
+        .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+        .animate-glitch { animation: glitch 1s infinite; }
+        @keyframes glitch { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        .bg-stripes { background: repeating-linear-gradient(45deg, #1e1b2e, #1e1b2e 10px, #171524 10px, #171524 20px); }
+        
+        .danger-border { box-shadow: 0 0 15px rgba(220, 38, 38, 0.5) inset; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- INFO MODAL -->
+    <div id="infoModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-[#1a1625] border border-purple-500 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(124,58,237,0.3)] overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
+            <div class="bg-purple-900/50 p-4 flex items-center gap-3 border-b border-purple-700">
+                <i class="fas fa-user-secret text-purple-300 text-xl"></i>
+                <h3 class="text-xl font-bold text-white font-game uppercase tracking-wider">Аналіз загрози</h3>
+                <button onclick="ui.closeModal()" class="absolute top-2 right-2 p-2 text-purple-300 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <h4 id="modalTitle" class="text-lg font-bold text-purple-400">...</h4>
+                <div id="modalText" class="text-slate-300 text-md leading-relaxed">...</div>
+                <div class="bg-red-900/20 p-3 rounded-lg border border-red-500/30 text-sm text-red-200 mt-4 hidden" id="modalWarn">
+                    <i class="fas fa-shield-alt mr-2 text-red-400"></i>
+                    <span id="modalWarnText">...</span>
+                </div>
+            </div>
+            <div class="p-4 bg-[#13111a] border-t border-white/5 flex justify-end">
+                <button onclick="ui.closeModal()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded transition shadow-lg shadow-purple-900/40">
+                    ЗРОЗУМІЛО
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="bg-[#13111a] border-b border-white/10 shrink-0 h-14 flex items-center justify-between px-4 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-purple-500/20 p-1.5 rounded border border-purple-500/50">
+                <i class="fas fa-gamepad text-purple-400 text-lg"></i>
+            </div>
+            <div class="hidden sm:block">
+                <h1 class="font-bold tracking-wide text-base text-white font-game uppercase">GameGuard <span class="text-purple-400">Sim</span></h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-2 py-1 bg-white/5 rounded border border-white/10">
+                <span class="hidden sm:inline text-[10px] text-slate-400 uppercase">Protection:</span>
+                <span id="envStatus" class="text-xs font-bold text-red-500 font-mono">STANDARD (Email)</span>
+            </div>
+            <button onclick="core.fullReset()" class="text-xs text-slate-400 hover:text-white flex items-center gap-2 border border-white/10 px-3 py-1.5 rounded hover:bg-white/5 transition">
+                <i class="fas fa-redo"></i> <span class="hidden sm:inline">Reset</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="bg-purple-900/20 border-b border-purple-500/20 p-1 text-center shrink-0 z-40">
+        <p class="text-[10px] text-purple-300 font-mono uppercase tracking-widest">
+            <i class="fas fa-graduation-cap mr-1"></i> Навчальний симулятор крадіжки ігрового акаунта
+        </p>
+    </div>
+
+    <!-- MOBILE TABS -->
+    <div class="md:hidden flex border-b border-white/10 bg-[#13111a] shrink-0 z-40">
+        <button id="tabPhone" onclick="ui.switchTab('phone')" class="flex-1 py-3 text-sm font-bold border-b-2 border-purple-500 text-purple-400 flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-mobile-alt"></i> Жертва
+        </button>
+        <button id="tabTerminal" onclick="ui.switchTab('terminal')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-terminal"></i> Хакер
+        </button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col md:grid md:grid-cols-2 overflow-hidden relative min-h-0">
+        
+        <!-- LEFT: VICTIM PHONE -->
+        <div id="panelPhone" class="flex-1 relative bg-stripes flex items-center justify-center p-2 md:p-6 md:flex overflow-hidden">
+            
+            <div class="absolute top-2 left-2 bg-black/50 text-white/50 text-[10px] px-2 py-1 rounded-full border border-white/10 z-10 font-mono">
+                TARGET: Gamer Teen
+            </div>
+
+            <!-- Phone Frame -->
+            <div class="w-[320px] h-[640px] bg-[#000] rounded-[2.5rem] border-[6px] border-[#2d2a3d] shadow-2xl relative overflow-hidden ring-1 ring-white/10 z-20 transform scale-[0.8] sm:scale-100 transition-transform origin-center">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#2d2a3d] rounded-b-xl z-20 flex justify-center items-center gap-4">
+                    <div class="w-12 h-1 rounded-full bg-[#1a1625]"></div>
+                </div>
+
+                <!-- Phone Screen -->
+                <div id="phoneScreen" class="w-full h-full bg-[#36393f] text-white pt-8 pb-4 flex flex-col relative transition-colors duration-500 font-sans">
+                    
+                    <!-- Top Bar -->
+                    <div class="px-5 pb-2 flex justify-between items-center text-xs font-bold text-white/70 border-b border-white/5 bg-[#2f3136]">
+                        <span>22:04</span>
+                        <div class="flex gap-1.5">
+                            <i class="fas fa-wifi"></i>
+                            <i class="fas fa-battery-half"></i>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: DISCORD (LURE) -->
+                    <div id="viewChatList" class="flex-1 overflow-hidden flex flex-col bg-[#36393f]">
+                        <div class="bg-[#2f3136] px-4 py-3 flex items-center gap-3 shadow-md shrink-0">
+                            <i class="fas fa-bars text-gray-400"></i>
+                            <span class="font-bold text-gray-200">Discord</span>
+                            <div class="ml-auto flex gap-3 text-gray-400">
+                                <i class="fas fa-search"></i>
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                        </div>
+
+                        <!-- Chat Area -->
+                        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                            <!-- Old message -->
+                            <div class="flex gap-3 opacity-60">
+                                <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold">P</div>
+                                <div>
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="font-bold text-white">ProGamer123</span>
+                                        <span class="text-[10px] text-gray-400">Вчора 15:30</span>
+                                    </div>
+                                    <p class="text-sm text-gray-300">Го в катку?</p>
+                                </div>
+                            </div>
+
+                            <!-- Lure Message -->
+                            <div id="phishMessage" class="hidden animate-slide-up flex gap-3">
+                                <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold relative">
+                                    P
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#36393f]"></div>
+                                </div>
+                                <div class="w-full">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="font-bold text-white">ProGamer123</span>
+                                        <span class="text-[10px] text-gray-400">Сьогодні 22:05</span>
+                                    </div>
+                                    <div class="mt-1 bg-[#2f3136] p-3 rounded border-l-4 border-indigo-500">
+                                        <p class="text-sm text-gray-100 mb-2">Йоу! Заціни, тут роздають скіни на Void Legends безкоштовно. Я вже забрав 5000 голди. Це офіційна промка.</p>
+                                        <p class="text-sm text-gray-100 mb-2">Забирай поки працює:</p>
+                                        <a href="#" onclick="core.openBrowser()" class="text-blue-400 hover:underline text-sm break-all font-mono block">https://void-games-reward.com/login</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: FAKE BROWSER -->
+                    <div id="viewBrowser" class="hidden absolute inset-0 bg-[#0f0f12] z-40 flex flex-col pt-8 animate-slide-up">
+                        <!-- Browser URL Bar -->
+                        <div class="bg-[#1a1a20] p-2 border-b border-white/10 flex items-center gap-2 text-xs">
+                            <i class="fas fa-arrow-left text-gray-500" onclick="ui.showView('chatList')"></i>
+                            <div class="flex-1 bg-[#0f0f12] border border-white/10 rounded px-2 py-1.5 flex items-center justify-between text-gray-400">
+                                <span class="truncate text-white">void-games-reward.com/login</span>
+                                <i class="fas fa-lock text-green-500 text-[10px] cursor-pointer" onclick="ui.showLockInfo()"></i>
+                            </div>
+                            <i class="fas fa-redo text-gray-500"></i>
+                        </div>
+                        
+                        <!-- Fake Game Site Content -->
+                        <div class="flex-1 p-6 flex flex-col items-center relative overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+                            
+                            <!-- Logo -->
+                            <div class="mt-8 mb-8 text-center">
+                                <div class="w-16 h-16 bg-purple-600 rounded-xl mx-auto flex items-center justify-center shadow-[0_0_20px_rgba(147,51,234,0.5)] mb-3 transform rotate-3">
+                                    <i class="fas fa-ghost text-3xl text-white"></i>
+                                </div>
+                                <h2 class="text-2xl font-game font-bold text-white tracking-widest uppercase">Void <span class="text-purple-500">ID</span></h2>
+                                <p class="text-gray-400 text-xs mt-1">Єдиний акаунт для всіх ігор</p>
+                            </div>
+
+                            <!-- Login Form -->
+                            <div class="w-full bg-[#1a1a20] p-5 rounded-lg border border-white/5 shadow-xl backdrop-blur-sm">
+                                <h3 class="text-white font-bold mb-4 text-center">Вхід в акаунт</h3>
+                                
+                                <!-- Step 1: Credentials -->
+                                <div id="loginStep1">
+                                    <div class="mb-4">
+                                        <label class="block text-[10px] text-gray-500 uppercase font-bold mb-1">Логін / Email</label>
+                                        <input type="text" id="victimUser" class="w-full bg-[#0f0f12] border border-white/10 rounded p-2 text-sm text-white focus:border-purple-500 focus:outline-none transition" placeholder="Username">
+                                    </div>
+                                    <div class="mb-6">
+                                        <label class="block text-[10px] text-gray-500 uppercase font-bold mb-1">Пароль</label>
+                                        <input type="password" id="victimPass" class="w-full bg-[#0f0f12] border border-white/10 rounded p-2 text-sm text-white focus:border-purple-500 focus:outline-none transition" placeholder="••••••••">
+                                    </div>
+                                    <button onclick="core.submitCreds()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded transition uppercase text-xs tracking-wider shadow-lg">
+                                        Увійти
+                                    </button>
+                                </div>
+
+                                <!-- Step 2: 2FA / Steam Guard Style -->
+                                <div id="loginStep2" class="hidden text-center">
+                                    <div class="text-purple-500 text-4xl mb-3"><i class="fas fa-shield-alt"></i></div>
+                                    <h4 class="text-white font-bold mb-2">Void Guard Mobile</h4>
+                                    <p class="text-xs text-gray-400 mb-4">Введіть код із додатку або пошти, щоб підтвердити вхід.</p>
+                                    
+                                    <div class="flex justify-center gap-2 mb-4">
+                                        <input type="text" id="guardCode" maxlength="5" class="w-32 bg-[#0f0f12] border-b-2 border-purple-500 text-center text-xl font-mono text-white tracking-[0.3em] focus:outline-none p-2" placeholder="XXXXX">
+                                    </div>
+                                    
+                                    <button onclick="core.submitGuard()" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2.5 rounded transition uppercase text-xs tracking-wider">
+                                        Підтвердити
+                                    </button>
+                                </div>
+
+                                <!-- Loader -->
+                                <div id="siteLoader" class="hidden absolute inset-0 bg-[#1a1a20]/95 flex flex-col items-center justify-center z-10 rounded-lg">
+                                    <div class="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <span class="text-xs text-purple-400 font-mono blink">CONNECTING...</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 text-[10px] text-gray-600 text-center">
+                                © 2025 Void Games Corp. All rights reserved. <br>Privacy Policy
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOTIFICATION (Real Email/App) -->
+                    <div id="sysNotification" class="absolute top-2 left-2 right-2 bg-[#202225] text-white p-3 rounded-lg shadow-2xl z-[60] hidden transform -translate-y-full transition-transform duration-500 border-l-4 border-yellow-500 cursor-pointer" onclick="ui.switchTab('phone')">
+                        <div class="flex gap-3">
+                            <div class="shrink-0 pt-1"><i class="fas fa-envelope text-yellow-500"></i></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-xs text-gray-200">Void Security</h4>
+                                    <span class="text-[10px] text-gray-500">now</span>
+                                </div>
+                                <p class="text-[10px] text-gray-300 mt-1">Your Guard Code: <span id="realGuardCode" class="font-mono font-bold text-yellow-400 text-sm"></span></p>
+                                <p class="text-[9px] text-gray-500 mt-0.5">Location: <span class="text-red-400">Moscow, RU (IP: 95.x.x.x)</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- NEW DEBRIEF SCREEN -->
+                    <div id="viewDebrief" class="hidden absolute inset-0 bg-[#13111a] z-50 flex flex-col animate-fade-in overflow-y-auto">
+                        <div class="bg-red-900/20 p-6 border-b border-red-500/30 text-center shrink-0">
+                            <i class="fas fa-skull-crossbones text-5xl text-red-500 mb-3 animate-pulse"></i>
+                            <h2 class="text-2xl font-game font-bold text-white uppercase tracking-wider">Акаунт Втрачено</h2>
+                            <p class="text-xs text-red-300 mt-1">Хакер змінив пароль та пошту.</p>
+                        </div>
+                        
+                        <div class="p-4 space-y-6">
+                            <!-- What Happened -->
+                            <div class="bg-[#1a1625] rounded-xl p-4 border border-white/5">
+                                <h3 class="text-sm font-bold text-purple-400 uppercase mb-3"><i class="fas fa-history mr-2"></i> Хронологія Атаки</h3>
+                                <ul class="space-y-3">
+                                    <li class="flex gap-3 text-xs">
+                                        <div class="w-5 h-5 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">1</div>
+                                        <div class="text-gray-400">Ви перейшли за посиланням <span class="text-red-400">void-games-reward.com</span> замість офіційного сайту.</div>
+                                    </li>
+                                    <li class="flex gap-3 text-xs">
+                                        <div class="w-5 h-5 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">2</div>
+                                        <div class="text-gray-400">Ви ввели логін/пароль на фейковому сайті.</div>
+                                    </li>
+                                    <li class="flex gap-3 text-xs">
+                                        <div class="w-5 h-5 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">3</div>
+                                        <div class="text-gray-400">Ви ввели код 2FA. <span class="text-red-400 font-bold">УВАГА:</span> У листі з кодом було вказано локацію "Moscow", але ви це проігнорували.</div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Why 2FA Failed -->
+                            <div class="bg-yellow-900/10 rounded-xl p-4 border border-yellow-500/20">
+                                <h3 class="text-sm font-bold text-yellow-500 uppercase mb-2"><i class="fas fa-unlock-alt mr-2"></i> Чому код не допоміг?</h3>
+                                <p class="text-xs text-gray-400 leading-relaxed">
+                                    Це була атака "Людина посередині" (MitM). Хакер використовував ваші дані в реальному часі на справжньому сайті. Коли справжній сайт просив код — хакер просив його у вас через фейковий сайт. Ви самі віддали йому ключ.
+                                </p>
+                            </div>
+
+                            <!-- Recommendations -->
+                            <div class="bg-green-900/10 rounded-xl p-4 border border-green-500/20">
+                                <h3 class="text-sm font-bold text-green-500 uppercase mb-3"><i class="fas fa-shield-alt mr-2"></i> Як захиститись?</h3>
+                                <div class="space-y-3">
+                                    <div class="flex gap-3">
+                                        <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                        <div>
+                                            <div class="text-xs font-bold text-white">Перевіряйте URL (Адресу)</div>
+                                            <div class="text-[10px] text-gray-400">Єдиний надійний спосіб розпізнати фейк.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                        <div>
+                                            <div class="text-xs font-bold text-white">Family View / PIN-код</div>
+                                            <div class="text-[10px] text-gray-400">Встановіть 4-значний PIN у Steam/Epic. Навіть якщо хакер зайде, він не зможе нічого продати чи змінити без PIN-коду.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                        <div>
+                                            <div class="text-xs font-bold text-white">Увага до сповіщень</div>
+                                            <div class="text-[10px] text-gray-400">Завжди читайте, ХТО і ЗВІДКИ запитує вхід у листі з кодом.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="core.fullReset()" class="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-lg text-sm font-bold transition uppercase tracking-wider">
+                                Спробувати ще раз
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: HACKER TERMINAL -->
+        <div id="panelTerminal" class="flex-1 bg-[#0d1117] flex flex-col border-l border-white/10 relative hidden md:flex font-mono text-sm leading-tight min-h-0">
+            <div class="bg-[#161b22] p-2 border-b border-white/10 flex justify-between items-center shrink-0">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span class="text-slate-500 text-xs">root@kali:~/tools/AccountStealer</span>
+            </div>
+            
+            <div id="terminalOutput" class="flex-1 p-4 overflow-y-auto text-green-400 terminal-scroll font-mono text-xs bg-black/90">
+                <div class="text-slate-500 mb-2"># Initializing Phishing Framework v4.0...</div>
+                <div class="text-purple-400">[INFO] Loaded template: Void_Games_Login</div>
+                <div class="text-purple-400">[INFO] Web Server started on port 8080</div>
+                <div class="text-slate-500">Waiting for interaction...</div>
+            </div>
+            
+            <div class="p-4 bg-[#161b22] border-t border-white/10 shrink-0">
+                <div id="taskBox" class="mb-4 bg-purple-900/10 border border-purple-500/30 p-3 rounded flex flex-col gap-3 transition-all">
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-3 items-center">
+                            <div class="p-2 bg-purple-900/50 rounded text-purple-400 h-fit">
+                                <i class="fas fa-bug text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-purple-400 font-bold text-xs uppercase tracking-wider">Mission Objective</h3>
+                                <p id="missionText" class="text-slate-300 text-xs mt-1">...</p>
+                            </div>
+                        </div>
+                        <button onclick="ui.showExplanation()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-lg shrink-0">
+                            <i class="fas fa-question-circle"></i>
+                            Що це означає?
+                        </button>
+                    </div>
+                </div>
+                
+                <form id="cmdForm" class="flex items-center gap-2 bg-black p-2 rounded border border-gray-800 focus-within:border-green-800 transition" onsubmit="core.handleCommand(event)">
+                    <span class="text-red-500 font-bold font-mono text-xs shrink-0">hacker@c2:~#</span>
+                    <input id="cmdInput" type="text" autocomplete="off" class="flex-1 bg-transparent border-none text-white focus:ring-0 focus:outline-none font-mono text-xs" placeholder="..." autofocus>
+                </form>
+                <div id="cmdHintBlock" class="mt-2 text-[10px] text-gray-500 flex gap-2">
+                    <span>Підказка:</span>
+                    <code id="cmdHint" class="text-yellow-500 cursor-pointer hover:underline" onclick="core.fillCommand()">...</code>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CONFIG = {
+            STEPS: [
+                {
+                    id: 'init',
+                    cmd: './spam_discord.py --target victim',
+                    mission: "Крок 1: Закинути наживку. Відправ посилання на 'безкоштовні скіни' через зламаний акаунт друга.",
+                    termLog: `[>] Connecting to Discord API...\n[>] Authenticated as User 'ProGamer123' (Compromised)\n[>] Sending message to friend list...\n[SUCCESS] Message sent to Target.`,
+                    termExpl: `[ПОЯСНЕННЯ] Скрипт автоматично пише всім друзям зламаного користувача.`,
+                    expl: {
+                        title: "Соціальна інженерія",
+                        text: "Хакери часто зламують один акаунт, щоб розсилати спам друзям. Ви довіряєте другу, тому з більшою ймовірністю клікнете на посилання.",
+                        tip: "Якщо друг пише дивно або пропонує 'халяву', подзвоніть йому і перепитайте."
+                    }
+                },
+                {
+                    id: 'wait_click',
+                    cmd: 'listen --port 8080',
+                    mission: "Крок 2: Очікування жертви. Сервер готовий приймати дані.",
+                    termLog: `[LISTENING] Server active on port 8080...\n...`,
+                    termExpl: `[ПОЯСНЕННЯ] Хакер бачить кожне відвідування свого фейкового сайту.`,
+                    manualTrigger: true,
+                    expl: {
+                        title: "Фейковий сайт",
+                        text: "Посилання веде не на офіційний сайт гри, а на точну копію, створену хакером. Зверніть увагу на URL.",
+                        tip: "Офіційний сайт: voidgames.com. Фейк: void-games-reward.com"
+                    }
+                },
+                {
+                    id: 'capture_creds',
+                    cmd: 'harvest_credentials',
+                    mission: "Крок 3: Перехоплення логіну та паролю.",
+                    termLog: `[HTTP] POST /login\n[DATA] User: victim_gamer | Pass: hunter2\n[INFO] Validating format... OK`,
+                    termExpl: `[ПОЯСНЕННЯ] Введені дані миттєво відправляються хакеру, поки ви дивитесь на "завантаження".`,
+                    manualTrigger: true,
+                    expl: {
+                        title: "Збір даних",
+                        text: "Як тільки ви вводите пароль на фейковому сайті, він миттєво з'являється на екрані хакера. Але сайт показує 'завантаження'.",
+                        tip: "Ніколи не вводьте пароль від Steam/Epic/Google на сторонніх сайтах."
+                    }
+                },
+                {
+                    id: 'bypass_2fa',
+                    cmd: './steam_guard_bypass.py',
+                    mission: "Крок 4: Обхід захисту (2FA). Запитай код під виглядом перевірки.",
+                    termLog: `[AUTO] Using stolen creds on Real Game Server...\n[ERROR] 2FA Required (Email/App Code)\n[ACTION] Prompting victim for code on phishing site...`,
+                    termExpl: `[ПОЯСНЕННЯ] Хакер вводить ваш пароль на справжньому сайті. Сайт просить код. Хакер просить цей код у ВАС.`,
+                    expl: {
+                        title: "Обхід 2FA",
+                        text: "Хакер використовує ваш пароль на справжньому сайті. Гра просить код захисту. Хакер виводить це прохання на фейковий сайт, щоб ви самі віддали йому код.",
+                        tip: "Зверніть увагу на місце входу в листі з кодом. Якщо там інша країна — це атака."
+                    }
+                },
+                {
+                    id: 'finalize',
+                    cmd: 'steal_session',
+                    mission: "Крок 5: Завершення атаки.",
+                    manualTrigger: true,
+                    termLog: `[HTTP] POST /2fa_code\n[DATA] Code: XXXXX\n[AUTO] Submitting to Real Server...\n[SUCCESS] Session Hijacked!\n[ACTION] Changing Password...\n[ACTION] Changing Email...`,
+                    termExpl: `[ПОЯСНЕННЯ] Код дає хакеру повний доступ. Він змінює пошту за лічені секунди.`,
+                    expl: {
+                        title: "Game Over",
+                        text: "Отримавши код, хакер заходить в акаунт, змінює пароль і відв'язує вашу пошту. Акаунт втрачено.",
+                        tip: "Налаштуйте сімейний перегляд або SMS-сповіщення, щоб ускладнити крадіжку."
+                    }
+                }
+            ]
+        };
+
+        // --- STATE ---
+        const state = {
+            stepIndex: 0,
+            generatedCode: null,
+            isProtected: false 
+        };
+
+        // --- UI CONTROLLER ---
+        const ui = {
+            els: {
+                term: document.getElementById('terminalOutput'),
+                missionText: document.getElementById('missionText'),
+                cmdInput: document.getElementById('cmdInput'),
+                cmdHint: document.getElementById('cmdHint'),
+                cmdHintBlock: document.getElementById('cmdHintBlock'),
+                views: {
+                    chatList: document.getElementById('viewChatList'),
+                    browser: document.getElementById('viewBrowser'),
+                    debrief: document.getElementById('viewDebrief')
+                },
+                overlays: {
+                    modal: document.getElementById('infoModal'),
+                    notif: document.getElementById('sysNotification'),
+                    loader: document.getElementById('siteLoader')
+                }
+            },
+
+            log(text, type = 'neutral') {
+                const div = document.createElement('div');
+                div.innerText = text;
+                div.className = 'mb-1 break-all font-mono';
+                if (type === 'success') div.classList.add('text-green-400');
+                else if (type === 'error') div.classList.add('text-red-400');
+                else if (type === 'warning') div.classList.add('text-yellow-400');
+                else if (type === 'info') div.classList.add('text-purple-400');
+                else if (type === 'expl') div.classList.add('text-cyan-400', 'italic', 'border-l-2', 'border-cyan-500', 'pl-2', 'my-2', 'py-1', 'text-xs');
+                else div.classList.add('text-slate-300');
+                
+                this.els.term.appendChild(div);
+                this.els.term.scrollTop = this.els.term.scrollHeight;
+            },
+
+            updateStep() {
+                if(state.stepIndex >= CONFIG.STEPS.length) return;
+                const step = CONFIG.STEPS[state.stepIndex];
+                this.els.missionText.innerText = step.mission;
+                
+                if (step.manualTrigger) {
+                    this.els.cmdInput.disabled = true;
+                    this.els.cmdInput.placeholder = "(Чекаємо дії жертви...)";
+                    this.els.cmdHintBlock.classList.add('hidden');
+                } else {
+                    this.els.cmdInput.disabled = false;
+                    this.els.cmdInput.placeholder = "Введіть команду...";
+                    this.els.cmdInput.focus();
+                    this.els.cmdHintBlock.classList.remove('hidden');
+                    this.els.cmdHint.innerText = step.cmd;
+                }
+            },
+
+            showView(name) {
+                Object.values(this.els.views).forEach(el => el.classList.add('hidden'));
+                this.els.views[name].classList.remove('hidden');
+            },
+
+            switchTab(tab) {
+                const isPhone = tab === 'phone';
+                document.getElementById('panelPhone').classList.toggle('hidden', !isPhone);
+                document.getElementById('panelPhone').classList.toggle('flex', isPhone);
+                document.getElementById('panelTerminal').classList.toggle('hidden', isPhone);
+                document.getElementById('panelTerminal').classList.toggle('flex', !isPhone);
+                
+                const activeClass = ['text-purple-400', 'border-purple-500'];
+                const inactiveClass = ['text-slate-500', 'border-transparent'];
+                
+                document.getElementById('tabPhone').classList[isPhone ? 'add' : 'remove'](...activeClass);
+                document.getElementById('tabPhone').classList[isPhone ? 'remove' : 'add'](...inactiveClass);
+                document.getElementById('tabTerminal').classList[!isPhone ? 'add' : 'remove'](...activeClass);
+                document.getElementById('tabTerminal').classList[!isPhone ? 'remove' : 'add'](...inactiveClass);
+            },
+
+            showModal(title, text, tip) {
+                document.getElementById('modalTitle').innerText = title;
+                document.getElementById('modalText').innerText = text;
+                if(tip) {
+                    document.getElementById('modalWarn').classList.remove('hidden');
+                    document.getElementById('modalWarnText').innerText = tip;
+                } else {
+                    document.getElementById('modalWarn').classList.add('hidden');
+                }
+                this.els.overlays.modal.classList.remove('hidden');
+                setTimeout(() => this.els.overlays.modal.classList.remove('opacity-0'), 10);
+            },
+
+            closeModal() {
+                this.els.overlays.modal.classList.add('opacity-0');
+                setTimeout(() => this.els.overlays.modal.classList.add('hidden'), 300);
+            },
+
+            showExplanation() {
+                const step = CONFIG.STEPS[state.stepIndex];
+                if (step && step.expl) {
+                    this.showModal(step.expl.title, step.expl.text, step.expl.tip);
+                }
+            },
+            
+            showLockInfo() {
+                this.showModal("HTTPS і Безпека", "Замок означає, що з'єднання зашифроване. Це НЕ означає, що сайт чесний. Хакери теж отримують сертифікати безпеки безкоштовно.", "Завжди перевіряй правильність написання домену (URL).");
+            },
+
+            showNotif(code) {
+                document.getElementById('realGuardCode').innerText = code;
+                this.els.overlays.notif.classList.remove('hidden', '-translate-y-full');
+                setTimeout(() => this.els.overlays.notif.classList.add('-translate-y-full'), 8000);
+            },
+
+            showResult(success) {
+                this.showView('debrief');
+                // You could customize this based on success/fail in future versions
+            }
+        };
+
+        // --- LOGIC ---
+        const core = {
+            init() {
+                ui.updateStep();
+                ui.switchTab('phone');
+            },
+
+            handleCommand(e) {
+                e.preventDefault();
+                const input = ui.els.cmdInput.value.trim();
+                if(!input) return;
+                
+                ui.log(`hacker@c2:~# ${input}`);
+                const step = CONFIG.STEPS[state.stepIndex];
+                
+                if (input === step.cmd || input.startsWith(step.cmd.split(' ')[0])) {
+                    this.executeStep(step);
+                    ui.els.cmdInput.value = '';
+                } else {
+                    ui.log(`bash: ${input}: command not found`, 'error');
+                }
+            },
+
+            fillCommand() {
+                if(!ui.els.cmdInput.disabled) {
+                    ui.els.cmdInput.value = CONFIG.STEPS[state.stepIndex].cmd;
+                    ui.els.cmdInput.focus();
+                }
+            },
+
+            executeStep(step) {
+                if(step.termLog) {
+                    step.termLog.split('\n').forEach((line, i) => {
+                        setTimeout(() => ui.log(line, line.includes('ERROR') ? 'error' : (line.includes('SUCCESS') ? 'success' : 'info')), i * 400);
+                    });
+                }
+                
+                // Add explanation after logs
+                if(step.termExpl) {
+                    setTimeout(() => ui.log(step.termExpl, 'expl'), 1500);
+                }
+
+                if (step.id === 'init') {
+                    setTimeout(() => {
+                        document.getElementById('phishMessage').classList.remove('hidden');
+                        state.stepIndex++;
+                        ui.updateStep();
+                    }, 2000);
+                } 
+                else if (step.id === 'bypass_2fa') {
+                    setTimeout(() => {
+                        state.generatedCode = Math.floor(10000 + Math.random() * 90000);
+                        state.stepIndex++;
+                        ui.updateStep();
+                        // Trigger UI on phone
+                        ui.els.overlays.loader.classList.add('hidden');
+                        document.getElementById('loginStep1').classList.add('hidden');
+                        document.getElementById('loginStep2').classList.remove('hidden');
+                        
+                        // Fake sending email - AUTO SWITCH TO PHONE TO SEE IT
+                        setTimeout(() => {
+                            ui.switchTab('phone');
+                            ui.showNotif(state.generatedCode);
+                        }, 2500);
+                    }, 2000);
+                }
+                else {
+                    state.stepIndex++;
+                    ui.updateStep();
+                }
+            },
+
+            openBrowser() {
+                if (CONFIG.STEPS[state.stepIndex].id !== 'wait_click') return;
+                
+                ui.log(`[ACCESS] IP: 192.168.1.10 | UA: Mobile Safari | REF: Discord`, 'warning');
+                ui.showView('browser');
+                state.stepIndex++; // Move to capture_creds
+                ui.updateStep();
+            },
+
+            submitCreds() {
+                const user = document.getElementById('victimUser').value;
+                const pass = document.getElementById('victimPass').value;
+                
+                if(!user || !pass) return alert("Заповніть поля!");
+
+                ui.els.overlays.loader.classList.remove('hidden');
+                
+                // Simulate delay and hacker terminal update
+                setTimeout(() => {
+                    ui.log(`[PHISH] CAPTURED CREDENTIALS!`, 'success');
+                    ui.log(`User: ${user}`, 'info');
+                    ui.log(`Pass: ${pass}`, 'info');
+                    
+                    // Advance logic to Hacker needs to bypass 2FA
+                    state.stepIndex++; // Move to bypass_2fa
+                    ui.updateStep();
+                    ui.switchTab('terminal'); // Force user to see hacker side for education
+                }, 1000);
+            },
+
+            submitGuard() {
+                const code = document.getElementById('guardCode').value;
+                if(code != state.generatedCode) return alert("Невірний код!");
+                
+                ui.els.overlays.loader.classList.remove('hidden');
+                
+                ui.log(`[PHISH] CAPTURED 2FA CODE: ${code}`, 'success');
+                ui.log(`[AUTO] Hijacking session...`, 'warning');
+                
+                setTimeout(() => {
+                    ui.log(`[SUCCESS] Account Password Changed. Cookie Exported.`, 'success');
+                    ui.showResult(false);
+                }, 1500);
+            },
+
+            fullReset() {
+                location.reload();
+            }
+        };
+
+        core.init();
+    </script>
+</body>
+</html>
