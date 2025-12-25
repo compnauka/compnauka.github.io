@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Phishing Simulator (Edu) v3.1 Mobile Fix</title>
+    <title>Telegram Phishing Simulator (Edu) v3.3 Refactored</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -11,39 +11,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; overflow: hidden; }
         .font-mono { font-family: 'Fira Code', monospace; }
-        
-        /* Terminal Scrollbar */
         .terminal-scroll::-webkit-scrollbar { width: 6px; }
         .terminal-scroll::-webkit-scrollbar-track { background: #0f172a; }
         .terminal-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-
-        /* Animations */
-        @keyframes slide-up {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
-
-        @keyframes notif-pop {
-            0% { transform: scale(0.8) translateY(-20px); opacity: 0; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        .animate-notif { animation: notif-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        .step-active { @apply text-blue-400 border-blue-500 bg-blue-500/10; }
-        .step-done { @apply text-green-400 border-green-500; }
-        .step-pending { @apply text-slate-600 border-slate-700; }
         
-        /* Custom Stripes Background */
-        .bg-stripes {
-            background: repeating-linear-gradient(
-                45deg,
-                #f1f5f9,
-                #f1f5f9 10px,
-                #e2e8f0 10px,
-                #e2e8f0 20px
-            );
-        }
+        .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+        .animate-notif { animation: notif-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes notif-pop { 0% { transform: scale(0.8) translateY(-20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+
+        .bg-stripes { background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px); }
     </style>
 </head>
 <body class="h-screen w-screen bg-slate-950 flex flex-col text-slate-200">
@@ -51,58 +32,61 @@
     <!-- INFO MODAL -->
     <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
         <div class="bg-slate-900 border border-blue-500/50 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
-            <div class="bg-gradient-to-r from-blue-900 to-slate-900 p-4 flex items-center justify-between border-b border-blue-800">
+            <div class="bg-slate-800 p-4 flex items-center justify-between border-b border-slate-700">
                 <div class="flex items-center gap-3">
-                    <div class="bg-blue-500/20 p-2 rounded-lg">
-                        <i class="fas fa-graduation-cap text-blue-400"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white">База знань</h3>
+                    <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+                    <h3 class="text-lg font-bold text-white" id="modalTitle">Інформація</h3>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+                <button onclick="ui.closeModal()" class="text-slate-400 hover:text-white transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
-                <h4 id="modalTitle" class="text-xl font-bold text-blue-400">...</h4>
-                <div id="modalText" class="text-slate-300 text-base leading-relaxed space-y-2">...</div>
-                <div class="bg-blue-900/20 p-3 rounded-lg border border-blue-800/50 text-sm text-blue-200 mt-4">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <span id="modalTip">...</span>
+                <div id="modalText" class="text-slate-300 text-sm leading-relaxed space-y-2">...</div>
+                <div class="bg-yellow-900/20 p-3 rounded-lg border border-yellow-800/50 text-sm text-yellow-200 mt-4 hidden" id="modalWarn">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span id="modalWarnText">...</span>
                 </div>
             </div>
             <div class="p-4 bg-slate-950/50 flex justify-end">
-                <button onclick="closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-6 rounded-lg transition">Зрозуміло</button>
+                <button onclick="ui.closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-6 rounded-lg transition">Зрозуміло</button>
             </div>
         </div>
     </div>
 
     <!-- HEADER -->
-    <header class="bg-slate-900 border-b border-slate-800 shrink-0 h-16 flex items-center justify-between px-4 md:px-6">
+    <header class="bg-slate-900 border-b border-slate-800 shrink-0 h-16 flex items-center justify-between px-4">
         <div class="flex items-center gap-3">
-            <div class="bg-cyan-500/10 p-2 rounded">
-                <i class="fas fa-paper-plane text-cyan-400 text-xl"></i>
+            <div class="bg-red-500/10 p-2 rounded">
+                <i class="fas fa-user-shield text-red-400 text-xl"></i>
             </div>
-            <div class="hidden xs:block">
-                <h1 class="font-bold tracking-wide text-lg text-white">TG PhishSim <span class="text-xs text-cyan-500 bg-cyan-950 px-1 rounded ml-1">v3.1</span></h1>
+            <div class="hidden sm:block">
+                <h1 class="font-bold tracking-wide text-lg text-white">PhishSim <span class="text-xs text-slate-500 bg-slate-800 px-1 rounded ml-1">v3.3</span></h1>
             </div>
         </div>
         
-        <!-- Environment Status -->
-        <div class="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded border border-slate-700 mx-2">
-            <span class="hidden sm:inline text-xs text-slate-400">STATUS:</span>
-            <span id="envStatus" class="text-xs font-bold text-red-500 font-mono">VULNERABLE</span>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded border border-slate-700">
+                <span class="hidden sm:inline text-xs text-slate-400">Config:</span>
+                <span id="envStatus" class="text-xs font-bold text-red-500 font-mono">NO 2FA</span>
+            </div>
+            <button onclick="core.fullReset()" class="text-xs text-slate-400 hover:text-white flex items-center gap-2 border border-slate-700 px-3 py-1.5 rounded hover:bg-slate-800 transition">
+                <i class="fas fa-power-off"></i> <span class="hidden sm:inline">Reset</span>
+            </button>
         </div>
-
-        <button onclick="fullReset()" class="text-xs text-slate-400 hover:text-white flex items-center gap-2 border border-slate-700 px-3 py-1.5 rounded hover:bg-slate-800 transition">
-            <i class="fas fa-power-off"></i> <span class="hidden sm:inline">Скидання</span>
-        </button>
     </header>
 
-    <!-- MOBILE TABS (Visible only on small screens) -->
+    <div class="bg-yellow-600/20 border-b border-yellow-600/30 p-1 text-center">
+        <p class="text-[10px] text-yellow-500 font-mono uppercase tracking-widest">
+            <i class="fas fa-exclamation-circle mr-1"></i> Тільки для освітніх цілей.
+        </p>
+    </div>
+
+    <!-- MOBILE TABS -->
     <div class="md:hidden flex border-b border-slate-800 bg-slate-900">
-        <button id="tabPhone" onclick="switchTab('phone')" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-2 transition-colors">
-            <i class="fas fa-mobile-alt"></i> Телефон Жертви
+        <button id="tabPhone" onclick="ui.switchTab('phone')" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-mobile-alt"></i> Жертва
         </button>
-        <button id="tabTerminal" onclick="switchTab('terminal')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-2 transition-colors">
-            <i class="fas fa-terminal"></i> Термінал Хакера
+        <button id="tabTerminal" onclick="ui.switchTab('terminal')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-terminal"></i> Хакер (C2)
         </button>
     </div>
 
@@ -110,25 +94,23 @@
     <main class="flex-1 flex flex-col md:grid md:grid-cols-2 overflow-hidden relative">
         
         <!-- LEFT: VICTIM PHONE -->
-        <!-- Logic: On mobile, 'flex' if active tab, 'hidden' if inactive. On desktop, always 'flex' or 'block'. -->
         <div id="panelPhone" class="flex-1 relative bg-stripes flex items-center justify-center p-4 md:p-8 md:flex">
             
             <div class="absolute top-4 left-4 bg-slate-800 text-white text-xs px-3 py-1 rounded-full shadow-lg z-10 font-mono">
-                <i class="fas fa-mobile-alt mr-2"></i>TARGET DEVICE
+                <i class="fas fa-mobile-alt mr-2"></i>TARGET: iPhone 13
             </div>
 
             <!-- Phone Frame -->
-            <div class="w-[320px] h-[640px] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl relative overflow-hidden ring-1 ring-slate-900/50 z-20 scale-[0.85] sm:scale-100 transition-transform">
-                <!-- Notch -->
+            <div class="w-[320px] h-[640px] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl relative overflow-hidden ring-1 ring-slate-900/50 z-20 scale-[0.85] sm:scale-100 transition-transform origin-top md:origin-center">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-xl z-20 flex justify-center items-center gap-4">
                     <div class="w-10 h-1 rounded-full bg-slate-800"></div>
                     <div class="w-1 h-1 rounded-full bg-blue-900"></div>
                 </div>
 
                 <!-- Phone Screen -->
-                <div id="phoneScreen" class="w-full h-full bg-white text-slate-900 pt-8 pb-4 flex flex-col relative transition-colors duration-500">
+                <div id="phoneScreen" class="w-full h-full bg-white text-slate-900 pt-8 pb-4 flex flex-col relative transition-colors duration-500 font-sans">
                     
-                    <!-- TOP BAR -->
+                    <!-- Top Bar -->
                     <div class="px-5 pb-2 flex justify-between items-center text-xs font-bold text-slate-800 border-b border-slate-100">
                         <span>19:42</span>
                         <div class="flex gap-1">
@@ -139,26 +121,46 @@
                     </div>
 
                     <!-- VIEW: CHAT LIST -->
-                    <div id="viewChatList" class="flex-1 overflow-hidden">
-                        <div class="bg-blue-500 px-4 py-3 flex items-center gap-4 text-white shadow-sm">
-                            <i class="fas fa-bars"></i>
+                    <div id="viewChatList" class="flex-1 overflow-hidden flex flex-col">
+                        <div class="bg-[#517da2] px-4 py-3 flex items-center gap-4 text-white shadow-sm shrink-0">
+                            <button onclick="ui.toggleMenu()" class="hover:bg-white/10 p-1 rounded"><i class="fas fa-bars"></i></button>
                             <span class="font-bold text-lg">Telegram</span>
                             <div class="ml-auto"><i class="fas fa-search"></i></div>
                         </div>
-                        <div class="divide-y divide-slate-100">
-                            <!-- Victim's chats -->
-                            <div class="px-3 py-2 flex gap-3 hover:bg-slate-50 cursor-pointer">
-                                <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-lg">M</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-baseline">
-                                        <h4 class="font-bold text-sm truncate">Мама</h4>
-                                        <span class="text-[10px] text-slate-400">18:30</span>
-                                    </div>
-                                    <p class="text-xs text-slate-500 truncate">Купи хліба по дорозі</p>
+                        
+                        <!-- Side Menu -->
+                        <div id="sideMenu" class="absolute inset-y-0 left-0 w-64 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col pt-12">
+                            <div class="bg-[#517da2] p-4 text-white absolute top-0 w-full h-32 -z-10"></div>
+                            <div class="px-4 mb-4 flex gap-3 items-center">
+                                <div class="w-12 h-12 rounded-full bg-blue-400 text-white flex items-center justify-center text-xl font-bold">V</div>
+                                <div class="text-white">
+                                    <div class="font-bold">Victim User</div>
+                                    <div class="text-xs opacity-80">+380 50 123 45 67</div>
                                 </div>
                             </div>
-                            <!-- Dynamic Chat Injection -->
-                            <div id="phishChatPreview" class="hidden animate-notif px-3 py-2 bg-blue-50/80 gap-3 cursor-pointer border-l-4 border-blue-500" onclick="openChat()">
+                            <div class="mt-8 py-2 border-t border-slate-100">
+                                <button onclick="ui.openSettings()" class="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-4 text-slate-700">
+                                    <i class="fas fa-cog text-slate-400 w-6"></i> Налаштування
+                                </button>
+                            </div>
+                            <button onclick="ui.toggleMenu()" class="absolute top-2 right-2 text-white/80 p-2"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <!-- Chat List -->
+                        <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+                            <!-- Service Chat -->
+                            <div class="px-3 py-2 flex gap-3 hover:bg-slate-50 cursor-pointer" onclick="ui.openChat('service')">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 font-bold text-lg"><i class="fas fa-shield-alt"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-baseline">
+                                        <h4 class="font-bold text-sm text-[#517da2] flex items-center gap-1">Telegram <i class="fas fa-check-circle text-blue-400 text-xs"></i></h4>
+                                        <span class="text-[10px] text-slate-400">Вчора</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 truncate" id="serviceChatPreview">Login code: 11223. Do not...</p>
+                                </div>
+                            </div>
+                            <!-- Phishing Chat -->
+                            <div id="phishChatPreview" class="hidden animate-notif px-3 py-2 bg-blue-50/80 gap-3 cursor-pointer border-l-4 border-blue-500" onclick="ui.openChat('phishing')">
                                 <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-lg">A</div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-baseline">
@@ -172,91 +174,119 @@
                         </div>
                     </div>
 
-                    <!-- VIEW: CHAT DETAIL -->
-                    <div id="viewChatDetail" class="hidden absolute inset-0 bg-slate-100 z-30 flex flex-col pt-8">
+                    <!-- VIEW: SETTINGS -->
+                    <div id="viewDevices" class="hidden absolute inset-0 bg-[#f0f2f5] z-40 flex flex-col pt-8 animate-slide-up">
+                        <div class="bg-white px-4 py-3 flex items-center gap-4 border-b shadow-sm shrink-0">
+                            <button onclick="ui.closeSettings()"><i class="fas fa-arrow-left text-slate-500"></i></button>
+                            <span class="font-bold text-lg text-slate-800">Пристрої</span>
+                        </div>
+                        <div class="p-2">
+                            <div class="text-xs font-bold text-slate-500 uppercase ml-2 mb-2 mt-2">Цей пристрій</div>
+                            <div class="bg-white p-3 rounded-xl mb-4 flex gap-3 items-center">
+                                <i class="fas fa-mobile-alt text-3xl text-blue-500"></i>
+                                <div>
+                                    <div class="font-bold text-sm">iPhone 13</div>
+                                    <div class="text-xs text-slate-500">Telegram iOS 10.2 • Kyiv, Ukraine</div>
+                                    <div class="text-xs text-green-500">Online</div>
+                                </div>
+                            </div>
+
+                            <div class="text-xs font-bold text-slate-500 uppercase ml-2 mb-2">Активні сеанси</div>
+                            <div id="hackerSession" class="hidden bg-white p-3 rounded-xl border-l-4 border-red-500 flex gap-3 items-center relative animate-fade-in">
+                                <i class="fab fa-linux text-3xl text-slate-600"></i>
+                                <div class="flex-1">
+                                    <div class="font-bold text-sm">Chrome, Linux</div>
+                                    <div class="text-xs text-slate-500">Web Client • Kyiv, Ukraine</div>
+                                    <div class="text-xs text-slate-400">Щойно</div>
+                                </div>
+                                <button onclick="core.killSession()" class="text-red-500 text-xs font-bold border border-red-200 px-2 py-1 rounded bg-red-50 hover:bg-red-100">Завершити</button>
+                            </div>
+                            <div id="noActiveSessions" class="text-center text-slate-400 text-sm py-4">
+                                Немає інших активних сеансів
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: CHAT DETAIL (Dynamic) -->
+                    <div id="viewChatDetail" class="hidden absolute inset-0 bg-[#879eb3] z-30 flex flex-col pt-8">
                         <div class="bg-white px-4 py-2 flex items-center gap-3 border-b shadow-sm shrink-0">
-                            <i class="fas fa-arrow-left text-slate-500 cursor-pointer" onclick="goBack('viewChatList')"></i>
-                            <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">A</div>
+                            <i class="fas fa-arrow-left text-slate-500 cursor-pointer" onclick="ui.goBack()"></i>
+                            <div id="chatAvatar" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">A</div>
                             <div>
-                                <h4 class="font-bold text-sm">Анна</h4>
+                                <h4 id="chatName" class="font-bold text-sm text-black">Name</h4>
                                 <p class="text-[10px] text-blue-500">online</p>
                             </div>
                         </div>
-                        <div class="flex-1 p-3 flex flex-col gap-3 overflow-y-auto bg-[#879eb3]/10">
-                            <div class="self-start bg-white rounded-tr-lg rounded-br-lg rounded-bl-lg p-3 max-w-[85%] shadow-sm text-sm">
-                                Привіт! 👋<br>
-                                Слухай, моя мала бере участь у конкурсі малюнків. Можеш проголосувати за неї?<br>
-                                Треба просто натиснути лайк.<br><br>
-                                Ось посилання:<br>
-                                <a href="#" onclick="openBrowser()" class="text-blue-500 underline font-bold break-all">http://teleg-vote.com/contest/art2025</a>
-                            </div>
+                        <div class="flex-1 p-3 flex flex-col gap-3 overflow-y-auto" id="chatMessages">
+                            <!-- Messages injected here -->
                         </div>
                     </div>
 
                     <!-- VIEW: FAKE BROWSER -->
                     <div id="viewBrowser" class="hidden absolute inset-0 bg-white z-40 flex flex-col pt-8 animate-slide-up">
-                        <!-- Fake Address Bar -->
                         <div class="bg-slate-100 p-2 border-b flex items-center gap-2 text-xs">
-                            <div class="flex-1 bg-white border border-slate-300 rounded px-2 py-1 flex items-center justify-between text-slate-600">
+                            <div class="flex-1 bg-white border border-slate-300 rounded px-2 py-1 flex items-center justify-between text-slate-600 shadow-inner">
                                 <span class="truncate">teleg-vote.com/login</span>
-                                <i class="fas fa-lock text-green-600 text-[10px]"></i>
+                                <i class="fas fa-lock text-green-600 text-[10px] cursor-pointer hover:scale-125 transition" onclick="ui.showLockInfo()"></i>
                             </div>
                             <i class="fas fa-ellipsis-v text-slate-400"></i>
                         </div>
                         
-                        <!-- Fake Site Content -->
                         <div class="flex-1 p-6 flex flex-col items-center justify-center bg-slate-50 relative">
-                            
                             <!-- Step A: Enter Phone -->
                             <div id="siteStep1" class="w-full max-w-xs text-center">
-                                <div class="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                                    <i class="fas fa-paper-plane text-white text-3xl"></i>
+                                <div class="w-20 h-20 bg-[#517da2] rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-paper-plane text-white text-4xl transform -translate-x-1 translate-y-1"></i>
                                 </div>
-                                <h2 class="text-xl font-bold mb-1">Вхід в Telegram</h2>
-                                <p class="text-slate-500 text-xs mb-6">Щоб проголосувати, увійдіть у свій акаунт.</p>
-                                
-                                <div class="text-left mb-4">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Номер телефону</label>
-                                    <input type="text" id="victimPhone" class="w-full border-b-2 border-blue-500 bg-transparent py-2 text-lg font-mono focus:outline-none" value="+380" placeholder="+380 XX XXX XX XX">
+                                <h2 class="text-xl font-bold mb-1 text-black">Вхід в Telegram</h2>
+                                <p class="text-slate-500 text-xs mb-8">Будь ласка, введіть свій номер телефону.</p>
+                                <div class="text-left mb-6 relative">
+                                    <label class="text-[10px] font-bold text-[#517da2] uppercase absolute -top-2 left-2 bg-slate-50 px-1">Телефон</label>
+                                    <input type="text" id="victimPhone" class="w-full border-2 border-slate-200 rounded-lg p-3 text-lg font-mono focus:outline-none focus:border-[#517da2] text-black bg-white transition" value="+380" placeholder="+380 XX XXX XX XX">
                                 </div>
-                                <button onclick="submitPhone()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95">ДАЛІ</button>
+                                <button onclick="core.submitPhone()" class="w-full bg-[#517da2] hover:bg-[#40688a] text-white font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 uppercase tracking-wider text-sm">Далі</button>
                             </div>
 
                             <!-- Step B: Enter SMS Code -->
                             <div id="siteStep2" class="hidden w-full max-w-xs text-center">
-                                <h2 class="text-lg font-bold mb-2">Введіть код</h2>
-                                <p class="text-slate-500 text-xs mb-6">Ми надіслали код в додаток Telegram на іншому пристрої.</p>
+                                <h2 class="text-lg font-bold mb-2 text-black">Введіть код</h2>
+                                <p class="text-slate-500 text-xs mb-6">Ми надіслали код в додаток Telegram.</p>
                                 <div class="flex justify-center gap-2 mb-6">
-                                    <input type="text" id="otpInput" maxlength="5" class="w-32 text-center border-b-2 border-blue-500 text-2xl font-mono tracking-widest focus:outline-none bg-transparent" placeholder="X X X X X">
+                                    <input type="text" id="otpInput" maxlength="5" class="w-36 text-center border-b-2 border-[#517da2] text-3xl font-mono tracking-[0.5em] focus:outline-none bg-transparent text-black" placeholder="•••••">
                                 </div>
-                                <button onclick="submitOTP()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg mb-2">ПІДТВЕРДИТИ</button>
+                                <button onclick="core.submitOTP()" class="w-full bg-[#517da2] hover:bg-[#40688a] text-white font-bold py-3.5 rounded-xl shadow-lg mb-2 uppercase text-sm">Підтвердити</button>
                             </div>
 
                             <!-- Step C: Enter Cloud Password (2FA) -->
                             <div id="siteStep3" class="hidden w-full max-w-xs text-center">
-                                <div class="mb-4 text-blue-500"><i class="fas fa-key text-4xl"></i></div>
-                                <h2 class="text-lg font-bold mb-2">Хмарний пароль</h2>
-                                <p class="text-slate-500 text-xs mb-6">Ваш акаунт захищено паролем.</p>
-                                <input type="password" class="w-full border p-3 rounded mb-4 text-center" placeholder="Пароль">
-                                <button class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg opacity-50 cursor-not-allowed">ВХІД</button>
-                                <p class="text-[10px] text-red-500 mt-2 font-bold hidden" id="2faNotice">Хакер не знає цього пароля!</p>
+                                <div class="mb-4 text-[#517da2]"><i class="fas fa-cloud-lock text-5xl"></i></div>
+                                <h2 class="text-lg font-bold mb-2 text-black">Хмарний пароль</h2>
+                                <p class="text-slate-500 text-xs mb-6">Цей акаунт захищено двоетапною перевіркою.</p>
+                                <input type="password" class="w-full border-2 border-slate-200 rounded-lg p-3 mb-4 text-center text-black" placeholder="Введіть пароль">
+                                <button class="w-full bg-[#517da2] opacity-50 cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg">Увійти</button>
+                                <p class="text-[10px] text-red-500 mt-4 font-bold hidden bg-red-50 p-2 rounded" id="2faNotice">
+                                    <i class="fas fa-ban mr-1"></i> Хакер не знає пароля. Атака зупинена.
+                                </p>
                             </div>
 
-                            <!-- Loading Spinner -->
-                            <div id="siteLoader" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-50">
-                                <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
-                                <div class="text-xs text-slate-500 font-mono">Connecting to Telegram API...</div>
+                            <!-- Loader -->
+                            <div id="siteLoader" class="hidden absolute inset-0 bg-white/95 flex flex-col items-center justify-center z-50">
+                                <div class="w-10 h-10 border-4 border-slate-200 border-t-[#517da2] rounded-full animate-spin mb-4"></div>
+                                <div class="text-xs text-slate-500 font-mono">З'єднання з сервером...</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- REAL SYSTEM NOTIFICATION (POPUP) -->
-                    <div id="sysNotification" class="absolute top-2 left-2 right-2 bg-slate-800/95 text-white p-3 rounded-xl shadow-xl z-50 hidden backdrop-blur transform -translate-y-full transition-transform duration-500 border-l-4 border-blue-400 cursor-pointer" onclick="switchTab('phone')" title="Code">
+                    <!-- NOTIFICATION -->
+                    <div id="sysNotification" class="absolute top-2 left-2 right-2 bg-white/95 backdrop-blur text-slate-800 p-3 rounded-2xl shadow-2xl z-50 hidden transform -translate-y-full transition-transform duration-500 border border-slate-200 cursor-pointer" onclick="ui.switchTab('phone')">
                         <div class="flex gap-3">
-                            <div class="shrink-0 pt-1"><i class="fab fa-telegram text-blue-400 text-lg"></i></div>
-                            <div>
-                                <h4 class="font-bold text-sm">Telegram Service</h4>
-                                <p class="text-xs text-slate-300">Login code: <span id="realOtpCode" class="font-bold text-white tracking-widest text-base"></span>. Do not give this code to anyone!</p>
+                            <div class="shrink-0 pt-1"><i class="fab fa-telegram text-[#517da2] text-2xl"></i></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-sm">Login code: <span id="realOtpCode" class="font-mono text-lg"></span></h4>
+                                    <span class="text-[10px] text-slate-400">now</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1">Do not give this code to anyone!</p>
                             </div>
                         </div>
                     </div>
@@ -266,569 +296,456 @@
         </div>
 
         <!-- RIGHT: HACKER TERMINAL -->
-        <!-- On mobile: Hidden by default, shown when tab is active -->
-        <div id="panelTerminal" class="flex-1 bg-[#0c0c0c] flex flex-col border-l border-slate-800 relative hidden md:flex">
-            
-            <!-- Terminal Header -->
-            <div class="bg-[#1a1a1a] p-3 border-b border-slate-800 flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-2">
-                    <div class="flex gap-1.5">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    </div>
-                    <span class="text-slate-400 text-xs font-mono ml-2">root@c2-server:~/phish-kit</span>
-                </div>
-                <div class="text-[10px] font-mono text-green-600">CONNECTED <i class="fas fa-bolt"></i></div>
+        <div id="panelTerminal" class="flex-1 bg-[#0d1117] flex flex-col border-l border-slate-800 relative hidden md:flex font-mono text-sm leading-tight">
+            <div class="bg-[#161b22] p-3 border-b border-slate-800 flex justify-between items-center shrink-0">
+                <span class="text-slate-400 text-xs">root@c2:~/evilginx2#</span>
+                <div class="text-[10px] text-green-500">LISTENING :443</div>
             </div>
-
-            <!-- Log Output -->
-            <div id="terminalOutput" class="flex-1 p-4 font-mono text-sm overflow-y-auto text-slate-300 terminal-scroll space-y-1">
-                <div class="text-slate-500">Initializing EvilGinx FrameWork v3.1...</div>
-                <div class="text-slate-500">Loading modules: [telegram_scam] [sms_grabber] [session_hijack]</div>
-                <div class="text-green-500">DONE. Listening on port 80...</div>
+            <div id="terminalOutput" class="flex-1 p-4 overflow-y-auto text-slate-300 terminal-scroll font-mono text-xs">
+                <div class="text-slate-500 mb-2">./start_server.sh --phishlets telegram.yaml</div>
+                <div class="text-blue-400">[INFO] Evilginx v3.2.0 initialized</div>
+                <div class="text-green-500">[SUCCESS] Server listening on https://teleg-vote.com</div>
                 <div class="text-slate-500">Waiting for victim...</div>
-                <div class="text-slate-500">root@c2-server:~# </div>
             </div>
-
-            <!-- Controls Area -->
-            <div class="p-4 bg-[#111] border-t border-slate-800">
-                
-                <!-- Interactive Command Box -->
-                <div id="taskBox" class="mb-4 bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-col gap-2">
+            <div class="p-4 bg-[#161b22] border-t border-slate-800">
+                <div id="taskBox" class="mb-4 bg-slate-900 border border-slate-700 p-3 rounded flex flex-col gap-2">
                     <div class="flex justify-between items-start">
                         <h3 class="text-blue-400 font-bold text-xs uppercase tracking-wider"><i class="fas fa-terminal mr-1"></i> Current Task</h3>
-                        <button onclick="showExplanation()" class="text-xs text-slate-400 hover:text-white underline decoration-dotted">Пояснення</button>
+                        <button onclick="ui.showExplanation()" class="text-xs text-slate-400 hover:text-white underline decoration-dotted">Аналіз</button>
                     </div>
-                    
                     <p id="missionText" class="text-slate-200 text-xs">...</p>
-
-                    <!-- Hint Block -->
                     <div id="cmdHintBlock" class="mt-1">
-                        <div class="text-[10px] text-slate-500 mb-1">Введіть команду:</div>
-                        <code id="cmdHint" class="block bg-black p-2 rounded text-green-400 font-mono text-xs border border-slate-800 cursor-pointer hover:bg-slate-950 hover:border-green-800 transition select-none" onclick="fillCommand()" title="Клікніть, щоб вставити">
-                            ...
-                        </code>
+                        <code id="cmdHint" class="block bg-black p-2 rounded text-green-400 font-mono text-xs border border-slate-800 cursor-pointer hover:bg-slate-950 hover:border-green-800 transition select-none" onclick="core.fillCommand()" title="Вставити команду">...</code>
                     </div>
                 </div>
-
-                <!-- Input Form -->
-                <form id="cmdForm" class="flex items-center gap-2 bg-black p-2 rounded border border-slate-800 focus-within:border-green-800 transition" onsubmit="handleCommand(event)">
+                <form id="cmdForm" class="flex items-center gap-2 bg-black p-2 rounded border border-slate-800 focus-within:border-green-800 transition" onsubmit="core.handleCommand(event)">
                     <span class="text-green-500 font-bold font-mono text-xs shrink-0">root@c2:~#</span>
                     <input id="cmdInput" type="text" autocomplete="off" class="flex-1 bg-transparent border-none text-white focus:ring-0 focus:outline-none font-mono text-xs" placeholder="..." autofocus>
                 </form>
-
-                <!-- Status Indicators -->
-                <div class="grid grid-cols-3 gap-2 text-[10px] font-mono text-center mt-4">
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                        <div class="text-slate-500">PHONE</div>
-                        <div id="statusPhone" class="text-slate-600">WAITING</div>
-                    </div>
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                        <div class="text-slate-500">OTP CODE</div>
-                        <div id="statusCode" class="text-slate-600">WAITING</div>
-                    </div>
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                        <div class="text-slate-500">SESSION</div>
-                        <div id="statusSession" class="text-slate-600">OFFLINE</div>
-                    </div>
-                </div>
-
             </div>
         </div>
-
     </main>
 
     <script>
-        // --- CONFIGURATION ---
-        const STEPS = [
-            {
-                id: 'deploy',
-                cmd: './deploy_site.sh -t voting',
-                mission: "Крок 1: Підготовка пастки. Створимо копію сторінки входу в Telegram.",
-                termLog: "[+] Cloning 'telegram.org' login page...\n[+] Injecting malicious JS hook...\n[+] Site hosted at: http://teleg-vote.com/contest/art2025",
-                termExpl: "[ПОЯСНЕННЯ] Хакери створюють точні копії популярних сайтів. Дизайн виглядає ідентично, щоб обдурити жертву.",
-                expl: {
-                    title: "Фішинговий сайт",
-                    text: "Хакери копіюють дизайн офіційного сайту. URL-адреса відрізняється (teleg-vote.com), але користувач часто не помічає цього.",
-                    tip: "Завжди перевіряй адресу сайту перед введенням даних!"
+        // --- CONSTANTS & CONFIG ---
+        const CONFIG = {
+            STEPS: [
+                {
+                    id: 'deploy',
+                    cmd: './deploy.py --template telegram_vote',
+                    mission: "Етап 1: Розгортання. Запуск веб-сервера з копією дизайну Telegram.",
+                    termLog: `[INFO] Templates loaded: /templates/telegram_vote/\n[INFO] SSL Certificates loaded (LetsEncrypt)\n[SUCCESS] Web Server started on 0.0.0.0:443\n[INFO] Public URL: https://teleg-vote.com`,
+                    expl: {
+                        title: "Фейковий сайт",
+                        text: "Ми розгорнули сайт, що виглядає як Telegram. Ми використовуємо HTTPS. Багато людей думають, що 'замок' означає безпеку, але це лише шифрування каналу.",
+                        tip: "Завжди перевіряй домен: teleg-vote.com != telegram.org"
+                    }
+                },
+                {
+                    id: 'send_lure',
+                    cmd: 'python3 send_msg.py --target +380501234567',
+                    mission: "Етап 2: Соціальна інженерія. Доставка фішингового посилання.",
+                    termLog: `[>] Connecting to MTProto API... OK\n[>] Authenticated as User#7712 (Compromised)\n[>] Sending message to Victim...\n[<] RPC_RESULT: MessageSent (id: 8821)`,
+                    expl: {
+                        title: "Ланцюгова реакція",
+                        text: "Фішинг часто поширюється як вірус. Зламавши одного користувача, скрипт розсилає повідомлення його контактам. Ви довіряєте відправнику, тому клікаєте.",
+                        tip: "Критично ставтеся до прохань 'проголосувати' навіть від близьких."
+                    }
+                },
+                {
+                    id: 'wait_click',
+                    cmd: 'tail -f access.log',
+                    mission: "Етап 3: Очікування переходу жертви.",
+                    termLog: `[INFO] Tailing access logs...\n...`,
+                    manualTrigger: true,
+                    expl: {
+                        title: "Перехід за посиланням",
+                        text: "Жертва клікає посилання і потрапляє на наш сервер.",
+                        tip: "Якщо Telegram просить ввести номер телефону на сайті — це 100% обман."
+                    }
+                },
+                {
+                    id: 'intercept_phone',
+                    cmd: 'intercepting...',
+                    mission: "Етап 4: Перехоплення номера та запит коду.",
+                    termLog: `[HTTP] POST /api/login_phone\n[DATA] phone_number: +380...\n[API] Sending AuthRequest to Official Telegram API...\n[API] RESPONSE: 200 OK (type: sentCode)`,
+                    manualTrigger: true,
+                    expl: {
+                        title: "Man-in-the-Middle",
+                        text: "Сервер хакера миттєво передає номер на сервери Telegram. Telegram думає, що це вхід з нового пристрою (Linux), і надсилає код.",
+                        tip: "Зверніть увагу на сповіщення: там буде 'Web Client' або 'Linux', а не ваш телефон."
+                    }
+                },
+                {
+                    id: 'intercept_otp',
+                    cmd: 'waiting_otp...',
+                    mission: "Етап 5: Перехоплення коду.",
+                    termLog: `[HTTP] POST /api/login_code\n[DATA] phone_code: XXXXX\n[API] Sending AuthSignIn to Official Telegram API...`,
+                    manualTrigger: true,
+                    expl: {
+                        title: "Викрадення сесії",
+                        text: "Ви вводите код на сайті. Хакер отримує його і передає в Telegram. Без 2FA сервер видає токен доступу.",
+                        tip: "Код — це останній рубіж оборони (якщо немає 2FA)."
+                    }
+                },
+                {
+                    id: 'hijack_attempt',
+                    cmd: './export_session.sh',
+                    mission: "Етап 6: Результат атаки.",
+                    termLog: `...`,
+                    expl: {
+                        title: "Фінал",
+                        text: "Результат залежить від налаштувань безпеки.",
+                        tip: "Перевіряйте 'Пристрої' на телефоні."
+                    }
                 }
-            },
-            {
-                id: 'send_lure',
-                cmd: './social_engine.py -u Anna',
-                mission: "Крок 2: Наживка. Відправимо повідомлення від імені знайомого.",
-                termLog: "[*] Sending message to target...\n[>] 'Привіт! Проголосуй за мене...'\n[+] Message DELIVERED.",
-                termExpl: "[ПОЯСНЕННЯ] Атака починається з маніпуляції довірою. Повідомлення від друга присипляє пильність.",
-                expl: {
-                    title: "Соціальна інженерія",
-                    text: "Найслабша ланка - це довіра. Повідомлення 'Проголосуй за племінницю' змушує діяти емоційно та швидко.",
-                    tip: "Якщо друг просить щось дивне — подзвони йому."
-                }
-            },
-            {
-                id: 'wait_click',
-                cmd: 'listening...',
-                mission: "Крок 3: Очікування. Жертва має натиснути на посилання в чаті.",
-                termLog: "[*] Listening for incoming connections...",
-                termExpl: "[ПОЯСНЕННЯ] Коли жертва натискає на посилання, вона покидає захищений додаток і переходить на підроблений сайт.",
-                manualTrigger: true,
-                expl: {
-                    title: "Перехід на сайт",
-                    text: "Коли жертва натискає на посилання, вона потрапляє на сайт хакера. З цього моменту всі введені дані бачить зловмисник.",
-                    tip: "Telegram ніколи не просить авторизацію на сторонніх сайтах."
-                }
-            },
-            {
-                id: 'intercept_phone',
-                cmd: 'intercepting...',
-                mission: "Крок 4: Крадіжка номера. Жертва вводить номер на сайті.",
-                termLog: "[*] Victim is on the landing page...",
-                termExpl: "[ПОЯСНЕННЯ] Хакерський скрипт перехоплює номер і миттєво відправляє його на сервер Telegram.",
-                manualTrigger: true,
-                expl: {
-                    title: "Перехоплення номера",
-                    text: "Жертва думає, що авторизується для голосування. Насправді скрипт використовує цей номер для входу в реальний акаунт.",
-                    tip: "Номер телефону - це ваш логін. Не вводьте його де попало."
-                }
-            },
-            {
-                id: 'intercept_otp',
-                cmd: 'waiting_sms...',
-                mission: "Крок 5: Перехоплення коду (OTP). Це найважливіший момент.",
-                termLog: "[+] Phone number captured! sending login request to Telegram API...\n[!] Telegram asked for OTP code.",
-                termExpl: "[ПОЯСНЕННЯ] Справжній Telegram надсилає код. Жертва вводить його на фейку, віддаючи хакеру.",
-                manualTrigger: true,
-                expl: {
-                    title: "Крадіжка коду (OTP)",
-                    text: "Жертва думає, що підтверджує голос. Насправді вона віддає ключ від свого акаунту хакеру.",
-                    tip: "Код входу в Telegram вводиться ТІЛЬКИ в офіційному додатку."
-                }
-            },
-            {
-                id: 'hijack_attempt',
-                cmd: './login_session.sh --start',
-                mission: "Крок 6: Спроба входу. Використання перехопленого коду.",
-                termLog: "[*] Using intercepted code...",
-                termExpl: "[ПОЯСНЕННЯ] Момент істини. Хакер пробує увійти. Результат залежить від наявності 2FA.",
-                expl: {
-                    title: "Захоплення сесії",
-                    text: "Маючи номер і код, хакер створює нову сесію. Якщо немає пароля (2FA), акаунт втрачено.",
-                    tip: "Без 2FA ваш акаунт захищений лише кодом з SMS, який легко вкрасти."
-                }
-            }
-        ];
-
-        // --- STATE ---
-        let currentStepIndex = 0;
-        let isProtected = false; // Start VULNERABLE
-        let generatedOtp = null; // Global OTP variable
-        let logs = [];
-
-        // --- DOM ELEMENTS ---
-        const els = {
-            term: document.getElementById('terminalOutput'),
-            missionBox: document.getElementById('missionBox'),
-            missionText: document.getElementById('missionText'),
-            cmdInput: document.getElementById('cmdInput'),
-            cmdHint: document.getElementById('cmdHint'),
-            cmdHintBlock: document.getElementById('cmdHintBlock'),
-            phoneScreen: document.getElementById('phoneScreen'),
-            chatPreview: document.getElementById('phishChatPreview'),
-            viewChatList: document.getElementById('viewChatList'),
-            viewChatDetail: document.getElementById('viewChatDetail'),
-            viewBrowser: document.getElementById('viewBrowser'),
-            victimPhone: document.getElementById('victimPhone'),
-            otpInput: document.getElementById('otpInput'),
-            siteLoader: document.getElementById('siteLoader'),
-            sysNotif: document.getElementById('sysNotification'),
-            realOtpDisplay: document.getElementById('realOtpCode'),
-            modal: document.getElementById('infoModal'),
-            stPhone: document.getElementById('statusPhone'),
-            stCode: document.getElementById('statusCode'),
-            stSession: document.getElementById('statusSession'),
-            envStatus: document.getElementById('envStatus'),
-            siteSteps: [
-                document.getElementById('siteStep1'),
-                document.getElementById('siteStep2'),
-                document.getElementById('siteStep3')
-            ],
-            // Panels for mobile switching
-            panelPhone: document.getElementById('panelPhone'),
-            panelTerminal: document.getElementById('panelTerminal'),
-            tabPhone: document.getElementById('tabPhone'),
-            tabTerminal: document.getElementById('tabTerminal')
+            ]
         };
 
-        // --- UTILS ---
-        const log = (text, type='neutral') => {
-            const div = document.createElement('div');
-            div.innerText = text;
-            if(type === 'success') div.className = 'text-green-500 font-bold';
-            else if(type === 'error') div.className = 'text-red-500 font-bold';
-            else if(type === 'warning') div.className = 'text-yellow-500';
-            else if(type === 'expl') div.className = 'text-cyan-300 italic mt-1 mb-2 border-l-2 border-cyan-500 pl-2';
-            else div.className = 'text-slate-400';
+        // --- STATE MANAGEMENT ---
+        const state = {
+            stepIndex: 0,
+            isProtected: false,
+            generatedOtp: null,
+            hackerSessionActive: false
+        };
+
+        // --- UI CONTROLLER ---
+        const ui = {
+            els: {
+                term: document.getElementById('terminalOutput'),
+                missionText: document.getElementById('missionText'),
+                cmdInput: document.getElementById('cmdInput'),
+                cmdHint: document.getElementById('cmdHint'),
+                cmdHintBlock: document.getElementById('cmdHintBlock'),
+                views: {
+                    chatList: document.getElementById('viewChatList'),
+                    chatDetail: document.getElementById('viewChatDetail'),
+                    browser: document.getElementById('viewBrowser'),
+                    devices: document.getElementById('viewDevices')
+                },
+                phoneInputs: {
+                    phone: document.getElementById('victimPhone'),
+                    otp: document.getElementById('otpInput')
+                },
+                overlays: {
+                    sideMenu: document.getElementById('sideMenu'),
+                    notif: document.getElementById('sysNotification'),
+                    loader: document.getElementById('siteLoader'),
+                    modal: document.getElementById('infoModal')
+                },
+                dynamic: {
+                    otpCode: document.getElementById('realOtpCode'),
+                    envStatus: document.getElementById('envStatus'),
+                    hackerSession: document.getElementById('hackerSession'),
+                    noSessions: document.getElementById('noActiveSessions'),
+                    missionBox: document.getElementById('taskBox'),
+                    servicePreview: document.getElementById('serviceChatPreview')
+                },
+                tabs: {
+                    phone: document.getElementById('tabPhone'),
+                    terminal: document.getElementById('tabTerminal'),
+                    panelPhone: document.getElementById('panelPhone'),
+                    panelTerminal: document.getElementById('panelTerminal')
+                }
+            },
+
+            log(text, type = 'neutral') {
+                const div = document.createElement('div');
+                div.innerText = text;
+                div.className = 'mb-1 break-all';
+                const colors = { success: 'text-green-500', error: 'text-red-500', warning: 'text-yellow-500', expl: 'text-blue-300 italic border-l-2 border-blue-500 pl-2 my-2' };
+                div.classList.add(...(colors[type] || 'text-slate-300').split(' '));
+                this.els.term.appendChild(div);
+                this.els.term.scrollTop = this.els.term.scrollHeight;
+            },
+
+            updateStep() {
+                const step = CONFIG.STEPS[state.stepIndex];
+                this.els.missionText.innerText = step.mission;
+                const isManual = step.manualTrigger;
+                
+                this.els.cmdInput.disabled = isManual;
+                this.els.cmdInput.value = '';
+                this.els.cmdInput.placeholder = isManual ? "(Чекаємо дії жертви...)" : "root@c2:~#";
+                if(isManual) this.els.cmdHintBlock.classList.add('hidden');
+                else {
+                    this.els.cmdHintBlock.classList.remove('hidden');
+                    this.els.cmdHint.innerText = step.cmd;
+                }
+                if(!isManual) this.els.cmdInput.focus();
+            },
+
+            toggleMenu() { this.els.overlays.sideMenu.classList.toggle('-translate-x-full'); },
             
-            els.term.insertBefore(div, els.term.lastElementChild);
-            els.term.scrollTop = els.term.scrollHeight;
-        };
+            openSettings() {
+                this.toggleMenu();
+                this.showView('devices');
+                const hasHacker = state.hackerSessionActive;
+                this.els.dynamic.hackerSession.classList.toggle('hidden', !hasHacker);
+                this.els.dynamic.noSessions.classList.toggle('hidden', hasHacker);
+            },
+            
+            closeSettings() { this.showView('chatList'); },
 
-        const updateStatus = (el, text, colorClass) => {
-            el.innerText = text;
-            el.className = colorClass + " font-bold transition-all duration-300 scale-110";
-            setTimeout(() => el.classList.remove('scale-110'), 300);
-        };
+            showView(viewName) {
+                Object.values(this.els.views).forEach(el => el.classList.add('hidden'));
+                this.els.views[viewName].classList.remove('hidden');
+            },
 
-        // --- MOBILE TABS LOGIC ---
-        function switchTab(tab) {
-            // Tailwind classes to toggle visibility on mobile only (md:flex ensures desktop visibility)
-            if (tab === 'phone') {
-                els.panelPhone.classList.remove('hidden');
-                els.panelPhone.classList.add('flex');
+            openChat(type) {
+                if (type === 'phishing') {
+                    if (CONFIG.STEPS[state.stepIndex].id !== 'wait_click') return;
+                    document.getElementById('chatAvatar').innerText = 'A';
+                    document.getElementById('chatAvatar').className = "w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold";
+                    document.getElementById('chatName').innerText = "Анна";
+                    document.getElementById('chatMessages').innerHTML = `
+                        <div class="self-start bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl p-3 max-w-[85%] shadow-sm text-sm text-black leading-snug">
+                            Привіт! 👋<br>Слухай, моя мала бере участь у конкурсі малюнків. Можеш проголосувати за неї?<br>
+                            Треба просто натиснути лайк.<br><br>Ось посилання:<br>
+                            <a href="#" onclick="core.openBrowser()" class="text-[#517da2] underline font-bold break-all">http://teleg-vote.com/contest/art2025</a>
+                        </div>`;
+                    this.showView('chatDetail');
+                } else if (type === 'service') {
+                    document.getElementById('chatAvatar').innerHTML = '<i class="fas fa-shield-alt"></i>';
+                    document.getElementById('chatAvatar').className = "w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-sm font-bold";
+                    document.getElementById('chatName').innerText = "Telegram";
+                    let msgs = `<div class="self-start bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl p-3 max-w-[85%] shadow-sm text-sm text-black leading-snug">Login code: 11223.<br>Do not give this code to anyone!</div>`;
+                    if (state.generatedOtp) {
+                        msgs += `<div class="self-start bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl p-3 max-w-[85%] shadow-sm text-sm text-black leading-snug mt-2">Login code: <strong>${state.generatedOtp}</strong>.<br>Do not give this code to anyone!<br><br><span class="text-xs text-slate-500">Device: Chrome, Linux<br>Location: Kyiv, Ukraine</span></div>`;
+                    }
+                    document.getElementById('chatMessages').innerHTML = msgs;
+                    this.showView('chatDetail');
+                }
+            },
+
+            goBack() { this.showView('chatList'); },
+
+            showLockInfo() {
+                this.showModal("HTTPS (Замок)", "Цей значок означає лише шифрування каналу. Це НЕ гарантує, що сайт справжній. Хакери теж використовують HTTPS.", "Завжди перевіряйте домен (teleg-vote.com).");
+            },
+
+            showExplanation() {
+                const step = CONFIG.STEPS[state.stepIndex];
+                if(step.expl) this.showModal(step.expl.title, step.expl.text, step.expl.tip);
+            },
+
+            showModal(title, text, warn) {
+                document.getElementById('modalTitle').innerText = title;
+                document.getElementById('modalText').innerText = text;
+                const w = document.getElementById('modalWarn');
+                if(warn) { w.classList.remove('hidden'); document.getElementById('modalWarnText').innerText = warn; }
+                else w.classList.add('hidden');
+                this.els.overlays.modal.classList.remove('hidden');
+                setTimeout(() => { this.els.overlays.modal.classList.remove('opacity-0'); document.getElementById('modalContent').classList.remove('scale-95'); }, 10);
+            },
+
+            closeModal() {
+                this.els.overlays.modal.classList.add('opacity-0');
+                document.getElementById('modalContent').classList.add('scale-95');
+                setTimeout(() => this.els.overlays.modal.classList.add('hidden'), 300);
+            },
+
+            switchTab(tab) {
+                const isPhone = tab === 'phone';
+                this.els.tabs.panelPhone.classList.toggle('hidden', !isPhone);
+                this.els.tabs.panelPhone.classList.toggle('flex', isPhone);
+                this.els.tabs.panelTerminal.classList.toggle('hidden', isPhone);
+                this.els.tabs.panelTerminal.classList.toggle('flex', !isPhone);
                 
-                els.panelTerminal.classList.add('hidden');
-                els.panelTerminal.classList.remove('flex');
-
-                els.tabPhone.classList.add('text-blue-400', 'border-blue-500');
-                els.tabPhone.classList.remove('text-slate-500', 'border-transparent');
-                els.tabTerminal.classList.remove('text-blue-400', 'border-blue-500');
-                els.tabTerminal.classList.add('text-slate-500', 'border-transparent');
-            } else {
-                els.panelPhone.classList.add('hidden');
-                els.panelPhone.classList.remove('flex');
+                const activeClass = ['text-blue-400', 'border-blue-500'];
+                const inactiveClass = ['text-slate-500', 'border-transparent'];
                 
-                els.panelTerminal.classList.remove('hidden');
-                els.panelTerminal.classList.add('flex');
+                this.els.tabs.phone.classList[isPhone ? 'add' : 'remove'](...activeClass);
+                this.els.tabs.phone.classList[isPhone ? 'remove' : 'add'](...inactiveClass);
+                this.els.tabs.terminal.classList[!isPhone ? 'add' : 'remove'](...activeClass);
+                this.els.tabs.terminal.classList[!isPhone ? 'remove' : 'add'](...inactiveClass);
+            },
 
-                els.tabTerminal.classList.add('text-blue-400', 'border-blue-500');
-                els.tabTerminal.classList.remove('text-slate-500', 'border-transparent');
-                els.tabPhone.classList.remove('text-blue-400', 'border-blue-500');
-                els.tabPhone.classList.add('text-slate-500', 'border-transparent');
+            showNotif(code) {
+                this.els.dynamic.otpCode.innerText = code;
+                this.els.dynamic.servicePreview.innerText = `Login code: ${code}. Do not...`;
+                this.els.overlays.notif.classList.remove('hidden', '-translate-y-full');
+                setTimeout(() => this.els.overlays.notif.classList.add('-translate-y-full'), 8000);
+            },
+
+            finishPhase(saved) {
+                this.els.cmdInput.disabled = true;
+                this.els.cmdInput.placeholder = "Scenario Ended";
+                this.els.cmdHintBlock.classList.add('hidden');
+
+                const btn = document.createElement('button');
+                btn.className = "w-full font-bold py-3 rounded mt-2 text-sm transition animate-fade-in";
+                
+                if (saved) {
+                    this.els.missionText.innerHTML = `<span class="text-green-400 font-bold">АТАКУ ВІДБИТО!</span><br>2FA зупинив хакера.`;
+                    btn.classList.add('bg-green-600', 'hover:bg-green-500', 'text-white');
+                    btn.innerText = "Завершити";
+                    btn.onclick = () => this.showModal("Висновок", "Active Sessions: Регулярно перевіряйте 'Пристрої'. Cloud Password (2FA): Це єдиний надійний бар'єр.", null);
+                } else {
+                    this.els.missionText.innerHTML = `<span class="text-red-500 font-bold">АКАУНТ ПІД ЗАГРОЗОЮ!</span><br>Хакер увійшов.`;
+                    btn.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white', 'animate-pulse');
+                    btn.innerText = "🆘 ВРЯТУВАТИ АКАУНТ";
+                    btn.onclick = () => { this.switchTab('phone'); alert("Швидко! Меню -> Налаштування -> Пристрої -> Завершити!"); };
+                }
+                this.els.dynamic.missionBox.appendChild(btn);
             }
-        }
+        };
 
         // --- CORE LOGIC ---
+        const core = {
+            init() {
+                state.isProtected = false;
+                this.updateEnvStatus();
+                ui.updateStep();
+                ui.switchTab('phone');
+            },
 
-        function init() {
-            isProtected = false; // Force vulnerable start
-            updateProtectionUI();
-            updateStepUI();
-            // Default tab
-            switchTab('phone');
-        }
+            updateEnvStatus() {
+                ui.els.dynamic.envStatus.innerText = state.isProtected ? "SECURE (2FA)" : "NO 2FA";
+                ui.els.dynamic.envStatus.className = state.isProtected ? "text-xs font-bold text-green-500 font-mono" : "text-xs font-bold text-red-500 font-mono";
+            },
 
-        function updateProtectionUI() {
-            if (isProtected) {
-                els.envStatus.innerText = "SECURE (2FA ENABLED)";
-                els.envStatus.className = "text-xs font-bold text-green-500 font-mono";
-            } else {
-                els.envStatus.innerText = "VULNERABLE (NO 2FA)";
-                els.envStatus.className = "text-xs font-bold text-red-500 font-mono";
-            }
-        }
+            handleCommand(e) {
+                e.preventDefault();
+                const val = ui.els.cmdInput.value.trim();
+                if (!val) return;
+                const step = CONFIG.STEPS[state.stepIndex];
+                ui.log(`root@c2:~# ${val}`);
 
-        function updateStepUI() {
-            const step = STEPS[currentStepIndex];
-            els.missionText.innerText = step.mission;
-            
-            if (step.manualTrigger) {
-                els.cmdInput.disabled = true;
-                els.cmdInput.value = '';
-                els.cmdInput.placeholder = "(Очікування дій на телефоні...)";
-                els.cmdHintBlock.classList.add('hidden');
-                els.cmdInput.parentElement.classList.add('opacity-50');
-            } else {
-                els.cmdInput.disabled = false;
-                els.cmdInput.value = '';
-                els.cmdInput.placeholder = "Введіть команду...";
-                els.cmdInput.focus();
-                els.cmdHint.innerText = step.cmd;
-                els.cmdHintBlock.classList.remove('hidden');
-                els.cmdInput.parentElement.classList.remove('opacity-50');
-            }
-        }
+                if (val === step.cmd || val.startsWith(step.cmd.split(' ')[0])) {
+                    this.executeStep(step);
+                    ui.els.cmdInput.value = '';
+                } else {
+                    ui.log(`bash: ${val}: command not found`, 'error');
+                }
+            },
 
-        function handleCommand(e) {
-            e.preventDefault();
-            const val = els.cmdInput.value.trim();
-            if (!val) return;
+            fillCommand() {
+                if (!ui.els.cmdInput.disabled) {
+                    ui.els.cmdInput.value = CONFIG.STEPS[state.stepIndex].cmd;
+                    ui.els.cmdInput.focus();
+                }
+            },
 
-            const step = STEPS[currentStepIndex];
-            log(`root@c2:~# ${val}`);
+            executeStep(step) {
+                if (step.termLog) {
+                    step.termLog.split('\n').forEach((l, i) => setTimeout(() => ui.log(l, l.includes('SUCCESS') || l.includes('OK') ? 'success' : 'neutral'), i * 300));
+                }
+                if (step.termExpl) setTimeout(() => ui.log(step.termExpl, 'expl'), 1500);
 
-            if (val === step.cmd || val === step.cmd.split(' ')[0]) {
-                executeStep(step);
-                els.cmdInput.value = '';
-            } else {
-                log(`bash: ${val}: command not found`, 'error');
-                log(`Hint: Try '${step.cmd}'`, 'warning');
-            }
-        }
-
-        function fillCommand() {
-            if (!els.cmdInput.disabled) {
-                els.cmdInput.value = STEPS[currentStepIndex].cmd;
-                els.cmdInput.focus();
-            }
-        }
-
-        function executeStep(step) {
-            if (step.termLog) {
-                step.termLog.split('\n').forEach((l, i) => {
-                    setTimeout(() => log(l, l.includes('[+]') ? 'success' : 'neutral'), i * 300);
-                });
-            }
-
-            if (step.termExpl) {
-                setTimeout(() => log(step.termExpl, 'expl'), 1000);
-            }
-
-            if (step.id === 'send_lure') {
-                setTimeout(() => {
-                    els.chatPreview.classList.remove('hidden');
-                    currentStepIndex++; 
-                    updateStepUI();
-                }, 1500);
-            } else if (step.id === 'hijack_attempt') {
-                handleHijackAttempt();
-            } else {
-                if (!step.manualTrigger) {
+                if (step.id === 'send_lure') {
                     setTimeout(() => {
-                        currentStepIndex++;
-                        updateStepUI();
-                    }, 1500);
+                        document.getElementById('phishChatPreview').classList.remove('hidden');
+                        this.advanceStep();
+                    }, 2000);
+                } else if (step.id === 'hijack_attempt') {
+                    this.handleHijack();
+                } else if (!step.manualTrigger) {
+                    setTimeout(() => this.advanceStep(), 1500);
                 }
-            }
-        }
+            },
 
-        // --- PHONE INTERACTION LOGIC ---
+            advanceStep() {
+                state.stepIndex++;
+                ui.updateStep();
+            },
 
-        window.openChat = function() {
-            if (STEPS[currentStepIndex].id !== 'wait_click') return;
-            els.viewChatList.classList.add('hidden');
-            els.viewChatDetail.classList.remove('hidden');
-        }
+            openBrowser() {
+                if (CONFIG.STEPS[state.stepIndex].id !== 'wait_click') return;
+                ui.log(`[ACCESS] GET /contest/art2025 IP: 192.168.1.55 UA: iPhone`, 'warning');
+                this.executeStep(CONFIG.STEPS[state.stepIndex]); // Log prev step
+                ui.showView('browser');
+                this.advanceStep();
+            },
 
-        window.openBrowser = function() {
-            if (STEPS[currentStepIndex].id !== 'wait_click') return;
-            
-            log("[!] TRAFFIC DETECTED: IP 192.168.1.55 connected to phishing site.", "warning");
-            executeStep(STEPS[currentStepIndex]); 
+            submitPhone() {
+                const phone = ui.els.phoneInputs.phone.value.replace(/[\s-]/g, '');
+                if (!/^\+380\d{9}$/.test(phone)) { alert("Введіть коректний номер: +380..."); return; }
+                
+                this.executeStep(CONFIG.STEPS[state.stepIndex]); // Log interception
+                
+                state.generatedOtp = Math.floor(10000 + Math.random() * 90000);
+                
+                ui.els.overlays.loader.classList.remove('hidden');
+                setTimeout(() => {
+                    ui.els.overlays.loader.classList.add('hidden');
+                    document.getElementById('siteStep1').classList.add('hidden');
+                    document.getElementById('siteStep2').classList.remove('hidden');
+                    
+                    setTimeout(() => ui.showNotif(state.generatedOtp), 1000);
+                    this.advanceStep();
+                }, 1500);
+            },
 
-            els.viewBrowser.classList.remove('hidden');
-            currentStepIndex++; 
-            updateStepUI();
-        }
-
-        window.submitPhone = function() {
-            const phone = els.victimPhone.value;
-            if (!/^\+380\d{9}$/.test(phone.replace(/\s/g, ''))) {
-                alert("Будь ласка, введіть коректний український номер (+380...)");
-                return;
-            }
-
-            log(`[*] Victim submitted phone number...`, 'neutral');
-            executeStep(STEPS[currentStepIndex]); 
-
-            // Simulating real OTP logic
-            generatedOtp = Math.floor(10000 + Math.random() * 90000);
-            els.realOtpDisplay.innerText = generatedOtp;
-
-            log(`[+] POST REQUEST: phone=${phone}`, "success");
-            log(`[*] Sending API Login Request...`);
-            updateStatus(els.stPhone, phone, "text-green-500");
-
-            els.siteLoader.classList.remove('hidden');
-            
-            setTimeout(() => {
-                els.siteLoader.classList.add('hidden');
-                els.siteSteps[0].classList.add('hidden');
-                els.siteSteps[1].classList.remove('hidden');
+            submitOTP() {
+                const code = ui.els.phoneInputs.otp.value;
+                if (Number(code) !== state.generatedOtp) { alert("Невірний код! (Див. сповіщення)"); return; }
+                
+                this.executeStep(CONFIG.STEPS[state.stepIndex]);
+                ui.els.overlays.loader.classList.remove('hidden');
 
                 setTimeout(() => {
-                    els.sysNotif.classList.remove('hidden');
-                    els.sysNotif.classList.remove('-translate-y-full');
-                    setTimeout(() => els.sysNotif.classList.add('-translate-y-full'), 6000);
+                    ui.els.overlays.loader.classList.add('hidden');
+                    this.advanceStep(); // to hijack
+                    document.getElementById('siteStep2').classList.add('hidden');
+                    
+                    if(state.isProtected) {
+                        document.getElementById('siteStep3').classList.remove('hidden');
+                        document.getElementById('2faNotice').classList.remove('hidden');
+                    } else {
+                        ui.els.overlays.loader.classList.remove('hidden');
+                        state.hackerSessionActive = true;
+                    }
                 }, 1000);
+            },
 
-                currentStepIndex++;
-                updateStepUI();
-            }, 1500);
-        }
+            handleHijack() {
+                const seq = state.isProtected ? 
+                    ["[API] AuthSignIn Success.", "[API] ERROR: SESSION_PASSWORD_NEEDED", "[FAIL] 2FA Enabled.", "[INFO] Session not captured."] : 
+                    ["[API] AuthSignIn Success.", "[SUCCESS] Session String Exported.", "[INFO] Access granted.", "[INFO] Downloading contacts..."];
 
-        window.submitOTP = function() {
-            const code = els.otpInput.value;
-            
-            // Check length
-            if (code.length < 5) return;
+                seq.forEach((l, i) => setTimeout(() => ui.log(l, l.includes('SUCCESS') ? 'success' : (l.includes('FAIL') || l.includes('ERROR') ? 'error' : 'neutral')), i * 500));
+                setTimeout(() => ui.finishPhase(state.isProtected), 2500);
+            },
 
-            // CHECK OTP MATCH (New Feature)
-            if (parseInt(code) !== generatedOtp) {
-                alert(`Невірний код! Подивіться на сповіщення зверху.\n(Для тесту введіть: ${generatedOtp})`);
-                log(`[!] Invalid code attempt: ${code}`, "warning");
-                return;
-            }
-
-            executeStep(STEPS[currentStepIndex]); 
-
-            log(`[+] POST REQUEST: code=${code}`, "success");
-            updateStatus(els.stCode, code, "text-green-500");
-
-            els.siteLoader.classList.remove('hidden');
-
-            setTimeout(() => {
-                els.siteLoader.classList.add('hidden');
-                
-                currentStepIndex++; // to hijack_attempt
-                updateStepUI();
-
-                els.siteSteps[1].classList.add('hidden');
-                
-                if(isProtected) {
-                    els.siteSteps[2].classList.remove('hidden');
-                    document.getElementById('2faNotice').classList.remove('hidden');
-                } else {
-                    els.siteLoader.classList.remove('hidden');
-                    document.querySelector('#siteLoader div').nextElementSibling.innerText = "Synchronizing data...";
+            killSession() {
+                state.hackerSessionActive = false;
+                ui.openSettings(); // Refresh
+                alert("Сесію хакера завершено!");
+                if (!state.isProtected && confirm("Увімкнути 2FA і перезапустити?")) {
+                    this.fullReset(true);
                 }
-            }, 1000);
-        }
+            },
 
-        function handleHijackAttempt() {
-            log("[*] Finalizing session hijacking...", "warning");
-            
-            setTimeout(() => {
-                if (isProtected) {
-                    // BLOCKED SCENARIO
-                    log("[!] ERROR: 2FA PASSWORD REQUIRED.", "error");
-                    log("[-] The account is protected by Cloud Password.", "error");
-                    log("[-] Attack FAILED. Password hash unknown.", "error");
-                    updateStatus(els.stSession, "ACCESS DENIED", "text-red-500");
-                    showPhaseResult(true);
-                } else {
-                    // SUCCESS SCENARIO
-                    log("[+] 2FA NOT DETECTED.", "success");
-                    log("[+] SESSION ESTABLISHED!", "success");
-                    log("[+] Dumping contacts... [Done]", "success");
-                    updateStatus(els.stSession, "HIJACKED", "text-green-500 animate-pulse");
-                    showPhaseResult(false);
-                }
-            }, 2000);
-        }
+            fullReset(protect = false) {
+                state.stepIndex = 0;
+                state.isProtected = protect;
+                state.hackerSessionActive = false;
+                state.generatedOtp = null;
+                
+                // DOM Reset
+                ui.els.term.innerHTML = `<div class="text-green-500 font-bold mb-2">--- NEW SCENARIO: ${protect ? 'SECURE' : 'VULNERABLE'} ---</div>`;
+                ui.showView('chatList');
+                ui.els.overlays.sideMenu.classList.add('-translate-x-full');
+                ui.els.phoneInputs.phone.value = "+380";
+                ui.els.phoneInputs.otp.value = "";
+                document.getElementById('siteStep1').classList.remove('hidden');
+                document.getElementById('siteStep2').classList.add('hidden');
+                document.getElementById('siteStep3').classList.add('hidden');
+                document.getElementById('2faNotice').classList.add('hidden');
+                
+                const oldBtn = ui.els.dynamic.missionBox.querySelector('button.w-full');
+                if(oldBtn) oldBtn.remove();
 
-        function showPhaseResult(wasBlocked) {
-            els.cmdInput.disabled = true;
-            els.cmdHintBlock.classList.add('hidden');
-            els.cmdInput.placeholder = "Етап завершено";
-
-            const btn = document.createElement('button');
-            btn.className = "w-full font-bold py-3 rounded mt-2 text-sm transition animate-bounce-in";
-            
-            if (wasBlocked) {
-                // Final Success
-                els.missionText.innerHTML = `<span class="text-green-400 font-bold">АТАКУ ЗУПИНЕНО!</span><br>Ввімкнення 2FA врятувало акаунт, навіть коли хакер мав SMS-код.`;
-                btn.classList.add('bg-green-600', 'hover:bg-green-500', 'text-white');
-                btn.innerText = "🎉 Завершити симуляцію";
-                btn.onclick = () => showFinalModal(true);
-            } else {
-                // First Phase Failure
-                els.missionText.innerHTML = `<span class="text-red-500 font-bold">АКАУНТ ВТРАЧЕНО!</span><br>Хакер увійшов, бо не було другого пароля. Виправте це негайно!`;
-                btn.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white');
-                btn.innerHTML = "<i class='fas fa-shield-alt mr-2'></i> Увімкнути 2FA та спробувати ще раз";
-                btn.onclick = () => enableProtectionAndReset();
+                this.updateEnvStatus();
+                ui.updateStep();
+                ui.switchTab(protect ? 'terminal' : 'phone');
             }
-            
-            els.missionBox.appendChild(btn);
-        }
+        };
 
-        function enableProtectionAndReset() {
-            // Soft Reset for Phase 2
-            isProtected = true;
-            currentStepIndex = 0;
-            
-            // Clean Terminal
-            els.term.innerHTML = '<div class="text-green-500 font-bold mb-2">--- SYSTEM SECURED: 2FA ENABLED ---</div><div class="text-slate-500">Restarting attack scenario...</div><div class="text-slate-500">root@c2-server:~# </div>';
-            
-            // Clean Status
-            updateStatus(els.stPhone, "WAITING", "text-slate-600");
-            updateStatus(els.stCode, "WAITING", "text-slate-600");
-            updateStatus(els.stSession, "OFFLINE", "text-slate-600");
-            
-            // Reset Phone UI
-            els.viewBrowser.classList.add('hidden');
-            els.viewChatDetail.classList.add('hidden');
-            els.viewChatList.classList.remove('hidden');
-            
-            // Reset Inputs
-            els.victimPhone.value = "+380";
-            els.otpInput.value = "";
-            els.siteSteps[0].classList.remove('hidden');
-            els.siteSteps[1].classList.add('hidden');
-            els.siteSteps[2].classList.add('hidden');
-            els.siteLoader.classList.add('hidden');
-            document.getElementById('2faNotice').classList.add('hidden');
-
-            // Remove old button
-            const oldBtn = els.missionBox.querySelector('button.w-full');
-            if(oldBtn) oldBtn.remove();
-
-            updateProtectionUI();
-            updateStepUI();
-        }
-
-        function fullReset() {
-            location.reload();
-        }
-
-        function showFinalModal(success) {
-            document.getElementById('modalTitle').innerText = "Ви захищені!";
-            document.getElementById('modalTitle').className = "text-xl font-bold text-green-400";
-            document.getElementById('modalText').innerHTML = `
-                <ul class="list-disc list-inside space-y-2 text-slate-300">
-                    <li><strong class="text-white">2FA працює.</strong> Ви бачили на власні очі: в першому випадку акаунт вкрали, в другому - ні.</li>
-                    <li><strong class="text-white">Хмарний пароль</strong> - це єдиний надійний захист від перехоплення SMS.</li>
-                </ul>
-            `;
-            document.getElementById('modalTip').innerText = "Налаштування -> Приватність і безпека -> Двоетапна перевірка";
-            els.modal.classList.remove('hidden');
-            setTimeout(() => { els.modal.classList.remove('opacity-0'); document.getElementById('modalContent').classList.remove('scale-95'); }, 10);
-        }
-
-        // --- NAVIGATION & MODALS ---
-        window.goBack = function(viewId) {
-            if (viewId === 'viewChatList') {
-                els.viewChatDetail.classList.add('hidden');
-                els.viewChatList.classList.remove('hidden');
-            }
-        }
-        window.showExplanation = function() {
-            const step = STEPS[currentStepIndex];
-            if(step && step.expl) {
-                document.getElementById('modalTitle').innerText = step.expl.title;
-                document.getElementById('modalTitle').className = "text-xl font-bold text-blue-400";
-                document.getElementById('modalText').innerText = step.expl.text;
-                document.getElementById('modalTip').innerText = step.expl.tip;
-                els.modal.classList.remove('hidden');
-                setTimeout(() => { els.modal.classList.remove('opacity-0'); document.getElementById('modalContent').classList.remove('scale-95'); }, 10);
-            }
-        }
-        window.closeModal = function() {
-            els.modal.classList.add('opacity-0');
-            document.getElementById('modalContent').classList.add('scale-95');
-            setTimeout(() => els.modal.classList.add('hidden'), 300);
-        }
-        window.fillCommand = function() {
-            if (!els.cmdInput.disabled) {
-                els.cmdInput.value = STEPS[currentStepIndex].cmd;
-                els.cmdInput.focus();
-            }
-        }
-        window.switchTab = switchTab; // Expose globally for HTML onclick
-
-        // Start
-        init();
-
+        // Init
+        core.init();
     </script>
 </body>
 </html>
