@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Освітні сервіси Ed-Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --accent: #0ea5e9;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --radius: 16px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header Styles */
+        .hero {
+            background: radial-gradient(circle at top left, #4f46e5, #0ea5e9);
+            color: white;
+            padding: 5rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--bg-color);
+            clip-path: ellipse(60% 100% at 50% 100%);
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: -0.025em;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .category-section {
+            margin-top: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-header i {
+            width: 40px;
+            height: 40px;
+            background: white;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            font-size: 1.2rem;
+        }
+
+        .category-header h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+
+        /* Grid & Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary);
+        }
+
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-desc {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            flex-grow: 1;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn i {
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover i {
+            transform: translateX(3px);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 6rem;
+            padding: 4rem 1.5rem;
+            background: white;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .gratitude {
+            color: var(--text-main);
+            font-weight: 600;
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .hero {
+                padding: 4rem 1.5rem;
+            }
+            .category-header h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="container">
+        <h1>Освітні сервіси Ed-Info</h1>
+        <p>Неофіційна добірка інструментів для навчання з сайту ed-info.github.io</p>
+    </div>
+</header>
+
+<main class="container">
+    <!-- Секція: Тренажери -->
+    <section class="category-section">
+        <div class="category-header">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <h2>Тренажери та базові навички</h2>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Тиканка</h3>
+                <p class="card-desc">Сучасний клавіатурний тренажер для опанування сліпого друку українською мовою.</p>
+                <a href="https://ed-info.github.io/tykanka/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">PrimoAlgo</h3>
+                <p class="card-desc">Візуальні алгоритмічні вправи, адаптовані для наймолодших користувачів.</p>
+                <a href="https://ed-info.github.io/primoalgo/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секція: Веб-розробка -->
+    <section class="category-section">
+        <div class="category-header">
+            <i class="fa-solid fa-globe"></i>
+            <h2>Веб-розробка</h2>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">HTML-редактор</h3>
+                <p class="card-desc">Потужне середовище для вивчення HTML та CSS з миттєвим відображенням результатів.</p>
+                <a href="https://ed-info.github.io/editor/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">BlocklyHTML</h3>
+                <p class="card-desc">Візуальне проектування веб-сторінок через логічні блоки Blockly.</p>
+                <a href="https://ed-info.github.io/blocklyhtml/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">JavaScript</h3>
+                <p class="card-desc">Інтерактивна консоль та редактор для вивчення логіки сценаріїв JavaScript.</p>
+                <a href="https://ed-info.github.io/js/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секція: Програмування та алгоритми -->
+    <section class="category-section">
+        <div class="category-header">
+            <i class="fa-solid fa-code"></i>
+            <h2>Програмування та алгоритми</h2>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Веб Черепашка</h3>
+                <p class="card-desc">Навчання алгоритмам через творче малювання геометричних фігур кодом.</p>
+                <a href="https://ed-info.github.io/webturtle/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">CodeCommander</h3>
+                <p class="card-desc">Блокове програмування для вирішення ігрових завдань та командної роботи.</p>
+                <a href="https://ed-info.github.io/codecmd/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Єpython</h3>
+                <p class="card-desc">Повноцінне онлайн середовище для навчання та програмування мовою Python. Не потребує встановлення ПЗ, працює в браузері.</p>
+                <a href="https://yepython.pp.ua/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">AlgoPython</h3>
+                <p class="card-desc">Спеціалізований курс Python, що перетворює навчання на захопливу пригоду.</p>
+                <a href="https://ed-info.github.io/algopython/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Python Quiz</h3>
+                <p class="card-desc">Перевірка знань Python за допомогою інтерактивних тестів та квізів.</p>
+                <a href="https://ed-info.github.io/python-quiz/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">p5Blockly</h3>
+                <p class="card-desc">Створення візуального мистецтва за допомогою блоків та бібліотеки p5.js.</p>
+                <a href="https://ed-info.github.io/p5blockly/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">BlockPy</h3>
+                <p class="card-desc">Гібридне середовище для плавного переходу від блоків до реального Python-коду.</p>
+                <a href="https://ed-info.github.io/blockpy/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Basthon</h3>
+                <p class="card-desc">Професійне онлайн-середовище для розробки складних Python-проєктів.</p>
+                <a href="https://ed-info.github.io/basthon/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секція: Графіка -->
+    <section class="category-section">
+        <div class="category-header">
+            <i class="fa-solid fa-palette"></i>
+            <h2>Цифрова графіка</h2>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Ти - маляр!</h3>
+                <p class="card-desc">Растровий редактор для втілення будь-яких художніх задумів онлайн.</p>
+                <a href="https://ed-info.github.io/paintz/app/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Shapes</h3>
+                <p class="card-desc">Інструмент для вивчення векторної графіки через математичні координати.</p>
+                <a href="https://ed-info.github.io/shapes/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">InkDraw</h3>
+                <p class="card-desc">Просунуте векторне середовище для створення ілюстрацій та дизайну.</p>
+                <a href="https://ed-info.github.io/inkdraw/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секція: Додатково -->
+    <section class="category-section">
+        <div class="category-header">
+            <i class="fa-solid fa-toolbox"></i>
+            <h2>Додаткові інструменти</h2>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Dat.A</h3>
+                <p class="card-desc">Онлайн середовище для вивчення баз даних SQL. Не потребує встановлення сервера.</p>
+                <a href="https://dat-a-dbms.github.io/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">IronCalc</h3>
+                <p class="card-desc">Основи роботи з даними, таблицями та складними обчисленнями.</p>
+                <a href="https://ed-info.github.io/ic/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Шифр Цезаря</h3>
+                <p class="card-desc">Перший крок у світ кібербезпеки через вивчення класичної криптографії.</p>
+                <a href="https://ed-info.github.io/cccode/" class="btn" target="_blank">Відкрити сервіс <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container footer-content">
+        <p>&copy; 2025 Ed-Info &bull; Неофіційна добірка</p>
+        <span class="gratitude">Створено з величезною вдячністю Григорію Громко</span>
+    </div>
+</footer>
+
+</body>
+</html>
