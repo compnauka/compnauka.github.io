@@ -506,6 +506,13 @@ const CATEGORIES = [
         link: "apps/", 
         image: "images/43.jpg", 
         tags: [] 
+      },
+      { 
+        name: "Освітні сервіси Ed-Info (Григорій Громко)", 
+        description: "Неофіційна добірка інструментів для навчання з сайту ed-info.github.io.", 
+        link: "edinfo/", 
+        image: "images/69.jpg", 
+        tags: [] 
       }
     ]
   },
