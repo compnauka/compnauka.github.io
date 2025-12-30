@@ -64,6 +64,10 @@
         
         .thumb-active { border-color: #6E00FF; opacity: 1; }
         .thumb-inactive { border-color: transparent; opacity: 0.6; }
+        .thumb-inactive:hover { opacity: 0.9; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
@@ -148,18 +152,21 @@
             <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center">
                 <i class="fa-solid fa-times"></i>
             </button>
-            <div class="w-full md:w-3/5 bg-slate-100 flex flex-col h-[40vh] md:h-auto">
-                <div class="flex-grow bg-slate-900">
-                    <img id="modalMainImage" src="" alt="" class="w-full h-full object-contain">
+            <div class="w-full md:w-3/5 bg-slate-100 flex flex-col h-[40vh] md:h-auto relative">
+                <div class="flex-grow bg-slate-900 relative overflow-hidden">
+                    <img id="modalMainImage" src="" alt="" class="w-full h-full object-contain transition-opacity duration-300">
+                    <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
+                        <div id="modalBadges" class="flex gap-2"></div>
+                    </div>
                 </div>
-                <div id="modalThumbsContainer" class="bg-slate-900 p-3 flex gap-2 overflow-x-auto h-24 flex-shrink-0"></div>
+                <div id="modalThumbsContainer" class="bg-slate-900 p-3 flex gap-2 overflow-x-auto scrollbar-hide h-24 flex-shrink-0 border-t border-slate-800"></div>
             </div>
-            <div class="w-full md:w-2/5 p-8 flex flex-col overflow-y-auto custom-scroll">
+            <div class="w-full md:w-2/5 p-8 flex flex-col overflow-y-auto custom-scroll bg-white">
                 <div class="flex items-start gap-4 mb-6">
                     <div id="modalIcon" class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-slate-100"></div>
                     <div>
-                        <h3 id="modalTitle" class="text-2xl font-extrabold text-slate-900"></h3>
-                        <p id="modalAuthor" class="text-sm font-medium text-slate-500"></p>
+                        <h3 id="modalTitle" class="text-2xl font-extrabold text-slate-900 leading-tight"></h3>
+                        <p id="modalAuthor" class="text-sm font-medium text-slate-500 mt-1"></p>
                     </div>
                 </div>
                 <div class="prose prose-sm text-slate-600 mb-8 flex-grow">
@@ -168,7 +175,9 @@
                     <h4 class="font-bold text-slate-800 uppercase text-xs mb-3">Функціонал</h4>
                     <ul id="modalFeatures" class="space-y-2 list-none p-0"></ul>
                 </div>
-                <a id="modalLink" href="#" target="_blank" class="block w-full text-center bett-gradient text-white font-bold py-4 rounded-xl">Відкрити ресурс</a>
+                <div class="mt-auto pt-6 border-t border-slate-100">
+                    <a id="modalLink" href="#" target="_blank" class="block w-full text-center bett-gradient text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">Відкрити ресурс</a>
+                </div>
             </div>
         </div>
     </div>
@@ -183,7 +192,7 @@
                 features: ["Підсвітка синтаксису", "Миттєвий запуск коду", "Український інтерфейс"],
                 author: "Григорій Громко",
                 category: "programming",
-                images: ["https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800&q=80"],
+                images: ["00001.jpg", "00002.jpg", "00003.jpg],
                 icon: "fa-brands fa-python",
                 color: "text-blue-500",
                 audience: "Вчителі, Учні"
@@ -196,7 +205,7 @@
                 features: ["Підтримка SQL", "Візуалізація таблиць"],
                 author: "Григорій Громко",
                 category: "databases",
-                images: ["https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&q=80"],
+                images: ["00005.jpg", "00004.jpg"],
                 icon: "fa-solid fa-database",
                 color: "text-slate-600",
                 audience: "Вчителі, Учні, Студенти"
@@ -209,10 +218,10 @@
                 features: ["Український синтаксис", "Для новачків"],
                 author: "Артем Кисляков",
                 category: "programming",
-                images: ["https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800&q=80"],
+                images: ["00006.jpg", "00007.jpg", "00008.jpg],
                 icon: "fa-solid fa-scroll",
                 color: "text-orange-600",
-                audience: "Початківці"
+                audience: "Початківці, Вчителі, Учні"
             },
             {
                 id: 3,
@@ -222,7 +231,7 @@
                 features: ["Drag & Drop", "Генерація коду"],
                 author: "Віталій Кушнір",
                 category: "programming",
-                images: ["https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800&q=80"],
+                images: ["00015.jpg", "00016.jpg"],
                 icon: "fa-solid fa-window-maximize",
                 color: "text-indigo-500",
                 audience: "Вчителі, Учні"
@@ -235,24 +244,20 @@
                 features: ["Тренажери", "Банк завдань"],
                 author: "Григорій Громко",
                 category: "services",
-                images: [
-                    "00009.jpg",
-                    "00010.jpg",
-                    "00011.jpg"
-                ],
+                images: ["00009.jpg", "00010.jpg", "00011.jpg],
                 icon: "fa-solid fa-laptop-code",
                 color: "text-indigo-600",
                 audience: "Вчителі, Учні"
             },
             {
-                id: 15, // Fixed ID collision
+                id: 15,
                 title: "Комп'ютерна наука",
                 url: "https://itnauka.org/",
                 desc: "Хаб авторських сервісів та інтерактивних завдань для вчителя інформатики.",
                 features: ["Методичні матеріали", "Безкоштовний доступ"],
                 author: "Артем Кисляков",
                 category: "services",
-                images: ["00009.jpg", "00010.jpg"],
+                images: ["00012.jpg", "00013.jpg", "00014.jpg],
                 icon: "fa-solid fa-laptop-code",
                 color: "text-indigo-600",
                 audience: "Вчителі, Учні"
@@ -263,9 +268,7 @@
             const grid = document.getElementById('projectsGrid');
             const noResults = document.getElementById('noResults');
             grid.innerHTML = '';
-            
             const filtered = filterCategory === 'all' ? projects : projects.filter(p => p.category === filterCategory);
-            
             if (filtered.length === 0) noResults.classList.remove('hidden');
             else noResults.classList.add('hidden');
 
@@ -310,26 +313,79 @@
         function openModal(id) {
             const project = projects.find(p => p.id === id);
             if (!project) return;
+
+            // Basic Info
             document.getElementById('modalTitle').innerText = project.title;
             document.getElementById('modalDesc').innerText = project.desc;
             document.getElementById('modalAuthor').innerHTML = `<i class="fa-solid fa-code-branch mr-1 text-bett-purple"></i> ${project.author}`;
             document.getElementById('modalLink').href = project.url;
-            document.getElementById('modalIcon').className = `w-14 h-14 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center text-3xl shadow-sm border border-slate-100 ${project.color}`;
-            document.getElementById('modalIcon').innerHTML = `<i class="${project.icon}"></i>`;
-            document.getElementById('modalFeatures').innerHTML = project.features.map(f => `<li class="flex items-start gap-2 text-sm"><i class="fa-solid fa-check text-green-500 mt-1"></i><span>${f}</span></li>`).join('');
-            document.getElementById('modalMainImage').src = project.images[0];
-            document.getElementById('projectModal').classList.remove('hidden-modal');
-            document.getElementById('projectModal').classList.add('visible-modal');
+            
+            const iconEl = document.getElementById('modalIcon');
+            iconEl.className = `w-14 h-14 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center text-3xl shadow-sm border border-slate-100 ${project.color}`;
+            iconEl.innerHTML = `<i class="${project.icon}"></i>`;
+            
+            document.getElementById('modalFeatures').innerHTML = project.features.map(f => `
+                <li class="flex items-start gap-2 text-sm text-slate-600">
+                    <i class="fa-solid fa-check text-green-500 mt-1 flex-shrink-0"></i>
+                    <span>${f}</span>
+                </li>`).join('');
+
+            // Image Gallery Logic
+            const mainImg = document.getElementById('modalMainImage');
+            const thumbsContainer = document.getElementById('modalThumbsContainer');
+            mainImg.src = project.images[0];
+            thumbsContainer.innerHTML = '';
+            
+            if (project.images.length > 1) {
+                thumbsContainer.style.display = 'flex';
+                project.images.forEach((imgSrc, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgSrc;
+                    thumb.className = `w-20 h-16 object-cover rounded cursor-pointer border-2 transition ${index === 0 ? 'thumb-active' : 'thumb-inactive'}`;
+                    thumb.onclick = function() {
+                        mainImg.style.opacity = '0.5';
+                        setTimeout(() => {
+                            mainImg.src = imgSrc;
+                            mainImg.style.opacity = '1';
+                        }, 100);
+                        Array.from(thumbsContainer.children).forEach(c => {
+                            c.classList.replace('thumb-active', 'thumb-inactive');
+                        });
+                        this.classList.replace('thumb-inactive', 'thumb-active');
+                    };
+                    thumbsContainer.appendChild(thumb);
+                });
+            } else {
+                thumbsContainer.style.display = 'none';
+            }
+
+            // Badges in Modal
+            document.getElementById('modalBadges').innerHTML = `
+                <span class="bg-black/50 backdrop-blur text-white px-3 py-1 rounded text-xs border border-white/20 select-none">
+                    UA Non-Profit
+                </span>
+            `;
+
+            // Display Modal
+            const modal = document.getElementById('projectModal');
+            modal.classList.remove('hidden-modal');
+            modal.classList.add('visible-modal');
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
-            document.getElementById('projectModal').classList.remove('visible-modal');
-            document.getElementById('projectModal').classList.add('hidden-modal');
+            const modal = document.getElementById('projectModal');
+            modal.classList.remove('visible-modal');
+            modal.classList.add('hidden-modal');
             document.body.style.overflow = '';
         }
 
         function scrollToGrid() { document.getElementById('catalogue').scrollIntoView({behavior: 'smooth'}); }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") closeModal();
+        });
+
         window.onload = () => renderProjects('all');
     </script>
 </body>
