@@ -487,6 +487,13 @@ const CATEGORIES = [
     color: "#64748b",
     services: [
       { 
+        name: "Авторські інновації від вчителів", 
+        description: "Освітні інструменти, створені українськими ентузіастами та перевірені реальною практикою.", 
+        link: "edexpo/", 
+        image: "images/101.jpg", 
+        tags: [] 
+      },
+      { 
         name: "micro:bit для вчителів та учнів", 
         description: "Знайомство з micro:bit та його основними компонентами та можливостями.", 
         link: "microbit/", 
