@@ -94,6 +94,15 @@
             color: #fff !important;
         }
 
+        /* Анімація для таймера (коли мало часу) */
+        @keyframes pulse-red {
+            0%, 100% { color: var(--text-ui); transform: scale(1); }
+            50% { color: var(--danger-red); transform: scale(1.1); }
+        }
+        .timer-warning {
+            animation: pulse-red 1s infinite;
+        }
+
         .control-btn {
             background: rgba(30, 41, 59, 0.9);
             border: 1px solid #94a3b8;
@@ -407,6 +416,13 @@
     <div id="ui-layer">
         <div class="ui-left">
             <div class="stat-box">
+                <i class="fa-solid fa-clock"></i>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span style="font-size: 0.8em; color: #94a3b8;">ЧАС</span>
+                    <span id="timer-val" style="color: var(--text-ui); font-size: 1.2em;">60</span>
+                </div>
+            </div>
+            <div class="stat-box">
                 <i class="fa-solid fa-shield-halved"></i>
                 <div style="display: flex; flex-direction: column; line-height: 1.2;">
                     <span style="font-size: 0.8em; color: #94a3b8;">ЗАХИСТ</span>
@@ -416,7 +432,7 @@
             <div class="stat-box">
                 <i class="fa-solid fa-crosshairs"></i>
                 <div style="display: flex; flex-direction: column; line-height: 1.2;">
-                    <span style="font-size: 0.8em; color: #94a3b8;">ЗБИТО</span>
+                    <span style="font-size: 0.8em; color: #94a3b8;">ВЛУЧАНЬ</span>
                     <span id="score-val" style="color: var(--accent-yellow); font-size: 1.2em;">0</span>
                 </div>
             </div>
@@ -484,10 +500,10 @@
 
     <!-- GAME OVER MENU -->
     <div id="game-over-screen" class="menu-overlay hidden">
-        <h1 style="color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);">
+        <h1 id="game-over-title" style="color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);">
             <i class="fa-solid fa-triangle-exclamation"></i> ПРОРИВ
         </h1>
-        <p style="font-size: 1.5rem; margin: 10px 0;">РЕЗУЛЬТАТ: <strong id="final-score" style="color: var(--accent-yellow)">0</strong></p>
+        <p style="font-size: 1.5rem; margin: 10px 0;">ВЛУЧАНЬ: <strong id="final-score" style="color: var(--accent-yellow)">0</strong></p>
         <p style="font-size: 1.2rem; margin: 10px 0;">ТОЧНІСТЬ: <strong id="final-accuracy" style="color: var(--accent-green)">0%</strong></p>
         <p style="font-size: 1.2rem; margin: 10px 0;">МАКС. КОМБО: <strong id="final-combo" style="color: #facc15">0</strong></p>
         <p id="high-score-display" style="color: #94a3b8; font-size: 1rem; margin-bottom: 20px;">РЕКОРД: 0</p>
@@ -573,7 +589,7 @@
             active: false,
             paused: false,
             enemies: [],
-            score: 0,
+            score: 0, // Now represents correct hits (keystrokes)
             health: 10,
             maxHealth: 10,
             level: 'easy',
@@ -585,6 +601,10 @@
             shotsHit: 0,
             combo: 0,
             maxCombo: 0,
+            
+            // Timer logic
+            timeLimit: 60,
+            timeLeft: 60,
 
             lastTime: 0,
             nextSpawnTime: 0,
@@ -598,6 +618,7 @@
                 wall: document.getElementById('the-wall'),
                 comboDisplay: document.getElementById('combo-display'),
                 comboVal: document.getElementById('combo-val'),
+                timerVal: document.getElementById('timer-val'),
                 menus: {
                     start: document.getElementById('start-menu'),
                     over: document.getElementById('game-over-screen'),
@@ -631,11 +652,15 @@
                 this.shotsHit = 0;
                 this.combo = 0;
                 this.maxCombo = 0;
+                this.timeLeft = this.timeLimit;
+                
                 this.enemies.forEach(e => e.el.remove());
                 this.enemies = [];
                 this.wordTarget = null;
                 this.elements.wall.innerHTML = ''; 
                 this.elements.comboDisplay.classList.add('hidden');
+                this.elements.timerVal.classList.remove('timer-warning');
+                
                 this.updateUI();
                 if (this.rafId) cancelAnimationFrame(this.rafId);
             },
@@ -726,8 +751,15 @@
             },
 
             updateUI() {
-                this.elements.score.textContent = this.score;
+                this.elements.score.textContent = this.shotsHit; // Show Hits count
                 this.elements.healthText.textContent = `${this.health}/${this.maxHealth}`;
+                this.elements.timerVal.textContent = Math.ceil(this.timeLeft);
+                
+                if (this.timeLeft <= 10) {
+                    this.elements.timerVal.classList.add('timer-warning');
+                } else {
+                    this.elements.timerVal.classList.remove('timer-warning');
+                }
                 
                 const ratio = this.health / this.maxHealth;
                 if (ratio > 0.5) this.elements.healthText.style.color = 'var(--accent-green)';
@@ -740,7 +772,6 @@
                     this.elements.comboDisplay.classList.remove('hidden');
                     this.elements.comboVal.textContent = "x" + this.combo;
                     
-                    // Анімація для високого комбо
                     if (this.combo >= 10) {
                         this.elements.comboVal.classList.add('combo-glow');
                         setTimeout(() => this.elements.comboVal.classList.remove('combo-glow'), 300);
@@ -793,7 +824,7 @@
                 setTimeout(() => document.body.style.transform = 'none', 80);
 
                 if (this.health <= 0) {
-                    this.gameOver();
+                    this.gameOver(false); // false means game over by damage
                 }
             },
 
@@ -930,6 +961,7 @@
                     this.combo++;
                     if (this.combo > this.maxCombo) this.maxCombo = this.combo;
                     this.updateComboUI();
+                    this.updateUI(); // Update score immediately on hit
                 } else {
                     this.combo = 0;
                     this.updateComboUI();
@@ -941,20 +973,13 @@
                 AudioSys.play('hit');
                 this.createExplosion(enemy.x + 20, enemy.y);
                 
-                // Рахуємо очки: база + бонус за комбо
-                let points = (this.level === 'hard' ? 5 : 1);
-                if (this.combo >= 5) {
-                    points += Math.floor(this.combo / 5);
-                }
-                this.score += points;
-
                 this.adjustDifficulty(0.01); 
                 
                 enemy.el.remove();
                 this.enemies = this.enemies.filter(e => e.id !== enemy.id);
                 if (this.wordTarget === enemy.id) this.wordTarget = null;
-
-                document.getElementById('score-val').textContent = this.score;
+                
+                // Score is updated in handleInput now (per hit)
             },
 
             loop(timestamp) {
@@ -962,6 +987,18 @@
 
                 const dt = timestamp - this.lastTime;
                 this.lastTime = timestamp;
+
+                // Timer Logic
+                this.timeLeft -= dt / 1000;
+                if (this.timeLeft <= 0) {
+                    this.timeLeft = 0;
+                    this.updateUI();
+                    this.gameOver(true); // true means time's up
+                    return;
+                }
+                
+                // Update UI every frame for smooth timer
+                this.updateUI();
 
                 if (timestamp >= this.nextSpawnTime) {
                     this.spawnEnemy();
@@ -989,10 +1026,22 @@
                 this.rafId = requestAnimationFrame(this.loop.bind(this));
             },
 
-            gameOver() {
+            gameOver(timeUp) {
                 this.active = false;
                 cancelAnimationFrame(this.rafId);
-                document.getElementById('final-score').textContent = this.score;
+                
+                const title = document.getElementById('game-over-title');
+                if (timeUp) {
+                    title.innerHTML = '<i class="fa-solid fa-flag-checkered"></i> ЧАС ВИЙШОВ';
+                    title.style.color = 'var(--accent-yellow)';
+                    title.style.textShadow = '0 0 20px rgba(251, 191, 36, 0.6)';
+                } else {
+                    title.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ПРОРИВ';
+                    title.style.color = 'var(--danger-red)';
+                    title.style.textShadow = '0 0 20px rgba(239, 68, 68, 0.6)';
+                }
+
+                document.getElementById('final-score').textContent = this.shotsHit;
                 document.getElementById('final-combo').textContent = this.maxCombo;
                 
                 const accuracy = this.shotsFired > 0 
@@ -1009,8 +1058,9 @@
                 const storageKey = `cityDefenderHighscore_${this.level}`;
                 const saved = localStorage.getItem(storageKey) || 0;
                 
-                if (this.score > saved) {
-                    localStorage.setItem(storageKey, this.score);
+                // Using hits as score now
+                if (this.shotsHit > saved) {
+                    localStorage.setItem(storageKey, this.shotsHit);
                     document.getElementById('high-score-display').textContent = `НОВИЙ РЕКОРД! (ПОПЕРЕДНІЙ: ${saved})`;
                 } else {
                     document.getElementById('high-score-display').textContent = `РЕКОРД: ${saved}`;
