@@ -92,6 +92,13 @@ const CATEGORIES = [
         tags: ["1-2 класи"] 
       },
       { 
+        name: "Захисники Неба", 
+        description: "Інтерактивна гра-тренажер для вивчення клавіатури та сліпого друку.", 
+        link: "services/keyppo.html", 
+        image: "images/70.jpg", 
+        tags: ["1-2 класи", "3-4 класи"] 
+      },
+      { 
         name: "Швидкісні вікна", 
         description: "Тренажер для роботи з вікнами програм.", 
         link: "services/windows/index.html", 
