@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рятівники Світла | Тренажер миші для дітей</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8T05K3NGT');
+    </script>
+  
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #020617;
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .city-background {
+            background: linear-gradient(to bottom, #020617 0%, #0f172a 100%);
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        .house {
+            position: relative;
+            background: #1e293b;
+            border-top: 4px solid #475569;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 15px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: inset -5px 0 20px rgba(0,0,0,0.6);
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            scrollbar-width: none;
+            animation: house-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        }
+
+        @keyframes house-appear {
+            from { transform: translateY(100%) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .house::-webkit-scrollbar { display: none; }
+
+        .window {
+            width: 50px;
+            height: 65px;
+            border: 4px solid #0f172a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s, background-color 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .window::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+            width: 0%;
+            transition: width linear;
+            z-index: 20;
+        }
+
+        .window.dark::before {
+            animation: timer-drain var(--fix-time) linear forwards;
+        }
+
+        @keyframes timer-drain {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        @media (max-width: 640px) {
+            .window { width: 55px; height: 70px; }
+            .house { gap: 8px; padding: 10px; }
+        }
+
+        .window.dark { background: #0f172a !important; }
+
+        .window.warning {
+            animation: alert-blink 0.3s infinite alternate;
+            border-color: #ef4444;
+            z-index: 10;
+        }
+
+        .window.broken {
+            background: #020617 !important;
+            border-color: #1e293b;
+            cursor: default;
+            opacity: 0.8;
+        }
+
+        @keyframes alert-blink {
+            from { background: #0f172a; transform: scale(1); }
+            to { background: #b91c1c; transform: scale(1.05); }
+        }
+
+        .ui-panel {
+            background: rgba(30, 41, 59, 0.98);
+            backdrop-filter: blur(12px);
+            border: 3px solid #475569;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .encouragement-popup {
+            animation: popup-anim 1s ease-out forwards;
+        }
+
+        @keyframes popup-anim {
+            0% { transform: translate(-50%, -40%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -55%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -70%) scale(0.8); opacity: 0; }
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="city-background flex flex-col items-center justify-end overflow-hidden">
+        <div id="starsContainer" class="absolute inset-0 pointer-events-none"></div>
+
+        <!-- HUD (Верхня панель) -->
+        <div class="fixed top-4 left-0 right-0 flex justify-center px-4 z-50">
+            <div id="hud" class="ui-panel px-6 py-3 rounded-[32px] text-white flex items-center gap-4 sm:gap-8 hidden w-full max-w-2xl">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] opacity-70 uppercase font-black tracking-widest">Рівень</span>
+                    <span id="levelDisplay" class="text-yellow-400 font-black text-2xl leading-none">1</span>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] opacity-70 uppercase font-black tracking-widest">Бали</span>
+                    <span id="scoreDisplay" class="text-green-400 font-black text-2xl leading-none">0</span>
+                </div>
+
+                <!-- Прогрес-бар -->
+                <div class="flex-1 flex flex-col items-center">
+                    <span class="text-[10px] opacity-70 uppercase font-black tracking-widest">Прогрес</span>
+                    <div class="w-full bg-slate-800 h-4 rounded-full mt-1 border border-slate-600 overflow-hidden">
+                        <div id="progressBar" class="bg-green-400 h-full transition-all duration-300 shadow-[0_0_10px_#4ade80]" style="width: 0%"></div>
+                    </div>
+                    <span id="progressText" class="text-[10px] mt-1 font-bold">0 / 0</span>
+                </div>
+
+                <div class="flex gap-1 text-red-500 text-xl" id="livesContainer"></div>
+                
+                <button id="pauseBtn" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-5 py-2.5 rounded-2xl transition-all active:scale-95">
+                    <i id="pauseIcon" class="fas fa-pause text-xs"></i>
+                    <span class="font-black text-xs uppercase tracking-tighter">Пауза</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Контейнер будинків -->
+        <div id="housesContainer" class="flex items-end justify-center gap-4 sm:gap-12 w-full px-6 pb-0 z-10"></div>
+
+        <div class="w-full h-12 bg-slate-950 border-t-4 border-slate-800 z-20"></div>
+    </div>
+
+    <!-- Модальні вікна -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center z-[100] p-4">
+        <div class="ui-panel p-10 rounded-[48px] text-center max-w-md w-full border-b-[12px] border-yellow-500">
+            <h1 id="modalTitle" class="text-4xl font-black text-yellow-400 mb-6 uppercase">Рятівники Світла</h1>
+            
+            <div id="modalContent" class="text-white text-xl mb-10"></div>
+
+            <div class="flex flex-col gap-4">
+                <button id="modalBtn" class="w-full py-6 bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-2xl font-black rounded-3xl shadow-[0_8px_0_#ca8a04] active:translate-y-2 active:shadow-none transition-all">
+                    ПОЧАТИ
+                </button>
+                <button id="exitBtn" class="w-full py-4 text-slate-400 hover:text-red-400 font-black text-sm uppercase tracking-widest transition-colors hidden">
+                    <i class="fas fa-sign-out-alt mr-2"></i>До меню
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audio = {
+            ctx: null,
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            play(freq, type, dur, vol) {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + dur);
+            },
+            success() { this.play(800, 'sine', 0.1, 0.2); },
+            fail() { this.play(150, 'sawtooth', 0.4, 0.15); },
+            levelUp() { this.play(600, 'sine', 0.3, 0.2); setTimeout(() => this.play(900, 'sine', 0.4, 0.2), 100); }
+        };
+
+        const config = {
+            levels: [
+                { houses: 1, minFloors: 2, maxFloors: 2, interval: 3500, fixTime: 4000, target: 5 },
+                { houses: 2, minFloors: 2, maxFloors: 3, interval: 3000, fixTime: 3500, target: 8 },
+                { houses: 2, minFloors: 2, maxFloors: 3, interval: 2500, fixTime: 3000, target: 10 },
+                { houses: 3, minFloors: 2, maxFloors: 3, interval: 2000, fixTime: 2500, target: 12 },
+                { houses: 3, minFloors: 3, maxFloors: 4, interval: 1800, fixTime: 2000, target: 15 }
+            ],
+            shades: ['#fde047', '#facc15', '#eab308', '#fef08a', '#fbbf24'],
+            encouragements: ["Чудово! 🌟", "Супер! ⚡", "Класно! 💡", "Продовжуй! 🔥", "Ти молодець! ✨"]
+        };
+
+        let state = {
+            currentLevel: 0,
+            totalScore: 0,
+            levelScore: 0,
+            lives: 3,
+            isPaused: true,
+            cycleTimeout: null,
+            activeFailTimers: new Map(),
+            hintsShown: 0
+        };
+
+        const dom = {
+            houses: document.getElementById('housesContainer'),
+            level: document.getElementById('levelDisplay'),
+            score: document.getElementById('scoreDisplay'),
+            lives: document.getElementById('livesContainer'),
+            progress: document.getElementById('progressBar'),
+            progressText: document.getElementById('progressText'),
+            modal: document.getElementById('modalOverlay'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalContent: document.getElementById('modalContent'),
+            modalBtn: document.getElementById('modalBtn'),
+            exitBtn: document.getElementById('exitBtn'),
+            pauseIcon: document.getElementById('pauseIcon'),
+            hud: document.getElementById('hud')
+        };
+
+        function initStars() {
+            const container = document.getElementById('starsContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 40; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                container.appendChild(star);
+            }
+        }
+
+        function clearAllTimers() {
+            if (state.cycleTimeout) clearTimeout(state.cycleTimeout);
+            state.activeFailTimers.forEach(t => {
+                clearTimeout(t.warningTimer);
+                clearTimeout(t.failTimer);
+            });
+            state.activeFailTimers.clear();
+        }
+
+        function updateProgress() {
+            const lvl = config.levels[state.currentLevel];
+            if (!lvl) return;
+            const target = lvl.target;
+            const pct = Math.min(100, (state.levelScore / target) * 100);
+            dom.progress.style.width = `${pct}%`;
+            dom.progressText.textContent = `${state.levelScore} / ${target}`;
+        }
+
+        function setupLevel() {
+            const lvl = config.levels[state.currentLevel];
+            state.levelScore = 0;
+            updateProgress();
+            dom.houses.innerHTML = '';
+            clearAllTimers();
+
+            for (let i = 0; i < lvl.houses; i++) {
+                const house = document.createElement('div');
+                house.className = 'house';
+                house.style.animationDelay = `${i * 0.1}s`;
+                const floors = Math.floor(Math.random() * (lvl.maxFloors - lvl.minFloors + 1)) + lvl.minFloors;
+                
+                for (let j = 0; j < floors * 2; j++) {
+                    const win = document.createElement('div');
+                    win.className = 'window';
+                    win.style.backgroundColor = config.shades[Math.floor(Math.random() * config.shades.length)];
+                    win.dataset.id = `h${i}w${j}`;
+                    win.addEventListener('click', () => handleFix(win));
+                    house.appendChild(win);
+                }
+                dom.houses.appendChild(house);
+            }
+
+            dom.level.textContent = state.currentLevel + 1;
+
+            state.isPaused = true;
+            setTimeout(() => {
+                state.isPaused = false;
+                if (state.currentLevel === 0 && state.hintsShown === 0) {
+                    const firstWin = document.querySelector('.window');
+                    if (firstWin) {
+                        triggerBlackout(firstWin);
+                        showHint(firstWin);
+                        state.hintsShown = 1;
+                    }
+                }
+                startCycle();
+            }, 1500);
+        }
+
+        function startCycle() {
+            const lvl = config.levels[state.currentLevel];
+            function tick() {
+                if (state.isPaused) {
+                    state.cycleTimeout = setTimeout(tick, 200);
+                    return;
+                }
+                const lit = Array.from(document.querySelectorAll('.window:not(.dark):not(.broken)'));
+                if (lit.length > 0) {
+                    const win = lit[Math.floor(Math.random() * lit.length)];
+                    triggerBlackout(win);
+                }
+                state.cycleTimeout = setTimeout(tick, lvl.interval);
+            }
+            tick();
+        }
+
+        function triggerBlackout(win) {
+            const lvl = config.levels[state.currentLevel];
+            win.style.setProperty('--fix-time', `${lvl.fixTime}ms`);
+            win.classList.add('dark');
+            const winId = win.dataset.id;
+
+            const warningTimer = setTimeout(() => {
+                if (win.classList.contains('dark') && !state.isPaused) {
+                    win.classList.add('warning');
+                }
+            }, lvl.fixTime * 0.5);
+
+            const failTimer = setTimeout(() => {
+                if (win.classList.contains('dark')) {
+                    win.classList.remove('warning');
+                    win.classList.add('broken');
+                    loseLife();
+                }
+            }, lvl.fixTime);
+
+            state.activeFailTimers.set(winId, { warningTimer, failTimer });
+        }
+
+        function showHint(win) {
+            const h = document.createElement('div');
+            h.className = 'absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-3 py-1 rounded-xl text-sm font-black animate-bounce shadow-lg z-50 pointer-events-none whitespace-nowrap';
+            h.innerHTML = 'Тисни! <i class="fas fa-mouse-pointer ml-1"></i>';
+            win.appendChild(h);
+            setTimeout(() => h.remove(), 2500);
+        }
+
+        function handleFix(win) {
+            if (state.isPaused || !win.classList.contains('dark') || win.classList.contains('broken')) return;
+
+            audio.success();
+            const winId = win.dataset.id;
+            const timers = state.activeFailTimers.get(winId);
+            if (timers) {
+                clearTimeout(timers.warningTimer);
+                clearTimeout(timers.failTimer);
+                state.activeFailTimers.delete(winId);
+            }
+
+            win.style.transform = 'scale(1.2)';
+            win.style.filter = 'brightness(1.5)';
+            win.classList.remove('dark', 'warning');
+            
+            setTimeout(() => {
+                win.style.transform = '';
+                win.style.filter = '';
+            }, 200);
+
+            state.totalScore++;
+            state.levelScore++;
+            dom.score.textContent = state.totalScore;
+            updateProgress();
+
+            if (state.levelScore % 3 === 0) showEncouragement();
+            
+            if (state.levelScore >= config.levels[state.currentLevel].target) {
+                state.isPaused = true;
+                setTimeout(victory, 1000); // Даємо 1 секунду побачити останнє ввімкнене вікно
+            }
+        }
+
+        function showEncouragement() {
+            const msg = document.createElement('div');
+            msg.className = 'fixed top-1/2 left-1/2 encouragement-popup bg-yellow-400 text-slate-900 px-8 py-4 rounded-3xl text-3xl font-black z-[110] shadow-2xl pointer-events-none whitespace-nowrap';
+            msg.textContent = config.encouragements[Math.floor(Math.random() * config.encouragements.length)];
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 1000);
+        }
+
+        function loseLife() {
+            audio.fail();
+            state.lives--;
+            updateLivesUI();
+            if (state.lives <= 0) gameOver();
+        }
+
+        function updateLivesUI() {
+            dom.lives.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const h = document.createElement('i');
+                h.className = i < state.lives ? 'fas fa-heart scale-110' : 'far fa-heart opacity-20';
+                dom.lives.appendChild(h);
+            }
+        }
+
+        function getHeartsHTML(lives) {
+            return Array(3).fill(0).map((_, i) => 
+                `<i class="${i < lives ? 'fas fa-heart text-red-500' : 'far fa-heart opacity-30'} mx-1"></i>`
+            ).join('');
+        }
+
+        function victory() {
+            audio.levelUp();
+            clearAllTimers();
+            
+            if (state.currentLevel < config.levels.length - 1) {
+                const msg = `Молодець! У ${state.levelScore} квартир повернуто світло!`;
+                showModal("ЧУДОВО!", 
+                    `<p class="mb-4">${msg}</p><div class="text-3xl">${getHeartsHTML(state.lives)}</div>`, 
+                    "ДАЛІ"
+                );
+            } else {
+                // Фінальне привітання після 5 рівня
+                showModal("ВІТАЄМО!", 
+                    `<div class="space-y-4">
+                        <p class="text-2xl font-black text-yellow-400 uppercase tracking-tighter">Місто врятовано!</p>
+                        <p>Ти повернув світло у всіх будинках!</p>
+                        <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
+                            <span class="text-xs opacity-70 uppercase font-bold">Загальні бали:</span>
+                            <p class="text-4xl font-black text-green-400 mt-1">${state.totalScore}</p>
+                        </div>
+                        <div class="text-3xl">${getHeartsHTML(state.lives)}</div>
+                    </div>`, 
+                    "ГРАТИ ЗНОВУ"
+                );
+            }
+        }
+
+        function gameOver() {
+            state.isPaused = true;
+            clearAllTimers();
+            showModal("ОЙ-ОЙ!", 
+                `<p class="mb-4">Місто поринуло у темряву. Ремонтна бригада вже поспішає!</p><div class="text-3xl">${getHeartsHTML(0)}</div>`, 
+                "СПОЧАТКУ"
+            );
+        }
+
+        function showModal(title, contentHTML, btnText) {
+            dom.modalTitle.textContent = title;
+            dom.modalContent.innerHTML = contentHTML;
+            dom.modalBtn.textContent = btnText;
+            dom.modal.classList.remove('hidden');
+            dom.exitBtn.classList.remove('hidden');
+        }
+
+        function showStartScreen() {
+            state.isPaused = true;
+            clearAllTimers();
+            dom.modalTitle.textContent = "РЯТІВНИКИ СВІТЛА!";
+            dom.modalContent.innerHTML = `
+                <div class="bg-slate-800/60 p-6 rounded-3xl text-left text-lg border border-slate-700">
+                    <p class="mb-3">💡 Бачиш <b>темне</b> вікно?</p>
+                    <p>👉 Швидше <b>тисни</b> на нього!</p>
+                </div>
+            `;
+            dom.modalBtn.textContent = "ПОЧАТИ ГРУ";
+            dom.modal.classList.remove('hidden');
+            dom.exitBtn.classList.add('hidden');
+            dom.hud.classList.add('hidden');
+            dom.houses.innerHTML = '';
+        }
+
+        function startGame() {
+            audio.init();
+            state.totalScore = 0;
+            state.levelScore = 0;
+            state.lives = 3;
+            state.currentLevel = 0;
+            state.hintsShown = 0;
+            dom.score.textContent = "0";
+            updateLivesUI();
+            updateProgress();
+            dom.modal.classList.add('hidden');
+            dom.hud.classList.remove('hidden');
+            setupLevel();
+        }
+
+        dom.modalBtn.addEventListener('click', () => {
+            const action = dom.modalBtn.textContent;
+            if (action === "ДАЛІ") {
+                state.currentLevel++;
+                dom.modal.classList.add('hidden');
+                setupLevel();
+            } else if (action === "ПРОДОВЖИТИ") {
+                state.isPaused = false;
+                dom.modal.classList.add('hidden');
+                dom.pauseIcon.className = 'fas fa-pause';
+            } else {
+                startGame();
+            }
+        });
+
+        dom.exitBtn.addEventListener('click', showStartScreen);
+
+        // ВИПРАВЛЕНО: Кнопка паузи тепер працює коректно
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (state.isPaused) return; // Якщо гра вже на паузі або в меню, нічого не робимо
+            state.isPaused = true;
+            dom.pauseIcon.className = 'fas fa-play';
+            showModal("ПАУЗА", "Ремонтна бригада на перерві.", "ПРОДОВЖИТИ");
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Escape' || e.key === ' ') && !state.isPaused && dom.modal.classList.contains('hidden')) {
+                e.preventDefault();
+                document.getElementById('pauseBtn').click();
+            }
+            if (e.key === 'Enter' && !dom.modal.classList.contains('hidden')) {
+                e.preventDefault();
+                dom.modalBtn.click();
+            }
+        });
+
+        window.onload = () => { initStars(); showStartScreen(); };
+    </script>
+</body>
+</html>
