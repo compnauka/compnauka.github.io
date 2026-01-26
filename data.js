@@ -68,84 +68,91 @@ const CATEGORIES = [
         description: "Тренажер для роботи з мишкою.", 
         link: "services/click.html", 
         image: "images/10.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Спіймай світлячка", 
         description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
         link: "services/fireflies.html", 
         image: "images/58.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Полювання на медуз", 
         description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
         link: "services/jailfish.html", 
         image: "images/59.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Перші клавіші", 
         description: "Тренажер для роботи з клавіатурою. Вивчаємо розташування клавіш.", 
         link: "services/kids_typing.html", 
         image: "images/56.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Клавіатура"] 
+      },
+      { 
+        name: "Рятівники Світла", 
+        description: "Гра-тренажер для роботи з мишкою. Вивчаємо наведення та натискання на об'єкти.", 
+        link: "services/svitlo.html", 
+        image: "images/71.jpg", 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Захисники Неба", 
         description: "Інтерактивна гра-тренажер для вивчення клавіатури та сліпого друку.", 
         link: "services/keyppo.html", 
         image: "images/70.jpg", 
-        tags: ["1-2 класи", "3-4 класи"] 
+        tags: ["1-2 класи", "3-4 класи", "Клавіатура"] 
       },
       { 
         name: "Швидкісні вікна", 
         description: "Тренажер для роботи з вікнами програм.", 
         link: "services/windows/index.html", 
         image: "images/48.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Права чи Ліва?", 
         description: "Тренажер для роботи з кнопками миші.", 
         link: "services/mouse_keys/index.html", 
         image: "images/49.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Чарівний лабіринт", 
         description: "Тренажер для роботи з перетягуванням об'єктів.", 
         link: "services/mouse_maze.html", 
         image: "images/57.jpg", 
-        tags: ["1-2 класи"] 
+        tags: ["1-2 класи", "Мишка"] 
       },
       { 
         name: "Гарячі клавіши", 
         description: "Інтерактивний урок про роботу з клавіатурою.", 
         link: "services/typing.html", 
         image: "images/18.jpg", 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи", "Клавіатура"] 
       },
       { 
         name: "Спритні пальчики", 
         description: "Тренажер для роботи з клавіатурою.", 
         link: "services/keys.html", 
         image: "images/11.jpg", 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи", "Клавіатура"] 
       },
       { 
         name: "Веселі адреси", 
         description: "Тренажер для роботи з клавіатурою: введення URL-адрес.", 
         link: "services/urls.html", 
         image: "images/38.jpg", 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи", "Клавіатура"] 
       },
       { 
         name: "Володар комбінацій", 
         description: "Тренажер для роботи з комбінаціями гарячих клавіш в ОС Windows.", 
         link: "services/keymaster.html", 
         image: "images/68.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+        tags: ["3-4 класи", "5-7 класи", "Клавіатура"] 
       },
       { 
         name: "Шукаємо в Інтернеті", 
