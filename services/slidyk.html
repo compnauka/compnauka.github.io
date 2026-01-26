@@ -376,9 +376,12 @@
 
   <script>
     /**************
-     * SLAYDYK Kids v2
-     * Односторінковий редактор: слайди + елементи + показ + PDF.
-     * Фокус: стабільність, прості дії, гарячі клавіші для дорослого.
+     * SLAYDYK Kids v2.1 (fixed)
+     * Fixes:
+     * - Text in templates is editable (no rerender on focus)
+     * - Drag/resize works (no rerender on pointermove)
+     * - Confirm modals before delete
+     * - Help for “Об’єкт” tools
      **************/
 
     const STORAGE_KEY = 'slidyk_kids_v2';
@@ -392,19 +395,15 @@
     const EMOJIS = ['😀','😁','😅','😍','😎','🤩','🥳','🤖','👋','👍','👏','❤️','✨','🌟','🔥','💡','🎨','🎮','⚽','🏆','🚀','🌈','🍕','🍦','🐱','🐶','🐼','🦊','🦄','🐸','🐙','🧠','📚','✏️','🧩'];
 
     const uid = () => Math.floor(Date.now() + Math.random() * 100000);
-
     const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-    function deepClone(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
+    const deepClone = (o) => JSON.parse(JSON.stringify(o));
 
     function safeParse(json, fallback) {
       try { return JSON.parse(json); } catch { return fallback; }
     }
 
     function normalizeState(raw) {
-      // Мінімальна валідація, щоб не ламалось після старих версій
       if (!raw || typeof raw !== 'object') return null;
       if (!Array.isArray(raw.slides) || raw.slides.length === 0) return null;
 
@@ -454,85 +453,70 @@
       /** @type {{slides:any[], current:number, selected:number|null}} */
       let state;
 
-      // history stacks
+      // history
       let undoStack = [];
       let redoStack = [];
 
-      // transient
-      let pointer = {
+      // DOM
+      const dom = {};
+      const elDomMap = new Map(); // id -> .el element
+
+      // transient pointer state
+      const pointer = {
         mode: 'none', // none | drag | resize
         elId: null,
         handle: null,
         startX: 0,
         startY: 0,
-        startBox: null,
-        dragOffset: {x:0,y:0}
+        dragOffset: { x: 0, y: 0 },
+        startBox: null
       };
 
-      // popover mode
       let colorMode = 'textColor'; // textColor | bg | fill | stroke
-
-      // clipboard
       let clip = null;
 
-      // debounced save
       let saveTimer = null;
-
-      // DOM
-      const dom = {};
+      let thumbsTimer = null;
 
       function $(id) { return document.getElementById(id); }
-
       function slide() { return state.slides[state.current]; }
-
       function elements() { return slide().elements; }
-
-      function selectedEl() {
-        if (!state.selected) return null;
-        return elements().find(e => e.id === state.selected) || null;
-      }
-
-      function stageRect() {
-        return dom.stage.getBoundingClientRect();
-      }
-
-      function toStagePoint(clientX, clientY) {
-        const r = stageRect();
-        // stage is scaled by CSS to fit width; we map to internal coordinate system using ratio.
-        const scaleX = r.width / parseFloat(getComputedStyle(dom.stage).getPropertyValue('width'));
-        // The computed width equals r.width in px, so scaleX is ~1. Keep safe mapping via ratios to base size.
-        const baseW = dom.stage.dataset.baseW ? Number(dom.stage.dataset.baseW) : 960;
-        const baseH = dom.stage.dataset.baseH ? Number(dom.stage.dataset.baseH) : 540;
-        const sx = baseW / r.width;
-        const sy = baseH / r.height;
-        return {
-          x: (clientX - r.left) * sx,
-          y: (clientY - r.top) * sy,
-          sx, sy, baseW, baseH
-        };
-      }
+      function selectedEl() { return state.selected ? (elements().find(e => e.id === state.selected) || null) : null; }
 
       function normalizeZ(sl) {
-        // ensure 1..n unique order
         const sorted = [...sl.elements].sort((a,b) => (a.z ?? 1) - (b.z ?? 1));
         sorted.forEach((e, i) => e.z = i + 1);
       }
 
+      function setSaveInfo(text) { dom.saveInfo.textContent = text || 'Готово'; }
+
+      function scheduleSave(label = 'Збережено') {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          setSaveInfo(`${label}: ${new Date().toLocaleTimeString()}`);
+        }, 200);
+      }
+
+      function debounceThumbs() {
+        if (thumbsTimer) clearTimeout(thumbsTimer);
+        thumbsTimer = setTimeout(() => renderThumbnails(), 300);
+      }
+
       function pushHistory(reason = '') {
-        // Save a snapshot of full state (simple + robust)
         const snap = JSON.stringify(state);
         if (undoStack.length && undoStack[undoStack.length - 1] === snap) return;
         undoStack.push(snap);
         if (undoStack.length > MAX_HISTORY) undoStack.shift();
         redoStack = [];
-        setSaveInfo(reason ? `Зміна: ${reason}` : 'Зміна');
+        if (reason) setSaveInfo(`Зміна: ${reason}`);
       }
 
       function undo() {
-        if (undoStack.length === 0) return;
-        const currentSnap = JSON.stringify(state);
-        const prev = undoStack.pop();
+        if (undoStack.length <= 1) return;
+        const currentSnap = undoStack.pop();
         redoStack.push(currentSnap);
+        const prev = undoStack[undoStack.length - 1];
         state = normalizeState(safeParse(prev, null)) || state;
         state.selected = null;
         renderAll();
@@ -541,54 +525,55 @@
 
       function redo() {
         if (redoStack.length === 0) return;
-        const currentSnap = JSON.stringify(state);
         const next = redoStack.pop();
-        undoStack.push(currentSnap);
+        undoStack.push(next);
         state = normalizeState(safeParse(next, null)) || state;
         state.selected = null;
         renderAll();
         scheduleSave('Redo');
       }
 
-      function scheduleSave(label = 'Збережено') {
-        if (saveTimer) clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          setSaveInfo(`${label}: ${new Date().toLocaleTimeString()}`);
-        }, 250);
+      function stageRect() { return dom.stage.getBoundingClientRect(); }
+
+      function toStagePoint(clientX, clientY) {
+        const r = stageRect();
+        const baseW = Number(dom.stage.dataset.baseW);
+        const baseH = Number(dom.stage.dataset.baseH);
+        const sx = baseW / r.width;
+        const sy = baseH / r.height;
+        return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy, baseW, baseH };
       }
 
-      function setSaveInfo(text) {
-        dom.saveInfo.textContent = text;
+      function applyTextStyleToDom(node, el) {
+        node.style.fontSize = (el.style.fontSize || 28) + 'px';
+        node.style.color = el.style.color || '#111827';
+        node.style.fontWeight = el.style.bold ? '900' : '700';
+        node.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+        node.style.textDecoration = el.style.underline ? 'underline' : 'none';
+        node.style.textAlign = el.style.align || 'left';
       }
 
-      function initDom() {
-        dom.stage = $('stage');
-        dom.slideList = $('slideList');
-        dom.workspace = $('workspace');
-        dom.saveInfo = $('saveInfo');
-
-        dom.colorPopover = $('colorPopover');
-        dom.colorGrid = $('colorGrid');
-        dom.colorTitle = $('colorTitle');
-
-        dom.emojiPopover = $('emojiPopover');
-        dom.emojiGrid = $('emojiGrid');
-
-        dom.modalOverlay = $('modalOverlay');
-        dom.modalTitle = $('modalTitle');
-        dom.modalBody = $('modalBody');
-        dom.modalActions = $('modalActions');
-
-        dom.presentOverlay = $('presentOverlay');
-        dom.presentStageWrap = $('presentStageWrap');
-
-        dom.stage.dataset.baseW = '960';
-        dom.stage.dataset.baseH = '540';
+      function updateSelectionDom() {
+        for (const [id, node] of elDomMap.entries()) {
+          node.classList.toggle('selected', state.selected === id);
+        }
       }
 
+      function selectElement(id) {
+        state.selected = id;
+        closePopovers();
+        updateSelectionDom();
+        scheduleSave('Вибрано');
+      }
+
+      function deselect() {
+        state.selected = null;
+        closePopovers();
+        updateSelectionDom();
+      }
+
+      /* Popovers */
       function initPopovers() {
-        // Colors
         dom.colorGrid.innerHTML = '';
         COLORS.forEach(c => {
           const b = document.createElement('button');
@@ -602,7 +587,6 @@
           dom.colorGrid.appendChild(b);
         });
 
-        // Emojis
         dom.emojiGrid.innerHTML = '';
         EMOJIS.forEach(emo => {
           const b = document.createElement('button');
@@ -621,8 +605,8 @@
         dom.colorTitle.textContent = {
           textColor: 'КОЛІР ТЕКСТУ',
           bg: 'ФОН СЛАЙДА',
-          fill: 'ЗАЛИВКА',
-          stroke: 'КОНТУР'
+          fill: 'ЗАЛИВКА (ФІГУРИ)',
+          stroke: 'КОНТУР (ФІГУРИ)'
         }[mode] || 'КОЛІР';
         closePopovers();
         dom.colorPopover.classList.remove('hidden');
@@ -639,32 +623,42 @@
       }
 
       function applyColor(color) {
-        const el = selectedEl();
         pushHistory('Колір');
+
         if (colorMode === 'bg') {
           slide().background = color;
-          renderAll();
+          dom.stage.style.background = slide().background;
+          renderThumbnails();
           scheduleSave('Збережено');
           return;
         }
 
+        const el = selectedEl();
         if (!el) return;
 
         if (colorMode === 'textColor' && el.type === 'text') {
           el.style.color = color;
-        }
-        if (colorMode === 'fill' && el.type === 'shape') {
-          el.style.fill = color;
-        }
-        if (colorMode === 'stroke' && el.type === 'shape') {
-          el.style.stroke = color;
+          const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
+          if (textNode) textNode.style.color = color;
         }
 
-        renderStage();
+        if (colorMode === 'fill' && el.type === 'shape') {
+          el.style.fill = color;
+          const shapeNode = elDomMap.get(el.id)?.querySelector('svg *');
+          if (shapeNode) shapeNode.setAttribute('fill', color);
+        }
+
+        if (colorMode === 'stroke' && el.type === 'shape') {
+          el.style.stroke = color;
+          const shapeNode = elDomMap.get(el.id)?.querySelector('svg *');
+          if (shapeNode) shapeNode.setAttribute('stroke', color);
+        }
+
         renderThumbnails();
         scheduleSave('Збережено');
       }
 
+      /* Modal helpers */
       function openModal({ title, bodyHTML, okText = 'Добре', cancelText = 'Скасувати', onOk, showActions = true }) {
         dom.modalTitle.textContent = title;
         dom.modalBody.innerHTML = bodyHTML;
@@ -676,51 +670,19 @@
         dom.modalOverlay.classList.remove('hidden');
       }
 
-      function closeModal() {
-        dom.modalOverlay.classList.add('hidden');
+      function closeModal() { dom.modalOverlay.classList.add('hidden'); }
+
+      function confirmAction({ title, message, okText = 'Так', cancelText = 'Ні', onYes }) {
+        openModal({
+          title,
+          bodyHTML: `<p class="text-sm font-bold text-slate-700">${message}</p>`,
+          okText,
+          cancelText,
+          onOk: () => { if (onYes) onYes(); }
+        });
       }
 
-      function initState() {
-        const saved = safeParse(localStorage.getItem(STORAGE_KEY), null);
-        const norm = normalizeState(saved);
-        if (norm) {
-          state = norm;
-          // start history with initial snapshot
-          undoStack = [JSON.stringify(state)];
-          redoStack = [];
-          return;
-        }
-
-        state = {
-          slides: [
-            {
-              id: uid(),
-              background: '#ffffff',
-              elements: [
-                {
-                  id: uid(),
-                  type: 'text',
-                  x: 140,
-                  y: 130,
-                  w: 680,
-                  h: 140,
-                  z: 1,
-                  content: 'Привіт! 👋\nНапиши назву презентації',
-                  style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
-                  shape: 'rect'
-                }
-              ]
-            }
-          ],
-          current: 0,
-          selected: null
-        };
-
-        undoStack = [JSON.stringify(state)];
-        redoStack = [];
-        scheduleSave('Створено');
-      }
-
+      /* Rendering */
       function renderAll() {
         renderThumbnails();
         renderStage();
@@ -753,7 +715,7 @@
           };
 
           actions.appendChild(btn('<i class="fa-regular fa-copy"></i>', 'Дублювати', () => duplicateSlide(idx)));
-          actions.appendChild(btn('<i class="fa-regular fa-trash-can"></i>', 'Видалити', () => deleteSlide(idx)));
+          actions.appendChild(btn('<i class="fa-regular fa-trash-can"></i>', 'Видалити', () => confirmDeleteSlide(idx)));
 
           head.appendChild(label);
           head.appendChild(actions);
@@ -772,7 +734,6 @@
           mini.className = 'mini';
           mini.style.background = s.background;
 
-          // render mini elements
           const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
           els.forEach(el => {
             const d = document.createElement('div');
@@ -839,10 +800,9 @@
 
       function renderStage() {
         dom.stage.innerHTML = '';
-        dom.stage.style.background = slide().background;
+        elDomMap.clear();
 
-        // click outside -> deselect
-        dom.stage.addEventListener('pointerdown', onStagePointerDown, { once: true });
+        dom.stage.style.background = slide().background;
 
         const els = [...elements()].sort((a,b) => (a.z??1) - (b.z??1));
         els.forEach(el => {
@@ -863,20 +823,17 @@
             t.className = 'textBox';
             t.contentEditable = 'true';
             t.spellcheck = false;
-            // IMPORTANT: textContent, not innerHTML (захист від XSS)
             t.textContent = el.content || '';
-
             applyTextStyleToDom(t, el);
 
-            // Save on input without re-rendering (preserve caret)
+            // IMPORTANT: Do not re-render while typing.
             t.addEventListener('input', () => {
               el.content = t.textContent || '';
               scheduleSave('Збережено');
-              // thumbnails обновлюємо рідше (не кожен символ)
               debounceThumbs();
             });
 
-            // Select element on focus/click
+            // Click inside text selects but does NOT re-render.
             t.addEventListener('pointerdown', (e) => {
               e.stopPropagation();
               selectElement(el.id);
@@ -936,81 +893,44 @@
           });
           w.appendChild(handles);
 
-          // drag/select
+          // drag/select (IMPORTANT: do not re-render on move)
           w.addEventListener('pointerdown', (e) => onElementPointerDown(e, el.id));
 
+          elDomMap.set(el.id, w);
           dom.stage.appendChild(w);
         });
+
+        updateSelectionDom();
       }
 
-      let thumbsTimer = null;
-      function debounceThumbs() {
-        if (thumbsTimer) clearTimeout(thumbsTimer);
-        thumbsTimer = setTimeout(() => renderThumbnails(), 350);
-      }
-
-      function applyTextStyleToDom(node, el) {
-        node.style.fontSize = (el.style.fontSize || 28) + 'px';
-        node.style.color = el.style.color || '#111827';
-        node.style.fontWeight = el.style.bold ? '900' : '700';
-        node.style.fontStyle = el.style.italic ? 'italic' : 'normal';
-        node.style.textDecoration = el.style.underline ? 'underline' : 'none';
-        node.style.textAlign = el.style.align || 'left';
-      }
-
-      function selectElement(id) {
-        state.selected = id;
-        closePopovers();
-        renderStage();
-        scheduleSave('Вибрано');
-      }
-
-      function deselect() {
-        state.selected = null;
-        closePopovers();
-        renderStage();
-        scheduleSave('');
-      }
-
-      function onStagePointerDown(e) {
-        // click empty area
-        if (e.target === dom.stage) deselect();
-      }
-
+      /* Pointer logic (no rerender during move) */
       function onElementPointerDown(e, id) {
+        // If inside text area -> typing, no drag
+        if (e.target && e.target.classList && e.target.classList.contains('textBox')) return;
+
         e.stopPropagation();
-
-        // If click inside text box, let caret work, but still select element
-        const elDom = e.currentTarget;
-        const isTextInside = e.target.classList && e.target.classList.contains('textBox');
-
         selectElement(id);
 
-        // allow editing inside text without dragging on simple click
-        if (isTextInside) {
-          // drag only if user starts from border area (not text), so return
-          return;
-        }
-
-        // start drag
         const el = elements().find(x => x.id === id);
-        if (!el) return;
+        const node = elDomMap.get(id);
+        if (!el || !node) return;
 
         pushHistory('Переміщення');
 
         const p = toStagePoint(e.clientX, e.clientY);
         pointer.mode = 'drag';
         pointer.elId = id;
-        pointer.startX = p.x;
-        pointer.startY = p.y;
         pointer.dragOffset = { x: p.x - el.x, y: p.y - el.y };
 
-        elDom.setPointerCapture(e.pointerId);
-        elDom.classList.add('dragging');
+        node.setPointerCapture(e.pointerId);
+        node.classList.add('dragging');
 
-        elDom.addEventListener('pointermove', onPointerMove);
-        elDom.addEventListener('pointerup', onPointerUp, { once: true });
-        elDom.addEventListener('pointercancel', onPointerUp, { once: true });
+        const move = (ev) => onPointerMove(ev);
+        const up = (ev) => onPointerUp(ev, move, up);
+
+        node.addEventListener('pointermove', move);
+        node.addEventListener('pointerup', up, { once: true });
+        node.addEventListener('pointercancel', up, { once: true });
       }
 
       function onHandlePointerDown(e, id, handle) {
@@ -1018,9 +938,9 @@
         e.preventDefault();
         selectElement(id);
 
-        const elDom = e.currentTarget.closest('.el');
         const el = elements().find(x => x.id === id);
-        if (!el || !elDom) return;
+        const node = elDomMap.get(id);
+        if (!el || !node) return;
 
         pushHistory('Зміна розміру');
 
@@ -1032,18 +952,22 @@
         pointer.startY = p.y;
         pointer.startBox = { x: el.x, y: el.y, w: el.w, h: el.h };
 
-        elDom.setPointerCapture(e.pointerId);
+        node.setPointerCapture(e.pointerId);
 
-        elDom.addEventListener('pointermove', onPointerMove);
-        elDom.addEventListener('pointerup', onPointerUp, { once: true });
-        elDom.addEventListener('pointercancel', onPointerUp, { once: true });
+        const move = (ev) => onPointerMove(ev);
+        const up = (ev) => onPointerUp(ev, move, up);
+
+        node.addEventListener('pointermove', move);
+        node.addEventListener('pointerup', up, { once: true });
+        node.addEventListener('pointercancel', up, { once: true });
       }
 
       function onPointerMove(e) {
         const el = elements().find(x => x.id === pointer.elId);
-        if (!el) return;
-        const p = toStagePoint(e.clientX, e.clientY);
+        const node = elDomMap.get(pointer.elId);
+        if (!el || !node) return;
 
+        const p = toStagePoint(e.clientX, e.clientY);
         const baseW = Number(dom.stage.dataset.baseW);
         const baseH = Number(dom.stage.dataset.baseH);
 
@@ -1052,7 +976,8 @@
           const ny = p.y - pointer.dragOffset.y;
           el.x = clamp(nx, 0, baseW - el.w);
           el.y = clamp(ny, 0, baseH - el.h);
-          renderStage();
+          node.style.left = el.x + 'px';
+          node.style.top = el.y + 'px';
           return;
         }
 
@@ -1063,8 +988,6 @@
 
           const minW = 40;
           const minH = 30;
-
-          // handle logic
           const has = (s) => pointer.handle.includes(s);
 
           if (has('e')) w = w + dx;
@@ -1072,23 +995,25 @@
           if (has('w')) { x = x + dx; w = w - dx; }
           if (has('n')) { y = y + dy; h = h - dy; }
 
-          // clamp sizes
           w = Math.max(minW, w);
           h = Math.max(minH, h);
-
-          // clamp position within stage
           x = clamp(x, 0, baseW - w);
           y = clamp(y, 0, baseH - h);
 
           el.x = x; el.y = y; el.w = w; el.h = h;
-          renderStage();
+          node.style.left = el.x + 'px';
+          node.style.top = el.y + 'px';
+          node.style.width = el.w + 'px';
+          node.style.height = el.h + 'px';
         }
       }
 
-      function onPointerUp(e) {
-        const elDom = e.currentTarget;
-        elDom.classList.remove('dragging');
-        elDom.removeEventListener('pointermove', onPointerMove);
+      function onPointerUp(e, moveHandler, upHandler) {
+        const node = elDomMap.get(pointer.elId);
+        if (node) {
+          node.classList.remove('dragging');
+          if (moveHandler) node.removeEventListener('pointermove', moveHandler);
+        }
 
         pointer.mode = 'none';
         pointer.elId = null;
@@ -1110,6 +1035,20 @@
         scheduleSave('Збережено');
       }
 
+      function confirmDeleteSlide(idx = state.current) {
+        if (state.slides.length <= 1) {
+          openModal({ title: 'Не можна', bodyHTML: '<p class="text-sm font-bold text-slate-700">Має бути хоча б 1 слайд 🙂</p>', showActions: false });
+          return;
+        }
+        confirmAction({
+          title: 'ВИДАЛИТИ СЛАЙД',
+          message: `Точно видалити слайд ${idx + 1}?`,
+          okText: 'Так, видалити',
+          cancelText: 'Ні',
+          onYes: () => deleteSlide(idx)
+        });
+      }
+
       function deleteSlide(idx = state.current) {
         if (state.slides.length <= 1) return;
         pushHistory('Видалити слайд');
@@ -1124,7 +1063,6 @@
         pushHistory('Дублювати слайд');
         const copy = deepClone(state.slides[idx]);
         copy.id = uid();
-        // new ids for elements
         copy.elements.forEach(e => e.id = uid());
         state.slides.splice(idx + 1, 0, copy);
         state.current = idx + 1;
@@ -1150,12 +1088,8 @@
       function addText() {
         pushHistory('Текст');
         const e = {
-          id: uid(),
-          type: 'text',
-          x: 180,
-          y: 160,
-          w: 600,
-          h: 120,
+          id: uid(), type: 'text',
+          x: 180, y: 160, w: 600, h: 120,
           z: elements().length + 1,
           content: 'Введи текст…',
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
@@ -1166,9 +1100,8 @@
         renderAll();
         scheduleSave('Збережено');
 
-        // Focus text
         requestAnimationFrame(() => {
-          const node = dom.stage.querySelector(`.el[data-id="${e.id}"] .textBox`);
+          const node = elDomMap.get(e.id)?.querySelector('.textBox');
           if (node) {
             node.focus();
             document.execCommand('selectAll', false, null);
@@ -1179,12 +1112,8 @@
       function addEmoji(emo) {
         pushHistory('Смайлик');
         const e = {
-          id: uid(),
-          type: 'text',
-          x: 420,
-          y: 220,
-          w: 120,
-          h: 120,
+          id: uid(), type: 'text',
+          x: 420, y: 220, w: 120, h: 120,
           z: elements().length + 1,
           content: emo,
           style: { fontSize: 56, color: '#111827', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
@@ -1199,12 +1128,8 @@
       function addShape(kind) {
         pushHistory('Фігура');
         const e = {
-          id: uid(),
-          type: 'shape',
-          x: 260,
-          y: 170,
-          w: 440,
-          h: 240,
+          id: uid(), type: 'shape',
+          x: 260, y: 170, w: 440, h: 240,
           z: elements().length + 1,
           content: '',
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
@@ -1219,9 +1144,7 @@
       function addImage() {
         const html = `
           <div class="space-y-4">
-            <button id="pickFile" class="w-full py-4 border-2 border-dashed border-slate-300 sharp font-black text-xs uppercase hover:bg-slate-50 transition-colors">
-              Обрати файл з пристрою
-            </button>
+            <button id="pickFile" class="w-full py-4 border-2 border-dashed border-slate-300 sharp font-black text-xs uppercase hover:bg-slate-50 transition-colors">Обрати файл з пристрою</button>
             <input type="file" id="fileInput" class="hidden" accept="image/*" />
             <div class="text-center text-[10px] font-black text-slate-400">АБО</div>
             <input type="text" id="imgUrl" placeholder="Вставте URL картинки…" class="w-full p-3 border-2 border-slate-900 sharp outline-none focus:border-blue-600 transition-colors" />
@@ -1256,12 +1179,8 @@
       function insertImage(src) {
         pushHistory('Фото');
         const e = {
-          id: uid(),
-          type: 'image',
-          x: 220,
-          y: 140,
-          w: 520,
-          h: 300,
+          id: uid(), type: 'image',
+          x: 220, y: 140, w: 520, h: 300,
           z: elements().length + 1,
           content: src,
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
@@ -1271,6 +1190,19 @@
         state.selected = e.id;
         renderAll();
         scheduleSave('Збережено');
+      }
+
+      function confirmDeleteSelected() {
+        const el = selectedEl();
+        if (!el) return;
+        const name = el.type === 'text' ? 'текст' : el.type === 'image' ? 'фото' : 'фігуру';
+        confirmAction({
+          title: 'ВИДАЛИТИ ОБ’ЄКТ',
+          message: `Точно видалити ${name}?`,
+          okText: 'Так, видалити',
+          cancelText: 'Ні',
+          onYes: () => deleteSelected()
+        });
       }
 
       function deleteSelected() {
@@ -1326,8 +1258,9 @@
         if (!el || el.type !== 'text') return;
         pushHistory('Розмір тексту');
         el.style.fontSize = Number(px);
-        renderStage();
-        renderThumbnails();
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
+        if (textNode) textNode.style.fontSize = el.style.fontSize + 'px';
+        debounceThumbs();
         scheduleSave('Збережено');
       }
 
@@ -1336,8 +1269,9 @@
         if (!el || el.type !== 'text') return;
         pushHistory('Формат');
         el.style[key] = !el.style[key];
-        renderStage();
-        renderThumbnails();
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
+        if (textNode) applyTextStyleToDom(textNode, el);
+        debounceThumbs();
         scheduleSave('Збережено');
       }
 
@@ -1346,8 +1280,9 @@
         if (!el || el.type !== 'text') return;
         pushHistory('Вирівнювання');
         el.style.align = align;
-        renderStage();
-        renderThumbnails();
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
+        if (textNode) textNode.style.textAlign = align;
+        debounceThumbs();
         scheduleSave('Збережено');
       }
 
@@ -1359,7 +1294,7 @@
             <button class="tpl p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white transition-all" data-tpl="two">Текст + фото</button>
             <button class="tpl p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white transition-all" data-tpl="three">3 блоки</button>
           </div>
-          <div class="mt-4 text-[11px] font-bold text-slate-500">Після вибору макета — можна все пересувати та змінювати 🙂</div>
+          <div class="mt-4 text-[11px] font-bold text-slate-500">Після вибору макета — можна друкувати, пересувати та змінювати 🙂</div>
         `;
 
         openModal({ title: 'МАКЕТИ', bodyHTML: body, showActions: false });
@@ -1394,13 +1329,14 @@
         }
 
         if (kind === 'two') {
-          s.background = '#ffffff';
           s.elements.push({
             id: uid(), type: 'text', x: 60, y: 60, w: 840, h: 80, z: 1, content: 'ЗАГОЛОВОК', shape: 'rect',
             style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
           });
           s.elements.push({
-            id: uid(), type: 'text', x: 60, y: 160, w: 420, h: 340, z: 2, content: '• Пункт 1\n• Пункт 2\n• Пункт 3', shape: 'rect',
+            id: uid(), type: 'text', x: 60, y: 160, w: 420, h: 340, z: 2, content: '• Пункт 1
+• Пункт 2
+• Пункт 3', shape: 'rect',
             style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
           });
           s.elements.push({
@@ -1449,11 +1385,10 @@
 
       /* Export PDF */
       async function exportPDF() {
-        // build hidden container with fixed 960x540 pages
         const container = document.createElement('div');
         container.style.width = '960px';
 
-        state.slides.forEach((s, idx) => {
+        state.slides.forEach((s) => {
           const page = document.createElement('div');
           page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`;
 
@@ -1556,8 +1491,8 @@
         render() {
           dom.presentStageWrap.innerHTML = '';
           const s = state.slides[this.idx];
-          const stage = document.createElement('div');
-          stage.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;border:10px solid #0f172a;`;
+          const st = document.createElement('div');
+          st.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;border:10px solid #0f172a;`;
 
           const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
           els.forEach(el => {
@@ -1612,35 +1547,50 @@
               box.appendChild(svg);
             }
 
-            stage.appendChild(box);
+            st.appendChild(box);
           });
 
-          dom.presentStageWrap.appendChild(stage);
+          dom.presentStageWrap.appendChild(st);
         }
       };
 
-      /* Reset */
       function resetAll() {
-        openModal({
+        confirmAction({
           title: 'ОЧИСТИТИ ВСЕ',
-          bodyHTML: '<p class="text-sm font-bold text-slate-600">Це видалить усі слайди на цьому пристрої. Продовжити?</p>',
+          message: 'Це видалить усі слайди на цьому пристрої. Продовжити?',
           okText: 'Так, очистити',
           cancelText: 'Ні',
-          onOk: () => {
+          onYes: () => {
             localStorage.removeItem(STORAGE_KEY);
             location.reload();
           }
         });
       }
 
+      function showObjectHelp() {
+        openModal({
+          title: 'ПІДКАЗКА: Об’єкт',
+          showActions: false,
+          bodyHTML: `
+            <div class="space-y-3 text-sm font-bold text-slate-700">
+              <p><b>Заливка</b> — міняє колір фігури (працює тільки для прямокутника/кола).</p>
+              <p><b>Контур</b> — колір обведення фігури (також тільки для фігур).</p>
+              <p><b>На передній план</b> — робить об’єкт "попереду" інших.</p>
+              <p><b>На задній план</b> — ховає об’єкт "позаду" інших.</p>
+              <p><b>Дублювати</b> — робить копію (можна Ctrl+D).</p>
+              <p><b>Видалити</b> — прибирає об’єкт (Delete).</p>
+              <div class="mt-3 text-[12px] font-black text-slate-500">Лайфхак: рухай об’єкт стрілками (Shift = швидше)</div>
+            </div>
+          `
+        });
+      }
+
       /* Keyboard shortcuts */
       function initKeyboard() {
         window.addEventListener('keydown', (e) => {
-          // avoid interfering with typing in text boxes
           const active = document.activeElement;
           const isTyping = active && active.classList && active.classList.contains('textBox');
 
-          // Undo/redo
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
             e.preventDefault();
             if (e.shiftKey) redo(); else undo();
@@ -1652,7 +1602,6 @@
             return;
           }
 
-          // Copy/paste element (not text)
           if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
             const el = selectedEl();
             if (el) { clip = deepClone(el); setSaveInfo('Скопійовано'); }
@@ -1675,20 +1624,17 @@
             return;
           }
 
-          // Duplicate element
           if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
             e.preventDefault();
             duplicateSelected();
             return;
           }
 
-          // Delete
           if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) {
-            deleteSelected();
+            confirmDeleteSelected();
             return;
           }
 
-          // Nudge with arrows
           if (!isTyping && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
             const el = selectedEl();
             if (!el) return;
@@ -1699,11 +1645,53 @@
             if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, 540 - el.h);
             if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, 960 - el.w);
             if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, 960 - el.w);
-            renderStage();
+            const node = elDomMap.get(el.id);
+            if (node) { node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; }
             debounceThumbs();
             scheduleSave('Збережено');
           }
         });
+      }
+
+      function initState() {
+        const saved = safeParse(localStorage.getItem(STORAGE_KEY), null);
+        const norm = normalizeState(saved);
+        if (norm) {
+          state = norm;
+          undoStack = [JSON.stringify(state)];
+          redoStack = [];
+          return;
+        }
+
+        state = {
+          slides: [
+            {
+              id: uid(),
+              background: '#ffffff',
+              elements: [
+                {
+                  id: uid(),
+                  type: 'text',
+                  x: 140,
+                  y: 130,
+                  w: 680,
+                  h: 140,
+                  z: 1,
+                  content: 'Привіт! 👋
+Напиши назву презентації',
+                  style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
+                  shape: 'rect'
+                }
+              ]
+            }
+          ],
+          current: 0,
+          selected: null
+        };
+
+        undoStack = [JSON.stringify(state)];
+        redoStack = [];
+        scheduleSave('Створено');
       }
 
       function bindUI() {
@@ -1720,7 +1708,7 @@
 
         // Toolbar slide
         $('btnDupSlide').onclick = () => duplicateSlide();
-        $('btnDelSlide').onclick = () => deleteSlide();
+        $('btnDelSlide').onclick = () => confirmDeleteSlide();
         $('btnBg').onclick = () => openColor('bg');
 
         // Insert
@@ -1746,7 +1734,11 @@
         $('btnBringFront').onclick = () => bringToFront();
         $('btnSendBack').onclick = () => sendToBack();
         $('btnDupEl').onclick = () => duplicateSelected();
-        $('btnDelEl').onclick = () => deleteSelected();
+        $('btnDelEl').onclick = () => confirmDeleteSelected();
+
+        // Add help to Object section via long-press/right-click on the label area
+        // (simple: shift+click on Object label area is hard; so use double click on status bar)
+        dom.zoomInfo.ondblclick = () => showObjectHelp();
 
         // Popovers
         $('btnClosePopover').onclick = () => closePopovers();
@@ -1766,6 +1758,37 @@
           const insidePopover = dom.colorPopover.contains(e.target) || dom.emojiPopover.contains(e.target);
           if (!insidePopover) closePopovers();
         });
+
+        // Stage click on empty -> deselect
+        dom.stage.addEventListener('pointerdown', (e) => {
+          if (e.target === dom.stage) deselect();
+        });
+      }
+
+      function initDom() {
+        dom.stage = $('stage');
+        dom.slideList = $('slideList');
+        dom.workspace = $('workspace');
+        dom.saveInfo = $('saveInfo');
+        dom.zoomInfo = $('zoomInfo');
+
+        dom.colorPopover = $('colorPopover');
+        dom.colorGrid = $('colorGrid');
+        dom.colorTitle = $('colorTitle');
+
+        dom.emojiPopover = $('emojiPopover');
+        dom.emojiGrid = $('emojiGrid');
+
+        dom.modalOverlay = $('modalOverlay');
+        dom.modalTitle = $('modalTitle');
+        dom.modalBody = $('modalBody');
+        dom.modalActions = $('modalActions');
+
+        dom.presentOverlay = $('presentOverlay');
+        dom.presentStageWrap = $('presentStageWrap');
+
+        dom.stage.dataset.baseW = '960';
+        dom.stage.dataset.baseH = '540';
       }
 
       function boot() {
@@ -1776,6 +1799,9 @@
         initKeyboard();
         renderAll();
         setSaveInfo('Готово');
+
+        // Little hint for help
+        dom.zoomInfo.textContent = 'Полотно: 16:9 (двічі клік — підказка “Об’єкт”)';
       }
 
       return { boot };
