@@ -377,11 +377,6 @@
   <script>
     /**************
      * SLAYDYK Kids v2.1 (fixed)
-     * Fixes:
-     * - Text in templates is editable (no rerender on focus)
-     * - Drag/resize works (no rerender on pointermove)
-     * - Confirm modals before delete
-     * - Help for “Об’єкт” tools
      **************/
 
     const STORAGE_KEY = 'slidyk_kids_v2';
@@ -450,20 +445,14 @@
     }
 
     const App = (() => {
-      /** @type {{slides:any[], current:number, selected:number|null}} */
       let state;
-
-      // history
       let undoStack = [];
       let redoStack = [];
-
-      // DOM
       const dom = {};
-      const elDomMap = new Map(); // id -> .el element
+      const elDomMap = new Map();
 
-      // transient pointer state
       const pointer = {
-        mode: 'none', // none | drag | resize
+        mode: 'none',
         elId: null,
         handle: null,
         startX: 0,
@@ -472,9 +461,8 @@
         startBox: null
       };
 
-      let colorMode = 'textColor'; // textColor | bg | fill | stroke
+      let colorMode = 'textColor';
       let clip = null;
-
       let saveTimer = null;
       let thumbsTimer = null;
 
@@ -572,7 +560,6 @@
         updateSelectionDom();
       }
 
-      /* Popovers */
       function initPopovers() {
         dom.colorGrid.innerHTML = '';
         COLORS.forEach(c => {
@@ -624,7 +611,6 @@
 
       function applyColor(color) {
         pushHistory('Колір');
-
         if (colorMode === 'bg') {
           slide().background = color;
           dom.stage.style.background = slide().background;
@@ -632,33 +618,27 @@
           scheduleSave('Збережено');
           return;
         }
-
         const el = selectedEl();
         if (!el) return;
-
         if (colorMode === 'textColor' && el.type === 'text') {
           el.style.color = color;
           const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
           if (textNode) textNode.style.color = color;
         }
-
         if (colorMode === 'fill' && el.type === 'shape') {
           el.style.fill = color;
           const shapeNode = elDomMap.get(el.id)?.querySelector('svg *');
           if (shapeNode) shapeNode.setAttribute('fill', color);
         }
-
         if (colorMode === 'stroke' && el.type === 'shape') {
           el.style.stroke = color;
           const shapeNode = elDomMap.get(el.id)?.querySelector('svg *');
           if (shapeNode) shapeNode.setAttribute('stroke', color);
         }
-
         renderThumbnails();
         scheduleSave('Збережено');
       }
 
-      /* Modal helpers */
       function openModal({ title, bodyHTML, okText = 'Добре', cancelText = 'Скасувати', onOk, showActions = true }) {
         dom.modalTitle.textContent = title;
         dom.modalBody.innerHTML = bodyHTML;
@@ -682,7 +662,6 @@
         });
       }
 
-      /* Rendering */
       function renderAll() {
         renderThumbnails();
         renderStage();
@@ -690,110 +669,55 @@
 
       function renderThumbnails() {
         dom.slideList.innerHTML = '';
-
         state.slides.forEach((s, idx) => {
           const wrap = document.createElement('div');
           wrap.className = 'space-y-2';
-
           const head = document.createElement('div');
           head.className = 'flex items-center justify-between';
-
           const label = document.createElement('div');
           label.className = 'text-[10px] font-black uppercase tracking-widest text-slate-500';
           label.textContent = `Слайд ${idx + 1}`;
-
           const actions = document.createElement('div');
           actions.className = 'flex gap-1';
-
           const btn = (icon, title, cb) => {
             const b = document.createElement('button');
             b.className = 'p-2 border-2 border-slate-900 bg-white sharp hover:bg-slate-900 hover:text-white transition-all';
-            b.innerHTML = icon;
-            b.title = title;
+            b.innerHTML = icon; b.title = title;
             b.addEventListener('click', (e) => { e.stopPropagation(); cb(); });
             return b;
           };
-
           actions.appendChild(btn('<i class="fa-regular fa-copy"></i>', 'Дублювати', () => duplicateSlide(idx)));
           actions.appendChild(btn('<i class="fa-regular fa-trash-can"></i>', 'Видалити', () => confirmDeleteSlide(idx)));
-
-          head.appendChild(label);
-          head.appendChild(actions);
-
+          head.appendChild(label); head.appendChild(actions);
           const thumb = document.createElement('div');
           thumb.className = 'thumb sharp ' + (idx === state.current ? 'active' : '');
           thumb.addEventListener('click', () => {
-            state.current = idx;
-            state.selected = null;
-            closePopovers();
-            renderAll();
-            scheduleSave('Вибрано');
+            state.current = idx; state.selected = null;
+            closePopovers(); renderAll(); scheduleSave('Вибрано');
           });
-
           const mini = document.createElement('div');
-          mini.className = 'mini';
-          mini.style.background = s.background;
-
+          mini.className = 'mini'; mini.style.background = s.background;
           const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
           els.forEach(el => {
             const d = document.createElement('div');
-            d.style.position = 'absolute';
-            d.style.left = el.x + 'px';
-            d.style.top = el.y + 'px';
-            d.style.width = el.w + 'px';
-            d.style.height = el.h + 'px';
-            d.style.overflow = 'hidden';
-
+            d.style.position = 'absolute'; d.style.left = el.x + 'px'; d.style.top = el.y + 'px'; d.style.width = el.w + 'px'; d.style.height = el.h + 'px'; d.style.overflow = 'hidden';
             if (el.type === 'text') {
-              d.style.fontSize = (el.style.fontSize || 28) + 'px';
-              d.style.color = el.style.color || '#111827';
-              d.style.fontWeight = el.style.bold ? '900' : '700';
-              d.style.fontStyle = el.style.italic ? 'italic' : 'normal';
-              d.style.textDecoration = el.style.underline ? 'underline' : 'none';
-              d.style.textAlign = el.style.align || 'left';
-              d.style.whiteSpace = 'pre-wrap';
-              d.style.padding = '8px';
-              d.textContent = el.content || '';
+              d.style.fontSize = (el.style.fontSize || 28) + 'px'; d.style.color = el.style.color || '#111827'; d.style.fontWeight = el.style.bold ? '900' : '700'; d.style.fontStyle = el.style.italic ? 'italic' : 'normal'; d.style.textDecoration = el.style.underline ? 'underline' : 'none'; d.style.textAlign = el.style.align || 'left'; d.style.whiteSpace = 'pre-wrap'; d.style.padding = '8px'; d.textContent = el.content || '';
             }
-
             if (el.type === 'image') {
-              const img = document.createElement('img');
-              img.src = el.content;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.objectFit = 'cover';
-              d.appendChild(img);
+              const img = document.createElement('img'); img.src = el.content; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; d.appendChild(img);
             }
-
             if (el.type === 'shape') {
-              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-              svg.setAttribute('width', '100%');
-              svg.setAttribute('height', '100%');
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
               const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
-              if (el.shape === 'circle') {
-                shape.setAttribute('cx', '50%');
-                shape.setAttribute('cy', '50%');
-                shape.setAttribute('rx', '48%');
-                shape.setAttribute('ry', '48%');
-              } else {
-                shape.setAttribute('x', '2%');
-                shape.setAttribute('y', '2%');
-                shape.setAttribute('width', '96%');
-                shape.setAttribute('height', '96%');
-              }
-              shape.setAttribute('fill', el.style.fill || '#60a5fa');
-              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
-              shape.setAttribute('stroke-width', '8');
-              svg.appendChild(shape);
-              d.appendChild(svg);
+              if (el.shape === 'circle') { shape.setAttribute('cx', '50%'); shape.setAttribute('cy', '50%'); shape.setAttribute('rx', '48%'); shape.setAttribute('ry', '48%'); }
+              else { shape.setAttribute('x', '2%'); shape.setAttribute('y', '2%'); shape.setAttribute('width', '96%'); shape.setAttribute('height', '96%'); }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa'); shape.setAttribute('stroke', el.style.stroke || '#0f172a'); shape.setAttribute('stroke-width', '8');
+              svg.appendChild(shape); d.appendChild(svg);
             }
-
             mini.appendChild(d);
           });
-
-          thumb.appendChild(mini);
-          wrap.appendChild(head);
-          wrap.appendChild(thumb);
+          thumb.appendChild(mini); wrap.appendChild(head); wrap.appendChild(thumb);
           dom.slideList.appendChild(wrap);
         });
       }
@@ -801,162 +725,78 @@
       function renderStage() {
         dom.stage.innerHTML = '';
         elDomMap.clear();
-
         dom.stage.style.background = slide().background;
-
         const els = [...elements()].sort((a,b) => (a.z??1) - (b.z??1));
         els.forEach(el => {
           const w = document.createElement('div');
           w.className = 'el sharp' + (state.selected === el.id ? ' selected' : '');
-          w.dataset.id = String(el.id);
-          w.style.left = el.x + 'px';
-          w.style.top = el.y + 'px';
-          w.style.width = el.w + 'px';
-          w.style.height = el.h + 'px';
-          w.style.zIndex = String(el.z || 1);
-
+          w.dataset.id = String(el.id); w.style.left = el.x + 'px'; w.style.top = el.y + 'px'; w.style.width = el.w + 'px'; w.style.height = el.h + 'px'; w.style.zIndex = String(el.z || 1);
           const content = document.createElement('div');
           content.className = 'content sharp';
-
           if (el.type === 'text') {
             const t = document.createElement('div');
-            t.className = 'textBox';
-            t.contentEditable = 'true';
-            t.spellcheck = false;
-            t.textContent = el.content || '';
+            t.className = 'textBox'; t.contentEditable = 'true'; t.spellcheck = false; t.textContent = el.content || '';
             applyTextStyleToDom(t, el);
-
-            // IMPORTANT: Do not re-render while typing.
-            t.addEventListener('input', () => {
-              el.content = t.textContent || '';
-              scheduleSave('Збережено');
-              debounceThumbs();
-            });
-
-            // Click inside text selects but does NOT re-render.
-            t.addEventListener('pointerdown', (e) => {
-              e.stopPropagation();
-              selectElement(el.id);
-            });
-
+            t.addEventListener('input', () => { el.content = t.textContent || ''; scheduleSave('Збережено'); debounceThumbs(); });
+            t.addEventListener('pointerdown', (e) => { e.stopPropagation(); selectElement(el.id); });
             content.appendChild(t);
           }
-
           if (el.type === 'image') {
-            const img = document.createElement('img');
-            img.src = el.content;
-            img.className = 'sharp';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-            img.draggable = false;
+            const img = document.createElement('img'); img.src = el.content; img.className = 'sharp'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; img.draggable = false;
             content.appendChild(img);
           }
-
           if (el.type === 'shape') {
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('width', '100%');
-            svg.setAttribute('height', '100%');
-            svg.setAttribute('class', 'shape');
-
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('class', 'shape');
             const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
-            if (el.shape === 'circle') {
-              shape.setAttribute('cx', '50%');
-              shape.setAttribute('cy', '50%');
-              shape.setAttribute('rx', '48%');
-              shape.setAttribute('ry', '48%');
-            } else {
-              shape.setAttribute('x', '2%');
-              shape.setAttribute('y', '2%');
-              shape.setAttribute('width', '96%');
-              shape.setAttribute('height', '96%');
-            }
-            shape.setAttribute('fill', el.style.fill || '#60a5fa');
-            shape.setAttribute('stroke', el.style.stroke || '#0f172a');
-            shape.setAttribute('stroke-width', '10');
-            svg.appendChild(shape);
-            content.appendChild(svg);
+            if (el.shape === 'circle') { shape.setAttribute('cx', '50%'); shape.setAttribute('cy', '50%'); shape.setAttribute('rx', '48%'); shape.setAttribute('ry', '48%'); }
+            else { shape.setAttribute('x', '2%'); shape.setAttribute('y', '2%'); shape.setAttribute('width', '96%'); shape.setAttribute('height', '96%'); }
+            shape.setAttribute('fill', el.style.fill || '#60a5fa'); shape.setAttribute('stroke', el.style.stroke || '#0f172a'); shape.setAttribute('stroke-width', '10');
+            svg.appendChild(shape); content.appendChild(svg);
           }
-
           w.appendChild(content);
-
-          // handles
           const handles = document.createElement('div');
           handles.className = 'handles';
           const pos = ['nw','n','ne','e','se','s','sw','w'];
           pos.forEach(p => {
-            const h = document.createElement('div');
-            h.className = `handle ${p} sharp`;
-            h.dataset.handle = p;
+            const h = document.createElement('div'); h.className = `handle ${p} sharp`; h.dataset.handle = p;
             h.addEventListener('pointerdown', (e) => onHandlePointerDown(e, el.id, p));
             handles.appendChild(h);
           });
           w.appendChild(handles);
-
-          // drag/select (IMPORTANT: do not re-render on move)
           w.addEventListener('pointerdown', (e) => onElementPointerDown(e, el.id));
-
-          elDomMap.set(el.id, w);
-          dom.stage.appendChild(w);
+          elDomMap.set(el.id, w); dom.stage.appendChild(w);
         });
-
         updateSelectionDom();
       }
 
-      /* Pointer logic (no rerender during move) */
       function onElementPointerDown(e, id) {
-        // If inside text area -> typing, no drag
         if (e.target && e.target.classList && e.target.classList.contains('textBox')) return;
-
-        e.stopPropagation();
-        selectElement(id);
-
+        e.stopPropagation(); selectElement(id);
         const el = elements().find(x => x.id === id);
         const node = elDomMap.get(id);
         if (!el || !node) return;
-
         pushHistory('Переміщення');
-
         const p = toStagePoint(e.clientX, e.clientY);
-        pointer.mode = 'drag';
-        pointer.elId = id;
-        pointer.dragOffset = { x: p.x - el.x, y: p.y - el.y };
-
-        node.setPointerCapture(e.pointerId);
-        node.classList.add('dragging');
-
+        pointer.mode = 'drag'; pointer.elId = id; pointer.dragOffset = { x: p.x - el.x, y: p.y - el.y };
+        node.setPointerCapture(e.pointerId); node.classList.add('dragging');
         const move = (ev) => onPointerMove(ev);
         const up = (ev) => onPointerUp(ev, move, up);
-
         node.addEventListener('pointermove', move);
         node.addEventListener('pointerup', up, { once: true });
         node.addEventListener('pointercancel', up, { once: true });
       }
 
       function onHandlePointerDown(e, id, handle) {
-        e.stopPropagation();
-        e.preventDefault();
-        selectElement(id);
-
+        e.stopPropagation(); e.preventDefault(); selectElement(id);
         const el = elements().find(x => x.id === id);
         const node = elDomMap.get(id);
         if (!el || !node) return;
-
         pushHistory('Зміна розміру');
-
         const p = toStagePoint(e.clientX, e.clientY);
-        pointer.mode = 'resize';
-        pointer.elId = id;
-        pointer.handle = handle;
-        pointer.startX = p.x;
-        pointer.startY = p.y;
-        pointer.startBox = { x: el.x, y: el.y, w: el.w, h: el.h };
-
+        pointer.mode = 'resize'; pointer.elId = id; pointer.handle = handle; pointer.startX = p.x; pointer.startY = p.y; pointer.startBox = { x: el.x, y: el.y, w: el.w, h: el.h };
         node.setPointerCapture(e.pointerId);
-
         const move = (ev) => onPointerMove(ev);
         const up = (ev) => onPointerUp(ev, move, up);
-
         node.addEventListener('pointermove', move);
         node.addEventListener('pointerup', up, { once: true });
         node.addEventListener('pointercancel', up, { once: true });
@@ -966,73 +806,40 @@
         const el = elements().find(x => x.id === pointer.elId);
         const node = elDomMap.get(pointer.elId);
         if (!el || !node) return;
-
         const p = toStagePoint(e.clientX, e.clientY);
         const baseW = Number(dom.stage.dataset.baseW);
         const baseH = Number(dom.stage.dataset.baseH);
-
         if (pointer.mode === 'drag') {
-          const nx = p.x - pointer.dragOffset.x;
-          const ny = p.y - pointer.dragOffset.y;
-          el.x = clamp(nx, 0, baseW - el.w);
-          el.y = clamp(ny, 0, baseH - el.h);
-          node.style.left = el.x + 'px';
-          node.style.top = el.y + 'px';
+          const nx = p.x - pointer.dragOffset.x; const ny = p.y - pointer.dragOffset.y;
+          el.x = clamp(nx, 0, baseW - el.w); el.y = clamp(ny, 0, baseH - el.h);
+          node.style.left = el.x + 'px'; node.style.top = el.y + 'px';
           return;
         }
-
         if (pointer.mode === 'resize' && pointer.startBox) {
-          const dx = p.x - pointer.startX;
-          const dy = p.y - pointer.startY;
+          const dx = p.x - pointer.startX; const dy = p.y - pointer.startY;
           let { x, y, w, h } = pointer.startBox;
-
-          const minW = 40;
-          const minH = 30;
+          const minW = 40; const minH = 30;
           const has = (s) => pointer.handle.includes(s);
-
-          if (has('e')) w = w + dx;
-          if (has('s')) h = h + dy;
-          if (has('w')) { x = x + dx; w = w - dx; }
-          if (has('n')) { y = y + dy; h = h - dy; }
-
-          w = Math.max(minW, w);
-          h = Math.max(minH, h);
-          x = clamp(x, 0, baseW - w);
-          y = clamp(y, 0, baseH - h);
-
+          if (has('e')) w = w + dx; if (has('s')) h = h + dy; if (has('w')) { x = x + dx; w = w - dx; } if (has('n')) { y = y + dy; h = h - dy; }
+          w = Math.max(minW, w); h = Math.max(minH, h);
+          x = clamp(x, 0, baseW - w); y = clamp(y, 0, baseH - h);
           el.x = x; el.y = y; el.w = w; el.h = h;
-          node.style.left = el.x + 'px';
-          node.style.top = el.y + 'px';
-          node.style.width = el.w + 'px';
-          node.style.height = el.h + 'px';
+          node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; node.style.width = el.w + 'px'; node.style.height = el.h + 'px';
         }
       }
 
       function onPointerUp(e, moveHandler, upHandler) {
         const node = elDomMap.get(pointer.elId);
-        if (node) {
-          node.classList.remove('dragging');
-          if (moveHandler) node.removeEventListener('pointermove', moveHandler);
-        }
-
-        pointer.mode = 'none';
-        pointer.elId = null;
-        pointer.handle = null;
-        pointer.startBox = null;
-
-        normalizeZ(slide());
-        renderThumbnails();
-        scheduleSave('Збережено');
+        if (node) { node.classList.remove('dragging'); if (moveHandler) node.removeEventListener('pointermove', moveHandler); }
+        pointer.mode = 'none'; pointer.elId = null; pointer.handle = null; pointer.startBox = null;
+        normalizeZ(slide()); renderThumbnails(); scheduleSave('Збережено');
       }
 
-      /* Slide ops */
       function addSlide() {
         pushHistory('Новий слайд');
         state.slides.push({ id: uid(), background: '#ffffff', elements: [] });
-        state.current = state.slides.length - 1;
-        state.selected = null;
-        renderAll();
-        scheduleSave('Збережено');
+        state.current = state.slides.length - 1; state.selected = null;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function confirmDeleteSlide(idx = state.current) {
@@ -1040,105 +847,69 @@
           openModal({ title: 'Не можна', bodyHTML: '<p class="text-sm font-bold text-slate-700">Має бути хоча б 1 слайд 🙂</p>', showActions: false });
           return;
         }
-        confirmAction({
-          title: 'ВИДАЛИТИ СЛАЙД',
-          message: `Точно видалити слайд ${idx + 1}?`,
-          okText: 'Так, видалити',
-          cancelText: 'Ні',
-          onYes: () => deleteSlide(idx)
-        });
+        confirmAction({ title: 'ВИДАЛИТИ СЛАЙД', message: `Точно видалити слайд ${idx + 1}?`, okText: 'Так, видалити', cancelText: 'Ні', onYes: () => deleteSlide(idx) });
       }
 
       function deleteSlide(idx = state.current) {
         if (state.slides.length <= 1) return;
         pushHistory('Видалити слайд');
         state.slides.splice(idx, 1);
-        state.current = clamp(state.current, 0, state.slides.length - 1);
-        state.selected = null;
-        renderAll();
-        scheduleSave('Збережено');
+        state.current = clamp(state.current, 0, state.slides.length - 1); state.selected = null;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function duplicateSlide(idx = state.current) {
         pushHistory('Дублювати слайд');
         const copy = deepClone(state.slides[idx]);
-        copy.id = uid();
-        copy.elements.forEach(e => e.id = uid());
+        copy.id = uid(); copy.elements.forEach(e => e.id = uid());
         state.slides.splice(idx + 1, 0, copy);
-        state.current = idx + 1;
-        state.selected = null;
-        renderAll();
-        scheduleSave('Збережено');
+        state.current = idx + 1; state.selected = null;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function moveSlide(delta) {
-        const i = state.current;
-        const j = i + delta;
+        const i = state.current; const j = i + delta;
         if (j < 0 || j >= state.slides.length) return;
         pushHistory('Переставити слайд');
-        const tmp = state.slides[i];
-        state.slides[i] = state.slides[j];
-        state.slides[j] = tmp;
-        state.current = j;
-        renderAll();
-        scheduleSave('Збережено');
+        const tmp = state.slides[i]; state.slides[i] = state.slides[j]; state.slides[j] = tmp;
+        state.current = j; renderAll(); scheduleSave('Збережено');
       }
 
-      /* Element ops */
       function addText() {
         pushHistory('Текст');
         const e = {
-          id: uid(), type: 'text',
-          x: 180, y: 160, w: 600, h: 120,
-          z: elements().length + 1,
+          id: uid(), type: 'text', x: 180, y: 160, w: 600, h: 120, z: elements().length + 1,
           content: 'Введи текст…',
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
           shape: 'rect'
         };
-        elements().push(e);
-        state.selected = e.id;
-        renderAll();
-        scheduleSave('Збережено');
-
-        requestAnimationFrame(() => {
-          const node = elDomMap.get(e.id)?.querySelector('.textBox');
-          if (node) {
-            node.focus();
-            document.execCommand('selectAll', false, null);
-          }
-        });
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave('Збережено');
+        requestAnimationFrame(() => { const node = elDomMap.get(e.id)?.querySelector('.textBox'); if (node) { node.focus(); document.execCommand('selectAll', false, null); } });
       }
 
       function addEmoji(emo) {
         pushHistory('Смайлик');
         const e = {
-          id: uid(), type: 'text',
-          x: 420, y: 220, w: 120, h: 120,
-          z: elements().length + 1,
+          id: uid(), type: 'text', x: 420, y: 220, w: 120, h: 120, z: elements().length + 1,
           content: emo,
           style: { fontSize: 56, color: '#111827', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
           shape: 'rect'
         };
-        elements().push(e);
-        state.selected = e.id;
-        renderAll();
-        scheduleSave('Збережено');
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function addShape(kind) {
         pushHistory('Фігура');
         const e = {
-          id: uid(), type: 'shape',
-          x: 260, y: 170, w: 440, h: 240,
-          z: elements().length + 1,
+          id: uid(), type: 'shape', x: 260, y: 170, w: 440, h: 240, z: elements().length + 1,
           content: '',
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
           shape: kind
         };
-        elements().push(e);
-        state.selected = e.id;
-        renderAll();
-        scheduleSave('Збережено');
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function addImage() {
@@ -1151,27 +922,12 @@
             <div class="text-[11px] font-bold text-slate-500">Порада: краще обирати файл з комп’ютера 🙂</div>
           </div>
         `;
-
-        openModal({
-          title: 'ДОДАТИ ФОТО',
-          bodyHTML: html,
-          okText: 'Додати',
-          cancelText: 'Закрити',
-          onOk: () => {
-            const url = $('imgUrl').value.trim();
-            if (url) insertImage(url);
-          }
-        });
-
+        openModal({ title: 'ДОДАТИ ФОТО', bodyHTML: html, okText: 'Додати', cancelText: 'Закрити', onOk: () => { const url = $('imgUrl').value.trim(); if (url) insertImage(url); } });
         $('pickFile').onclick = () => $('fileInput').click();
         $('fileInput').onchange = (ev) => {
-          const f = ev.target.files && ev.target.files[0];
-          if (!f) return;
+          const f = ev.target.files && ev.target.files[0]; if (!f) return;
           const reader = new FileReader();
-          reader.onload = () => {
-            insertImage(String(reader.result));
-            closeModal();
-          };
+          reader.onload = () => { insertImage(String(reader.result)); closeModal(); };
           reader.readAsDataURL(f);
         };
       }
@@ -1179,114 +935,70 @@
       function insertImage(src) {
         pushHistory('Фото');
         const e = {
-          id: uid(), type: 'image',
-          x: 220, y: 140, w: 520, h: 300,
-          z: elements().length + 1,
+          id: uid(), type: 'image', x: 220, y: 140, w: 520, h: 300, z: elements().length + 1,
           content: src,
           style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
           shape: 'rect'
         };
-        elements().push(e);
-        state.selected = e.id;
-        renderAll();
-        scheduleSave('Збережено');
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave('Збережено');
       }
 
       function confirmDeleteSelected() {
-        const el = selectedEl();
-        if (!el) return;
+        const el = selectedEl(); if (!el) return;
         const name = el.type === 'text' ? 'текст' : el.type === 'image' ? 'фото' : 'фігуру';
-        confirmAction({
-          title: 'ВИДАЛИТИ ОБ’ЄКТ',
-          message: `Точно видалити ${name}?`,
-          okText: 'Так, видалити',
-          cancelText: 'Ні',
-          onYes: () => deleteSelected()
-        });
+        confirmAction({ title: 'ВИДАЛИТИ ОБ’ЄКТ', message: `Точно видалити ${name}?`, okText: 'Так, видалити', cancelText: 'Ні', onYes: () => deleteSelected() });
       }
 
       function deleteSelected() {
-        const el = selectedEl();
-        if (!el) return;
+        const el = selectedEl(); if (!el) return;
         pushHistory('Видалити об’єкт');
         slide().elements = slide().elements.filter(e => e.id !== el.id);
-        state.selected = null;
-        normalizeZ(slide());
-        renderAll();
-        scheduleSave('Збережено');
+        state.selected = null; normalizeZ(slide());
+        renderAll(); scheduleSave('Збережено');
       }
 
       function duplicateSelected() {
-        const el = selectedEl();
-        if (!el) return;
+        const el = selectedEl(); if (!el) return;
         pushHistory('Дублювати об’єкт');
-        const copy = deepClone(el);
-        copy.id = uid();
-        copy.x = clamp(copy.x + 20, 0, 960 - copy.w);
-        copy.y = clamp(copy.y + 20, 0, 540 - copy.h);
-        copy.z = elements().length + 1;
-        elements().push(copy);
-        state.selected = copy.id;
-        normalizeZ(slide());
-        renderAll();
-        scheduleSave('Збережено');
+        const copy = deepClone(el); copy.id = uid(); copy.x = clamp(copy.x + 20, 0, 960 - copy.w); copy.y = clamp(copy.y + 20, 0, 540 - copy.h); copy.z = elements().length + 1;
+        elements().push(copy); state.selected = copy.id; normalizeZ(slide());
+        renderAll(); scheduleSave('Збережено');
       }
 
       function bringToFront() {
-        const el = selectedEl();
-        if (!el) return;
-        pushHistory('На передній план');
-        el.z = elements().length + 1;
-        normalizeZ(slide());
-        renderAll();
-        scheduleSave('Збережено');
+        const el = selectedEl(); if (!el) return;
+        pushHistory('На передній план'); el.z = elements().length + 1; normalizeZ(slide());
+        renderAll(); scheduleSave('Збережено');
       }
 
       function sendToBack() {
-        const el = selectedEl();
-        if (!el) return;
-        pushHistory('На задній план');
-        el.z = 0;
-        normalizeZ(slide());
-        renderAll();
-        scheduleSave('Збережено');
+        const el = selectedEl(); if (!el) return;
+        pushHistory('На задній план'); el.z = 0; normalizeZ(slide());
+        renderAll(); scheduleSave('Збережено');
       }
 
-      /* Text style ops */
       function setFontSize(px) {
-        const el = selectedEl();
-        if (!el || el.type !== 'text') return;
-        pushHistory('Розмір тексту');
-        el.style.fontSize = Number(px);
-        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
-        if (textNode) textNode.style.fontSize = el.style.fontSize + 'px';
-        debounceThumbs();
-        scheduleSave('Збережено');
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory('Розмір тексту'); el.style.fontSize = Number(px);
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox'); if (textNode) textNode.style.fontSize = el.style.fontSize + 'px';
+        debounceThumbs(); scheduleSave('Збережено');
       }
 
       function toggleTextStyle(key) {
-        const el = selectedEl();
-        if (!el || el.type !== 'text') return;
-        pushHistory('Формат');
-        el.style[key] = !el.style[key];
-        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
-        if (textNode) applyTextStyleToDom(textNode, el);
-        debounceThumbs();
-        scheduleSave('Збережено');
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory('Формат'); el.style[key] = !el.style[key];
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox'); if (textNode) applyTextStyleToDom(textNode, el);
+        debounceThumbs(); scheduleSave('Збережено');
       }
 
       function setAlign(align) {
-        const el = selectedEl();
-        if (!el || el.type !== 'text') return;
-        pushHistory('Вирівнювання');
-        el.style.align = align;
-        const textNode = elDomMap.get(el.id)?.querySelector('.textBox');
-        if (textNode) textNode.style.textAlign = align;
-        debounceThumbs();
-        scheduleSave('Збережено');
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory('Вирівнювання'); el.style.align = align;
+        const textNode = elDomMap.get(el.id)?.querySelector('.textBox'); if (textNode) textNode.style.textAlign = align;
+        debounceThumbs(); scheduleSave('Збережено');
       }
 
-      /* Templates */
       function openTemplates() {
         const body = `
           <div class="grid grid-cols-1 gap-2">
@@ -1296,359 +1008,125 @@
           </div>
           <div class="mt-4 text-[11px] font-bold text-slate-500">Після вибору макета — можна друкувати, пересувати та змінювати 🙂</div>
         `;
-
         openModal({ title: 'МАКЕТИ', bodyHTML: body, showActions: false });
-
         dom.modalBody.querySelectorAll('.tpl').forEach(btn => {
-          btn.addEventListener('click', () => {
-            applyTemplate(btn.dataset.tpl);
-            closeModal();
-          });
+          btn.addEventListener('click', () => { applyTemplate(btn.dataset.tpl); closeModal(); });
         });
       }
 
       function applyTemplate(kind) {
         pushHistory('Макет');
-        const s = slide();
-        s.elements = [];
-        s.background = '#ffffff';
-
+        const s = slide(); s.elements = []; s.background = '#ffffff';
         if (kind === 'title') {
-          s.elements.push({
-            id: uid(), type: 'shape', x: 60, y: 60, w: 840, h: 420, z: 1, content: '', shape: 'rect',
-            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#dbeafe', stroke: '#1e40af' }
-          });
-          s.elements.push({
-            id: uid(), type: 'text', x: 120, y: 170, w: 720, h: 160, z: 2, content: 'НАЗВА ПРЕЗЕНТАЦІЇ', shape: 'rect',
-            style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
-          });
-          s.elements.push({
-            id: uid(), type: 'text', x: 220, y: 340, w: 520, h: 80, z: 3, content: 'Автор: …', shape: 'rect',
-            style: { fontSize: 28, color: '#334155', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
-          });
+          s.elements.push({ id: uid(), type: 'shape', x: 60, y: 60, w: 840, h: 420, z: 1, content: '', shape: 'rect', style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#dbeafe', stroke: '#1e40af' } });
+          s.elements.push({ id: uid(), type: 'text', x: 120, y: 170, w: 720, h: 160, z: 2, content: 'НАЗВА ПРЕЗЕНТАЦІЇ', shape: 'rect', style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' } });
+          s.elements.push({ id: uid(), type: 'text', x: 220, y: 340, w: 520, h: 80, z: 3, content: 'Автор: …', shape: 'rect', style: { fontSize: 28, color: '#334155', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' } });
         }
-
         if (kind === 'two') {
-          s.elements.push({
-            id: uid(), type: 'text', x: 60, y: 60, w: 840, h: 80, z: 1, content: 'ЗАГОЛОВОК', shape: 'rect',
-            style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
-          });
-          s.elements.push({
-            id: uid(), type: 'text', x: 60, y: 160, w: 420, h: 340, z: 2, content: '• Пункт 1
+          s.elements.push({ id: uid(), type: 'text', x: 60, y: 60, w: 840, h: 80, z: 1, content: 'ЗАГОЛОВОК', shape: 'rect', style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' } });
+          s.elements.push({ id: uid(), type: 'text', x: 60, y: 160, w: 420, h: 340, z: 2, content: `• Пункт 1
 • Пункт 2
-• Пункт 3', shape: 'rect',
-            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
-          });
-          s.elements.push({
-            id: uid(), type: 'shape', x: 510, y: 160, w: 390, h: 340, z: 3, content: '', shape: 'rect',
-            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#fde68a', stroke: '#92400e' }
-          });
-          s.elements.push({
-            id: uid(), type: 'text', x: 540, y: 300, w: 330, h: 120, z: 4, content: 'Додай фото сюди', shape: 'rect',
-            style: { fontSize: 28, color: '#92400e', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
-          });
+• Пункт 3`, shape: 'rect', style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' } });
+          s.elements.push({ id: uid(), type: 'shape', x: 510, y: 160, w: 390, h: 340, z: 3, content: '', shape: 'rect', style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#fde68a', stroke: '#92400e' } });
+          s.elements.push({ id: uid(), type: 'text', x: 540, y: 300, w: 330, h: 120, z: 4, content: 'Додай фото сюди', shape: 'rect', style: { fontSize: 28, color: '#92400e', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' } });
         }
-
         if (kind === 'three') {
-          s.elements.push({
-            id: uid(), type: 'text', x: 60, y: 50, w: 840, h: 70, z: 1, content: 'МІЙ СЛАЙД', shape: 'rect',
-            style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
-          });
-
-          const blocks = [
-            { x: 60,  fill: '#dcfce7', stroke: '#166534', title: 'Ідея 1' },
-            { x: 340, fill: '#dbeafe', stroke: '#1e40af', title: 'Ідея 2' },
-            { x: 620, fill: '#fae8ff', stroke: '#7e22ce', title: 'Ідея 3' }
-          ];
-
+          s.elements.push({ id: uid(), type: 'text', x: 60, y: 50, w: 840, h: 70, z: 1, content: 'МІЙ СЛАЙД', shape: 'rect', style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' } });
+          const blocks = [{ x: 60, fill: '#dcfce7', stroke: '#166534', title: 'Ідея 1' }, { x: 340, fill: '#dbeafe', stroke: '#1e40af', title: 'Ідея 2' }, { x: 620, fill: '#fae8ff', stroke: '#7e22ce', title: 'Ідея 3' }];
           blocks.forEach((b, i) => {
-            s.elements.push({
-              id: uid(), type: 'shape', x: b.x, y: 150, w: 280, h: 350, z: 2 + i, content: '', shape: 'rect',
-              style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: b.fill, stroke: b.stroke }
-            });
-            s.elements.push({
-              id: uid(), type: 'text', x: b.x + 20, y: 175, w: 240, h: 60, z: 10 + i, content: b.title, shape: 'rect',
-              style: { fontSize: 32, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
-            });
-            s.elements.push({
-              id: uid(), type: 'text', x: b.x + 20, y: 250, w: 240, h: 220, z: 20 + i, content: 'Напиши тут…', shape: 'rect',
-              style: { fontSize: 24, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
-            });
+            s.elements.push({ id: uid(), type: 'shape', x: b.x, y: 150, w: 280, h: 350, z: 2 + i, content: '', shape: 'rect', style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: b.fill, stroke: b.stroke } });
+            s.elements.push({ id: uid(), type: 'text', x: b.x + 20, y: 175, w: 240, h: 60, z: 10 + i, content: b.title, shape: 'rect', style: { fontSize: 32, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' } });
+            s.elements.push({ id: uid(), type: 'text', x: b.x + 20, y: 250, w: 240, h: 220, z: 20 + i, content: 'Напиши тут…', shape: 'rect', style: { fontSize: 24, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' } });
           });
         }
-
-        normalizeZ(s);
-        state.selected = null;
-        renderAll();
-        scheduleSave('Збережено');
+        normalizeZ(s); state.selected = null; renderAll(); scheduleSave('Збережено');
       }
 
-      /* Export PDF */
       async function exportPDF() {
-        const container = document.createElement('div');
-        container.style.width = '960px';
-
+        const container = document.createElement('div'); container.style.width = '960px';
         state.slides.forEach((s) => {
-          const page = document.createElement('div');
-          page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`;
-
+          const page = document.createElement('div'); page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`;
           const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
           els.forEach(el => {
-            const box = document.createElement('div');
-            box.style.position = 'absolute';
-            box.style.left = el.x + 'px';
-            box.style.top = el.y + 'px';
-            box.style.width = el.w + 'px';
-            box.style.height = el.h + 'px';
-
+            const box = document.createElement('div'); box.style.position = 'absolute'; box.style.left = el.x + 'px'; box.style.top = el.y + 'px'; box.style.width = el.w + 'px'; box.style.height = el.h + 'px';
             if (el.type === 'text') {
-              box.style.fontSize = (el.style.fontSize || 28) + 'px';
-              box.style.color = el.style.color || '#111827';
-              box.style.fontWeight = el.style.bold ? '900' : '700';
-              box.style.fontStyle = el.style.italic ? 'italic' : 'normal';
-              box.style.textDecoration = el.style.underline ? 'underline' : 'none';
-              box.style.textAlign = el.style.align || 'left';
-              box.style.whiteSpace = 'pre-wrap';
-              box.style.padding = '8px';
-              box.textContent = el.content || '';
+              box.style.fontSize = (el.style.fontSize || 28) + 'px'; box.style.color = el.style.color || '#111827'; box.style.fontWeight = el.style.bold ? '900' : '700'; box.style.fontStyle = el.style.italic ? 'italic' : 'normal'; box.style.textDecoration = el.style.underline ? 'underline' : 'none'; box.style.textAlign = el.style.align || 'left'; box.style.whiteSpace = 'pre-wrap'; box.style.padding = '8px'; box.textContent = el.content || '';
             }
-
             if (el.type === 'image') {
-              const img = document.createElement('img');
-              img.src = el.content;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.objectFit = 'cover';
-              box.appendChild(img);
+              const img = document.createElement('img'); img.src = el.content; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; box.appendChild(img);
             }
-
             if (el.type === 'shape') {
-              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-              svg.setAttribute('width', '100%');
-              svg.setAttribute('height', '100%');
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
               const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
-              if (el.shape === 'circle') {
-                shape.setAttribute('cx', '50%');
-                shape.setAttribute('cy', '50%');
-                shape.setAttribute('rx', '48%');
-                shape.setAttribute('ry', '48%');
-              } else {
-                shape.setAttribute('x', '2%');
-                shape.setAttribute('y', '2%');
-                shape.setAttribute('width', '96%');
-                shape.setAttribute('height', '96%');
-              }
-              shape.setAttribute('fill', el.style.fill || '#60a5fa');
-              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
-              shape.setAttribute('stroke-width', '10');
-              svg.appendChild(shape);
-              box.appendChild(svg);
+              if (el.shape === 'circle') { shape.setAttribute('cx', '50%'); shape.setAttribute('cy', '50%'); shape.setAttribute('rx', '48%'); shape.setAttribute('ry', '48%'); }
+              else { shape.setAttribute('x', '2%'); shape.setAttribute('y', '2%'); shape.setAttribute('width', '96%'); shape.setAttribute('height', '96%'); }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa'); shape.setAttribute('stroke', el.style.stroke || '#0f172a'); shape.setAttribute('stroke-width', '10');
+              svg.appendChild(shape); box.appendChild(svg);
             }
-
             page.appendChild(box);
           });
-
           container.appendChild(page);
         });
-
-        await html2pdf()
-          .from(container)
-          .set({
-            margin: 0,
-            filename: 'slidyk_kids.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'px', format: [960, 540], orientation: 'landscape' }
-          })
-          .save();
+        await html2pdf().from(container).set({ margin: 0, filename: 'slidyk_kids.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [960, 540], orientation: 'landscape' } }).save();
       }
 
-      /* Presentation */
       const Present = {
-        idx: 0,
-        keyHandler: null,
+        idx: 0, keyHandler: null,
         start() {
-          this.idx = state.current;
-          dom.presentOverlay.style.display = 'block';
-          this.render();
+          this.idx = state.current; dom.presentOverlay.style.display = 'block'; this.render();
           this.keyHandler = (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-              if (this.idx < state.slides.length - 1) { this.idx++; this.render(); }
-              else this.stop();
-            }
-            if (e.key === 'ArrowLeft') {
-              if (this.idx > 0) { this.idx--; this.render(); }
-            }
+            if (e.key === 'ArrowRight' || e.key === ' ') { if (this.idx < state.slides.length - 1) { this.idx++; this.render(); } else this.stop(); }
+            if (e.key === 'ArrowLeft') { if (this.idx > 0) { this.idx--; this.render(); } }
             if (e.key === 'Escape') this.stop();
           };
           window.addEventListener('keydown', this.keyHandler);
         },
-        stop() {
-          dom.presentOverlay.style.display = 'none';
-          if (this.keyHandler) window.removeEventListener('keydown', this.keyHandler);
-          this.keyHandler = null;
-        },
+        stop() { dom.presentOverlay.style.display = 'none'; if (this.keyHandler) window.removeEventListener('keydown', this.keyHandler); this.keyHandler = null; },
         render() {
           dom.presentStageWrap.innerHTML = '';
           const s = state.slides[this.idx];
-          const st = document.createElement('div');
-          st.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;border:10px solid #0f172a;`;
-
+          const st = document.createElement('div'); st.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;border:10px solid #0f172a;`;
           const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
           els.forEach(el => {
-            const box = document.createElement('div');
-            box.style.position = 'absolute';
-            box.style.left = el.x + 'px';
-            box.style.top = el.y + 'px';
-            box.style.width = el.w + 'px';
-            box.style.height = el.h + 'px';
-
+            const box = document.createElement('div'); box.style.position = 'absolute'; box.style.left = el.x + 'px'; box.style.top = el.y + 'px'; box.style.width = el.w + 'px'; box.style.height = el.h + 'px';
             if (el.type === 'text') {
-              box.style.fontSize = (el.style.fontSize || 28) + 'px';
-              box.style.color = el.style.color || '#fff';
-              box.style.fontWeight = el.style.bold ? '900' : '700';
-              box.style.fontStyle = el.style.italic ? 'italic' : 'normal';
-              box.style.textDecoration = el.style.underline ? 'underline' : 'none';
-              box.style.textAlign = el.style.align || 'left';
-              box.style.whiteSpace = 'pre-wrap';
-              box.style.padding = '8px';
-              box.textContent = el.content || '';
+              box.style.fontSize = (el.style.fontSize || 28) + 'px'; box.style.color = el.style.color || '#111827'; box.style.fontWeight = el.style.bold ? '900' : '700'; box.style.fontStyle = el.style.italic ? 'italic' : 'normal'; box.style.textDecoration = el.style.underline ? 'underline' : 'none'; box.style.textAlign = el.style.align || 'left'; box.style.whiteSpace = 'pre-wrap'; box.style.padding = '8px'; box.textContent = el.content || '';
             }
-
             if (el.type === 'image') {
-              const img = document.createElement('img');
-              img.src = el.content;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.objectFit = 'cover';
-              box.appendChild(img);
+              const img = document.createElement('img'); img.src = el.content; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; box.appendChild(img);
             }
-
             if (el.type === 'shape') {
-              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-              svg.setAttribute('width', '100%');
-              svg.setAttribute('height', '100%');
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
               const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
-              if (el.shape === 'circle') {
-                shape.setAttribute('cx', '50%');
-                shape.setAttribute('cy', '50%');
-                shape.setAttribute('rx', '48%');
-                shape.setAttribute('ry', '48%');
-              } else {
-                shape.setAttribute('x', '2%');
-                shape.setAttribute('y', '2%');
-                shape.setAttribute('width', '96%');
-                shape.setAttribute('height', '96%');
-              }
-              shape.setAttribute('fill', el.style.fill || '#60a5fa');
-              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
-              shape.setAttribute('stroke-width', '10');
-              svg.appendChild(shape);
-              box.appendChild(svg);
+              if (el.shape === 'circle') { shape.setAttribute('cx', '50%'); shape.setAttribute('cy', '50%'); shape.setAttribute('rx', '48%'); shape.setAttribute('ry', '48%'); }
+              else { shape.setAttribute('x', '2%'); shape.setAttribute('y', '2%'); shape.setAttribute('width', '96%'); shape.setAttribute('height', '96%'); }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa'); shape.setAttribute('stroke', el.style.stroke || '#0f172a'); shape.setAttribute('stroke-width', '10');
+              svg.appendChild(shape); box.appendChild(svg);
             }
-
             st.appendChild(box);
           });
-
           dom.presentStageWrap.appendChild(st);
         }
       };
 
-      function resetAll() {
-        confirmAction({
-          title: 'ОЧИСТИТИ ВСЕ',
-          message: 'Це видалить усі слайди на цьому пристрої. Продовжити?',
-          okText: 'Так, очистити',
-          cancelText: 'Ні',
-          onYes: () => {
-            localStorage.removeItem(STORAGE_KEY);
-            location.reload();
-          }
-        });
-      }
+      function resetAll() { confirmAction({ title: 'ОЧИСТИТИ ВСЕ', message: 'Це видалить усі слайди на цьому пристрої. Продовжити?', okText: 'Так, очистити', cancelText: 'Ні', onYes: () => { localStorage.removeItem(STORAGE_KEY); location.reload(); } }); }
+      function showObjectHelp() { openModal({ title: 'ПІДКАЗКА: Об’єкт', showActions: false, bodyHTML: `<div class="space-y-3 text-sm font-bold text-slate-700"><p><b>Заливка</b> — міняє колір фігури.</p><p><b>Контур</b> — колір обведення.</p><p><b>На передній план</b> — робить об’єкт "попереду".</p><p><b>На задній план</b> — ховає об’єкт "позаду".</p><p><b>Дублювати</b> — робить копію.</p><p><b>Видалити</b> — прибирає об’єкт.</p></div>` }); }
 
-      function showObjectHelp() {
-        openModal({
-          title: 'ПІДКАЗКА: Об’єкт',
-          showActions: false,
-          bodyHTML: `
-            <div class="space-y-3 text-sm font-bold text-slate-700">
-              <p><b>Заливка</b> — міняє колір фігури (працює тільки для прямокутника/кола).</p>
-              <p><b>Контур</b> — колір обведення фігури (також тільки для фігур).</p>
-              <p><b>На передній план</b> — робить об’єкт "попереду" інших.</p>
-              <p><b>На задній план</b> — ховає об’єкт "позаду" інших.</p>
-              <p><b>Дублювати</b> — робить копію (можна Ctrl+D).</p>
-              <p><b>Видалити</b> — прибирає об’єкт (Delete).</p>
-              <div class="mt-3 text-[12px] font-black text-slate-500">Лайфхак: рухай об’єкт стрілками (Shift = швидше)</div>
-            </div>
-          `
-        });
-      }
-
-      /* Keyboard shortcuts */
       function initKeyboard() {
         window.addEventListener('keydown', (e) => {
-          const active = document.activeElement;
-          const isTyping = active && active.classList && active.classList.contains('textBox');
-
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-            e.preventDefault();
-            if (e.shiftKey) redo(); else undo();
-            return;
-          }
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-            e.preventDefault();
-            redo();
-            return;
-          }
-
-          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
-            const el = selectedEl();
-            if (el) { clip = deepClone(el); setSaveInfo('Скопійовано'); }
-            return;
-          }
-          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-            if (clip) {
-              pushHistory('Вставити');
-              const copy = deepClone(clip);
-              copy.id = uid();
-              copy.x = clamp(copy.x + 24, 0, 960 - copy.w);
-              copy.y = clamp(copy.y + 24, 0, 540 - copy.h);
-              copy.z = elements().length + 1;
-              elements().push(copy);
-              state.selected = copy.id;
-              normalizeZ(slide());
-              renderAll();
-              scheduleSave('Збережено');
-            }
-            return;
-          }
-
-          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
-            e.preventDefault();
-            duplicateSelected();
-            return;
-          }
-
-          if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) {
-            confirmDeleteSelected();
-            return;
-          }
-
+          const active = document.activeElement; const isTyping = active && active.classList && active.classList.contains('textBox');
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { const el = selectedEl(); if (el) { clip = deepClone(el); setSaveInfo('Скопійовано'); } return; }
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') { if (clip) { pushHistory('Вставити'); const copy = deepClone(clip); copy.id = uid(); copy.x = clamp(copy.x + 24, 0, 960 - copy.w); copy.y = clamp(copy.y + 24, 0, 540 - copy.h); copy.z = elements().length + 1; elements().push(copy); state.selected = copy.id; normalizeZ(slide()); renderAll(); scheduleSave('Збережено'); } return; }
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+          if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) { confirmDeleteSelected(); return; }
           if (!isTyping && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-            const el = selectedEl();
-            if (!el) return;
-            e.preventDefault();
-            pushHistory('Крок');
-            const step = e.shiftKey ? 10 : 2;
-            if (e.key === 'ArrowUp') el.y = clamp(el.y - step, 0, 540 - el.h);
-            if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, 540 - el.h);
-            if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, 960 - el.w);
-            if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, 960 - el.w);
-            const node = elDomMap.get(el.id);
-            if (node) { node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; }
-            debounceThumbs();
-            scheduleSave('Збережено');
+            const el = selectedEl(); if (!el) return;
+            e.preventDefault(); pushHistory('Крок'); const step = e.shiftKey ? 10 : 2;
+            if (e.key === 'ArrowUp') el.y = clamp(el.y - step, 0, 540 - el.h); if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, 540 - el.h); if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, 960 - el.w); if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, 960 - el.w);
+            const node = elDomMap.get(el.id); if (node) { node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; }
+            debounceThumbs(); scheduleSave('Збережено');
           }
         });
       }
@@ -1656,157 +1134,49 @@
       function initState() {
         const saved = safeParse(localStorage.getItem(STORAGE_KEY), null);
         const norm = normalizeState(saved);
-        if (norm) {
-          state = norm;
-          undoStack = [JSON.stringify(state)];
-          redoStack = [];
-          return;
-        }
-
+        if (norm) { state = norm; undoStack = [JSON.stringify(state)]; redoStack = []; return; }
         state = {
-          slides: [
-            {
-              id: uid(),
-              background: '#ffffff',
-              elements: [
-                {
-                  id: uid(),
-                  type: 'text',
-                  x: 140,
-                  y: 130,
-                  w: 680,
-                  h: 140,
-                  z: 1,
-                  content: 'Привіт! 👋
-Напиши назву презентації',
-                  style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
-                  shape: 'rect'
-                }
-              ]
-            }
-          ],
-          current: 0,
-          selected: null
+          slides: [{ id: uid(), background: '#ffffff', elements: [{ id: uid(), type: 'text', x: 140, y: 130, w: 680, h: 140, z: 1, content: `Привіт! 👋
+Напиши назву презентації`, style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }, shape: 'rect' }] }],
+          current: 0, selected: null
         };
-
-        undoStack = [JSON.stringify(state)];
-        redoStack = [];
-        scheduleSave('Створено');
+        undoStack = [JSON.stringify(state)]; redoStack = []; scheduleSave('Створено');
       }
 
       function bindUI() {
-        // Header
-        $('btnPresent').onclick = () => Present.start();
-        $('btnPDF').onclick = () => exportPDF();
-        $('btnReset').onclick = () => resetAll();
-
-        // Sidebar
-        $('btnNewSlide').onclick = () => addSlide();
-        $('btnTemplates').onclick = () => openTemplates();
-        $('btnSlideUp').onclick = () => moveSlide(-1);
-        $('btnSlideDown').onclick = () => moveSlide(1);
-
-        // Toolbar slide
-        $('btnDupSlide').onclick = () => duplicateSlide();
-        $('btnDelSlide').onclick = () => confirmDeleteSlide();
-        $('btnBg').onclick = () => openColor('bg');
-
-        // Insert
-        $('btnAddText').onclick = () => addText();
-        $('btnAddImage').onclick = () => addImage();
-        $('btnEmoji').onclick = () => openEmoji();
-        $('btnShapeRect').onclick = () => addShape('rect');
-        $('btnShapeCircle').onclick = () => addShape('circle');
-
-        // Text
+        $('btnPresent').onclick = () => Present.start(); $('btnPDF').onclick = () => exportPDF(); $('btnReset').onclick = () => resetAll();
+        $('btnNewSlide').onclick = () => addSlide(); $('btnTemplates').onclick = () => openTemplates(); $('btnSlideUp').onclick = () => moveSlide(-1); $('btnSlideDown').onclick = () => moveSlide(1);
+        $('btnDupSlide').onclick = () => duplicateSlide(); $('btnDelSlide').onclick = () => confirmDeleteSlide(); $('btnBg').onclick = () => openColor('bg');
+        $('btnAddText').onclick = () => addText(); $('btnAddImage').onclick = () => addImage(); $('btnEmoji').onclick = () => openEmoji(); $('btnShapeRect').onclick = () => addShape('rect'); $('btnShapeCircle').onclick = () => addShape('circle');
         $('selFontSize').onchange = (e) => setFontSize(e.target.value);
-        $('btnBold').onclick = () => toggleTextStyle('bold');
-        $('btnItalic').onclick = () => toggleTextStyle('italic');
-        $('btnUnderline').onclick = () => toggleTextStyle('underline');
-        $('btnAlignLeft').onclick = () => setAlign('left');
-        $('btnAlignCenter').onclick = () => setAlign('center');
-        $('btnAlignRight').onclick = () => setAlign('right');
+        $('btnBold').onclick = () => toggleTextStyle('bold'); $('btnItalic').onclick = () => toggleTextStyle('italic'); $('btnUnderline').onclick = () => toggleTextStyle('underline');
+        $('btnAlignLeft').onclick = () => setAlign('left'); $('btnAlignCenter').onclick = () => setAlign('center'); $('btnAlignRight').onclick = () => setAlign('right');
         $('btnTextColor').onclick = () => openColor('textColor');
-
-        // Object
-        $('btnFill').onclick = () => openColor('fill');
-        $('btnStroke').onclick = () => openColor('stroke');
-        $('btnBringFront').onclick = () => bringToFront();
-        $('btnSendBack').onclick = () => sendToBack();
-        $('btnDupEl').onclick = () => duplicateSelected();
-        $('btnDelEl').onclick = () => confirmDeleteSelected();
-
-        // Add help to Object section via long-press/right-click on the label area
-        // (simple: shift+click on Object label area is hard; so use double click on status bar)
+        $('btnFill').onclick = () => openColor('fill'); $('btnStroke').onclick = () => openColor('stroke'); $('btnBringFront').onclick = () => bringToFront(); $('btnSendBack').onclick = () => sendToBack(); $('btnDupEl').onclick = () => duplicateSelected(); $('btnDelEl').onclick = () => confirmDeleteSelected();
         dom.zoomInfo.ondblclick = () => showObjectHelp();
-
-        // Popovers
-        $('btnClosePopover').onclick = () => closePopovers();
-        $('btnCloseEmoji').onclick = () => closePopovers();
-
-        // Modal
+        $('btnClosePopover').onclick = () => closePopovers(); $('btnCloseEmoji').onclick = () => closePopovers();
         $('btnModalClose').onclick = () => closeModal();
-        dom.modalOverlay.addEventListener('pointerdown', (e) => {
-          if (e.target === dom.modalOverlay) closeModal();
-        });
-
-        // Presentation
+        dom.modalOverlay.addEventListener('pointerdown', (e) => { if (e.target === dom.modalOverlay) closeModal(); });
         $('btnPresentClose').onclick = () => Present.stop();
-
-        // Workspace click closes popovers
-        dom.workspace.addEventListener('pointerdown', (e) => {
-          const insidePopover = dom.colorPopover.contains(e.target) || dom.emojiPopover.contains(e.target);
-          if (!insidePopover) closePopovers();
-        });
-
-        // Stage click on empty -> deselect
-        dom.stage.addEventListener('pointerdown', (e) => {
-          if (e.target === dom.stage) deselect();
-        });
+        dom.workspace.addEventListener('pointerdown', (e) => { if (!(dom.colorPopover.contains(e.target) || dom.emojiPopover.contains(e.target))) closePopovers(); });
+        dom.stage.addEventListener('pointerdown', (e) => { if (e.target === dom.stage) deselect(); });
       }
 
       function initDom() {
-        dom.stage = $('stage');
-        dom.slideList = $('slideList');
-        dom.workspace = $('workspace');
-        dom.saveInfo = $('saveInfo');
-        dom.zoomInfo = $('zoomInfo');
-
-        dom.colorPopover = $('colorPopover');
-        dom.colorGrid = $('colorGrid');
-        dom.colorTitle = $('colorTitle');
-
-        dom.emojiPopover = $('emojiPopover');
-        dom.emojiGrid = $('emojiGrid');
-
-        dom.modalOverlay = $('modalOverlay');
-        dom.modalTitle = $('modalTitle');
-        dom.modalBody = $('modalBody');
-        dom.modalActions = $('modalActions');
-
-        dom.presentOverlay = $('presentOverlay');
-        dom.presentStageWrap = $('presentStageWrap');
-
-        dom.stage.dataset.baseW = '960';
-        dom.stage.dataset.baseH = '540';
+        dom.stage = $('stage'); dom.slideList = $('slideList'); dom.workspace = $('workspace'); dom.saveInfo = $('saveInfo'); dom.zoomInfo = $('zoomInfo');
+        dom.colorPopover = $('colorPopover'); dom.colorGrid = $('colorGrid'); dom.colorTitle = $('colorTitle');
+        dom.emojiPopover = $('emojiPopover'); dom.emojiGrid = $('emojiGrid');
+        dom.modalOverlay = $('modalOverlay'); dom.modalTitle = $('modalTitle'); dom.modalBody = $('modalBody'); dom.modalActions = $('modalActions');
+        dom.presentOverlay = $('presentOverlay'); dom.presentStageWrap = $('presentStageWrap');
+        dom.stage.dataset.baseW = '960'; dom.stage.dataset.baseH = '540';
       }
 
       function boot() {
-        initDom();
-        initPopovers();
-        initState();
-        bindUI();
-        initKeyboard();
-        renderAll();
-        setSaveInfo('Готово');
-
-        // Little hint for help
+        initDom(); initPopovers(); initState(); bindUI(); initKeyboard(); renderAll(); setSaveInfo('Готово');
         dom.zoomInfo.textContent = 'Полотно: 16:9 (двічі клік — підказка “Об’єкт”)';
       }
-
       return { boot };
     })();
-
     window.addEventListener('load', () => App.boot());
   </script>
 </body>
