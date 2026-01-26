@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Слайдик — Мій редактор презентацій</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Comfortaa', cursive;
+            background-color: #f0f9ff;
+            user-select: none;
+        }
+
+        .slide-area {
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+
+        #active-slide-editor:empty:before {
+            content: attr(data-placeholder);
+            color: #cbd5e1;
+            cursor: text;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s;
+            border: 4px solid transparent;
+        }
+
+        .sidebar-item.active {
+            border-color: #3b82f6;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        [contenteditable] {
+            outline: none;
+            user-select: text;
+        }
+
+        .toolbar-btn {
+            @apply p-2 rounded-xl bg-white hover:bg-blue-100 transition-all shadow-sm text-blue-600 flex items-center justify-center;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        .toolbar-btn.active {
+            @apply bg-blue-600 text-white;
+        }
+
+        .pdf-slide, .view-slide {
+            width: 800px;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .view-slide {
+            width: 100%;
+            height: 100%;
+            padding: 5%;
+            font-size: 2.5rem;
+        }
+
+        ul { list-style-type: disc; padding-left: 40px; margin: 10px 0; }
+        ol { list-style-type: decimal; padding-left: 40px; margin: 10px 0; }
+
+        #presentation-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 100;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .emoji-item {
+            @apply cursor-pointer hover:bg-blue-50 p-2 rounded-lg text-2xl text-center transition-all;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-lg z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-yellow-300 p-2 rounded-lg">
+                <i class="fas fa-magic text-2xl text-blue-700"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">СЛАЙДИК</h1>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="startPresentation()" class="bg-green-400 hover:bg-green-500 text-blue-900 px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                <i class="fas fa-play"></i> Дивитись
+            </button>
+            <button onclick="exportToPDF()" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                <i class="fas fa-file-pdf"></i> В PDF
+            </button>
+            <button onclick="askClearStorage()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold transition-all shadow-md active:scale-95">
+                Очистити
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-72 bg-white border-r border-gray-200 flex flex-col shadow-inner">
+            <div class="p-4 flex flex-col gap-4 overflow-y-auto flex-1 bg-gray-50" id="slide-list"></div>
+            <div class="p-6 border-t bg-white flex flex-col gap-3">
+                <button onclick="showTemplates()" class="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-xl font-bold text-sm transition-all shadow-sm">
+                    <i class="fas fa-th-large mr-2"></i> Шаблони
+                </button>
+                <button onclick="addNewSlide()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+                    <i class="fas fa-plus-circle text-xl"></i> Додати слайд
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 flex flex-col gap-6 overflow-y-auto items-center bg-blue-50/50">
+            <!-- Toolbar -->
+            <div class="bg-white p-2 rounded-2xl shadow-md flex flex-wrap gap-2 items-center justify-center max-w-5xl w-full border border-blue-100">
+                <div class="flex gap-1">
+                    <button onclick="format('undo')" title="Назад" class="toolbar-btn"><i class="fas fa-undo"></i></button>
+                    <button onclick="format('redo')" title="Вперед" class="toolbar-btn"><i class="fas fa-redo"></i></button>
+                </div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                <div class="flex gap-1">
+                    <button onclick="format('bold')" class="toolbar-btn"><i class="fas fa-bold"></i></button>
+                    <button onclick="format('italic')" class="toolbar-btn"><i class="fas fa-italic"></i></button>
+                    <button onclick="format('underline')" class="toolbar-btn"><i class="fas fa-underline"></i></button>
+                </div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                <div class="flex gap-1">
+                    <button onclick="format('justifyLeft')" class="toolbar-btn"><i class="fas fa-align-left"></i></button>
+                    <button onclick="format('justifyCenter')" class="toolbar-btn"><i class="fas fa-align-center"></i></button>
+                    <button onclick="format('insertUnorderedList')" class="toolbar-btn"><i class="fas fa-list-ul"></i></button>
+                    <button onclick="format('insertOrderedList')" class="toolbar-btn"><i class="fas fa-list-ol"></i></button>
+                </div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                <select onchange="format('fontSize', this.value)" class="p-2 rounded-lg bg-gray-50 text-sm outline-none border border-gray-100 cursor-pointer">
+                    <option value="3">Малий</option>
+                    <option value="5" selected>Звичайний</option>
+                    <option value="7">Великий</option>
+                    <option value="10">Величезний</option>
+                </select>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                <div class="flex gap-1">
+                    <input type="color" onchange="format('foreColor', this.value)" class="w-10 h-10 rounded-xl cursor-pointer bg-white p-1 border border-gray-100" title="Колір тексту">
+                    <button onclick="insertImagePrompt()" class="toolbar-btn" title="Картинка"><i class="fas fa-image"></i></button>
+                    <button onclick="toggleEmojiPanel()" class="toolbar-btn text-yellow-500" title="Емодзі"><i class="fas fa-smile"></i></button>
+                    <button onclick="document.getElementById('bg-color-picker').click()" class="toolbar-btn text-purple-600" title="Фон"><i class="fas fa-fill-drip"></i></button>
+                    <input type="color" id="bg-color-picker" onchange="changeSlideBackground(this.value)" class="hidden">
+                    <button onclick="duplicateSlide()" title="Дублювати" class="toolbar-btn text-green-600"><i class="fas fa-copy"></i></button>
+                </div>
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                <button onclick="askDeleteSlide()" class="toolbar-btn text-red-500 hover:bg-red-50" title="Видалити"><i class="fas fa-trash-can"></i></button>
+            </div>
+
+            <!-- Slide Editor -->
+            <div id="editor-container" class="w-full max-w-5xl relative">
+                <div id="active-slide-editor" 
+                     class="slide-area w-full rounded-2xl p-16 text-3xl overflow-hidden break-words" 
+                     contenteditable="true"
+                     data-placeholder="Напиши щось цікаве тут..."
+                     oninput="saveCurrentContent()"
+                     onfocus="handleFirstFocus(this)">
+                </div>
+                
+                <!-- Emoji Panel (Absolute inside container) -->
+                <div id="emoji-panel" class="absolute top-0 right-0 mt-2 mr-2 bg-white p-4 rounded-2xl shadow-2xl border border-blue-100 hidden z-20 w-64">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-blue-600 text-sm">Вибери смайлик</span>
+                        <button onclick="toggleEmojiPanel()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="emoji-grid" id="emoji-container"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 text-green-600 font-medium bg-green-100/50 px-4 py-2 rounded-full transition-opacity duration-500" id="save-status">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-sm">Збережено</span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Presentation Overlay -->
+    <div id="presentation-overlay">
+        <div id="view-content" class="view-slide text-white h-full w-full"></div>
+        <button onclick="closePresentation()" class="fixed top-6 right-6 bg-white/20 hover:bg-white/40 text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl transition-all z-50">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 bg-black/60 p-3 rounded-full backdrop-blur-md z-50">
+            <button onclick="viewPrev(event)" class="text-white w-10 h-10 hover:bg-white/20 rounded-full transition-all"><i class="fas fa-arrow-left"></i></button>
+            <span id="view-index" class="text-white font-bold py-2 px-4 min-w-[80px] text-center">1 / 1</span>
+            <button onclick="viewNext(event)" class="text-white w-10 h-10 hover:bg-white/20 rounded-full transition-all"><i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div id="pdf-export-container"></div>
+
+    <!-- Custom Modal System -->
+    <div id="modal-overlay" class="fixed inset-0 bg-blue-900/60 backdrop-blur-md hidden z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-10 rounded-[2.5rem] max-w-md w-full shadow-2xl border-8 border-white transform transition-all scale-100">
+            <div id="modal-icon" class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl text-blue-600">
+                <i class="fas fa-question"></i>
+            </div>
+            <h3 id="modal-title" class="text-2xl font-bold mb-3 text-center text-blue-800"></h3>
+            <p id="modal-desc" class="text-gray-500 mb-8 text-center font-medium leading-relaxed"></p>
+            <div id="modal-input-container" class="hidden">
+                <input type="text" id="modal-input" class="w-full p-4 border-2 border-blue-50 bg-blue-50/50 rounded-2xl mb-8 focus:border-blue-400 outline-none text-lg transition-all text-center">
+            </div>
+            <div class="flex gap-4">
+                <button id="modal-cancel" class="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-2xl font-bold transition-all active:scale-95">Ні</button>
+                <button id="modal-confirm" class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-95">Так!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'slidyk_presentation_v2';
+        const DEFAULT_CONTENT = "<h1>Привіт! 👋</h1><p>Створи свою власну презентацію.</p>";
+        const EMOJIS = ['😀', '😂', '😍', '🥳', '😎', '🤓', '🎈', '🎉', '🌟', '🌈', '🍦', '🍕', '🐱', '🐶', '🦄', '🚀', '🎨', '🎮', '⚽', '📚', '🌻', '🍎', '💎', '💡'];
+        
+        let slides = [];
+        let currentSlideIndex = 0;
+        let viewIndex = 0;
+        let modalAction = null;
+
+        const slideListEl = document.getElementById('slide-list');
+        const editorEl = document.getElementById('active-slide-editor');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalInput = document.getElementById('modal-input');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalConfirmBtn = document.getElementById('modal-confirm');
+        const viewOverlay = document.getElementById('presentation-overlay');
+        const viewContent = document.getElementById('view-content');
+
+        function init() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    slides = parsed.slides || [];
+                    currentSlideIndex = parsed.currentIndex || 0;
+                } catch (e) { resetToDefault(); }
+            } else { resetToDefault(); }
+
+            if (slides.length === 0) resetToDefault();
+            
+            renderSlideList();
+            loadSlide(currentSlideIndex);
+            setupEmojiPanel();
+            
+            editorEl.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (viewOverlay.style.display === 'block') {
+                    if (e.key === 'ArrowRight' || e.key === ' ') viewNext();
+                    if (e.key === 'ArrowLeft') viewPrev();
+                    if (e.key === 'Escape') closePresentation();
+                }
+            });
+        }
+
+        function resetToDefault() {
+            slides = [{ id: Date.now(), content: DEFAULT_CONTENT, background: "#ffffff" }];
+            currentSlideIndex = 0;
+            saveToLocal();
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                slides: slides,
+                currentIndex: currentSlideIndex
+            }));
+            const status = document.getElementById('save-status');
+            status.style.opacity = '1';
+            setTimeout(() => status.style.opacity = '0.3', 2000);
+        }
+
+        function loadSlide(index) {
+            if (index < 0 || index >= slides.length) index = 0;
+            currentSlideIndex = index;
+            const slide = slides[index];
+            editorEl.innerHTML = slide.content;
+            editorEl.style.backgroundColor = slide.background;
+            document.getElementById('bg-color-picker').value = slide.background;
+            renderSlideList();
+            saveToLocal();
+        }
+
+        function renderSlideList() {
+            slideListEl.innerHTML = '';
+            slides.forEach((slide, index) => {
+                const div = document.createElement('div');
+                div.className = `sidebar-item group cursor-pointer aspect-video bg-white rounded-xl p-2 relative shadow-sm ${index === currentSlideIndex ? 'active' : ''}`;
+                div.onclick = () => loadSlide(index);
+                div.innerHTML = `
+                    <div class="w-full h-full overflow-hidden text-[6px] rounded bg-white shadow-inner pointer-events-none" style="background-color: ${slide.background}">
+                        <div class="p-2">${slide.content}</div>
+                    </div>
+                    <div class="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold shadow-sm">${index + 1}</div>
+                `;
+                slideListEl.appendChild(div);
+            });
+        }
+
+        // Modals Logic
+        function customConfirm(title, desc, icon, callback) {
+            modalTitle.innerText = title;
+            modalDesc.innerText = desc;
+            document.getElementById('modal-icon').innerHTML = `<i class="fas ${icon}"></i>`;
+            document.getElementById('modal-input-container').classList.add('hidden');
+            modalConfirmBtn.innerText = "Так!";
+            modalConfirmBtn.onclick = () => {
+                modalOverlay.classList.add('hidden');
+                callback();
+            };
+            modalOverlay.classList.remove('hidden');
+        }
+
+        function customPrompt(title, desc, icon, placeholder, callback) {
+            modalTitle.innerText = title;
+            modalDesc.innerText = desc;
+            document.getElementById('modal-icon').innerHTML = `<i class="fas ${icon}"></i>`;
+            document.getElementById('modal-input-container').classList.remove('hidden');
+            modalInput.placeholder = placeholder;
+            modalInput.value = "";
+            modalConfirmBtn.innerText = "Готово";
+            modalConfirmBtn.onclick = () => {
+                modalOverlay.classList.add('hidden');
+                callback(modalInput.value);
+            };
+            modalOverlay.classList.remove('hidden');
+            setTimeout(() => modalInput.focus(), 100);
+        }
+
+        document.getElementById('modal-cancel').onclick = () => modalOverlay.classList.add('hidden');
+
+        // Actions
+        function askClearStorage() {
+            customConfirm("Видалити все?", "Твоя презентація зникне назавжди. Ти впевнений?", "fa-broom", () => {
+                localStorage.removeItem(STORAGE_KEY);
+                resetToDefault();
+                loadSlide(0);
+            });
+        }
+
+        function askDeleteSlide() {
+            if (slides.length <= 1) return;
+            customConfirm("Видалити слайд?", "Це видалить поточний слайд номер " + (currentSlideIndex + 1), "fa-trash", () => {
+                slides.splice(currentSlideIndex, 1);
+                currentSlideIndex = Math.max(0, currentSlideIndex - 1);
+                loadSlide(currentSlideIndex);
+            });
+        }
+
+        function insertImagePrompt() {
+            customPrompt("Додай картинку", "Встав посилання на зображення (URL) тут:", "fa-image", "https://...", (url) => {
+                if (!url) return;
+                const img = `<img src="${url}" style="max-width: 80%; display: block; margin: 20px auto; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" onerror="this.src='https://via.placeholder.com/400x200?text=Картинка+не+знайдена'">`;
+                document.execCommand('insertHTML', false, img + "<p><br></p>");
+                saveCurrentContent();
+            });
+        }
+
+        // Templates
+        function showTemplates() {
+            const list = [
+                { name: "Тільки заголовок", html: "<h1 style='text-align:center; margin-top:20%'>Мій заголовок</h1>" },
+                { name: "Заголовок + Список", html: "<h2>План розповіді:</h2><ul><li>Пункт 1</li><li>Пункт 2</li></ul>" },
+                { name: "Дві колонки", html: "<div style='display:flex; gap:20px;'><div style='flex:1'><h3>Текст зліва</h3></div><div style='flex:1'><h3>Текст справа</h3></div></div>" }
+            ];
+            
+            // Reusing modal as simple selector
+            modalTitle.innerText = "Вибери шаблон";
+            modalDesc.innerText = "Це замінить контент на слайді!";
+            document.getElementById('modal-icon').innerHTML = `<i class="fas fa-th-large"></i>`;
+            document.getElementById('modal-input-container').classList.add('hidden');
+            
+            const btnContainer = document.querySelector('#modal-overlay .flex.gap-4');
+            const originalBtns = btnContainer.innerHTML;
+            
+            btnContainer.innerHTML = list.map((t, i) => 
+                `<button onclick="applyTemplate('${encodeURIComponent(t.html)}')" class="w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-sm font-bold mb-2">${t.name}</button>`
+            ).join('') + `<button onclick="closeTemplateModal()" class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-bold">Скасувати</button>`;
+            
+            modalOverlay.classList.remove('hidden');
+            
+            window.applyTemplate = (html) => {
+                editorEl.innerHTML = decodeURIComponent(html);
+                saveCurrentContent();
+                closeTemplateModal();
+            };
+            
+            window.closeTemplateModal = () => {
+                modalOverlay.classList.add('hidden');
+                btnContainer.innerHTML = originalBtns;
+            };
+        }
+
+        // Emojis
+        function setupEmojiPanel() {
+            const container = document.getElementById('emoji-container');
+            EMOJIS.forEach(emoji => {
+                const span = document.createElement('div');
+                span.className = 'emoji-item';
+                span.innerText = emoji;
+                span.onclick = () => {
+                    document.execCommand('insertText', false, emoji);
+                    toggleEmojiPanel();
+                    saveCurrentContent();
+                };
+                container.appendChild(span);
+            });
+        }
+
+        function toggleEmojiPanel() {
+            document.getElementById('emoji-panel').classList.toggle('hidden');
+        }
+
+        function format(command, value = null) {
+            document.execCommand(command, false, value);
+            saveCurrentContent();
+            editorEl.focus();
+        }
+
+        function handleFirstFocus(el) {
+            if (el.innerHTML.trim() === DEFAULT_CONTENT) {
+                el.innerHTML = "";
+                saveCurrentContent();
+            }
+        }
+
+        function addNewSlide() {
+            slides.push({ id: Date.now(), content: "", background: "#ffffff" });
+            currentSlideIndex = slides.length - 1;
+            loadSlide(currentSlideIndex);
+            editorEl.focus();
+        }
+
+        function duplicateSlide() {
+            const current = slides[currentSlideIndex];
+            const newSlide = JSON.parse(JSON.stringify(current));
+            newSlide.id = Date.now();
+            slides.splice(currentSlideIndex + 1, 0, newSlide);
+            currentSlideIndex++;
+            loadSlide(currentSlideIndex);
+        }
+
+        function saveCurrentContent() {
+            slides[currentSlideIndex].content = editorEl.innerHTML;
+            const preview = slideListEl.children[currentSlideIndex]?.querySelector('div div');
+            if (preview) preview.innerHTML = editorEl.innerHTML;
+            saveToLocal();
+        }
+
+        function changeSlideBackground(color) {
+            slides[currentSlideIndex].background = color;
+            editorEl.style.backgroundColor = color;
+            renderSlideList();
+            saveToLocal();
+        }
+
+        // View Mode
+        function startPresentation() {
+            if (slides.length === 0) return;
+            viewIndex = 0;
+            viewOverlay.style.display = 'block';
+            updateView();
+        }
+
+        function closePresentation() { viewOverlay.style.display = 'none'; }
+
+        function updateView() {
+            const slide = slides[viewIndex];
+            viewContent.innerHTML = slide.content;
+            viewContent.style.backgroundColor = slide.background;
+            document.getElementById('view-index').innerText = `${viewIndex + 1} / ${slides.length}`;
+        }
+
+        function viewNext() {
+            if (viewIndex < slides.length - 1) {
+                viewIndex++;
+                updateView();
+            } else { closePresentation(); }
+        }
+
+        function viewPrev() {
+            if (viewIndex > 0) {
+                viewIndex--;
+                updateView();
+            }
+        }
+
+        async function exportToPDF() {
+            const btn = event.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-magic fa-spin"></i> Магія...';
+            btn.disabled = true;
+
+            const container = document.getElementById('pdf-export-container');
+            container.innerHTML = '';
+            slides.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'pdf-slide';
+                div.style.backgroundColor = s.background;
+                div.innerHTML = s.content || "<p></p>";
+                container.appendChild(div);
+            });
+
+            const opt = {
+                margin: 0,
+                filename: 'моя_презентація.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'px', format: [800, 450], orientation: 'landscape' }
+            };
+
+            await html2pdf().set(opt).from(container).save();
+            btn.innerHTML = original;
+            btn.disabled = false;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
