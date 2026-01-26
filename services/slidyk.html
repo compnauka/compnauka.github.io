@@ -1,657 +1,1787 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>СЛАЙДИК — Професійний редактор</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>СЛАЙДИК Kids — редактор презентацій</title>
 
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #cbd5e1;
-            user-select: none;
-        }
+  <!-- UI libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-        .sharp { border-radius: 0 !important; }
-        
-        /* Полотно слайда */
-        #canvas-container {
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16 / 9;
-            background-color: white;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid #64748b;
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.1);
-        }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
 
-        /* Елементи на слайді */
-        .slide-element {
-            position: absolute;
-            cursor: move;
-            min-width: 50px;
-            min-height: 30px;
-            border: 1px solid transparent;
-            box-sizing: border-box;
-        }
+    :root {
+      --slide-w: 960px;
+      --slide-h: 540px; /* 16:9 */
+    }
 
-        .slide-element.selected {
-            border: 2px dashed #2563eb;
-        }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #cbd5e1;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        .resize-handle {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #2563eb;
-            bottom: -5px;
-            right: -5px;
-            cursor: nwse-resize;
-            display: none;
-        }
+    .sharp { border-radius: 0 !important; }
 
-        .slide-element.selected .resize-handle {
-            display: block;
-        }
+    /* Stage (workspace slide) */
+    #stage {
+      width: 100%;
+      max-width: var(--slide-w);
+      aspect-ratio: 16 / 9;
+      background: white;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #475569;
+      box-shadow: 10px 10px 0 rgba(0,0,0,.12);
+      touch-action: none;
+    }
 
-        /* Текстовий блок */
-        .text-element {
-            outline: none;
-            word-wrap: break-word;
-            padding: 5px;
-        }
+    /* Elements */
+    .el {
+      position: absolute;
+      box-sizing: border-box;
+      border: 2px solid transparent;
+      min-width: 40px;
+      min-height: 30px;
+      cursor: grab;
+      touch-action: none;
+    }
 
-        /* Список слайдів */
-        .sidebar-item {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: white;
-            border: 2px solid #94a3b8;
-            margin-bottom: 10px;
-            position: relative;
-            cursor: pointer;
-            overflow: hidden;
-        }
+    .el.selected {
+      border-color: #2563eb;
+      cursor: grab;
+    }
 
-        .sidebar-item.active {
-            border-color: #2563eb;
-            box-shadow: 4px 4px 0px #bfdbfe;
-        }
+    .el.dragging { cursor: grabbing; }
 
-        .sidebar-preview-content {
-            width: 800px;
-            height: 450px;
-            transform: scale(0.25);
-            transform-origin: top left;
-            pointer-events: none;
-        }
+    .el .content {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
 
-        .toolbar-group {
-            @apply flex flex-col border-r-2 border-slate-200 px-4 last:border-r-0;
-        }
+    .textBox {
+      padding: 8px;
+      user-select: text !important;
+      cursor: text;
+      outline: none;
+      line-height: 1.1;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
 
-        .group-label {
-            @apply text-[10px] font-black uppercase text-slate-400 mb-1 tracking-tighter;
-        }
+    .shape {
+      width: 100%;
+      height: 100%;
+    }
 
-        .btn-tool {
-            @apply p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center;
-            min-width: 36px;
-            height: 36px;
-        }
+    /* Resize handles */
+    .handles { display: none; position: absolute; inset: 0; pointer-events: none; }
+    .el.selected .handles { display: block; }
 
-        .btn-tool.active {
-            @apply bg-blue-600 text-white;
-        }
+    .handle {
+      width: 10px;
+      height: 10px;
+      background: #2563eb;
+      position: absolute;
+      pointer-events: auto;
+    }
 
-        .color-dot {
-            @apply w-5 h-5 border border-slate-300 cursor-pointer hover:scale-110 transition-transform;
-        }
+    .handle.nw { left: -6px; top: -6px; cursor: nwse-resize; }
+    .handle.n  { left: 50%; top: -6px; transform: translateX(-50%); cursor: ns-resize; }
+    .handle.ne { right: -6px; top: -6px; cursor: nesw-resize; }
+    .handle.e  { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .handle.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+    .handle.s  { left: 50%; bottom: -6px; transform: translateX(-50%); cursor: ns-resize; }
+    .handle.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+    .handle.w  { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
 
-        #presentation-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 1000;
-        }
-    </style>
+    /* Sidebar slide thumbnail */
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: white;
+      border: 2px solid #94a3b8;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .thumb.active {
+      border-color: #2563eb;
+      box-shadow: 4px 4px 0 #bfdbfe;
+    }
+
+    .thumb .mini {
+      width: var(--slide-w);
+      height: var(--slide-h);
+      transform: scale(0.22);
+      transform-origin: top left;
+      pointer-events: none;
+      position: relative;
+    }
+
+    /* Popovers */
+    .popover {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      background: white;
+      border: 2px solid #0f172a;
+      box-shadow: 10px 10px 0 rgba(0,0,0,.12);
+      padding: .75rem;
+    }
+
+    /* Presentation overlay */
+    #presentOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 1000;
+    }
+
+    /* A11y focus */
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    /* Prevent drag image */
+    img { -webkit-user-drag: none; user-select: none; }
+  </style>
 </head>
+
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white p-3 flex justify-between items-center z-50">
-        <div class="flex items-center gap-3">
-            <i class="fas fa-layer-group text-blue-500 text-2xl"></i>
-            <h1 class="text-xl font-black tracking-tighter uppercase">СЛАЙДИК</h1>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="Presentation.start()" class="bg-emerald-500 hover:bg-emerald-600 px-6 py-2 font-black sharp uppercase text-xs transition-all" title="Почати показ">
-                <i class="fas fa-play mr-2"></i> Перегляд
-            </button>
-            <button onclick="Export.toPDF()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 font-black sharp uppercase text-xs transition-all" title="Зберегти файл">
-                <i class="fas fa-file-pdf mr-2"></i> PDF
-            </button>
-            <button onclick="App.clear()" class="bg-red-600 hover:bg-red-700 px-4 py-2 font-black sharp uppercase text-xs transition-all" title="Видалити все">
-                Очистити
-            </button>
-        </div>
-    </header>
-
-    <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-slate-100 border-r-2 border-slate-300 flex flex-col">
-            <div id="slide-list" class="p-4 overflow-y-auto flex-1"></div>
-            <div class="p-4 border-t-2 border-slate-300 bg-white space-y-2">
-                <button onclick="Templates.open()" class="w-full border-2 border-slate-800 py-2 font-black text-[10px] uppercase sharp hover:bg-slate-800 hover:text-white transition-all">
-                    Макети
-                </button>
-                <button onclick="App.addSlide()" class="w-full bg-blue-600 text-white py-3 font-black sharp uppercase text-xs hover:bg-blue-700 shadow-[4px_4px_0px_#1e40af]">
-                    Новий слайд
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Area -->
-        <main class="flex-1 flex flex-col">
-            <!-- Professional Toolbar -->
-            <div class="bg-white border-b-2 border-slate-300 p-2 flex items-start overflow-x-auto">
-                <div class="toolbar-group">
-                    <span class="group-label">Проєкт</span>
-                    <div class="flex gap-1">
-                        <button onclick="App.deleteSlide()" class="btn-tool text-red-500" title="Видалити слайд"><i class="fas fa-trash-alt"></i></button>
-                        <button onclick="App.duplicateSlide()" class="btn-tool text-emerald-600" title="Дублювати слайд"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-
-                <div class="toolbar-group">
-                    <span class="group-label">Текст</span>
-                    <div class="flex gap-1 items-center">
-                        <button onclick="Editor.format('bold')" class="btn-tool" title="Жирний"><i class="fas fa-bold"></i></button>
-                        <button onclick="Editor.format('italic')" class="btn-tool" title="Курсив"><i class="fas fa-italic"></i></button>
-                        <select onchange="Editor.format('fontSize', this.value)" class="text-[10px] font-bold border-2 border-slate-200 sharp p-1" title="Розмір тексту">
-                            <option value="16px">S</option>
-                            <option value="32px" selected>M</option>
-                            <option value="48px">L</option>
-                            <option value="72px">XL</option>
-                        </select>
-                        <button onclick="UI.toggleColorPicker('text')" class="btn-tool" title="Колір тексту"><i class="fas fa-font"></i></button>
-                    </div>
-                </div>
-
-                <div class="toolbar-group">
-                    <span class="group-label">Вставка</span>
-                    <div class="flex gap-1">
-                        <button onclick="App.addTextElement()" class="btn-tool text-blue-600" title="Додати текст"><i class="fas fa-font"></i> <i class="fas fa-plus text-[8px]"></i></button>
-                        <button onclick="App.openImageModal()" class="btn-tool text-purple-600" title="Додати фото"><i class="fas fa-image"></i></button>
-                        <button onclick="UI.toggleEmoji()" class="btn-tool text-amber-500" title="Додати смайлик"><i class="fas fa-smile"></i></button>
-                    </div>
-                </div>
-
-                <div class="toolbar-group">
-                    <span class="group-label">Слайд</span>
-                    <div class="flex gap-1">
-                        <button onclick="UI.toggleColorPicker('bg')" class="btn-tool text-orange-500" title="Фон слайда"><i class="fas fa-fill-drip"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Canvas Workspace -->
-            <div class="flex-1 overflow-auto p-12 flex justify-center items-center relative" id="workspace" onclick="App.deselect(event)">
-                <div id="canvas-container" class="sharp" ondrop="App.handleDrop(event)" ondragover="event.preventDefault()">
-                    <!-- Elements will be here -->
-                </div>
-
-                <!-- Color Picker Popover -->
-                <div id="color-popover" class="absolute top-4 left-1/2 -translate-x-1/2 bg-white border-2 border-slate-900 p-3 sharp shadow-[8px_8px_0px_rgba(0,0,0,0.1)] hidden z-50">
-                    <div class="flex justify-between items-center mb-2">
-                        <span id="color-title" class="text-[10px] font-black uppercase tracking-widest">Виберіть колір</span>
-                        <button onclick="UI.closePopovers()" class="text-slate-400 hover:text-black"><i class="fas fa-times text-xs"></i></button>
-                    </div>
-                    <div id="color-grid" class="grid grid-cols-5 gap-1"></div>
-                </div>
-
-                <!-- Emoji Popover -->
-                <div id="emoji-popover" class="absolute top-4 left-1/2 -translate-x-1/2 bg-white border-2 border-slate-900 p-3 sharp shadow-[8px_8px_0px_rgba(0,0,0,0.1)] hidden z-50 w-64">
-                    <div class="grid grid-cols-6 gap-2" id="emoji-grid"></div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="bg-slate-800 text-slate-400 px-4 py-1 flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                <span>Масштаб: 100% (16:9)</span>
-                <span id="save-status">Збережено локально</span>
-            </div>
-        </main>
+  <!-- Header -->
+  <header class="bg-slate-900 text-white p-3 flex justify-between items-center z-50">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-layer-group text-blue-400 text-2xl"></i>
+      <h1 class="text-xl font-black tracking-tight uppercase">СЛАЙДИК Kids</h1>
+      <span class="ml-2 hidden sm:inline text-[10px] font-black uppercase tracking-widest text-slate-300">просто • безпечно • для 3–4 класу</span>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[2000] flex items-center justify-center p-4" onclick="UI.closeModalsIfOutside(event)">
-        <div class="bg-white p-8 max-w-md w-full border-2 border-slate-900 sharp shadow-[12px_12px_0px_#2563eb] relative">
-            <button onclick="UI.closeModal()" class="absolute top-4 right-4 text-slate-300 hover:text-black"><i class="fas fa-times text-xl"></i></button>
-            <h3 id="modal-title" class="text-xl font-black mb-4 uppercase text-center">Заголовок</h3>
-            <div id="modal-content" class="mb-6"></div>
-            <div id="modal-actions" class="flex gap-2">
-                <button id="modal-cancel" class="flex-1 py-3 bg-slate-200 font-black uppercase text-xs sharp">Скасувати</button>
-                <button id="modal-confirm" class="flex-1 py-3 bg-blue-600 text-white font-black uppercase text-xs sharp">Добре</button>
-            </div>
+    <div class="flex gap-2">
+      <button id="btnPresent" class="bg-emerald-500 hover:bg-emerald-600 px-5 py-2 font-black sharp uppercase text-xs transition-all" title="Почати показ">
+        <i class="fa-solid fa-play mr-2"></i> Перегляд
+      </button>
+      <button id="btnPDF" class="bg-blue-600 hover:bg-blue-700 px-5 py-2 font-black sharp uppercase text-xs transition-all" title="Зберегти PDF">
+        <i class="fa-solid fa-file-pdf mr-2"></i> PDF
+      </button>
+      <button id="btnReset" class="bg-red-600 hover:bg-red-700 px-4 py-2 font-black sharp uppercase text-xs transition-all" title="Очистити все">
+        Очистити
+      </button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-72 bg-slate-100 border-r-2 border-slate-300 flex flex-col">
+      <div class="p-4 border-b-2 border-slate-300 bg-white">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-black uppercase tracking-widest text-slate-500">Слайди</div>
+          <div class="flex gap-1">
+            <button id="btnSlideUp" class="p-2 border-2 border-slate-900 bg-white sharp hover:bg-slate-900 hover:text-white transition-all" title="Перемістити слайд вгору">
+              <i class="fa-solid fa-arrow-up"></i>
+            </button>
+            <button id="btnSlideDown" class="p-2 border-2 border-slate-900 bg-white sharp hover:bg-slate-900 hover:text-white transition-all" title="Перемістити слайд вниз">
+              <i class="fa-solid fa-arrow-down"></i>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div id="slideList" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
+
+      <div class="p-4 border-t-2 border-slate-300 bg-white space-y-2">
+        <button id="btnTemplates" class="w-full border-2 border-slate-900 py-2 font-black text-[10px] uppercase sharp hover:bg-slate-900 hover:text-white transition-all">
+          Макети
+        </button>
+        <button id="btnNewSlide" class="w-full bg-blue-600 text-white py-3 font-black sharp uppercase text-xs hover:bg-blue-700 shadow-[4px_4px_0px_#1e40af]">
+          Новий слайд
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col">
+
+      <!-- Toolbar -->
+      <div class="bg-white border-b-2 border-slate-300 p-2 flex items-start overflow-x-auto gap-3">
+
+        <div class="flex flex-col px-3 border-r-2 border-slate-200">
+          <span class="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-tight">Слайд</span>
+          <div class="flex gap-1">
+            <button id="btnDupSlide" class="p-2 border border-transparent hover:bg-slate-800 hover:text-white text-emerald-600 transition-all flex items-center justify-center" title="Дублювати слайд">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            <button id="btnDelSlide" class="p-2 border border-transparent hover:bg-slate-800 hover:text-white text-slate-400 transition-all flex items-center justify-center" title="Видалити слайд">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+            <button id="btnBg" class="p-2 border border-transparent hover:bg-slate-800 hover:text-white text-orange-500 transition-all flex items-center justify-center" title="Фон">
+              <i class="fa-solid fa-fill-drip"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col px-3 border-r-2 border-slate-200">
+          <span class="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-tight">Вставка</span>
+          <div class="flex gap-1">
+            <button id="btnAddText" class="p-2 hover:bg-slate-800 hover:text-white text-blue-600 transition-all border border-transparent flex items-center justify-center" title="Текст">
+              <i class="fa-solid fa-font"></i>
+            </button>
+            <button id="btnAddImage" class="p-2 hover:bg-slate-800 hover:text-white text-purple-600 transition-all border border-transparent flex items-center justify-center" title="Фото">
+              <i class="fa-regular fa-image"></i>
+            </button>
+            <button id="btnEmoji" class="p-2 hover:bg-slate-800 hover:text-white text-amber-500 transition-all border border-transparent flex items-center justify-center" title="Смайлик">
+              <i class="fa-regular fa-face-smile"></i>
+            </button>
+            <button id="btnShapeRect" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Прямокутник">
+              <i class="fa-regular fa-square"></i>
+            </button>
+            <button id="btnShapeCircle" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Коло">
+              <i class="fa-regular fa-circle"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col px-3 border-r-2 border-slate-200">
+          <span class="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-tight">Текст</span>
+          <div class="flex gap-1 items-center">
+            <select id="selFontSize" class="text-[10px] font-bold border-2 border-slate-200 sharp p-1" title="Розмір">
+              <option value="18">S</option>
+              <option value="28" selected>M</option>
+              <option value="40">L</option>
+              <option value="56">XL</option>
+            </select>
+            <button id="btnBold" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Жирний">
+              <i class="fa-solid fa-bold"></i>
+            </button>
+            <button id="btnItalic" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Курсив">
+              <i class="fa-solid fa-italic"></i>
+            </button>
+            <button id="btnUnderline" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Підкреслення">
+              <i class="fa-solid fa-underline"></i>
+            </button>
+            <button id="btnAlignLeft" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Вирівняти ліворуч">
+              <i class="fa-solid fa-align-left"></i>
+            </button>
+            <button id="btnAlignCenter" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="По центру">
+              <i class="fa-solid fa-align-center"></i>
+            </button>
+            <button id="btnAlignRight" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Праворуч">
+              <i class="fa-solid fa-align-right"></i>
+            </button>
+            <button id="btnTextColor" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Колір тексту">
+              <i class="fa-solid fa-palette"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col px-3">
+          <span class="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-tight">Об’єкт</span>
+          <div class="flex gap-1">
+            <button id="btnFill" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Заливка (фігури)">
+              <i class="fa-solid fa-droplet"></i>
+            </button>
+            <button id="btnStroke" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="Контур (фігури)">
+              <i class="fa-solid fa-pen-ruler"></i>
+            </button>
+            <button id="btnBringFront" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="На передній план">
+              <i class="fa-solid fa-layer-group"></i>
+            </button>
+            <button id="btnSendBack" class="p-2 hover:bg-slate-800 hover:text-white text-slate-700 transition-all border border-transparent flex items-center justify-center" title="На задній план">
+              <i class="fa-solid fa-layer-group fa-flip-vertical"></i>
+            </button>
+            <button id="btnDupEl" class="p-2 hover:bg-slate-800 hover:text-white text-emerald-600 transition-all border border-transparent flex items-center justify-center" title="Дублювати об’єкт (Ctrl+D)">
+              <i class="fa-regular fa-clone"></i>
+            </button>
+            <button id="btnDelEl" class="p-2 hover:bg-slate-800 hover:text-white text-red-500 transition-all border border-transparent flex items-center justify-center" title="Видалити (Delete)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Workspace -->
+      <div id="workspace" class="flex-1 overflow-auto p-10 flex justify-center items-center relative">
+        <div id="stage" class="sharp" aria-label="Полотно слайда"></div>
+
+        <!-- Color popover -->
+        <div id="colorPopover" class="popover hidden sharp">
+          <div class="flex items-center justify-between mb-2">
+            <div id="colorTitle" class="text-[10px] font-black uppercase tracking-widest">КОЛІР</div>
+            <button id="btnClosePopover" class="text-slate-400 hover:text-black" title="Закрити">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div id="colorGrid" class="grid grid-cols-6 gap-2"></div>
+        </div>
+
+        <!-- Emoji popover -->
+        <div id="emojiPopover" class="popover hidden sharp w-72">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-[10px] font-black uppercase tracking-widest">СМАЙЛИКИ</div>
+            <button id="btnCloseEmoji" class="text-slate-400 hover:text-black" title="Закрити">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div id="emojiGrid" class="grid grid-cols-8 gap-2"></div>
+        </div>
+
+      </div>
+
+      <!-- Status bar -->
+      <div class="bg-slate-800 text-slate-300 px-4 py-1 flex justify-between text-[10px] font-bold uppercase tracking-widest">
+        <span id="zoomInfo">Полотно: 16:9</span>
+        <span id="saveInfo">Готово</span>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[2000] flex items-center justify-center p-4">
+    <div class="bg-white p-6 max-w-lg w-full border-2 border-slate-900 sharp shadow-[12px_12px_0px_#2563eb] relative" role="dialog" aria-modal="true">
+      <button id="btnModalClose" class="absolute top-3 right-3 text-slate-300 hover:text-black" title="Закрити">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+      <h3 id="modalTitle" class="text-lg font-black mb-4 uppercase text-center text-slate-900">Заголовок</h3>
+      <div id="modalBody" class="mb-5"></div>
+      <div id="modalActions" class="flex gap-2">
+        <button id="btnModalCancel" class="flex-1 py-3 bg-slate-200 font-black uppercase text-xs sharp">Скасувати</button>
+        <button id="btnModalOk" class="flex-1 py-3 bg-blue-600 text-white font-black uppercase text-xs sharp">Добре</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Presentation Overlay -->
-    <div id="presentation-overlay">
-        <div id="pres-canvas-wrapper" class="w-full h-full flex items-center justify-center"></div>
-        <button onclick="Presentation.stop()" class="fixed top-6 right-6 text-white text-4xl opacity-50 hover:opacity-100 transition-all"><i class="fas fa-times"></i></button>
-    </div>
+  <!-- Presentation overlay -->
+  <div id="presentOverlay">
+    <div id="presentStageWrap" class="w-full h-full flex items-center justify-center"></div>
+    <button id="btnPresentClose" class="fixed top-6 right-6 text-white text-4xl opacity-60 hover:opacity-100 transition-all" title="Вийти">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
 
-    <script>
-        const STORAGE_KEY = 'slidyk_v10_obj';
-        const COLORS = ['#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#cbd5e1', '#fee2e2', '#dcfce7', '#dbeafe', '#fef3c7'];
-        const EMOJIS = ['😀','🥳','😎','🚀','🎨','🎮','⚽','🐱','🍦','🍕','🌟','🌈','🔥','👏','🤖','💡'];
+  <script>
+    /**************
+     * SLAYDYK Kids v2
+     * Односторінковий редактор: слайди + елементи + показ + PDF.
+     * Фокус: стабільність, прості дії, гарячі клавіші для дорослого.
+     **************/
 
-        let state = {
-            slides: [
+    const STORAGE_KEY = 'slidyk_kids_v2';
+    const MAX_HISTORY = 60;
+
+    const COLORS = [
+      '#000000','#ffffff','#ef4444','#f97316','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899',
+      '#64748b','#1e293b','#94a3b8','#22c55e','#0ea5e9','#a855f7','#facc15','#fb7185','#7c3aed'
+    ];
+
+    const EMOJIS = ['😀','😁','😅','😍','😎','🤩','🥳','🤖','👋','👍','👏','❤️','✨','🌟','🔥','💡','🎨','🎮','⚽','🏆','🚀','🌈','🍕','🍦','🐱','🐶','🐼','🦊','🦄','🐸','🐙','🧠','📚','✏️','🧩'];
+
+    const uid = () => Math.floor(Date.now() + Math.random() * 100000);
+
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function safeParse(json, fallback) {
+      try { return JSON.parse(json); } catch { return fallback; }
+    }
+
+    function normalizeState(raw) {
+      // Мінімальна валідація, щоб не ламалось після старих версій
+      if (!raw || typeof raw !== 'object') return null;
+      if (!Array.isArray(raw.slides) || raw.slides.length === 0) return null;
+
+      const slides = raw.slides.map(s => ({
+        id: typeof s.id === 'number' ? s.id : uid(),
+        background: typeof s.background === 'string' ? s.background : '#ffffff',
+        elements: Array.isArray(s.elements) ? s.elements.map(e => ({
+          id: typeof e.id === 'number' ? e.id : uid(),
+          type: ['text','image','shape'].includes(e.type) ? e.type : 'text',
+          x: Number.isFinite(e.x) ? e.x : 100,
+          y: Number.isFinite(e.y) ? e.y : 100,
+          w: Number.isFinite(e.w) ? e.w : 260,
+          h: Number.isFinite(e.h) ? e.h : 80,
+          z: Number.isFinite(e.z) ? e.z : 1,
+          content: typeof e.content === 'string' ? e.content : '',
+          style: typeof e.style === 'object' && e.style ? {
+            fontSize: Number.isFinite(e.style.fontSize) ? e.style.fontSize : 28,
+            color: typeof e.style.color === 'string' ? e.style.color : '#111827',
+            bold: !!e.style.bold,
+            italic: !!e.style.italic,
+            underline: !!e.style.underline,
+            align: ['left','center','right'].includes(e.style.align) ? e.style.align : 'left',
+            fill: typeof e.style.fill === 'string' ? e.style.fill : '#60a5fa',
+            stroke: typeof e.style.stroke === 'string' ? e.style.stroke : '#0f172a'
+          } : {
+            fontSize: 28,
+            color: '#111827',
+            bold: false,
+            italic: false,
+            underline: false,
+            align: 'left',
+            fill: '#60a5fa',
+            stroke: '#0f172a'
+          },
+          shape: e.shape && ['rect','circle'].includes(e.shape) ? e.shape : 'rect'
+        })) : []
+      }));
+
+      return {
+        slides,
+        current: Number.isFinite(raw.current) ? clamp(raw.current, 0, slides.length - 1) : 0,
+        selected: Number.isFinite(raw.selected) ? raw.selected : null
+      };
+    }
+
+    const App = (() => {
+      /** @type {{slides:any[], current:number, selected:number|null}} */
+      let state;
+
+      // history stacks
+      let undoStack = [];
+      let redoStack = [];
+
+      // transient
+      let pointer = {
+        mode: 'none', // none | drag | resize
+        elId: null,
+        handle: null,
+        startX: 0,
+        startY: 0,
+        startBox: null,
+        dragOffset: {x:0,y:0}
+      };
+
+      // popover mode
+      let colorMode = 'textColor'; // textColor | bg | fill | stroke
+
+      // clipboard
+      let clip = null;
+
+      // debounced save
+      let saveTimer = null;
+
+      // DOM
+      const dom = {};
+
+      function $(id) { return document.getElementById(id); }
+
+      function slide() { return state.slides[state.current]; }
+
+      function elements() { return slide().elements; }
+
+      function selectedEl() {
+        if (!state.selected) return null;
+        return elements().find(e => e.id === state.selected) || null;
+      }
+
+      function stageRect() {
+        return dom.stage.getBoundingClientRect();
+      }
+
+      function toStagePoint(clientX, clientY) {
+        const r = stageRect();
+        // stage is scaled by CSS to fit width; we map to internal coordinate system using ratio.
+        const scaleX = r.width / parseFloat(getComputedStyle(dom.stage).getPropertyValue('width'));
+        // The computed width equals r.width in px, so scaleX is ~1. Keep safe mapping via ratios to base size.
+        const baseW = dom.stage.dataset.baseW ? Number(dom.stage.dataset.baseW) : 960;
+        const baseH = dom.stage.dataset.baseH ? Number(dom.stage.dataset.baseH) : 540;
+        const sx = baseW / r.width;
+        const sy = baseH / r.height;
+        return {
+          x: (clientX - r.left) * sx,
+          y: (clientY - r.top) * sy,
+          sx, sy, baseW, baseH
+        };
+      }
+
+      function normalizeZ(sl) {
+        // ensure 1..n unique order
+        const sorted = [...sl.elements].sort((a,b) => (a.z ?? 1) - (b.z ?? 1));
+        sorted.forEach((e, i) => e.z = i + 1);
+      }
+
+      function pushHistory(reason = '') {
+        // Save a snapshot of full state (simple + robust)
+        const snap = JSON.stringify(state);
+        if (undoStack.length && undoStack[undoStack.length - 1] === snap) return;
+        undoStack.push(snap);
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        setSaveInfo(reason ? `Зміна: ${reason}` : 'Зміна');
+      }
+
+      function undo() {
+        if (undoStack.length === 0) return;
+        const currentSnap = JSON.stringify(state);
+        const prev = undoStack.pop();
+        redoStack.push(currentSnap);
+        state = normalizeState(safeParse(prev, null)) || state;
+        state.selected = null;
+        renderAll();
+        scheduleSave('Undo');
+      }
+
+      function redo() {
+        if (redoStack.length === 0) return;
+        const currentSnap = JSON.stringify(state);
+        const next = redoStack.pop();
+        undoStack.push(currentSnap);
+        state = normalizeState(safeParse(next, null)) || state;
+        state.selected = null;
+        renderAll();
+        scheduleSave('Redo');
+      }
+
+      function scheduleSave(label = 'Збережено') {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          setSaveInfo(`${label}: ${new Date().toLocaleTimeString()}`);
+        }, 250);
+      }
+
+      function setSaveInfo(text) {
+        dom.saveInfo.textContent = text;
+      }
+
+      function initDom() {
+        dom.stage = $('stage');
+        dom.slideList = $('slideList');
+        dom.workspace = $('workspace');
+        dom.saveInfo = $('saveInfo');
+
+        dom.colorPopover = $('colorPopover');
+        dom.colorGrid = $('colorGrid');
+        dom.colorTitle = $('colorTitle');
+
+        dom.emojiPopover = $('emojiPopover');
+        dom.emojiGrid = $('emojiGrid');
+
+        dom.modalOverlay = $('modalOverlay');
+        dom.modalTitle = $('modalTitle');
+        dom.modalBody = $('modalBody');
+        dom.modalActions = $('modalActions');
+
+        dom.presentOverlay = $('presentOverlay');
+        dom.presentStageWrap = $('presentStageWrap');
+
+        dom.stage.dataset.baseW = '960';
+        dom.stage.dataset.baseH = '540';
+      }
+
+      function initPopovers() {
+        // Colors
+        dom.colorGrid.innerHTML = '';
+        COLORS.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'w-7 h-7 border-2 border-slate-200 sharp hover:scale-105 transition-transform';
+          b.style.background = c;
+          b.title = c;
+          b.addEventListener('click', () => {
+            applyColor(c);
+            closePopovers();
+          });
+          dom.colorGrid.appendChild(b);
+        });
+
+        // Emojis
+        dom.emojiGrid.innerHTML = '';
+        EMOJIS.forEach(emo => {
+          const b = document.createElement('button');
+          b.className = 'text-2xl p-1 sharp hover:bg-slate-100';
+          b.textContent = emo;
+          b.addEventListener('click', () => {
+            addEmoji(emo);
+            closePopovers();
+          });
+          dom.emojiGrid.appendChild(b);
+        });
+      }
+
+      function openColor(mode) {
+        colorMode = mode;
+        dom.colorTitle.textContent = {
+          textColor: 'КОЛІР ТЕКСТУ',
+          bg: 'ФОН СЛАЙДА',
+          fill: 'ЗАЛИВКА',
+          stroke: 'КОНТУР'
+        }[mode] || 'КОЛІР';
+        closePopovers();
+        dom.colorPopover.classList.remove('hidden');
+      }
+
+      function openEmoji() {
+        closePopovers();
+        dom.emojiPopover.classList.remove('hidden');
+      }
+
+      function closePopovers() {
+        dom.colorPopover.classList.add('hidden');
+        dom.emojiPopover.classList.add('hidden');
+      }
+
+      function applyColor(color) {
+        const el = selectedEl();
+        pushHistory('Колір');
+        if (colorMode === 'bg') {
+          slide().background = color;
+          renderAll();
+          scheduleSave('Збережено');
+          return;
+        }
+
+        if (!el) return;
+
+        if (colorMode === 'textColor' && el.type === 'text') {
+          el.style.color = color;
+        }
+        if (colorMode === 'fill' && el.type === 'shape') {
+          el.style.fill = color;
+        }
+        if (colorMode === 'stroke' && el.type === 'shape') {
+          el.style.stroke = color;
+        }
+
+        renderStage();
+        renderThumbnails();
+        scheduleSave('Збережено');
+      }
+
+      function openModal({ title, bodyHTML, okText = 'Добре', cancelText = 'Скасувати', onOk, showActions = true }) {
+        dom.modalTitle.textContent = title;
+        dom.modalBody.innerHTML = bodyHTML;
+        dom.modalActions.classList.toggle('hidden', !showActions);
+        $('btnModalOk').textContent = okText;
+        $('btnModalCancel').textContent = cancelText;
+        $('btnModalOk').onclick = () => { if (onOk) onOk(); closeModal(); };
+        $('btnModalCancel').onclick = () => closeModal();
+        dom.modalOverlay.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        dom.modalOverlay.classList.add('hidden');
+      }
+
+      function initState() {
+        const saved = safeParse(localStorage.getItem(STORAGE_KEY), null);
+        const norm = normalizeState(saved);
+        if (norm) {
+          state = norm;
+          // start history with initial snapshot
+          undoStack = [JSON.stringify(state)];
+          redoStack = [];
+          return;
+        }
+
+        state = {
+          slides: [
+            {
+              id: uid(),
+              background: '#ffffff',
+              elements: [
                 {
-                    id: Date.now(),
-                    background: '#ffffff',
-                    elements: [
-                        { id: 1, type: 'text', x: 50, y: 50, w: 400, h: 100, content: '<h1>Мій Слайдик</h1>', color: '#000000', fontSize: '48px' }
-                    ]
+                  id: uid(),
+                  type: 'text',
+                  x: 140,
+                  y: 130,
+                  w: 680,
+                  h: 140,
+                  z: 1,
+                  content: 'Привіт! 👋\nНапиши назву презентації',
+                  style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
+                  shape: 'rect'
                 }
-            ],
-            currentIdx: 0,
-            selectedId: null
-        };
-
-        let isDragging = false;
-        let isResizing = false;
-        let dragOffset = { x: 0, y: 0 };
-        let resizeTarget = null;
-        let colorMode = 'text'; // 'text' or 'bg'
-
-        const App = {
-            init() {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) state = JSON.parse(saved);
-                this.render();
-                this.initEmoji();
-                this.initColors();
-            },
-
-            save() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                document.getElementById('save-status').innerText = 'Збережено: ' + new Date().toLocaleTimeString();
-            },
-
-            render() {
-                this.renderSlideList();
-                this.renderCanvas();
-            },
-
-            renderSlideList() {
-                const list = document.getElementById('slide-list');
-                list.innerHTML = '';
-                state.slides.forEach((s, i) => {
-                    const div = document.createElement('div');
-                    div.className = `sidebar-item sharp ${i === state.currentIdx ? 'active' : ''}`;
-                    div.onclick = () => { state.currentIdx = i; state.selectedId = null; this.render(); };
-                    
-                    const preview = document.createElement('div');
-                    preview.className = 'sidebar-preview-content';
-                    preview.style.backgroundColor = s.background;
-                    s.elements.forEach(el => {
-                        const elDiv = document.createElement('div');
-                        elDiv.style.cssText = `position:absolute; left:${el.x}px; top:${el.y}px; width:${el.w}px; height:${el.h}px; font-size:${el.fontSize}; color:${el.color}; overflow:hidden;`;
-                        if (el.type === 'text') elDiv.innerHTML = el.content;
-                        if (el.type === 'image') elDiv.innerHTML = `<img src="${el.content}" style="width:100%;height:100%;object-fit:cover">`;
-                        preview.appendChild(elDiv);
-                    });
-                    
-                    div.appendChild(preview);
-                    list.appendChild(div);
-                });
-            },
-
-            renderCanvas() {
-                const container = document.getElementById('canvas-container');
-                container.innerHTML = '';
-                const slide = state.slides[state.currentIdx];
-                container.style.backgroundColor = slide.background;
-
-                slide.elements.forEach(el => {
-                    const div = document.createElement('div');
-                    div.className = `slide-element ${state.selectedId === el.id ? 'selected' : ''} sharp`;
-                    div.style.cssText = `left:${el.x}px; top:${el.y}px; width:${el.w}px; height:${el.h}px; color:${el.color}; font-size:${el.fontSize}; z-index:${el.id};`;
-                    
-                    if (el.type === 'text') {
-                        div.innerHTML = `<div class="text-element" contenteditable="true" oninput="App.updateText(${el.id}, this.innerHTML)">${el.content}</div>`;
-                    } else {
-                        div.innerHTML = `<img src="${el.content}" style="width:100%;height:100%;object-fit:cover;pointer-events:none" class="sharp">`;
-                    }
-
-                    const handle = document.createElement('div');
-                    handle.className = 'resize-handle sharp';
-                    handle.onmousedown = (e) => this.startResize(e, el.id);
-                    div.appendChild(handle);
-
-                    div.onmousedown = (e) => {
-                        if (e.target.classList.contains('resize-handle')) return;
-                        this.startDrag(e, el.id);
-                    };
-
-                    container.appendChild(div);
-                });
-            },
-
-            addSlide() {
-                state.slides.push({ id: Date.now(), background: '#ffffff', elements: [] });
-                state.currentIdx = state.slides.length - 1;
-                this.render();
-                this.save();
-            },
-
-            deleteSlide() {
-                if (state.slides.length <= 1) return;
-                state.slides.splice(state.currentIdx, 1);
-                state.currentIdx = Math.max(0, state.currentIdx - 1);
-                this.render();
-                this.save();
-            },
-
-            duplicateSlide() {
-                const copy = JSON.parse(JSON.stringify(state.slides[state.currentIdx]));
-                copy.id = Date.now();
-                state.slides.splice(state.currentIdx + 1, 0, copy);
-                state.currentIdx++;
-                this.render();
-                this.save();
-            },
-
-            addTextElement() {
-                const id = Date.now();
-                state.slides[state.currentIdx].elements.push({
-                    id: id, type: 'text', x: 100, y: 100, w: 300, h: 80, content: 'Новий текст...', color: '#000000', fontSize: '32px'
-                });
-                state.selectedId = id;
-                this.render();
-                this.save();
-            },
-
-            updateText(id, html) {
-                const el = state.slides[state.currentIdx].elements.find(e => e.id === id);
-                if (el) el.content = html;
-                this.save();
-                this.renderSlideList();
-            },
-
-            deselect(e) {
-                if (e.target.id === 'workspace' || e.target.id === 'canvas-container') {
-                    state.selectedId = null;
-                    this.render();
-                }
-            },
-
-            startDrag(e, id) {
-                e.stopPropagation();
-                state.selectedId = id;
-                const el = state.slides[state.currentIdx].elements.find(e => e.id === id);
-                isDragging = true;
-                dragOffset = { x: e.clientX - el.x, y: e.clientY - el.y };
-                this.render();
-            },
-
-            startResize(e, id) {
-                e.stopPropagation();
-                isResizing = true;
-                resizeTarget = id;
-            },
-
-            handleMouseMove(e) {
-                if (isDragging) {
-                    const el = state.slides[state.currentIdx].elements.find(e => e.id === state.selectedId);
-                    el.x = e.clientX - dragOffset.x;
-                    el.y = e.clientY - dragOffset.y;
-                    this.renderCanvas();
-                }
-                if (isResizing) {
-                    const el = state.slides[state.currentIdx].elements.find(e => e.id === resizeTarget);
-                    el.w = Math.max(50, e.clientX - (document.getElementById('canvas-container').getBoundingClientRect().left + el.x));
-                    el.h = Math.max(30, e.clientY - (document.getElementById('canvas-container').getBoundingClientRect().top + el.y));
-                    this.renderCanvas();
-                }
-            },
-
-            handleMouseUp() {
-                if (isDragging || isResizing) {
-                    isDragging = false;
-                    isResizing = false;
-                    this.save();
-                    this.renderSlideList();
-                }
-            },
-
-            initEmoji() {
-                const grid = document.getElementById('emoji-grid');
-                EMOJIS.forEach(emo => {
-                    const btn = document.createElement('button');
-                    btn.className = 'text-2xl p-1 hover:bg-slate-100 sharp';
-                    btn.innerText = emo;
-                    btn.onclick = () => {
-                        const id = Date.now();
-                        state.slides[state.currentIdx].elements.push({
-                            id: id, type: 'text', x: 200, y: 200, w: 60, h: 60, content: emo, color: '#000000', fontSize: '48px'
-                        });
-                        UI.closePopovers();
-                        this.render();
-                        this.save();
-                    };
-                    grid.appendChild(btn);
-                });
-            },
-
-            initColors() {
-                const grid = document.getElementById('color-grid');
-                COLORS.forEach(col => {
-                    const dot = document.createElement('div');
-                    dot.className = 'color-dot';
-                    dot.style.backgroundColor = col;
-                    dot.onclick = () => {
-                        if (colorMode === 'text' && state.selectedId) {
-                            const el = state.slides[state.currentIdx].elements.find(e => e.id === state.selectedId);
-                            if (el) el.color = col;
-                        } else if (colorMode === 'bg') {
-                            state.slides[state.currentIdx].background = col;
-                        }
-                        UI.closePopovers();
-                        this.render();
-                        this.save();
-                    };
-                    grid.appendChild(dot);
-                });
-            },
-
-            openImageModal() {
-                const content = `
-                    <div class="space-y-4">
-                        <button onclick="document.getElementById('file-in').click()" class="w-full py-4 border-2 border-dashed border-slate-300 sharp font-black text-xs uppercase hover:bg-slate-50">Обрати файл з ПК</button>
-                        <input type="file" id="file-in" class="hidden" accept="image/*" onchange="App.handleUpload(this)">
-                        <div class="text-center text-[10px] font-black text-slate-400">АБО</div>
-                        <input type="text" id="img-url" placeholder="Вставте URL..." class="w-full p-3 border-2 border-slate-900 sharp outline-none">
-                    </div>
-                `;
-                UI.modal("ДОДАТИ ФОТО", content, () => {
-                    const url = document.getElementById('img-url').value;
-                    if (url) this.insertImage(url);
-                });
-            },
-
-            handleUpload(input) {
-                if (input.files && input.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => this.insertImage(e.target.result);
-                    reader.readAsDataURL(input.files[0]);
-                    UI.closeModal();
-                }
-            },
-
-            insertImage(src) {
-                const id = Date.now();
-                state.slides[state.currentIdx].elements.push({
-                    id: id, type: 'image', x: 150, y: 150, w: 300, h: 200, content: src, color: '', fontSize: ''
-                });
-                state.selectedId = id;
-                this.render();
-                this.save();
-            },
-
-            clear() {
-                if (confirm('Видалити всю презентацію?')) {
-                    localStorage.removeItem(STORAGE_KEY);
-                    location.reload();
-                }
+              ]
             }
+          ],
+          current: 0,
+          selected: null
         };
 
-        const UI = {
-            toggleEmoji() {
-                const p = document.getElementById('emoji-popover');
-                const isHidden = p.classList.contains('hidden');
-                this.closePopovers();
-                if (isHidden) p.classList.remove('hidden');
-            },
-            toggleColorPicker(mode) {
-                colorMode = mode;
-                const p = document.getElementById('color-popover');
-                const isHidden = p.classList.contains('hidden');
-                document.getElementById('color-title').innerText = mode === 'text' ? 'Колір тексту' : 'Фон слайда';
-                this.closePopovers();
-                if (isHidden) p.classList.remove('hidden');
-            },
-            closePopovers() {
-                document.getElementById('emoji-popover').classList.add('hidden');
-                document.getElementById('color-popover').classList.add('hidden');
-            },
-            modal(title, content, onConfirm) {
-                document.getElementById('modal-title').innerText = title;
-                document.getElementById('modal-content').innerHTML = content;
-                document.getElementById('modal-overlay').classList.remove('hidden');
-                document.getElementById('modal-confirm').onclick = () => { onConfirm(); this.closeModal(); };
-                document.getElementById('modal-cancel').onclick = () => this.closeModal();
-            },
-            closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); },
-            closeModalsIfOutside(e) { if (e.target.id === 'modal-overlay') this.closeModal(); }
-        };
+        undoStack = [JSON.stringify(state)];
+        redoStack = [];
+        scheduleSave('Створено');
+      }
 
-        const Editor = {
-            format(cmd, val = null) {
-                if (state.selectedId) {
-                    const el = state.slides[state.currentIdx].elements.find(e => e.id === state.selectedId);
-                    if (el && el.type === 'text') {
-                        if (cmd === 'fontSize') el.fontSize = val;
-                        else document.execCommand(cmd, false, val);
-                        App.render();
-                        App.save();
-                    }
-                }
+      function renderAll() {
+        renderThumbnails();
+        renderStage();
+      }
+
+      function renderThumbnails() {
+        dom.slideList.innerHTML = '';
+
+        state.slides.forEach((s, idx) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'space-y-2';
+
+          const head = document.createElement('div');
+          head.className = 'flex items-center justify-between';
+
+          const label = document.createElement('div');
+          label.className = 'text-[10px] font-black uppercase tracking-widest text-slate-500';
+          label.textContent = `Слайд ${idx + 1}`;
+
+          const actions = document.createElement('div');
+          actions.className = 'flex gap-1';
+
+          const btn = (icon, title, cb) => {
+            const b = document.createElement('button');
+            b.className = 'p-2 border-2 border-slate-900 bg-white sharp hover:bg-slate-900 hover:text-white transition-all';
+            b.innerHTML = icon;
+            b.title = title;
+            b.addEventListener('click', (e) => { e.stopPropagation(); cb(); });
+            return b;
+          };
+
+          actions.appendChild(btn('<i class="fa-regular fa-copy"></i>', 'Дублювати', () => duplicateSlide(idx)));
+          actions.appendChild(btn('<i class="fa-regular fa-trash-can"></i>', 'Видалити', () => deleteSlide(idx)));
+
+          head.appendChild(label);
+          head.appendChild(actions);
+
+          const thumb = document.createElement('div');
+          thumb.className = 'thumb sharp ' + (idx === state.current ? 'active' : '');
+          thumb.addEventListener('click', () => {
+            state.current = idx;
+            state.selected = null;
+            closePopovers();
+            renderAll();
+            scheduleSave('Вибрано');
+          });
+
+          const mini = document.createElement('div');
+          mini.className = 'mini';
+          mini.style.background = s.background;
+
+          // render mini elements
+          const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
+          els.forEach(el => {
+            const d = document.createElement('div');
+            d.style.position = 'absolute';
+            d.style.left = el.x + 'px';
+            d.style.top = el.y + 'px';
+            d.style.width = el.w + 'px';
+            d.style.height = el.h + 'px';
+            d.style.overflow = 'hidden';
+
+            if (el.type === 'text') {
+              d.style.fontSize = (el.style.fontSize || 28) + 'px';
+              d.style.color = el.style.color || '#111827';
+              d.style.fontWeight = el.style.bold ? '900' : '700';
+              d.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+              d.style.textDecoration = el.style.underline ? 'underline' : 'none';
+              d.style.textAlign = el.style.align || 'left';
+              d.style.whiteSpace = 'pre-wrap';
+              d.style.padding = '8px';
+              d.textContent = el.content || '';
             }
-        };
 
-        const Templates = {
-            open() {
-                const content = `
-                    <div class="grid grid-cols-1 gap-2">
-                        <button onclick="Templates.apply(1)" class="p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white">Титульний</button>
-                        <button onclick="Templates.apply(2)" class="p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white">Текст + Фото</button>
-                    </div>
-                `;
-                UI.modal("ОБЕРІТЬ МАКЕТ", content, null);
-                document.getElementById('modal-actions').classList.add('hidden');
-            },
-            apply(type) {
-                const slide = state.slides[state.currentIdx];
-                if (slide.elements.length > 0 && !confirm('Оновити слайд? Поточні елементи будуть видалені.')) return;
-                
-                slide.elements = [];
-                if (type === 1) {
-                    slide.elements.push({ id: 1, type: 'text', x: 100, y: 150, w: 600, h: 150, content: '<h1 style="text-align:center">ЗАГОЛОВОК</h1>', color: '#000000', fontSize: '72px' });
-                } else if (type === 2) {
-                    slide.elements.push({ id: 1, type: 'text', x: 50, y: 50, w: 350, h: 350, content: '<h2>Мій текст...</h2>', color: '#000000', fontSize: '32px' });
-                    slide.elements.push({ id: 2, type: 'image', x: 420, y: 50, w: 330, h: 350, content: 'https://via.placeholder.com/300', color: '', fontSize: '' });
-                }
-                
-                UI.closeModal();
-                App.render();
-                App.save();
+            if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'cover';
+              d.appendChild(img);
             }
-        };
 
-        const Presentation = {
-            idx: 0,
-            start() {
-                this.idx = 0;
-                document.getElementById('presentation-overlay').style.display = 'block';
-                this.render();
-                window.addEventListener('keydown', this.handleKeys);
-            },
-            stop() {
-                document.getElementById('presentation-overlay').style.display = 'none';
-                window.removeEventListener('keydown', this.handleKeys);
-            },
-            render() {
-                const wrapper = document.getElementById('pres-canvas-wrapper');
-                wrapper.innerHTML = '';
-                const slide = state.slides[this.idx];
-                const canvas = document.createElement('div');
-                canvas.style.cssText = `width:800px; height:450px; background-color:${slide.background}; position:relative; overflow:hidden; border:10px solid #222;`;
-                
-                slide.elements.forEach(el => {
-                    const div = document.createElement('div');
-                    div.style.cssText = `position:absolute; left:${el.x}px; top:${el.y}px; width:${el.w}px; height:${el.h}px; font-size:${el.fontSize}; color:${el.color};`;
-                    if (el.type === 'text') div.innerHTML = el.content;
-                    if (el.type === 'image') div.innerHTML = `<img src="${el.content}" style="width:100%;height:100%;object-fit:cover">`;
-                    canvas.appendChild(div);
-                });
-                wrapper.appendChild(canvas);
-            },
-            handleKeys(e) {
-                if (e.key === 'ArrowRight' || e.key === ' ') {
-                    if (Presentation.idx < state.slides.length - 1) { Presentation.idx++; Presentation.render(); }
-                    else Presentation.stop();
-                }
-                if (e.key === 'ArrowLeft') {
-                    if (Presentation.idx > 0) { Presentation.idx--; Presentation.render(); }
-                }
-                if (e.key === 'Escape') Presentation.stop();
+            if (el.type === 'shape') {
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              svg.setAttribute('width', '100%');
+              svg.setAttribute('height', '100%');
+              const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
+              if (el.shape === 'circle') {
+                shape.setAttribute('cx', '50%');
+                shape.setAttribute('cy', '50%');
+                shape.setAttribute('rx', '48%');
+                shape.setAttribute('ry', '48%');
+              } else {
+                shape.setAttribute('x', '2%');
+                shape.setAttribute('y', '2%');
+                shape.setAttribute('width', '96%');
+                shape.setAttribute('height', '96%');
+              }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa');
+              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
+              shape.setAttribute('stroke-width', '8');
+              svg.appendChild(shape);
+              d.appendChild(svg);
             }
-        };
 
-        const Export = {
-            async toPDF() {
-                const container = document.createElement('div');
-                state.slides.forEach(s => {
-                    const page = document.createElement('div');
-                    page.style.cssText = `width:800px; height:450px; background-color:${s.background}; position:relative; overflow:hidden; page-break-after:always;`;
-                    s.elements.forEach(el => {
-                        const div = document.createElement('div');
-                        div.style.cssText = `position:absolute; left:${el.x}px; top:${el.y}px; width:${el.w}px; height:${el.h}px; font-size:${el.fontSize}; color:${el.color};`;
-                        if (el.type === 'text') div.innerHTML = el.content;
-                        if (el.type === 'image') div.innerHTML = `<img src="${el.content}" style="width:100%;height:100%;object-fit:cover">`;
-                        page.appendChild(div);
-                    });
-                    container.appendChild(page);
-                });
-                await html2pdf().from(container).set({ margin: 0, filename: 'презентація.pdf', jsPDF: { format: [800, 450], orientation: 'landscape' } }).save();
+            mini.appendChild(d);
+          });
+
+          thumb.appendChild(mini);
+          wrap.appendChild(head);
+          wrap.appendChild(thumb);
+          dom.slideList.appendChild(wrap);
+        });
+      }
+
+      function renderStage() {
+        dom.stage.innerHTML = '';
+        dom.stage.style.background = slide().background;
+
+        // click outside -> deselect
+        dom.stage.addEventListener('pointerdown', onStagePointerDown, { once: true });
+
+        const els = [...elements()].sort((a,b) => (a.z??1) - (b.z??1));
+        els.forEach(el => {
+          const w = document.createElement('div');
+          w.className = 'el sharp' + (state.selected === el.id ? ' selected' : '');
+          w.dataset.id = String(el.id);
+          w.style.left = el.x + 'px';
+          w.style.top = el.y + 'px';
+          w.style.width = el.w + 'px';
+          w.style.height = el.h + 'px';
+          w.style.zIndex = String(el.z || 1);
+
+          const content = document.createElement('div');
+          content.className = 'content sharp';
+
+          if (el.type === 'text') {
+            const t = document.createElement('div');
+            t.className = 'textBox';
+            t.contentEditable = 'true';
+            t.spellcheck = false;
+            // IMPORTANT: textContent, not innerHTML (захист від XSS)
+            t.textContent = el.content || '';
+
+            applyTextStyleToDom(t, el);
+
+            // Save on input without re-rendering (preserve caret)
+            t.addEventListener('input', () => {
+              el.content = t.textContent || '';
+              scheduleSave('Збережено');
+              // thumbnails обновлюємо рідше (не кожен символ)
+              debounceThumbs();
+            });
+
+            // Select element on focus/click
+            t.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              selectElement(el.id);
+            });
+
+            content.appendChild(t);
+          }
+
+          if (el.type === 'image') {
+            const img = document.createElement('img');
+            img.src = el.content;
+            img.className = 'sharp';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.draggable = false;
+            content.appendChild(img);
+          }
+
+          if (el.type === 'shape') {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('class', 'shape');
+
+            const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
+            if (el.shape === 'circle') {
+              shape.setAttribute('cx', '50%');
+              shape.setAttribute('cy', '50%');
+              shape.setAttribute('rx', '48%');
+              shape.setAttribute('ry', '48%');
+            } else {
+              shape.setAttribute('x', '2%');
+              shape.setAttribute('y', '2%');
+              shape.setAttribute('width', '96%');
+              shape.setAttribute('height', '96%');
             }
-        };
+            shape.setAttribute('fill', el.style.fill || '#60a5fa');
+            shape.setAttribute('stroke', el.style.stroke || '#0f172a');
+            shape.setAttribute('stroke-width', '10');
+            svg.appendChild(shape);
+            content.appendChild(svg);
+          }
 
-        window.onmousemove = (e) => App.handleMouseMove(e);
-        window.onmouseup = () => App.handleMouseUp();
-        window.onload = () => App.init();
-    </script>
+          w.appendChild(content);
+
+          // handles
+          const handles = document.createElement('div');
+          handles.className = 'handles';
+          const pos = ['nw','n','ne','e','se','s','sw','w'];
+          pos.forEach(p => {
+            const h = document.createElement('div');
+            h.className = `handle ${p} sharp`;
+            h.dataset.handle = p;
+            h.addEventListener('pointerdown', (e) => onHandlePointerDown(e, el.id, p));
+            handles.appendChild(h);
+          });
+          w.appendChild(handles);
+
+          // drag/select
+          w.addEventListener('pointerdown', (e) => onElementPointerDown(e, el.id));
+
+          dom.stage.appendChild(w);
+        });
+      }
+
+      let thumbsTimer = null;
+      function debounceThumbs() {
+        if (thumbsTimer) clearTimeout(thumbsTimer);
+        thumbsTimer = setTimeout(() => renderThumbnails(), 350);
+      }
+
+      function applyTextStyleToDom(node, el) {
+        node.style.fontSize = (el.style.fontSize || 28) + 'px';
+        node.style.color = el.style.color || '#111827';
+        node.style.fontWeight = el.style.bold ? '900' : '700';
+        node.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+        node.style.textDecoration = el.style.underline ? 'underline' : 'none';
+        node.style.textAlign = el.style.align || 'left';
+      }
+
+      function selectElement(id) {
+        state.selected = id;
+        closePopovers();
+        renderStage();
+        scheduleSave('Вибрано');
+      }
+
+      function deselect() {
+        state.selected = null;
+        closePopovers();
+        renderStage();
+        scheduleSave('');
+      }
+
+      function onStagePointerDown(e) {
+        // click empty area
+        if (e.target === dom.stage) deselect();
+      }
+
+      function onElementPointerDown(e, id) {
+        e.stopPropagation();
+
+        // If click inside text box, let caret work, but still select element
+        const elDom = e.currentTarget;
+        const isTextInside = e.target.classList && e.target.classList.contains('textBox');
+
+        selectElement(id);
+
+        // allow editing inside text without dragging on simple click
+        if (isTextInside) {
+          // drag only if user starts from border area (not text), so return
+          return;
+        }
+
+        // start drag
+        const el = elements().find(x => x.id === id);
+        if (!el) return;
+
+        pushHistory('Переміщення');
+
+        const p = toStagePoint(e.clientX, e.clientY);
+        pointer.mode = 'drag';
+        pointer.elId = id;
+        pointer.startX = p.x;
+        pointer.startY = p.y;
+        pointer.dragOffset = { x: p.x - el.x, y: p.y - el.y };
+
+        elDom.setPointerCapture(e.pointerId);
+        elDom.classList.add('dragging');
+
+        elDom.addEventListener('pointermove', onPointerMove);
+        elDom.addEventListener('pointerup', onPointerUp, { once: true });
+        elDom.addEventListener('pointercancel', onPointerUp, { once: true });
+      }
+
+      function onHandlePointerDown(e, id, handle) {
+        e.stopPropagation();
+        e.preventDefault();
+        selectElement(id);
+
+        const elDom = e.currentTarget.closest('.el');
+        const el = elements().find(x => x.id === id);
+        if (!el || !elDom) return;
+
+        pushHistory('Зміна розміру');
+
+        const p = toStagePoint(e.clientX, e.clientY);
+        pointer.mode = 'resize';
+        pointer.elId = id;
+        pointer.handle = handle;
+        pointer.startX = p.x;
+        pointer.startY = p.y;
+        pointer.startBox = { x: el.x, y: el.y, w: el.w, h: el.h };
+
+        elDom.setPointerCapture(e.pointerId);
+
+        elDom.addEventListener('pointermove', onPointerMove);
+        elDom.addEventListener('pointerup', onPointerUp, { once: true });
+        elDom.addEventListener('pointercancel', onPointerUp, { once: true });
+      }
+
+      function onPointerMove(e) {
+        const el = elements().find(x => x.id === pointer.elId);
+        if (!el) return;
+        const p = toStagePoint(e.clientX, e.clientY);
+
+        const baseW = Number(dom.stage.dataset.baseW);
+        const baseH = Number(dom.stage.dataset.baseH);
+
+        if (pointer.mode === 'drag') {
+          const nx = p.x - pointer.dragOffset.x;
+          const ny = p.y - pointer.dragOffset.y;
+          el.x = clamp(nx, 0, baseW - el.w);
+          el.y = clamp(ny, 0, baseH - el.h);
+          renderStage();
+          return;
+        }
+
+        if (pointer.mode === 'resize' && pointer.startBox) {
+          const dx = p.x - pointer.startX;
+          const dy = p.y - pointer.startY;
+          let { x, y, w, h } = pointer.startBox;
+
+          const minW = 40;
+          const minH = 30;
+
+          // handle logic
+          const has = (s) => pointer.handle.includes(s);
+
+          if (has('e')) w = w + dx;
+          if (has('s')) h = h + dy;
+          if (has('w')) { x = x + dx; w = w - dx; }
+          if (has('n')) { y = y + dy; h = h - dy; }
+
+          // clamp sizes
+          w = Math.max(minW, w);
+          h = Math.max(minH, h);
+
+          // clamp position within stage
+          x = clamp(x, 0, baseW - w);
+          y = clamp(y, 0, baseH - h);
+
+          el.x = x; el.y = y; el.w = w; el.h = h;
+          renderStage();
+        }
+      }
+
+      function onPointerUp(e) {
+        const elDom = e.currentTarget;
+        elDom.classList.remove('dragging');
+        elDom.removeEventListener('pointermove', onPointerMove);
+
+        pointer.mode = 'none';
+        pointer.elId = null;
+        pointer.handle = null;
+        pointer.startBox = null;
+
+        normalizeZ(slide());
+        renderThumbnails();
+        scheduleSave('Збережено');
+      }
+
+      /* Slide ops */
+      function addSlide() {
+        pushHistory('Новий слайд');
+        state.slides.push({ id: uid(), background: '#ffffff', elements: [] });
+        state.current = state.slides.length - 1;
+        state.selected = null;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function deleteSlide(idx = state.current) {
+        if (state.slides.length <= 1) return;
+        pushHistory('Видалити слайд');
+        state.slides.splice(idx, 1);
+        state.current = clamp(state.current, 0, state.slides.length - 1);
+        state.selected = null;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function duplicateSlide(idx = state.current) {
+        pushHistory('Дублювати слайд');
+        const copy = deepClone(state.slides[idx]);
+        copy.id = uid();
+        // new ids for elements
+        copy.elements.forEach(e => e.id = uid());
+        state.slides.splice(idx + 1, 0, copy);
+        state.current = idx + 1;
+        state.selected = null;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function moveSlide(delta) {
+        const i = state.current;
+        const j = i + delta;
+        if (j < 0 || j >= state.slides.length) return;
+        pushHistory('Переставити слайд');
+        const tmp = state.slides[i];
+        state.slides[i] = state.slides[j];
+        state.slides[j] = tmp;
+        state.current = j;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      /* Element ops */
+      function addText() {
+        pushHistory('Текст');
+        const e = {
+          id: uid(),
+          type: 'text',
+          x: 180,
+          y: 160,
+          w: 600,
+          h: 120,
+          z: elements().length + 1,
+          content: 'Введи текст…',
+          style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
+          shape: 'rect'
+        };
+        elements().push(e);
+        state.selected = e.id;
+        renderAll();
+        scheduleSave('Збережено');
+
+        // Focus text
+        requestAnimationFrame(() => {
+          const node = dom.stage.querySelector(`.el[data-id="${e.id}"] .textBox`);
+          if (node) {
+            node.focus();
+            document.execCommand('selectAll', false, null);
+          }
+        });
+      }
+
+      function addEmoji(emo) {
+        pushHistory('Смайлик');
+        const e = {
+          id: uid(),
+          type: 'text',
+          x: 420,
+          y: 220,
+          w: 120,
+          h: 120,
+          z: elements().length + 1,
+          content: emo,
+          style: { fontSize: 56, color: '#111827', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' },
+          shape: 'rect'
+        };
+        elements().push(e);
+        state.selected = e.id;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function addShape(kind) {
+        pushHistory('Фігура');
+        const e = {
+          id: uid(),
+          type: 'shape',
+          x: 260,
+          y: 170,
+          w: 440,
+          h: 240,
+          z: elements().length + 1,
+          content: '',
+          style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
+          shape: kind
+        };
+        elements().push(e);
+        state.selected = e.id;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function addImage() {
+        const html = `
+          <div class="space-y-4">
+            <button id="pickFile" class="w-full py-4 border-2 border-dashed border-slate-300 sharp font-black text-xs uppercase hover:bg-slate-50 transition-colors">
+              Обрати файл з пристрою
+            </button>
+            <input type="file" id="fileInput" class="hidden" accept="image/*" />
+            <div class="text-center text-[10px] font-black text-slate-400">АБО</div>
+            <input type="text" id="imgUrl" placeholder="Вставте URL картинки…" class="w-full p-3 border-2 border-slate-900 sharp outline-none focus:border-blue-600 transition-colors" />
+            <div class="text-[11px] font-bold text-slate-500">Порада: краще обирати файл з комп’ютера 🙂</div>
+          </div>
+        `;
+
+        openModal({
+          title: 'ДОДАТИ ФОТО',
+          bodyHTML: html,
+          okText: 'Додати',
+          cancelText: 'Закрити',
+          onOk: () => {
+            const url = $('imgUrl').value.trim();
+            if (url) insertImage(url);
+          }
+        });
+
+        $('pickFile').onclick = () => $('fileInput').click();
+        $('fileInput').onchange = (ev) => {
+          const f = ev.target.files && ev.target.files[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            insertImage(String(reader.result));
+            closeModal();
+          };
+          reader.readAsDataURL(f);
+        };
+      }
+
+      function insertImage(src) {
+        pushHistory('Фото');
+        const e = {
+          id: uid(),
+          type: 'image',
+          x: 220,
+          y: 140,
+          w: 520,
+          h: 300,
+          z: elements().length + 1,
+          content: src,
+          style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' },
+          shape: 'rect'
+        };
+        elements().push(e);
+        state.selected = e.id;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function deleteSelected() {
+        const el = selectedEl();
+        if (!el) return;
+        pushHistory('Видалити об’єкт');
+        slide().elements = slide().elements.filter(e => e.id !== el.id);
+        state.selected = null;
+        normalizeZ(slide());
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function duplicateSelected() {
+        const el = selectedEl();
+        if (!el) return;
+        pushHistory('Дублювати об’єкт');
+        const copy = deepClone(el);
+        copy.id = uid();
+        copy.x = clamp(copy.x + 20, 0, 960 - copy.w);
+        copy.y = clamp(copy.y + 20, 0, 540 - copy.h);
+        copy.z = elements().length + 1;
+        elements().push(copy);
+        state.selected = copy.id;
+        normalizeZ(slide());
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function bringToFront() {
+        const el = selectedEl();
+        if (!el) return;
+        pushHistory('На передній план');
+        el.z = elements().length + 1;
+        normalizeZ(slide());
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      function sendToBack() {
+        const el = selectedEl();
+        if (!el) return;
+        pushHistory('На задній план');
+        el.z = 0;
+        normalizeZ(slide());
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      /* Text style ops */
+      function setFontSize(px) {
+        const el = selectedEl();
+        if (!el || el.type !== 'text') return;
+        pushHistory('Розмір тексту');
+        el.style.fontSize = Number(px);
+        renderStage();
+        renderThumbnails();
+        scheduleSave('Збережено');
+      }
+
+      function toggleTextStyle(key) {
+        const el = selectedEl();
+        if (!el || el.type !== 'text') return;
+        pushHistory('Формат');
+        el.style[key] = !el.style[key];
+        renderStage();
+        renderThumbnails();
+        scheduleSave('Збережено');
+      }
+
+      function setAlign(align) {
+        const el = selectedEl();
+        if (!el || el.type !== 'text') return;
+        pushHistory('Вирівнювання');
+        el.style.align = align;
+        renderStage();
+        renderThumbnails();
+        scheduleSave('Збережено');
+      }
+
+      /* Templates */
+      function openTemplates() {
+        const body = `
+          <div class="grid grid-cols-1 gap-2">
+            <button class="tpl p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white transition-all" data-tpl="title">Титульний</button>
+            <button class="tpl p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white transition-all" data-tpl="two">Текст + фото</button>
+            <button class="tpl p-3 bg-slate-50 border-2 border-slate-900 sharp font-black text-xs uppercase hover:bg-blue-600 hover:text-white transition-all" data-tpl="three">3 блоки</button>
+          </div>
+          <div class="mt-4 text-[11px] font-bold text-slate-500">Після вибору макета — можна все пересувати та змінювати 🙂</div>
+        `;
+
+        openModal({ title: 'МАКЕТИ', bodyHTML: body, showActions: false });
+
+        dom.modalBody.querySelectorAll('.tpl').forEach(btn => {
+          btn.addEventListener('click', () => {
+            applyTemplate(btn.dataset.tpl);
+            closeModal();
+          });
+        });
+      }
+
+      function applyTemplate(kind) {
+        pushHistory('Макет');
+        const s = slide();
+        s.elements = [];
+        s.background = '#ffffff';
+
+        if (kind === 'title') {
+          s.elements.push({
+            id: uid(), type: 'shape', x: 60, y: 60, w: 840, h: 420, z: 1, content: '', shape: 'rect',
+            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#dbeafe', stroke: '#1e40af' }
+          });
+          s.elements.push({
+            id: uid(), type: 'text', x: 120, y: 170, w: 720, h: 160, z: 2, content: 'НАЗВА ПРЕЗЕНТАЦІЇ', shape: 'rect',
+            style: { fontSize: 56, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+          s.elements.push({
+            id: uid(), type: 'text', x: 220, y: 340, w: 520, h: 80, z: 3, content: 'Автор: …', shape: 'rect',
+            style: { fontSize: 28, color: '#334155', bold: false, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+        }
+
+        if (kind === 'two') {
+          s.background = '#ffffff';
+          s.elements.push({
+            id: uid(), type: 'text', x: 60, y: 60, w: 840, h: 80, z: 1, content: 'ЗАГОЛОВОК', shape: 'rect',
+            style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+          s.elements.push({
+            id: uid(), type: 'text', x: 60, y: 160, w: 420, h: 340, z: 2, content: '• Пункт 1\n• Пункт 2\n• Пункт 3', shape: 'rect',
+            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+          s.elements.push({
+            id: uid(), type: 'shape', x: 510, y: 160, w: 390, h: 340, z: 3, content: '', shape: 'rect',
+            style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#fde68a', stroke: '#92400e' }
+          });
+          s.elements.push({
+            id: uid(), type: 'text', x: 540, y: 300, w: 330, h: 120, z: 4, content: 'Додай фото сюди', shape: 'rect',
+            style: { fontSize: 28, color: '#92400e', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+        }
+
+        if (kind === 'three') {
+          s.elements.push({
+            id: uid(), type: 'text', x: 60, y: 50, w: 840, h: 70, z: 1, content: 'МІЙ СЛАЙД', shape: 'rect',
+            style: { fontSize: 48, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
+          });
+
+          const blocks = [
+            { x: 60,  fill: '#dcfce7', stroke: '#166534', title: 'Ідея 1' },
+            { x: 340, fill: '#dbeafe', stroke: '#1e40af', title: 'Ідея 2' },
+            { x: 620, fill: '#fae8ff', stroke: '#7e22ce', title: 'Ідея 3' }
+          ];
+
+          blocks.forEach((b, i) => {
+            s.elements.push({
+              id: uid(), type: 'shape', x: b.x, y: 150, w: 280, h: 350, z: 2 + i, content: '', shape: 'rect',
+              style: { fontSize: 28, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: b.fill, stroke: b.stroke }
+            });
+            s.elements.push({
+              id: uid(), type: 'text', x: b.x + 20, y: 175, w: 240, h: 60, z: 10 + i, content: b.title, shape: 'rect',
+              style: { fontSize: 32, color: '#111827', bold: true, italic: false, underline: false, align: 'center', fill: '#60a5fa', stroke: '#0f172a' }
+            });
+            s.elements.push({
+              id: uid(), type: 'text', x: b.x + 20, y: 250, w: 240, h: 220, z: 20 + i, content: 'Напиши тут…', shape: 'rect',
+              style: { fontSize: 24, color: '#111827', bold: false, italic: false, underline: false, align: 'left', fill: '#60a5fa', stroke: '#0f172a' }
+            });
+          });
+        }
+
+        normalizeZ(s);
+        state.selected = null;
+        renderAll();
+        scheduleSave('Збережено');
+      }
+
+      /* Export PDF */
+      async function exportPDF() {
+        // build hidden container with fixed 960x540 pages
+        const container = document.createElement('div');
+        container.style.width = '960px';
+
+        state.slides.forEach((s, idx) => {
+          const page = document.createElement('div');
+          page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`;
+
+          const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
+          els.forEach(el => {
+            const box = document.createElement('div');
+            box.style.position = 'absolute';
+            box.style.left = el.x + 'px';
+            box.style.top = el.y + 'px';
+            box.style.width = el.w + 'px';
+            box.style.height = el.h + 'px';
+
+            if (el.type === 'text') {
+              box.style.fontSize = (el.style.fontSize || 28) + 'px';
+              box.style.color = el.style.color || '#111827';
+              box.style.fontWeight = el.style.bold ? '900' : '700';
+              box.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+              box.style.textDecoration = el.style.underline ? 'underline' : 'none';
+              box.style.textAlign = el.style.align || 'left';
+              box.style.whiteSpace = 'pre-wrap';
+              box.style.padding = '8px';
+              box.textContent = el.content || '';
+            }
+
+            if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'cover';
+              box.appendChild(img);
+            }
+
+            if (el.type === 'shape') {
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              svg.setAttribute('width', '100%');
+              svg.setAttribute('height', '100%');
+              const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
+              if (el.shape === 'circle') {
+                shape.setAttribute('cx', '50%');
+                shape.setAttribute('cy', '50%');
+                shape.setAttribute('rx', '48%');
+                shape.setAttribute('ry', '48%');
+              } else {
+                shape.setAttribute('x', '2%');
+                shape.setAttribute('y', '2%');
+                shape.setAttribute('width', '96%');
+                shape.setAttribute('height', '96%');
+              }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa');
+              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
+              shape.setAttribute('stroke-width', '10');
+              svg.appendChild(shape);
+              box.appendChild(svg);
+            }
+
+            page.appendChild(box);
+          });
+
+          container.appendChild(page);
+        });
+
+        await html2pdf()
+          .from(container)
+          .set({
+            margin: 0,
+            filename: 'slidyk_kids.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'px', format: [960, 540], orientation: 'landscape' }
+          })
+          .save();
+      }
+
+      /* Presentation */
+      const Present = {
+        idx: 0,
+        keyHandler: null,
+        start() {
+          this.idx = state.current;
+          dom.presentOverlay.style.display = 'block';
+          this.render();
+          this.keyHandler = (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+              if (this.idx < state.slides.length - 1) { this.idx++; this.render(); }
+              else this.stop();
+            }
+            if (e.key === 'ArrowLeft') {
+              if (this.idx > 0) { this.idx--; this.render(); }
+            }
+            if (e.key === 'Escape') this.stop();
+          };
+          window.addEventListener('keydown', this.keyHandler);
+        },
+        stop() {
+          dom.presentOverlay.style.display = 'none';
+          if (this.keyHandler) window.removeEventListener('keydown', this.keyHandler);
+          this.keyHandler = null;
+        },
+        render() {
+          dom.presentStageWrap.innerHTML = '';
+          const s = state.slides[this.idx];
+          const stage = document.createElement('div');
+          stage.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;border:10px solid #0f172a;`;
+
+          const els = [...s.elements].sort((a,b) => (a.z??1) - (b.z??1));
+          els.forEach(el => {
+            const box = document.createElement('div');
+            box.style.position = 'absolute';
+            box.style.left = el.x + 'px';
+            box.style.top = el.y + 'px';
+            box.style.width = el.w + 'px';
+            box.style.height = el.h + 'px';
+
+            if (el.type === 'text') {
+              box.style.fontSize = (el.style.fontSize || 28) + 'px';
+              box.style.color = el.style.color || '#fff';
+              box.style.fontWeight = el.style.bold ? '900' : '700';
+              box.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+              box.style.textDecoration = el.style.underline ? 'underline' : 'none';
+              box.style.textAlign = el.style.align || 'left';
+              box.style.whiteSpace = 'pre-wrap';
+              box.style.padding = '8px';
+              box.textContent = el.content || '';
+            }
+
+            if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'cover';
+              box.appendChild(img);
+            }
+
+            if (el.type === 'shape') {
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              svg.setAttribute('width', '100%');
+              svg.setAttribute('height', '100%');
+              const shape = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
+              if (el.shape === 'circle') {
+                shape.setAttribute('cx', '50%');
+                shape.setAttribute('cy', '50%');
+                shape.setAttribute('rx', '48%');
+                shape.setAttribute('ry', '48%');
+              } else {
+                shape.setAttribute('x', '2%');
+                shape.setAttribute('y', '2%');
+                shape.setAttribute('width', '96%');
+                shape.setAttribute('height', '96%');
+              }
+              shape.setAttribute('fill', el.style.fill || '#60a5fa');
+              shape.setAttribute('stroke', el.style.stroke || '#0f172a');
+              shape.setAttribute('stroke-width', '10');
+              svg.appendChild(shape);
+              box.appendChild(svg);
+            }
+
+            stage.appendChild(box);
+          });
+
+          dom.presentStageWrap.appendChild(stage);
+        }
+      };
+
+      /* Reset */
+      function resetAll() {
+        openModal({
+          title: 'ОЧИСТИТИ ВСЕ',
+          bodyHTML: '<p class="text-sm font-bold text-slate-600">Це видалить усі слайди на цьому пристрої. Продовжити?</p>',
+          okText: 'Так, очистити',
+          cancelText: 'Ні',
+          onOk: () => {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+          }
+        });
+      }
+
+      /* Keyboard shortcuts */
+      function initKeyboard() {
+        window.addEventListener('keydown', (e) => {
+          // avoid interfering with typing in text boxes
+          const active = document.activeElement;
+          const isTyping = active && active.classList && active.classList.contains('textBox');
+
+          // Undo/redo
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) redo(); else undo();
+            return;
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redo();
+            return;
+          }
+
+          // Copy/paste element (not text)
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+            const el = selectedEl();
+            if (el) { clip = deepClone(el); setSaveInfo('Скопійовано'); }
+            return;
+          }
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            if (clip) {
+              pushHistory('Вставити');
+              const copy = deepClone(clip);
+              copy.id = uid();
+              copy.x = clamp(copy.x + 24, 0, 960 - copy.w);
+              copy.y = clamp(copy.y + 24, 0, 540 - copy.h);
+              copy.z = elements().length + 1;
+              elements().push(copy);
+              state.selected = copy.id;
+              normalizeZ(slide());
+              renderAll();
+              scheduleSave('Збережено');
+            }
+            return;
+          }
+
+          // Duplicate element
+          if (!isTyping && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            duplicateSelected();
+            return;
+          }
+
+          // Delete
+          if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) {
+            deleteSelected();
+            return;
+          }
+
+          // Nudge with arrows
+          if (!isTyping && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+            const el = selectedEl();
+            if (!el) return;
+            e.preventDefault();
+            pushHistory('Крок');
+            const step = e.shiftKey ? 10 : 2;
+            if (e.key === 'ArrowUp') el.y = clamp(el.y - step, 0, 540 - el.h);
+            if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, 540 - el.h);
+            if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, 960 - el.w);
+            if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, 960 - el.w);
+            renderStage();
+            debounceThumbs();
+            scheduleSave('Збережено');
+          }
+        });
+      }
+
+      function bindUI() {
+        // Header
+        $('btnPresent').onclick = () => Present.start();
+        $('btnPDF').onclick = () => exportPDF();
+        $('btnReset').onclick = () => resetAll();
+
+        // Sidebar
+        $('btnNewSlide').onclick = () => addSlide();
+        $('btnTemplates').onclick = () => openTemplates();
+        $('btnSlideUp').onclick = () => moveSlide(-1);
+        $('btnSlideDown').onclick = () => moveSlide(1);
+
+        // Toolbar slide
+        $('btnDupSlide').onclick = () => duplicateSlide();
+        $('btnDelSlide').onclick = () => deleteSlide();
+        $('btnBg').onclick = () => openColor('bg');
+
+        // Insert
+        $('btnAddText').onclick = () => addText();
+        $('btnAddImage').onclick = () => addImage();
+        $('btnEmoji').onclick = () => openEmoji();
+        $('btnShapeRect').onclick = () => addShape('rect');
+        $('btnShapeCircle').onclick = () => addShape('circle');
+
+        // Text
+        $('selFontSize').onchange = (e) => setFontSize(e.target.value);
+        $('btnBold').onclick = () => toggleTextStyle('bold');
+        $('btnItalic').onclick = () => toggleTextStyle('italic');
+        $('btnUnderline').onclick = () => toggleTextStyle('underline');
+        $('btnAlignLeft').onclick = () => setAlign('left');
+        $('btnAlignCenter').onclick = () => setAlign('center');
+        $('btnAlignRight').onclick = () => setAlign('right');
+        $('btnTextColor').onclick = () => openColor('textColor');
+
+        // Object
+        $('btnFill').onclick = () => openColor('fill');
+        $('btnStroke').onclick = () => openColor('stroke');
+        $('btnBringFront').onclick = () => bringToFront();
+        $('btnSendBack').onclick = () => sendToBack();
+        $('btnDupEl').onclick = () => duplicateSelected();
+        $('btnDelEl').onclick = () => deleteSelected();
+
+        // Popovers
+        $('btnClosePopover').onclick = () => closePopovers();
+        $('btnCloseEmoji').onclick = () => closePopovers();
+
+        // Modal
+        $('btnModalClose').onclick = () => closeModal();
+        dom.modalOverlay.addEventListener('pointerdown', (e) => {
+          if (e.target === dom.modalOverlay) closeModal();
+        });
+
+        // Presentation
+        $('btnPresentClose').onclick = () => Present.stop();
+
+        // Workspace click closes popovers
+        dom.workspace.addEventListener('pointerdown', (e) => {
+          const insidePopover = dom.colorPopover.contains(e.target) || dom.emojiPopover.contains(e.target);
+          if (!insidePopover) closePopovers();
+        });
+      }
+
+      function boot() {
+        initDom();
+        initPopovers();
+        initState();
+        bindUI();
+        initKeyboard();
+        renderAll();
+        setSaveInfo('Готово');
+      }
+
+      return { boot };
+    })();
+
+    window.addEventListener('load', () => App.boot());
+  </script>
 </body>
 </html>
