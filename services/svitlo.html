@@ -231,6 +231,7 @@
             currentLevel: 0,
             totalScore: 0,
             levelScore: 0,
+            scoreAtLevelStart: 0, // Зберігає бали на початку рівня
             lives: 5,
             isPaused: true,
             cycleTimeout: null,
@@ -447,6 +448,9 @@
         function victory() {
             audio.levelUp();
             clearAllTimers();
+            // Перед переходом на наступний рівень зберігаємо поточний рахунок як базовий
+            state.scoreAtLevelStart = state.totalScore;
+            
             if (state.currentLevel < config.levels.length - 1) {
                 showModal("ЧУДОВО!", `<p class="mb-4">У ${state.levelScore} квартир повернуто світло!</p>`, "ДАЛІ");
             } else {
@@ -483,6 +487,7 @@
         function startGame() {
             audio.init();
             state.totalScore = 0;
+            state.scoreAtLevelStart = 0;
             state.currentLevel = 0;
             state.lives = config.levels[0].maxLives;
             dom.score.textContent = "0";
@@ -505,6 +510,9 @@
                 dom.pauseIcon.className = 'fas fa-pause';
                 startCycle(); 
             } else if (action === "ПОВТОРИТИ РІВЕНЬ") {
+                // Скидаємо рахунок до значення на початку цього рівня
+                state.totalScore = state.scoreAtLevelStart;
+                dom.score.textContent = state.totalScore;
                 state.lives = config.levels[state.currentLevel].maxLives;
                 updateLivesUI();
                 dom.modal.classList.add('hidden');
