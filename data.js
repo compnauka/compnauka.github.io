@@ -1,63 +1,6 @@
 // --- DATA (Категорії та сервіси) ---
 const CATEGORIES = [
   {
-    id: "offline-activities",
-    name: "Безкомп'ютерні активності",
-    iconClass: "fas fa-child",
-    color: "#f97316",
-    services: [
-      { 
-        name: 'Паперові алгоритми: Залізниця', 
-        description: "Допоможи побудувати залізницю.", 
-        link: "pdfs/Pre_Coding_Activity_Potyag_UA.pdf", 
-        image: "images/42.jpg", 
-        tags: ["1-2 класи"] 
-      },
-      { 
-        name: "Паперові алгоритми: Автомобіль", 
-        description: "Проклади маршрут додому.", 
-        link: "pdfs/Pre_Coding_Activity_Auto_UA.pdf", 
-        image: "images/40.jpg", 
-        tags: ["1-2 класи"] 
-      },
-      { 
-        name: "Паперові алгоритми: Равлик", 
-        description: "Допоможи Равлику знайти шлях до смаколика.", 
-        link: "pdfs/Pre_CodingActivity_Ravlyk_UA.pdf", 
-        image: "images/41.jpg", 
-        tags: ["1-2 класи"] 
-      },
-      { 
-        name: "Паперовий Планшет", 
-        description: "Створи власний планшет з улюбленими іграми та застосунками.", 
-        link: "pdfs/Paper_Tablet_UA.pdf", 
-        image: "images/60.jpg", 
-        tags: ["1-2 класи"] 
-      },
-      { 
-        name: "Паперовий Ноутбук", 
-        description: "Збери та розфарбуй власний ноутбук.", 
-        link: "pdfs/Paper_Laptop_UA.pdf", 
-        image: "images/61.jpg", 
-        tags: ["1-2 класи"] 
-      },
-      { 
-        name: "Шифр Цезаря", 
-        description: "Створи свій шифрувальний диск.", 
-        link: "pdfs/Cesar_Cipher_Disk_UA.pdf", 
-        image: "images/62.jpg", 
-        tags: ["3-4 класи"] 
-      },
-      { 
-        name: "Піксель Арт", 
-        description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.", 
-        link: "services/pixelart.html", 
-        image: "images/65.jpg", 
-        tags: ["1-2 класи", "3-4 класи"] 
-      }
-    ]
-  },
-  {
     id: "digital-literacy",
     name: "Цифрова грамотність",
     iconClass: "fas fa-laptop",
@@ -160,6 +103,63 @@ const CATEGORIES = [
         link: "services/se/index.html", 
         image: "images/39.jpg", 
         tags: ["3-4 класи"] 
+      }
+    ]
+  },
+  {
+    id: "offline-activities",
+    name: "Безкомп'ютерні активності",
+    iconClass: "fas fa-child",
+    color: "#f97316",
+    services: [
+      { 
+        name: 'Паперові алгоритми: Залізниця', 
+        description: "Допоможи побудувати залізницю.", 
+        link: "pdfs/Pre_Coding_Activity_Potyag_UA.pdf", 
+        image: "images/42.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперові алгоритми: Автомобіль", 
+        description: "Проклади маршрут додому.", 
+        link: "pdfs/Pre_Coding_Activity_Auto_UA.pdf", 
+        image: "images/40.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперові алгоритми: Равлик", 
+        description: "Допоможи Равлику знайти шлях до смаколика.", 
+        link: "pdfs/Pre_CodingActivity_Ravlyk_UA.pdf", 
+        image: "images/41.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперовий Планшет", 
+        description: "Створи власний планшет з улюбленими іграми та застосунками.", 
+        link: "pdfs/Paper_Tablet_UA.pdf", 
+        image: "images/60.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Паперовий Ноутбук", 
+        description: "Збери та розфарбуй власний ноутбук.", 
+        link: "pdfs/Paper_Laptop_UA.pdf", 
+        image: "images/61.jpg", 
+        tags: ["1-2 класи"] 
+      },
+      { 
+        name: "Шифр Цезаря", 
+        description: "Створи свій шифрувальний диск.", 
+        link: "pdfs/Cesar_Cipher_Disk_UA.pdf", 
+        image: "images/62.jpg", 
+        tags: ["3-4 класи"] 
+      },
+      { 
+        name: "Піксель Арт", 
+        description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.", 
+        link: "services/pixelart.html", 
+        image: "images/65.jpg", 
+        tags: ["1-2 класи", "3-4 класи"] 
       }
     ]
   },
