@@ -472,7 +472,7 @@ const CATEGORIES = [
         description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
         link: "services/quizes/save_server/index.html", 
         image: "images/64.jpg", 
-        tags: ["Тест"] 
+        tags: ["3-4 класи","5-7 класи", "Тест"] 
       },
       { 
         name: "Пікселізатор", 
@@ -571,12 +571,12 @@ const CATEGORIES = [
         image: "images/55.jpg", 
         tags: ["1-2 класи", "3-4 класи"] 
       },
-      { 
+{ 
         name: "Місія: Порятунок сервера", 
         description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
         link: "services/quizes/save_server/index.html", 
         image: "images/64.jpg", 
-        tags: ["3-4 класи"] 
+        tags: ["3-4 класи","5-7 класи", "Тест"] 
       }
     ]
   }
