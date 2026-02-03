@@ -2,43 +2,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SOUND ENGINE ---
     const SoundFX = {
         ctx: null,
-        init: function() {
+        init: function () {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            
+
             if (!this.ctx) {
                 this.ctx = new AudioContext();
             } else if (this.ctx.state === 'suspended') {
                 this.ctx.resume();
             }
         },
-        playTone: function(freq, type, startTime, duration, vol = 0.1) {
+        playTone: function (freq, type, startTime, duration, vol = 0.1) {
             if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, startTime);
-            
+
             gain.gain.setValueAtTime(0, startTime);
             gain.gain.linearRampToValueAtTime(vol, startTime + 0.05);
             gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-            
+
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(startTime);
             osc.stop(startTime + duration);
         },
-        playClick: function() { 
-            if (this.ctx) this.playTone(800, 'sine', this.ctx.currentTime, 0.1, 0.05); 
+        playClick: function () {
+            if (this.ctx) this.playTone(800, 'sine', this.ctx.currentTime, 0.1, 0.05);
         },
-        playSuccess: function() {
+        playSuccess: function () {
             if (!this.ctx) return;
             const now = this.ctx.currentTime;
             [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
                 this.playTone(freq, 'sine', now + (i * 0.1), 0.3, 0.1);
             });
         },
-        playZap: function() {
+        playZap: function () {
             if (!this.ctx) return;
             const now = this.ctx.currentTime;
             const osc = this.ctx.createOscillator();
@@ -59,27 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function createSparks(x, y) {
         const colors = ['#ff0000', '#ff4500', '#ffd700', '#ffffff'];
         const fragment = document.createDocumentFragment();
-        
+
         for (let i = 0; i < 20; i++) {
             const spark = document.createElement('div');
             spark.classList.add('spark');
-            
+
             const angle = Math.random() * Math.PI * 2;
             const velocity = Math.random() * 60 + 20;
             const tx = Math.cos(angle) * velocity;
             const ty = Math.sin(angle) * velocity + 50;
-            
+
             spark.style.left = x + 'px';
             spark.style.top = y + 'px';
             spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            
+
             fragment.appendChild(spark);
-            
+
             const animation = spark.animate([
                 { transform: `translate(0,0) scale(1)`, opacity: 1 },
                 { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
             ], { duration: 500 + Math.random() * 300, easing: 'cubic-bezier(0, .9, .57, 1)' });
-            
+
             animation.onfinish = () => spark.remove();
         }
         document.body.appendChild(fragment);
@@ -95,13 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let isTimerEnabled = false;
     let shownCheckpoints = {};
     let typeWriterTimeout;
+    let consecutiveErrors = 0;
 
     // --- DOM ELEMENTS ---
     const elements = {
         dialogueText: document.getElementById('dialogue-text'),
         skipDialogueBtn: document.getElementById('skip-dialogue-btn'),
         interactionArea: document.getElementById('interaction-area'),
-        feedbackMsg: document.getElementById('feedback-msg'),
+        feedbackMsg: document.getElementById('feedback-msg'), // Will need to remove or ignore this
+        gameFooter: document.getElementById('game-footer'),
+        footerContent: document.getElementById('footer-content'),
         progressBar: document.getElementById('progress-bar'),
         levelIndicator: document.getElementById('level-indicator'),
         gameContainer: document.getElementById('game-container'),
@@ -123,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.startBtn.addEventListener('click', startGame);
     elements.resetBtnTop.addEventListener('click', resetProgress);
     elements.restartBtn.addEventListener('click', resetProgress);
-    
+
     document.addEventListener('keydown', handleKeyboardInput);
 
     // --- GAME LOGIC ---
@@ -131,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initGameSession() {
         // Шкільний режим: завжди генеруємо нову сесію, ігноруємо збережену
         localStorage.removeItem('serverRescue_session');
-        
+
         gameSession = missionDatabase.map(topicData => {
             const randomVarIndex = Math.floor(Math.random() * topicData.variations.length);
             return {
@@ -139,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...topicData.variations[randomVarIndex]
             };
         });
-        
+
         // Можемо не зберігати сесію взагалі, або зберігати для поточної гри
         // localStorage.setItem('serverRescue_session', JSON.stringify(gameSession));
     }
@@ -147,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         SoundFX.init();
         SoundFX.playClick();
-        
+
         isTimerEnabled = elements.timerToggle.checked;
         if (isTimerEnabled) elements.timerDisplay.classList.remove('hidden');
         else elements.timerDisplay.classList.add('hidden');
@@ -157,11 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('serverRescue_progress');
 
         initGameSession();
-        
+
         elements.startScreen.classList.add('hidden');
         elements.victoryScreen.classList.add('hidden');
         elements.characterArea.classList.remove('hidden');
-        
+
         loadLevel(gameState.currentLevelIndex);
     }
 
@@ -170,7 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
         totalErrors = 0;
         currentHealth = 100;
         failedTopics = [];
+        failedTopics = [];
         shownCheckpoints = {}; // Скидаємо показані чекпойнти
+        consecutiveErrors = 0;
         updateHealthUI();
     }
 
@@ -183,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateRobotEmotion(state) {
         elements.robotAvatar.className = "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-2 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.5)] z-10 relative transition-all duration-300";
         elements.robotIcon.className = "fas text-2xl md:text-3xl transition-colors";
-        
+
         const emotions = {
             happy: {
                 avatar: ['bg-green-900', 'border-green-400'],
@@ -211,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateHealthUI() {
         elements.healthBar.style.width = `${currentHealth}%`;
         elements.healthBar.setAttribute('aria-valuenow', currentHealth);
-        
+
         let colorClass = "bg-green-500";
         if (currentHealth <= 30) colorClass = "bg-red-500";
         else if (currentHealth <= 70) colorClass = "bg-yellow-500";
@@ -223,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
         element.innerHTML = "";
         element.classList.add('typing-effect');
-        
+
         let i = 0;
         function type() {
             if (i < text.length) {
@@ -241,17 +246,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function startTimer() {
         if (!isTimerEnabled) return;
         let timeLeft = 45;
-        
+
         elements.timerDisplay.innerText = timeLeft + 's';
         elements.timerDisplay.classList.remove('text-red-500', 'animate-pulse');
         elements.timerDisplay.classList.add('text-yellow-400');
-        
+
         if (timerInterval) clearInterval(timerInterval);
 
         timerInterval = setInterval(() => {
             timeLeft--;
             elements.timerDisplay.innerText = timeLeft + 's';
-            
+
             if (timeLeft <= 10) {
                 elements.timerDisplay.classList.remove('text-yellow-400');
                 elements.timerDisplay.classList.add('text-red-500', 'animate-pulse');
@@ -275,29 +280,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const levelData = gameSession[gameState.currentLevelIndex];
         registerFailedQuestion(levelData);
 
-        showFeedback(false, "Час вийшов! Система пошкоджена.");
+        showFeedback(false, "Час вичерпано! Систему пошкоджено.");
         showNextButton();
     }
 
     function showFeedback(isSuccess, message) {
-        elements.feedbackMsg.classList.remove('hidden', 'scale-95', 'opacity-0');
-        elements.feedbackMsg.classList.add('scale-100', 'opacity-100');
-        
+        // Show Footer
+        elements.gameFooter.classList.remove('translate-y-full');
+
+        let bgColor, borderColor, icon, title;
+
         if (isSuccess) {
-            elements.feedbackMsg.className = "mt-4 p-4 rounded-lg text-left font-bold text-white w-full shadow-lg transform transition-all duration-300 scale-100 opacity-100 border-l-4 shrink-0 bg-green-600/90 border-green-400";
-            elements.feedbackMsg.innerHTML = `<div><i class="fas fa-check-circle mr-2"></i> ${message}</div>`;
+            bgColor = 'bg-slate-800'; // Make neutral dark bg for cleaner look, or keep green
+            borderColor = 'border-green-500';
+            icon = 'fa-check-circle text-green-400';
+            title = 'Правильно!';
         } else {
-            elements.feedbackMsg.className = "mt-4 p-4 rounded-lg text-left font-bold text-white w-full shadow-lg transform transition-all duration-300 scale-100 opacity-100 border-l-4 shrink-0 bg-red-600/90 border-red-400";
-            elements.feedbackMsg.innerHTML = `<div><i class="fas fa-times-circle mr-2"></i> ${message}</div>`;
+            bgColor = 'bg-slate-800';
+            borderColor = 'border-red-500';
+            icon = 'fa-times-circle text-red-400';
+            title = 'Неправильно';
         }
+
+        elements.footerContent.className = `p-4 md:p-6 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] border-t-4 ${bgColor} ${borderColor} flex flex-col md:flex-row items-center justify-between gap-4`;
+
+        elements.footerContent.innerHTML = `
+            <div class="flex items-start gap-4 flex-1">
+                <i class="fas ${icon} text-3xl mt-1 shrink-0"></i>
+                <div>
+                    <h4 class="font-bold text-white text-lg mb-1">${title}</h4>
+                    <p class="text-slate-300 text-sm md:text-base">${message}</p>
+                </div>
+            </div>
+            <!-- Action button will be appended here or separately -->
+        `;
+    }
+
+    function hideFeedback() {
+        elements.gameFooter.classList.add('translate-y-full');
     }
 
     function showCheckpoint(index) {
         if (timerInterval) clearInterval(timerInterval);
         updateRobotEmotion('happy');
         elements.interactionArea.innerHTML = '';
-        elements.feedbackMsg.classList.add('hidden');
-        
+        hideFeedback();
+
         const progressPct = (index / gameSession.length) * 100;
         elements.progressBar.style.width = `${progressPct}%`;
         elements.levelIndicator.innerText = `${index + 1}/${gameSession.length}`;
@@ -348,14 +376,17 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.levelIndicator.innerText = `${index + 1}/${gameSession.length}`;
         elements.progressBar.style.width = `${(index / gameSession.length) * 100}%`;
         elements.interactionArea.innerHTML = '';
-        elements.feedbackMsg.classList.add('hidden');
+        elements.levelIndicator.innerText = `${index + 1}/${gameSession.length}`;
+        elements.progressBar.style.width = `${(index / gameSession.length) * 100}%`;
+        elements.interactionArea.innerHTML = '';
+        hideFeedback();
 
         const speed = isTimerEnabled ? 15 : 20;
         typeWriter(levelData.dialogue, elements.dialogueText, speed);
         setupSkipButton(levelData.dialogue);
 
         // Wait for typing or skip
-        const delay = Math.min(levelData.dialogue.length * speed + 500, 2000); 
+        const delay = Math.min(levelData.dialogue.length * speed + 500, 2000);
         setTimeout(() => {
             renderOptions(levelData.options);
             if (isTimerEnabled) startTimer();
@@ -410,9 +441,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateRobotEmotion('happy');
             btn.classList.replace('border-slate-600', 'border-green-400');
             btn.classList.add('bg-green-900/50');
-            
+
             showFeedback(true, selectedOption.feedback);
-            
+
             const rect = btn.getBoundingClientRect();
             createSparks(rect.left + rect.width / 2, rect.top + rect.height / 2);
         } else {
@@ -429,6 +460,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => elements.gameContainer.classList.remove('shake'), 500);
 
             showFeedback(false, selectedOption.feedback);
+
+            consecutiveErrors++;
+            if (consecutiveErrors >= 3) {
+                // Too many errors - Game Over
+                setTimeout(() => {
+                    showEndScreen(false, 'study_needed');
+                }, 2000); // Give time to read feedback
+                return; // Do NOT show Next button
+            }
         }
         showNextButton();
     }
@@ -448,21 +488,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showNextButton() {
-        setTimeout(() => {
-            const nextBtn = document.createElement('button');
-            nextBtn.className = "mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 w-full md:w-auto touch-manipulation";
-            nextBtn.innerHTML = `Далі <i class="fas fa-arrow-right ml-2"></i>`;
-            nextBtn.addEventListener('click', () => {
-                SoundFX.playClick();
-                if (currentHealth <= 0) showEndScreen(false);
-                else loadLevel(gameState.currentLevelIndex + 1);
-            });
-            elements.interactionArea.appendChild(nextBtn);
-            elements.interactionArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 1000);
+        const nextBtn = document.createElement('button');
+        nextBtn.className = "bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 w-full md:w-auto touch-manipulation flex items-center justify-center gap-2 shrink-0 whitespace-nowrap";
+        nextBtn.innerHTML = `Далі <i class="fas fa-arrow-right"></i>`;
+
+        nextBtn.addEventListener('click', () => {
+            SoundFX.playClick();
+            if (currentHealth <= 0) showEndScreen(false);
+            else loadLevel(gameState.currentLevelIndex + 1);
+        });
+
+        // Append to footer content instead of interaction area
+        elements.footerContent.appendChild(nextBtn);
     }
 
-    function showEndScreen(isVictory) {
+    function showEndScreen(isVictory, reason) {
         elements.victoryScreen.classList.remove('hidden');
         document.getElementById('final-health').innerText = currentHealth + '%';
         document.getElementById('stats-errors').innerText = totalErrors;
@@ -478,20 +518,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             failedList.classList.remove('hidden');
             perfectMsg.classList.add('hidden');
-            failedList.innerHTML = failedTopics.map(t => 
+            failedList.innerHTML = failedTopics.map(t =>
                 `<div class="flex items-start gap-2"><i class="fas fa-exclamation-triangle text-yellow-500 mt-1"></i><span>${t.topic}</span></div>`
             ).join('');
         }
 
         if (isVictory) {
-             title.innerText = "МІСІЮ ВИКОНАНО!";
-             title.classList.remove('text-red-500');
-             summary.innerHTML = `<strong class="text-green-400">Вітаємо!</strong> Ти успішно відновив сервер.`;
-             localStorage.removeItem('serverRescue_progress');
+            title.innerText = "МІСІЮ ВИКОНАНО!";
+            title.classList.remove('text-red-500');
+            summary.innerHTML = `<strong class="text-green-400">Вітаємо!</strong> Ти успішно відновив сервер.`;
+            localStorage.removeItem('serverRescue_progress');
         } else {
-             title.innerText = "СИСТЕМА ВПАЛА";
-             title.classList.add('text-red-500');
-             summary.innerHTML = `<strong class="text-red-400">Сервер критично пошкоджено!</strong> Спробуй ще раз.`;
+            title.innerText = "СИСТЕМА ВПАЛА";
+            title.classList.add('text-red-500');
+            if (reason === 'study_needed') {
+                summary.innerHTML = `<strong class="text-red-400">Навчальна тривога!</strong><br>Ти помилився(-лась) 3 рази поспіль. Схоже, матеріал залишився незрозумілим.<br>Радимо повторити відповідні теми з інформатики і спробувати ще раз!`;
+            } else {
+                summary.innerHTML = `<strong class="text-red-400">Сервер критично пошкоджено!</strong> Спробуй ще раз.`;
+            }
         }
     }
 
