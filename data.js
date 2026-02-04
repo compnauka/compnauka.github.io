@@ -207,7 +207,7 @@ const CATEGORIES = [
       { 
         name: "Перевір себе", 
         description: "Тест з обчислювального мислення.", 
-        link: "services/quiz.html", 
+        link: "services/quizes/ct_quiz/index.html", 
         image: "images/55.jpg", 
         tags: ["3-4 класи"] 
       }
@@ -567,7 +567,7 @@ const CATEGORIES = [
       { 
         name: "Перевір себе", 
         description: "Тест з обчислювального мислення.", 
-        link: "services/quiz.html", 
+        link: "services/quizes/ct_quiz/index.html", 
         image: "images/55.jpg", 
         tags: ["1-2 класи", "3-4 класи"] 
       },
