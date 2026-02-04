@@ -156,11 +156,11 @@ function appendMessage(msg) {
       "flex flex-col items-center justify-start min-h-0 text-center px-4 py-6 md:py-8 fade-in";
 
     coverWrapper.innerHTML = `
-      <div class="mb-4 md:mb-6 relative group max-w-md md:max-w-2xl w-full">
+      <div class="mb-4 md:mb-6 relative group max-w-sm md:max-w-md lg:max-w-xl w-full">
         <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
         <img src="${msg.image}"
              alt="Обкладинка"
-             class="relative rounded-xl shadow-2xl w-full h-auto object-contain border-4 border-white transform transition duration-500 hover:scale-105">
+             class="relative rounded-xl shadow-2xl w-full h-auto object-contain border-4 border-white transform transition duration-500 hover:scale-105 max-h-[50vh]">
       </div>
 
       ${msg.content}
