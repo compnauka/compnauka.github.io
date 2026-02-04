@@ -153,24 +153,24 @@ function appendMessage(msg) {
   if (msg.type === "cover") {
     const coverWrapper = document.createElement("div");
     coverWrapper.className =
-      "flex flex-col items-center justify-center min-h-[80vh] text-center px-4 fade-in";
+      "flex flex-col items-center justify-start min-h-0 text-center px-4 py-6 md:py-8 fade-in";
 
     coverWrapper.innerHTML = `
-      <div class="mb-8 relative group">
+      <div class="mb-4 md:mb-6 relative group max-w-md md:max-w-2xl w-full">
         <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
         <img src="${msg.image}"
              alt="Обкладинка"
-             class="relative rounded-xl shadow-2xl w-full max-w-3xl mx-auto h-auto object-contain border-4 border-white transform transition duration-500 hover:scale-105">
+             class="relative rounded-xl shadow-2xl w-full h-auto object-contain border-4 border-white transform transition duration-500 hover:scale-105">
       </div>
 
       ${msg.content}
 
       <button
         id="coverStartBtn"
-        class="mt-8 px-8 py-4 bg-indigo-600 text-white text-lg font-bold rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3 animate-bounce">
+        class="mt-4 md:mt-6 px-6 md:px-8 py-3 md:py-4 bg-indigo-600 text-white text-base md:text-lg font-bold rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-2 md:gap-3">
         ${msg.action}
         <svg xmlns="http://www.w3.org/2000/svg"
-             class="h-6 w-6"
+             class="h-5 w-5 md:h-6 md:w-6"
              fill="none"
              viewBox="0 0 24 24"
              stroke="currentColor"
