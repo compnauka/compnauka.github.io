@@ -1,0 +1,319 @@
+:root {
+    /* Висококонтрастні кольори для дітей (WCAG AAA) */
+    --color-primary: #004aad;
+    /* Stronger Blue */
+    --color-primary-light: #e0f2fe;
+    --color-secondary: #d97706;
+    /* High contrast Amber */
+    --color-secondary-light: #fffbeb;
+    --color-correct: #047857;
+    /* High Contrast Emerald */
+    --color-correct-light: #ecfdf5;
+    --color-incorrect: #b91c1c;
+    /* High Contrast Red */
+    --color-incorrect-light: #fef2f2;
+
+    --color-text-dark: #1f2937;
+    /* Very Dark Gray */
+    --color-background-light: #ffffff;
+
+    --border-width: 4px;
+    /* Chunky borders */
+    --border-radius: 1.5rem;
+    /* Large rounded corners */
+}
+
+body {
+    font-family: 'Nunito', 'Inter', sans-serif;
+    /* Friendly rounded font */
+    background-color: #e6f7ff;
+    /* Soft blue background */
+    color: var(--color-text-dark);
+    font-size: 18px;
+    /* Base size increase */
+}
+
+.card {
+    box-shadow: 0 10px 0px rgba(0, 0, 0, 0.1);
+    /* Flat shadow for "sticker" look */
+    border: var(--border-width) solid #e5e7eb;
+    /* Default light border for cards */
+    border-radius: var(--border-radius);
+    background-color: var(--color-background-light);
+}
+
+.pulse-effect {
+    animation: pulse-grow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulse-grow {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+.answer-option {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: var(--border-width) solid #d1d5db;
+    background-color: #f9fafb;
+    font-size: 1.35rem;
+    /* Larger text */
+    border-radius: 1rem;
+    /* Slightly smaller than card */
+    padding: 1rem 1.5rem;
+    /* More padding */
+    font-weight: 600;
+}
+
+.answer-option:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-light);
+    transform: translateY(-4px);
+    /* Larger lift */
+    box-shadow: 0 6px 0 var(--color-primary);
+    /* 3D click effect hint */
+}
+
+/* Active/Active state adjustment to feel tactile */
+.answer-option:active {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 0 var(--color-primary);
+}
+
+.answer-option.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-light);
+    font-weight: 800;
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+    /* Focus ring */
+}
+
+/* Custom styles for showing results */
+.result-correct {
+    border-color: var(--color-correct);
+    background-color: var(--color-correct-light);
+    color: var(--color-correct);
+}
+
+.result-incorrect {
+    border-color: var(--color-incorrect);
+    background-color: var(--color-incorrect-light);
+    color: var(--color-incorrect);
+}
+
+#quiz-container {
+    min-height: 600px;
+    /* Fixed height to prevent jumping */
+}
+
+#quiz-container:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+}
+
+#options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-grow: 1;
+    /* Push buttons to bottom */
+    justify-content: center;
+    /* Center options vertically if few */
+    margin-bottom: 2rem;
+}
+
+/* High contrast for main headings */
+#question-text {
+    font-size: 1.6rem;
+    /* Restored size */
+    line-height: 1.4;
+    font-weight: 800;
+    color: var(--color-text-dark);
+    margin-bottom: 1.5rem;
+    min-height: 4.5rem;
+    /* Reserve space for ~3 lines */
+    display: flex;
+    align-items: center;
+    /* Center text vertically in its reserved space */
+}
+
+/* Styling for the next/skip buttons for better contrast */
+#next-button {
+    background-color: var(--color-correct);
+    border: var(--border-width) solid var(--color-correct);
+    border-radius: 1rem;
+    box-shadow: 0 6px 0 #065f46;
+    /* Darker shade of green for shadow */
+    transition: all 0.1s;
+    margin-bottom: 6px;
+    /* Space for shadow */
+}
+
+#next-button:hover:not(:disabled) {
+    background-color: #059669;
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #065f46;
+}
+
+#next-button:active:not(:disabled) {
+    transform: translateY(6px);
+    box-shadow: none;
+}
+
+#skip-button {
+    color: #92400e;
+    /* Dark amber text */
+    border: var(--border-width) solid var(--color-secondary);
+    background-color: white;
+    font-weight: 800;
+    border-radius: 1rem;
+    box-shadow: 0 6px 0 #b45309;
+    /* Darker amber shadow */
+    transition: all 0.1s;
+    margin-bottom: 6px;
+}
+
+#skip-button:hover {
+    background-color: var(--color-secondary-light);
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #b45309;
+}
+
+#skip-button:active {
+    transform: translateY(6px);
+    box-shadow: none;
+}
+
+#review-button {
+    font-size: 1.2rem;
+}
+
+/* Ensure all text uses high contrast dark color */
+.text-gray-800 {
+    color: var(--color-text-dark);
+}
+
+/* --- Grade Button Styles (Extracted from JS) --- */
+.grade-button {
+    /* Base styles from JS: p-6 font-extrabold text-2xl rounded-2xl transition-all duration-100 border-4 focus:outline-none mb-4 */
+    padding: 1.5rem;
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    border-radius: 1rem;
+    transition: all 0.1s;
+    border-width: 4px;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    margin-bottom: 1rem;
+    width: 100%;
+    /* Ensure full width in grid if needed, or controlled by grid */
+    text-align: center;
+}
+
+.btn-grade-2 {
+    /* border-amber-500 text-amber-900 bg-amber-50 */
+    border-color: #f59e0b;
+    color: #78350f;
+    background-color: #fffbeb;
+    /* shadow-[0_6px_0_#d97706] */
+    box-shadow: 0 6px 0 #d97706;
+}
+
+.btn-grade-2:hover {
+    /* hover:bg-amber-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#d97706] */
+    background-color: #fef3c7;
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #d97706;
+}
+
+.btn-grade-2:active {
+    /* active:translate-y-[6px] active:shadow-none */
+    transform: translateY(6px);
+    box-shadow: none;
+}
+
+.btn-grade-3 {
+    /* border-green-500 text-green-900 bg-green-50 */
+    border-color: #22c55e;
+    color: #14532d;
+    background-color: #f0fdf4;
+    /* shadow-[0_6px_0_#059669] */
+    box-shadow: 0 6px 0 #059669;
+}
+
+.btn-grade-3:hover {
+    /* hover:bg-green-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#059669] */
+    background-color: #dcfce7;
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #059669;
+}
+
+.btn-grade-3:active {
+    transform: translateY(6px);
+    box-shadow: none;
+}
+
+.btn-grade-4 {
+    /* border-blue-500 text-blue-900 bg-blue-50 */
+    border-color: #3b82f6;
+    color: #1e3a8a;
+    background-color: #eff6ff;
+    /* shadow-[0_6px_0_#004aad] */
+    box-shadow: 0 6px 0 #004aad;
+}
+
+.btn-grade-4:hover {
+    /* hover:bg-blue-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#004aad] */
+    background-color: #dbeafe;
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #004aad;
+}
+
+.btn-grade-4:active {
+    transform: translateY(6px);
+    box-shadow: none;
+}
+
+/* --- Accessibility: Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .pulse-effect {
+        animation: none;
+    }
+
+    .answer-option:hover,
+    #next-button:hover,
+    #skip-button:hover,
+    .grade-button:hover {
+        transform: none !important;
+        /* Keep the shadow changes or remove them if distracting, keeping it simple for now */
+    }
+
+    .answer-option:active,
+    #next-button:active,
+    #skip-button:active,
+    .grade-button:active {
+        transform: none !important;
+        box-shadow: inherit !important;
+        /* Prevent the shadow disappearance "click" effect */
+    }
+}

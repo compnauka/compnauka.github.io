@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест з обчислювального мислення для дітей</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+    <script>
+        window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments) }, plausible.init = plausible.init || function (i) { plausible.o = i || {} };
+        plausible.init()
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="min-h-screen p-4 sm:p-8 flex justify-center items-start pt-8 bg-[#e6f7ff]">
+
+    <!-- Firebase Initialization and Utility Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Використання глобальних змінних Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let userId = 'anonymous';
+        let isAuthReady = false;
+
+        if (firebaseConfig) {
+            // Налаштування логування для налагодження
+            setLogLevel('debug');
+
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Аутентифікація користувача
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log(`[Firebase] Користувач автентифікований. UserID: ${userId}`);
+                } else {
+                    console.log("[Firebase] Користувач не автентифікований. Спроба анонімного входу...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("[Firebase] Помилка аутентифікації:", error);
+                        // Якщо анонімний вхід не вдався, генеруємо локальний ID
+                        userId = crypto.randomUUID();
+                    }
+                }
+                isAuthReady = true;
+                // Оновлюємо відображення ID, як тільки аутентифікація завершена
+                if (document.getElementById('user-info-display')) {
+                    document.getElementById('user-info-display').innerHTML = `Твій тимчасовий ID: ${userId}`;
+                }
+            });
+        } else {
+            console.error("[Firebase] Конфігурація Firebase недоступна. Використовується локальний режим.");
+        }
+
+        // Глобальна функція для отримання ID користувача
+        window.getUserId = () => userId;
+    </script>
+
+
+    <!-- Головний контейнер тесту -->
+    <main id="app-container" class="w-full max-w-4xl p-0">
+
+        <!-- 1. Екран вибору класу -->
+        <div id="class-selection" class="card bg-white p-6 sm:p-10 text-center transition-all duration-500">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-6 text-center">
+                🧠 Тест з обчислювального мислення для дітей
+            </h1>
+            <p class="text-xl text-gray-600 mb-10">Обери свій рівень, щоб почати гру! 👇</p>
+
+            <div id="class-buttons" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <!-- Кнопки класів генеруються JS -->
+            </div>
+
+            <div id="user-info-display" class="mt-8 text-xs text-gray-500">
+                <!-- Тут буде відображатися ID користувача -->
+            </div>
+        </div>
+
+        <!-- 2. Екран тесту -->
+        <div id="quiz-container" class="hidden card bg-white p-4 sm:p-6 transition-all duration-500">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <p class="text-xl font-bold text-blue-600">Завдання <span id="current-question-index">1</span> з 10</p>
+                <div class="text-lg font-medium text-gray-700">Рівень: <span id="current-grade"></span></div>
+            </div>
+
+            <h2 id="question-text" class="text-2xl font-semibold text-gray-800 mb-4"></h2>
+
+            <div id="options-container">
+                <!-- Варіанти відповідей будуть тут -->
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                <button id="skip-button"
+                    class="w-full sm:w-1/2 py-3 text-yellow-600 font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-300"
+                    onclick="skipQuestion()">
+                    Пропустити 🤔
+                </button>
+                <button id="next-button"
+                    class="w-full sm:w-1/2 py-3 text-white font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-300 opacity-50 cursor-not-allowed"
+                    disabled onclick="nextQuestion()">
+                    Далі 🚀
+                </button>
+            </div>
+
+            <button id="review-button" class="mt-4 w-full py-2 text-sm text-blue-500 hover:text-blue-700"
+                onclick="openReviewModal()" style="display:none;">
+                Переглянути пропущені питання (<span id="skipped-count">0</span>)
+            </button>
+        </div>
+
+        <!-- 3. Екран результатів -->
+        <div id="results-container" class="hidden card bg-white p-6 sm:p-10 text-center transition-all duration-500">
+            <h1 class="text-4xl sm:text-5xl font-extrabold mb-4" id="result-message">Чудова робота! 🎉</h1>
+            <p class="text-xl text-gray-600 mb-6">Твій результат:</p>
+
+            <div class="inline-block p-6 rounded-full bg-yellow-100 border-4 border-yellow-400 mb-8 pulse-effect">
+                <span id="score-display" class="text-6xl font-black text-yellow-600">0/10</span>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-left">Аналіз відповідей:</h2>
+
+            <!-- Доданий блок для переліку концепцій -->
+            <div id="concepts-summary" class="bg-blue-50 p-4 rounded-xl mb-6 border-l-4 border-blue-500 text-left">
+                <h3 class="font-bold text-blue-800 text-lg mb-2">💡 Концепції, які ти повторив:</h3>
+                <p id="concept-list" class="text-sm text-gray-700"></p>
+            </div>
+
+            <div id="detailed-results" class="space-y-6 text-left">
+                <!-- Детальний аналіз буде тут -->
+            </div>
+
+            <button
+                class="mt-10 py-3 px-8 bg-blue-500 text-white font-bold text-lg rounded-xl transition duration-300 hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                onclick="resetQuiz()">
+                Почати знову! 🔄
+            </button>
+        </div>
+
+        <!-- Модальне вікно для навігації по пропущених питаннях -->
+        <div id="review-modal"
+            class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white card w-full max-w-md p-6">
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">Перегляд питань</h3>
+                <p class="text-gray-600 mb-4">Натисни на номер, щоб повернутися до питання.</p>
+                <div id="modal-question-list" class="grid grid-cols-5 gap-3 max-h-64 overflow-y-auto p-2">
+                    <!-- Список питань буде тут -->
+                </div>
+                <button class="mt-6 w-full py-2 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600"
+                    onclick="closeReviewModal()">
+                    Закрити
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="questions.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
