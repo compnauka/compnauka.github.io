@@ -25,7 +25,7 @@ const missionDatabase = [
                 options: [
                     { text: "SSD диск", icon: "fa-database", correct: true, feedback: "SSD зчитує й записує дані набагато швидше, ніж звичайний жорсткий диск." },
                     { text: "HDD диск", icon: "fa-hard-drive", correct: false, feedback: "HDD повільніший, тому система завантажується довше." },
-                    { text: "Оптичнийдиск", icon: "fa-compact-disc", correct: false, feedback: "Оптичниі диски (CD, DVD) зазвичай використовують для перегляду або встановлення програм, а не для постійної роботи системи." },
+                    { text: "Оптичний диск", icon: "fa-compact-disc", correct: false, feedback: "Оптичниі диски (CD, DVD) зазвичай використовують для перегляду або встановлення програм, а не для постійної роботи системи." },
                     { text: "Флешка", icon: "fa-usb", correct: false, feedback: "Флешка може зберігати файли, але не є основним диском сервера." }
                 ]
             }

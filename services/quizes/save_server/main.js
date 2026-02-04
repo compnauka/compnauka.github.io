@@ -85,6 +85,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(fragment);
     }
 
+    // --- UTILITIES ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     // --- STATE MANAGEMENT ---
     let gameSession = [];
     let gameState = { currentLevelIndex: 0 };
@@ -135,15 +144,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Шкільний режим: завжди генеруємо нову сесію, ігноруємо збережену
         localStorage.removeItem('serverRescue_session');
 
-        gameSession = missionDatabase.map(topicData => {
+        // Визначаємо межі модулів за чекпойнтами
+        const checkpointIndices = Object.keys(storyCheckpoints).map(Number).sort((a, b) => a - b);
+        let ranges = [];
+        let lastIdx = 0;
+
+        checkpointIndices.forEach(idx => {
+            ranges.push([lastIdx, idx]);
+            lastIdx = idx;
+        });
+        ranges.push([lastIdx, missionDatabase.length]);
+
+        let shuffledTopics = [];
+        ranges.forEach(([start, end]) => {
+            let moduleTopics = missionDatabase.slice(start, end);
+            shuffleArray(moduleTopics);
+            shuffledTopics = shuffledTopics.concat(moduleTopics);
+        });
+
+        gameSession = shuffledTopics.map(topicData => {
             const randomVarIndex = Math.floor(Math.random() * topicData.variations.length);
+            const variation = topicData.variations[randomVarIndex];
+
+            // Шкуфлимо самі варіанти відповідей у варіації
+            const shuffledOptions = shuffleArray([...variation.options]);
+
             return {
                 title: topicData.topic,
-                ...topicData.variations[randomVarIndex]
+                ...variation,
+                options: shuffledOptions
             };
         });
 
-        // Можемо не зберігати сесію взагалі, або зберігати для поточної гри
         // localStorage.setItem('serverRescue_session', JSON.stringify(gameSession));
     }
 
@@ -422,10 +454,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <i class="fas ${opt.icon} text-xl"></i>
                 </div>
                 <div class="flex-1">
-                    <div class="text-xs text-slate-400 mb-1">${idx + 1}</div>
+                    <div class="text-xs text-slate-400 mb-0.5">${idx + 1}</div>
                     <div class="text-sm md:text-base">${opt.text}</div>
                 </div>
             `;
+            // Note: opt.icon is available but we might want to use markers instead of icons if they are too revealing, 
+            // but the prompt didn't ask to change visuals, just randomization. 
+            // Actually, showing idx+1 is common for keyboard shortcuts.
             btn.addEventListener('click', () => handleAnswer(opt, btn));
             grid.appendChild(btn);
         });
