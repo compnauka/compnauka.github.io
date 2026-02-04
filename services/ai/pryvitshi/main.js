@@ -23,8 +23,8 @@ let messageTimers = [];
 
 // Скасувати всі відкладені покази повідомлень (коли переходимо між розділами)
 function clearMessageTimers() {
-    messageTimers.forEach(id => clearTimeout(id));
-    messageTimers = [];
+  messageTimers.forEach(id => clearTimeout(id));
+  messageTimers = [];
 }
 
 
@@ -60,10 +60,9 @@ function renderNav() {
 
     btn.innerHTML = `
       <span>${bookSections[key].title}</span>
-      ${
-        index === currentSectionIndex
-          ? '<div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>'
-          : ""
+      ${index === currentSectionIndex
+        ? '<div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>'
+        : ""
       }
     `;
 
@@ -78,74 +77,74 @@ function renderNav() {
 
 // ---------- SECTION / CHAT RENDER ----------
 function loadSection(index) {
-    // 1. Спочатку скасовуємо всі старі таймери,
-    // щоб попередній розділ не домальовувався
-    clearMessageTimers();
+  // 1. Спочатку скасовуємо всі старі таймери,
+  // щоб попередній розділ не домальовувався
+  clearMessageTimers();
 
-    currentSectionIndex = index;
-    // Зберегти прогрес при кожному переході
-    saveProgress();
-    
-    const sectionKey = sectionKeys[index];
-    const data = bookSections[sectionKey];
-    
-    // 2. Показ / приховування нижньої навігації:
-    //    ховаємо на Обкладинці (index === 0), показуємо в інших розділах
-    if (index === 0) {
-        bottomNav.classList.add('translate-y-full'); // Hide
-        bottomNav.classList.remove('translate-y-0');
-    } else {
-        bottomNav.classList.remove('translate-y-full'); // Show
-        bottomNav.classList.add('translate-y-0');
-    }
+  currentSectionIndex = index;
+  // Зберегти прогрес при кожному переході
+  saveProgress();
 
-    // 3. Оновлення стану кнопок і індикатора сторінки
-    pageIndicator.textContent = index + 1;
-    // Назад вимкнено на Обкладинці (0) і Вступі (1)
-    prevBtn.disabled = index <= 1;
-    nextBtn.disabled = index === sectionKeys.length - 1;
-    
-    // 4. Очистити чат перед рендером нового розділу
-    chatWindow.innerHTML = '';
-    chatWindow.scrollTop = 0;
-    
-    // 5. Перемалювати навігацію з активним розділом
-    renderNav(); 
-    
-    // 6. Заголовок розділу (крім Обкладинки)
-    if (index !== 0) {
-        const titleDiv = document.createElement('div');
-        titleDiv.className = "text-center py-6 mb-6 border-b-2 border-dashed border-slate-200";
-        titleDiv.innerHTML = `<h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">${data.title}</h2>`;
-        chatWindow.appendChild(titleDiv);
-    }
+  const sectionKey = sectionKeys[index];
+  const data = bookSections[sectionKey];
 
-    // 7. Плавне «виписування» повідомлень з затримкою
-    let delay = 100;
-    
-    // Стандартні повідомлення
-    data.messages.forEach((msg) => {
-        const timerId = setTimeout(() => {
-            appendMessage(msg);
-        }, delay);
+  // 2. Показ / приховування нижньої навігації:
+  //    ховаємо на Обкладинці (index === 0), показуємо в інших розділах
+  if (index === 0) {
+    bottomNav.classList.add('translate-y-full'); // Hide
+    bottomNav.classList.remove('translate-y-0');
+  } else {
+    bottomNav.classList.remove('translate-y-full'); // Show
+    bottomNav.classList.add('translate-y-0');
+  }
 
-        // зберігаємо ID таймера, щоб потім можна було його скасувати
-        messageTimers.push(timerId);
+  // 3. Оновлення стану кнопок і індикатора сторінки
+  pageIndicator.textContent = index + 1;
+  // Назад вимкнено на Обкладинці (0) і Вступі (1)
+  prevBtn.disabled = index <= 1;
+  nextBtn.disabled = index === sectionKeys.length - 1;
 
-        delay += 300;
-    });
+  // 4. Очистити чат перед рендером нового розділу
+  chatWindow.innerHTML = '';
+  chatWindow.scrollTop = 0;
 
-    // 8. Випадковий квіз наприкінці, якщо є
-    if (data.quizzes && data.quizzes.length > 0) {
-        const randomQuiz = data.quizzes[Math.floor(Math.random() * data.quizzes.length)];
-        
-        const quizTimerId = setTimeout(() => {
-            appendMessage({ type: 'quiz', content: randomQuiz });
-        }, delay + 200);
+  // 5. Перемалювати навігацію з активним розділом
+  renderNav();
 
-        // теж зберігаємо ID
-        messageTimers.push(quizTimerId);
-    }
+  // 6. Заголовок розділу (крім Обкладинки)
+  if (index !== 0) {
+    const titleDiv = document.createElement('div');
+    titleDiv.className = "text-center py-6 mb-6 border-b-2 border-dashed border-slate-200";
+    titleDiv.innerHTML = `<h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">${data.title}</h2>`;
+    chatWindow.appendChild(titleDiv);
+  }
+
+  // 7. Плавне «виписування» повідомлень з затримкою
+  let delay = 100;
+
+  // Стандартні повідомлення
+  data.messages.forEach((msg) => {
+    const timerId = setTimeout(() => {
+      appendMessage(msg);
+    }, delay);
+
+    // зберігаємо ID таймера, щоб потім можна було його скасувати
+    messageTimers.push(timerId);
+
+    delay += 300;
+  });
+
+  // 8. Випадковий квіз наприкінці, якщо є
+  if (data.quizzes && data.quizzes.length > 0) {
+    const randomQuiz = data.quizzes[Math.floor(Math.random() * data.quizzes.length)];
+
+    const quizTimerId = setTimeout(() => {
+      appendMessage({ type: 'quiz', content: randomQuiz });
+    }, delay + 200);
+
+    // теж зберігаємо ID
+    messageTimers.push(quizTimerId);
+  }
 }
 
 
@@ -167,14 +166,15 @@ function appendMessage(msg) {
       ${msg.content}
 
       <button
-        onclick="document.getElementById('nextBtn').click()"
+        id="coverStartBtn"
         class="mt-8 px-8 py-4 bg-indigo-600 text-white text-lg font-bold rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3 animate-bounce">
         ${msg.action}
         <svg xmlns="http://www.w3.org/2000/svg"
              class="h-6 w-6"
              fill="none"
              viewBox="0 0 24 24"
-             stroke="currentColor">
+             stroke="currentColor"
+             aria-hidden="true">
           <path stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
@@ -183,8 +183,17 @@ function appendMessage(msg) {
       </button>
     `;
 
+
+    // Додаємо event listener замість inline onclick
     chatWindow.appendChild(coverWrapper);
+    const startBtn = document.getElementById('coverStartBtn');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        nextBtn.click();
+      });
+    }
     return;
+
   }
 
   // Default wrapper
@@ -223,17 +232,14 @@ function appendMessage(msg) {
     const quizData = msg.content;
     const quizId = "quiz-" + Math.random().toString(36).slice(2);
 
-    const escapedExplanation = quizData.explanation
-      .replace(/'/g, "\\'")
-      .replace(/"/g, "&quot;")
-      .replace(/\n/g, "");
-
     let optionsHtml = "";
 
-    quizData.options.forEach((opt) => {
+    quizData.options.forEach((opt, index) => {
       optionsHtml += `
         <button
-          onclick="checkAnswer(this, ${opt.correct}, '${quizId}', '${escapedExplanation}')"
+          data-quiz-id="${quizId}"
+          data-is-correct="${opt.correct}"
+          data-option-index="${index}"
           class="quiz-option w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-slate-50 mb-2 font-medium text-slate-700 bg-white shadow-sm flex items-center justify-between group">
           <span>${opt.text}</span>
           <span class="status-icon hidden"></span>
@@ -249,7 +255,8 @@ function appendMessage(msg) {
             <svg xmlns="http://www.w3.org/2000/svg"
                  class="h-5 w-5"
                  viewBox="0 0 20 20"
-                 fill="currentColor">
+                 fill="currentColor"
+                 aria-hidden="true">
               <path fill-rule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                     clip-rule="evenodd"/>
@@ -267,6 +274,17 @@ function appendMessage(msg) {
     `;
     wrapper.appendChild(contentDiv);
     chatWindow.appendChild(wrapper);
+
+    // Додаємо event listeners до кнопок квізу замість inline onclick
+    const quizContainer = document.getElementById(quizId);
+    const quizButtons = quizContainer.querySelectorAll('.quiz-option');
+    quizButtons.forEach(btn => {
+      btn.addEventListener('click', function () {
+        const isCorrect = this.dataset.isCorrect === 'true';
+        checkAnswer(this, isCorrect, quizId, quizData.explanation);
+      });
+    });
+
     return;
   }
 
@@ -333,8 +351,11 @@ function appendMessage(msg) {
   chatWindow.appendChild(wrapper);
 }
 
-// ---------- QUIZ HANDLER (глобальний для inline onclick) ----------
-window.checkAnswer = function (btn, isCorrect, quizId, explanation) {
+// ---------- QUIZ HANDLER ----------
+function checkAnswer(btn, isCorrect, quizId, explanation) {
+  // Заборонити повторні кліки
+  if (btn.disabled) return;
+
   const parent = document.getElementById(quizId);
   const feedback = document.getElementById(quizId + "-feedback");
   const buttons = parent.querySelectorAll("button");
@@ -350,6 +371,7 @@ window.checkAnswer = function (btn, isCorrect, quizId, explanation) {
     feedback.classList.remove("hidden", "bg-red-50", "text-red-900", "border-red-100");
     feedback.classList.add("bg-green-50", "text-green-900", "border-green-100");
 
+    // Заблокувати всі кнопки після правильної відповіді
     buttons.forEach((b) => {
       b.disabled = true;
       if (b !== btn) b.classList.add("opacity-50");
@@ -357,6 +379,7 @@ window.checkAnswer = function (btn, isCorrect, quizId, explanation) {
   } else {
     btn.classList.add("wrong");
     btn.classList.remove("bg-white");
+    btn.disabled = true; // Заборонити повторний клік на неправильну відповідь
     const icon = btn.querySelector(".status-icon");
     icon.innerHTML = "❌";
     icon.classList.remove("hidden");
@@ -365,7 +388,7 @@ window.checkAnswer = function (btn, isCorrect, quizId, explanation) {
     feedback.classList.remove("hidden", "bg-green-50", "text-green-900", "border-green-100");
     feedback.classList.add("bg-red-50", "text-red-900", "border-red-100");
   }
-};
+}
 
 // ---------- MENU / RESIZE ----------
 const toggleMenu = (show) => {
