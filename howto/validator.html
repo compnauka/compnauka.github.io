@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевірка topics.json</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">🔍 Перевірка topics.json</h1>
+            <p class="text-gray-600 mb-6">Вставте вміст файлу topics.json нижче, щоб перевірити на помилки:</p>
+
+            <textarea id="jsonInput" class="w-full h-64 p-4 border-2 border-gray-300 rounded-lg font-mono text-sm"
+                placeholder='Вставте сюди вміст topics.json...'></textarea>
+
+            <button onclick="validateJSON()"
+                class="mt-4 bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition">
+                Перевірити
+            </button>
+
+            <button onclick="autoFixQuotes()"
+                class="mt-4 ml-2 bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition">
+                🔧 Автовиправлення лапок
+            </button>
+
+            <div id="result" class="mt-6"></div>
+        </div>
+
+        <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+            <h3 class="font-bold text-blue-800 mb-2">💡 Підказка:</h3>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li>✓ Всі ID мають бути унікальними</li>
+                <li>✓ Після кожного блоку { } має бути кома, крім останнього</li>
+                <li>✓ Всі лапки всередині "text" мають бути одинарними '</li>
+                <li>✓ URL відео має починатися з https://</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function autoFixQuotes() {
+            const input = document.getElementById('jsonInput');
+            const result = document.getElementById('result');
+            let content = input.value;
+
+            if (!content.trim()) {
+                result.innerHTML = `
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                        <p class="text-yellow-800">⚠️ Будь ласка, вставте вміст файлу</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Спроба розпарсити для визначення проблемних місць
+                const data = JSON.parse(content);
+
+                result.innerHTML = `
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <p class="text-blue-800">ℹ️ JSON вже коректний, виправлення не потрібні!</p>
+                    </div>
+                `;
+            } catch (e) {
+                // Автоматичне виправлення подвійних лапок у полі "text"
+                // Це складний процес, тому робимо базове екранування
+                let fixed = content;
+
+                // Знаходимо всі "text": "..." блоки і замінюємо " на ' всередині
+                fixed = fixed.replace(/"text":\s*"([^"]*(?:"[^"]*)*?)"/g, (match, textContent) => {
+                    // Замінюємо подвійні лапки всередині на одинарні
+                    const cleaned = textContent.replace(/"/g, "'");
+                    return `"text": "${cleaned}"`;
+                });
+
+                input.value = fixed;
+
+                result.innerHTML = `
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <p class="text-green-800 font-bold">✅ Лапки автоматично виправлено!</p>
+                        <p class="text-green-700 text-sm mt-2">Тепер натисни "Перевірити" для остаточної валідації.</p>
+                    </div>
+                `;
+
+                // Автоматична перевірка після виправлення
+                setTimeout(validateJSON, 500);
+            }
+        }
+
+        function validateJSON() {
+            const input = document.getElementById('jsonInput').value;
+            const result = document.getElementById('result');
+
+            if (!input.trim()) {
+                result.innerHTML = `
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                        <p class="text-yellow-800">⚠️ Будь ласка, вставте вміст файлу</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const data = JSON.parse(input);
+
+                // Перевірки
+                const errors = [];
+                const warnings = [];
+                const ids = new Set();
+
+                // Визначення формату (старий чи новий)
+                let topics;
+                if (Array.isArray(data)) {
+                    topics = data;
+                    warnings.push('Використовується старий формат. Рекомендується оновити до нового формату з версією.');
+                } else if (data.topics && Array.isArray(data.topics)) {
+                    topics = data.topics;
+                    if (!data.version) warnings.push('Відсутнє поле "version"');
+                    if (!data.lastUpdated) warnings.push('Відсутнє поле "lastUpdated"');
+                } else {
+                    errors.push('Невірна структура JSON. Очікується масив тем або об\'єкт з полем "topics"');
+                    topics = [];
+                }
+
+                if (topics.length > 0) {
+                    topics.forEach((topic, index) => {
+                        // Перевірка обов'язкових полів
+                        const required = ['id', 'title', 'category', 'icon', 'short', 'video', 'text'];
+                        required.forEach(field => {
+                            if (!topic[field]) {
+                                errors.push(`Тема ${index + 1}: відсутнє поле "${field}"`);
+                            }
+                        });
+
+                        // Перевірка унікальності ID
+                        if (ids.has(topic.id)) {
+                            errors.push(`Дублікат ID: ${topic.id}`);
+                        }
+                        ids.add(topic.id);
+
+                        // Перевірка URL відео
+                        if (topic.video && !topic.video.startsWith('https://')) {
+                            warnings.push(`Тема "${topic.title}": URL відео має починатися з https://`);
+                        }
+
+                        // Перевірка подвійних лапок у тексті
+                        if (topic.text && topic.text.includes('"')) {
+                            warnings.push(`Тема "${topic.title}": у тексті є подвійні лапки ("), використовуй одинарні (')`);
+                        }
+                    });
+                }
+
+                // Відображення результату
+                if (errors.length === 0 && warnings.length === 0) {
+                    result.innerHTML = `
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                            <p class="text-green-800 font-bold">✅ Все чудово!</p>
+                            <p class="text-green-700 text-sm mt-2">Знайдено тем: ${topics.length}</p>
+                            <p class="text-green-700 text-sm">Файл готовий до використання 🎉</p>
+                        </div>
+                    `;
+                } else {
+                    let html = '';
+
+                    if (errors.length > 0) {
+                        html += `
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
+                                <p class="text-red-800 font-bold">❌ Знайдено помилки:</p>
+                                <ul class="text-red-700 text-sm mt-2 list-disc ml-5">
+                                    ${errors.map(e => `<li>${e}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    if (warnings.length > 0) {
+                        html += `
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                                <p class="text-yellow-800 font-bold">⚠️ Попередження:</p>
+                                <ul class="text-yellow-700 text-sm mt-2 list-disc ml-5">
+                                    ${warnings.map(w => `<li>${w}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    result.innerHTML = html;
+                }
+
+            } catch (e) {
+                result.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <p class="text-red-800 font-bold">❌ JSON не валідний!</p>
+                        <p class="text-red-700 text-sm mt-2">Помилка: ${e.message}</p>
+                        <p class="text-red-600 text-xs mt-3">Найчастіші причини:</p>
+                        <ul class="text-red-600 text-xs mt-1 list-disc ml-5">
+                            <li>Забута кома після блоку { }</li>
+                            <li>Зайва кома перед ]</li>
+                            <li>Незакрита лапка або дужка</li>
+                            <li>Використання подвійних лапок " всередині "text"</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Автоматична перевірка при введенні (з затримкою)
+        let timeout;
+        document.getElementById('jsonInput').addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(validateJSON, 1000);
+        });
+    </script>
+</body>
+
+</html>
