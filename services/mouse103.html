@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Швидка мишача допомога 103</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Замінено шрифт на Nunito */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        :root {
+            --road-color: #334155;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif; /* Використання нового шрифту */
+            user-select: none;
+            overflow: hidden;
+            background-color: #86efac;
+            background-image: radial-gradient(#4ade80 15%, transparent 16%), radial-gradient(#4ade80 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            touch-action: none;
+        }
+
+        /* Анімація дороги */
+        .road-stripes {
+            background-image: linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.3) 50%);
+            background-size: 100% 200px;
+            animation: moveRoad 1s linear infinite;
+        }
+
+        @keyframes moveRoad {
+            from { background-position: 0 0; }
+            to { background-position: 0 200px; }
+        }
+
+        .paused .road-stripes {
+            animation-play-state: paused;
+        }
+
+        /* Ефекти кнопок миші */
+        .mouse-btn-active {
+            background-color: #4ade80 !important;
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .game-shadow {
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+        }
+
+        .modal-screen {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Анімація підбору бонусу */
+        @keyframes popOut {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .bonus-pop {
+            animation: popOut 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-between overflow-hidden p-2">
+
+    <!-- Верхня панель -->
+    <header class="w-full max-w-xl flex justify-between items-center bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-lg mb-2 z-20 border-b-4 border-red-500">
+        <div class="flex items-center gap-3">
+            <div class="bg-red-100 p-2 rounded-full">
+                <i class="fa-solid fa-truck-medical text-red-500 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-extrabold text-gray-800 leading-none mb-1">Швидка мишача допомога</h1>
+                <div class="flex gap-3 text-xs font-bold text-gray-500 leading-tight">
+                    <span>Рахунок: <span id="scoreValue" class="text-blue-600 text-base">0</span></span>
+                    <span>Рекорд: <span id="highScoreValue" class="text-purple-600 text-base">0</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <button id="pauseBtn" class="w-12 h-12 bg-blue-100 rounded-full text-blue-500 hover:bg-blue-200 flex items-center justify-center transition shadow-sm border-2 border-blue-200 active:scale-95 outline-none">
+            <i class="fa-solid fa-pause text-xl" id="pauseIcon"></i>
+        </button>
+    </header>
+
+    <!-- Основна зона гри -->
+    <main class="relative flex-1 w-full max-w-xl flex justify-center min-h-0">
+        
+        <!-- Ліве узбіччя -->
+        <div class="w-4 md:w-6 h-full bg-gray-300 border-r-4 border-gray-400 shadow-lg z-10 rounded-l-lg"></div>
+
+        <!-- Контейнер гри -->
+        <div id="gameContainer" class="relative flex-1 bg-slate-700 overflow-hidden shadow-2xl h-full rounded-b-lg cursor-crosshair">
+            
+            <!-- Статична розмітка -->
+            <div class="absolute inset-0 flex pointer-events-none">
+                <div class="w-1/3 h-full border-r-2 border-white/10 relative"></div>
+                <div class="w-1/3 h-full border-r-2 border-white/10 relative"></div>
+                <div class="w-1/3 h-full relative"></div>
+            </div>
+            
+            <!-- Анімована розмітка -->
+            <div id="roadStripes" class="absolute inset-0 road-stripes opacity-20 paused pointer-events-none"></div>
+
+            <!-- Гравець: Швидка допомога -->
+            <div id="playerCar" class="absolute bottom-6 z-10 w-16 h-20 flex items-center justify-center transition-all duration-150 ease-out game-shadow">
+                <i class="fa-solid fa-truck-medical text-6xl text-slate-100 transform -rotate-90 filter drop-shadow-md"></i>
+            </div>
+
+            <!-- Контейнер об'єктів -->
+            <div id="objectsContainer" class="absolute inset-0 pointer-events-none"></div>
+
+            <!-- Екрани інтерфейсу -->
+            
+            <!-- Старт -->
+            <div id="startScreen" class="absolute inset-0 modal-screen flex flex-col items-center justify-center z-30 px-4">
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] border-b-8 border-red-500 text-center shadow-2xl max-w-xs w-full">
+                    <div class="mb-4 bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-star-of-life text-3xl text-red-500 animate-pulse"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold text-gray-800 mb-4">Виклик 103!</h2>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-3 shadow-inner">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 text-center"><i class="fa-solid fa-triangle-exclamation text-orange-500 text-xl"></i></div>
+                            <span class="text-sm font-extrabold text-gray-600 leading-tight">Уникай аварій</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 text-center"><i class="fa-solid fa-star text-yellow-400 text-xl"></i></div>
+                            <span class="text-sm font-extrabold text-gray-600 leading-tight">Збирай зірки (+5)</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 text-center"><i class="fa-solid fa-bolt text-purple-500 text-xl"></i></div>
+                            <span class="text-sm font-extrabold text-gray-600 leading-tight">Лови блискавки (+10 та сповілнення)</span>
+                        </div>
+                    </div>
+
+                    <button id="startBtn" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-extrabold rounded-xl shadow-lg border-b-4 border-green-700 active:translate-y-1 active:border-0 transition-all outline-none">
+                        ПОЇХАЛИ!
+                    </button>
+                </div>
+            </div>
+
+            <!-- Пауза -->
+            <div id="pauseScreen" class="hidden absolute inset-0 modal-screen flex flex-col items-center justify-center z-30 px-4">
+                <div class="bg-white p-6 rounded-[2rem] border-b-8 border-blue-400 text-center shadow-2xl max-w-xs w-full">
+                    <i class="fa-solid fa-pause text-4xl text-blue-400 mb-4 block"></i>
+                    <h2 class="text-2xl font-extrabold text-gray-800 mb-6">Пауза</h2>
+                    <button id="resumeBtn" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white text-xl font-extrabold rounded-xl shadow-lg border-b-4 border-blue-700 active:translate-y-1 active:border-0 transition-all outline-none">
+                        ПРОДОВЖИТИ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Програш (без анімації підстрибування) -->
+            <div id="gameOverScreen" class="hidden absolute inset-0 bg-red-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-30 px-4">
+                <div class="bg-white p-6 rounded-[2rem] border-b-8 border-red-500 text-center shadow-2xl max-w-xs w-full">
+                    <div class="mb-4 bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-1">Аварія!</h2>
+                    <p class="text-gray-600 mb-4 text-sm font-bold">Швидка не доїхала...</p>
+                    <div class="bg-gray-100 rounded-lg p-3 mb-4 flex justify-between items-center">
+                        <div class="text-left">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Рахунок</p>
+                            <p class="text-2xl font-extrabold text-blue-600" id="finalScore">0</p>
+                        </div>
+                         <div class="text-right border-l pl-3">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Рекорд</p>
+                            <p class="text-2xl font-extrabold text-purple-600" id="finalHighScore">0</p>
+                        </div>
+                    </div>
+                    <button id="restartBtn" class="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-xl font-extrabold rounded-xl shadow-lg border-b-4 border-yellow-600 active:translate-y-1 active:border-0 transition-all outline-none">
+                        НОВИЙ ВИКЛИК
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Праве узбіччя -->
+        <div class="w-4 md:w-6 h-full bg-gray-300 border-l-4 border-gray-400 shadow-lg z-10 rounded-r-lg"></div>
+
+        <!-- Візуалізація Мишки (Десктоп) -->
+        <div class="hidden md:flex absolute top-1/2 -right-32 transform -translate-y-1/2 flex-col items-center bg-white/90 p-4 rounded-xl border-b-4 border-blue-600 shadow-xl w-28">
+            <p class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wide text-center">Пробіл = Пауза</p>
+            <div class="relative w-16 h-24 bg-gray-200 rounded-t-[30px] rounded-b-[20px] border-4 border-gray-700 shadow-inner flex overflow-hidden">
+                <div id="visualLeftBtnDesktop" class="w-1/2 h-10 border-r-2 border-gray-400 bg-white transition-all duration-75 flex items-center justify-center"></div>
+                <div id="visualRightBtnDesktop" class="w-1/2 h-10 bg-white transition-all duration-75 flex items-center justify-center"></div>
+                <div class="absolute top-6 left-1/2 transform -translate-x-1/2 w-1.5 h-4 bg-gray-800 rounded-full"></div>
+            </div>
+            <div class="flex justify-between w-full mt-2 px-1">
+                <span class="text-[10px] font-bold text-gray-400">ЛІВА</span>
+                <span class="text-[10px] font-bold text-gray-400">ПРАВА</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Підказка для мобільних (оновлена) -->
+    <footer class="md:hidden w-full max-w-xl mt-2 flex justify-center">
+        <div class="bg-white/80 backdrop-blur-sm p-2 rounded-xl flex items-center gap-4 border-b-4 border-blue-400 shadow-lg">
+            <div class="text-xs font-bold text-gray-600 text-center flex items-center gap-2">
+                <i class="fa-solid fa-arrows-left-right text-blue-500 animate-pulse text-lg"></i>
+                <span>Свайп для руху</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Аудіо Система (Web Audio API) ---
+        const Sound = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone(freq, type, duration, vol = 0.1) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            playNoise(duration) {
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                noise.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            },
+            move() { this.playTone(200, 'triangle', 0.1, 0.05); },
+            score() { this.playTone(600, 'sine', 0.1, 0.05); },
+            bonus() { 
+                this.playTone(800, 'sine', 0.1, 0.1); 
+                setTimeout(() => this.playTone(1200, 'sine', 0.2, 0.1), 100);
+            },
+            crash() { 
+                this.playTone(100, 'sawtooth', 0.3, 0.2);
+                this.playNoise(0.3);
+            },
+            ambulance() { // Сирена швидкої
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                for(let i = 0; i < 3; i++) {
+                    const time = now + (i * 0.6);
+                    // Високий тон
+                    const osc1 = this.ctx.createOscillator();
+                    const gain1 = this.ctx.createGain();
+                    osc1.frequency.value = 800;
+                    osc1.type = 'sine';
+                    gain1.gain.value = 0.1;
+                    osc1.connect(gain1);
+                    gain1.connect(this.ctx.destination);
+                    osc1.start(time);
+                    osc1.stop(time + 0.3);
+
+                    // Низький тон
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.frequency.value = 600;
+                    osc2.type = 'sine';
+                    gain2.gain.value = 0.1;
+                    osc2.connect(gain2);
+                    gain2.connect(this.ctx.destination);
+                    osc2.start(time + 0.3);
+                    osc2.stop(time + 0.6);
+                }
+            }
+        };
+
+        // --- Конфігурація ---
+        const CONFIG = {
+            totalLanes: 3,
+            initialSpeed: 400,
+            speedIncrement: 20,
+            speedIncrementStep: 5,
+            initialSpawnInterval: 1800,
+            minSpawnInterval: 600,
+            collisionBuffer: 15
+        };
+
+        // Типи об'єктів (Перешкоди та Бонуси)
+        const OBJECT_TYPES = [
+            // Перешкоди (вага 3)
+            { type: 'obstacle', icon: 'fa-triangle-exclamation', color: 'text-orange-500', weight: 3 },
+            { type: 'obstacle', icon: 'fa-mound', color: 'text-stone-500', weight: 3 },
+            { type: 'obstacle', icon: 'fa-car-side', color: 'text-blue-500', weight: 2, transform: 'rotate(90deg)', shadow: true },
+            { type: 'obstacle', icon: 'fa-box', color: 'text-amber-700', weight: 3 },
+            // Бонуси (збільшено вагу та додано логіку для зірок)
+            { type: 'bonus', kind: 'star', icon: 'fa-star', color: 'text-yellow-400', weight: 2, points: 5 },
+            { type: 'bonus', kind: 'bolt', icon: 'fa-bolt', color: 'text-purple-500', weight: 1, points: 10, effect: 'slow' }
+        ];
+
+        // --- Елементи DOM ---
+        const UI = {
+            player: document.getElementById('playerCar'),
+            objects: document.getElementById('objectsContainer'),
+            score: document.getElementById('scoreValue'),
+            highScore: document.getElementById('highScoreValue'),
+            finalScore: document.getElementById('finalScore'),
+            finalHighScore: document.getElementById('finalHighScore'),
+            pauseIcon: document.getElementById('pauseIcon'),
+            screens: {
+                start: document.getElementById('startScreen'),
+                game: document.getElementById('gameContainer'),
+                over: document.getElementById('gameOverScreen'),
+                pause: document.getElementById('pauseScreen')
+            },
+            road: document.getElementById('roadStripes'),
+            buttons: {
+                start: document.getElementById('startBtn'),
+                restart: document.getElementById('restartBtn'),
+                resume: document.getElementById('resumeBtn'),
+                pause: document.getElementById('pauseBtn')
+            },
+            visualBtns: {
+                left: [document.getElementById('visualLeftBtnDesktop')],
+                right: [document.getElementById('visualRightBtnDesktop')]
+            }
+        };
+
+        // --- Стан гри ---
+        const State = {
+            isRunning: false,
+            isPaused: false,
+            score: 0,
+            highScore: parseInt(localStorage.getItem('mouseRacerHighScore')) || 0,
+            speed: CONFIG.initialSpeed,
+            currentLane: 1,
+            objects: [],
+            lastTime: 0,
+            timeSinceSpawn: 0,
+            spawnInterval: CONFIG.initialSpawnInterval,
+            frameId: null
+        };
+
+        // --- Логіка гри ---
+        const Game = {
+            init() {
+                UI.highScore.innerText = State.highScore;
+                this.updateCarPosition();
+                this.setupInputs();
+                this.setupButtons();
+            },
+
+            setupButtons() {
+                UI.buttons.start.addEventListener('click', () => {
+                    Sound.init();
+                    this.start();
+                });
+                UI.buttons.restart.addEventListener('click', () => this.start());
+                UI.buttons.resume.addEventListener('click', () => this.togglePause());
+                UI.buttons.pause.addEventListener('click', () => this.togglePause());
+            },
+
+            start() {
+                UI.screens.start.classList.add('hidden');
+                UI.screens.over.classList.add('hidden');
+                UI.screens.pause.classList.add('hidden');
+                UI.road.classList.remove('paused');
+
+                State.isRunning = true;
+                State.isPaused = false;
+                State.score = 0;
+                State.speed = CONFIG.initialSpeed;
+                State.spawnInterval = CONFIG.initialSpawnInterval;
+                State.currentLane = 1;
+                State.objects = [];
+                State.timeSinceSpawn = 0;
+
+                UI.score.innerText = '0';
+                UI.objects.innerHTML = '';
+                this.updatePauseIcon();
+                this.updateCarPosition();
+                
+                // Запуск сирени
+                Sound.ambulance();
+
+                State.lastTime = performance.now();
+                if (State.frameId) cancelAnimationFrame(State.frameId);
+                State.frameId = requestAnimationFrame((t) => this.loop(t));
+            },
+
+            togglePause() {
+                if (!State.isRunning) return;
+
+                State.isPaused = !State.isPaused;
+                this.updatePauseIcon();
+
+                if (State.isPaused) {
+                    UI.screens.pause.classList.remove('hidden');
+                    UI.road.classList.add('paused');
+                    cancelAnimationFrame(State.frameId);
+                } else {
+                    UI.screens.pause.classList.add('hidden');
+                    UI.road.classList.remove('paused');
+                    State.lastTime = performance.now();
+                    State.frameId = requestAnimationFrame((t) => this.loop(t));
+                }
+            },
+
+            updatePauseIcon() {
+                if (State.isPaused) {
+                    UI.pauseIcon.classList.remove('fa-pause');
+                    UI.pauseIcon.classList.add('fa-play');
+                } else {
+                    UI.pauseIcon.classList.remove('fa-play');
+                    UI.pauseIcon.classList.add('fa-pause');
+                }
+            },
+
+            saveHighScore() {
+                if (State.score > State.highScore) {
+                    State.highScore = State.score;
+                    localStorage.setItem('mouseRacerHighScore', State.highScore);
+                    UI.highScore.innerText = State.highScore;
+                }
+                UI.finalHighScore.innerText = State.highScore;
+            },
+
+            gameOver() {
+                State.isRunning = false;
+                cancelAnimationFrame(State.frameId);
+                UI.road.classList.add('paused');
+                
+                Sound.crash();
+                this.saveHighScore();
+                
+                UI.finalScore.innerText = State.score;
+                UI.screens.over.classList.remove('hidden');
+            },
+
+            loop(time) {
+                if (!State.isRunning || State.isPaused) return;
+
+                const deltaTime = time - State.lastTime;
+                State.lastTime = time;
+
+                if (deltaTime > 100) {
+                    State.frameId = requestAnimationFrame((t) => this.loop(t));
+                    return;
+                }
+
+                State.timeSinceSpawn += deltaTime;
+                if (State.timeSinceSpawn > State.spawnInterval) {
+                    this.spawnObject();
+                    State.timeSinceSpawn = 0;
+                    if (State.spawnInterval > CONFIG.minSpawnInterval) {
+                        State.spawnInterval -= 5;
+                    }
+                }
+
+                const moveStep = (State.speed * deltaTime) / 1000;
+                const containerH = UI.screens.game.clientHeight;
+                const carRect = UI.player.getBoundingClientRect();
+
+                for (let i = State.objects.length - 1; i >= 0; i--) {
+                    const obj = State.objects[i];
+                    obj.y += moveStep;
+                    obj.el.style.top = `${obj.y}px`;
+
+                    if (obj.y > containerH / 2 && obj.lane === State.currentLane) {
+                        // Перевірка колізії з урахуванням типу об'єкта
+                        const isBonus = obj.data.type === 'bonus';
+                        if (this.checkCollision(carRect, obj.el, isBonus)) {
+                            if (obj.data.type === 'obstacle') {
+                                this.gameOver();
+                                return;
+                            } else if (isBonus) {
+                                this.collectBonus(obj, i);
+                                continue;
+                            }
+                        }
+                    }
+
+                    if (obj.y > containerH) {
+                        if (!obj.passed && obj.data.type === 'obstacle') {
+                            this.updateScore(1);
+                            obj.passed = true;
+                        }
+                        obj.el.remove();
+                        State.objects.splice(i, 1);
+                    }
+                }
+
+                State.frameId = requestAnimationFrame((t) => this.loop(t));
+            },
+
+            spawnObject() {
+                const lane = Math.floor(Math.random() * CONFIG.totalLanes);
+                
+                let type;
+                // Розрахунок загальної ваги
+                const totalWeight = OBJECT_TYPES.reduce((acc, obj) => acc + obj.weight, 0);
+                const rand = Math.random() * totalWeight;
+                let sum = 0;
+                for (const t of OBJECT_TYPES) {
+                    sum += t.weight;
+                    if (rand < sum) {
+                        type = t;
+                        break;
+                    }
+                }
+                if (!type) type = OBJECT_TYPES[0];
+
+                const el = document.createElement('div');
+                el.className = `absolute top-0 w-16 h-16 flex items-center justify-center z-10`;
+                const laneWidth = 100 / CONFIG.totalLanes;
+                const leftPos = (lane * laneWidth) + (laneWidth / 2);
+                el.style.left = `calc(${leftPos}% - 2rem)`;
+
+                const extraClass = type.shadow ? 'game-shadow' : 'drop-shadow-md';
+                const transform = type.transform ? `style="transform: ${type.transform}"` : '';
+                
+                el.innerHTML = `<i class="fa-solid ${type.icon} fa-3x ${type.color} ${extraClass}" ${transform}></i>`;
+                UI.objects.appendChild(el);
+
+                State.objects.push({ el, y: -80, lane, data: type, passed: false });
+            },
+
+            // Оновлена функція перевірки колізій з більшим хітбоксом для бонусів
+            checkCollision(carRect, objEl, isBonus = false) {
+                const objRect = objEl.getBoundingClientRect();
+                const buf = isBonus ? 5 : CONFIG.collisionBuffer; // Легше збирати бонуси (5px буфер замість 15px)
+                return (
+                    carRect.top + buf < objRect.bottom - buf &&
+                    carRect.bottom - buf > objRect.top + buf &&
+                    carRect.right - buf > objRect.left + buf &&
+                    carRect.left + buf < objRect.right - buf
+                );
+            },
+
+            collectBonus(obj, index) {
+                Sound.bonus();
+                
+                const feedback = document.createElement('div');
+                feedback.className = 'absolute font-extrabold text-yellow-300 text-2xl z-20 bonus-pop';
+                feedback.style.left = obj.el.style.left;
+                feedback.style.top = obj.el.style.top;
+                feedback.innerText = `+${obj.data.points}`;
+                UI.screens.game.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 500);
+
+                this.updateScore(obj.data.points);
+                
+                if (obj.data.effect === 'slow') {
+                    State.speed = Math.max(200, State.speed - 50);
+                }
+
+                obj.el.remove();
+                State.objects.splice(index, 1);
+            },
+
+            updateScore(points) {
+                State.score += points;
+                UI.score.innerText = State.score;
+                
+                if (points === 1 && State.score % 10 === 0) Sound.score();
+
+                if (points === 1 && State.score % CONFIG.speedIncrementStep === 0) {
+                    State.speed += CONFIG.speedIncrement;
+                }
+            },
+
+            moveLane(direction) {
+                const newLane = State.currentLane + direction;
+                if (newLane >= 0 && newLane < CONFIG.totalLanes) {
+                    State.currentLane = newLane;
+                    this.updateCarPosition();
+                    Sound.move();
+                }
+            },
+
+            updateCarPosition() {
+                const laneWidth = 100 / CONFIG.totalLanes;
+                const center = (State.currentLane * laneWidth) + (laneWidth / 2);
+                UI.player.style.left = `calc(${center}% - 2rem)`;
+            },
+
+            setupInputs() {
+                document.addEventListener('contextmenu', e => e.preventDefault());
+
+                document.addEventListener('keydown', e => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.togglePause();
+                    }
+                    if (State.isRunning && !State.isPaused) {
+                         if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.moveLane(-1);
+                         if (e.code === 'ArrowRight' || e.code === 'KeyD') this.moveLane(1);
+                    }
+                });
+
+                UI.screens.game.addEventListener('mousedown', e => {
+                    if (State.isPaused || !State.isRunning) return;
+                    if (e.button === 0) {
+                        this.highlightBtns(UI.visualBtns.left, true);
+                        this.moveLane(-1);
+                    } else if (e.button === 2) {
+                        this.highlightBtns(UI.visualBtns.right, true);
+                        this.moveLane(1);
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    this.highlightBtns(UI.visualBtns.left, false);
+                    this.highlightBtns(UI.visualBtns.right, false);
+                });
+
+                let touchStartX = 0;
+                UI.screens.game.addEventListener('touchstart', e => {
+                    touchStartX = e.touches[0].clientX;
+                }, {passive: true});
+
+                UI.screens.game.addEventListener('touchend', e => {
+                    if (State.isPaused || !State.isRunning) return;
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const diff = touchEndX - touchStartX;
+                    
+                    if (Math.abs(diff) > 40) {
+                        if (diff < 0) this.moveLane(-1);
+                        else this.moveLane(1);
+                    } else {
+                         const w = window.innerWidth;
+                         if (touchEndX < w / 2) this.moveLane(-1);
+                         else this.moveLane(1);
+                    }
+                }, {passive: true});
+            },
+
+            highlightBtns(elements, active) {
+                elements.forEach(el => {
+                    if (el) el.classList.toggle('mouse-btn-active', active);
+                });
+            }
+        };
+
+        Game.init();
+    </script>
+</body>
+</html>
