@@ -7,6 +7,13 @@ const CATEGORIES = [
     color: "#3b82f6",
     services: [
       { 
+        name: "Швидка мишача допомога", 
+        description: "Тренажер для роботи з кнопками мишки.", 
+        link: "services/mouse103.html", 
+        image: "images/72.jpg", 
+        tags: ["1-2 класи", "Мишка"] 
+      },
+      { 
         name: "Мишачі перегони", 
         description: "Тренажер для роботи з мишкою.", 
         link: "services/click.html", 
