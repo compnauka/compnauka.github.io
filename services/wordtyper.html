@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер з Конфеті: PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Стилізація клавіш */
+        .key-3d {
+            background: linear-gradient(to bottom, #ffffff 0%, #f3f4f6 100%);
+            border-radius: 6px;
+            box-shadow: 0 4px 0 #94a3b8, 0 5px 5px rgba(0,0,0,0.15);
+            transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.1s;
+            position: relative;
+            top: 0;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .key-3d:active, .key-pressed {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #94a3b8, inset 0 2px 4px rgba(0,0,0,0.1);
+            background: #e2e8f0;
+        }
+
+        .key-hint {
+            background: linear-gradient(to bottom, #fde047 0%, #facc15 100%) !important;
+            border-color: #eab308 !important;
+            box-shadow: 0 4px 0 #a16207, 0 0 10px rgba(250, 204, 21, 0.6) !important;
+            color: #422006 !important;
+            z-index: 10;
+        }
+        .key-hint:active, .key-hint.key-pressed {
+            box-shadow: 0 0 0 #a16207, inset 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+
+        .key-special {
+            background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 100%);
+            box-shadow: 0 4px 0 #64748b;
+            color: #334155;
+            border: 1px solid #94a3b8;
+        }
+        .key-special:active, .key-special.key-pressed {
+            box-shadow: 0 0 0 #64748b;
+            background: #94a3b8;
+        }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .milestone-enter {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .trophy-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-4 overflow-hidden" role="application">
+
+    <!-- Header & Stats -->
+    <div class="w-full max-w-5xl px-4 flex flex-col gap-4 relative z-10">
+        <!-- Top Row -->
+        <div class="flex justify-between items-center text-white drop-shadow-md">
+            <div class="text-2xl font-extrabold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-yellow-300"></i>
+                <span class="hidden sm:inline">КЛАВІАТУРА</span>
+            </div>
+            
+            <div class="flex gap-3 items-center">
+                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Вимкнути звук">
+                    <i class="fa-solid fa-volume-high text-white"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
+            <!-- Score -->
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
+                <span class="text-[10px] uppercase font-bold text-yellow-200">Слів</span>
+                <span id="score-counter" class="font-black text-xl text-white">0</span>
+            </div>
+            <!-- Errors -->
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
+                <span class="text-[10px] uppercase font-bold text-red-200">Помилок</span>
+                <span id="error-counter" class="font-black text-xl text-red-100">0</span>
+            </div>
+            <!-- Best -->
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-yellow-400/10"></div>
+                <span class="text-[10px] uppercase font-bold text-orange-200">Рекорд</span>
+                <span id="best-score" class="font-black text-xl text-orange-100">0</span>
+            </div>
+            <!-- WPM -->
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
+                <span class="text-[10px] uppercase font-bold text-blue-200">WPM</span>
+                <span id="wpm-counter" class="font-black text-xl text-blue-100">0</span>
+            </div>
+            <!-- Accuracy -->
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
+                <span class="text-[10px] uppercase font-bold text-green-200">Точність</span>
+                <span id="accuracy-counter" class="font-black text-xl text-green-100">100%</span>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-900/30 rounded-full h-3 overflow-hidden border border-white/10 shadow-inner">
+            <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(251,191,36,0.5)]" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="flex-grow flex flex-col items-center justify-center w-full max-w-3xl px-4 relative z-0 min-h-[160px]">
+        
+        <!-- Modal -->
+        <div id="milestone-modal" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity duration-300" aria-modal="true" role="dialog">
+            <div class="relative bg-white p-8 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.5)] text-center milestone-enter max-w-sm mx-auto border-4 border-indigo-50 overflow-hidden">
+                <!-- Decorative Background -->
+                <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
+                    <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm">Супер!</h2>
+                    <p class="text-slate-500 text-xl font-bold mb-8" id="milestone-text">Ти набрав 5 слів!</p>
+                    
+                    <button id="modal-next-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
+                        <span>Далі</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                    
+                    <div class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        Натисни будь-яку клавішу
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative w-full">
+            <div class="absolute -top-10 left-0 w-full text-center text-white/80 font-bold uppercase tracking-widest text-sm animate-pulse">
+                Набирай літери:
+            </div>
+            
+            <div id="word-display" class="bg-white rounded-3xl shadow-2xl border-b-8 border-slate-200 px-8 py-10 text-center text-5xl md:text-7xl font-black text-slate-300 tracking-wider min-h-[120px] md:min-h-[140px] flex items-center justify-center transform transition-all hover:scale-105" aria-live="polite" role="status">
+                <!-- JS render -->
+            </div>
+        </div>
+        
+        <div id="message-area" class="h-8 mt-4 text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center" aria-live="assertive">
+            Чудово!
+        </div>
+    </div>
+
+    <!-- Keyboard -->
+    <div class="w-full max-w-5xl px-2 pb-4 select-none">
+        <div class="bg-slate-800 p-2 md:p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-b-8 border-slate-900 mx-auto">
+            <!-- Row Numbers -->
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">`</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">1</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">2</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">3</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">4</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">5</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">6</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">7</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">8</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">9</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">0</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">-</div>
+                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">=</div>
+                <div class="key-3d key-special flex-1 h-10 md:h-12 text-sm" data-action="backspace">
+                    <i class="fa-solid fa-delete-left"></i>
+                </div>
+            </div>
+
+            <!-- Row 1 -->
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+                <div class="key-3d key-special w-12 md:w-[4.5rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Tab</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="й">Й</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ц">Ц</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="у">У</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="к">К</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="е">Е</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="н">Н</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="г">Г</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ш">Ш</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="щ">Щ</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="з">З</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="х">Х</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ї">Ї</div>
+                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-sm">\</div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+                <div class="key-3d key-special w-14 md:w-[5.4rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Caps</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ф">Ф</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="і">І</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="в">В</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="а">А</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="п">П</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="р">Р</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="о">О</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="л">Л</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="д">Д</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ж">Ж</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="є">Є</div>
+                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-[10px] md:text-xs bg-gradient-to-b from-blue-100 to-blue-200">Enter</div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+                <div class="key-3d key-special w-16 md:w-[6.9rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Shift</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ґ">Ґ</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="я">Я</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ч">Ч</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="с">С</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="м">М</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="и">И</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="т">Т</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ь">Ь</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="б">Б</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ю">Ю</div>
+                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char=".">.</div>
+                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-[10px] md:text-xs">Shift</div>
+            </div>
+
+            <!-- Space -->
+            <div class="flex justify-center gap-1.5 w-full">
+                <div class="key-3d w-1/2 h-10 md:h-12 font-bold text-slate-400 text-sm" data-code="Space"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AudioController = {
+            ctx: null,
+            muted: false,
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            resume() { if (!this.muted && this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(console.warn); },
+            toggleMute(btn, icon) {
+                this.muted = !this.muted;
+                icon.classList.replace(this.muted ? 'fa-volume-high' : 'fa-volume-xmark', this.muted ? 'fa-volume-xmark' : 'fa-volume-high');
+                btn.classList.toggle('bg-red-500/50', this.muted);
+                btn.blur();
+            },
+            playTone(freq, type, duration, volStart = 0.05, volEnd = 0.001) {
+                if (this.muted) return; // FIXED: Не ініціалізуємо, якщо звук вимкнено
+                if (!this.ctx) this.init();
+                this.resume();
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                if (type === 'triangle') osc.frequency.exponentialRampToValueAtTime(freq / 4, this.ctx.currentTime + duration);
+                gain.gain.setValueAtTime(volStart, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(volEnd, this.ctx.currentTime + duration);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration + 0.1);
+            },
+            playClick() { this.playTone(400, 'triangle', 0.05); },
+            playSuccess() {
+                if (this.muted) return;
+                [523.25, 659.25, 783.99].forEach((freq, i) => setTimeout(() => this.playTone(freq, 'sine', 0.5, 0.1), i * 50));
+            }
+        };
+
+        const Storage = {
+            saveBest(score) {
+                const best = this.getBest();
+                if (score > best) {
+                    localStorage.setItem('bestScore', score);
+                    return true;
+                }
+                return false;
+            },
+            getBest() {
+                return parseInt(localStorage.getItem('bestScore') || '0', 10);
+            }
+        };
+
+        const UI = {
+            els: {
+                wordDisplay: document.getElementById('word-display'),
+                score: document.getElementById('score-counter'),
+                errors: document.getElementById('error-counter'),
+                best: document.getElementById('best-score'),
+                wpm: document.getElementById('wpm-counter'),
+                accuracy: document.getElementById('accuracy-counter'),
+                progressBar: document.getElementById('progress-bar'),
+                message: document.getElementById('message-area'),
+                modal: document.getElementById('milestone-modal'),
+                modalText: document.getElementById('milestone-text'),
+                nextBtn: document.getElementById('modal-next-btn'),
+                soundBtn: document.getElementById('sound-toggle'),
+                soundIcon: document.querySelector('#sound-toggle i')
+            },
+            keyMap: new Map(),
+
+            initKeyMap() {
+                document.querySelectorAll('.key-3d').forEach(el => {
+                    let key = el.dataset.char;
+                    if (!key && el.dataset.code === 'Space') key = ' ';
+                    const action = el.dataset.action;
+                    if (key) this.keyMap.set(key.toLowerCase(), el);
+                    el.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        if (action === 'backspace') Game.handleBackspace();
+                        else if (key) Game.handleInput(key);
+                    });
+                });
+            },
+            renderWord(word, index) {
+                this.els.wordDisplay.innerHTML = '';
+                for (let i = 0; i < word.length; i++) {
+                    const span = document.createElement('span');
+                    span.textContent = word[i];
+                    if (i < index) span.className = 'text-green-500 transition-colors duration-200';
+                    else if (i === index) span.className = 'text-indigo-600 border-b-4 border-indigo-500 pb-1';
+                    else span.className = 'text-slate-300';
+                    this.els.wordDisplay.appendChild(span);
+                }
+            },
+            updateStats(state) {
+                this.els.score.textContent = state.score;
+                this.els.errors.textContent = state.errors;
+                this.els.best.textContent = state.bestScore;
+                
+                // Progress Bar: FIXED Calculation
+                const wordsInCycle = state.score % 5;
+                const wordProgress = state.currentWord.length > 0 ? state.charIndex / state.currentWord.length : 0;
+                const progress = (wordsInCycle + wordProgress) * 20;
+                this.els.progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+                // Accuracy
+                const totalAttempts = state.totalHits + state.errors;
+                const accuracy = totalAttempts <= 0 ? 100 : (state.totalHits / totalAttempts) * 100;
+                this.els.accuracy.textContent = `${accuracy.toFixed(1)}%`;
+                
+                if (accuracy > 95) this.els.accuracy.className = "font-black text-xl text-green-100";
+                else if (accuracy > 80) this.els.accuracy.className = "font-black text-xl text-yellow-100";
+                else this.els.accuracy.className = "font-black text-xl text-red-100";
+            },
+            updateWPM(startTime, score) {
+                if (!startTime || score === 0) {
+                    this.els.wpm.textContent = '0';
+                    return;
+                }
+                const minutes = (Date.now() - startTime) / 60000;
+                // Avoid division by zero or very small numbers
+                if (minutes < 0.001) {
+                    this.els.wpm.textContent = '0';
+                    return;
+                }
+                const wpm = Math.round(score / minutes);
+                this.els.wpm.textContent = wpm;
+            },
+            highlightKey(char) {
+                document.querySelectorAll('.key-hint').forEach(el => el.classList.remove('key-hint'));
+                if (!char) return;
+                const el = this.keyMap.get(char.toLowerCase());
+                if (el) el.classList.add('key-hint');
+            },
+            animateKey(char) {
+                const el = this.keyMap.get(char.toLowerCase());
+                if (el) {
+                    el.classList.add('key-pressed');
+                    setTimeout(() => el.classList.remove('key-pressed'), 150);
+                }
+            },
+            shakeWord() {
+                this.els.wordDisplay.classList.add('shake');
+                setTimeout(() => this.els.wordDisplay.classList.remove('shake'), 400);
+            },
+            showSuccessMessage() {
+                const phrases = ["Молодець!", "Так тримати!", "Супер!", "Клас!", "Чудово!", "Гарно!"];
+                this.els.message.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+                this.els.message.style.opacity = '1';
+                this.els.message.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    this.els.message.style.opacity = '0';
+                    this.els.message.style.transform = 'scale(1)';
+                }, 800);
+            },
+            showModal(text) {
+                this.els.modalText.textContent = text;
+                this.els.modal.classList.remove('hidden');
+                setTimeout(() => this.els.nextBtn.focus(), 100);
+            },
+            hideModal() {
+                this.els.modal.classList.add('hidden');
+            }
+        };
+
+        const Game = {
+            words: [
+                "люди", "вона", "вони", "коли", "його", "бути", "року", "час", "було", "мене", "дуже", "мені", "тому", "тебе", "який", "має", "себе", "може", "цього", "вже", "собі", "робити", "буде", "треба", "світ", "життя", "лише", "можна", "тут", "день", "свою", "тепер", "щоби", "йому", "свої", "інші", "навіть", "хочу", "кого", "були", "саме", "куди", "яка", "доки", "тоді", "теж", "очі", "руки", "ніби", "ніж", "поки", "просто", "багато", "зараз", "мама", "тато", "брат", "мова", "вода", "небо", "поле", "ліс", "ріка", "море", "гора", "села", "місто", "хата", "вікно", "двері", "стіл", "книга", "школа", "клас", "урок", "ручка", "друг", "сила", "воля", "слава", "пісня", "душа", "серце", "любов", "мрія", "надія", "віра", "правда", "краса", "радість", "добро", "успіх", "праця", "знати", "жити", "мати"
+            ],
+            milestones: ["Чудовий старт!", "Ти справжній майстер!", "Неймовірна швидкість!", "Продовжуй у тому ж дусі!", "Клавіатурний геній!", "Неперевершено!"],
+            ignoredKeys: new Set(['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter']),
+            state: {
+                wordIndex: 0,
+                charIndex: 0,
+                score: 0,
+                errors: 0,
+                totalHits: 0, // For accuracy
+                bestScore: 0,
+                startTime: null,
+                currentWord: "",
+                paused: false,
+                closingModal: false
+            },
+
+            init() {
+                this.words = [...new Set(this.words)];
+                this.shuffleWords();
+                this.state.bestScore = Storage.getBest();
+                UI.initKeyMap();
+                UI.els.soundBtn.addEventListener('click', () => AudioController.toggleMute(UI.els.soundBtn, UI.els.soundIcon));
+                UI.els.nextBtn.addEventListener('click', () => this.closeModal());
+                document.addEventListener('keydown', (e) => this.onKeyDown(e));
+                this.loadNextWord();
+                UI.updateStats(this.state);
+            },
+            shuffleWords() {
+                for (let i = this.words.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.words[i], this.words[j]] = [this.words[j], this.words[i]];
+                }
+            },
+            loadNextWord() {
+                if (this.state.wordIndex >= this.words.length) {
+                    this.state.wordIndex = 0;
+                    this.shuffleWords();
+                }
+                this.state.currentWord = this.words[this.state.wordIndex];
+                this.state.charIndex = 0;
+                UI.renderWord(this.state.currentWord, 0);
+                UI.highlightKey(this.state.currentWord[0]);
+                UI.updateStats(this.state);
+            },
+            handleInput(inputChar) {
+                if (this.state.paused) return;
+                
+                // Start timer on first interaction
+                if (!this.state.startTime) this.state.startTime = Date.now();
+                
+                // FIXED: Update WPM in real-time
+                UI.updateWPM(this.state.startTime, this.state.score);
+
+                AudioController.playClick();
+                UI.animateKey(inputChar);
+
+                const targetChar = this.state.currentWord[this.state.charIndex];
+
+                if (inputChar.toLowerCase() === targetChar.toLowerCase()) {
+                    this.state.charIndex++;
+                    this.state.totalHits++;
+                    UI.renderWord(this.state.currentWord, this.state.charIndex);
+                    
+                    if (this.state.charIndex === this.state.currentWord.length) {
+                        this.onWordComplete();
+                    } else {
+                        UI.highlightKey(this.state.currentWord[this.state.charIndex]);
+                    }
+                } else {
+                    this.state.errors++;
+                    UI.shakeWord();
+                }
+                UI.updateStats(this.state);
+            },
+            handleBackspace() {
+                if (this.state.paused || this.state.charIndex === 0) return;
+                AudioController.playClick();
+                this.state.charIndex--;
+                // FIXED: Decrement totalHits for accuracy calculation
+                if (this.state.totalHits > 0) this.state.totalHits--;
+                
+                UI.renderWord(this.state.currentWord, this.state.charIndex);
+                UI.highlightKey(this.state.currentWord[this.state.charIndex]);
+                UI.updateStats(this.state);
+            },
+            onWordComplete() {
+                this.state.score++;
+                if (Storage.saveBest(this.state.score)) {
+                    this.state.bestScore = this.state.score;
+                }
+                
+                AudioController.playSuccess();
+                UI.showSuccessMessage();
+                UI.updateWPM(this.state.startTime, this.state.score);
+                
+                this.state.wordIndex++;
+
+                if (this.state.score > 0 && this.state.score % 5 === 0) {
+                    this.triggerMilestone();
+                } else {
+                    setTimeout(() => this.loadNextWord(), 200);
+                }
+            },
+            triggerMilestone() {
+                this.state.paused = true;
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                const phrase = this.milestones[Math.floor(Math.random() * this.milestones.length)];
+                UI.showModal(`${phrase} (${this.state.score} слів)`);
+                UI.els.progressBar.style.width = '100%';
+            },
+            closeModal() {
+                if (this.state.closingModal) return;
+                this.state.closingModal = true;
+                UI.hideModal();
+                this.state.paused = false;
+                // Reset visual progress bar
+                UI.els.progressBar.style.width = '0%';
+                this.loadNextWord();
+                setTimeout(() => { this.state.closingModal = false; }, 300);
+            },
+            onKeyDown(e) {
+                if (this.state.paused) { this.closeModal(); return; }
+                if (this.ignoredKeys.has(e.key)) return;
+                if (e.key === 'Backspace') { this.handleBackspace(); return; }
+                if (e.key.length === 1) this.handleInput(e.key);
+            }
+        };
+
+        Game.init();
+    </script>
+</body>
+</html>
