@@ -2,8 +2,8 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Клавіатурний тренажер</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тренажер з Конфеті: PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,13 +12,14 @@
             font-family: 'Nunito', 'Segoe UI', sans-serif;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
         }
 
         /* Стилізація клавіш */
         .key-3d {
             background: linear-gradient(to bottom, #ffffff 0%, #f3f4f6 100%);
-            border-radius: 6px;
-            box-shadow: 0 4px 0 #94a3b8, 0 5px 5px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            box-shadow: 0 2px 0 #94a3b8, 0 3px 3px rgba(0,0,0,0.15);
             transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.1s;
             position: relative;
             top: 0;
@@ -26,22 +27,42 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
+            flex-shrink: 1; /* Дозволяє зменшуватись */
             cursor: pointer;
+            min-width: 0; /* Важливо для flex елементів */
+        }
+
+        @media (min-width: 768px) {
+            .key-3d {
+                border-radius: 6px;
+                box-shadow: 0 4px 0 #94a3b8, 0 5px 5px rgba(0,0,0,0.15);
+            }
         }
 
         .key-3d:active, .key-pressed {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #94a3b8, inset 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #94a3b8, inset 0 1px 2px rgba(0,0,0,0.1);
             background: #e2e8f0;
+        }
+
+        @media (min-width: 768px) {
+            .key-3d:active, .key-pressed {
+                transform: translateY(4px);
+                box-shadow: 0 0 0 #94a3b8, inset 0 2px 4px rgba(0,0,0,0.1);
+            }
         }
 
         .key-hint {
             background: linear-gradient(to bottom, #fde047 0%, #facc15 100%) !important;
             border-color: #eab308 !important;
-            box-shadow: 0 4px 0 #a16207, 0 0 10px rgba(250, 204, 21, 0.6) !important;
+            box-shadow: 0 2px 0 #a16207, 0 0 5px rgba(250, 204, 21, 0.6) !important;
             color: #422006 !important;
             z-index: 10;
+        }
+        @media (min-width: 768px) {
+            .key-hint {
+                box-shadow: 0 4px 0 #a16207, 0 0 10px rgba(250, 204, 21, 0.6) !important;
+            }
         }
         .key-hint:active, .key-hint.key-pressed {
             box-shadow: 0 0 0 #a16207, inset 0 2px 4px rgba(0,0,0,0.1) !important;
@@ -49,9 +70,14 @@
 
         .key-special {
             background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 100%);
-            box-shadow: 0 4px 0 #64748b;
+            box-shadow: 0 2px 0 #64748b;
             color: #334155;
             border: 1px solid #94a3b8;
+        }
+        @media (min-width: 768px) {
+            .key-special {
+                box-shadow: 0 4px 0 #64748b;
+            }
         }
         .key-special:active, .key-special.key-pressed {
             box-shadow: 0 0 0 #64748b;
@@ -89,188 +115,194 @@
         }
     </style>
 </head>
-<body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-4 overflow-hidden" role="application">
+<body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-2 md:py-4 overflow-hidden" role="application">
 
     <!-- Header & Stats -->
-    <div class="w-full max-w-5xl px-4 flex flex-col gap-4 relative z-10">
+    <div class="w-full max-w-5xl px-2 md:px-4 flex flex-col gap-2 md:gap-4 relative z-10 shrink-0">
         <!-- Top Row -->
         <div class="flex justify-between items-center text-white drop-shadow-md">
-            <div class="text-2xl font-extrabold tracking-wider flex items-center gap-2">
+            <div class="text-lg md:text-2xl font-extrabold tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-gamepad text-yellow-300"></i>
                 <span class="hidden sm:inline">KEYBOARD</span>
             </div>
             
-            <div class="flex gap-3 items-center">
+            <div class="flex gap-2 md:gap-3 items-center">
                 <!-- Language Toggle -->
-                <button id="lang-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-xl font-bold text-sm hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white">
+                <button id="lang-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-1.5 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white">
                     UA | EN
                 </button>
 
-                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Toggle Sound">
-                    <i class="fa-solid fa-volume-high text-white"></i>
+                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Toggle Sound">
+                    <i class="fa-solid fa-volume-high text-white text-xs md:text-base"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
+        <!-- Stats Row (Flex wrap for mobile) -->
+        <div class="flex flex-wrap justify-center gap-1 md:gap-4 w-full">
             <!-- Score -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-yellow-200">Score</span>
-                <span id="score-counter" class="font-black text-xl text-white">0</span>
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-yellow-200">Score</span>
+                <span id="score-counter" class="font-black text-sm md:text-xl text-white">0</span>
             </div>
             <!-- Errors -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-red-200">Errors</span>
-                <span id="error-counter" class="font-black text-xl text-red-100">0</span>
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-red-200">Errors</span>
+                <span id="error-counter" class="font-black text-sm md:text-xl text-red-100">0</span>
             </div>
             <!-- Best -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center relative overflow-hidden">
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center relative overflow-hidden min-w-[60px] md:min-w-[80px]">
                 <div class="absolute inset-0 bg-yellow-400/10"></div>
-                <span class="text-[10px] uppercase font-bold text-orange-200">Record</span>
-                <span id="best-score" class="font-black text-xl text-orange-100">0</span>
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-orange-200">Record</span>
+                <span id="best-score" class="font-black text-sm md:text-xl text-orange-100">0</span>
             </div>
             <!-- WPM -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-blue-200">WPM</span>
-                <span id="wpm-counter" class="font-black text-xl text-blue-100">0</span>
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-blue-200">WPM</span>
+                <span id="wpm-counter" class="font-black text-sm md:text-xl text-blue-100">0</span>
             </div>
             <!-- Accuracy -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-green-200">Accuracy</span>
-                <span id="accuracy-counter" class="font-black text-xl text-green-100">100%</span>
+            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-green-200">Accuracy</span>
+                <span id="accuracy-counter" class="font-black text-sm md:text-xl text-green-100">100%</span>
             </div>
         </div>
 
         <!-- Progress Bar -->
-        <div class="w-full bg-slate-900/30 rounded-full h-3 overflow-hidden border border-white/10 shadow-inner">
+        <div class="w-full bg-slate-900/30 rounded-full h-2 md:h-3 overflow-hidden border border-white/10 shadow-inner">
             <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(251,191,36,0.5)]" style="width: 0%"></div>
         </div>
     </div>
 
     <!-- Main Game Area -->
-    <div class="flex-grow flex flex-col items-center justify-center w-full max-w-3xl px-4 relative z-0 min-h-[160px]">
+    <div class="flex-grow flex flex-col items-center justify-center w-full max-w-3xl px-2 md:px-4 relative z-0 min-h-0">
         
         <!-- Modal -->
-        <div id="milestone-modal" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity duration-300" aria-modal="true" role="dialog">
-            <div class="relative bg-white p-8 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.5)] text-center milestone-enter max-w-sm mx-auto border-4 border-indigo-50 overflow-hidden">
+        <div id="milestone-modal" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity duration-300 px-4" aria-modal="true" role="dialog">
+            <div class="relative bg-white p-6 md:p-8 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.5)] text-center milestone-enter w-full max-w-sm mx-auto border-4 border-indigo-50 overflow-hidden">
                 <!-- Decorative Background -->
                 <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
-                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
-                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                    <div class="absolute -top-10 -right-10 w-24 h-24 md:w-32 md:h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                    <div class="absolute -bottom-10 -left-10 w-24 h-24 md:w-32 md:h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
                 </div>
 
                 <div class="relative z-10">
-                    <div class="text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
-                    <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm" id="modal-title">Super!</h2>
-                    <p class="text-slate-500 text-xl font-bold mb-8" id="milestone-text">5 words done!</p>
+                    <div class="text-5xl md:text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
+                    <h2 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm" id="modal-title">Super!</h2>
+                    <p class="text-slate-500 text-lg md:text-xl font-bold mb-6 md:mb-8" id="milestone-text">5 words done!</p>
                     
-                    <button id="modal-next-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
+                    <button id="modal-next-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-6 md:py-4 md:px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
                         <span id="modal-btn-text">Next</span>
                         <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                     </button>
                     
-                    <div class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="modal-hint">
+                    <div class="mt-4 text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="modal-hint">
                         Press any key
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative w-full">
-            <div class="absolute -top-10 left-0 w-full text-center text-white/80 font-bold uppercase tracking-widest text-sm animate-pulse" id="typing-prompt">
+        <div class="relative w-full flex flex-col items-center justify-center flex-grow">
+            <div class="w-full text-center text-white/80 font-bold uppercase tracking-widest text-[10px] md:text-sm animate-pulse mb-2 md:mb-4" id="typing-prompt">
                 Type letters:
             </div>
             
-            <div id="word-display" class="bg-white rounded-3xl shadow-2xl border-b-8 border-slate-200 px-8 py-10 text-center text-5xl md:text-7xl font-black text-slate-300 tracking-wider min-h-[120px] md:min-h-[140px] flex items-center justify-center transform transition-all hover:scale-105" aria-live="polite" role="status">
+            <div id="word-display" class="bg-white rounded-2xl md:rounded-3xl shadow-2xl border-b-4 md:border-b-8 border-slate-200 px-4 py-4 md:px-8 md:py-10 text-center text-4xl md:text-7xl font-black text-slate-300 tracking-wider w-full min-h-[80px] md:min-h-[140px] flex items-center justify-center transform transition-all" aria-live="polite" role="status">
                 <!-- JS render -->
             </div>
-        </div>
-        
-        <div id="message-area" class="h-8 mt-4 text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center" aria-live="assertive">
-            Great!
+             <div id="message-area" class="h-6 md:h-8 mt-2 md:mt-4 text-lg md:text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center" aria-live="assertive">
+                Great!
+            </div>
         </div>
     </div>
 
     <!-- Keyboard -->
-    <div class="w-full max-w-5xl px-2 pb-4 select-none">
-        <div class="bg-slate-800 p-2 md:p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-b-8 border-slate-900 mx-auto" id="keyboard-container">
+    <div class="w-full max-w-5xl px-1 md:px-2 pb-2 md:pb-4 select-none shrink-0">
+        <div class="bg-slate-800 p-1 md:p-5 rounded-lg md:rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b-4 md:border-b-8 border-slate-900 mx-auto w-full" id="keyboard-container">
             <!-- Row Numbers -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">`</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">1</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">2</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">3</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">4</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">5</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">6</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">7</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">8</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">9</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">0</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">-</div>
-                <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">=</div>
-                <div class="key-3d key-special flex-1 h-10 md:h-12 text-sm" data-action="backspace">
+            <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full">
+                <!-- Standard Keys: flex-1 for responsiveness -->
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">`</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">1</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">2</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">3</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">4</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">5</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">6</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">7</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">8</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">9</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">0</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">-</div>
+                <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">=</div>
+                <!-- Backspace is usually bigger, giving it flex-grow-2 -->
+                <div class="key-3d key-special flex-[1.5] h-8 md:h-12 text-[10px] md:text-sm" data-action="backspace">
                     <i class="fa-solid fa-delete-left"></i>
                 </div>
             </div>
 
             <!-- Row 1 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
-                <div class="key-3d key-special w-12 md:w-[4.5rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Tab</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="й">Й</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ц">Ц</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="у">У</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="к">К</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="е">Е</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="н">Н</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="г">Г</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ш">Ш</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="щ">Щ</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="з">З</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="х">Х</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ї">Ї</div>
-                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-sm">\</div>
+            <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
+                <!-- Tab -->
+                <div class="key-3d key-special flex-[1.5] h-8 md:h-12 font-bold text-[8px] md:text-xs">Tab</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="й">Й</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ц">Ц</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="у">У</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="к">К</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="е">Е</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="н">Н</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="г">Г</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ш">Ш</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="щ">Щ</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="з">З</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="х">Х</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ї">Ї</div>
+                <div class="key-3d key-special flex-[1.2] h-8 md:h-12 font-bold text-sm md:text-sm">\</div>
             </div>
 
             <!-- Row 2 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
-                <div class="key-3d key-special w-14 md:w-[5.4rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Caps</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ф">Ф</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="і">І</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="в">В</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="а">А</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="п">П</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="р">Р</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="о">О</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="л">Л</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="д">Д</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ж">Ж</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="є">Є</div>
-                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-[10px] md:text-xs bg-gradient-to-b from-blue-100 to-blue-200">Enter</div>
+            <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
+                <!-- Caps -->
+                <div class="key-3d key-special flex-[1.8] h-8 md:h-12 font-bold text-[8px] md:text-xs">Caps</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ф">Ф</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="і">І</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="в">В</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="а">А</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="п">П</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="р">Р</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="о">О</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="л">Л</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="д">Д</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ж">Ж</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="є">Є</div>
+                <!-- Enter -->
+                <div class="key-3d key-special flex-[2] h-8 md:h-12 font-bold text-[8px] md:text-xs bg-gradient-to-b from-blue-100 to-blue-200">Enter</div>
             </div>
 
             <!-- Row 3 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
-                <div class="key-3d key-special w-16 md:w-[6.9rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Shift</div>
+            <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
+                <!-- Shift -->
+                <div class="key-3d key-special flex-[2.3] h-8 md:h-12 font-bold text-[8px] md:text-xs">Shift</div>
                 <!-- 11 slots -->
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ґ">Ґ</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="я">Я</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ч">Ч</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="с">С</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="м">М</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="и">И</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="т">Т</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ь">Ь</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="б">Б</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ю">Ю</div>
-                <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char=".">.</div>
-                <div class="key-3d key-special flex-1 h-10 md:h-12 font-bold text-[10px] md:text-xs">Shift</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ґ">Ґ</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="я">Я</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ч">Ч</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="с">С</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="м">М</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="и">И</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="т">Т</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ь">Ь</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="б">Б</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ю">Ю</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char=".">.</div>
+                <!-- Shift -->
+                <div class="key-3d key-special flex-[2.3] h-8 md:h-12 font-bold text-[8px] md:text-xs">Shift</div>
             </div>
 
             <!-- Space -->
-            <div class="flex justify-center gap-1.5 w-full">
-                <div class="key-3d w-1/2 h-10 md:h-12 font-bold text-slate-400 text-sm" data-code="Space"></div>
+            <div class="flex justify-center gap-0.5 md:gap-1.5 w-full">
+                <div class="key-3d w-1/2 h-8 md:h-12 font-bold text-slate-400 text-sm" data-code="Space"></div>
             </div>
         </div>
     </div>
@@ -386,10 +418,15 @@
                 this.els.modalHint.textContent = l.pressAny;
                 
                 const stats = document.querySelectorAll('.grid span.uppercase');
-                stats[0].textContent = l.words;
-                stats[1].textContent = l.errors;
-                stats[2].textContent = l.record;
-                stats[4].textContent = l.accuracy;
+                // stats was a nodelist from grid, but we changed layout to flex
+                // Re-query labels correctly
+                const statLabels = document.querySelectorAll('[class*="uppercase"]');
+                // The order in HTML: Words, Errors, Record, WPM, Accuracy
+                if(statLabels[0]) statLabels[0].textContent = l.words;
+                if(statLabels[1]) statLabels[1].textContent = l.errors;
+                if(statLabels[2]) statLabels[2].textContent = l.record;
+                if(statLabels[3]) statLabels[3].textContent = "WPM"; // Always WPM
+                if(statLabels[4]) statLabels[4].textContent = l.accuracy;
             },
 
             updateKeyboardLayout(lang) {
@@ -417,13 +454,9 @@
                 // Row 3
                 const row3Keys = rows[2].querySelectorAll('.key-letter');
                 
-                // Hide or show the first key based on language layout length
-                // UA has 11 keys, EN has 10. The first key in HTML is usually the extra one for UA (ґ)
                 if (lang === 'en') {
                     row3Keys[0].classList.add('hidden-key');
-                    // Shift the rest
                     layout[2].forEach((char, i) => {
-                        // We map EN char 0 ('z') to Key 1 (index 1), etc.
                         if(row3Keys[i+1]) {
                             row3Keys[i+1].textContent = char.toUpperCase();
                             row3Keys[i+1].dataset.char = char;
@@ -446,7 +479,7 @@
                     const span = document.createElement('span');
                     span.textContent = word[i];
                     if (i < index) span.className = 'text-green-500 transition-colors duration-200';
-                    else if (i === index) span.className = 'text-indigo-600 border-b-4 border-indigo-500 pb-1';
+                    else if (i === index) span.className = 'text-indigo-600 border-b-2 md:border-b-4 border-indigo-500 pb-0.5 md:pb-1';
                     else span.className = 'text-slate-300';
                     this.els.wordDisplay.appendChild(span);
                 }
@@ -465,9 +498,10 @@
                 const accuracy = totalAttempts <= 0 ? 100 : (state.totalHits / totalAttempts) * 100;
                 this.els.accuracy.textContent = `${accuracy.toFixed(1)}%`;
                 
-                if (accuracy > 95) this.els.accuracy.className = "font-black text-xl text-green-100";
-                else if (accuracy > 80) this.els.accuracy.className = "font-black text-xl text-yellow-100";
-                else this.els.accuracy.className = "font-black text-xl text-red-100";
+                const baseClass = "font-black text-sm md:text-xl";
+                if (accuracy > 95) this.els.accuracy.className = `${baseClass} text-green-100`;
+                else if (accuracy > 80) this.els.accuracy.className = `${baseClass} text-yellow-100`;
+                else this.els.accuracy.className = `${baseClass} text-red-100`;
             },
             updateWPM(startTime, score) {
                 if (!startTime || score === 0) {
@@ -486,9 +520,6 @@
                 document.querySelectorAll('.key-hint').forEach(el => el.classList.remove('key-hint'));
                 if (!char) return;
                 
-                // Find key via dataset inside container (handled by event delegation logic below)
-                // But for visual highlight we need direct access.
-                // We can query selector since we don't maintain a heavy map anymore for listeners
                 let selector;
                 if (char === ' ') selector = '[data-code="Space"]';
                 else selector = `[data-char="${char.toLowerCase()}"]`;
@@ -552,12 +583,11 @@
             },
 
             initEventListeners() {
-                UI.els.soundBtn.addEventListener('click', () => AudioController.toggleMute(UI.els.soundBtn, UI.els.soundIcon));
+                UI.els.soundBtn.addEventListener('click', () => AudioController.toggleMute(UI.els.soundBtn, UI.els.soundIcon.parentElement.querySelector('i')));
                 UI.els.langBtn.addEventListener('click', () => this.toggleLanguage());
                 UI.els.nextBtn.addEventListener('click', () => this.closeModal());
                 document.addEventListener('keydown', (e) => this.onKeyDown(e));
                 
-                // Event Delegation for Virtual Keyboard
                 UI.els.keyboard.addEventListener('mousedown', (e) => {
                     const keyEl = e.target.closest('.key-3d');
                     if (!keyEl) return;
