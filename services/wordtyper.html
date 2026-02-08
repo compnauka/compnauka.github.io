@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Тренажер з Конфеті: PRO</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Nunito', 'Segoe UI', sans-serif;
@@ -15,11 +21,10 @@
             overscroll-behavior: none;
         }
 
-        /* Стилізація клавіш */
         .key-3d {
             background: linear-gradient(to bottom, #ffffff 0%, #f3f4f6 100%);
             border-radius: 4px;
-            box-shadow: 0 2px 0 #94a3b8, 0 3px 3px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 0 #94a3b8, 0 3px 3px rgba(0, 0, 0, 0.15);
             transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.1s;
             position: relative;
             top: 0;
@@ -27,28 +32,32 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 1; /* Дозволяє зменшуватись */
+            flex-shrink: 1;
             cursor: pointer;
-            min-width: 0; /* Важливо для flex елементів */
+            min-width: 0;
+            touch-action: manipulation;
         }
 
         @media (min-width: 768px) {
             .key-3d {
                 border-radius: 6px;
-                box-shadow: 0 4px 0 #94a3b8, 0 5px 5px rgba(0,0,0,0.15);
+                box-shadow: 0 4px 0 #94a3b8, 0 5px 5px rgba(0, 0, 0, 0.15);
             }
         }
 
-        .key-3d:active, .key-pressed {
+        .key-3d:active,
+        .key-pressed {
             transform: translateY(2px);
-            box-shadow: 0 0 0 #94a3b8, inset 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 0 0 #94a3b8, inset 0 1px 2px rgba(0, 0, 0, 0.1);
             background: #e2e8f0;
         }
 
         @media (min-width: 768px) {
-            .key-3d:active, .key-pressed {
+
+            .key-3d:active,
+            .key-pressed {
                 transform: translateY(4px);
-                box-shadow: 0 0 0 #94a3b8, inset 0 2px 4px rgba(0,0,0,0.1);
+                box-shadow: 0 0 0 #94a3b8, inset 0 2px 4px rgba(0, 0, 0, 0.1);
             }
         }
 
@@ -59,13 +68,16 @@
             color: #422006 !important;
             z-index: 10;
         }
+
         @media (min-width: 768px) {
             .key-hint {
                 box-shadow: 0 4px 0 #a16207, 0 0 10px rgba(250, 204, 21, 0.6) !important;
             }
         }
-        .key-hint:active, .key-hint.key-pressed {
-            box-shadow: 0 0 0 #a16207, inset 0 2px 4px rgba(0,0,0,0.1) !important;
+
+        .key-hint:active,
+        .key-hint.key-pressed {
+            box-shadow: 0 0 0 #a16207, inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
         }
 
         .key-special {
@@ -73,145 +85,247 @@
             box-shadow: 0 2px 0 #64748b;
             color: #334155;
             border: 1px solid #94a3b8;
+            cursor: default;
         }
+
         @media (min-width: 768px) {
             .key-special {
                 box-shadow: 0 4px 0 #64748b;
             }
         }
-        .key-special:active, .key-special.key-pressed {
+
+        .key-special:active,
+        .key-special.key-pressed {
             box-shadow: 0 0 0 #64748b;
             background: #94a3b8;
         }
 
         .shake {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
         }
+
         @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
         }
 
         .milestone-enter {
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+
         @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .trophy-float {
             animation: float 3s ease-in-out infinite;
         }
+
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
-        
+
         .hidden-key {
             display: none !important;
         }
     </style>
 </head>
-<body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-2 md:py-4 overflow-hidden" role="application">
+
+<body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-2 md:py-4 overflow-hidden"
+    role="application">
+
+    <!-- Start Modal -->
+    <div id="start-modal"
+        class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-lg px-4"
+        aria-modal="true" role="dialog">
+        <div
+            class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-md w-full border-4 border-indigo-100 relative">
+            <div class="text-5xl mb-4">⌨️</div>
+            <h1 class="text-3xl font-black text-indigo-600 mb-4">Тренажер друку</h1>
+            <p class="text-slate-600 mb-6 font-medium">Натискай відповідні клавіші на клавіатурі, щоб друкувати слова.
+                Вдосконалюй свою швидкість та точність!</p>
+            <button id="start-game-btn"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg transform transition active:scale-95 cursor-pointer">
+                Почати
+            </button>
+        </div>
+    </div>
+
+    <!-- Milestone Modal -->
+    <div id="milestone-modal"
+        class="hidden fixed inset-0 z-[999] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity duration-300 px-4"
+        aria-modal="true" role="dialog">
+        <div
+            class="relative bg-white p-6 md:p-8 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.5)] text-center milestone-enter w-full max-w-sm mx-auto border-4 border-indigo-50 overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <div
+                    class="absolute -top-10 -right-10 w-24 h-24 md:w-32 md:h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50">
+                </div>
+                <div
+                    class="absolute -bottom-10 -left-10 w-24 h-24 md:w-32 md:h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50">
+                </div>
+            </div>
+
+            <div class="relative z-10">
+                <div class="text-5xl md:text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
+                <h2 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm"
+                    id="modal-title">Super!</h2>
+                <p class="text-slate-500 text-lg md:text-xl font-bold mb-6 md:mb-8" id="milestone-text">5 words done!
+                </p>
+
+                <button id="modal-next-btn"
+                    class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-6 md:py-4 md:px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
+                    <span id="modal-btn-text">Next</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <div class="mt-4 text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                    id="modal-hint">
+                    Press any key
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal"
+        class="hidden fixed inset-0 z-[1001] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity duration-300 px-4"
+        aria-modal="true" role="dialog">
+        <div
+            class="relative bg-white p-6 md:p-8 rounded-3xl shadow-2xl text-center milestone-enter w-full max-w-md mx-auto border-4 border-indigo-100 overflow-hidden">
+            <div class="relative z-10">
+                <div class="text-5xl mb-4">🌍</div>
+                <h2 class="text-2xl md:text-3xl font-black text-indigo-600 mb-4">Зміна мови</h2>
+                <p class="text-slate-600 mb-8 font-medium">Ви впевнені, що хочете змінити мову? Поточний прогрес буде
+                    втрачено.</p>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="confirm-cancel-btn"
+                        class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-2xl transition active:scale-95 cursor-pointer">
+                        Скасувати
+                    </button>
+                    <button id="confirm-yes-btn"
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 cursor-pointer">
+                        Так, змінити
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Header & Stats -->
     <div class="w-full max-w-5xl px-2 md:px-4 flex flex-col gap-2 md:gap-4 relative z-10 shrink-0">
-        <!-- Top Row -->
         <div class="flex justify-between items-center text-white drop-shadow-md">
             <div class="text-lg md:text-2xl font-extrabold tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-gamepad text-yellow-300"></i>
                 <span class="hidden sm:inline">KEYBOARD</span>
             </div>
-            
+
             <div class="flex gap-2 md:gap-3 items-center">
-                <!-- Language Toggle -->
-                <button id="lang-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-1.5 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white">
+                <button id="lang-toggle"
+                    class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-1.5 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white">
                     UA | EN
                 </button>
 
-                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Toggle Sound">
+                <button id="sound-toggle"
+                    class="bg-white/20 backdrop-blur-md border border-white/30 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white"
+                    aria-label="Toggle Sound">
                     <i class="fa-solid fa-volume-high text-white text-xs md:text-base"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Stats Row (Flex wrap for mobile) -->
-        <div class="flex flex-wrap justify-center gap-1 md:gap-4 w-full">
-            <!-- Score -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
-                <span class="text-[8px] md:text-[10px] uppercase font-bold text-yellow-200">Score</span>
+        <!-- Stats -->
+        <div class="flex flex-wrap justify-center gap-1 md:gap-4 w-full" id="stats-row">
+            <div
+                class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-yellow-200"
+                    data-stat-label="words">Score</span>
                 <span id="score-counter" class="font-black text-sm md:text-xl text-white">0</span>
             </div>
-            <!-- Errors -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
-                <span class="text-[8px] md:text-[10px] uppercase font-bold text-red-200">Errors</span>
+
+            <div
+                class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-red-200"
+                    data-stat-label="errors">Errors</span>
                 <span id="error-counter" class="font-black text-sm md:text-xl text-red-100">0</span>
             </div>
-            <!-- Best -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center relative overflow-hidden min-w-[60px] md:min-w-[80px]">
+
+            <div
+                class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center relative overflow-hidden min-w-[60px] md:min-w-[80px]">
                 <div class="absolute inset-0 bg-yellow-400/10"></div>
-                <span class="text-[8px] md:text-[10px] uppercase font-bold text-orange-200">Record</span>
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-orange-200"
+                    data-stat-label="record">Record</span>
                 <span id="best-score" class="font-black text-sm md:text-xl text-orange-100">0</span>
             </div>
-            <!-- WPM -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
-                <span class="text-[8px] md:text-[10px] uppercase font-bold text-blue-200">WPM</span>
+
+            <div
+                class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-blue-200"
+                    data-stat-label="wpm">WPM</span>
                 <span id="wpm-counter" class="font-black text-sm md:text-xl text-blue-100">0</span>
             </div>
-            <!-- Accuracy -->
-            <div class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
-                <span class="text-[8px] md:text-[10px] uppercase font-bold text-green-200">Accuracy</span>
+
+            <div
+                class="bg-white/20 backdrop-blur-md border border-white/30 px-2 py-1 md:px-3 md:py-2 rounded-lg md:rounded-xl flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                <span class="text-[8px] md:text-[10px] uppercase font-bold text-green-200"
+                    data-stat-label="accuracy">Accuracy</span>
                 <span id="accuracy-counter" class="font-black text-sm md:text-xl text-green-100">100%</span>
             </div>
         </div>
 
-        <!-- Progress Bar -->
         <div class="w-full bg-slate-900/30 rounded-full h-2 md:h-3 overflow-hidden border border-white/10 shadow-inner">
-            <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(251,191,36,0.5)]" style="width: 0%"></div>
+            <div id="progress-bar"
+                class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                style="width: 0%"></div>
         </div>
     </div>
 
-    <!-- Main Game Area -->
+    <!-- Main -->
     <div class="flex-grow flex flex-col items-center justify-center w-full max-w-3xl px-2 md:px-4 relative z-0 min-h-0">
-        
-        <!-- Modal -->
-        <div id="milestone-modal" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity duration-300 px-4" aria-modal="true" role="dialog">
-            <div class="relative bg-white p-6 md:p-8 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.5)] text-center milestone-enter w-full max-w-sm mx-auto border-4 border-indigo-50 overflow-hidden">
-                <!-- Decorative Background -->
-                <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
-                    <div class="absolute -top-10 -right-10 w-24 h-24 md:w-32 md:h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
-                    <div class="absolute -bottom-10 -left-10 w-24 h-24 md:w-32 md:h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
-                </div>
-
-                <div class="relative z-10">
-                    <div class="text-5xl md:text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
-                    <h2 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm" id="modal-title">Super!</h2>
-                    <p class="text-slate-500 text-lg md:text-xl font-bold mb-6 md:mb-8" id="milestone-text">5 words done!</p>
-                    
-                    <button id="modal-next-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-6 md:py-4 md:px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
-                        <span id="modal-btn-text">Next</span>
-                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-                    
-                    <div class="mt-4 text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="modal-hint">
-                        Press any key
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="relative w-full flex flex-col items-center justify-center flex-grow">
-            <div class="w-full text-center text-white/80 font-bold uppercase tracking-widest text-[10px] md:text-sm animate-pulse mb-2 md:mb-4" id="typing-prompt">
-                Type letters:
-            </div>
-            
-            <div id="word-display" class="bg-white rounded-2xl md:rounded-3xl shadow-2xl border-b-4 md:border-b-8 border-slate-200 px-4 py-4 md:px-8 md:py-10 text-center text-4xl md:text-7xl font-black text-slate-300 tracking-wider w-full min-h-[80px] md:min-h-[140px] flex items-center justify-center transform transition-all" aria-live="polite" role="status">
-                <!-- JS render -->
-            </div>
-             <div id="message-area" class="h-6 md:h-8 mt-2 md:mt-4 text-lg md:text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center" aria-live="assertive">
+            <div id="word-display"
+                class="bg-white rounded-2xl md:rounded-3xl shadow-2xl border-b-4 md:border-b-8 border-slate-200 px-4 py-4 md:px-8 md:py-10 text-center text-4xl md:text-7xl font-black text-slate-300 tracking-wider w-full min-h-[80px] md:min-h-[140px] flex items-center justify-center transform transition-all"
+                aria-live="polite" role="status"></div>
+
+            <div id="message-area"
+                class="h-6 md:h-8 mt-2 md:mt-4 text-lg md:text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center"
+                aria-live="assertive">
                 Great!
             </div>
         </div>
@@ -219,10 +333,9 @@
 
     <!-- Keyboard -->
     <div class="w-full max-w-5xl px-1 md:px-2 pb-2 md:pb-4 select-none shrink-0">
-        <div class="bg-slate-800 p-1 md:p-5 rounded-lg md:rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b-4 md:border-b-8 border-slate-900 mx-auto w-full" id="keyboard-container">
-            <!-- Row Numbers -->
+        <div class="bg-gray-300 p-1 md:p-5 rounded-lg md:rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b-4 md:border-b-8 border-gray-400 mx-auto w-full"
+            id="keyboard-container">
             <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full">
-                <!-- Standard Keys: flex-1 for responsiveness -->
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">`</div>
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">1</div>
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">2</div>
@@ -236,73 +349,102 @@
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">0</div>
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">-</div>
                 <div class="key-3d key-special flex-1 h-8 md:h-12 font-bold text-[10px] md:text-sm">=</div>
-                <!-- Backspace is usually bigger, giving it flex-grow-2 -->
-                <div class="key-3d key-special flex-[1.5] h-8 md:h-12 text-[10px] md:text-sm" data-action="backspace">
+                <div class="key-3d key-special flex-[1.5] h-8 md:h-12 text-[10px] md:text-sm cursor-pointer"
+                    data-action="backspace">
                     <i class="fa-solid fa-delete-left"></i>
                 </div>
             </div>
 
-            <!-- Row 1 -->
             <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
-                <!-- Tab -->
                 <div class="key-3d key-special flex-[1.5] h-8 md:h-12 font-bold text-[8px] md:text-xs">Tab</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="й">Й</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ц">Ц</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="у">У</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="к">К</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="е">Е</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="н">Н</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="г">Г</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ш">Ш</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="щ">Щ</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="з">З</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="х">Х</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ї">Ї</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="й">Й</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ц">Ц</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="у">У</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="к">К</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="е">Е</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="н">Н</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="г">Г</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ш">Ш</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="щ">Щ</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="з">З</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="х">Х</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ї">Ї</div>
                 <div class="key-3d key-special flex-[1.2] h-8 md:h-12 font-bold text-sm md:text-sm">\</div>
             </div>
 
-            <!-- Row 2 -->
             <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
-                <!-- Caps -->
                 <div class="key-3d key-special flex-[1.8] h-8 md:h-12 font-bold text-[8px] md:text-xs">Caps</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ф">Ф</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="і">І</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="в">В</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="а">А</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="п">П</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="р">Р</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="о">О</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="л">Л</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="д">Д</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ж">Ж</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="є">Є</div>
-                <!-- Enter -->
-                <div class="key-3d key-special flex-[2] h-8 md:h-12 font-bold text-[8px] md:text-xs bg-gradient-to-b from-blue-100 to-blue-200">Enter</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ф">Ф</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="і">І</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="в">В</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="а">А</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="п">П</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="р">Р</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="о">О</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="л">Л</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="д">Д</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ж">Ж</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="є">Є</div>
+                <div
+                    class="key-3d key-special flex-[2] h-8 md:h-12 font-bold text-[8px] md:text-xs bg-gradient-to-b from-blue-100 to-blue-200">
+                    Enter</div>
             </div>
 
-            <!-- Row 3 -->
             <div class="flex gap-0.5 md:gap-1.5 mb-1 md:mb-3 w-full keyboard-row">
-                <!-- Shift -->
                 <div class="key-3d key-special flex-[2.3] h-8 md:h-12 font-bold text-[8px] md:text-xs">Shift</div>
-                <!-- 11 slots -->
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ґ">Ґ</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="я">Я</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ч">Ч</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="с">С</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="м">М</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="и">И</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="т">Т</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ь">Ь</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="б">Б</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char="ю">Ю</div>
-                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg" data-char=".">.</div>
-                <!-- Shift -->
+
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ґ">Ґ</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="я">Я</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ч">Ч</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="с">С</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="м">М</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="и">И</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="т">Т</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ь">Ь</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="б">Б</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char="ю">Ю</div>
+                <div class="key-3d key-letter flex-1 h-8 md:h-12 font-bold text-slate-700 text-sm md:text-lg"
+                    data-char=".">.</div>
+
                 <div class="key-3d key-special flex-[2.3] h-8 md:h-12 font-bold text-[8px] md:text-xs">Shift</div>
             </div>
 
-            <!-- Space -->
             <div class="flex justify-center gap-0.5 md:gap-1.5 w-full">
-                <div class="key-3d w-1/2 h-8 md:h-12 font-bold text-slate-400 text-sm" data-code="Space"></div>
+                <div class="key-3d w-1/2 h-8 md:h-12 font-bold text-slate-400 text-sm cursor-pointer" data-code="Space">
+                </div>
             </div>
         </div>
     </div>
@@ -323,7 +465,7 @@
                 if (this.muted) return;
                 if (!this.ctx) this.init();
                 this.resume();
-                
+
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.connect(gain);
@@ -339,7 +481,7 @@
             playClick() { this.playTone(400, 'triangle', 0.05); },
             playSuccess() {
                 if (this.muted) return;
-                [523.25, 659.25, 783.99].forEach((freq, i) => setTimeout(() => this.playTone(freq, 'sine', 0.5, 0.1), i * 50));
+                [523.25, 659.25, 783.99].forEach((freq, i) => setTimeout(() => this.playTone(freq, 'sine', 0.35, 0.10), i * 60));
             }
         };
 
@@ -348,7 +490,7 @@
                 const key = `bestScore_${lang}`;
                 const best = this.getBest(lang);
                 if (score > best) {
-                    localStorage.setItem(key, score);
+                    localStorage.setItem(key, String(score));
                     return true;
                 }
                 return false;
@@ -361,26 +503,53 @@
         const Data = {
             uk: {
                 words: [...new Set([
-                    "люди", "вона", "вони", "коли", "його", "бути", "року", "час", "було", "мене", "дуже", "мені", "тому", "тебе", "який", "має", "себе", "може", "цього", "вже", "собі", "робити", "буде", "треба", "світ", "життя", "лише", "можна", "тут", "день", "свою", "тепер", "щоби", "йому", "свої", "інші", "навіть", "хочу", "кого", "були", "саме", "куди", "яка", "доки", "тоді", "теж", "очі", "руки", "ніби", "ніж", "поки", "просто", "багато", "зараз", "мама", "тато", "брат", "мова", "вода", "небо", "поле", "ліс", "ріка", "море", "гора", "села", "місто", "хата", "вікно", "двері", "стіл", "книга", "школа", "клас", "урок", "ручка", "друг", "сила", "воля", "слава", "пісня", "душа", "серце", "любов", "мрія", "надія", "віра", "правда", "краса", "радість", "добро", "успіх", "праця", "знати", "жити", "мати"
+                    "люди", "вона", "вони", "коли", "його", "бути", "року", "час", "було", "мене", "дуже", "мені", "тому", "тебе",
+                    "який", "має", "себе", "може", "цього", "вже", "собі", "робити", "буде", "треба", "світ", "життя", "лише",
+                    "можна", "тут", "день", "свою", "тепер", "щоби", "йому", "свої", "інші", "навіть", "хочу", "кого", "були",
+                    "саме", "куди", "яка", "доки", "тоді", "теж", "очі", "руки", "ніби", "ніж", "поки", "просто", "багато",
+                    "зараз", "мама", "тато", "брат", "мова", "вода", "небо", "поле", "ліс", "ріка", "море", "гора", "села",
+                    "місто", "хата", "вікно", "двері", "стіл", "книга", "школа", "клас", "урок", "ручка", "друг", "сила",
+                    "воля", "слава", "пісня", "душа", "серце", "любов", "мрія", "надія", "віра", "правда", "краса", "радість",
+                    "добро", "успіх", "праця", "знати", "жити",
+                    "ніхто", "ніхто", "кожен", "ніхто", "завжди", "ніколи", "часто", "рідко", "перше", "друге", "третє",
+                    "сонце", "земля", "батько", "сестра", "дім", "кімната", "ліжко", "хліб", "молоко", "ручний",
+                    "голова", "ніс", "рот", "вухо", "волосся", "одяг", "куртка", "дорога", "автомобіль", "грати",
+                    "пісок", "камінь", "дерево", "квітка", "трава", "птах", "риба", "собака", "кішка", "корова",
+                    "кінь", "курка", "яйце", "м'ясо", "яблуко", "число", "один", "два", "три", "чотири",
+                    "школяр", "учитель", "зошит", "олівець", "гумка", "комп'ютер", "мишка", "клавіатура", "екран",
+                    "програма", "графіка", "звук", "кнопка", "меню", "файл", "папка"
                 ])],
                 milestones: ["Чудовий старт!", "Ти справжній майстер!", "Неймовірна швидкість!", "Продовжуй у тому ж дусі!", "Клавіатурний геній!", "Неперевершено!"],
-                labels: { prompt: "Набирай літери:", success: "Чудово!", words: "Слів", errors: "Помилок", record: "Рекорд", accuracy: "Точність", next: "Далі", pressAny: "Натисни будь-яку клавішу", modalTitle: "Супер!", modalText: "слів!" },
+                labels: { success: "Чудово!", words: "Слів", errors: "Помилок", record: "Рекорд", accuracy: "Точність", next: "Далі", pressAny: "Натисни будь-яку клавішу", modalTitle: "Супер!", modalText: "слів!" },
                 layout: [
-                    ['й','ц','у','к','е','н','г','ш','щ','з','х','ї'],
-                    ['ф','і','в','а','п','р','о','л','д','ж','є'],
-                    ['ґ','я','ч','с','м','и','т','ь','б','ю','.']
+                    ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ї'],
+                    ['ф', 'і', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'є'],
+                    ['ґ', 'я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', '.']
                 ]
             },
             en: {
                 words: [...new Set([
-                    "about", "other", "which", "their", "there", "first", "would", "these", "click", "price", "state", "world", "music", "video", "books", "links", "years", "could", "group", "games", "service", "start", "today", "south", "pages", "found", "house", "photo", "power", "while", "three", "total", "place", "think", "north", "where", "after", "water", "since", "guide", "board", "white", "small", "shall", "times", "sites", "level", "thank", "phone", "hours", "black", "plant", "trade", "radio", "study", "party", "early", "given", "light", "every", "field", "large", "point", "never", "under", "group", "among", "great", "right", "write", "thing", "cause", "check", "stand", "ready", "story", "media", "class", "value", "image", "model", "phone", "space", "night", "table", "event", "order", "range", "cloud", "focus", "voice", "offer", "learn", "money", "paper", "track", "terms", "skill", "brain", "dream"
+                    "about", "other", "which", "their", "there", "first", "would", "these", "click", "price", "state", "world",
+                    "music", "books", "links", "years", "could", "group", "games", "service", "start", "today", "pages", "found",
+                    "house", "photo", "power", "while", "three", "total", "place", "think", "where", "after", "water", "guide",
+                    "board", "white", "small", "times", "sites", "level", "thank", "phone", "hours", "black", "plant", "trade",
+                    "radio", "study", "party", "early", "given", "light", "every", "field", "large", "point", "never", "among",
+                    "great", "right", "write", "thing", "cause", "check", "stand", "ready", "story", "media", "class", "value",
+                    "image", "model", "space", "night", "table", "event", "order", "range", "cloud", "focus", "voice", "offer",
+                    "learn", "money", "paper", "track", "terms", "skill", "brain", "dream",
+                    "people", "number", "system", "program", "computer", "screen", "keyboard", "mouse", "button", "window",
+                    "folder", "school", "teacher", "student", "lesson", "homework", "picture", "family", "mother", "father",
+                    "brother", "sister", "animal", "forest", "river", "mountain", "ocean", "flower", "garden", "kitchen",
+                    "bedroom", "living", "office", "project", "robot", "sensor", "engine", "player", "action", "levelup",
+                    "friend", "happy", "strong", "energy", "future", "travel", "planet", "star", "magic", "dragon",
+                    "castle", "sword", "shield", "health", "score", "record", "nation", "leader"
                 ])],
                 milestones: ["Great Start!", "You're a master!", "Incredible Speed!", "Keep it up!", "Keyboard Genius!", "Outstanding!"],
-                labels: { prompt: "Type letters:", success: "Great!", words: "Words", errors: "Errors", record: "Record", accuracy: "Accuracy", next: "Next", pressAny: "Press any key", modalTitle: "Super!", modalText: "words done!" },
+                labels: { success: "Great!", words: "Words", errors: "Errors", record: "Record", accuracy: "Accuracy", next: "Next", pressAny: "Press any key", modalTitle: "Super!", modalText: "words done!" },
                 layout: [
-                    ['q','w','e','r','t','y','u','i','o','p','[',']'],
-                    ['a','s','d','f','g','h','j','k','l',';','\''],
-                    ['z','x','c','v','b','n','m',',','.','/']
+                    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']'],
+                    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\''],
+                    ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
                 ]
             }
         };
@@ -403,76 +572,88 @@
                 nextBtn: document.getElementById('modal-next-btn'),
                 soundBtn: document.getElementById('sound-toggle'),
                 langBtn: document.getElementById('lang-toggle'),
-                prompt: document.getElementById('typing-prompt'),
-                statLabels: document.querySelectorAll('.grid span.uppercase'),
-                keyboard: document.getElementById('keyboard-container')
+                keyboard: document.getElementById('keyboard-container'),
+                startModal: document.getElementById('start-modal'),
+                startGameBtn: document.getElementById('start-game-btn'),
+                confirmModal: document.getElementById('confirm-modal'),
+                confirmYesBtn: document.getElementById('confirm-yes-btn'),
+                confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
+                statWords: document.querySelector('[data-stat-label="words"]'),
+                statErrors: document.querySelector('[data-stat-label="errors"]'),
+                statRecord: document.querySelector('[data-stat-label="record"]'),
+                statAccuracy: document.querySelector('[data-stat-label="accuracy"]')
             },
-            keyMap: new Map(),
+
+            escAttrValue(s) {
+                // safest for querySelector attribute values (handles quotes, brackets, etc.)
+                if (window.CSS && typeof CSS.escape === 'function') return CSS.escape(s);
+                return String(s).replace(/["\\\]]/g, '\\$&');
+            },
 
             updateLabels(lang) {
                 const l = Data[lang].labels;
-                this.els.prompt.textContent = l.prompt;
                 this.els.message.textContent = l.success;
                 this.els.modalTitle.textContent = l.modalTitle;
                 this.els.modalBtnText.textContent = l.next;
                 this.els.modalHint.textContent = l.pressAny;
-                
-                const stats = document.querySelectorAll('.grid span.uppercase');
-                // stats was a nodelist from grid, but we changed layout to flex
-                // Re-query labels correctly
-                const statLabels = document.querySelectorAll('[class*="uppercase"]');
-                // The order in HTML: Words, Errors, Record, WPM, Accuracy
-                if(statLabels[0]) statLabels[0].textContent = l.words;
-                if(statLabels[1]) statLabels[1].textContent = l.errors;
-                if(statLabels[2]) statLabels[2].textContent = l.record;
-                if(statLabels[3]) statLabels[3].textContent = "WPM"; // Always WPM
-                if(statLabels[4]) statLabels[4].textContent = l.accuracy;
+
+                if (this.els.statWords) this.els.statWords.textContent = l.words;
+                if (this.els.statErrors) this.els.statErrors.textContent = l.errors;
+                if (this.els.statRecord) this.els.statRecord.textContent = l.record;
+                if (this.els.statAccuracy) this.els.statAccuracy.textContent = l.accuracy;
             },
 
             updateKeyboardLayout(lang) {
                 const layout = Data[lang].layout;
                 const rows = document.querySelectorAll('.keyboard-row');
-                
-                // Row 1
+
                 const row1Keys = rows[0].querySelectorAll('.key-letter');
                 layout[0].forEach((char, i) => {
-                    if(row1Keys[i]) {
+                    if (row1Keys[i]) {
                         row1Keys[i].textContent = char.toUpperCase();
                         row1Keys[i].dataset.char = char;
                     }
                 });
 
-                // Row 2
                 const row2Keys = rows[1].querySelectorAll('.key-letter');
                 layout[1].forEach((char, i) => {
-                    if(row2Keys[i]) {
+                    if (row2Keys[i]) {
                         row2Keys[i].textContent = char.toUpperCase();
                         row2Keys[i].dataset.char = char;
                     }
                 });
 
-                // Row 3
                 const row3Keys = rows[2].querySelectorAll('.key-letter');
-                
+
                 if (lang === 'en') {
+                    // hide "ґ" key slot
                     row3Keys[0].classList.add('hidden-key');
+
                     layout[2].forEach((char, i) => {
-                        if(row3Keys[i+1]) {
-                            row3Keys[i+1].textContent = char.toUpperCase();
-                            row3Keys[i+1].dataset.char = char;
+                        const el = row3Keys[i + 1];
+                        if (el) {
+                            el.textContent = char.toUpperCase();
+                            el.dataset.char = char;
                         }
                     });
                 } else {
                     row3Keys[0].classList.remove('hidden-key');
+
                     layout[2].forEach((char, i) => {
-                        if(row3Keys[i]) {
-                            row3Keys[i].textContent = char.toUpperCase();
-                            row3Keys[i].dataset.char = char;
+                        const el = row3Keys[i];
+                        if (el) {
+                            el.textContent = char.toUpperCase();
+                            el.dataset.char = char;
                         }
                     });
                 }
+
+                // remove leftover dataset.char from any hidden/unused keys (safety)
+                document.querySelectorAll('.key-letter.hidden-key').forEach(el => {
+                    delete el.dataset.char;
+                });
             },
-            
+
             renderWord(word, index) {
                 this.els.wordDisplay.innerHTML = '';
                 for (let i = 0; i < word.length; i++) {
@@ -484,11 +665,12 @@
                     this.els.wordDisplay.appendChild(span);
                 }
             },
+
             updateStats(state) {
                 this.els.score.textContent = state.score;
                 this.els.errors.textContent = state.errors;
                 this.els.best.textContent = state.bestScore;
-                
+
                 const wordsInCycle = state.score % 5;
                 const wordProgress = state.currentWord.length > 0 ? state.charIndex / state.currentWord.length : 0;
                 const progress = (wordsInCycle + wordProgress) * 20;
@@ -497,12 +679,13 @@
                 const totalAttempts = state.totalHits + state.errors;
                 const accuracy = totalAttempts <= 0 ? 100 : (state.totalHits / totalAttempts) * 100;
                 this.els.accuracy.textContent = `${accuracy.toFixed(1)}%`;
-                
+
                 const baseClass = "font-black text-sm md:text-xl";
                 if (accuracy > 95) this.els.accuracy.className = `${baseClass} text-green-100`;
                 else if (accuracy > 80) this.els.accuracy.className = `${baseClass} text-yellow-100`;
                 else this.els.accuracy.className = `${baseClass} text-red-100`;
             },
+
             updateWPM(startTime, score) {
                 if (!startTime || score === 0) {
                     this.els.wpm.textContent = '0';
@@ -514,35 +697,43 @@
                     return;
                 }
                 const wpm = Math.round(score / minutes);
-                this.els.wpm.textContent = wpm;
+                this.els.wpm.textContent = String(wpm);
             },
-            highlightKey(char) {
+
+            clearHints() {
                 document.querySelectorAll('.key-hint').forEach(el => el.classList.remove('key-hint'));
+            },
+
+            highlightKey(char) {
+                this.clearHints();
                 if (!char) return;
-                
+
                 let selector;
                 if (char === ' ') selector = '[data-code="Space"]';
-                else selector = `[data-char="${char.toLowerCase()}"]`;
-                
+                else selector = `[data-char="${this.escAttrValue(char.toLowerCase())}"]`;
+
                 const el = this.els.keyboard.querySelector(selector);
                 if (el) el.classList.add('key-hint');
             },
+
             animateKey(char) {
                 let selector;
                 if (char === ' ') selector = '[data-code="Space"]';
-                else selector = `[data-char="${char.toLowerCase()}"]`;
-                
+                else selector = `[data-char="${this.escAttrValue(char.toLowerCase())}"]`;
+
                 const el = this.els.keyboard.querySelector(selector);
                 if (el) {
                     el.classList.add('key-pressed');
                     setTimeout(() => el.classList.remove('key-pressed'), 150);
                 }
             },
+
             shakeWord() {
                 this.els.wordDisplay.classList.add('shake');
                 setTimeout(() => this.els.wordDisplay.classList.remove('shake'), 400);
             },
-            showSuccessMessage(lang) {
+
+            showSuccessMessage() {
                 this.els.message.style.opacity = '1';
                 this.els.message.style.transform = 'scale(1.2)';
                 setTimeout(() => {
@@ -550,19 +741,42 @@
                     this.els.message.style.transform = 'scale(1)';
                 }, 800);
             },
+
             showModal(text) {
                 this.els.modalText.textContent = text;
                 this.els.modal.classList.remove('hidden');
-                setTimeout(() => this.els.nextBtn.focus(), 100);
+                setTimeout(() => this.els.nextBtn.focus(), 80);
             },
+
             hideModal() {
                 this.els.modal.classList.add('hidden');
+            },
+
+            isModalOpen() {
+                return !this.els.modal.classList.contains('hidden');
+            },
+
+            isStartOpen() {
+                return !this.els.startModal.classList.contains('hidden');
+            },
+
+            isConfirmOpen() {
+                return !this.els.confirmModal.classList.contains('hidden');
+            },
+
+            showConfirm() {
+                this.els.confirmModal.classList.remove('hidden');
+            },
+
+            hideConfirm() {
+                this.els.confirmModal.classList.add('hidden');
             }
         };
 
         const Game = {
             currentLang: 'uk',
             ignoredKeys: new Set(['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter']),
+            currentWordsList: [],
             state: {
                 wordIndex: 0,
                 charIndex: 0,
@@ -572,35 +786,76 @@
                 bestScore: 0,
                 startTime: null,
                 currentWord: "",
-                paused: false,
-                closingModal: false
+                paused: true,
+                closingModal: false,
+                started: false
             },
 
             init() {
                 this.setupLanguage();
                 this.initEventListeners();
-                this.startNewGame();
+                this.state.paused = true;
+                this.state.started = false;
+                UI.renderWord("...", 0);
+                UI.updateStats(this.state);
+                UI.updateWPM(null, 0);
             },
 
             initEventListeners() {
-                UI.els.soundBtn.addEventListener('click', () => AudioController.toggleMute(UI.els.soundBtn, UI.els.soundIcon.parentElement.querySelector('i')));
+                UI.els.startGameBtn.addEventListener('click', () => {
+                    UI.els.startModal.classList.add('hidden');
+                    this.state.started = true;
+                    this.state.paused = false;
+                    // unlock audio on user gesture
+                    AudioController.resume();
+                    this.startNewGame();
+                });
+
+                UI.els.soundBtn.addEventListener('click', () => {
+                    const icon = UI.els.soundBtn.querySelector('i');
+                    AudioController.toggleMute(UI.els.soundBtn, icon);
+                });
+
                 UI.els.langBtn.addEventListener('click', () => this.toggleLanguage());
+
                 UI.els.nextBtn.addEventListener('click', () => this.closeModal());
-                document.addEventListener('keydown', (e) => this.onKeyDown(e));
-                
-                UI.els.keyboard.addEventListener('mousedown', (e) => {
+
+                UI.els.confirmYesBtn.addEventListener('click', () => {
+                    UI.hideConfirm();
+                    this.state.paused = false;
+                    this.proceedWithLanguageToggle();
+                });
+
+                UI.els.confirmCancelBtn.addEventListener('click', () => {
+                    UI.hideConfirm();
+                    this.state.paused = false;
+                });
+
+                document.addEventListener('keydown', (e) => this.onKeyDown(e), { passive: false });
+
+                // Pointer events (works for mouse + touch)
+                UI.els.keyboard.addEventListener('pointerdown', (e) => {
                     const keyEl = e.target.closest('.key-3d');
                     if (!keyEl) return;
-                    
-                    e.preventDefault();
-                    const key = keyEl.dataset.char;
+
+                    // only interactive for letter keys / space / backspace
                     const action = keyEl.dataset.action;
-                    
-                    if (action === 'backspace') {
-                        this.handleBackspace();
-                    } else if (key || keyEl.dataset.code === 'Space') {
-                        this.handleInput(key || ' ');
+                    const ch = keyEl.dataset.char;
+                    const isSpace = keyEl.dataset.code === 'Space';
+
+                    if (!(action === 'backspace' || ch || isSpace)) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (!this.state.started || this.state.paused) {
+                        // allow closing milestone modal by tapping anywhere only if it is open
+                        if (UI.isModalOpen()) this.closeModal();
+                        return;
                     }
+
+                    if (action === 'backspace') this.handleBackspace();
+                    else this.handleInput(ch || ' ');
                 });
             },
 
@@ -610,13 +865,27 @@
             },
 
             toggleLanguage() {
-                if (this.state.score > 0) {
-                    const confirmSwitch = window.confirm("Switch language? Current progress will be lost.");
-                    if (!confirmSwitch) return;
+                if (this.state.started && (this.state.score > 0 || this.state.errors > 0 || this.state.totalHits > 0)) {
+                    this.state.paused = true;
+                    UI.showConfirm();
+                    return;
                 }
+                this.proceedWithLanguageToggle();
+            },
+
+            proceedWithLanguageToggle() {
                 this.currentLang = this.currentLang === 'uk' ? 'en' : 'uk';
                 this.setupLanguage();
-                this.startNewGame();
+                UI.clearHints();
+
+                if (this.state.started) {
+                    this.startNewGame();
+                } else {
+                    // just refresh best score label when still on start modal
+                    this.state.bestScore = Storage.getBest(this.currentLang);
+                    UI.updateStats(this.state);
+                }
+
                 UI.els.langBtn.blur();
             },
 
@@ -628,33 +897,33 @@
                 this.state.charIndex = 0;
                 this.state.startTime = null;
                 this.state.bestScore = Storage.getBest(this.currentLang);
-                
+                this.state.currentWord = "";
+
                 const words = [...Data[this.currentLang].words];
                 for (let i = words.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [words[i], words[j]] = [words[j], words[i]];
                 }
                 this.currentWordsList = words;
-                
+
                 this.loadNextWord();
                 UI.updateStats(this.state);
                 UI.updateWPM(null, 0);
             },
 
             loadNextWord() {
-                if (this.state.wordIndex >= this.currentWordsList.length) {
-                    this.state.wordIndex = 0;
-                }
-                this.state.currentWord = this.currentWordsList[this.state.wordIndex];
+                if (this.state.wordIndex >= this.currentWordsList.length) this.state.wordIndex = 0;
+                this.state.currentWord = this.currentWordsList[this.state.wordIndex] || "";
                 this.state.charIndex = 0;
+
                 UI.renderWord(this.state.currentWord, 0);
-                UI.highlightKey(this.state.currentWord[0]);
+                UI.highlightKey(this.state.currentWord[0] || null);
                 UI.updateStats(this.state);
             },
 
             handleInput(inputChar) {
-                if (this.state.paused) return;
-                
+                if (!this.state.started || this.state.paused) return;
+
                 if (!this.state.startTime) this.state.startTime = Date.now();
                 UI.updateWPM(this.state.startTime, this.state.score);
 
@@ -662,12 +931,13 @@
                 UI.animateKey(inputChar);
 
                 const targetChar = this.state.currentWord[this.state.charIndex];
+                if (!targetChar) return;
 
-                if (inputChar.toLowerCase() === targetChar.toLowerCase()) {
+                if (String(inputChar).toLowerCase() === String(targetChar).toLowerCase()) {
                     this.state.charIndex++;
                     this.state.totalHits++;
                     UI.renderWord(this.state.currentWord, this.state.charIndex);
-                    
+
                     if (this.state.charIndex === this.state.currentWord.length) {
                         this.onWordComplete();
                     } else {
@@ -677,16 +947,19 @@
                     this.state.errors++;
                     UI.shakeWord();
                 }
+
                 UI.updateStats(this.state);
             },
 
             handleBackspace() {
-                if (this.state.paused || this.state.charIndex === 0) return;
+                if (!this.state.started || this.state.paused || this.state.charIndex === 0) return;
                 AudioController.playClick();
+
                 this.state.charIndex--;
                 if (this.state.totalHits > 0) this.state.totalHits--;
+
                 UI.renderWord(this.state.currentWord, this.state.charIndex);
-                UI.highlightKey(this.state.currentWord[this.state.charIndex]);
+                UI.highlightKey(this.state.currentWord[this.state.charIndex] || null);
                 UI.updateStats(this.state);
             },
 
@@ -695,11 +968,11 @@
                 if (Storage.saveBest(this.state.score, this.currentLang)) {
                     this.state.bestScore = this.state.score;
                 }
-                
+
                 AudioController.playSuccess();
-                UI.showSuccessMessage(this.currentLang);
+                UI.showSuccessMessage();
                 UI.updateWPM(this.state.startTime, this.state.score);
-                
+
                 this.state.wordIndex++;
 
                 if (this.state.score > 0 && this.state.score % 5 === 0) {
@@ -711,33 +984,75 @@
 
             triggerMilestone() {
                 this.state.paused = true;
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+
+                try {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                } catch (_) { /* ignore */ }
+
                 const milestones = Data[this.currentLang].milestones;
                 const phrase = milestones[Math.floor(Math.random() * milestones.length)];
                 const suffix = Data[this.currentLang].labels.modalText;
+
                 UI.showModal(`${phrase} (${this.state.score} ${suffix})`);
                 UI.els.progressBar.style.width = '100%';
             },
 
             closeModal() {
                 if (this.state.closingModal) return;
+                if (!UI.isModalOpen()) return; // важливо: не закривати "порожнє" паузування
+
                 this.state.closingModal = true;
                 UI.hideModal();
                 this.state.paused = false;
+
                 UI.els.progressBar.style.width = '0%';
                 this.loadNextWord();
-                setTimeout(() => { this.state.closingModal = false; }, 300);
+
+                setTimeout(() => { this.state.closingModal = false; }, 250);
             },
 
             onKeyDown(e) {
-                if (this.state.paused) { this.closeModal(); return; }
+                // Do not react while start modal is open (before game starts)
+                if (!this.state.started || UI.isStartOpen()) return;
+
+                // If milestone modal or confirm modal is open, handle them
+                if (this.state.paused) {
+                    if (UI.isModalOpen()) {
+                        e.preventDefault();
+                        this.closeModal();
+                    } else if (UI.isConfirmOpen()) {
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            UI.hideConfirm();
+                            this.state.paused = false;
+                        } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            UI.hideConfirm();
+                            this.state.paused = false;
+                            this.proceedWithLanguageToggle();
+                        }
+                    }
+                    return;
+                }
+
+                // prevent browser navigation on Backspace
+                if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    this.handleBackspace();
+                    return;
+                }
+
                 if (this.ignoredKeys.has(e.key)) return;
-                if (e.key === 'Backspace') { this.handleBackspace(); return; }
-                if (e.key.length === 1) this.handleInput(e.key);
+
+                // only printable characters
+                if (e.key && e.key.length === 1) {
+                    this.handleInput(e.key);
+                }
             }
         };
 
         Game.init();
     </script>
 </body>
+
 </html>
