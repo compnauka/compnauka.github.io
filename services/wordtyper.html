@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажер з Конфеті: PRO</title>
+    <title>Клавіатурний тренажер</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -83,6 +83,10 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
+        
+        .hidden-key {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="bg-indigo-600 h-screen flex flex-col items-center justify-between py-4 overflow-hidden" role="application">
@@ -93,11 +97,16 @@
         <div class="flex justify-between items-center text-white drop-shadow-md">
             <div class="text-2xl font-extrabold tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-gamepad text-yellow-300"></i>
-                <span class="hidden sm:inline">КЛАВІАТУРА</span>
+                <span class="hidden sm:inline">KEYBOARD</span>
             </div>
             
             <div class="flex gap-3 items-center">
-                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Вимкнути звук">
+                <!-- Language Toggle -->
+                <button id="lang-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-xl font-bold text-sm hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white">
+                    UA | EN
+                </button>
+
+                <button id="sound-toggle" class="bg-white/20 backdrop-blur-md border border-white/30 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white" aria-label="Toggle Sound">
                     <i class="fa-solid fa-volume-high text-white"></i>
                 </button>
             </div>
@@ -107,18 +116,18 @@
         <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
             <!-- Score -->
             <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-yellow-200">Слів</span>
+                <span class="text-[10px] uppercase font-bold text-yellow-200">Score</span>
                 <span id="score-counter" class="font-black text-xl text-white">0</span>
             </div>
             <!-- Errors -->
             <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-red-200">Помилок</span>
+                <span class="text-[10px] uppercase font-bold text-red-200">Errors</span>
                 <span id="error-counter" class="font-black text-xl text-red-100">0</span>
             </div>
             <!-- Best -->
             <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center relative overflow-hidden">
                 <div class="absolute inset-0 bg-yellow-400/10"></div>
-                <span class="text-[10px] uppercase font-bold text-orange-200">Рекорд</span>
+                <span class="text-[10px] uppercase font-bold text-orange-200">Record</span>
                 <span id="best-score" class="font-black text-xl text-orange-100">0</span>
             </div>
             <!-- WPM -->
@@ -128,7 +137,7 @@
             </div>
             <!-- Accuracy -->
             <div class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 rounded-xl flex flex-col items-center">
-                <span class="text-[10px] uppercase font-bold text-green-200">Точність</span>
+                <span class="text-[10px] uppercase font-bold text-green-200">Accuracy</span>
                 <span id="accuracy-counter" class="font-black text-xl text-green-100">100%</span>
             </div>
         </div>
@@ -153,24 +162,24 @@
 
                 <div class="relative z-10">
                     <div class="text-7xl mb-4 trophy-float filter drop-shadow-lg">🏆</div>
-                    <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm">Супер!</h2>
-                    <p class="text-slate-500 text-xl font-bold mb-8" id="milestone-text">Ти набрав 5 слів!</p>
+                    <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 drop-shadow-sm" id="modal-title">Super!</h2>
+                    <p class="text-slate-500 text-xl font-bold mb-8" id="milestone-text">5 words done!</p>
                     
                     <button id="modal-next-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer outline-none focus:ring-4 focus:ring-indigo-300">
-                        <span>Далі</span>
+                        <span id="modal-btn-text">Next</span>
                         <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                     </button>
                     
-                    <div class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        Натисни будь-яку клавішу
+                    <div class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="modal-hint">
+                        Press any key
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="relative w-full">
-            <div class="absolute -top-10 left-0 w-full text-center text-white/80 font-bold uppercase tracking-widest text-sm animate-pulse">
-                Набирай літери:
+            <div class="absolute -top-10 left-0 w-full text-center text-white/80 font-bold uppercase tracking-widest text-sm animate-pulse" id="typing-prompt">
+                Type letters:
             </div>
             
             <div id="word-display" class="bg-white rounded-3xl shadow-2xl border-b-8 border-slate-200 px-8 py-10 text-center text-5xl md:text-7xl font-black text-slate-300 tracking-wider min-h-[120px] md:min-h-[140px] flex items-center justify-center transform transition-all hover:scale-105" aria-live="polite" role="status">
@@ -179,13 +188,13 @@
         </div>
         
         <div id="message-area" class="h-8 mt-4 text-2xl font-bold text-yellow-300 drop-shadow-md opacity-0 transition-opacity duration-300 text-center" aria-live="assertive">
-            Чудово!
+            Great!
         </div>
     </div>
 
     <!-- Keyboard -->
     <div class="w-full max-w-5xl px-2 pb-4 select-none">
-        <div class="bg-slate-800 p-2 md:p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-b-8 border-slate-900 mx-auto">
+        <div class="bg-slate-800 p-2 md:p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-b-8 border-slate-900 mx-auto" id="keyboard-container">
             <!-- Row Numbers -->
             <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
                 <div class="key-3d key-special w-8 h-10 md:w-12 md:h-12 font-bold text-sm">`</div>
@@ -207,7 +216,7 @@
             </div>
 
             <!-- Row 1 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
                 <div class="key-3d key-special w-12 md:w-[4.5rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Tab</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="й">Й</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ц">Ц</div>
@@ -225,7 +234,7 @@
             </div>
 
             <!-- Row 2 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
                 <div class="key-3d key-special w-14 md:w-[5.4rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Caps</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ф">Ф</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="і">І</div>
@@ -242,8 +251,9 @@
             </div>
 
             <!-- Row 3 -->
-            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full">
+            <div class="flex gap-1 md:gap-1.5 mb-1.5 md:mb-3 w-full keyboard-row">
                 <div class="key-3d key-special w-16 md:w-[6.9rem] h-10 md:h-12 font-bold text-[10px] md:text-xs">Shift</div>
+                <!-- 11 slots -->
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ґ">Ґ</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="я">Я</div>
                 <div class="key-3d key-letter w-8 h-10 md:w-12 md:h-12 font-bold text-slate-700 text-lg" data-char="ч">Ч</div>
@@ -278,7 +288,7 @@
                 btn.blur();
             },
             playTone(freq, type, duration, volStart = 0.05, volEnd = 0.001) {
-                if (this.muted) return; // FIXED: Не ініціалізуємо, якщо звук вимкнено
+                if (this.muted) return;
                 if (!this.ctx) this.init();
                 this.resume();
                 
@@ -302,16 +312,44 @@
         };
 
         const Storage = {
-            saveBest(score) {
-                const best = this.getBest();
+            saveBest(score, lang) {
+                const key = `bestScore_${lang}`;
+                const best = this.getBest(lang);
                 if (score > best) {
-                    localStorage.setItem('bestScore', score);
+                    localStorage.setItem(key, score);
                     return true;
                 }
                 return false;
             },
-            getBest() {
-                return parseInt(localStorage.getItem('bestScore') || '0', 10);
+            getBest(lang) {
+                return parseInt(localStorage.getItem(`bestScore_${lang}`) || '0', 10);
+            }
+        };
+
+        const Data = {
+            uk: {
+                words: [...new Set([
+                    "люди", "вона", "вони", "коли", "його", "бути", "року", "час", "було", "мене", "дуже", "мені", "тому", "тебе", "який", "має", "себе", "може", "цього", "вже", "собі", "робити", "буде", "треба", "світ", "життя", "лише", "можна", "тут", "день", "свою", "тепер", "щоби", "йому", "свої", "інші", "навіть", "хочу", "кого", "були", "саме", "куди", "яка", "доки", "тоді", "теж", "очі", "руки", "ніби", "ніж", "поки", "просто", "багато", "зараз", "мама", "тато", "брат", "мова", "вода", "небо", "поле", "ліс", "ріка", "море", "гора", "села", "місто", "хата", "вікно", "двері", "стіл", "книга", "школа", "клас", "урок", "ручка", "друг", "сила", "воля", "слава", "пісня", "душа", "серце", "любов", "мрія", "надія", "віра", "правда", "краса", "радість", "добро", "успіх", "праця", "знати", "жити", "мати"
+                ])],
+                milestones: ["Чудовий старт!", "Ти справжній майстер!", "Неймовірна швидкість!", "Продовжуй у тому ж дусі!", "Клавіатурний геній!", "Неперевершено!"],
+                labels: { prompt: "Набирай літери:", success: "Чудово!", words: "Слів", errors: "Помилок", record: "Рекорд", accuracy: "Точність", next: "Далі", pressAny: "Натисни будь-яку клавішу", modalTitle: "Супер!", modalText: "слів!" },
+                layout: [
+                    ['й','ц','у','к','е','н','г','ш','щ','з','х','ї'],
+                    ['ф','і','в','а','п','р','о','л','д','ж','є'],
+                    ['ґ','я','ч','с','м','и','т','ь','б','ю','.']
+                ]
+            },
+            en: {
+                words: [...new Set([
+                    "about", "other", "which", "their", "there", "first", "would", "these", "click", "price", "state", "world", "music", "video", "books", "links", "years", "could", "group", "games", "service", "start", "today", "south", "pages", "found", "house", "photo", "power", "while", "three", "total", "place", "think", "north", "where", "after", "water", "since", "guide", "board", "white", "small", "shall", "times", "sites", "level", "thank", "phone", "hours", "black", "plant", "trade", "radio", "study", "party", "early", "given", "light", "every", "field", "large", "point", "never", "under", "group", "among", "great", "right", "write", "thing", "cause", "check", "stand", "ready", "story", "media", "class", "value", "image", "model", "phone", "space", "night", "table", "event", "order", "range", "cloud", "focus", "voice", "offer", "learn", "money", "paper", "track", "terms", "skill", "brain", "dream"
+                ])],
+                milestones: ["Great Start!", "You're a master!", "Incredible Speed!", "Keep it up!", "Keyboard Genius!", "Outstanding!"],
+                labels: { prompt: "Type letters:", success: "Great!", words: "Words", errors: "Errors", record: "Record", accuracy: "Accuracy", next: "Next", pressAny: "Press any key", modalTitle: "Super!", modalText: "words done!" },
+                layout: [
+                    ['q','w','e','r','t','y','u','i','o','p','[',']'],
+                    ['a','s','d','f','g','h','j','k','l',';','\''],
+                    ['z','x','c','v','b','n','m',',','.','/']
+                ]
             }
         };
 
@@ -327,25 +365,81 @@
                 message: document.getElementById('message-area'),
                 modal: document.getElementById('milestone-modal'),
                 modalText: document.getElementById('milestone-text'),
+                modalTitle: document.getElementById('modal-title'),
+                modalBtnText: document.getElementById('modal-btn-text'),
+                modalHint: document.getElementById('modal-hint'),
                 nextBtn: document.getElementById('modal-next-btn'),
                 soundBtn: document.getElementById('sound-toggle'),
-                soundIcon: document.querySelector('#sound-toggle i')
+                langBtn: document.getElementById('lang-toggle'),
+                prompt: document.getElementById('typing-prompt'),
+                statLabels: document.querySelectorAll('.grid span.uppercase'),
+                keyboard: document.getElementById('keyboard-container')
             },
             keyMap: new Map(),
 
-            initKeyMap() {
-                document.querySelectorAll('.key-3d').forEach(el => {
-                    let key = el.dataset.char;
-                    if (!key && el.dataset.code === 'Space') key = ' ';
-                    const action = el.dataset.action;
-                    if (key) this.keyMap.set(key.toLowerCase(), el);
-                    el.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        if (action === 'backspace') Game.handleBackspace();
-                        else if (key) Game.handleInput(key);
-                    });
-                });
+            updateLabels(lang) {
+                const l = Data[lang].labels;
+                this.els.prompt.textContent = l.prompt;
+                this.els.message.textContent = l.success;
+                this.els.modalTitle.textContent = l.modalTitle;
+                this.els.modalBtnText.textContent = l.next;
+                this.els.modalHint.textContent = l.pressAny;
+                
+                const stats = document.querySelectorAll('.grid span.uppercase');
+                stats[0].textContent = l.words;
+                stats[1].textContent = l.errors;
+                stats[2].textContent = l.record;
+                stats[4].textContent = l.accuracy;
             },
+
+            updateKeyboardLayout(lang) {
+                const layout = Data[lang].layout;
+                const rows = document.querySelectorAll('.keyboard-row');
+                
+                // Row 1
+                const row1Keys = rows[0].querySelectorAll('.key-letter');
+                layout[0].forEach((char, i) => {
+                    if(row1Keys[i]) {
+                        row1Keys[i].textContent = char.toUpperCase();
+                        row1Keys[i].dataset.char = char;
+                    }
+                });
+
+                // Row 2
+                const row2Keys = rows[1].querySelectorAll('.key-letter');
+                layout[1].forEach((char, i) => {
+                    if(row2Keys[i]) {
+                        row2Keys[i].textContent = char.toUpperCase();
+                        row2Keys[i].dataset.char = char;
+                    }
+                });
+
+                // Row 3
+                const row3Keys = rows[2].querySelectorAll('.key-letter');
+                
+                // Hide or show the first key based on language layout length
+                // UA has 11 keys, EN has 10. The first key in HTML is usually the extra one for UA (ґ)
+                if (lang === 'en') {
+                    row3Keys[0].classList.add('hidden-key');
+                    // Shift the rest
+                    layout[2].forEach((char, i) => {
+                        // We map EN char 0 ('z') to Key 1 (index 1), etc.
+                        if(row3Keys[i+1]) {
+                            row3Keys[i+1].textContent = char.toUpperCase();
+                            row3Keys[i+1].dataset.char = char;
+                        }
+                    });
+                } else {
+                    row3Keys[0].classList.remove('hidden-key');
+                    layout[2].forEach((char, i) => {
+                        if(row3Keys[i]) {
+                            row3Keys[i].textContent = char.toUpperCase();
+                            row3Keys[i].dataset.char = char;
+                        }
+                    });
+                }
+            },
+            
             renderWord(word, index) {
                 this.els.wordDisplay.innerHTML = '';
                 for (let i = 0; i < word.length; i++) {
@@ -362,13 +456,11 @@
                 this.els.errors.textContent = state.errors;
                 this.els.best.textContent = state.bestScore;
                 
-                // Progress Bar: FIXED Calculation
                 const wordsInCycle = state.score % 5;
                 const wordProgress = state.currentWord.length > 0 ? state.charIndex / state.currentWord.length : 0;
                 const progress = (wordsInCycle + wordProgress) * 20;
                 this.els.progressBar.style.width = `${Math.min(progress, 100)}%`;
 
-                // Accuracy
                 const totalAttempts = state.totalHits + state.errors;
                 const accuracy = totalAttempts <= 0 ? 100 : (state.totalHits / totalAttempts) * 100;
                 this.els.accuracy.textContent = `${accuracy.toFixed(1)}%`;
@@ -383,7 +475,6 @@
                     return;
                 }
                 const minutes = (Date.now() - startTime) / 60000;
-                // Avoid division by zero or very small numbers
                 if (minutes < 0.001) {
                     this.els.wpm.textContent = '0';
                     return;
@@ -394,11 +485,23 @@
             highlightKey(char) {
                 document.querySelectorAll('.key-hint').forEach(el => el.classList.remove('key-hint'));
                 if (!char) return;
-                const el = this.keyMap.get(char.toLowerCase());
+                
+                // Find key via dataset inside container (handled by event delegation logic below)
+                // But for visual highlight we need direct access.
+                // We can query selector since we don't maintain a heavy map anymore for listeners
+                let selector;
+                if (char === ' ') selector = '[data-code="Space"]';
+                else selector = `[data-char="${char.toLowerCase()}"]`;
+                
+                const el = this.els.keyboard.querySelector(selector);
                 if (el) el.classList.add('key-hint');
             },
             animateKey(char) {
-                const el = this.keyMap.get(char.toLowerCase());
+                let selector;
+                if (char === ' ') selector = '[data-code="Space"]';
+                else selector = `[data-char="${char.toLowerCase()}"]`;
+                
+                const el = this.els.keyboard.querySelector(selector);
                 if (el) {
                     el.classList.add('key-pressed');
                     setTimeout(() => el.classList.remove('key-pressed'), 150);
@@ -408,9 +511,7 @@
                 this.els.wordDisplay.classList.add('shake');
                 setTimeout(() => this.els.wordDisplay.classList.remove('shake'), 400);
             },
-            showSuccessMessage() {
-                const phrases = ["Молодець!", "Так тримати!", "Супер!", "Клас!", "Чудово!", "Гарно!"];
-                this.els.message.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+            showSuccessMessage(lang) {
                 this.els.message.style.opacity = '1';
                 this.els.message.style.transform = 'scale(1.2)';
                 setTimeout(() => {
@@ -429,17 +530,14 @@
         };
 
         const Game = {
-            words: [
-                "люди", "вона", "вони", "коли", "його", "бути", "року", "час", "було", "мене", "дуже", "мені", "тому", "тебе", "який", "має", "себе", "може", "цього", "вже", "собі", "робити", "буде", "треба", "світ", "життя", "лише", "можна", "тут", "день", "свою", "тепер", "щоби", "йому", "свої", "інші", "навіть", "хочу", "кого", "були", "саме", "куди", "яка", "доки", "тоді", "теж", "очі", "руки", "ніби", "ніж", "поки", "просто", "багато", "зараз", "мама", "тато", "брат", "мова", "вода", "небо", "поле", "ліс", "ріка", "море", "гора", "села", "місто", "хата", "вікно", "двері", "стіл", "книга", "школа", "клас", "урок", "ручка", "друг", "сила", "воля", "слава", "пісня", "душа", "серце", "любов", "мрія", "надія", "віра", "правда", "краса", "радість", "добро", "успіх", "праця", "знати", "жити", "мати"
-            ],
-            milestones: ["Чудовий старт!", "Ти справжній майстер!", "Неймовірна швидкість!", "Продовжуй у тому ж дусі!", "Клавіатурний геній!", "Неперевершено!"],
+            currentLang: 'uk',
             ignoredKeys: new Set(['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter']),
             state: {
                 wordIndex: 0,
                 charIndex: 0,
                 score: 0,
                 errors: 0,
-                totalHits: 0, // For accuracy
+                totalHits: 0,
                 bestScore: 0,
                 startTime: null,
                 currentWord: "",
@@ -448,40 +546,86 @@
             },
 
             init() {
-                this.words = [...new Set(this.words)];
-                this.shuffleWords();
-                this.state.bestScore = Storage.getBest();
-                UI.initKeyMap();
+                this.setupLanguage();
+                this.initEventListeners();
+                this.startNewGame();
+            },
+
+            initEventListeners() {
                 UI.els.soundBtn.addEventListener('click', () => AudioController.toggleMute(UI.els.soundBtn, UI.els.soundIcon));
+                UI.els.langBtn.addEventListener('click', () => this.toggleLanguage());
                 UI.els.nextBtn.addEventListener('click', () => this.closeModal());
                 document.addEventListener('keydown', (e) => this.onKeyDown(e));
+                
+                // Event Delegation for Virtual Keyboard
+                UI.els.keyboard.addEventListener('mousedown', (e) => {
+                    const keyEl = e.target.closest('.key-3d');
+                    if (!keyEl) return;
+                    
+                    e.preventDefault();
+                    const key = keyEl.dataset.char;
+                    const action = keyEl.dataset.action;
+                    
+                    if (action === 'backspace') {
+                        this.handleBackspace();
+                    } else if (key || keyEl.dataset.code === 'Space') {
+                        this.handleInput(key || ' ');
+                    }
+                });
+            },
+
+            setupLanguage() {
+                UI.updateLabels(this.currentLang);
+                UI.updateKeyboardLayout(this.currentLang);
+            },
+
+            toggleLanguage() {
+                if (this.state.score > 0) {
+                    const confirmSwitch = window.confirm("Switch language? Current progress will be lost.");
+                    if (!confirmSwitch) return;
+                }
+                this.currentLang = this.currentLang === 'uk' ? 'en' : 'uk';
+                this.setupLanguage();
+                this.startNewGame();
+                UI.els.langBtn.blur();
+            },
+
+            startNewGame() {
+                this.state.score = 0;
+                this.state.errors = 0;
+                this.state.totalHits = 0;
+                this.state.wordIndex = 0;
+                this.state.charIndex = 0;
+                this.state.startTime = null;
+                this.state.bestScore = Storage.getBest(this.currentLang);
+                
+                const words = [...Data[this.currentLang].words];
+                for (let i = words.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [words[i], words[j]] = [words[j], words[i]];
+                }
+                this.currentWordsList = words;
+                
                 this.loadNextWord();
                 UI.updateStats(this.state);
+                UI.updateWPM(null, 0);
             },
-            shuffleWords() {
-                for (let i = this.words.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [this.words[i], this.words[j]] = [this.words[j], this.words[i]];
-                }
-            },
+
             loadNextWord() {
-                if (this.state.wordIndex >= this.words.length) {
+                if (this.state.wordIndex >= this.currentWordsList.length) {
                     this.state.wordIndex = 0;
-                    this.shuffleWords();
                 }
-                this.state.currentWord = this.words[this.state.wordIndex];
+                this.state.currentWord = this.currentWordsList[this.state.wordIndex];
                 this.state.charIndex = 0;
                 UI.renderWord(this.state.currentWord, 0);
                 UI.highlightKey(this.state.currentWord[0]);
                 UI.updateStats(this.state);
             },
+
             handleInput(inputChar) {
                 if (this.state.paused) return;
                 
-                // Start timer on first interaction
                 if (!this.state.startTime) this.state.startTime = Date.now();
-                
-                // FIXED: Update WPM in real-time
                 UI.updateWPM(this.state.startTime, this.state.score);
 
                 AudioController.playClick();
@@ -505,25 +649,25 @@
                 }
                 UI.updateStats(this.state);
             },
+
             handleBackspace() {
                 if (this.state.paused || this.state.charIndex === 0) return;
                 AudioController.playClick();
                 this.state.charIndex--;
-                // FIXED: Decrement totalHits for accuracy calculation
                 if (this.state.totalHits > 0) this.state.totalHits--;
-                
                 UI.renderWord(this.state.currentWord, this.state.charIndex);
                 UI.highlightKey(this.state.currentWord[this.state.charIndex]);
                 UI.updateStats(this.state);
             },
+
             onWordComplete() {
                 this.state.score++;
-                if (Storage.saveBest(this.state.score)) {
+                if (Storage.saveBest(this.state.score, this.currentLang)) {
                     this.state.bestScore = this.state.score;
                 }
                 
                 AudioController.playSuccess();
-                UI.showSuccessMessage();
+                UI.showSuccessMessage(this.currentLang);
                 UI.updateWPM(this.state.startTime, this.state.score);
                 
                 this.state.wordIndex++;
@@ -534,23 +678,27 @@
                     setTimeout(() => this.loadNextWord(), 200);
                 }
             },
+
             triggerMilestone() {
                 this.state.paused = true;
                 confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-                const phrase = this.milestones[Math.floor(Math.random() * this.milestones.length)];
-                UI.showModal(`${phrase} (${this.state.score} слів)`);
+                const milestones = Data[this.currentLang].milestones;
+                const phrase = milestones[Math.floor(Math.random() * milestones.length)];
+                const suffix = Data[this.currentLang].labels.modalText;
+                UI.showModal(`${phrase} (${this.state.score} ${suffix})`);
                 UI.els.progressBar.style.width = '100%';
             },
+
             closeModal() {
                 if (this.state.closingModal) return;
                 this.state.closingModal = true;
                 UI.hideModal();
                 this.state.paused = false;
-                // Reset visual progress bar
                 UI.els.progressBar.style.width = '0%';
                 this.loadNextWord();
                 setTimeout(() => { this.state.closingModal = false; }, 300);
             },
+
             onKeyDown(e) {
                 if (this.state.paused) { this.closeModal(); return; }
                 if (this.ignoredKeys.has(e.key)) return;
