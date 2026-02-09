@@ -65,7 +65,7 @@ const CATEGORIES = [
       { 
         name: "Справжній Друк", 
         description: "Клавіатурний тренажер та уроки швидкого друку.", 
-        link: "services/keys.html", 
+        link: "services/truetyper.html", 
         image: "images/56.jpg", 
         tags: ["3-4 класи", "Клавіатура"] 
       },
