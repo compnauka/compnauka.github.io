@@ -38,7 +38,7 @@ const CATEGORIES = [
         name: "Тиць! Перші клавіші", 
         description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.", 
         link: "services/kids_typing.html", 
-        image: "images/56.jpg", 
+        image: "images/73.jpg", 
         tags: ["1-2 класи", "Клавіатура"] 
       },
       { 
@@ -54,6 +54,20 @@ const CATEGORIES = [
         link: "services/keyppo.html", 
         image: "images/70.jpg", 
         tags: ["1-2 класи", "3-4 класи", "Клавіатура"] 
+      },
+      { 
+        name: "Спритні пальці", 
+        description: "Тренажер для роботи з клавіатурою.", 
+        link: "services/keys.html", 
+        image: "images/11.jpg", 
+        tags: ["3-4 класи", "Клавіатура"] 
+      },
+      { 
+        name: "Справжній Друк", 
+        description: "Клавіатурний тренажер та уроки швидкого друку.", 
+        link: "services/keys.html", 
+        image: "images/56.jpg", 
+        tags: ["3-4 класи", "Клавіатура"] 
       },
       { 
         name: "Швидкісні вікна", 
@@ -81,13 +95,6 @@ const CATEGORIES = [
         description: "Інтерактивний урок про роботу з клавіатурою.", 
         link: "services/typing.html", 
         image: "images/18.jpg", 
-        tags: ["3-4 класи", "Клавіатура"] 
-      },
-      { 
-        name: "Спритні пальчики", 
-        description: "Тренажер для роботи з клавіатурою.", 
-        link: "services/keys.html", 
-        image: "images/11.jpg", 
         tags: ["3-4 класи", "Клавіатура"] 
       },
       { 
