@@ -121,6 +121,69 @@ const CATEGORIES = [
     ]
   },
   {
+    id: "digital-tools",
+    name: "Цифрові інструменти",
+    iconClass: "fas fa-tools",
+    color: "#ec4899",
+    services: [
+      { 
+        name: "Онлайн-дошка", 
+        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
+        link: "doshka/", 
+        image: "images/47.jpg" 
+      },
+      { 
+        name: "Друкарик", 
+        description: "Веселий текстовий редактор для дітей.", 
+        link: "services/drukaryk.html", 
+        image: "images/28.jpg", 
+        tags: ["1-2 класи", "Текст"] 
+      },
+      { 
+        name: "Піксель", 
+        description: "Простий піксельний графічний редактор для дітей.", 
+        link: "services/pixel.html", 
+        image: "images/36.jpg", 
+        tags: ["1-2 класи", "Графіка"] 
+      },
+      { 
+        name: "Пензлик", 
+        description: "Яскравий графічний редактор для дітей.", 
+        link: "services/penslyk.html", 
+        image: "images/27.jpg", 
+        tags: ["1-2 класи", "Графіка"] 
+      },
+      { 
+        name: "Пензлик Плюс", 
+        description: "Функціональний графічний редактор для дітей.", 
+        link: "services/penslykplus.html", 
+        image: "images/35.jpg" , 
+        tags: ["3-4 класи", "Графіка"] 
+      },
+      { 
+        name: "Друпензлик", 
+        description: "Текстово-графічний редактор для дітей.", 
+        link: "services/drupenslyk.html", 
+        image: "images/67.jpg" , 
+        tags: ["1-2 класи", "Графіка"] 
+      },
+      { 
+        name: "Комірник", 
+        description: "Спрощщений табличний процесор для дітей.", 
+        link: "services/komirnyk/index.html", 
+        image: "images/66.jpg" , 
+        tags: ["3-4 класи", "Таблиці"] 
+      },
+      { 
+        name: "Бітовий конвертер", 
+        description: "Простий конвертер з двійкової в десяткову систему.", 
+        link: "services/bitconverter.html", 
+        image: "images/5.jpg", 
+        tags: ["5-6 класи"] 
+      }
+    ]
+  },
+  {
     id: "offline-activities",
     name: "Безкомп'ютерні активності",
     iconClass: "fas fa-child",
@@ -367,69 +430,6 @@ const CATEGORIES = [
         link: "services/ai/pryvitshi/index.html", 
         image: "images/4.jpg", 
         tags: ["3-4 класи"] 
-      }
-    ]
-  },
-  {
-    id: "digital-tools",
-    name: "Цифрові інструменти",
-    iconClass: "fas fa-tools",
-    color: "#ec4899",
-    services: [
-      { 
-        name: "Онлайн-дошка", 
-        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
-        link: "doshka/", 
-        image: "images/47.jpg" 
-      },
-      { 
-        name: "Друкарик", 
-        description: "Веселий текстовий редактор для дітей.", 
-        link: "services/drukaryk.html", 
-        image: "images/28.jpg", 
-        tags: ["1-2 класи", "Текст"] 
-      },
-      { 
-        name: "Піксель", 
-        description: "Простий піксельний графічний редактор для дітей.", 
-        link: "services/pixel.html", 
-        image: "images/36.jpg", 
-        tags: ["1-2 класи", "Графіка"] 
-      },
-      { 
-        name: "Пензлик", 
-        description: "Яскравий графічний редактор для дітей.", 
-        link: "services/penslyk.html", 
-        image: "images/27.jpg", 
-        tags: ["1-2 класи", "Графіка"] 
-      },
-      { 
-        name: "Пензлик Плюс", 
-        description: "Функціональний графічний редактор для дітей.", 
-        link: "services/penslykplus.html", 
-        image: "images/35.jpg" , 
-        tags: ["3-4 класи", "Графіка"] 
-      },
-      { 
-        name: "Друпензлик", 
-        description: "Текстово-графічний редактор для дітей.", 
-        link: "services/drupenslyk.html", 
-        image: "images/67.jpg" , 
-        tags: ["1-2 класи", "Графіка"] 
-      },
-      { 
-        name: "Комірник", 
-        description: "Спрощщений табличний процесор для дітей.", 
-        link: "services/komirnyk/index.html", 
-        image: "images/66.jpg" , 
-        tags: ["3-4 класи", "Таблиці"] 
-      },
-      { 
-        name: "Бітовий конвертер", 
-        description: "Простий конвертер з двійкової в десяткову систему.", 
-        link: "services/bitconverter.html", 
-        image: "images/5.jpg", 
-        tags: ["5-6 класи"] 
       }
     ]
   },
