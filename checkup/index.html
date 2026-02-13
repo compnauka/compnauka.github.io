@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT-Орієнтир: Комплексний Тест з інформатики</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        
+        :root {
+            --brutal-black: #1a1a1a;
+            --accent-yellow: #FFDE03;
+            --accent-pink: #FF70A6;
+            --accent-blue: #4CC9F0;
+            --accent-green: #06D6A0;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #f0f2f5; 
+            color: var(--brutal-black);
+            -webkit-print-color-adjust: exact;
+        }
+
+        .soft-brutal {
+            background: white;
+            border: 3px solid var(--brutal-black);
+            box-shadow: 6px 6px 0px 0px var(--brutal-black);
+            border-radius: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .brutal-btn {
+            border: 3px solid var(--brutal-black);
+            box-shadow: 4px 4px 0px 0px var(--brutal-black);
+            border-radius: 1rem;
+            transition: all 0.1s ease;
+            font-weight: 800;
+        }
+
+        .brutal-btn:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px 0px var(--brutal-black);
+        }
+
+        .brutal-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px 0px var(--brutal-black);
+        }
+
+        .option-selected {
+            background-color: var(--accent-green) !important;
+            transform: scale(0.98);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar-container {
+            border: 3px solid var(--brutal-black);
+            height: 1.5rem;
+            border-radius: 1rem;
+            background: white;
+            overflow: hidden;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .soft-brutal { box-shadow: none !important; border: 1px solid #000; border-radius: 8px; page-break-inside: avoid; }
+            .print-only { display: block !important; }
+            .print-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 15px !important; }
+            h2 { font-size: 18px !important; } 
+            .brutal-btn { display: none; }
+        }
+
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8">
+
+    <!-- Екран вітання -->
+    <div id="screen-welcome" class="flex-grow flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-500">
+        <div class="soft-brutal bg-yellow-300 p-8 text-center max-w-md rotate-1">
+            <h1 class="text-4xl font-900 mb-2 tracking-tight uppercase">IT-Орієнтир</h1>
+            <p class="font-bold text-slate-800 italic">Комплексна перевірка знань НУШ</p>
+        </div>
+
+        <div class="w-full max-w-md space-y-4">
+            <div class="flex flex-col">
+                <label class="font-900 mb-1 ml-2 text-sm uppercase">Твоє ім'я та прізвище:</label>
+                <input type="text" id="user-name" 
+                    placeholder="Тільки літери..." 
+                    class="soft-brutal p-4 text-xl font-bold outline-none focus:bg-blue-50"
+                    oninput="this.value = this.value.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s]/g, '')">
+                <p id="name-error" class="text-red-500 text-xs font-bold mt-2 ml-2 hidden">Будь ласка, введи коректне ім'я (мінімум 3 літери)</p>
+            </div>
+            
+            <button onclick="checkNameAndProceed()" class="brutal-btn w-full bg-[#4CC9F0] py-5 text-xl uppercase tracking-widest">
+                Почати подорож <i class="fas fa-rocket ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Вибір класу -->
+    <div id="screen-grade" class="hidden flex-grow flex flex-col items-center justify-center space-y-8 animate-in zoom-in duration-300">
+        <h2 class="text-3xl font-900 uppercase underline decoration-pink-500 decoration-4">Обери свій клас</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl">
+            <button onclick="selectGrade(1)" class="soft-brutal bg-green-300 p-6 hover:rotate-2 transition-transform">
+                <span class="text-5xl font-900">1</span>
+                <p class="font-black mt-2">КЛАС</p>
+            </button>
+            <button onclick="selectGrade(2)" class="soft-brutal bg-blue-300 p-6 hover:-rotate-2 transition-transform">
+                <span class="text-5xl font-900">2</span>
+                <p class="font-black mt-2">КЛАС</p>
+            </button>
+            <button onclick="selectGrade(3)" class="soft-brutal bg-yellow-300 p-6 hover:rotate-2 transition-transform">
+                <span class="text-5xl font-900">3</span>
+                <p class="font-black mt-2">КЛАС</p>
+            </button>
+            <button onclick="selectGrade(4)" class="soft-brutal bg-pink-300 p-6 hover:-rotate-2 transition-transform">
+                <span class="text-5xl font-900">4</span>
+                <p class="font-black mt-2">КЛАС</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Екран тесту -->
+    <div id="screen-test" class="hidden max-w-4xl mx-auto w-full space-y-6 pt-4">
+        <div class="flex items-center gap-4">
+            <div class="progress-bar-container flex-grow">
+                <div id="progress-fill" class="h-full bg-pink-500 border-r-2 border-black transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div id="q-counter" class="soft-brutal bg-white px-4 py-2 font-900">1/12</div>
+        </div>
+
+        <div id="question-container" class="soft-brutal p-6 md:p-10 space-y-8 min-h-[450px]">
+            <!-- Питання додаються тут -->
+        </div>
+
+        <div class="flex justify-between items-center no-print">
+            <button id="btn-back" onclick="changeQuestion(-1)" class="brutal-btn bg-white px-8 py-3 opacity-50 transition-all" disabled>НАЗАД</button>
+            <button id="btn-next" onclick="nextAction()" class="brutal-btn bg-[#FFDE03] px-12 py-3">ДАЛІ</button>
+        </div>
+    </div>
+
+    <!-- Екран результатів -->
+    <div id="screen-results" class="hidden max-w-4xl mx-auto w-full space-y-8 pb-10">
+        <div class="soft-brutal bg-white p-8 md:p-12 text-center space-y-6">
+            <div class="print-only mb-10 text-left border-b-4 border-black pb-6">
+                <h1 class="text-3xl font-black uppercase">Протокол оцінювання</h1>
+                <div class="grid grid-cols-2 gap-4 mt-6 text-lg">
+                    <p>Учень/Учениця: <span id="print-name" class="font-black underline"></span></p>
+                    <p>Клас: <span id="print-grade" class="font-black underline"></span></p>
+                    <p>Дата: <span id="print-date" class="font-black underline"></span></p>
+                    <p>Система: <span class="font-black italic">IT-Орієнтир v2.1</span></p>
+                </div>
+            </div>
+
+            <div class="text-7xl no-print" id="result-emoji">⭐</div>
+            <h2 class="text-4xl font-900 uppercase">Мій результат: <span id="final-score" class="text-pink-600">0</span>/12</h2>
+            
+            <div id="competency-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left print-grid">
+                <!-- Аналіз компетентностей -->
+            </div>
+
+            <div class="print-only mt-12 pt-10 border-t-4 border-black text-left flex justify-between items-end">
+                <div class="space-y-2">
+                    <p class="font-bold italic text-sm">Коментар вчителя:</p>
+                    <div class="w-64 border-b border-black h-8"></div>
+                    <div class="w-64 border-b border-black h-8"></div>
+                </div>
+                <div class="text-right space-y-4">
+                    <p class="font-black">Оцінка: __________</p>
+                    <p class="text-sm">Підпис: _________________</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 justify-center no-print pt-8">
+                <button onclick="location.reload()" class="brutal-btn bg-blue-300 px-8 py-4">СПОЧАТКУ</button>
+                <button onclick="window.print()" class="brutal-btn bg-green-400 px-8 py-4">ДРУКУВАТИ ЗВІТ <i class="fas fa-print ml-2"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COMPS = {
+            'INFO': 'Інформація та дані',
+            'DEVICES': 'Цифрові пристрої',
+            'ALGO': 'Алгоритми',
+            'MODELING': 'Моделювання',
+            'PRODUCTS': 'Інфо-продукти',
+            'SAFETY': 'Безпека'
+        };
+
+        const DB = {
+            1: [
+                // Виправлено: питання про інформацію, а не смак
+                { comp: 'INFO', variants: [{ q: "Яку інформацію ми отримуємо, дивлячись на малюнок яблука?", type: "mcq", opts: ["Смак яблука", "Колір та форму", "Запах"], ans: 1 }] },
+                { comp: 'INFO', variants: [{ q: "Оберіть всі види ГРАФІЧНОЇ інформації:", type: "multi", opts: ["Малюнок", "Текст", "Фотографія", "Картина"], ans: [0, 2, 3] }] },
+                { comp: 'DEVICES', variants: [{ q: "Пристрій, що допомагає виводити звук:", type: "mcq", opts: ["Колонки", "Мишка", "Клавіатура"], ans: 0 }] },
+                { comp: 'DEVICES', variants: [{ q: "Оберіть всі пристрої, якими можна керувати курсором:", type: "multi", opts: ["Мишка", "Тачпад", "Монітор", "Клавіатура"], ans: [0, 1] }] },
+                { comp: 'ALGO', variants: [{ q: "Що треба зробити ПЕРШИМ, щоб помити руки?", type: "mcq", opts: ["Витерти рушником", "Відкрити кран", "Намилити руки"], ans: 1 }] },
+                { comp: 'ALGO', variants: [{ q: "Впорядкуй дії 'Одягнути черевики':", type: "order", items: [{id:0, t:"Взяти черевики"}, {id:1, t:"Взути черевики"}, {id:2, t:"Зав'язати шнурки"}], correct: [0, 1, 2] }] },
+                { comp: 'MODELING', variants: [{ q: "Яка властивість спільна у Сонця та м'яча?", type: "mcq", opts: ["Смак", "Форма (кругла)", "Запах"], ans: 1 }] },
+                { comp: 'MODELING', variants: [{ q: "Обери ознаки об'єкта 'Лимон':", type: "multi", opts: ["Кисний", "Жовтий", "Солодкий", "Овальний"], ans: [0, 1, 3] }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Інструмент у Paint для стирання помилок:", type: "mcq", opts: ["Пензлик", "Ластик", "Заливка"], ans: 1 }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Оберіть всі інструменти для малювання в редакторі:", type: "multi", opts: ["Олівець", "Монітор", "Розпилювач", "Пензель"], ans: [0, 2, 3] }] },
+                { comp: 'SAFETY', variants: [{ q: "Чому не варто їсти за комп'ютером?", type: "mcq", opts: ["Можна забруднити клавіатуру", "Це весело", "Так швидше"], ans: 0 }] },
+                { comp: 'SAFETY', variants: [{ q: "Обери правила безпеки в кабінеті:", type: "multi", opts: ["Не бігати", "Не чіпати дроти", "Кричати", "Мити руки"], ans: [0, 1] }] }
+            ],
+            2: [
+                { comp: 'INFO', variants: [{ q: "З чого складається зображення на моніторі?", type: "mcq", opts: ["З фарб", "З дрібних точок (пікселів)", "З кольорового паперу"], ans: 1 }] },
+                { comp: 'INFO', variants: [{ q: "Оберіть всі джерела ТЕКСТОВОЇ інформації:", type: "multi", opts: ["Книга", "Газета", "Радіо", "Лист"], ans: [0, 1, 3] }] },
+                { comp: 'DEVICES', variants: [{ q: "Який пристрій використовують для введення тексту?", type: "mcq", opts: ["Принтер", "Клавіатура", "Колонки"], ans: 1 }] },
+                { comp: 'DEVICES', variants: [{ q: "Оберіть пристрої для виведення інформації:", type: "multi", opts: ["Принтер", "Монітор", "Навушники", "Сканер"], ans: [0, 1, 2] }] },
+                { comp: 'ALGO', variants: [{ q: "Що таке алгоритм?", type: "mcq", opts: ["Будь-які дії", "Чітка послідовність кроків", "Малюнок"], ans: 1 }] },
+                { comp: 'ALGO', variants: [{ q: "Впорядкуй алгоритм 'Перехід дороги':", type: "order", items: [{id:0, t:"Підійти до переходу"}, {id:1, t:"Подивитися на світлофор"}, {id:2, t:"Перейти дорогу"}], correct: [0, 1, 2] }] },
+                { comp: 'MODELING', variants: [{ q: "Глобус - це модель якої планети?", type: "mcq", opts: ["Марс", "Земля", "Місяць"], ans: 1 }] },
+                { comp: 'MODELING', variants: [{ q: "Оберіть властивості тексту, які можна змінити:", type: "multi", opts: ["Колір", "Розмір", "Запах", "Шрифт"], ans: [0, 1, 3] }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Який інструмент зафарбовує фігуру повністю?", type: "mcq", opts: ["Заливка (Відерце)", "Олівець", "Текст"], ans: 0 }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Оберіть дії, які можна робити в Paint:", type: "multi", opts: ["Малювати", "Стирати", "Варити каву", "Змінювати кольори"], ans: [0, 1, 3] }] },
+                { comp: 'SAFETY', variants: [{ q: "Яка відстань від очей до екрана є безпечною?", type: "mcq", opts: ["10 см", "50-60 см (витягнута рука)", "2 метри"], ans: 1 }] },
+                { comp: 'SAFETY', variants: [{ q: "Чи можна розказувати незнайомцям свою адресу в Інтернеті?", type: "mcq", opts: ["Ніколи", "Тільки якщо дуже просять", "Так"], ans: 0 }] }
+            ],
+            3: [
+                { comp: 'INFO', variants: [{ q: "Що таке 'фейкова' інформація?", type: "mcq", opts: ["Дуже цікава", "Неправдива", "Корисна"], ans: 1 }] },
+                { comp: 'INFO', variants: [{ q: "Оберіть всі ФАКТИ (не думки):", type: "multi", opts: ["Київ - столиця України", "Сьогодні гарна погода", "В році 12 місяців", "Інформатика - супер!"], ans: [0, 2] }] },
+                { comp: 'DEVICES', variants: [{ q: "Для чого використовують хмарні сховища?", type: "mcq", opts: ["Для ігор", "Для зберігання файлів в Інтернеті", "Щоб вимикати комп'ютер"], ans: 1 }] },
+                { comp: 'DEVICES', variants: [{ q: "Оберіть способи підключення до Інтернету:", type: "multi", opts: ["Wi-Fi", "Мобільний інтернет", "Кабель", "Радіо"], ans: [0, 1, 2] }] },
+                { comp: 'ALGO', variants: [{ q: "Як називається команда, що повторюється багато разів?", type: "mcq", opts: ["Умова", "Цикл", "Стрибок"], ans: 1 }] },
+                { comp: 'ALGO', variants: [{ q: "Впорядкуй блоки в Scratch:", type: "order", items: [{id:0, t:"Коли натиснуто прапорець"}, {id:1, t:"Повторити 10"}, {id:2, t:"Перемістити на 10 кроків"}], correct: [0, 1, 2] }] },
+                { comp: 'MODELING', variants: [{ q: "Яка модель є графічною?", type: "mcq", opts: ["Розповідь", "Карта міста", "Таблиця чисел"], ans: 1 }] },
+                { comp: 'MODELING', variants: [{ q: "Оберіть об'єкти групи 'Носії інформації':", type: "multi", opts: ["Флешка", "Диск", "Папір", "Монітор"], ans: [0, 1, 2] }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Як називається аркуш у презентації?", type: "mcq", opts: ["Сторінка", "Слайд", "Кадр"], ans: 1 }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Оберіть інструменти для роботи з ТЕКСТОМ:", type: "multi", opts: ["Жирний шрифт", "Колір букв", "Заливка фону", "Ластик"], ans: [0, 1, 2] }] },
+                { comp: 'SAFETY', variants: [{ q: "Що таке кібербулінг?", type: "mcq", opts: ["Швидкий інтернет", "Цькування в мережі", "Нова гра"], ans: 1 }] },
+                { comp: 'SAFETY', variants: [{ q: "Оберіть надійні паролі:", type: "multi", opts: ["12345", "Super_Cat_2024!", "qwerty", "P@ssword_99"], ans: [1, 3] }] }
+            ],
+            4: [
+                { comp: 'INFO', variants: [{ q: "Яка інформація вважається достовірною?", type: "mcq", opts: ["З будь-якого сайту", "З перевірених джерел та фактів", "З коментарів"], ans: 1 }] },
+                { comp: 'INFO', variants: [{ q: "Оберіть ознаки надійного сайту:", type: "multi", opts: ["Є автор", "Немає помилок", "Є посилання на джерела", "Дуже багато реклами"], ans: [0, 1, 2] }] },
+                { comp: 'DEVICES', variants: [{ q: "Яка програма керує всіма пристроями комп'ютера?", type: "mcq", opts: ["Браузер", "Операційна система", "Scratch"], ans: 1 }] },
+                { comp: 'DEVICES', variants: [{ q: "Оберіть типи комп'ютерних мереж:", type: "multi", opts: ["Локальна (в школі/вдома)", "Глобальна (Інтернет)", "Телефонна", "Міська"], ans: [0, 1, 3] }] },
+                { comp: 'ALGO', variants: [{ q: "Який блок у Scratch перевіряє умову?", type: "mcq", opts: ["Завжди", "Якщо ... то", "Створити клон"], ans: 1 }] },
+                { comp: 'ALGO', variants: [{ q: "Впорядкуй алгоритм 'Цикл з умовою':", type: "order", items: [{id:0, t:"Завжди"}, {id:1, t:"Якщо торкається межі"}, {id:2, t:"Повернути на 180"}], correct: [0, 1, 2] }] },
+                { comp: 'MODELING', variants: [{ q: "Креслення будинку — це яка модель?", type: "mcq", opts: ["Матеріальна", "Інформаційна", "Звукова"], ans: 1 }] },
+                { comp: 'MODELING', variants: [{ q: "Оберіть типи моделей:", type: "multi", opts: ["Табличні", "Словесні", "Смакові", "Графічні"], ans: [0, 1, 3] }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Яка комбінація клавіш копіює об'єкт?", type: "mcq", opts: ["Ctrl + V", "Ctrl + C", "Ctrl + Z"], ans: 1 }] },
+                { comp: 'PRODUCTS', variants: [{ q: "Оберіть об'єкти, які можна додати на слайд:", type: "multi", opts: ["Текст", "Звук", "Малюнок", "Відео"], ans: [0, 1, 2, 3] }] },
+                { comp: 'SAFETY', variants: [{ q: "Що таке 'цифровий слід'?", type: "mcq", opts: ["Бруд на екрані", "Дані про твої дії в мережі", "Пароль"], ans: 1 }] },
+                { comp: 'SAFETY', variants: [{ q: "Оберіть дії для захисту приватних даних:", type: "multi", opts: ["Складний пароль", "Не ділитися адресою", "Двофакторна перевірка", "Відкрити доступ усім"], ans: [0, 1, 2] }] }
+            ]
+        };
+
+        let state = { name: "", grade: null, tasks: [], index: 0, answers: {} };
+
+        function checkNameAndProceed() {
+            const input = document.getElementById('user-name');
+            const val = input.value.trim();
+            if (val.length < 3) {
+                document.getElementById('name-error').classList.remove('hidden');
+                input.classList.add('border-red-500');
+                return;
+            }
+            state.name = val;
+            document.getElementById('screen-welcome').classList.add('hidden');
+            document.getElementById('screen-grade').classList.remove('hidden');
+        }
+
+        function selectGrade(g) {
+            state.grade = g;
+            state.tasks = DB[g].map(slot => {
+                const variant = slot.variants[Math.floor(Math.random() * slot.variants.length)];
+                return { ...variant, compId: slot.comp };
+            }).sort(() => Math.random() - 0.5);
+
+            document.getElementById('screen-grade').classList.add('hidden');
+            document.getElementById('screen-test').classList.remove('hidden');
+            renderTask();
+        }
+
+        function renderTask() {
+            const task = state.tasks[state.index];
+            const box = document.getElementById('question-container');
+            const progress = ((state.index + 1) / state.tasks.length) * 100;
+            
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('q-counter').innerText = `${state.index + 1}/12`;
+
+            let html = `<div class="space-y-4">
+                <span class="px-4 py-2 bg-yellow-200 border-2 border-black font-black text-xs uppercase rounded-full">
+                    <i class="fas fa-tag mr-2"></i> ${COMPS[task.compId]}
+                </span>
+                <h2 class="text-2xl md:text-3xl font-900 leading-tight">${task.q}</h2>
+                <div class="flex gap-2 text-[10px] font-black uppercase text-slate-400">
+                    <i class="fas fa-info-circle"></i>
+                    <span>${task.type === 'multi' ? 'Обери декілька варіантів' : task.type === 'order' ? 'Перетягуй кнопками' : 'Обери одну відповідь'}</span>
+                </div>
+            </div><div class="grid grid-cols-1 gap-4 mt-8">`;
+
+            if (task.type === "mcq") {
+                task.opts.forEach((o, i) => {
+                    const sel = state.answers[state.index] === i;
+                    // Додано aria-label
+                    html += `<button onclick="pickMcq(${i})" aria-label="Варіант ${i+1}: ${o}" class="brutal-btn p-5 text-left bg-white text-lg ${sel ? 'option-selected' : ''}">${o}</button>`;
+                });
+            } else if (task.type === "multi") {
+                task.opts.forEach((o, i) => {
+                    const selArr = state.answers[state.index] || [];
+                    const isSel = selArr.includes(i);
+                    // Додано aria-label
+                    html += `<button onclick="pickMulti(${i})" aria-label="Варіант ${i+1}: ${o}, ${isSel ? 'обрано' : 'не обрано'}" class="brutal-btn p-5 text-left bg-white text-lg ${isSel ? 'option-selected' : ''}">
+                        <i class="fas ${isSel ? 'fa-check-square' : 'fa-square'} mr-3"></i> ${o}
+                    </button>`;
+                });
+            } else if (task.type === "order") {
+                const order = state.answers[state.index] || task.items;
+                order.forEach((item, i) => {
+                    html += `<div class="soft-brutal bg-white p-4 flex justify-between items-center">
+                        <span class="font-black bg-black text-white w-10 h-10 flex items-center justify-center rounded-xl">${i+1}</span>
+                        <span class="flex-grow ml-4 font-bold text-lg">${item.t}</span>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="move(${i}, -1)" aria-label="Перемістити вгору" class="brutal-btn bg-yellow-300 p-2 text-xs"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="move(${i}, 1)" aria-label="Перемістити вниз" class="brutal-btn bg-yellow-300 p-2 text-xs"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            box.innerHTML = html;
+            document.getElementById('btn-back').disabled = state.index === 0;
+            document.getElementById('btn-back').classList.toggle('opacity-50', state.index === 0);
+            document.getElementById('btn-next').innerText = state.index === state.tasks.length - 1 ? 'РЕЗУЛЬТАТИ' : 'ДАЛІ';
+        }
+
+        function pickMcq(i) { state.answers[state.index] = i; renderTask(); }
+        
+        function pickMulti(i) {
+            if (!state.answers[state.index]) state.answers[state.index] = [];
+            const arr = state.answers[state.index];
+            const idx = arr.indexOf(i);
+            idx === -1 ? arr.push(i) : arr.splice(idx, 1);
+            renderTask();
+        }
+
+        function move(i, d) {
+            if (!state.answers[state.index]) state.answers[state.index] = [...state.tasks[state.index].items];
+            const arr = state.answers[state.index];
+            const n = i + d;
+            if (n >= 0 && n < arr.length) [arr[i], arr[n]] = [arr[n], arr[i]];
+            renderTask();
+        }
+
+        function nextAction() {
+            const task = state.tasks[state.index];
+            
+            // ВАЛІДАЦІЯ MCQ
+            if (task.type === 'mcq' && state.answers[state.index] === undefined) {
+                return alert("ОБЕРИ ВІДПОВІДЬ!");
+            }
+            
+            // ВАЛІДАЦІЯ MULTI
+            if (task.type === 'multi') {
+                const ans = state.answers[state.index];
+                if (!ans || ans.length === 0) {
+                    return alert("ОБЕРИ ХОЧА Б ОДИН ВАРІАНТ!");
+                }
+            }
+
+            // ЗБЕРЕЖЕННЯ ORDER (якщо не чіпали - зберігаємо дефолт)
+            if (task.type === 'order' && !state.answers[state.index]) {
+                state.answers[state.index] = [...task.items];
+            }
+
+            // Виправлено: умова циклу тепер динамічна
+            if (state.index < state.tasks.length - 1) {
+                state.index++;
+                renderTask();
+            } else {
+                showResults();
+            }
+        }
+
+        function changeQuestion(d) { state.index += d; renderTask(); }
+
+        function showResults() {
+            document.getElementById('screen-test').classList.add('hidden');
+            document.getElementById('screen-results').classList.remove('hidden');
+
+            let score = 0;
+            const res = {};
+            Object.keys(COMPS).forEach(c => res[c] = { ok: 0, total: 0 });
+
+            state.tasks.forEach((t, i) => {
+                const ans = state.answers[i];
+                let isOk = false;
+                
+                if (t.type === 'mcq') isOk = ans === t.ans;
+                else if (t.type === 'multi') {
+                    // Перевірка на undefined, хоча nextAction має це блокувати
+                    if (ans && ans.length === t.ans.length && ans.every(v => t.ans.includes(v))) {
+                        isOk = true;
+                    }
+                } 
+                else if (t.type === 'order') {
+                    // Перевірка на undefined для order
+                    if (ans && ans.every((it, idx) => it.id === t.correct[idx])) {
+                        isOk = true;
+                    }
+                }
+
+                if (isOk) { score++; res[t.compId].ok++; }
+                res[t.compId].total++;
+            });
+
+            document.getElementById('final-score').innerText = score;
+            const grid = document.getElementById('competency-grid');
+            grid.innerHTML = '';
+
+            Object.keys(res).forEach(c => {
+                const p = (res[c].ok / res[c].total) * 100;
+                grid.innerHTML += `<div class="soft-brutal p-5 bg-slate-50">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-black text-[10px] uppercase tracking-tighter">${COMPS[c]}</span>
+                        <span class="font-bold">${res[c].ok}/${res[c].total}</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="h-full ${p === 100 ? 'bg-green-400' : 'bg-blue-400'}" style="width:${p}%"></div></div>
+                </div>`;
+            });
+
+            document.getElementById('print-name').innerText = state.name;
+            document.getElementById('print-grade').innerText = state.grade + " клас";
+            document.getElementById('print-date').innerText = new Date().toLocaleDateString('uk-UA');
+        }
+    </script>
+</body>
+</html>
