@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Інтерактивний тренажер IT навичок. Виконуй завдання, збирай XP та прокачуй свій рівень.">
+    <title>IT Level Up - Твій шлях до майстерності в інформатиці</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Russo+One&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Montserrat"', 'sans-serif'],
+                        gamer: ['"Russo One"', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#090919',
+                            card: '#13132b',
+                            accent: '#00f0ff',
+                            pink: '#ff0099',
+                            purple: '#bd00ff',
+                            success: '#00ff9d'
+                        },
+                        pop: {
+                            bg: '#f0f4f8',
+                            card: '#ffffff',
+                            yellow: '#ffcc00',
+                            blue: '#3b82f6',
+                            text: '#1e293b'
+                        }
+                    },
+                    boxShadow: {
+                        'neon': '0 0 10px rgba(0, 240, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3)',
+                        'neon-success': '0 0 10px rgba(0, 255, 157, 0.5), 0 0 20px rgba(0, 255, 157, 0.3)',
+                        'pop': '4px 4px 0px 0px rgba(0,0,0,1)',
+                        'pop-hover': '6px 6px 0px 0px rgba(0,0,0,1)',
+                        'pop-press': '2px 2px 0px 0px rgba(0,0,0,1)',
+                    },
+                    animation: {
+                        'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'bounce-short': 'bounce-short 1s infinite',
+                    },
+                    keyframes: {
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        'bounce-short': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-25%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+
+        /* --- THEMES --- */
+        html.dark body {
+            background-color: #050510;
+            background-image: 
+                linear-gradient(rgba(19, 19, 43, 0.8) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(19, 19, 43, 0.8) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        html.dark .activity-card {
+            background: rgba(19, 19, 43, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+        }
+
+        html:not(.dark) body {
+            background-color: #fff9e6;
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
+            background-size: 24px 24px;
+        }
+
+        html:not(.dark) .activity-card {
+            background: white;
+            border: 2px solid black;
+            box-shadow: 4px 4px 0px 0px black;
+            border-radius: 12px;
+        }
+        
+        /* Light Mode Contrast Improvement for Completed Items */
+        html:not(.dark) .activity-card.completed {
+            background-color: #f0fdf4; /* Green-50 */
+            border-color: #16a34a; /* Green-600 */
+        }
+
+        /* --- CHECKBOX FIX --- */
+        /* Initial state for icon scaling */
+        .check-box-wrapper div i {
+            transform: scale(0);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Explicitly styling the icon when input is checked */
+        .check-box-wrapper input:checked + div {
+            background-color: #10b981; 
+            border-color: #10b981;
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        /* Scale up icon when checked */
+        .check-box-wrapper input:checked + div i {
+            transform: scale(1); 
+        }
+        
+        html:not(.dark) .check-box-wrapper input:checked + div {
+            background-color: #22c55e;
+            border-color: black;
+        }
+
+        /* --- UTILS --- */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 3px solid black;
+        }
+        html.dark .glass-header {
+            background: rgba(5, 5, 16, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 glass-header transition-all duration-300">
+        <div class="max-w-5xl mx-auto px-4 py-3">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3 group cursor-pointer" onclick="location.reload()">
+                    <div class="relative">
+                        <div class="w-10 h-10 md:w-12 md:h-12 bg-black dark:bg-transparent dark:border-2 dark:border-cyber-accent rounded-lg flex items-center justify-center shadow-pop dark:shadow-neon transition-all group-hover:-translate-y-1">
+                            <i class="fa-solid fa-gamepad text-white dark:text-cyber-accent text-xl md:text-2xl"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-gamer font-black tracking-wider uppercase italic transform -skew-x-6 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-cyber-accent dark:to-cyber-purple drop-shadow-sm">
+                            IT LEVEL UP
+                        </h1>
+                        <p class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-cyber-pink/80">
+                            Твоя інформатика
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 md:gap-5">
+                    <button id="theme-toggle" aria-label="Змінити скін" class="relative w-14 h-8 bg-slate-200 dark:bg-slate-700 rounded-full border-2 border-black dark:border-slate-500 transition-colors focus:outline-none overflow-hidden">
+                        <div class="absolute top-0.5 left-0.5 w-6 h-6 bg-yellow-400 dark:bg-indigo-500 rounded-full border-2 border-black dark:border-none shadow-sm transform transition-transform duration-300 dark:translate-x-6 flex items-center justify-center">
+                            <i class="fa-solid fa-sun text-[10px] text-black dark:hidden"></i>
+                            <i class="fa-solid fa-moon text-[10px] text-white hidden dark:block"></i>
+                        </div>
+                    </button>
+
+                    <div class="hidden sm:flex flex-col items-end">
+                        <span class="text-[10px] font-bold uppercase text-slate-400 dark:text-cyber-accent">Прогрес</span>
+                        <!-- Added aria-live for accessibility -->
+                        <span id="progress-text" class="font-gamer text-xl text-black dark:text-white tabular-nums" aria-live="polite" aria-atomic="true">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full bg-white dark:bg-slate-800 border-2 border-black dark:border-slate-600 h-4 md:h-5 rounded-full overflow-hidden relative">
+                <div id="progress-bar" class="h-full bg-yellow-400 dark:bg-gradient-to-r dark:from-cyber-purple dark:to-cyber-pink w-0 transition-all duration-700 ease-out relative border-r-2 border-black dark:border-none"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl focus:outline-none" tabindex="-1" id="main-content">
+        
+        <div class="text-center mb-12 relative">
+            <div class="inline-block p-6 rounded-2xl bg-white dark:bg-slate-800/50 border-2 border-dashed border-slate-300 dark:border-slate-600 max-w-2xl mx-auto backdrop-blur-sm">
+                <div class="mb-4">
+                     <span class="inline-block px-3 py-1 bg-yellow-300 dark:bg-cyber-pink text-black text-xs font-black uppercase tracking-wider rounded border-2 border-black dark:border-none transform -rotate-2">
+                        Місія
+                    </span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+                    Стань профі в інформатиці!
+                </h2>
+                <p class="text-slate-600 dark:text-slate-300 text-sm md:text-base mb-4">
+                    Виконуй челенджі, збирай галочки та прокачуй нові скіли.
+                </p>
+                <button onclick="ModalManager.open('reset')" class="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:underline transition-colors uppercase tracking-wide">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Скинути прогрес
+                </button>
+            </div>
+        </div>
+
+        <div id="path-container" class="space-y-12 pb-20"></div>
+
+    </main>
+
+    <!-- Modals (Section Complete & Reset) -->
+    <div id="modal-section" class="fixed inset-0 z-[100] hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 modal-backdrop transition-opacity opacity-0"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-panel bg-yellow-300 dark:bg-slate-900 rounded-3xl p-1 border-4 border-black dark:border-cyber-accent transform scale-90 opacity-0 transition-all duration-300 max-w-sm w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-neon">
+                <div class="bg-white dark:bg-slate-800 rounded-[20px] p-6 text-center overflow-hidden relative">
+                    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-yellow-100 to-transparent dark:from-cyber-accent/20 dark:to-transparent"></div>
+                    <div class="relative z-10">
+                        <div class="w-24 h-24 mx-auto mb-4 bg-black dark:bg-slate-900 rounded-full flex items-center justify-center border-4 border-yellow-400 dark:border-cyber-purple animate-bounce-short">
+                            <i id="modal-section-icon" class="fa-solid fa-trophy text-5xl text-yellow-400 dark:text-cyber-purple"></i>
+                        </div>
+                        <h2 class="text-3xl font-gamer font-black text-black dark:text-white mb-2 uppercase italic">Level Up!</h2>
+                        <h3 id="modal-section-title" class="text-lg font-bold text-slate-600 dark:text-cyber-accent mb-4"></h3>
+                        <p class="text-slate-500 dark:text-slate-300 mb-8 text-sm font-medium">Ти закрив цей рівень на 100%! +100 до респекту.</p>
+                        <button onclick="ModalManager.close('section')" class="w-full bg-black hover:bg-slate-800 dark:bg-cyber-accent dark:hover:bg-cyan-400 text-white dark:text-black font-gamer font-bold py-4 rounded-xl text-lg uppercase tracking-wider transition-all transform hover:scale-[1.02] shadow-lg">Далі >></button>
+                    </div>
+                    <button onclick="ModalManager.close('section')" class="absolute top-4 right-4 text-black dark:text-white opacity-50 hover:opacity-100 transition-opacity"><i class="fa-solid fa-xmark text-2xl"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-reset" class="fixed inset-0 z-[100] hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 modal-backdrop transition-opacity opacity-0"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-panel bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full text-center border-4 border-red-500 dark:border-red-600 shadow-[8px_8px_0px_0px_rgba(239,68,68,1)] dark:shadow-[0_0_20px_rgba(220,38,38,0.5)] transform scale-90 opacity-0 transition-all duration-300">
+                <i class="fa-solid fa-skull-crossbones text-5xl text-red-500 dark:text-red-500 mb-4 animate-pulse"></i>
+                <h2 class="text-2xl font-gamer font-bold text-black dark:text-white mb-3 uppercase">Game Over?</h2>
+                <p class="text-slate-600 dark:text-slate-300 mb-8 font-medium">Це видалить весь твій прогрес. Ти точно хочеш почати нову гру?</p>
+                <div class="flex gap-3">
+                    <button onclick="ModalManager.close('reset')" class="flex-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-black dark:text-white font-bold py-3 px-4 rounded-xl">Ні</button>
+                    <button onclick="App.resetProgress()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transform hover:scale-105">Так, RESET</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-12 py-8 text-center">
+        <div class="inline-block px-4 py-2 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
+            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">itnauka.org | 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        'use strict';
+
+        const CONFIG = {
+            storageKeys: {
+                progress: 'gamePathProgress',
+                sections: 'gamePathCompletedSections',
+                theme: 'gameTheme'
+            },
+            sections: [
+                {
+                    id: 'mouse', title: 'Миша', subtitle: 'Aim Training', icon: 'fa-computer-mouse', color: 'text-cyan-500', darkColor: 'text-cyber-accent',
+                    activities: [
+                        { id: 'm1', title: 'Лабіринт', desc: 'Проведи курсор без помилок.', link: './services/mouse103.html' },
+                        { id: 'm2', title: 'Пожежник', desc: 'Гаси вогонь кліками!', link: './services/fireman.html' },
+                        { id: 'm3', title: 'Світлячки', desc: 'Спіймай їх усіх.', link: './services/fireflies.html' },
+                        { id: 'm4', title: 'Аква', desc: 'Підводне полювання.', link: './services/aqua.html' },
+                        { id: 'm5', title: 'Лікар', desc: 'Подвійний клік лікує.', link: './services/click.html' },
+                        { id: 'm6', title: 'Кнопки', desc: 'Ліва чи Права?', link: './services/mouse_keys/index.html' },
+                        { id: 'm7', title: 'Вікна', desc: 'Закривай спам як профі.', link: './services/windows.html' },
+                        { id: 'm8', title: 'Точність', desc: 'Рівень "Снайпер".', link: './services/mouse_maze.html' }
+                    ]
+                },
+                {
+                    id: 'keyboard', title: 'Клавіатура', subtitle: 'Швидкість друку', icon: 'fa-keyboard', color: 'text-emerald-500', darkColor: 'text-emerald-400',
+                    activities: [
+                        { id: 'k1', title: 'Старт', desc: 'Перші літери.', link: './services/kids_typing.html' },
+                        { id: 'k2', title: 'Реакція', desc: 'Натисни поки не зникло.', link: './services/typing.html' },
+                        { id: 'k3', title: 'НЛО', desc: 'Захист бази (WASD).', link: './services/ufo.html' },
+                        { id: 'k4', title: 'Тайпінг', desc: 'Друкуємо слова.', link: './services/drukaryk.html' },
+                        { id: 'k5', title: '@ та .com', desc: 'Вводимо адреси.', link: './services/urls.html' },
+                        { id: 'k6', title: 'Shortcuts', desc: 'Ctrl+C — це база.', link: './services/keys.html' }
+                    ]
+                },
+                {
+                    id: 'security', title: 'Кібер-Захист', subtitle: 'Безпека в мережі', icon: 'fa-shield-halved', color: 'text-rose-500', darkColor: 'text-rose-400',
+                    activities: [
+                        { id: 's1', title: 'Фейк чи ні?', desc: 'Вмикай критичне мислення.', link: './services/critic.html' },
+                        { id: 's2', title: 'Паролі', desc: 'Створи непробивний захист.', link: './services/cyber.html' },
+                        { id: 's3', title: 'Шифри', desc: 'Секретні повідомлення.', link: './services/crypto.html' }
+                    ]
+                },
+                {
+                    id: 'coding', title: 'Кодинг', subtitle: 'Створення алгоритмів', icon: 'fa-code', color: 'text-amber-500', darkColor: 'text-amber-400',
+                    activities: [
+                        { id: 'c1', title: 'Логіка', desc: 'Що за чим іде?', link: './services/algorithm.html' },
+                        { id: 'c2', title: 'Бот-Фермер', desc: 'Простий скрипт.', link: './services/farmbot.html' },
+                        { id: 'c3', title: 'Бот PRO', desc: 'Цикли (Loops).', link: './services/farmbotplus.html' }
+                    ]
+                },
+                {
+                    id: 'ai', title: 'Штучний Інтелект', subtitle: 'Майбутнє тут', icon: 'fa-robot', color: 'text-violet-500', darkColor: 'text-cyber-purple',
+                    activities: [
+                        { id: 'a1', title: 'AI Інфо', desc: 'Що воно таке?', link: './services/ai.html' },
+                        { id: 'a2', title: 'Чат-бот', desc: 'Говоримо з машиною.', link: './services/ai/pryvitshi/index.html' }
+                    ]
+                },
+                {
+                    id: 'thinking', title: 'Мозок', subtitle: 'Прокачка мислення', icon: 'fa-brain', color: 'text-pink-500', darkColor: 'text-cyber-pink',
+                    activities: [
+                        { id: 't1', title: 'Система', desc: 'Як все працює.', link: './services/compthinking.html' },
+                        { id: 't2', title: 'Спрощення', desc: 'Абстракція.', link: './services/abstraction.html' },
+                        { id: 't3', title: 'Патерни', desc: 'Шукаємо повтори.', link: './services/patterns.html' },
+                        { id: 't4', title: 'Декомпозиція', desc: 'Розбиваємо задачу.', link: './services/decomposition.html' }
+                    ]
+                }
+            ]
+        };
+
+        const Storage = {
+            get(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } },
+            set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} },
+            remove(key) { localStorage.removeItem(key); }
+        };
+
+        const ThemeManager = {
+            init() {
+                const saved = localStorage[CONFIG.storageKeys.theme];
+                const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', isDark);
+            },
+            toggle() {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage[CONFIG.storageKeys.theme] = isDark ? 'dark' : 'light';
+                // Trigger update to refresh styles dependent on theme (like shadows)
+                App.updateState();
+            }
+        };
+
+        const ModalManager = {
+            open(type, data = null) {
+                const modal = document.getElementById(`modal-${type}`);
+                if (!modal) return;
+                if (type === 'section' && data) {
+                    document.getElementById('modal-section-title').textContent = data.title;
+                    document.getElementById('modal-section-icon').className = `fa-solid ${data.icon} text-5xl text-yellow-400 dark:text-cyber-purple`;
+                }
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.querySelector('.modal-backdrop').classList.remove('opacity-0');
+                    const panel = modal.querySelector('.modal-panel');
+                    panel.classList.remove('scale-90', 'opacity-0');
+                    panel.classList.add('scale-100', 'opacity-100');
+                });
+            },
+            close(type) {
+                const modal = document.getElementById(`modal-${type}`);
+                if (!modal) return;
+                modal.querySelector('.modal-backdrop').classList.add('opacity-0');
+                const panel = modal.querySelector('.modal-panel');
+                panel.classList.remove('scale-100', 'opacity-100');
+                panel.classList.add('scale-90', 'opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        };
+
+        const App = {
+            init() {
+                ThemeManager.init();
+                document.getElementById('theme-toggle').addEventListener('click', ThemeManager.toggle);
+                this.renderStructure();
+                this.updateState();
+            },
+
+            toggleActivity(id) {
+                let completed = Storage.get(CONFIG.storageKeys.progress);
+                const wasCompleted = completed.includes(id);
+
+                if (wasCompleted) {
+                    completed = completed.filter(item => item !== id);
+                } else {
+                    completed.push(id);
+                    const card = document.getElementById(`card-${id}`);
+                    if(card) {
+                        card.classList.add('animate-pop-in');
+                        setTimeout(() => card.classList.remove('animate-pop-in'), 400);
+                    }
+                }
+
+                Storage.set(CONFIG.storageKeys.progress, completed);
+                if (!wasCompleted) this.checkSectionCompletion(id, completed);
+                this.updateState();
+            },
+
+            checkSectionCompletion(activityId, completedIds) {
+                const section = CONFIG.sections.find(sec => sec.activities.some(a => a.id === activityId));
+                if (!section) return;
+                const allDone = section.activities.every(a => completedIds.includes(a.id));
+                if (allDone) {
+                    const completedSections = Storage.get(CONFIG.storageKeys.sections);
+                    if (!completedSections.includes(section.id)) {
+                        ModalManager.open('section', section);
+                        completedSections.push(section.id);
+                        Storage.set(CONFIG.storageKeys.sections, completedSections);
+                    }
+                }
+            },
+
+            resetProgress() {
+                Storage.remove(CONFIG.storageKeys.progress);
+                Storage.remove(CONFIG.storageKeys.sections);
+                ModalManager.close('reset');
+                this.updateState();
+            },
+
+            renderStructure() {
+                const container = document.getElementById('path-container');
+                container.innerHTML = '';
+                
+                CONFIG.sections.forEach(section => {
+                    const sectionEl = document.createElement('section');
+                    sectionEl.className = 'section-container rounded-[20px] p-6 md:p-8 dark:bg-slate-900/60 dark:border-none dark:shadow-none dark:ring-1 dark:ring-white/10 relative overflow-hidden group/section';
+                    
+                    sectionEl.innerHTML = `
+                        <div class="flex items-center gap-4 mb-8 relative z-10">
+                            <div class="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center border-2 border-black dark:border-slate-600 shadow-pop dark:shadow-none transition-transform group-hover/section:rotate-6">
+                                <i class="fa-solid ${section.icon} text-2xl ${section.color} dark:${section.darkColor}"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-gamer font-bold text-black dark:text-white uppercase tracking-wide">${section.title}</h2>
+                                <p class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">${section.subtitle}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="grid-${section.id}"></div>
+                    `;
+
+                    const grid = sectionEl.querySelector(`#grid-${section.id}`);
+                    section.activities.forEach(act => {
+                        const card = document.createElement('article');
+                        card.id = `card-${act.id}`;
+                        card.className = 'activity-card relative p-5 flex flex-col justify-between h-full group cursor-pointer transition-all duration-300';
+                        
+                        // Added aria-label to label for Accessibility Improvement
+                        card.innerHTML = `
+                            <div class="mb-5 pointer-events-none"> 
+                                <div class="flex justify-between items-start mb-2 gap-3">
+                                    <h3 class="font-bold text-lg leading-tight text-black dark:text-slate-100 font-gamer uppercase group-hover:text-blue-600 dark:group-hover:text-cyber-accent transition-colors">
+                                        ${act.title}
+                                        <i id="title-icon-${act.id}" class="fa-solid fa-circle-check text-green-500 dark:text-cyber-success ml-2 hidden animate-bounce-short"></i>
+                                    </h3>
+                                </div>
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">${act.desc}</p>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-auto">
+                                <a id="btn-${act.id}" class="inline-flex items-center justify-center px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all border-2 border-black dark:border-transparent min-w-[100px]"></a>
+
+                                <label class="check-box-wrapper cursor-pointer relative shrink-0 ml-3" aria-label="Відмітити '${act.title}' як виконане">
+                                    <input type="checkbox" class="sr-only peer" id="chk-${act.id}" onchange="App.toggleActivity('${act.id}')">
+                                    <div class="w-10 h-10 border-2 border-black dark:border-slate-500 rounded-lg bg-slate-100 dark:bg-slate-800 transition-all duration-200 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500">
+                                        <i class="fa-solid fa-check text-white text-lg font-black"></i>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+
+                    container.appendChild(sectionEl);
+                });
+            },
+
+            updateState() {
+                const completedIds = Storage.get(CONFIG.storageKeys.progress);
+                let total = 0, completedCount = 0;
+                let isPrevCompleted = true; 
+                const isDark = document.documentElement.classList.contains('dark');
+
+                CONFIG.sections.forEach(section => {
+                    section.activities.forEach(act => {
+                        total++;
+                        const isCompleted = completedIds.includes(act.id);
+                        if (isCompleted) completedCount++;
+
+                        const card = document.getElementById(`card-${act.id}`);
+                        const btn = document.getElementById(`btn-${act.id}`);
+                        const chk = document.getElementById(`chk-${act.id}`);
+                        const titleIcon = document.getElementById(`title-icon-${act.id}`);
+                        
+                        chk.checked = isCompleted;
+
+                        // Reset base classes
+                        btn.className = 'inline-flex items-center justify-center px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all border-2 border-black dark:border-transparent min-w-[100px] shadow-pop-press';
+                        
+                        // Performance Optimization: Use classList.toggle/remove for cleaner logic
+                        card.classList.remove('opacity-60', 'grayscale');
+
+                        // Toggle completed state styles
+                        card.classList.toggle('completed', isCompleted);
+                        card.classList.toggle('border-green-500', isCompleted);
+                        card.classList.toggle('dark:border-green-500/50', isCompleted);
+                        
+                        // Performance Optimization: Toggle shadow based on condition
+                        card.classList.toggle('shadow-neon-success', isCompleted && isDark);
+
+                        if (isCompleted) {
+                            // COMPLETED STATE
+                            titleIcon.classList.remove('hidden');
+
+                            // Style Button
+                            btn.className += ' bg-green-500 text-white border-green-700 dark:bg-green-600 dark:text-white pointer-events-none shadow-none translate-y-1 translate-x-1';
+                            btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Done';
+                            btn.removeAttribute('href');
+                        } else {
+                            titleIcon.classList.add('hidden');
+                            
+                            if (isPrevCompleted) {
+                                // ACTIVE STATE
+                                btn.className = 'inline-flex items-center justify-center px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all border-2 border-black dark:border-none min-w-[100px] bg-yellow-400 text-black hover:bg-yellow-300 hover:-translate-y-1 hover:-translate-x-1 hover:shadow-pop dark:bg-cyber-accent dark:text-black dark:hover:bg-white dark:hover:shadow-[0_0_15px_rgba(0,240,255,0.6)]';
+                                btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> Play';
+                                btn.href = act.link;
+                                btn.target = '_blank';
+                                btn.removeAttribute('aria-disabled');
+                            } else {
+                                // LOCKED STATE
+                                card.classList.add('opacity-60', 'grayscale');
+                                btn.className += ' bg-slate-200 text-slate-400 border-slate-300 dark:bg-slate-800 dark:text-slate-600 dark:border-slate-700 cursor-not-allowed shadow-none';
+                                btn.innerHTML = '<i class="fa-solid fa-lock"></i>';
+                                btn.removeAttribute('href');
+                                btn.setAttribute('aria-disabled', 'true');
+                            }
+                        }
+
+                        if (!isCompleted) isPrevCompleted = false;
+                    });
+                });
+
+                const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+                document.getElementById('progress-text').textContent = `${percent}%`;
+                document.getElementById('progress-bar').style.width = `${percent}%`;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
