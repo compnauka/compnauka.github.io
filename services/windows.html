@@ -1,27 +1,23 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тренажер роботи з вікнами програм</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-N8T05K3NGT');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
     </script>
 
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
-    <script>
-      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-      plausible.init()
-    </script>
-    
     <style>
         * {
             margin: 0;
@@ -82,7 +78,7 @@
             color: #666;
             text-transform: uppercase;
         }
-        
+
         .main-controls {
             display: flex;
             gap: 10px;
@@ -121,7 +117,7 @@
             font-weight: bold;
             transition: all 0.2s ease;
         }
-        
+
         .lang-btn:hover {
             background: #ccc;
         }
@@ -262,6 +258,7 @@
                 transform: scale(0.8) rotate(5deg);
                 opacity: 0;
             }
+
             to {
                 transform: scale(1) rotate(0deg);
                 opacity: 1;
@@ -318,6 +315,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="desktop" id="desktop">
         <div class="control-panel">
@@ -335,9 +333,10 @@
                     <div class="stat-label" data-translate-key="streak">Серія</div>
                 </div>
             </div>
-             <div class="main-controls">
+            <div class="main-controls">
                 <button id="startGameBtn" class="btn" data-translate-key="startGame">Почати гру</button>
-                <button id="stopGameBtn" class="btn" data-translate-key="stopGame" style="display: none;">Зупинити гру</button>
+                <button id="stopGameBtn" class="btn" data-translate-key="stopGame" style="display: none;">Зупинити
+                    гру</button>
                 <div class="lang-switcher">
                     <button id="lang-uk" class="lang-btn active">UK</button>
                     <button id="lang-en" class="lang-btn">EN</button>
@@ -361,7 +360,7 @@
                 this.timer = null;
                 this.isGameActive = false;
                 this.currentLanguage = 'uk';
-                
+
                 this.apps = [
                     { name: 'TextEditor Pro', icon: '<i class="fa-solid fa-file-alt"></i>', color: '#4CAF50' },
                     { name: 'Calculator Plus', icon: '<i class="fa-solid fa-calculator"></i>', color: '#2196F3' },
@@ -376,7 +375,7 @@
                 ];
 
                 this.tasks = ['close', 'minimize', 'maximize'];
-                
+
                 this.taskIcons = {
                     close: '<i class="fa-solid fa-xmark"></i>',
                     minimize: '<i class="fa-solid fa-window-minimize"></i>',
@@ -439,7 +438,7 @@
                 window.addEventListener('resize', () => this.handleResize());
                 this.setLanguage(this.currentLanguage);
             }
-            
+
             setLanguage(lang) {
                 this.currentLanguage = lang;
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
@@ -449,7 +448,7 @@
 
                 document.getElementById('lang-uk').classList.toggle('active', lang === 'uk');
                 document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-                
+
                 if (this.isGameActive) {
                     this.clearTimer(); // Clear timer and reset progress bar
                     this.updateStats(); // Update stats in the new language
@@ -467,7 +466,7 @@
                 this.score = 0;
                 this.level = 1;
                 this.streak = 0;
-                this.timeLimit = 8000; 
+                this.timeLimit = 8000;
                 this.updateStats();
                 const gameOverNotification = document.querySelector('.notification.info');
                 if (gameOverNotification) {
@@ -484,7 +483,7 @@
                 document.getElementById('startGameBtn').style.display = 'block';
                 document.getElementById('startGameBtn').textContent = this.translations[this.currentLanguage].playAgain;
                 document.getElementById('stopGameBtn').style.display = 'none';
-                
+
                 this.showNotification(
                     `<h3>${this.translations[this.currentLanguage].gameOverTitle}</h3>
                     <p>${this.translations[this.currentLanguage].gameOverScore}: ${this.score}</p>
@@ -494,7 +493,7 @@
                     'info',
                     0 // Duration 0 means it won't auto-close
                 );
-                
+
                 document.querySelector('.notification-close-btn').addEventListener('click', (e) => {
                     e.target.closest('.notification').remove();
                 });
@@ -508,16 +507,16 @@
 
                 const app = this.apps[Math.floor(Math.random() * this.apps.length)];
                 const task = this.tasks[Math.floor(Math.random() * this.tasks.length)];
-                
+
                 this.currentTask = task;
-                
+
                 const windowEl = document.createElement('div');
                 windowEl.className = 'window';
                 windowEl.style.left = Math.random() * (window.innerWidth - 450) + 'px';
                 windowEl.style.top = Math.random() * (window.innerHeight - 350) + 'px';
                 windowEl.style.width = '420px';
                 windowEl.style.height = '320px';
-                
+
                 const T = this.translations[this.currentLanguage];
 
                 windowEl.innerHTML = `
@@ -544,13 +543,13 @@
                         </div>
                     </div>
                 `;
-                
+
                 windowEl.querySelector('.minimize').addEventListener('click', () => this.handleAction('minimize'));
                 windowEl.querySelector('.maximize').addEventListener('click', () => this.handleAction('maximize'));
                 windowEl.querySelector('.close').addEventListener('click', () => this.handleAction('close'));
 
                 document.getElementById('desktop').appendChild(windowEl);
-                
+
                 this.startTimer();
                 this.makeDraggable(windowEl);
             }
@@ -559,10 +558,10 @@
                 const progressFill = document.getElementById('progressFill');
                 progressFill.style.transition = 'none';
                 progressFill.style.width = '100%';
-                
+
                 setTimeout(() => {
-                     progressFill.style.transition = `width ${this.timeLimit / 1000}s linear`;
-                     progressFill.style.width = '0%';
+                    progressFill.style.transition = `width ${this.timeLimit / 1000}s linear`;
+                    progressFill.style.width = '0%';
                 }, 50);
 
                 this.timer = setTimeout(() => {
@@ -579,12 +578,12 @@
 
             handleAction(action) {
                 if (!this.isGameActive) return;
-                
+
                 this.clearTimer(); // Clear timer when action is taken
-                
+
                 const windowEl = document.querySelector('.window');
                 if (!windowEl) return;
-                
+
                 if (action === this.currentTask) {
                     this.handleCorrectAction(action, windowEl);
                 } else {
@@ -595,18 +594,18 @@
             handleCorrectAction(action, windowEl) {
                 this.score += (10 * this.level);
                 this.streak++;
-                
+
                 if (this.streak >= 5) {
                     this.level++;
                     this.streak = 0;
                     this.timeLimit = Math.max(4000, this.timeLimit - 150); // Змінено поріг та крок зменшення
                 }
-                
+
                 this.updateStats();
                 const T = this.translations[this.currentLanguage];
                 this.showNotification(`${T.notifyCorrect} +${10 * this.level} ${T.notifyPoints}`, 'success');
-                
-                switch(action) {
+
+                switch (action) {
                     case 'close':
                         windowEl.style.transform = 'scale(0) rotate(180deg)';
                         windowEl.style.opacity = '0';
@@ -618,7 +617,7 @@
                         windowEl.classList.add('maximized');
                         break;
                 }
-                
+
                 setTimeout(() => {
                     windowEl.remove();
                     this.createWindow();
@@ -629,7 +628,7 @@
                 this.streak = 0;
                 this.updateStats();
                 this.showNotification(this.translations[this.currentLanguage].notifyIncorrect, 'error');
-                
+
                 windowEl.style.transition = 'transform 0.5s ease';
                 windowEl.style.transform = 'translateX(-10px)';
                 setTimeout(() => { windowEl.style.transform = 'translateX(10px)'; }, 100);
@@ -643,7 +642,7 @@
                 this.streak = 0;
                 this.updateStats();
                 this.showNotification(this.translations[this.currentLanguage].notifyTimeout, 'error');
-                
+
                 const windowEl = document.querySelector('.window');
                 if (windowEl) {
                     windowEl.style.opacity = '0.5';
@@ -662,9 +661,9 @@
                 notification.className = `notification ${type}`;
                 notification.innerHTML = `<div class="notification-content">${message}</div>`;
                 document.body.appendChild(notification);
-                
+
                 setTimeout(() => notification.classList.add('show'), 10);
-                
+
                 if (duration > 0) {
                     setTimeout(() => {
                         notification.classList.remove('show');
@@ -677,10 +676,10 @@
                 const header = element.querySelector('.window-header');
                 let isDragging = false;
                 let startX, startY, initialX, initialY;
-                
+
                 header.addEventListener('mousedown', (e) => {
                     if (e.target.closest('.window-control') || element.classList.contains('maximized')) return;
-                    
+
                     isDragging = true;
                     startX = e.clientX;
                     startY = e.clientY;
@@ -695,7 +694,7 @@
                     });
                     element.style.zIndex = maxZIndex + 1;
                 });
-                
+
                 document.addEventListener('mousemove', (e) => {
                     if (!isDragging) return;
                     const deltaX = e.clientX - startX;
@@ -703,7 +702,7 @@
                     element.style.left = (initialX + deltaX) + 'px';
                     element.style.top = (initialY + deltaY) + 'px';
                 });
-                
+
                 document.addEventListener('mouseup', () => isDragging = false);
             }
 
@@ -734,5 +733,5 @@
         document.getElementById('lang-en').addEventListener('click', () => trainer.setLanguage('en'));
     </script>
 </body>
-</html>
 
+</html>
