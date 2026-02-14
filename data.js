@@ -313,7 +313,7 @@ const CATEGORIES = [
       {
         name: "Конструктор блок-схем",
         description: "Простий редактор для створення блок-схем.",
-        link: "services/tools/block_diagram_designer/index.html",
+        link: "tools/block_diagram_designer/index.html",
         image: "images/37.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },
