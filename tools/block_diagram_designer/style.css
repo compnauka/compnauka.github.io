@@ -1,0 +1,626 @@
+  /* Глобальні змінні кольорів для сучасної кольорової схеми */
+  :root {
+    --primary: #3f51b5;    /* Основний колір для заголовків та елементів інтерфейсу */
+    --primary-light: #757de8; /* Світліший варіант основного кольору */
+    --primary-dark: #002984; /* Темніший варіант основного кольору */
+    --secondary: #ff9800;   /* Вторинний колір для елементів акценту */
+    --success: #4caf50;     /* Колір для успішних дій та фігур початку/кінця */
+    --danger: #f44336;      /* Колір для помилок та кнопок видалення */
+    --neutral: #f5f5f5;     /* Нейтральний колір для фону та простих фігур */
+    --dark: #212121;        /* Темний колір для тексту та контурів */
+    --light: #ffffff;       /* Білий колір для фону та тексту */
+    --gray: #9e9e9e;        /* Сірий колір для неактивних елементів */
+    --shadow: 0 2px 8px rgba(0,0,0,0.15); /* Стандартна тінь */
+}
+
+/* Базове скидання стилів для всіх елементів */
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+/* Базова структура сторінки з фіксованою висотою та запобіганням прокрутки */
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--light);
+    display: flex;
+    flex-direction: column;
+    color: var(--dark);
+}
+
+/* Стилізація заголовка сторінки */
+header {
+    background-color: var(--primary);
+    color: var(--light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    z-index: 10;
+}
+
+/* Стиль для заголовка з відступами */
+h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+}
+
+/* Основний контейнер сторінки - використовується flex для розміщення сайдбару та полотна */
+.container {
+    display: flex;
+    flex: 1 1 auto;
+}
+
+/* Стилізація бокової панелі з інструментами */
+.sidebar {
+    width: 220px;
+    background-color: var(--light);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    z-index: 5;
+    overflow-y: auto;
+}
+
+/* Заголовки в сайдбарі */
+.sidebar h3 {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: var(--primary-dark);
+    font-weight: 500;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Контейнер для кнопок фігур */
+.shape-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Стилізація кнопок для створення фігур */
+.shape-button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--neutral);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: var(--dark);
+}
+
+/* Анімація підняття кнопки при наведенні для інтерактивності */
+.shape-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    background-color: #eeeeee;
+}
+
+/* Сітка для вибору кольорів */
+.color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* Стилізація кожного елемента вибору кольору */
+.color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Ефект при наведенні на колір */
+.color-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Виділення активного кольору */
+.color-option.selected {
+    border: 2px solid var(--dark);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+}
+
+/* Контейнер для інструментів керування */
+.tools {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Стилізація кнопок інструментів */
+.tool-button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--neutral);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    color: var(--dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Зміна стилю кнопки інструмента при наведенні */
+.tool-button:hover {
+    background-color: #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Особливі стилі для кнопок дій */
+.tool-button.primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.tool-button.primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.tool-button.danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.tool-button.danger:hover {
+    background-color: #d32f2f;
+}
+
+/* Контейнер для полотна з блок-схемою */
+.canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background-color: white;
+    /* Сітка для орієнтації на полотні */
+    background-image: 
+        linear-gradient(rgba(200, 200, 200, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 200, 200, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Основне полотно для блок-схеми */
+#flowchart-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2000px;
+    height: 2000px;
+    transform-origin: 0 0;
+}
+
+/* Контроль масштабу */
+.zoom-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+    background-color: white;
+    padding: 6px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.zoom-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.zoom-button:hover {
+    background-color: var(--primary-dark);
+}
+
+.zoom-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+.zoom-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 60px;
+    user-select: none;
+}
+
+/* Базовий стиль для всіх типів фігур */
+.shape {
+    position: absolute;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--dark);
+    padding: 10px;
+    min-width: 120px;
+    min-height: 48px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1;
+    font-size: 18px;
+    transition: box-shadow 0.2s ease;
+    user-select: none;
+}
+
+/* Стиль для виділеної фігури */
+.shape.selected {
+    outline: 2px dashed var(--primary);
+    outline-offset: 2px;
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Стилізація фігури початку/кінця (овал) */
+.shape.start-end {
+    border-radius: 35px;
+    background-color: var(--success);
+    color: white;
+}
+
+/* Стилізація фігури процесу (прямокутник) */
+.shape.process {
+    border-radius: 8px;
+    background-color: rgb(3, 169, 244);
+    color: #fff;
+}
+
+/* Стилізація фігури умови (ромб) */
+.shape.decision {
+    transform: rotate(45deg);
+    background-color: var(--secondary);
+    aspect-ratio: 1 / 1;
+    color: white;
+}
+
+/* Корекція тексту в ромбі щоб він був горизонтальним */
+.shape.decision .content {
+    transform: rotate(-45deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 85%;
+    height: 85%;
+}
+
+/* Стилізація фігури вводу/виводу (паралелограм) */
+.shape.input-output {
+    border-radius: 8px;
+    transform: skew(-20deg);
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Корекція тексту в паралелограмі щоб він був горизонтальним */
+.shape.input-output .content {
+    transform: skew(20deg);
+}
+
+/* Стиль для з'єднувачів між фігурами */
+.connector {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Стиль для міток на з'єднаннях */
+.connection-label {
+    position: absolute;
+    background-color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+    border: 1px solid #333;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Стиль для мітки "Так" */
+.connection-label.yes {
+    color: var(--success);
+    border-color: var(--success);
+}
+
+/* Стиль для мітки "Ні" */
+.connection-label.no {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* Стилізація модального вікна */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    backdrop-filter: blur(3px);
+}
+
+/* Стилізація контенту модального вікна */
+.modal-content {
+    background-color: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 340px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* Стиль для заголовка в модальному вікні */
+.modal h2 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 500;
+}
+
+/* Стилізація текстового поля в модальному вікні */
+.modal textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 16px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: none;
+    height: 120px;
+    transition: border-color 0.2s ease;
+    font-family: 'Roboto', sans-serif;
+}
+
+.modal textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+/* Контейнер для кнопок у модальному вікні */
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* Базовий стиль для кнопок модального вікна */
+.modal-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* Стиль для кнопки "Скасувати" */
+.modal-button.cancel {
+    background-color: #f5f5f5;
+    color: var(--dark);
+}
+
+.modal-button.cancel:hover {
+    background-color: #e0e0e0;
+}
+
+/* Стиль для кнопки "Зберегти" */
+.modal-button.save {
+    background-color: var(--primary);
+    color: white;
+}
+
+.modal-button.save:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Стилізація кнопки допомоги */
+.help-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.help-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Стилізація вмісту довідки */
+.help-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-width: 320px;
+    right: 20px;
+    top: 70px;
+}
+
+/* Клас для відображення вмісту довідки */
+.help-content.active {
+    display: block;
+}
+
+/* Стиль для заголовка довідки */
+.help-content h3 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* Стилізація списку в довідці */
+.help-content ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+/* Стилізація елементів списку в довідці */
+.help-content li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Модальне вікно для повідомлень/підтверджень */
+#message-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    /* z-index успадковується від .modal (1100) */
+    backdrop-filter: blur(3px);
+}
+#message-modal.active {
+    display: flex;
+}
+#message-modal .modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    min-width: 320px;
+    max-width: 90vw;
+    margin: auto;
+    position: relative;
+    text-align: center;
+}
+#message-modal-buttons {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+#message-modal .modal-button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+#message-modal .modal-button.save {
+    background: var(--primary);
+    color: #fff;
+}
+#message-modal .modal-button.cancel {
+    background: #f5f5f5;
+    color: #333;
+}
+#message-modal .modal-button.save:hover {
+    background: var(--primary-dark);
+}
+#message-modal .modal-button.cancel:hover {
+    background: #e0e0e0;
+}
+
+/* Медіа-запити для адаптивності */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 180px;
+        padding: 12px;
+    }
+    
+    .modal-content {
+        width: 90%;
+        max-width: 340px;
+    }
+}
+
+/* Оновлюємо стилі для .connection-label в SVG */
+#connectors-layer .connection-label {
+    font-size: 14px; 
+    font-weight: bold;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+#connect-button {
+    background-color: #9c27b0;
+    color: #fff;
+}
+#connect-button:hover {
+    background-color: #6d1b7b;
+}
+
+.help-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: var(--gray);
+    cursor: pointer;
+    z-index: 10;
+    padding: 4px 8px;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+}
+.help-close:hover {
+    background: #eee;
+    color: var(--danger);
+}

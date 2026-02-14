@@ -6,117 +6,117 @@ const CATEGORIES = [
     iconClass: "fas fa-laptop",
     color: "#3b82f6",
     services: [
-      { 
-        name: "Швидка мишача допомога", 
-        description: "Тренажер для роботи з кнопками мишки.", 
-        link: "services/mouse103.html", 
-        image: "images/72.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Швидка мишача допомога",
+        description: "Тренажер для роботи з кнопками мишки.",
+        link: "services/mouse103.html",
+        image: "images/72.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Мишачі перегони", 
-        description: "Тренажер для роботи з мишкою.", 
-        link: "services/click.html", 
-        image: "images/10.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Мишачі перегони",
+        description: "Тренажер для роботи з мишкою.",
+        link: "services/click.html",
+        image: "images/10.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Спіймай світлячка", 
-        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
-        link: "services/fireflies.html", 
-        image: "images/58.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Спіймай світлячка",
+        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.",
+        link: "services/fireflies.html",
+        image: "images/58.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Полювання на медуз", 
-        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.", 
-        link: "services/jailfish.html", 
-        image: "images/59.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Полювання на медуз",
+        description: "Тренажер для роботи з мишкою. Перетягування об'єктів.",
+        link: "services/jailfish.html",
+        image: "images/59.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Тиць! Перші клавіші", 
-        description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.", 
-        link: "services/kids_typing.html", 
-        image: "images/73.jpg", 
-        tags: ["1-2 класи", "Клавіатура"] 
+      {
+        name: "Тиць! Перші клавіші",
+        description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.",
+        link: "services/kids_typing.html",
+        image: "images/73.jpg",
+        tags: ["1-2 класи", "Клавіатура"]
       },
-      { 
-        name: "Рятівники Світла", 
-        description: "Гра-тренажер для роботи з мишкою. Вивчаємо наведення та натискання на об'єкти.", 
-        link: "services/svitlo.html", 
-        image: "images/71.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Рятівники Світла",
+        description: "Гра-тренажер для роботи з мишкою. Вивчаємо наведення та натискання на об'єкти.",
+        link: "services/svitlo.html",
+        image: "images/71.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Захисники Неба", 
-        description: "Інтерактивна гра-тренажер для вивчення клавіатури та сліпого друку.", 
-        link: "services/keyppo.html", 
-        image: "images/70.jpg", 
-        tags: ["1-2 класи", "3-4 класи", "Клавіатура"] 
+      {
+        name: "Захисники Неба",
+        description: "Інтерактивна гра-тренажер для вивчення клавіатури та сліпого друку.",
+        link: "services/keyppo.html",
+        image: "images/70.jpg",
+        tags: ["1-2 класи", "3-4 класи", "Клавіатура"]
       },
-      { 
-        name: "Спритні пальці", 
-        description: "Тренажер для роботи з клавіатурою.", 
-        link: "services/keys.html", 
-        image: "images/11.jpg", 
-        tags: ["3-4 класи", "Клавіатура"] 
+      {
+        name: "Спритні пальці",
+        description: "Тренажер для роботи з клавіатурою.",
+        link: "services/keys.html",
+        image: "images/11.jpg",
+        tags: ["3-4 класи", "Клавіатура"]
       },
-      { 
-        name: "Справжній Друк", 
-        description: "Клавіатурний тренажер та уроки швидкого друку.", 
-        link: "services/truetyper.html", 
-        image: "images/56.jpg", 
-        tags: ["3-4 класи", "Клавіатура"] 
+      {
+        name: "Справжній Друк",
+        description: "Клавіатурний тренажер та уроки швидкого друку.",
+        link: "services/truetyper.html",
+        image: "images/56.jpg",
+        tags: ["3-4 класи", "Клавіатура"]
       },
-      { 
-        name: "Швидкісні вікна", 
-        description: "Тренажер для роботи з вікнами програм.", 
-        link: "services/windows/index.html", 
-        image: "images/48.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Швидкісні вікна",
+        description: "Тренажер для роботи з вікнами програм.",
+        link: "services/windows/index.html",
+        image: "images/48.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Права чи Ліва?", 
-        description: "Тренажер для роботи з кнопками миші.", 
-        link: "services/mouse_keys/index.html", 
-        image: "images/49.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Права чи Ліва?",
+        description: "Тренажер для роботи з кнопками миші.",
+        link: "services/mouse_keys/index.html",
+        image: "images/49.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Чарівний лабіринт", 
-        description: "Тренажер для роботи з перетягуванням об'єктів.", 
-        link: "services/mouse_maze.html", 
-        image: "images/57.jpg", 
-        tags: ["1-2 класи", "Мишка"] 
+      {
+        name: "Чарівний лабіринт",
+        description: "Тренажер для роботи з перетягуванням об'єктів.",
+        link: "services/mouse_maze.html",
+        image: "images/57.jpg",
+        tags: ["1-2 класи", "Мишка"]
       },
-      { 
-        name: "Гарячі клавіши", 
-        description: "Інтерактивний урок про роботу з клавіатурою.", 
-        link: "services/typing.html", 
-        image: "images/18.jpg", 
-        tags: ["3-4 класи", "Клавіатура"] 
+      {
+        name: "Гарячі клавіши",
+        description: "Інтерактивний урок про роботу з клавіатурою.",
+        link: "services/typing.html",
+        image: "images/18.jpg",
+        tags: ["3-4 класи", "Клавіатура"]
       },
-      { 
-        name: "Веселі адреси", 
-        description: "Тренажер для роботи з клавіатурою: введення URL-адрес.", 
-        link: "services/urls.html", 
-        image: "images/38.jpg", 
-        tags: ["3-4 класи", "Клавіатура"] 
+      {
+        name: "Веселі адреси",
+        description: "Тренажер для роботи з клавіатурою: введення URL-адрес.",
+        link: "services/urls.html",
+        image: "images/38.jpg",
+        tags: ["3-4 класи", "Клавіатура"]
       },
-      { 
-        name: "Володар комбінацій", 
-        description: "Тренажер для роботи з комбінаціями гарячих клавіш в ОС Windows.", 
-        link: "services/keymaster.html", 
-        image: "images/68.jpg", 
-        tags: ["3-4 класи", "5-7 класи", "Клавіатура"] 
+      {
+        name: "Володар комбінацій",
+        description: "Тренажер для роботи з комбінаціями гарячих клавіш в ОС Windows.",
+        link: "services/keymaster.html",
+        image: "images/68.jpg",
+        tags: ["3-4 класи", "5-7 класи", "Клавіатура"]
       },
-      { 
-        name: "Шукаємо в Інтернеті", 
-        description: "Інтерактивне опанування пошукових систем.", 
-        link: "services/se/index.html", 
-        image: "images/39.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Шукаємо в Інтернеті",
+        description: "Інтерактивне опанування пошукових систем.",
+        link: "services/se/index.html",
+        image: "images/39.jpg",
+        tags: ["3-4 класи"]
       }
     ]
   },
@@ -126,60 +126,67 @@ const CATEGORIES = [
     iconClass: "fas fa-tools",
     color: "#ec4899",
     services: [
-      { 
-        name: "Онлайн-дошка", 
-        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.", 
-        link: "doshka/", 
-        image: "images/47.jpg" 
+      {
+        name: "Онлайн-дошка",
+        description: "Зручна мінімалістична онлайн-дошка з таймером та QR code генератором.",
+        link: "tools/doshka/index.html",
+        image: "images/47.jpg"
       },
-      { 
-        name: "Друкарик", 
-        description: "Веселий текстовий редактор для дітей.", 
-        link: "services/drukaryk.html", 
-        image: "images/28.jpg", 
-        tags: ["1-2 класи", "Текст"] 
+      {
+        name: "Друкарик",
+        description: "Веселий текстовий редактор для дітей.",
+        link: "tools/drukaryk/index.html",
+        image: "images/28.jpg",
+        tags: ["1-2 класи", "Текст"]
       },
-      { 
-        name: "Піксель", 
-        description: "Простий піксельний графічний редактор для дітей.", 
-        link: "services/pixel.html", 
-        image: "images/36.jpg", 
-        tags: ["1-2 класи", "Графіка"] 
+      {
+        name: "Піксель",
+        description: "Простий піксельний графічний редактор для дітей.",
+        link: "tools/pixel/index.html",
+        image: "images/36.jpg",
+        tags: ["1-2 класи", "Графіка"]
       },
-      { 
-        name: "Пензлик", 
-        description: "Яскравий графічний редактор для дітей.", 
-        link: "services/penslyk.html", 
-        image: "images/27.jpg", 
-        tags: ["1-2 класи", "Графіка"] 
+      {
+        name: "Пензлик",
+        description: "Яскравий графічний редактор для дітей.",
+        link: "tools/penslyk/index.html",
+        image: "images/27.jpg",
+        tags: ["1-2 класи", "Графіка"]
       },
-      { 
-        name: "Пензлик Плюс", 
-        description: "Функціональний графічний редактор для дітей.", 
-        link: "services/penslykplus.html", 
-        image: "images/35.jpg" , 
-        tags: ["3-4 класи", "Графіка"] 
+      {
+        name: "Пензлик Плюс",
+        description: "Функціональний графічний редактор для дітей.",
+        link: "tools/penslyk_plus/index.html",
+        image: "images/35.jpg",
+        tags: ["3-4 класи", "Графіка"]
       },
-      { 
-        name: "Друпензлик", 
-        description: "Текстово-графічний редактор для дітей.", 
-        link: "services/drupenslyk.html", 
-        image: "images/67.jpg" , 
-        tags: ["1-2 класи", "Графіка"] 
+      {
+        name: "Друпензлик",
+        description: "Текстово-графічний редактор для дітей.",
+        link: "tools/drupenslyk/index.html",
+        image: "images/67.jpg",
+        tags: ["1-2 класи", "Графіка"]
       },
-      { 
-        name: "Комірник", 
-        description: "Спрощщений табличний процесор для дітей.", 
-        link: "services/komirnyk/index.html", 
-        image: "images/66.jpg" , 
-        tags: ["3-4 класи", "Таблиці"] 
+      {
+        name: "Комірник",
+        description: "Простий табличний редактор для дітей.",
+        link: "tools/komirnyk/index.html",
+        image: "images/66.jpg",
+        tags: ["3-4 класи", "Таблиці"]
       },
-      { 
-        name: "Бітовий конвертер", 
-        description: "Простий конвертер з двійкової в десяткову систему.", 
-        link: "services/bitconverter.html", 
-        image: "images/5.jpg", 
-        tags: ["5-6 класи"] 
+      {
+        name: "Конструктор блок-схем",
+        description: "Простий редактор для створення блок-схем.",
+        link: "tools/block_diagram_designer/index.html",
+        image: "images/37.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
+      },
+      {
+        name: "Бітовий конвертер",
+        description: "Простий конвертер з двійкової в десяткову систему.",
+        link: "tools/bit_converter/index.html",
+        image: "images/5.jpg",
+        tags: ["5-6 класи"]
       }
     ]
   },
@@ -189,54 +196,54 @@ const CATEGORIES = [
     iconClass: "fas fa-child",
     color: "#f97316",
     services: [
-      { 
-        name: 'Паперові алгоритми: Залізниця', 
-        description: "Допоможи побудувати залізницю.", 
-        link: "pdfs/Pre_Coding_Activity_Potyag_UA.pdf", 
-        image: "images/42.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: 'Паперові алгоритми: Залізниця',
+        description: "Допоможи побудувати залізницю.",
+        link: "services/offline_activities/pdfs/Pre_Coding_Activity_Potyag_UA.pdf",
+        image: "images/42.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Паперові алгоритми: Автомобіль", 
-        description: "Проклади маршрут додому.", 
-        link: "pdfs/Pre_Coding_Activity_Auto_UA.pdf", 
-        image: "images/40.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Паперові алгоритми: Автомобіль",
+        description: "Проклади маршрут додому.",
+        link: "services/offline_activities/pdfs/Pre_Coding_Activity_Auto_UA.pdf",
+        image: "images/40.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Паперові алгоритми: Равлик", 
-        description: "Допоможи Равлику знайти шлях до смаколика.", 
-        link: "pdfs/Pre_CodingActivity_Ravlyk_UA.pdf", 
-        image: "images/41.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Паперові алгоритми: Равлик",
+        description: "Допоможи Равлику знайти шлях до смаколика.",
+        link: "services/offline_activities/pdfs/Pre_CodingActivity_Ravlyk_UA.pdf",
+        image: "images/41.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Паперовий Планшет", 
-        description: "Створи власний планшет з улюбленими іграми та застосунками.", 
-        link: "pdfs/Paper_Tablet_UA.pdf", 
-        image: "images/60.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Паперовий Планшет",
+        description: "Створи власний планшет з улюбленими іграми та застосунками.",
+        link: "services/offline_activities/pdfs/Paper_Tablet_UA.pdf",
+        image: "images/60.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Паперовий Ноутбук", 
-        description: "Збери та розфарбуй власний ноутбук.", 
-        link: "pdfs/Paper_Laptop_UA.pdf", 
-        image: "images/61.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Паперовий Ноутбук",
+        description: "Збери та розфарбуй власний ноутбук.",
+        link: "services/offline_activities/pdfs/Paper_Laptop_UA.pdf",
+        image: "images/61.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Шифр Цезаря", 
-        description: "Створи свій шифрувальний диск.", 
-        link: "pdfs/Cesar_Cipher_Disk_UA.pdf", 
-        image: "images/62.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Шифр Цезаря",
+        description: "Створи свій шифрувальний диск.",
+        link: "services/offline_activities/pdfs/Cesar_Cipher_Disk_UA.pdf",
+        image: "images/62.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Піксель Арт", 
-        description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.", 
-        link: "services/pixelart.html", 
-        image: "images/65.jpg", 
-        tags: ["1-2 класи", "3-4 класи"] 
+      {
+        name: "Піксель Арт",
+        description: "Активність, що поєднує цифровий та реальний світ. Виконуй завдання з екрану та створюй шедеври на папері.",
+        link: "services/offline_activities/pixelart/index.html",
+        image: "images/65.jpg",
+        tags: ["1-2 класи", "3-4 класи"]
       }
     ]
   },
@@ -246,47 +253,47 @@ const CATEGORIES = [
     iconClass: "fas fa-brain",
     color: "#8b5cf6",
     services: [
-      { 
-        name: "Обчислювальне мислення", 
-        description: "Простими словами про обчислювальне мислення.", 
-        link: "services/compthinking.html", 
-        image: "images/1.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Обчислювальне мислення",
+        description: "Простими словами про обчислювальне мислення.",
+        link: "services/computational_thinking/index.html",
+        image: "images/1.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Алгоритми для дітей", 
-        description: "Як програмувати роботів та комп'ютери.", 
-        link: "services/algorithm.html", 
-        image: "images/12.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Алгоритми для дітей",
+        description: "Як програмувати роботів та комп'ютери.",
+        link: "services/computational_thinking/algorithm/index.html",
+        image: "images/12.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Абстракція для дітей", 
-        description: "Інтерактивний урок про рівні абстракції.", 
-        link: "services/abstraction.html", 
-        image: "images/22.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Абстракція для дітей",
+        description: "Інтерактивний урок про рівні абстракції.",
+        link: "services/computational_thinking/abstraction/index.html",
+        image: "images/22.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Виявлення шаблонів", 
-        description: "Інтерактивний урок про виявлення шаблонів.", 
-        link: "services/patterns.html", 
-        image: "images/23.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Виявлення шаблонів",
+        description: "Інтерактивний урок про виявлення шаблонів.",
+        link: "services/computational_thinking/patterns/index.html",
+        image: "images/23.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Декомпозиція для дітей", 
-        description: "Інтерактивний урок про декомпозицію.", 
-        link: "services/decomposition.html", 
-        image: "images/24.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Декомпозиція для дітей",
+        description: "Інтерактивний урок про декомпозицію.",
+        link: "services/computational_thinking/decomposition/index.html",
+        image: "images/24.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Перевір себе", 
-        description: "Тест з обчислювального мислення.", 
-        link: "services/quizes/ct_quiz/index.html", 
-        image: "images/55.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Перевір себе",
+        description: "Тест з обчислювального мислення.",
+        link: "services/quizes/ct_quiz/index.html",
+        image: "images/55.jpg",
+        tags: ["3-4 класи"]
       }
     ]
   },
@@ -296,68 +303,68 @@ const CATEGORIES = [
     iconClass: "fas fa-code",
     color: "#10b981",
     services: [
-      { 
-        name: "Алгоритми для дітей", 
-        description: "Як програмувати роботів та комп'ютери.", 
-        link: "services/algorithm.html", 
-        image: "images/12.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Алгоритми для дітей",
+        description: "Як програмувати роботів та комп'ютери.",
+        link: "services/computational_thinking/algorithm/index.html",
+        image: "images/12.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Конструктор блок-схем", 
-        description: "Простий редактор для створення блок-схем.", 
-        link: "services/blocks/index.html", 
-        image: "images/37.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+      {
+        name: "Конструктор блок-схем",
+        description: "Простий редактор для створення блок-схем.",
+        link: "services/tools/block_diagram_designer/index.html",
+        image: "images/37.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
       },
-      { 
-        name: "Програмування з Равликом", 
-        description: "Онлайн редактор для текстової мови програмування РАВЛИК", 
-        link: "https://ravlyk.org", 
-        image: "images/2.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Програмування з Равликом",
+        description: "Онлайн редактор для текстової мови програмування РАВЛИК",
+        link: "https://ravlyk.org",
+        image: "images/2.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Посібник з програмування Равлика", 
-        description: "Знайомство з мовою програмування РАВЛИК.", 
-        link: "https://ravlyk.org/manual.html", 
-        image: "images/3.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Посібник з програмування Равлика",
+        description: "Знайомство з мовою програмування РАВЛИК.",
+        link: "https://ravlyk.org/manual.html",
+        image: "images/3.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Фермер Бот", 
-        description: "Програмування робота за допомогою блоків.", 
-        link: "services/farmbot/index.html", 
-        image: "images/25.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Фермер Бот",
+        description: "Програмування робота за допомогою блоків.",
+        link: "services/coding/farmbot/index.html",
+        image: "images/25.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Фермер Бот Плюс", 
-        description: "Програмування робота за допомогою текстових команд.", 
-        link: "services/farmbot_plus/index.html", 
-        image: "images/26.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Фермер Бот Плюс",
+        description: "Програмування робота за допомогою текстових команд.",
+        link: "services/coding/farmbot_plus/index.html",
+        image: "images/26.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Що таке змінні", 
-        description: "Інтерактивний урок про змінні в програмуванні.", 
-        link: "services/variables.html", 
-        image: "images/33.jpg", 
-        tags: ["5-7 класи"] 
+      {
+        name: "Що таке змінні",
+        description: "Інтерактивний урок про змінні в програмуванні.",
+        link: "services/coding/variables/index.html",
+        image: "images/33.jpg",
+        tags: ["5-7 класи"]
       },
-      { 
-        name: "Що таке типи даних", 
-        description: "Інтерактивний урок про типи даних в програмуванні.", 
-        link: "services/types.html", 
-        image: "images/34.jpg", 
-        tags: ["5-7 класи"] 
+      {
+        name: "Що таке типи даних",
+        description: "Інтерактивний урок про типи даних в програмуванні.",
+        link: "services/coding/types/index.html",
+        image: "images/34.jpg",
+        tags: ["5-7 класи"]
       },
-      { 
-        name: "Основи Python", 
-        description: "Курс з основ програмування на Python.", 
-        link: "/python", 
-        image: "images/46.jpg", 
-        tags: ["5-7 класи"] 
+      {
+        name: "Основи Python",
+        description: "Курс з основ програмування на Python.",
+        link: "services/coding/python/index.html",
+        image: "images/46.jpg",
+        tags: ["5-7 класи"]
       }
     ]
   },
@@ -367,40 +374,40 @@ const CATEGORIES = [
     iconClass: "fas fa-shield-alt",
     color: "#ef4444",
     services: [
-      { 
-        name: "Кібербезпека для дітей", 
-        description: "Дізнайся, як захистити себе в інтернеті.", 
-        link: "services/cyber.html", 
-        image: "images/9.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Кібербезпека для дітей",
+        description: "Дізнайся, як захистити себе в інтернеті.",
+        link: "services/safety/cyber.html",
+        image: "images/9.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Криптографія для дітей", 
-        description: "Інтерактивний сайт про шифрування інформації.", 
-        link: "services/crypto.html", 
-        image: "images/8.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Криптографія для дітей",
+        description: "Інтерактивний сайт про шифрування інформації.",
+        link: "services/safety/crypto.html",
+        image: "images/8.jpg",
+        tags: ["3-4 класи"]
       },
-      { 
-        name: "Шифр Цезаря", 
-        description: "Зашифруй своє повідомлення одним з найдавніших шифрів.", 
-        link: "services/caesar_encrypt.html", 
-        image: "images/6.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+      {
+        name: "Шифр Цезаря",
+        description: "Зашифруй своє повідомлення одним з найдавніших шифрів.",
+        link: "services/safety/caesar_encrypt.html",
+        image: "images/6.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
       },
-      { 
-        name: "Розшифрування шифру Цезаря", 
-        description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.", 
-        link: "services/caesar_decrypt.html", 
-        image: "images/7.jpg", 
-        tags: ["4-7 класи", "5-7 класи"] 
+      {
+        name: "Розшифрування шифру Цезаря",
+        description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.",
+        link: "services/safety/caesar_decrypt.html",
+        image: "images/7.jpg",
+        tags: ["4-7 класи", "5-7 класи"]
       },
-      { 
-        name: "Перевіряй інформацію!", 
-        description: "Інтерактивний тренажер з критичного оцінювання інформації.", 
-        link: "services/critic.html", 
-        image: "images/13.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+      {
+        name: "Перевіряй інформацію!",
+        description: "Інтерактивний тренажер з критичного оцінювання інформації.",
+        link: "services/safety/critic.html",
+        image: "images/13.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
       }
     ]
   },
@@ -410,26 +417,26 @@ const CATEGORIES = [
     iconClass: "fas fa-robot",
     color: "#6366f1",
     services: [
-      { 
-        name: "ЕЛІЗА. Перший чат-бот", 
-        description: "Дізнайтесь, якими були чат-боти на початку розвитку ШІ.", 
-        link: "games/eliza.html", 
-        image: "images/50.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+      {
+        name: "ЕЛІЗА. Перший чат-бот",
+        description: "Дізнайтесь, якими були чат-боти на початку розвитку ШІ.",
+        link: "games/eliza.html",
+        image: "images/50.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
       },
-      { 
-        name: "Штучний інтелект", 
-        description: "Інтерактивний сайт про те, як працює ШІ.", 
-        link: "services/ai.html", 
-        image: "images/32.jpg", 
-        tags: ["3-4 класи", "5-7 класи"] 
+      {
+        name: "Штучний інтелект",
+        description: "Інтерактивний сайт про те, як працює ШІ.",
+        link: "services/ai/ai_for_kids/index.html",
+        image: "images/32.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
       },
-      { 
-        name: "Привіт, ШІ!", 
-        description: "Інтерактивна книга для дітей про штучний інтелект.", 
-        link: "services/ai/pryvitshi/index.html", 
-        image: "images/4.jpg", 
-        tags: ["3-4 класи"] 
+      {
+        name: "Привіт, ШІ!",
+        description: "Інтерактивна книга для дітей про штучний інтелект.",
+        link: "services/ai/pryvitshi/index.html",
+        image: "images/4.jpg",
+        tags: ["3-4 класи"]
       }
     ]
   },
@@ -439,72 +446,72 @@ const CATEGORIES = [
     iconClass: "fas fa-gamepad",
     color: "#14b8a6",
     services: [
-      { 
-        name: "Змійка", 
-        description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.", 
-        link: "games/snake.html", 
-        image: "images/51.jpg", 
-        tags: [] 
+      {
+        name: "Змійка",
+        description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.",
+        link: "games/snake.html",
+        image: "images/51.jpg",
+        tags: []
       },
-      { 
-        name: "Теніс", 
-        description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.", 
-        link: "games/tenis.html", 
-        image: "images/52.jpg", 
-        tags: [] 
+      {
+        name: "Теніс",
+        description: "Динамічний пінг-понг для двох гравців. Тренує швидкість реакції та координацію.",
+        link: "games/tenis.html",
+        image: "images/52.jpg",
+        tags: []
       },
-      { 
-        name: "Морський бій", 
-        description: "Класична онлайн-гра для двох гравців. Розвиває стратегічне та критичне мислення.", 
-        link: "games/seabattle.html", 
-        image: "images/54.jpg", 
-        tags: [] 
+      {
+        name: "Морський бій",
+        description: "Класична онлайн-гра для двох гравців. Розвиває стратегічне та критичне мислення.",
+        link: "games/seabattle.html",
+        image: "images/54.jpg",
+        tags: []
       },
-      { 
-        name: "Космічні заарбники", 
-        description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.", 
-        link: "games/spaceinviders.html", 
-        image: "images/53.jpg", 
-        tags: [] 
+      {
+        name: "Космічні заарбники",
+        description: "Захищай космос від прибульців! Удосконалює точність кліків та швидкість реакції.",
+        link: "games/spaceinviders.html",
+        image: "images/53.jpg",
+        tags: []
       },
-      { 
-        name: "Руйнівник блоків", 
-        description: "Класична аркада для одного гравця! Розвиває просторове мислення та швидкість реакції.", 
-        link: "games/arkanoid.html", 
-        image: "images/63.jpg", 
-        tags: [] 
+      {
+        name: "Руйнівник блоків",
+        description: "Класична аркада для одного гравця! Розвиває просторове мислення та швидкість реакції.",
+        link: "games/arkanoid.html",
+        image: "images/63.jpg",
+        tags: []
       },
-      { 
-        name: "Неонова хвиля", 
-        description: "ТІЛЬКИ ДЛЯ ГРАВЦІВ З МІЦНИМИ НЕРВАМИ! Розвиває просторове мислення та швидкість реакції.", 
-        link: "games/neon_wave.html", 
-        image: "images/64.jpg", 
-        tags: [] 
+      {
+        name: "Неонова хвиля",
+        description: "ТІЛЬКИ ДЛЯ ГРАВЦІВ З МІЦНИМИ НЕРВАМИ! Розвиває просторове мислення та швидкість реакції.",
+        link: "games/neon_wave.html",
+        image: "images/64.jpg",
+        tags: []
       },
-      { 
-        name: "Місія: Порятунок сервера", 
-        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
-        link: "services/quizes/save_server/index.html", 
-        image: "images/64.jpg", 
-        tags: ["3-4 класи","5-7 класи", "Тест"] 
+      {
+        name: "Місія: Порятунок сервера",
+        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.",
+        link: "services/quizes/save_server/index.html",
+        image: "images/64.jpg",
+        tags: ["3-4 класи", "5-7 класи", "Тест"]
       },
-      { 
-        name: "Пікселізатор", 
-        description: "Вивчай абстракцію за допомогою пікселів!", 
-        link: "services/pixels.html", 
-        image: "images/29.jpg" 
+      {
+        name: "Пікселізатор",
+        description: "Вивчай абстракцію за допомогою пікселів!",
+        link: "services/experiments/pixels.html",
+        image: "images/29.jpg"
       },
-      { 
-        name: "Розпізнавач облич", 
-        description: "Інтерактивна демонстрація комп'ютерного зору", 
-        link: "services/facedetector.html", 
-        image: "images/30.jpg" 
+      {
+        name: "Розпізнавач облич",
+        description: "Інтерактивна демонстрація комп'ютерного зору",
+        link: "services/experiments/facedetector.html",
+        image: "images/30.jpg"
       },
-      { 
-        name: "Фейс ту смайл", 
-        description: "Доповнена реальність і смайлики!", 
-        link: "services/facemask.html", 
-        image: "images/31.jpg" 
+      {
+        name: "Фейс ту смайл",
+        description: "Доповнена реальність і смайлики!",
+        link: "services/experiments/facemask.html",
+        image: "images/31.jpg"
       }
     ]
   },
@@ -514,40 +521,40 @@ const CATEGORIES = [
     iconClass: "fas fa-link",
     color: "#64748b",
     services: [
-      { 
-        name: "Авторські інновації від вчителів", 
-        description: "Освітні інструменти, створені українськими ентузіастами та перевірені реальною практикою.", 
-        link: "edexpo/", 
-        image: "images/101.jpg", 
-        tags: [] 
+      {
+        name: "Авторські інновації від вчителів",
+        description: "Освітні інструменти, створені українськими ентузіастами та перевірені реальною практикою.",
+        link: "edexpo/",
+        image: "images/101.jpg",
+        tags: []
       },
-      { 
-        name: "micro:bit для вчителів та учнів", 
-        description: "Знайомство з micro:bit та його основними компонентами та можливостями.", 
-        link: "microbit/", 
-        image: "images/45.png", 
-        tags: [] 
+      {
+        name: "micro:bit для вчителів та учнів",
+        description: "Знайомство з micro:bit та його основними компонентами та можливостями.",
+        link: "microbit/",
+        image: "images/45.png",
+        tags: []
       },
-      { 
-        name: "Інструменти для вчителя інформатики", 
-        description: "Добірка корисних інструментів для вчителя інформатики.", 
-        link: "outer/", 
-        image: "images/44.jpg", 
-        tags: [] 
+      {
+        name: "Інструменти для вчителя інформатики",
+        description: "Добірка корисних інструментів для вчителя інформатики.",
+        link: "outer/",
+        image: "images/44.jpg",
+        tags: []
       },
-      { 
-        name: "Освітні застосунки для дітей", 
-        description: "Добірка перевірених освітніх застосунків для дітей.", 
-        link: "apps/", 
-        image: "images/43.jpg", 
-        tags: [] 
+      {
+        name: "Освітні застосунки для дітей",
+        description: "Добірка перевірених освітніх застосунків для дітей.",
+        link: "apps/",
+        image: "images/43.jpg",
+        tags: []
       },
-      { 
-        name: "Освітні сервіси Ed-Info (Григорій Громко)", 
-        description: "Неофіційна добірка інструментів для навчання з сайту ed-info.github.io.", 
-        link: "edinfo/", 
-        image: "images/69.jpg", 
-        tags: [] 
+      {
+        name: "Освітні сервіси Ed-Info (Григорій Громко)",
+        description: "Неофіційна добірка інструментів для навчання з сайту ed-info.github.io.",
+        link: "edinfo/",
+        image: "images/69.jpg",
+        tags: []
       }
     ]
   },
@@ -557,40 +564,40 @@ const CATEGORIES = [
     iconClass: "fas fa-clipboard-question",
     color: "#A3E635",
     services: [
-      { 
-        name: "Сортування 1", 
-        description: "Відсортуй об'єкти за ознаками.", 
-        link: "services/quizes/abc_sort.html", 
-        image: "images/55.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Сортування 1",
+        description: "Відсортуй об'єкти за ознаками.",
+        link: "services/quizes/abc_sort.html",
+        image: "images/55.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Сортування 2", 
-        description: "Відсортуй об'єкти за ознаками.", 
-        link: "services/quizes/sort.html", 
-        image: "images/55.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Сортування 2",
+        description: "Відсортуй об'єкти за ознаками.",
+        link: "services/quizes/sort.html",
+        image: "images/55.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Сортування 3", 
-        description: "Відсортуй об'єкти за ознаками.", 
-        link: "services/infosort.html", 
-        image: "images/55.jpg", 
-        tags: ["1-2 класи"] 
+      {
+        name: "Сортування 3",
+        description: "Відсортуй об'єкти за ознаками.",
+        link: "services/quizes/infosort.html",
+        image: "images/55.jpg",
+        tags: ["1-2 класи"]
       },
-      { 
-        name: "Перевір себе", 
-        description: "Тест з обчислювального мислення.", 
-        link: "services/quizes/ct_quiz/index.html", 
-        image: "images/55.jpg", 
-        tags: ["1-2 класи", "3-4 класи"] 
+      {
+        name: "Перевір себе",
+        description: "Тест з обчислювального мислення.",
+        link: "services/quizes/ct_quiz/index.html",
+        image: "images/55.jpg",
+        tags: ["1-2 класи", "3-4 класи"]
       },
-{ 
-        name: "Місія: Порятунок сервера", 
-        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.", 
-        link: "services/quizes/save_server/index.html", 
-        image: "images/64.jpg", 
-        tags: ["3-4 класи","5-7 класи", "Тест"] 
+      {
+        name: "Місія: Порятунок сервера",
+        description: "Допоможи відновити шкільний сервер з оцінками та домашніми завданнями.",
+        link: "services/quizes/save_server/index.html",
+        image: "images/64.jpg",
+        tags: ["3-4 класи", "5-7 класи", "Тест"]
       }
     ]
   }

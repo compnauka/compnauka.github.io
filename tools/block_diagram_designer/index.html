@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор блок-схем</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+    <script>
+        window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments) }, plausible.init = plausible.init || function (i) { plausible.o = i || {} };
+        plausible.init()
+    </script>
+
+</head>
+
+<body>
+    <header>
+        <h1>Редактор блок-схем</h1>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <a href="manual.html" class="tool-button"
+                style="background: var(--secondary); color: var(--dark); font-weight: 500;">Що таке блок-схема</a>
+            <button id="help-button" class="help-button">?</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Фігури</h3>
+            <div class="shape-buttons">
+                <button class="shape-button" data-shape="start-end">
+                    <div style="width:24px; height:24px; background-color:var(--success); border-radius:12px;"></div>
+                    Початок/Кінець
+                </button>
+                <button class="shape-button" data-shape="process">
+                    <div style="width:24px; height:24px; background-color:rgb(3, 169, 244); border-radius:4px;"></div>
+                    Дія
+                </button>
+                <button class="shape-button" data-shape="decision">
+                    <div style="width:24px; height:24px; background-color:var(--secondary); transform:rotate(45deg);">
+                    </div>
+                    Умова
+                </button>
+                <button class="shape-button" data-shape="input-output">
+                    <div style="width:24px; height:24px; background-color:var(--primary); transform:skew(-20deg);">
+                    </div>
+                    Ввід/Вивід
+                </button>
+            </div>
+
+            <h3>Кольори</h3>
+            <div class="color-picker">
+                <div class="color-option selected" style="background-color: var(--primary);" data-color="#3f51b5"></div>
+                <div class="color-option" style="background-color: var(--success);" data-color="#4caf50"></div>
+                <div class="color-option" style="background-color: var(--secondary);" data-color="#ff9800"></div>
+                <div class="color-option" style="background-color: var(--danger);" data-color="#f44336"></div>
+                <div class="color-option" style="background-color: #03a9f4;" data-color="#03a9f4"></div>
+                <div class="color-option" style="background-color: #9c27b0;" data-color="#9c27b0"></div>
+                <div class="color-option" style="background-color: #ffe066;" data-color="#ffe066"></div>
+                <div class="color-option" style="background-color: #00bfae;" data-color="#00bfae"></div>
+            </div>
+
+            <div class="tools">
+                <button class="tool-button primary" id="connect-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 17L17 7"></path>
+                        <path d="M7 7h10v10"></path>
+                    </svg>
+                    З'єднати фігури
+                </button>
+                <button class="tool-button danger" id="delete-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                    Видалити
+                </button>
+                <button class="tool-button" id="clear-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <path d="M9 9L15 15"></path>
+                        <path d="M15 9L9 15"></path>
+                    </svg>
+                    Очистити все
+                </button>
+                <button class="tool-button primary" id="save-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Зберегти
+                </button>
+            </div>
+        </div>
+
+        <div class="canvas-container" id="canvas-container">
+            <svg id="connectors-layer"
+                style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                    </marker>
+                    <marker id="arrowhead-yes" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#6aa84f" />
+                    </marker>
+                    <marker id="arrowhead-no" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#e06666" />
+                    </marker>
+                </defs>
+            </svg>
+            <div id="flowchart-canvas"></div>
+
+            <!-- Додані елементи керування масштабом -->
+            <div class="zoom-controls">
+                <button id="zoom-out" class="zoom-button">−</button>
+                <div id="zoom-level" class="zoom-text">100%</div>
+                <button id="zoom-in" class="zoom-button">+</button>
+                <button id="zoom-reset" class="zoom-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"></path>
+                        <path d="M12 8v4l3 3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для редагування тексту -->
+    <div id="text-modal" class="modal">
+        <div class="modal-content">
+            <h2>Введіть текст</h2>
+            <textarea id="shape-text" placeholder="Введіть опис дії..."></textarea>
+
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="cancel-text">Скасувати</button>
+                <button class="modal-button save" id="save-text">Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-content" class="help-content">
+        <button id="help-close" class="help-close" aria-label="Закрити">&times;</button>
+        <h3>Як користуватись редактором</h3>
+        <ul>
+            <li><b>Фігури:</b> Натисни на фігуру та перетягни її на полі в потрібне місце</li>
+            <li><b>Текст:</b> Двічі клацни на фігуру, щоб додати або змінити текст</li>
+            <li><b>З'єднання:</b> Натисни кнопку "З'єднати фігури", обери першу фігуру, потім другу</li>
+            <li><b>Умова:</b> При з'єднанні блоку "Умова" з іншими фігурами, обери варіант "Так" чи "Ні" в діалозі</li>
+            <li><b>Переміщення:</b> Просто перетягуй фігури мишкою</li>
+            <li><b>Видалення:</b> Вибери фігуру і натисни "Видалити"</li>
+            <li><b>Масштаб:</b> Використовуй кнопки "+", "−" або колесо миші для зміни масштабу</li>
+        </ul>
+    </div>
+
+    <!-- Модальне вікно для вибору типу з'єднання -->
+    <div id="connection-modal" class="modal">
+        <div class="modal-content">
+            <h2>Тип з'єднання</h2>
+            <p>Оберіть, який тип з'єднання створити:</p>
+            <div style="display: flex; gap: 12px; margin: 20px 0;">
+                <button id="connection-yes" class="modal-button"
+                    style="flex: 1; background-color: var(--success); height: 44px; color: white;">Так</button>
+                <button id="connection-no" class="modal-button"
+                    style="flex: 1; background-color: var(--danger); height: 44px; color: white;">Ні</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="cancel-connection">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для повідомлень/підтверджень -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <div id="message-modal-text" style="margin-bottom:16px;"></div>
+            <div id="message-modal-buttons"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
