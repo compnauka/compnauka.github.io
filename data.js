@@ -114,7 +114,7 @@ const CATEGORIES = [
       {
         name: "Шукаємо в Інтернеті",
         description: "Інтерактивне опанування пошукових систем.",
-        link: "services/se/index.html",
+        link: "services/safety/search_engine/index.html",
         image: "images/39.jpg",
         tags: ["3-4 класи"]
       }
@@ -408,6 +408,13 @@ const CATEGORIES = [
         link: "services/safety/critic.html",
         image: "images/13.jpg",
         tags: ["3-4 класи", "5-7 класи"]
+      },
+      {
+        name: "Шукаємо в Інтернеті",
+        description: "Інтерактивне опанування пошукових систем.",
+        link: "services/safety/search_engine/index.html",
+        image: "images/39.jpg",
+        tags: ["3-4 класи"]
       }
     ]
   },
