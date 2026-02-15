@@ -391,14 +391,14 @@ const CATEGORIES = [
       {
         name: "Шифр Цезаря",
         description: "Зашифруй своє повідомлення одним з найдавніших шифрів.",
-        link: "services/security_and_safety/caeser_cipher/caesar_encrypt.html",
+        link: "services/security_and_safety/caesar_cipher/caesar_encrypt.html",
         image: "images/6.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },
       {
         name: "Розшифрування шифру Цезаря",
         description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.",
-        link: "services/security_and_safety/caeser_cipher/caesar_decrypt.html",
+        link: "services/security_and_safety/caesar_cipher/caesar_decrypt.html",
         image: "images/7.jpg",
         tags: ["4-7 класи", "5-7 класи"]
       },
