@@ -9,112 +9,112 @@ const CATEGORIES = [
       {
         name: "Швидка мишача допомога",
         description: "Тренажер для роботи з кнопками мишки.",
-        link: "services/mouse103.html",
+        link: "services/digital_literacy/mouse_skills/mouse103/index.html",
         image: "images/72.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Мишачі перегони",
         description: "Тренажер для роботи з мишкою.",
-        link: "services/click.html",
+        link: "services/digital_literacy/mouse_skills/click/index.html",
         image: "images/10.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Спіймай світлячка",
         description: "Тренажер для роботи з мишкою. Перетягування об'єктів.",
-        link: "services/fireflies.html",
+        link: "services/digital_literacy/mouse_skills/fireflies/index.html",
         image: "images/58.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Полювання на медуз",
         description: "Тренажер для роботи з мишкою. Перетягування об'єктів.",
-        link: "services/jailfish.html",
+        link: "services/digital_literacy/mouse_skills/jailfish/index.html",
         image: "images/59.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Тиць! Перші клавіші",
         description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.",
-        link: "services/kids_typing.html",
+        link: "services/digital_literacy/typing_skills/tyts/index.html",
         image: "images/73.jpg",
         tags: ["1-2 класи", "Клавіатура"]
       },
       {
         name: "Рятівники Світла",
         description: "Гра-тренажер для роботи з мишкою. Вивчаємо наведення та натискання на об'єкти.",
-        link: "services/svitlo.html",
+        link: "services/digital_literacy/mouse_skills/svitlo/index.html",
         image: "images/71.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Захисники Неба",
         description: "Інтерактивна гра-тренажер для вивчення клавіатури та сліпого друку.",
-        link: "services/keyppo.html",
+        link: "services/digital_literacy/typing_skills/key_ppo/index.html",
         image: "images/70.jpg",
         tags: ["1-2 класи", "3-4 класи", "Клавіатура"]
       },
       {
         name: "Спритні пальці",
         description: "Тренажер для роботи з клавіатурою.",
-        link: "services/keys.html",
+        link: "services/digital_literacy/typing_skills/detect_and_type/index.html",
         image: "images/11.jpg",
         tags: ["3-4 класи", "Клавіатура"]
       },
       {
         name: "Справжній Друк",
         description: "Клавіатурний тренажер та уроки швидкого друку.",
-        link: "services/truetyper.html",
+        link: "services/digital_literacy/typing_skills/truetyper/index.html",
         image: "images/56.jpg",
         tags: ["3-4 класи", "Клавіатура"]
       },
       {
         name: "Швидкісні вікна",
         description: "Тренажер для роботи з вікнами програм.",
-        link: "services/windows/index.html",
+        link: "services/digital_literacy/mouse_skills/windows/index.html",
         image: "images/48.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Права чи Ліва?",
         description: "Тренажер для роботи з кнопками миші.",
-        link: "services/mouse_keys/index.html",
+        link: "services/digital_literacy/mouse_skills/mouse_keys/index.html",
         image: "images/49.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Чарівний лабіринт",
         description: "Тренажер для роботи з перетягуванням об'єктів.",
-        link: "services/mouse_maze.html",
+        link: "services/digital_literacy/mouse_skills/maze/index.html",
         image: "images/57.jpg",
         tags: ["1-2 класи", "Мишка"]
       },
       {
         name: "Гарячі клавіши",
         description: "Інтерактивний урок про роботу з клавіатурою.",
-        link: "services/typing.html",
+        link: "services/digital_literacy/typing_skills/typing_lesson/index.html",
         image: "images/18.jpg",
         tags: ["3-4 класи", "Клавіатура"]
       },
       {
         name: "Веселі адреси",
         description: "Тренажер для роботи з клавіатурою: введення URL-адрес.",
-        link: "services/urls.html",
+        link: "services/digital_literacy/typing_skills/urls_typing/index.html",
         image: "images/38.jpg",
         tags: ["3-4 класи", "Клавіатура"]
       },
       {
         name: "Володар комбінацій",
         description: "Тренажер для роботи з комбінаціями гарячих клавіш в ОС Windows.",
-        link: "services/keymaster.html",
+        link: "services/digital_literacy/typing_skills/keymaster/index.html",
         image: "images/68.jpg",
         tags: ["3-4 класи", "5-7 класи", "Клавіатура"]
       },
       {
         name: "Шукаємо в Інтернеті",
         description: "Інтерактивне опанування пошукових систем.",
-        link: "services/safety/search_engine/index.html",
+        link: "services/security_and_safety/search_engine/index.html",
         image: "images/39.jpg",
         tags: ["3-4 класи"]
       }
@@ -377,42 +377,42 @@ const CATEGORIES = [
       {
         name: "Кібербезпека для дітей",
         description: "Дізнайся, як захистити себе в інтернеті.",
-        link: "services/safety/cyber.html",
+        link: "services/security_and_safety/cybersecurity_for_kids/index.html",
         image: "images/9.jpg",
         tags: ["3-4 класи"]
       },
       {
         name: "Криптографія для дітей",
         description: "Інтерактивний сайт про шифрування інформації.",
-        link: "services/safety/crypto.html",
+        link: "services/security_and_safety/cryptography_for_kids/index.html",
         image: "images/8.jpg",
         tags: ["3-4 класи"]
       },
       {
         name: "Шифр Цезаря",
         description: "Зашифруй своє повідомлення одним з найдавніших шифрів.",
-        link: "services/safety/caesar_encrypt.html",
+        link: "services/security_and_safety/caeser_cipher/caesar_encrypt.html",
         image: "images/6.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },
       {
         name: "Розшифрування шифру Цезаря",
         description: "Розшифруй повідомлення, яке було зашифроване шифром Цезаря.",
-        link: "services/safety/caesar_decrypt.html",
+        link: "services/security_and_safety/caeser_cipher/caesar_decrypt.html",
         image: "images/7.jpg",
         tags: ["4-7 класи", "5-7 класи"]
       },
       {
         name: "Перевіряй інформацію!",
         description: "Інтерактивний тренажер з критичного оцінювання інформації.",
-        link: "services/safety/critic.html",
+        link: "services/security_and_safety/critical_thinking_for_kids/index.html",
         image: "images/13.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },
       {
         name: "Шукаємо в Інтернеті",
         description: "Інтерактивне опанування пошукових систем.",
-        link: "services/safety/search_engine/index.html",
+        link: "services/security_and_safety/search_engine/index.html",
         image: "images/39.jpg",
         tags: ["3-4 класи"]
       }

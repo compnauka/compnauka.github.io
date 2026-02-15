@@ -1,0 +1,106 @@
+:root {
+    --bg-gradient-start: #6dd5ed;
+    --bg-gradient-end: #2193b0;
+
+    --l-circle-gradient-start: #ff758c;
+    --l-circle-gradient-end: #ff7eb3;
+
+    --r-circle-gradient-start: #4facfe;
+    --r-circle-gradient-end: #00f2fe;
+
+    --timer-gradient-start: #4facfe;
+    --timer-gradient-end: #00f2fe;
+
+    --difficulty-active-color: #ff758c;
+
+    --pop-success-duration: 0.3s;
+    --shake-error-duration: 0.5s;
+    --countdown-pop-duration: 1s;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    overflow: hidden;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.8)" stroke="black" stroke-width="1" d="M5.5 3.42L18.42 12 5.5 20.58V3.42z"/></svg>'), auto;
+}
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.title {
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+.game-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+}
+.game-board {
+    cursor: crosshair;
+}
+.target-circle {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    transition: transform 0.2s ease;
+    user-select: none;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+.target-circle:hover {
+    transform: scale(1.1);
+    z-index: 10;
+}
+.l-circle { background: linear-gradient(135deg, var(--l-circle-gradient-start), var(--l-circle-gradient-end)); }
+.r-circle { background: linear-gradient(135deg, var(--r-circle-gradient-start), var(--r-circle-gradient-end)); }
+
+@keyframes pop-success {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(0) rotate(90deg); opacity: 0; }
+}
+.pop-success-animation { animation: pop-success var(--pop-success-duration) ease-out forwards; }
+
+@keyframes shake-error {
+     0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+.shake-error-animation { animation: shake-error var(--shake-error-duration); }
+
+.timer-bar-container {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+.timer-bar-fill {
+    height: 10px;
+    background: linear-gradient(90deg, var(--timer-gradient-start), var(--timer-gradient-end));
+    border-radius: 10px;
+    transition: width 1s linear;
+}
+.countdown-number {
+    font-weight: 700;
+    color: #2193b0;
+    text-shadow: 3px 3px 0px rgba(255,255,255,0.8);
+    animation: countdown-pop var(--countdown-pop-duration) ease-in-out;
+}
+@keyframes countdown-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    80% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.difficulty-btn.active {
+    background-color: var(--difficulty-active-color);
+    color: white;
+    box-shadow: 0 0 10px var(--difficulty-active-color);
+}

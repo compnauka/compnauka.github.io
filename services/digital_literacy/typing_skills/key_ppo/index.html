@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Захисники Неба | Український Клавіатурний Тренажер | Сліпий Друк</title>
+    <meta name="description"
+        content="Безкоштовний клавіатурний тренажер українською мовою. Гра 'Захисники Неба': вчись сліпому друку, знищуючи ворожі дрони та ракети. Тренування швидкості набору для дітей та дорослих." />
+    <meta name="keywords"
+        content="клавіатурний тренажер, сліпий друк, швидкість друку, навчання друку, гра для друку, українська розкладка, typing tutor ukrainian, захисники неба" />
+    <meta name="author" content="Пан Артем" />
+    <meta name="robots" content="index, follow" />
+
+    <link rel="canonical" href="https://itnauka.org/services/digital_literacy/typing_skills/key_ppo/index.html" />
+
+    <meta property="og:title" content="Захисники Неба - Вчись друкувати швидко!">
+    <meta property="og:description"
+        content="Інтерактивна гра-тренажер сліпого друку. Захищай місто від шахедів та ракет, набираючи слова. Спробуй побити рекорд!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itnauka.org/services/keyppo.html">
+    <meta property="og:locale" content="uk_UA">
+
+    <meta property="og:image" content="https://itnauka.org/share-image.jpg">
+    <meta property="og:image:alt" content="Інтерфейс гри Захисники Неба">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Захисники Неба | Клавіатурний Тренажер">
+    <meta name="twitter:description" content="Тренуй швидкість друку, граючи у захисника міста! Українська мова.">
+    <meta name="twitter:image" content="https://itnauka.org/share-image.jpg">
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Захисники Неба",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "EducationalGame",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "UAH"
+      },
+      "description": "Клавіатурний тренажер у форматі гри для вивчення української розкладки та сліпого друку.",
+      "inLanguage": "uk",
+      "author": {
+        "@type": "Person",
+        "name": "Artem"
+      },
+      "featureList": "Навчання сліпому друку, Українська мова, Ігровий процес, Статистика швидкості"
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <style>
+        /* --- 1. ЗМІННІ ТА БАЗОВІ НАЛАШТУВАННЯ --- */
+        :root {
+            --bg-dark: #020617;
+            --bg-light: #1e293b;
+            --ui-text: #f1f5f9;
+            --ui-muted: #94a3b8;
+
+            --col-success: #22c55e;
+            --col-warning: #fbbf24;
+            --col-danger: #ef4444;
+            --col-accent: #f59e0b;
+
+            --wall-base: #334155;
+            --wall-border: #475569;
+
+            --btn-primary: #22c55e;
+            --btn-primary-shade: #15803d;
+            --btn-secondary: #f97316;
+            --btn-secondary-shade: #c2410c;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--bg-dark) 0%, var(--bg-light) 100%);
+            font-family: 'Roboto Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+            color: var(--ui-text);
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.1s;
+        }
+
+        body.miss-flash {
+            box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.8);
+        }
+
+        /* --- 2. ІГРОВИЙ СВІТ --- */
+        #game-area {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        #damage-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 90;
+            background: radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0) 100%);
+            transition: background 0.3s ease;
+        }
+
+        .city-skyline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30vh;
+            background-color: #0f172a;
+            clip-path: polygon(0% 100%, 0% 80%, 5% 80%, 5% 60%, 10% 60%, 10% 85%,
+                    15% 85%, 15% 40%, 25% 40%, 25% 70%, 30% 70%, 30% 50%,
+                    40% 50%, 40% 80%, 45% 80%, 45% 20%, 55% 20%, 55% 90%,
+                    60% 90%, 60% 55%, 70% 55%, 70% 80%, 75% 80%, 75% 45%,
+                    85% 45%, 85% 75%, 90% 75%, 90% 60%, 95% 60%, 95% 90%,
+                    100% 90%, 100% 100%);
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .city-skyline::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(#facc15 1px, transparent 1px);
+            background-size: 12px 18px;
+            opacity: 0.15;
+        }
+
+        #the-wall {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background: linear-gradient(90deg, var(--wall-base), var(--bg-light));
+            border-left: 4px solid var(--wall-border);
+            z-index: 50;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s;
+            overflow: hidden;
+        }
+
+        #the-wall.critical {
+            border-left-color: var(--col-danger);
+            animation: wall-shake 0.5s infinite;
+        }
+
+        #the-wall::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* --- 3. UI ЕЛЕМЕНТИ --- */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .ui-group {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .stat-box {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .stat-box i {
+            color: var(--ui-muted);
+            font-size: 1.2em;
+        }
+
+        .stat-col {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            color: var(--ui-muted);
+        }
+
+        .stat-val {
+            font-size: 1.2em;
+        }
+
+        .control-btn {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid var(--ui-muted);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+
+        #layout-warning {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 90;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        #layout-warning.visible {
+            opacity: 1;
+        }
+
+        /* --- 4. ВОРОГИ ТА ЕФЕКТИ --- */
+        .enemy {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            will-change: transform;
+            z-index: 20;
+        }
+
+        /* Шахед */
+        .enemy-shahed-body {
+            width: 0;
+            height: 0;
+            border-top: 35px solid transparent;
+            border-bottom: 35px solid transparent;
+            border-left: 60px solid #1e293b;
+            position: relative;
+            filter: drop-shadow(0 0 1px #cbd5e1) drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.5));
+        }
+
+        .enemy-shahed-body::after {
+            content: '';
+            position: absolute;
+            left: -63px;
+            top: -5px;
+            width: 8px;
+            height: 10px;
+            background: var(--col-accent);
+            border-radius: 2px;
+            box-shadow: -2px 0 8px var(--col-accent);
+            animation: flicker 0.1s infinite;
+        }
+
+        .enemy-label {
+            /* Центрування літери відносно центру маси трикутника */
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: white;
+            z-index: 22;
+            background: rgba(0, 0, 0, 0.5);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            pointer-events: none;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* Ракета */
+        .rocket-body {
+            background: #1e293b;
+            padding: 8px 12px 8px 24px;
+            border-radius: 4px 30px 30px 4px;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            color: #fff;
+            min-width: 80px;
+        }
+
+        .rocket-flame {
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 12px;
+            background: var(--col-accent);
+            border-radius: 50%;
+            box-shadow: -4px 0 10px var(--col-accent);
+            animation: flame 0.1s infinite alternate;
+        }
+
+        .rocket-text {
+            display: flex;
+            align-items: center;
+            gap: 1px;
+            white-space: nowrap;
+        }
+
+        /* Текст */
+        .word-char {
+            font-size: 1.5rem;
+            color: var(--ui-muted);
+            margin: 0 1px;
+            font-weight: 800;
+        }
+
+        .word-char.active {
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            transform: scale(1.2);
+            display: inline-block;
+        }
+
+        .word-char.done {
+            color: var(--col-success);
+            text-shadow: 0 0 5px var(--col-success);
+        }
+
+        /* Стани цілі */
+        .enemy.locked-target .enemy-shahed-body {
+            border-left-color: var(--col-danger);
+        }
+
+        .enemy.locked-target .rocket-body {
+            border-color: var(--col-danger);
+        }
+
+        .enemy.dimmed {
+            opacity: 0.4;
+        }
+
+        /* Ефекти */
+        .impact-crater {
+            position: absolute;
+            background: radial-gradient(circle, #020617 30%, #1e293b 70%);
+            border-radius: 50%;
+            border: 2px solid #334155;
+            transform: translate(-50%, -50%);
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.8);
+            z-index: 51;
+        }
+
+        .wall-debris {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #475569;
+            z-index: 55;
+            animation: debrisFly 0.8s ease-out forwards;
+            border: 1px solid #1e293b;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, var(--col-accent) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: explode 0.3s ease-out forwards;
+            z-index: 60;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+
+        .laser {
+            position: absolute;
+            height: 3px;
+            background: #fff;
+            transform-origin: left center;
+            box-shadow: 0 0 8px #fff, 0 0 15px var(--col-success);
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        /* --- 5. МЕНЮ --- */
+        .menu-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+
+        p {
+            color: #cbd5e1;
+            max-width: 600px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .btn {
+            border: none;
+            padding: 16px 40px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 15px;
+            text-transform: uppercase;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--btn-primary);
+            box-shadow: 0 5px 0 var(--btn-primary-shade);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 7px 0 var(--btn-primary-shade);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 var(--btn-primary-shade);
+        }
+
+        .btn-alt {
+            background: var(--btn-secondary);
+            box-shadow: 0 5px 0 var(--btn-secondary-shade);
+        }
+
+        .btn-alt:hover {
+            box-shadow: 0 7px 0 var(--btn-secondary-shade);
+        }
+
+        .btn-alt:active {
+            box-shadow: 0 0 0 var(--btn-secondary-shade);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--ui-muted);
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            color: white;
+            border: 2px solid #334155;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: var(--col-success);
+        }
+
+        /* Стилі для туторіалу */
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .tut-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .enemy-preview {
+            width: 80px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .tut-shahed .body {
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 40px solid #1e293b;
+            filter: drop-shadow(0 0 1px #cbd5e1);
+        }
+
+        .tut-shahed .label {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.5);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .tut-rocket .body {
+            background: #1e293b;
+            padding: 4px 12px;
+            border-radius: 4px 20px 20px 4px;
+            border: 2px solid #cbd5e1;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .tut-info {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--col-warning);
+        }
+
+        .tut-info p {
+            margin: 5px 0;
+            font-size: 1rem;
+            color: #e2e8f0;
+        }
+
+        /* --- 6. АНІМАЦІЇ --- */
+        @keyframes flicker {
+            0% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes flame {
+            from {
+                width: 12px;
+                opacity: 0.8;
+            }
+
+            to {
+                width: 18px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes debrisFly {
+            0% {
+                transform: translate(0, 0) rotate(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50px, 150px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                color: var(--ui-text);
+                transform: scale(1);
+            }
+
+            50% {
+                color: var(--col-danger);
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes pulse-gold {
+
+            0%,
+            100% {
+                transform: scale(1);
+                text-shadow: 0 0 10px var(--col-warning);
+            }
+
+            50% {
+                transform: scale(1.2);
+                text-shadow: 0 0 20px var(--col-warning), 0 0 30px white;
+            }
+        }
+
+        @keyframes wall-shake {
+            0% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-2px);
+            }
+
+            75% {
+                transform: translateX(2px);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        .combo-glow {
+            animation: pulse-gold 0.3s ease-in-out;
+            color: #fff !important;
+        }
+
+        .timer-warning {
+            animation: pulse-red 1s infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ефекти на весь екран -->
+    <div id="damage-overlay"></div>
+
+    <!-- UI Шари -->
+    <div id="ui-layer">
+        <div class="ui-group">
+            <div class="stat-box">
+                <i class="fa-solid fa-clock"></i>
+                <div class="stat-col">
+                    <span class="stat-label">ЧАС</span>
+                    <span id="timer-val" class="stat-val" style="color: var(--ui-text);">60</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div class="stat-col">
+                    <span class="stat-label">ЗАХИСТ</span>
+                    <span id="health-text" class="stat-val" style="color: var(--col-success);">100%</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i class="fa-solid fa-crosshairs"></i>
+                <div class="stat-col">
+                    <span class="stat-label">ВЛУЧАНЬ</span>
+                    <span id="score-val" class="stat-val" style="color: var(--col-warning);">0</span>
+                </div>
+            </div>
+            <div class="stat-box hidden" id="combo-display">
+                <i class="fa-solid fa-fire" style="color: var(--col-accent);"></i>
+                <div class="stat-col">
+                    <span class="stat-label">КОМБО</span>
+                    <span id="combo-val" class="stat-val"
+                        style="color: var(--col-warning); transition: all 0.1s;">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="layout-warning"><i class="fa-solid fa-keyboard"></i> ЗМІНИ РОЗКЛАДКУ НА УКРАЇНСЬКУ</div>
+
+        <div class="ui-group">
+            <button class="control-btn" id="pause-btn" title="Пауза (Esc)"><i class="fa-solid fa-pause"></i></button>
+            <button class="control-btn" id="stop-btn" title="Завершити гру"><i class="fa-solid fa-stop"></i></button>
+        </div>
+    </div>
+
+    <!-- Ігровий Світ -->
+    <div class="city-skyline"></div>
+    <div id="the-wall"></div>
+    <div id="game-area"></div>
+
+    <!-- МЕНЮ -->
+    <!-- Головне меню -->
+    <div id="start-menu" class="menu-overlay">
+        <h1>ЗАХИСНИКИ НЕБА</h1>
+        <p>Клавіатурний тренажер</p>
+        <p>СИСТЕМА ППО ГОТОВА ДО РОБОТИ<br>ВІДБИЙ АТАКУ ШАХЕДІВ ТА РАКЕТ НА МІСТО</p>
+
+        <div class="options-grid">
+            <div class="option-group">
+                <label><i class="fa-solid fa-sliders"></i> СКЛАДНІСТЬ</label>
+                <select id="level-select">
+                    <option value="beginner">НОВАЧОК (Дуже повільно)</option>
+                    <option value="easy">ЛЕГКИЙ (Повільно)</option>
+                    <option value="medium" selected>СЕРЕДНІЙ (Швидко + цифри)</option>
+                    <option value="hard">СКЛАДНИЙ (Слова)</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <label><i class="fa-solid fa-volume-high"></i> ЗВУК</label>
+                <select id="sound-select">
+                    <option value="on">УВІМКНЕНО</option>
+                    <option value="off">ВИМКНЕНО</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" onclick="game.start()">
+            <i class="fa-solid fa-play"></i> РОЗПОЧАТИ
+        </button>
+    </div>
+
+    <!-- Туторіал (Інструктаж) -->
+    <div id="tutorial-screen" class="menu-overlay hidden">
+        <h1>ЯК ГРАТИ?</h1>
+        <div class="tutorial-grid">
+            <div class="tut-item">
+                <div class="enemy-preview tut-shahed">
+                    <div class="body"></div>
+                    <div class="label">А</div>
+                </div>
+                <p><strong>ДРОНИ</strong><br>Бачиш літеру на шахеді? Знайди та натисни її на клавіатурі!</p>
+            </div>
+            <div class="tut-item">
+                <div class="enemy-preview tut-rocket">
+                    <div class="body">СЛОВО</div>
+                </div>
+                <p><strong>РАКЕТИ</strong><br>Бачиш слово на ракеті? Надрукуй його, щоб знищити ворожу ціль!</p>
+            </div>
+        </div>
+        <div class="tut-info">
+            <p><i class="fa-solid fa-keyboard"></i> Мова тренажера — <strong>УКРАЇНСЬКА</strong> (UA).</p>
+            <p><i class="fa-solid fa-shield-halved"></i> Будь уважним! Не помиляйся.</p>
+        </div>
+        <button class="btn" onclick="game.confirmTutorial()">
+            <i class="fa-solid fa-check"></i> ЗРОЗУМІЛО
+        </button>
+    </div>
+
+    <!-- Меню паузи -->
+    <div id="pause-menu" class="menu-overlay hidden">
+        <h1><i class="fa-solid fa-pause"></i> ПАУЗА</h1>
+        <button class="btn" onclick="game.togglePause()">
+            <i class="fa-solid fa-play"></i> ПРОДОВЖИТИ
+        </button>
+        <button class="btn btn-alt" onclick="game.quit()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> МЕНЮ
+        </button>
+    </div>
+
+    <!-- Екран кінця гри -->
+    <div id="game-over-screen" class="menu-overlay hidden">
+        <h1 id="game-over-title" style="text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);"></h1>
+
+        <div class="options-grid" style="grid-template-columns: 1fr; margin: 10px 0; padding: 15px;">
+            <p style="margin: 5px;">ВЛУЧАНЬ: <strong id="final-score" style="color: var(--col-warning)">0</strong></p>
+            <p style="margin: 5px;">ТОЧНІСТЬ: <strong id="final-accuracy" style="color: var(--col-success)">0%</strong>
+            </p>
+            <p style="margin: 5px;">МАКС. КОМБО: <strong id="final-combo" style="color: var(--col-warning)">0</strong>
+            </p>
+            <p id="high-score-display" style="color: var(--ui-muted); font-size: 0.9rem; margin-top: 10px;">РЕКОРД: 0
+            </p>
+        </div>
+
+        <button class="btn" onclick="game.restart()">
+            <i class="fa-solid fa-rotate-right"></i> ЩЕ РАЗ
+        </button>
+        <button class="btn btn-alt" onclick="location.reload()">
+            <i class="fa-solid fa-bars"></i> МЕНЮ
+        </button>
+    </div>
+
+    <script>
+        /**
+         * === 1. КОНФІГУРАЦІЯ ТА ДАНІ ===
+         */
+        const WORDS_DB = [
+            "ДІМ", "ЧАС", "РІК", "СВІТ", "РУКА", "ОКО", "СИЛА", "ВОДА", "ТАТО", "МАМА",
+            "ДРУГ", "НІЧ", "ДЕНЬ", "КРОВ", "ЗОРЯ", "МОВА", "ДУША", "ЛИЦЕ", "СИН", "ДІД",
+            "САД", "ЛІС", "ПОЛЕ", "КІНЬ", "ХЛІБ", "СІЛЬ", "МЕЧ", "ЩИТ", "НЕБО", "МОРЕ",
+            "РІКА", "ГОРА", "СТЕП", "ШЛЯХ", "КРАЙ", "МІСТ", "СЕЛО", "ЗИМА", "ЛІТО", "ОСІНЬ",
+            "ВЕСНА", "КВІТ", "ПТАХ", "РИБА", "ЗВІР", "ГРІХ", "СМІХ", "ПЛАЧ", "ЗВУК", "КОЛІР",
+            "НАРОД", "ЗЕМЛЯ", "СОНЦЕ", "СЕРЦЕ", "ЖИТТЯ", "СЛОВО", "ПРАЦЯ", "РОЗУМ", "КНИГА", "ШКОЛА",
+            "ВІТЕР", "ГОЛОС", "ДЕРЕВО", "ТРАВА", "ХМАРА", "МІСТО", "ВУЛИЦЯ", "ВІКНО", "ДВЕРІ", "СТІНА",
+            "КІМНАТА", "ЛЮБОВ", "НАДІЯ", "ВІРА", "ПРАВДА", "ДОЛЯ", "МРІЯ", "ДУМКА", "ПІСНЯ", "КАЗКА",
+            "ІСТОРІЯ", "ПАМЯТЬ", "РОДИНА", "БАТЬКО", "МАТИ", "БРАТ", "СЕСТРА", "ДОНЬКА", "ДИТИНА", "ЛЮДИНА",
+            "ХЛОПЕЦЬ", "ДІВЧИНА", "КОЗАК", "ГЕРОЙ", "ВОЇН", "ЗБРОЯ", "ПЕРЕМОГА", "СЛАВА", "ВОЛЯ", "ЧЕСТЬ"
+        ];
+
+        const CONFIG = {
+            beginner: { baseSpeed: 45, spawnRate: 2500, chars: "АБВГДЕЖЗИІКЛМНОПРСТУФХЦЧШЮЯ", maxHealth: 20 },
+            easy: { baseSpeed: 90, spawnRate: 2000, chars: "АБВГДЕЖЗИІКЛМНОПРСТУФХЦЧШЮЯ", maxHealth: 10 },
+            medium: { baseSpeed: 170, spawnRate: 1500, chars: "АБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ1234567890", maxHealth: 10 },
+            hard: { baseSpeed: 140, spawnRate: 2400, mode: "words", maxHealth: 10 }
+        };
+
+        /**
+         * === 2. АУДІО СИСТЕМА ===
+         */
+        const AudioController = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            play(type) {
+                if (document.getElementById('sound-select').value === 'off') return;
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                const now = this.ctx.currentTime;
+
+                const presets = {
+                    shoot: { type: 'sawtooth', f1: 600, f2: 100, dur: 0.1, vol: 0.08 },
+                    hit: { type: 'square', f1: 150, f2: 40, dur: 0.2, vol: 0.1 },
+                    damage: { type: 'sawtooth', f1: 80, f2: 20, dur: 0.4, vol: 0.3 },
+                    miss: { type: 'triangle', f1: 150, f2: 100, dur: 0.15, vol: 0.1 }
+                };
+
+                const s = presets[type];
+                if (!s) return;
+
+                osc.type = s.type;
+                osc.frequency.setValueAtTime(s.f1, now);
+                if (type === 'damage' || type === 'miss') {
+                    osc.frequency.linearRampToValueAtTime(s.f2, now + s.dur);
+                } else {
+                    osc.frequency.exponentialRampToValueAtTime(s.f2, now + s.dur);
+                }
+
+                gain.gain.setValueAtTime(s.vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + s.dur);
+
+                osc.start(now);
+                osc.stop(now + s.dur);
+            }
+        };
+
+        /**
+         * === 3. МЕНЕДЖЕР ЛІНІЙ (Уникнення накладання) ===
+         */
+        class LaneManager {
+            constructor(totalHeight, laneHeight, marginTop, marginBottom) {
+                this.lanes = [];
+                const availableHeight = totalHeight - marginTop - marginBottom;
+                const count = Math.floor(availableHeight / laneHeight);
+                for (let i = 0; i < count; i++) {
+                    this.lanes.push({ y: marginTop + (i * laneHeight), busyUntil: 0 });
+                }
+            }
+
+            getFreeLane(now) {
+                const candidates = this.lanes.filter(l => l.busyUntil < now);
+                if (candidates.length === 0) return null;
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            }
+
+            reserveLane(lane, duration, now) {
+                lane.busyUntil = now + duration;
+            }
+        }
+
+        /**
+         * === 4. ІГРОВИЙ ДВИГУН ===
+         */
+        const game = {
+            active: false,
+            paused: false,
+            hasSeenTutorial: false,
+
+            // Стан гри
+            enemies: [],
+            score: 0,
+            health: 10,
+            maxHealth: 10,
+            combo: 0,
+            maxCombo: 0,
+            shotsFired: 0,
+            shotsHit: 0,
+            timeLeft: 60,
+            wordTargetId: null,
+
+            // Системні змінні
+            levelConfig: {},
+            laneManager: null,
+            rafId: null,
+            lastTime: 0,
+            nextSpawnTime: 0,
+            difficultyMultiplier: 1.0,
+            warningTimeout: null,
+
+            // Кеш DOM елементів
+            dom: {
+                area: document.getElementById('game-area'),
+                wall: document.getElementById('the-wall'),
+                overlay: document.getElementById('damage-overlay'),
+                warning: document.getElementById('layout-warning'),
+
+                // Статистика
+                score: document.getElementById('score-val'),
+                health: document.getElementById('health-text'),
+                timer: document.getElementById('timer-val'),
+                comboBox: document.getElementById('combo-display'),
+                comboVal: document.getElementById('combo-val'),
+
+                // Меню
+                start: document.getElementById('start-menu'),
+                tutorial: document.getElementById('tutorial-screen'),
+                over: document.getElementById('game-over-screen'),
+                pause: document.getElementById('pause-menu'),
+
+                // Екран результатів
+                endTitle: document.getElementById('game-over-title'),
+                endScore: document.getElementById('final-score'),
+                endAcc: document.getElementById('final-accuracy'),
+                endCombo: document.getElementById('final-combo'),
+                endHigh: document.getElementById('high-score-display')
+            },
+
+            // --- ЗАПУСК ТА УПРАВЛІННЯ ---
+
+            start() {
+                AudioController.init();
+
+                if (!this.hasSeenTutorial) {
+                    this.dom.start.classList.add('hidden');
+                    this.dom.tutorial.classList.remove('hidden');
+                    return;
+                }
+
+                this._realStart();
+            },
+
+            confirmTutorial() {
+                this.hasSeenTutorial = true;
+                this.dom.tutorial.classList.add('hidden');
+                this._realStart();
+            },
+
+            _realStart() {
+                const level = document.getElementById('level-select').value;
+                this.levelConfig = CONFIG[level];
+                this.maxHealth = this.levelConfig.maxHealth;
+                this.health = this.maxHealth;
+                this.difficultyMultiplier = 1.0;
+
+                // Налаштування ліній (верхній відступ 150px для HUD)
+                this.laneManager = new LaneManager(window.innerHeight, 90, 150, 50);
+
+                this.reset();
+                this.active = true;
+                this.paused = false;
+
+                this.dom.start.classList.add('hidden');
+                this.dom.over.classList.add('hidden');
+                this.dom.pause.classList.add('hidden');
+
+                this.lastTime = performance.now();
+                this.nextSpawnTime = this.lastTime + 1000;
+                this.rafId = requestAnimationFrame(this.loop.bind(this));
+            },
+
+            reset() {
+                this.score = 0;
+                this.shotsFired = 0;
+                this.shotsHit = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.timeLeft = 60;
+
+                // Очистка
+                this.enemies.forEach(e => e.el.remove());
+                this.enemies = [];
+                this.wordTargetId = null;
+
+                // Скидання візуалів
+                this.dom.wall.innerHTML = '';
+                this.dom.wall.className = '';
+                this.dom.overlay.style.background = 'radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0) 100%)';
+                this.dom.comboBox.classList.add('hidden');
+                this.dom.timer.classList.remove('timer-warning');
+
+                if (this.rafId) cancelAnimationFrame(this.rafId);
+                this.updateUI();
+            },
+
+            restart() {
+                this.health = this.maxHealth; // Відновлення здоров'я
+                this.reset();
+                this.active = true;
+                this.dom.over.classList.add('hidden');
+                this.lastTime = performance.now();
+                this.nextSpawnTime = this.lastTime + 1000;
+                this.difficultyMultiplier = 1.0;
+                this.rafId = requestAnimationFrame(this.loop.bind(this));
+            },
+
+            togglePause() {
+                if (!this.active) return;
+                this.paused = !this.paused;
+
+                if (this.paused) {
+                    this.dom.pause.classList.remove('hidden');
+                    cancelAnimationFrame(this.rafId);
+                } else {
+                    this.dom.pause.classList.add('hidden');
+                    this.lastTime = performance.now();
+                    this.rafId = requestAnimationFrame(this.loop.bind(this));
+                }
+            },
+
+            quit() {
+                this.active = false;
+                this.paused = false;
+                this.dom.pause.classList.add('hidden');
+                this.dom.start.classList.remove('hidden');
+                this.reset();
+            },
+
+            // --- ЛОГІКА ГРИ ---
+
+            spawnEnemy() {
+                const now = performance.now();
+                const lane = this.laneManager.getFreeLane(now);
+                if (!lane) return;
+
+                let content, type;
+                if (this.levelConfig.mode === 'words') {
+                    content = WORDS_DB[Math.floor(Math.random() * WORDS_DB.length)];
+                    type = 'rocket';
+                } else {
+                    const chars = this.levelConfig.chars;
+                    content = chars[Math.floor(Math.random() * chars.length)];
+                    type = 'shahed';
+                }
+
+                // Створення DOM
+                const el = document.createElement('div');
+                el.className = 'enemy';
+                el.style.transform = `translate3d(-150px, ${lane.y}px, 0)`;
+
+                if (type === 'shahed') {
+                    el.innerHTML = `<div class="enemy-shahed-body"><div class="enemy-label">${content}</div></div>`;
+                } else {
+                    let html = `<div class="rocket-body"><div class="rocket-flame"></div><div class="rocket-text">`;
+                    for (let char of content) html += `<span class="word-char">${char}</span>`;
+                    html += `</div></div>`;
+                    el.innerHTML = html;
+                }
+
+                this.dom.area.appendChild(el);
+
+                // Бронювання лінії
+                const currentSpeed = this.levelConfig.baseSpeed * this.difficultyMultiplier;
+                const travelTime = (window.innerWidth + 200) / currentSpeed * 1000;
+                this.laneManager.reserveLane(lane, travelTime * 0.45, now);
+
+                this.enemies.push({
+                    id: Date.now() + Math.random(),
+                    el,
+                    x: -150,
+                    y: lane.y,
+                    content,
+                    typedIndex: 0,
+                    speed: currentSpeed * (0.9 + Math.random() * 0.2),
+                    type
+                });
+            },
+
+            handleInput(key) {
+                if (!this.active || this.paused) return;
+
+                this.shotsFired++;
+                key = key.toUpperCase();
+
+                // Валідація розкладки
+                if (/[A-Z]/.test(key) && !/[А-ЯІЇЄҐ]/.test(key)) {
+                    this.dom.warning.classList.add('visible');
+                    clearTimeout(this.warningTimeout);
+                    this.warningTimeout = setTimeout(() => this.dom.warning.classList.remove('visible'), 2000);
+                    return;
+                }
+
+                let hit = false;
+
+                if (this.levelConfig.mode === 'words') {
+                    // Режим слів (Ракети)
+                    if (this.wordTargetId) {
+                        const enemy = this.enemies.find(e => e.id === this.wordTargetId);
+                        if (!enemy) { this.wordTargetId = null; return; }
+
+                        if (key === enemy.content[enemy.typedIndex]) {
+                            this.processHit(enemy);
+                            enemy.typedIndex++;
+
+                            const chars = enemy.el.querySelectorAll('.word-char');
+                            if (chars[enemy.typedIndex - 1]) {
+                                chars[enemy.typedIndex - 1].classList.add('done');
+                                chars[enemy.typedIndex - 1].classList.remove('active');
+                            }
+                            if (chars[enemy.typedIndex]) chars[enemy.typedIndex].classList.add('active');
+
+                            if (enemy.typedIndex >= enemy.content.length) this.destroyEnemy(enemy);
+                            hit = true;
+                        } else {
+                            this.resetWordProgress(enemy);
+                            this.processMiss();
+                        }
+                    } else {
+                        // Пошук нового слова
+                        const candidates = this.enemies
+                            .filter(e => e.content.startsWith(key))
+                            .sort((a, b) => b.x - a.x);
+
+                        if (candidates.length > 0) {
+                            const enemy = candidates[0];
+                            this.wordTargetId = enemy.id;
+
+                            enemy.el.classList.add('locked-target');
+                            this.enemies.forEach(e => { if (e.id !== enemy.id) e.el.classList.add('dimmed'); });
+
+                            enemy.typedIndex = 1;
+                            const chars = enemy.el.querySelectorAll('.word-char');
+                            chars[0].classList.add('done');
+                            if (chars[1]) chars[1].classList.add('active');
+
+                            this.processHit(enemy);
+                            if (enemy.content.length === 1) this.destroyEnemy(enemy);
+                            hit = true;
+                        }
+                    }
+                } else {
+                    // Режим символів (Шахеди)
+                    const match = this.enemies
+                        .filter(e => e.content === key)
+                        .sort((a, b) => b.x - a.x)[0];
+
+                    if (match) {
+                        this.processHit(match);
+                        this.destroyEnemy(match);
+                        hit = true;
+                    }
+                }
+
+                if (!hit && !this.wordTargetId) this.processMiss();
+            },
+
+            processHit(enemy) {
+                this.shotsHit++;
+                this.combo++;
+                if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+                AudioController.play('shoot');
+                this.spawnLaser(enemy.el);
+                this.updateUI();
+            },
+
+            processMiss() {
+                this.combo = 0;
+                AudioController.play('miss');
+                document.body.classList.add('miss-flash');
+                setTimeout(() => document.body.classList.remove('miss-flash'), 100);
+                this.updateUI();
+            },
+
+            resetWordProgress(enemy) {
+                enemy.typedIndex = 0;
+                const chars = enemy.el.querySelectorAll('.word-char');
+                chars.forEach(c => c.classList.remove('done', 'active'));
+                this.wordTargetId = null;
+                this.enemies.forEach(e => e.el.classList.remove('dimmed', 'locked-target'));
+            },
+
+            destroyEnemy(enemy) {
+                AudioController.play('hit');
+                const rect = enemy.el.getBoundingClientRect();
+                this.spawnExplosion(rect.left + rect.width / 2 - 40, enemy.y);
+
+                this.adjustDifficulty(0.015);
+                enemy.el.remove();
+                this.enemies = this.enemies.filter(e => e.id !== enemy.id);
+
+                if (this.wordTargetId === enemy.id) {
+                    this.wordTargetId = null;
+                    this.enemies.forEach(e => e.el.classList.remove('dimmed'));
+                }
+            },
+
+            takeDamage(yPos) {
+                if (this.health <= 0) return;
+
+                this.health--;
+                this.combo = 0;
+                AudioController.play('damage');
+                this.adjustDifficulty(-0.1);
+                this.updateUI();
+
+                const size = 30 + Math.random() * 40;
+                const crater = document.createElement('div');
+                crater.className = 'impact-crater';
+                crater.style.width = size + 'px';
+                crater.style.height = size + 'px';
+                crater.style.top = yPos + 'px';
+                crater.style.left = (Math.random() * 30 - 10) + 'px';
+                crater.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+                this.dom.wall.appendChild(crater);
+
+                this.spawnDebris(yPos);
+                document.body.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+                setTimeout(() => document.body.style.transform = 'none', 80);
+
+                if (this.health <= 0) this.gameOver(false);
+            },
+
+            adjustDifficulty(change) {
+                this.difficultyMultiplier += change;
+                this.difficultyMultiplier = Math.max(0.5, Math.min(2.5, this.difficultyMultiplier));
+            },
+
+            // --- ЕФЕКТИ ---
+
+            spawnLaser(targetEl) {
+                const rect = targetEl.getBoundingClientRect();
+                const tx = rect.left + rect.width / 2;
+                const ty = rect.top + rect.height / 2;
+                const sx = window.innerWidth;
+                const sy = window.innerHeight;
+
+                const dist = Math.hypot(tx - sx, ty - sy);
+                const angle = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
+
+                const laser = document.createElement('div');
+                laser.className = 'laser';
+                laser.style.width = dist + 'px';
+                laser.style.top = sy + 'px';
+                laser.style.left = sx + 'px';
+                laser.style.transform = `rotate(${angle}deg)`;
+
+                this.dom.area.appendChild(laser);
+                requestAnimationFrame(() => {
+                    laser.style.opacity = 0;
+                    setTimeout(() => laser.remove(), 150);
+                });
+            },
+
+            spawnExplosion(x, y) {
+                const exp = document.createElement('div');
+                exp.className = 'explosion';
+                exp.style.left = x + 'px';
+                exp.style.top = y + 'px';
+                this.dom.area.appendChild(exp);
+                setTimeout(() => exp.remove(), 350);
+            },
+
+            spawnDebris(y) {
+                const rect = this.dom.wall.getBoundingClientRect();
+                for (let i = 0; i < 8; i++) {
+                    const deb = document.createElement('div');
+                    deb.className = 'wall-debris';
+                    deb.style.left = (rect.left + Math.random() * 10) + 'px';
+                    deb.style.top = (y - 20 + Math.random() * 40) + 'px';
+
+                    const s = 4 + Math.random() * 6;
+                    deb.style.width = s + 'px'; deb.style.height = s + 'px';
+                    deb.style.backgroundColor = Math.random() > 0.5 ? '#334155' : '#1e293b';
+                    deb.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+
+                    this.dom.area.appendChild(deb);
+                    setTimeout(() => deb.remove(), 1000);
+                }
+            },
+
+            // --- ЦИКЛ ГРИ ---
+
+            updateUI() {
+                this.dom.score.textContent = this.shotsHit;
+                this.dom.health.textContent = `${this.health}/${this.maxHealth}`;
+                this.dom.timer.textContent = Math.ceil(this.timeLeft);
+
+                if (this.timeLeft <= 10) this.dom.timer.classList.add('timer-warning');
+                else this.dom.timer.classList.remove('timer-warning');
+
+                if (this.combo >= 3) {
+                    this.dom.comboBox.classList.remove('hidden');
+                    this.dom.comboVal.textContent = "x" + this.combo;
+                    if (this.combo >= 10) {
+                        this.dom.comboVal.classList.add('combo-glow');
+                        setTimeout(() => this.dom.comboVal.classList.remove('combo-glow'), 300);
+                    }
+                } else {
+                    this.dom.comboBox.classList.add('hidden');
+                }
+
+                const ratio = this.health / this.maxHealth;
+                if (ratio > 0.5) {
+                    this.dom.health.style.color = 'var(--col-success)';
+                    this.dom.wall.className = '';
+                    this.dom.overlay.style.background = 'radial-gradient(circle, transparent 60%, rgba(239, 68, 68, 0) 100%)';
+                } else if (ratio > 0.2) {
+                    this.dom.health.style.color = 'var(--col-warning)';
+                    this.dom.wall.className = '';
+                    this.dom.overlay.style.background = 'radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0.3) 100%)';
+                } else {
+                    this.dom.health.style.color = 'var(--col-danger)';
+                    this.dom.wall.className = 'critical';
+                    this.dom.overlay.style.background = 'radial-gradient(circle, transparent 30%, rgba(239, 68, 68, 0.6) 100%)';
+                }
+            },
+
+            loop(timestamp) {
+                if (!this.active || this.paused) return;
+
+                const dt = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+
+                this.timeLeft -= dt / 1000;
+                if (this.timeLeft <= 0) {
+                    this.timeLeft = 0;
+                    this.updateUI();
+                    this.gameOver(true);
+                    return;
+                }
+
+                this.updateUI();
+
+                if (timestamp >= this.nextSpawnTime) {
+                    this.spawnEnemy();
+                    const currentRate = this.levelConfig.spawnRate / Math.sqrt(this.difficultyMultiplier);
+                    this.nextSpawnTime = timestamp + Math.max(800, currentRate);
+                }
+
+                const wallPos = window.innerWidth - 80;
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const e = this.enemies[i];
+                    e.x += e.speed * (dt / 1000);
+                    e.el.style.transform = `translate3d(${e.x}px, ${e.y}px, 0)`;
+
+                    if (e.x >= wallPos - 40) {
+                        this.takeDamage(e.y);
+                        this.spawnExplosion(e.x + 40, e.y);
+                        e.el.remove();
+                        this.enemies.splice(i, 1);
+
+                        if (e.id === this.wordTargetId) {
+                            this.wordTargetId = null;
+                            this.enemies.forEach(en => en.el.classList.remove('dimmed'));
+                        }
+                    }
+                }
+
+                this.rafId = requestAnimationFrame(this.loop.bind(this));
+            },
+
+            gameOver(timeUp) {
+                this.active = false;
+                cancelAnimationFrame(this.rafId);
+
+                if (timeUp) {
+                    this.dom.endTitle.innerHTML = '<i class="fa-solid fa-flag-checkered"></i> ЧАС ВИЙШОВ';
+                    this.dom.endTitle.style.color = 'var(--col-warning)';
+                } else {
+                    this.dom.endTitle.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ПРОРИВ';
+                    this.dom.endTitle.style.color = 'var(--col-danger)';
+                }
+
+                this.dom.endScore.textContent = this.shotsHit;
+                this.dom.endCombo.textContent = this.maxCombo;
+                const acc = this.shotsFired > 0 ? Math.round((this.shotsHit / this.shotsFired) * 100) : 0;
+                this.dom.endAcc.textContent = acc + '%';
+
+                if (acc >= 90) this.dom.endAcc.style.color = 'var(--col-success)';
+                else if (acc >= 70) this.dom.endAcc.style.color = 'var(--col-warning)';
+                else this.dom.endAcc.style.color = 'var(--col-danger)';
+
+                const key = `cityDef_hs_${document.getElementById('level-select').value}`;
+                const saved = localStorage.getItem(key) || 0;
+                if (this.shotsHit > saved) {
+                    localStorage.setItem(key, this.shotsHit);
+                    this.dom.endHigh.textContent = `НОВИЙ РЕКОРД! (ПОПЕРЕДНІЙ: ${saved})`;
+                } else {
+                    this.dom.endHigh.textContent = `РЕКОРД: ${saved}`;
+                }
+
+                this.dom.over.classList.remove('hidden');
+            }
+        };
+
+        // --- 5. ГЛОБАЛЬНІ ПОДІЇ ---
+        document.getElementById('pause-btn').addEventListener('click', () => game.togglePause());
+        document.getElementById('stop-btn').addEventListener('click', () => game.quit());
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (game.active) game.togglePause();
+                return;
+            }
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                game.handleInput(e.key);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
