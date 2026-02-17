@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Друкарик | Редактор для дітей</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind config (keep this AFTER the CDN like in the original monolith) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    colors: {
+                        'neo-yellow': '#FFDE00',
+                        'neo-blue': '#3B82F6',
+                        'neo-red': '#FF4D4D',
+                        'neo-green': '#00E055',
+                        'neo-purple': '#A855F7',
+                        'neo-dark': '#1a1a1a',
+                        'dark-bg': '#121212',
+                        'dark-card': '#1e1e1e',
+                    },
+                    boxShadow: {
+                        'neo': '4px 4px 0px 0px #000000',
+                        'neo-sm': '2px 2px 0px 0px #000000',
+                        'neo-lg': '8px 8px 0px 0px #000000',
+                    }
+                }
+            }
+        }
+    </script>
+
+
+    
+<!-- styles moved to style.css -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body
+    class="bg-neo-yellow dark:bg-dark-bg flex flex-col selection:bg-neo-purple selection:text-white transition-colors duration-300">
+
+    <!-- HEADER -->
+    <header
+        class="sticky top-0 flex-none bg-neo-yellow dark:bg-dark-card border-b-4 border-black p-3 flex justify-between items-center z-50">
+        <div class="flex items-center gap-4 select-none">
+            <div
+                class="w-12 h-12 sm:w-14 sm:h-14 bg-neo-blue border-4 border-black rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl shadow-neo-sm transform -rotate-3">
+                <i class="fas fa-keyboard"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black uppercase dark:text-white tracking-tight">Друкарик</h1>
+        </div>
+
+        <div class="flex gap-2 sm:gap-3">
+            <button onmousedown="event.preventDefault()" onclick="App.toggleTheme()"
+                class="neo-btn bg-gray-700 text-white w-12 h-12 sm:w-14 sm:h-14" title="Тема" aria-label="Змінити тему">
+                <i id="theme-icon" class="fas fa-moon text-lg sm:text-xl"></i>
+            </button>
+
+            <button onmousedown="event.preventDefault()" onclick="App.clear()"
+                class="neo-btn bg-neo-red text-white w-12 h-12 sm:w-14 sm:h-14" title="Видалити"
+                aria-label="Видалити весь текст">
+                <i class="fas fa-trash-alt text-lg sm:text-xl"></i>
+            </button>
+
+            <label class="neo-btn bg-orange-400 text-black w-12 h-12 sm:w-14 sm:h-14 cursor-pointer" title="Відкрити"
+                aria-label="Відкрити файл">
+                <i class="fas fa-folder-open text-lg sm:text-xl"></i>
+                <input id="file-input" type="file" accept=".txt,.html" class="hidden" />
+            </label>
+
+            <button onmousedown="event.preventDefault()" onclick="App.askSave()"
+                class="neo-btn bg-neo-green px-4 sm:px-6 h-12 sm:h-14 gap-2 text-sm sm:text-base" aria-label="Зберегти">
+                <i class="fas fa-save text-lg sm:text-xl"></i>
+                <span class="hidden md:inline font-black uppercase">Зберегти</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOOLS TOOLBAR -->
+    <div
+        class="sticky top-[76px] sm:top-[84px] flex-none bg-neo-purple border-b-4 border-black p-2 overflow-x-auto no-scrollbar z-40">
+        <div class="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3 justify-center min-w-max px-2">
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <button onmousedown="event.preventDefault()" onclick="Editor.exec('undo')"
+                    class="neo-btn bg-white w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl" aria-label="Скасувати">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button onmousedown="event.preventDefault()" onclick="Editor.exec('redo')"
+                    class="neo-btn bg-white w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl" aria-label="Повторити">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <button id="cmd-bold" onmousedown="event.preventDefault()" onclick="Editor.exec('bold')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl font-black"
+                    aria-label="Жирний">Ж</button>
+                <button id="cmd-italic" onmousedown="event.preventDefault()" onclick="Editor.exec('italic')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl italic font-black"
+                    aria-label="Курсив">К</button>
+                <button id="cmd-underline" onmousedown="event.preventDefault()" onclick="Editor.exec('underline')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl underline font-black"
+                    aria-label="Підкреслення">Ч</button>
+            </div>
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <button id="sz-3" onmousedown="event.preventDefault()" onclick="Editor.setSize('3')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Малий розмір">М</button>
+                <button id="sz-5" onmousedown="event.preventDefault()" onclick="Editor.setSize('5')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Середній розмір">С</button>
+                <button id="sz-7" onmousedown="event.preventDefault()" onclick="Editor.setSize('7')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Великий розмір">В</button>
+            </div>
+
+            <div id="palette"
+                class="flex gap-2 bg-white border-4 border-black p-1.5 rounded-2xl shadow-neo-sm h-12 sm:h-14 items-center">
+            </div>
+        </div>
+    </div>
+
+    <!-- EMOJI TOOLBAR -->
+    <div
+        class="sticky top-[148px] sm:top-[160px] flex-none bg-teal-300 dark:bg-gray-800 border-b-4 border-black p-2 z-40">
+        <!-- ✅ overflow-y-visible + py-1 щоб тінь кубіка не різалась -->
+        <div
+            class="max-w-4xl mx-auto flex gap-3 justify-center items-center overflow-x-auto overflow-y-visible no-scrollbar py-1 px-2">
+            <button onmousedown="event.preventDefault()" onclick="Editor.renderEmojis()"
+                class="neo-btn bg-neo-yellow w-12 h-12 sm:w-14 sm:h-14 shrink-0 text-2xl sm:text-3xl shadow-neo-sm"
+                aria-label="Перемішати емодзі">🎲</button>
+            <div id="emojis" class="flex gap-2 min-w-max"></div>
+        </div>
+    </div>
+
+    <!-- EDITOR AREA -->
+    <main class="flex-grow p-4 sm:p-8 flex flex-col bg-neo-yellow/10 dark:bg-dark-bg">
+        <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col">
+            <div
+                class="flex-grow bg-white dark:bg-dark-card border-4 border-black shadow-neo-lg rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col">
+                <div id="editor" contenteditable="true" spellcheck="false"
+                    data-placeholder="Почни писати тут свою неймовірну історію..."
+                    class="flex-grow p-6 sm:p-14 outline-none text-2xl sm:text-4xl leading-relaxed font-bold text-neo-dark dark:text-white min-h-[400px]">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- STATUS BAR -->
+    <div class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40">
+        <div
+            class="bg-white dark:bg-dark-card border-4 border-black px-4 py-2 sm:px-6 sm:py-3 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl shadow-neo dark:text-white">
+            <span id="word-count">0</span> СЛІВ
+        </div>
+    </div>
+
+    <!-- TOASTS -->
+    <div id="toasts"
+        class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-max"></div>
+
+    <!-- MODAL WINDOW -->
+    <div id="modal" class="fixed inset-0 bg-black/70 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div
+            class="bg-white dark:bg-dark-card border-4 border-black shadow-neo-lg rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 w-full max-w-lg text-center">
+            <h3 id="modal-title" class="text-2xl sm:text-3xl font-black uppercase mb-4 dark:text-white"></h3>
+            <p id="modal-msg" class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 sm:mb-10 font-bold"></p>
+            <div id="modal-actions" class="flex flex-col gap-3 sm:gap-4"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

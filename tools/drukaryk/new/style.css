@@ -1,0 +1,147 @@
+body {
+            background-image: radial-gradient(#000 8%, transparent 8%);
+            background-size: 24px 24px;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+
+        html.dark body {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.12) 8%, transparent 8%);
+        }
+
+        .neo-btn {
+            border-radius: 1.25rem;
+            border: 4px solid #000;
+            box-shadow: 4px 4px 0px 0px #000;
+            transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            outline: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .neo-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px #000;
+        }
+
+        .neo-btn.active {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
+        html.dark .neo-btn.active {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .color-swatch {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            border: 3px solid #000;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.12);
+        }
+
+        /* ✅ active обводка не лізе на сусідів (inset) */
+        .color-swatch.active {
+            box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 6px #000;
+            transform: scale(1.08);
+        }
+
+        /*
+          Placeholder for contenteditable.
+          IMPORTANT:
+          - :empty is unreliable because browsers often insert <br>
+          - We toggle .is-empty from JS based on textContent.
+          - The placeholder must NOT take layout space, otherwise the caret
+            jumps under it. So we render it as an absolute overlay.
+        */
+        #editor {
+            position: relative;
+        }
+
+        #editor.is-empty::before {
+            content: attr(data-placeholder);
+            position: absolute;
+            inset: 0;
+            padding: inherit; /* match Tailwind padding (p-6 / sm:p-14) */
+            color: #94a3b8;
+            font-style: italic;
+            pointer-events: none;
+            user-select: none;
+            white-space: pre-wrap;
+            overflow: hidden;
+        }
+
+        /* Optional: a tiny fade when focused so the caret is super visible */
+        #editor.is-empty:focus::before {
+            opacity: 0.85;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(28px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-anim {
+            animation: slideUp 0.25s ease-out forwards;
+        }
+
+        /* Accessibility: focus ring (helps on keyboard) */
+        .neo-btn:focus-visible,
+        .color-swatch:focus-visible {
+            outline: 4px solid rgba(0, 0, 0, 0.7);
+            outline-offset: 2px;
+        }
+
+        html.dark .neo-btn:focus-visible,
+        html.dark .color-swatch:focus-visible {
+            outline: 4px solid rgba(255, 255, 255, 0.7);
+        }
+
+/* ------------------------------------------------------------------
+   Fallback for custom Tailwind tokens (in case CDN config is ignored)
+   This guarantees the same look even if tailwind.config isn't applied.
+-------------------------------------------------------------------*/
+.bg-neo-yellow { background-color: #FFDE00 !important; }
+.bg-neo-blue { background-color: #3B82F6 !important; }
+.bg-neo-red { background-color: #FF4D4D !important; }
+.bg-neo-green { background-color: #00E055 !important; }
+.bg-neo-purple { background-color: #A855F7 !important; }
+.bg-neo-dark { background-color: #1a1a1a !important; }
+.bg-dark-bg { background-color: #121212 !important; }
+.bg-dark-card { background-color: #1e1e1e !important; }
+
+.text-neo-dark { color: #1a1a1a !important; }
+
+.shadow-neo { box-shadow: 4px 4px 0px 0px #000 !important; }
+.shadow-neo-sm { box-shadow: 2px 2px 0px 0px #000 !important; }
+.shadow-neo-lg { box-shadow: 8px 8px 0px 0px #000 !important; }
