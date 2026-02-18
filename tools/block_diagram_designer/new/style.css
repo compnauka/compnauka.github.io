@@ -1,0 +1,572 @@
+/* Глобальні змінні кольорів */
+:root {
+    --primary: #3f51b5;
+    --primary-light: #757de8;
+    --primary-dark: #002984;
+    --secondary: #ff9800;
+    --success: #4caf50;
+    --danger: #f44336;
+    --neutral: #f5f5f5;
+    --dark: #212121;
+    --light: #ffffff;
+    --gray: #9e9e9e;
+    --shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--light);
+    display: flex;
+    flex-direction: column;
+    color: var(--dark);
+    /* Забороняємо стандартне виділення тексту при перетягуванні */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Заголовок */
+header {
+    background-color: var(--primary);
+    color: var(--light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+}
+
+/* Основний контейнер */
+.container {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Бокова панель */
+.sidebar {
+    width: 220px;
+    min-width: 180px;
+    background-color: var(--light);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    z-index: 5;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar h3 {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: var(--primary-dark);
+    font-weight: 500;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Кнопки фігур */
+.shape-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shape-button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--neutral);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: var(--dark);
+    min-height: 44px; /* touch-friendly */
+    touch-action: manipulation;
+}
+
+.shape-button:hover, .shape-button:active {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    background-color: #eeeeee;
+}
+
+/* Вибір кольору */
+.color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.color-option {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    touch-action: manipulation;
+}
+
+.color-option:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.color-option.selected {
+    border: 2.5px solid var(--dark);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+}
+
+/* Кнопки інструментів */
+.tools {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tool-button {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--neutral);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    color: var(--dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-height: 44px;
+    touch-action: manipulation;
+}
+
+.tool-button:hover {
+    background-color: #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.tool-button.primary {
+    background-color: var(--primary);
+    color: white;
+}
+.tool-button.primary:hover { background-color: var(--primary-dark); }
+
+.tool-button.danger {
+    background-color: var(--danger);
+    color: white;
+}
+.tool-button.danger:hover { background-color: #d32f2f; }
+
+/* Контейнер полотна */
+.canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background-color: white;
+    background-image:
+        linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+    touch-action: none; /* керуємо самі */
+}
+
+/* Полотно */
+#flowchart-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2000px;
+    height: 2000px;
+    transform-origin: 0 0;
+}
+
+/* SVG шар з'єднань (всередині #flowchart-canvas) */
+#connectors-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Маркери з'єднань (handles) — SVG circle елементи */
+#connectors-layer circle.conn-handle {
+    cursor: crosshair;
+    pointer-events: all;
+    opacity: 0;
+    transition: opacity 0.15s, r 0.15s;
+}
+
+#connectors-layer circle.conn-handle.visible {
+    opacity: 0.55;
+}
+
+#connectors-layer circle.conn-handle:hover,
+#connectors-layer circle.conn-handle.hovered {
+    opacity: 1;
+}
+
+/* Базовий стиль фігур */
+.shape {
+    position: absolute;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 10px 14px;
+    min-width: 120px;
+    min-height: 50px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1;
+    font-size: 17px;
+    transition: box-shadow 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.shape.selected {
+    outline: 2.5px dashed var(--primary);
+    outline-offset: 3px;
+    z-index: 2;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+
+/* Початок/Кінець — овал */
+.shape.start-end {
+    border-radius: 35px;
+    background-color: var(--success);
+    color: white;
+}
+
+/* Дія — прямокутник */
+.shape.process {
+    border-radius: 8px;
+    background-color: rgb(3, 169, 244);
+    color: #fff;
+}
+
+/* Умова — ромб */
+.shape.decision {
+    transform: rotate(45deg);
+    background-color: var(--secondary);
+    aspect-ratio: 1 / 1;
+    color: white;
+    border-radius: 4px;
+}
+
+/* Текст в ромбі — контр-поворот */
+.shape.decision .content {
+    transform: rotate(-45deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    height: 90%;
+    word-break: break-word;
+}
+
+/* Ввід/Вивід — паралелограм */
+.shape.input-output {
+    border-radius: 4px;
+    transform: skew(-20deg);
+    background-color: var(--primary);
+    color: white;
+}
+
+.shape.input-output .content {
+    transform: skew(20deg);
+}
+
+/* Контроль масштабу */
+.zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+    background-color: white;
+    padding: 6px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.zoom-button {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    outline: none;
+    touch-action: manipulation;
+}
+
+.zoom-button:hover { background-color: var(--primary-dark); }
+.zoom-button:active { transform: scale(0.92); }
+
+.zoom-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 52px;
+    user-select: none;
+}
+
+/* Модальні вікна */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background-color: white;
+    padding: 24px;
+    border-radius: 14px;
+    width: 340px;
+    max-width: 92vw;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+
+.modal h2 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.modal textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    resize: none;
+    height: 110px;
+    transition: border-color 0.2s ease;
+    font-family: 'Roboto', sans-serif;
+}
+
+.modal textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.18);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.modal-button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    touch-action: manipulation;
+}
+
+.modal-button.cancel {
+    background-color: #f5f5f5;
+    color: var(--dark);
+}
+.modal-button.cancel:hover { background-color: #e0e0e0; }
+
+.modal-button.save {
+    background-color: var(--primary);
+    color: white;
+}
+.modal-button.save:hover { background-color: var(--primary-dark); }
+
+/* Кнопка довідки */
+.help-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+}
+
+.help-button:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Панель довідки */
+.help-content {
+    display: none;
+    position: fixed;
+    background-color: white;
+    border-radius: 14px;
+    padding: 20px 20px 20px 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    z-index: 1000;
+    max-width: 320px;
+    width: 90vw;
+    right: 16px;
+    top: 70px;
+}
+
+.help-content.active { display: block; }
+
+.help-content h3 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 17px;
+    font-weight: 500;
+    padding-right: 24px;
+}
+
+.help-content ul {
+    padding-left: 18px;
+    margin-bottom: 0;
+    margin-top: 8px;
+}
+
+.help-content li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.help-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    color: var(--gray);
+    cursor: pointer;
+    z-index: 10;
+    padding: 2px 8px;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+    line-height: 1;
+}
+.help-close:hover {
+    background: #eee;
+    color: var(--danger);
+}
+
+/* Повідомлення / підтвердження */
+#message-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1200;
+    backdrop-filter: blur(3px);
+}
+#message-modal.active { display: flex; }
+#message-modal .modal-content {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    min-width: 280px;
+    max-width: 90vw;
+    text-align: center;
+    font-size: 16px;
+}
+#message-modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Мітки з'єднань */
+.connection-label {
+    position: absolute;
+    background-color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+    border: 1px solid #333;
+}
+.connection-label.yes { color: var(--success); border-color: var(--success); }
+.connection-label.no  { color: var(--danger);  border-color: var(--danger);  }
+
+/* Адаптивність для малих екранів */
+@media (max-width: 600px) {
+    .sidebar {
+        width: 160px;
+        padding: 10px;
+        font-size: 13px;
+    }
+    h1 { font-size: 17px; }
+    .shape-button { padding: 8px; font-size: 12px; min-height: 40px; }
+    .tool-button  { font-size: 12px; min-height: 40px; }
+    .color-option { width: 28px; height: 28px; }
+}

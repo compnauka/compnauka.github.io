@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комірник | Табличний процесор</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Підключення локальних стилів -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <div id="header" class="bg-blue-600 text-white shadow-md z-30 transition-colors duration-300">
+        <div class="p-3 flex justify-between items-center flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-boxes-stacked text-2xl"></i>
+                <h1 class="font-black text-2xl tracking-wide">Комірник</h1>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <div class="flex bg-white/20 rounded-lg p-1 gap-1">
+                    <button onclick="changeTheme('blue')"
+                        class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white/80" title="Наука"></button>
+                    <button onclick="changeTheme('green')"
+                        class="w-6 h-6 rounded-full bg-green-500 border-2 border-white/50" title="Природа"></button>
+                    <button onclick="changeTheme('pink')"
+                        class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white/50" title="Творчість"></button>
+                </div>
+
+                <button onclick="undo()" id="undoBtn"
+                    class="undo-redo-btn px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-bold text-sm transition border border-white/30"
+                    title="Скасувати (Ctrl+Z)">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button onclick="redo()" id="redoBtn"
+                    class="undo-redo-btn px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-bold text-sm transition border border-white/30"
+                    title="Повернути (Ctrl+Y)">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                <button onclick="askConfirm('Завантажити приклад? Поточні дані зникнуть.', loadExample)"
+                    class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-bold text-sm transition border border-white/30">
+                    <i class="fa-solid fa-lightbulb"></i> Приклад
+                </button>
+                <button onclick="askConfirm('Очистити всю таблицю? Всі дані будуть видалені!', clearAll)"
+                    class="px-4 py-1 bg-red-500/90 hover:bg-red-600 rounded font-bold text-sm transition border border-white/30 shadow-lg">
+                    <i class="fa-solid fa-trash-can"></i> Очистити таблицю
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-slate-50 p-2 border-b border-slate-200 flex flex-wrap gap-3 items-center text-slate-700">
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="insertChar('+')"
+                    class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg"
+                    title="Плюс"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="insertChar('-')"
+                    class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg"
+                    title="Мінус"><i class="fa-solid fa-minus"></i></button>
+                <button onclick="insertChar('*')"
+                    class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg"
+                    title="Помножити"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="insertChar('/')"
+                    class="w-9 h-9 flex items-center justify-center rounded hover:bg-orange-100 text-orange-600 font-bold text-lg"
+                    title="Поділити"><i class="fa-solid fa-divide"></i></button>
+            </div>
+
+            <div class="w-px h-8 bg-slate-300"></div>
+
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="applyFunc('SUM')"
+                    class="px-3 h-9 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition"
+                    title="Сума виділених клітинок">СУМА</button>
+                <button onclick="applyFunc('AVG')"
+                    class="px-3 h-9 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition"
+                    title="Середнє значення">СЕР</button>
+                <button onclick="applyFunc('MAX')"
+                    class="px-3 h-9 rounded hover:bg-purple-100 text-purple-700 font-bold text-sm transition"
+                    title="Максимальне значення">МАКС</button>
+                <button onclick="applyFunc('MIN')"
+                    class="px-3 h-9 rounded hover:bg-purple-100 text-purple-700 font-bold text-sm transition"
+                    title="Мінімальне значення">МІН</button>
+            </div>
+
+            <div class="w-px h-8 bg-slate-300"></div>
+
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <button onclick="toggleStyle('style-border-all')"
+                    class="w-9 h-9 rounded hover:bg-gray-100 text-gray-700" title="Границі"><i
+                        class="fa-solid fa-border-all"></i></button>
+                <button onclick="cycleColor()" class="w-9 h-9 rounded hover:bg-yellow-100 text-yellow-600"
+                    title="Колір фону"><i class="fa-solid fa-fill-drip"></i></button>
+                <button onclick="autoFitColumns()"
+                    class="px-3 h-9 rounded bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm"
+                    title="Автоматично підібрати ширину колонок за вмістом">
+                    Автоширина
+                </button>
+                <button onclick="makeChart()"
+                    class="px-3 h-9 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm ml-1"
+                    title="Створити графік">
+                    <i class="fa-solid fa-chart-pie"></i> Графік
+                </button>
+
+                <button onclick="exportCSV()"
+                    class="px-3 h-9 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-sm ml-1"
+                    title="Експорт у CSV">
+                    <i class="fa-solid fa-file-csv"></i> Зберегти CSV
+                </button>
+                <button onclick="triggerCSVImport()"
+                    class="px-3 h-9 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-sm"
+                    title="Імпорт з CSV">
+                    <i class="fa-solid fa-file-import"></i> Завантажити CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-2 border-b border-slate-200 flex items-center">
+            <div class="w-16 text-center font-bold text-slate-400 border rounded bg-slate-50 mr-2 py-1"
+                id="activeCellRef">A1</div>
+            <span class="text-slate-400 font-serif italic mr-2">fx</span>
+            <input id="formulaBar" type="text"
+                class="flex-1 bg-transparent outline-none font-mono text-slate-700 placeholder-slate-300"
+                placeholder="Введіть число або формулу (наприклад: =A1+B1)..." maxlength="200">
+            <span id="saveBadge" class="text-xs font-bold text-green-600 opacity-0 transition px-2">Збережено</span>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-auto bg-slate-100 p-4 flex justify-center items-start">
+        <div id="gridWrap" class="bg-white shadow-xl rounded overflow-auto max-w-full relative">
+            <!-- Hover "+" buttons for вставки рядків/колонок -->
+            <button id="insertColBtn" class="insert-btn hidden" title="Вставити колонку"><i
+                    class="fa-solid fa-plus"></i></button>
+            <button id="insertRowBtn" class="insert-btn hidden" title="Вставити рядок"><i
+                    class="fa-solid fa-plus"></i></button>
+
+            <table id="grid">
+                <colgroup id="colgroup"></colgroup>
+                <thead>
+                    <tr id="headRow">
+                        <th class="row-header">#</th>
+                    </tr>
+                </thead>
+                <tbody id="bodyRows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- hidden input for CSV import -->
+    <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" />
+
+    <!-- Modals -->
+    <div id="msgModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="mb-4 text-4xl text-blue-500"><i class="fa-solid fa-circle-info"></i></div>
+            <h3 id="msgTitle" class="text-xl font-bold mb-2">Інфо</h3>
+            <p id="msgText" class="text-slate-600 mb-6"></p>
+            <button onclick="closeModal('msgModal')"
+                class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">Гаразд</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-slate-800">Підтвердження</h3>
+            <p id="confirmText" class="text-slate-600 mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button id="confirmBtnYes"
+                    class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Так</button>
+                <button onclick="closeModal('confirmModal')"
+                    class="bg-slate-400 text-white px-6 py-2 rounded font-bold hover:bg-slate-500">Ні</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="modal-overlay">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col p-4 animate-[modalPop_0.3s]">
+            <div class="flex justify-between items-center border-b pb-2 mb-2">
+                <div class="flex gap-2">
+                    <button onclick="setChartType('bar')"
+                        class="px-3 py-1 bg-blue-100 text-blue-700 rounded font-bold text-sm">Стовпчики</button>
+                    <button onclick="setChartType('pie')"
+                        class="px-3 py-1 bg-pink-100 text-pink-700 rounded font-bold text-sm">Пиріг</button>
+                    <button onclick="setChartType('line')"
+                        class="px-3 py-1 bg-purple-100 text-purple-700 rounded font-bold text-sm">Лінія</button>
+                </div>
+                <button onclick="closeModal('chartModal')" class="text-slate-400 hover:text-red-500 text-2xl"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 relative"><canvas id="theChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Підключення логіки (порядок важливий) -->
+    <!-- Aria live region для скрінрідерів -->
+    <div id="ariaAnnouncer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+    <script src="logic.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
