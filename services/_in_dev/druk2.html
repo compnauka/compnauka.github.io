@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Справжній Друк!</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+:root {
+  /* Balanced neobrutalism palette — warm neutral base, 4 accent colors */
+  --bg:        #F5F0E8;
+  --black:     #1C1C1C;
+  --white:     #FFFFFF;
+
+  /* Accents */
+  --amber:     #F5A623;
+  --amber-dk:  #C47D0A;
+  --teal:      #2ABFBF;
+  --teal-dk:   #1A8F8F;
+  --coral:     #E8604C;
+  --coral-dk:  #B83C2A;
+  --sage:      #5AAF7A;
+  --sage-dk:   #3A8558;
+  --slate:     #6B7FA3;
+  --slate-dk:  #4A5C80;
+  --lavender:  #9B7FD4;
+
+  /* Stat colors — muted tones */
+  --stat-score:  #FFF0CC;
+  --stat-streak: #CCF0E8;
+  --stat-errors: #FFE0D8;
+  --stat-record: #E8ECFF;
+  --stat-wpm:    #D8F0FF;
+  --stat-acc:    #E0F5E8;
+
+  --border: 3px solid var(--black);
+  --sh:     4px 4px 0 var(--black);
+  --sh-sm:  3px 3px 0 var(--black);
+  --sh-lg:  6px 6px 0 var(--black);
+  --r:      12px;
+  --r-lg:   18px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  background: var(--bg);
+  background-image:
+    linear-gradient(rgba(28,28,28,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28,28,28,.055) 1px, transparent 1px);
+  background-size: 30px 30px;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ── MODALS ───────────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(28,28,28,.75);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+}
+.overlay.hidden { display: none !important; }
+
+.modal-box {
+  background: var(--white);
+  border: 4px solid var(--black);
+  border-radius: 22px;
+  box-shadow: 8px 8px 0 var(--black);
+  padding: 36px 32px;
+  text-align: center;
+  width: 100%; max-width: 420px;
+  animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { opacity:0; transform: scale(.6) translateY(50px); }
+  to   { opacity:1; transform: scale(1)  translateY(0); }
+}
+.modal-box.milestone-box { background: var(--amber); }
+
+.modal-icon  { font-size: 3.6rem; margin-bottom: 12px; color: var(--black); }
+.modal-title { font-size: 2rem; font-weight: 700; color: var(--black); margin-bottom: 8px; }
+.modal-sub   { font-size: 1.1rem; font-weight: 500; color: #444; margin-bottom: 24px; line-height: 1.5; white-space: pre-line; }
+.modal-hint  { margin-top: 14px; font-size: .7rem; text-transform: uppercase; letter-spacing: 2px; color: #888; font-weight: 600; }
+
+/* ── BUTTONS ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.15rem; font-weight: 700;
+  padding: 13px 24px;
+  border: var(--border); border-radius: var(--r);
+  box-shadow: var(--sh); cursor: pointer;
+  transition: transform .08s, box-shadow .08s;
+  white-space: nowrap; outline: none;
+}
+.btn:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--black); }
+.btn:active { transform: translate(4px,4px);   box-shadow: 0 0 0 var(--black); }
+.btn-full   { width: 100%; }
+.btn-lg     { font-size: 1.25rem; padding: 15px 28px; }
+.btn-amber  { background: var(--amber);  color: var(--black); }
+.btn-teal   { background: var(--teal);   color: var(--white); }
+.btn-coral  { background: var(--coral);  color: var(--white); }
+.btn-sage   { background: var(--sage);   color: var(--white); }
+.btn-ghost  { background: #E0E0E0;       color: var(--black); }
+
+/* ── HEADER ───────────────────────────────────────────────── */
+#header {
+  width: 100%; max-width: 1020px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--black); color: var(--amber);
+  border: var(--border); border-color: var(--black);
+  border-radius: 12px;
+  box-shadow: var(--sh-sm);
+  padding: 8px 18px;
+  font-size: 1.2rem; font-weight: 700; letter-spacing: .01em;
+}
+.logo i { font-size: 1.1rem; }
+
+.hcontrols { display: flex; gap: 8px; align-items: center; }
+
+.icon-btn {
+  height: 44px; min-width: 44px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--white); border: var(--border); border-radius: 10px;
+  box-shadow: var(--sh-sm); cursor: pointer;
+  font-family: 'Fredoka', sans-serif;
+  font-size: .85rem; font-weight: 700; letter-spacing: 1px; color: var(--black);
+  transition: transform .08s, box-shadow .08s; outline: none;
+}
+.icon-btn:hover  { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--black); }
+.icon-btn:active { transform: translate(3px,3px);   box-shadow: 0 0 0 var(--black); }
+.icon-btn.muted  { background: var(--coral); color: var(--white); }
+
+/* ── STATS ────────────────────────────────────────────────── */
+#stats-row {
+  width: 100%; max-width: 1020px;
+  display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.stat {
+  flex: 1;
+  background: var(--white);
+  border: var(--border); border-radius: 14px;
+  box-shadow: var(--sh-sm);
+  padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; min-width: 0;
+}
+.stat-icon { font-size: .9rem; }
+.stat-lbl  { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; color: #666; line-height: 1; }
+.stat-val  { font-size: 1.5rem; font-weight: 700; color: var(--black); line-height: 1; }
+
+.stat.s-score   { background: var(--stat-score); }
+.stat.s-streak  { background: var(--stat-streak); }
+.stat.s-errors  { background: var(--stat-errors); }
+.stat.s-record  { background: var(--stat-record); }
+.stat.s-wpm     { background: var(--stat-wpm); }
+.stat.s-acc     { background: var(--stat-acc); }
+
+/* ── PROGRESS ─────────────────────────────────────────────── */
+#prog-wrap {
+  width: 100%; max-width: 1020px;
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 999px; height: 16px; overflow: hidden;
+  box-shadow: var(--sh-sm); flex-shrink: 0;
+}
+#prog-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--teal), var(--sage));
+  border-radius: 999px;
+  transition: width .45s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── WORD DISPLAY ─────────────────────────────────────────── */
+#main-area {
+  flex: 1; width: 100%; max-width: 1020px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; min-height: 0;
+}
+
+#word-display {
+  width: 100%;
+  background: var(--white);
+  border: 4px solid var(--black);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--black);
+  /* FIXED: equal padding top/bottom so word is truly centered */
+  padding: 20px 28px;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 110px;
+  font-size: clamp(2rem, 7vw, 4.2rem);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-align: center;
+  transition: background .12s;
+}
+
+#msg-area {
+  height: 32px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 1.15rem; font-weight: 700;
+  color: var(--sage-dk);
+  opacity: 0;
+  transition: opacity .18s, transform .18s;
+  transform: scale(1);
+}
+
+/* ── KEYBOARD ─────────────────────────────────────────────── */
+#kb-wrap { width: 100%; max-width: 1020px; flex-shrink: 0; }
+
+#kb {
+  background: #C8C8C8;
+  border: 4px solid var(--black);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--black);
+  padding: 10px 10px 10px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.kb-row { display: flex; gap: 5px; justify-content: center; }
+
+.key {
+  background: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--black);
+  height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  flex: 1; min-width: 0;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1rem; font-weight: 600; color: var(--black);
+  cursor: pointer;
+  transition: transform .07s, box-shadow .07s, background .1s;
+  touch-action: manipulation; user-select: none;
+}
+.key:active, .key.pressed {
+  transform: translate(4px,4px);
+  box-shadow: 0 0 0 var(--black);
+}
+
+.key.special {
+  background: #ADADAD; color: #3A3A3A;
+  font-size: .65rem; cursor: default;
+  font-weight: 600;
+}
+.key.special i { font-size: .9rem; }
+
+/* Hint — amber pulse */
+.key.hint {
+  background: var(--amber) !important;
+  color: var(--black) !important;
+  border-color: var(--black) !important;
+  animation: hintPulse 1.0s ease-in-out infinite;
+  z-index: 2;
+}
+.key.hint.pressed, .key.hint:active {
+  animation: none;
+  transform: translate(4px,4px);
+  box-shadow: 0 0 0 var(--black);
+}
+@keyframes hintPulse {
+  0%,100% { box-shadow: 4px 4px 0 var(--black); }
+  50%     { box-shadow: 6px 6px 0 var(--black); transform: translate(-1px,-1px); }
+}
+
+/* Wrong — coral flash */
+.key.wrong {
+  background: var(--coral) !important;
+  color: var(--white) !important;
+  animation: none !important;
+}
+/* Correct — teal flash */
+.key.correct {
+  background: var(--teal) !important;
+  color: var(--white) !important;
+  animation: none !important;
+}
+
+/* Width variants */
+.key.w-bs    { flex: 1.6; }
+.key.w-tab   { flex: 1.6; }
+.key.w-caps  { flex: 1.9; }
+.key.w-enter { flex: 2.1; background: #D8E8FF; }
+.key.w-shift { flex: 2.4; }
+.key.w-space { flex: 0 0 44%; max-width: 360px; }
+.key.hidden-key { display: none !important; }
+
+/* ── WORD ANIMATIONS ──────────────────────────────────────── */
+.shake { animation: shake .38s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+  10%,90%     { transform: translateX(-3px); }
+  20%,80%     { transform: translateX(5px);  }
+  30%,50%,70% { transform: translateX(-7px); }
+  40%,60%     { transform: translateX(7px);  }
+}
+.word-wrong { background: #FFE8E4 !important; }
+
+/* milestone trophy float */
+.float { animation: tfloat 2.8s ease-in-out infinite; }
+@keyframes tfloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-14px); }
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  body { gap: 7px; padding: 8px 6px 6px; }
+  .key { height: 36px; font-size: .82rem; border-radius: 6px; box-shadow: 3px 3px 0 var(--black); }
+  .key:active, .key.pressed { transform: translate(3px,3px); }
+  #kb { padding: 7px 6px; gap: 4px; }
+  .kb-row { gap: 3px; }
+  .stat-val { font-size: 1.2rem; }
+  .stat     { padding: 7px 5px; }
+  #word-display { min-height: 80px; padding: 14px 16px; }
+  .logo { padding: 6px 12px; font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── START MODAL ───────────────────────────────────────── -->
+<div id="start-modal" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal-box">
+    <div class="modal-icon"><i class="fa-solid fa-keyboard"></i></div>
+    <h1 class="modal-title">Справжній Друк!</h1>
+    <p class="modal-sub">Натискай клавіші та вчись друкувати<br>швидко і точно!</p>
+    <button id="start-btn" class="btn btn-teal btn-full btn-lg">
+      <i class="fa-solid fa-play"></i> Почати гру
+    </button>
+    <p class="modal-hint" style="margin-top:12px;">Підходить для дітей і дорослих</p>
+  </div>
+</div>
+
+<!-- ── MILESTONE MODAL ───────────────────────────────────── -->
+<div id="milestone-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="modal-box milestone-box">
+    <div class="modal-icon float"><i class="fa-solid fa-trophy"></i></div>
+    <h2 class="modal-title" id="m-title">Супер!</h2>
+    <p class="modal-sub" id="m-text">5 слів!</p>
+    <button id="m-next-btn" class="btn btn-teal btn-full btn-lg">
+      <span id="m-btn-label">Далі</span>
+      <i class="fa-solid fa-arrow-right"></i>
+    </button>
+    <p class="modal-hint" id="m-hint">Натисни будь-яку клавішу</p>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ─────────────────────────────────────── -->
+<div id="confirm-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="modal-box">
+    <div class="modal-icon"><i class="fa-solid fa-globe"></i></div>
+    <h2 class="modal-title">Зміна мови</h2>
+    <p class="modal-sub">Поточний прогрес буде скинуто.<br>Продовжити?</p>
+    <div style="display:flex;gap:10px;">
+      <button id="confirm-cancel" class="btn btn-ghost" style="flex:1;">
+        <i class="fa-solid fa-xmark"></i> Скасувати
+      </button>
+      <button id="confirm-yes" class="btn btn-teal" style="flex:1;">
+        <i class="fa-solid fa-check"></i> Так!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ────────────────────────────────────────────── -->
+<div id="header">
+  <div class="logo">
+    <i class="fa-solid fa-keyboard"></i>
+    Справжній Друк!
+  </div>
+  <div class="hcontrols">
+    <button id="lang-btn" class="icon-btn">
+      <i class="fa-solid fa-globe"></i>
+      <span id="lang-label">UA</span>
+    </button>
+    <button id="sound-btn" class="icon-btn" aria-label="Toggle sound">
+      <i class="fa-solid fa-volume-high"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ── STATS ─────────────────────────────────────────────── -->
+<div id="stats-row">
+  <div class="stat s-score">
+    <i class="fa-solid fa-star stat-icon" style="color:var(--amber-dk);"></i>
+    <span class="stat-lbl" data-label="words">Слова</span>
+    <span class="stat-val" id="st-score">0</span>
+  </div>
+  <div class="stat s-streak">
+    <i class="fa-solid fa-fire stat-icon" style="color:var(--coral);"></i>
+    <span class="stat-lbl" data-label="streak">Серія</span>
+    <span class="stat-val" id="st-streak">0</span>
+  </div>
+  <div class="stat s-errors">
+    <i class="fa-solid fa-circle-xmark stat-icon" style="color:var(--coral-dk);"></i>
+    <span class="stat-lbl" data-label="errors">Помилки</span>
+    <span class="stat-val" id="st-errors">0</span>
+  </div>
+  <div class="stat s-record">
+    <i class="fa-solid fa-medal stat-icon" style="color:var(--slate);"></i>
+    <span class="stat-lbl" data-label="record">Рекорд</span>
+    <span class="stat-val" id="st-record">0</span>
+  </div>
+  <div class="stat s-wpm">
+    <i class="fa-solid fa-gauge-high stat-icon" style="color:var(--teal-dk);"></i>
+    <span class="stat-lbl" data-label="wpm">WPM</span>
+    <span class="stat-val" id="st-wpm">0</span>
+  </div>
+  <div class="stat s-acc">
+    <i class="fa-solid fa-bullseye stat-icon" style="color:var(--sage-dk);"></i>
+    <span class="stat-lbl" data-label="accuracy">Точність</span>
+    <span class="stat-val" id="st-acc">100%</span>
+  </div>
+</div>
+
+<!-- ── PROGRESS ───────────────────────────────────────────── -->
+<div id="prog-wrap"><div id="prog-bar"></div></div>
+
+<!-- ── WORD + MESSAGE ────────────────────────────────────── -->
+<div id="main-area">
+  <div id="word-display" role="status" aria-live="polite"></div>
+  <div id="msg-area">
+    <i id="msg-icon" class="fa-solid fa-check-circle" style="color:var(--sage-dk);"></i>
+    <span id="msg-text"></span>
+  </div>
+</div>
+
+<!-- ── KEYBOARD ───────────────────────────────────────────── -->
+<div id="kb-wrap">
+<div id="kb">
+  <!-- Numbers row -->
+  <div class="kb-row">
+    <div class="key special">`</div>
+    <div class="key special">1</div><div class="key special">2</div>
+    <div class="key special">3</div><div class="key special">4</div>
+    <div class="key special">5</div><div class="key special">6</div>
+    <div class="key special">7</div><div class="key special">8</div>
+    <div class="key special">9</div><div class="key special">0</div>
+    <div class="key special">-</div><div class="key special">=</div>
+    <div class="key special w-bs" data-action="backspace">
+      <i class="fa-solid fa-delete-left"></i>
+    </div>
+  </div>
+  <!-- Row 1 -->
+  <div class="kb-row kb-letter-row" id="row1">
+    <div class="key special w-tab">Tab</div>
+    <div class="key letter" data-char="й">Й</div>
+    <div class="key letter" data-char="ц">Ц</div>
+    <div class="key letter" data-char="у">У</div>
+    <div class="key letter" data-char="к">К</div>
+    <div class="key letter" data-char="е">Е</div>
+    <div class="key letter" data-char="н">Н</div>
+    <div class="key letter" data-char="г">Г</div>
+    <div class="key letter" data-char="ш">Ш</div>
+    <div class="key letter" data-char="щ">Щ</div>
+    <div class="key letter" data-char="з">З</div>
+    <div class="key letter" data-char="х">Х</div>
+    <div class="key letter" data-char="ї">Ї</div>
+    <div class="key special" style="flex:1.2;">\</div>
+  </div>
+  <!-- Row 2 -->
+  <div class="kb-row kb-letter-row" id="row2">
+    <div class="key special w-caps">Caps</div>
+    <div class="key letter" data-char="ф">Ф</div>
+    <div class="key letter" data-char="і">І</div>
+    <div class="key letter" data-char="в">В</div>
+    <div class="key letter" data-char="а">А</div>
+    <div class="key letter" data-char="п">П</div>
+    <div class="key letter" data-char="р">Р</div>
+    <div class="key letter" data-char="о">О</div>
+    <div class="key letter" data-char="л">Л</div>
+    <div class="key letter" data-char="д">Д</div>
+    <div class="key letter" data-char="ж">Ж</div>
+    <div class="key letter" data-char="є">Є</div>
+    <div class="key special w-enter"><i class="fa-solid fa-turn-down"></i> Enter</div>
+  </div>
+  <!-- Row 3 -->
+  <div class="kb-row kb-letter-row" id="row3">
+    <div class="key special w-shift">
+      <i class="fa-solid fa-up-long"></i> Shift
+    </div>
+    <div class="key letter" data-char="ґ">Ґ</div>
+    <div class="key letter" data-char="я">Я</div>
+    <div class="key letter" data-char="ч">Ч</div>
+    <div class="key letter" data-char="с">С</div>
+    <div class="key letter" data-char="м">М</div>
+    <div class="key letter" data-char="и">И</div>
+    <div class="key letter" data-char="т">Т</div>
+    <div class="key letter" data-char="ь">Ь</div>
+    <div class="key letter" data-char="б">Б</div>
+    <div class="key letter" data-char="ю">Ю</div>
+    <div class="key letter" data-char=".">.</div>
+    <div class="key special w-shift">
+      <i class="fa-solid fa-up-long"></i> Shift
+    </div>
+  </div>
+  <!-- Space -->
+  <div class="kb-row">
+    <div class="key w-space" data-code="Space"></div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   AUDIO
+══════════════════════════════════════════════════════════════ */
+const Snd = {
+  ctx: null, muted: false,
+  _init()   { if (!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); },
+  _resume() { if (!this.muted && this.ctx?.state==='suspended') this.ctx.resume().catch(()=>{}); },
+  toggleMute(btn) {
+    this.muted = !this.muted;
+    const ic = btn.querySelector('i');
+    ic.className = this.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+    btn.classList.toggle('muted', this.muted);
+  },
+  _tone(freq,type,dur,v0=0.06,v1=0.001) {
+    if (this.muted) return;
+    this._init(); this._resume();
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.connect(g); g.connect(this.ctx.destination);
+    o.type=type;
+    o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    if (type==='triangle') o.frequency.exponentialRampToValueAtTime(freq/4, this.ctx.currentTime+dur);
+    g.gain.setValueAtTime(v0, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(v1, this.ctx.currentTime+dur);
+    o.start(); o.stop(this.ctx.currentTime+dur+.05);
+  },
+  click()   { this._tone(500,'triangle',.04); },
+  error()   { this._tone(180,'sawtooth',.14,.1); },
+  success() {
+    if (this.muted) return;
+    [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this._tone(f,'sine',.22,.1),i*55));
+  },
+  streak()  {
+    if (this.muted) return;
+    [784,988,1175,1568].forEach((f,i)=>setTimeout(()=>this._tone(f,'sine',.18,.12),i*45));
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════════════════════════ */
+const Store = {
+  get(lang)        { return parseInt(localStorage.getItem(`sd_best_${lang}`)||'0',10); },
+  save(score,lang) {
+    if (score>this.get(lang)){ localStorage.setItem(`sd_best_${lang}`,String(score)); return true; }
+    return false;
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   DATA  — no apostrophe words
+══════════════════════════════════════════════════════════════ */
+const DATA = {
+  uk: {
+    words: [...new Set([
+      "люди","вона","вони","коли","його","бути","року","час","було","мене",
+      "дуже","мені","тому","тебе","який","має","себе","може","цього","вже",
+      "собі","буде","треба","світ","життя","лише","можна","тут","день","свою",
+      "тепер","щоби","йому","свої","інші","навіть","хочу","кого","були","саме",
+      "куди","яка","доки","тоді","теж","очі","руки","ніби","ніж","поки",
+      "просто","багато","зараз","мама","тато","брат","мова","вода","небо",
+      "поле","ліс","ріка","море","гора","село","місто","хата","вікно","двері",
+      "стіл","книга","школа","клас","урок","ручка","друг","сила","воля",
+      "слава","пісня","душа","серце","любов","мрія","надія","віра","правда",
+      "краса","радість","добро","успіх","праця","знати","жити","ніхто","кожен",
+      "завжди","ніколи","часто","рідко","сонце","земля","батько","сестра",
+      "кімната","ліжко","хліб","молоко","голова","ніс","рот","вухо","одяг",
+      "куртка","дорога","грати","пісок","камінь","дерево","квітка","трава",
+      "птах","риба","собака","кішка","корова","кінь","курка","яйце","яблуко",
+      "число","один","два","три","чотири","школяр","учитель","зошит","олівець",
+      "гумка","мишка","екран","програма","графіка","звук","кнопка","меню",
+      "файл","папка","вулиця","хлопець","дівчина","малюнок","вчора","зустріч",
+      "початок","кінець","думка","слово","речення","відповідь","сьогодні",
+      "завтра","природа","тварина","навчання","робота","гра","музика","спорт"
+    ])],
+    layout: [
+      ['й','ц','у','к','е','н','г','ш','щ','з','х','ї'],
+      ['ф','і','в','а','п','р','о','л','д','ж','є'],
+      ['ґ','я','ч','с','м','и','т','ь','б','ю','.']
+    ],
+    milestones: [
+      "Чудовий старт!","Ти справжній майстер!","Неймовірна швидкість!",
+      "Продовжуй так само!","Клавіатурний геній!","Неперевершено!","Ти просто вогонь!"
+    ],
+    success: ["Чудово!","Так тримати!","Молодець!","Відмінно!","Супер!","Браво!","Вогонь!","Зачаровано!"],
+    labels: {
+      words:"Слова", errors:"Помилки", record:"Рекорд", acc:"Точність",
+      wpm:"WPM", streak:"Серія", btnNext:"Далі",
+      pressAny:"Натисни будь-яку клавішу", mTitle:"Супер!",
+      mWords:"слів!"
+    }
+  },
+  en: {
+    words: [...new Set([
+      "about","other","which","their","there","first","would","these","click","price",
+      "state","world","music","books","links","years","could","group","games","start",
+      "today","pages","found","house","photo","power","while","three","total","place",
+      "think","where","after","water","guide","board","white","small","times","sites",
+      "level","thank","phone","hours","black","plant","trade","radio","study","party",
+      "early","given","light","every","field","large","point","never","among","great",
+      "right","write","thing","cause","check","stand","ready","story","media","class",
+      "value","image","model","space","night","table","event","order","range","cloud",
+      "focus","voice","offer","learn","money","paper","track","terms","skill","brain",
+      "dream","people","number","system","program","screen","button","window","folder",
+      "school","teacher","student","lesson","picture","family","mother","father",
+      "brother","sister","animal","forest","river","mountain","ocean","flower","garden",
+      "kitchen","bedroom","office","project","robot","player","friend","happy","strong",
+      "energy","future","travel","planet","castle","shield","health","score","record",
+      "nation","leader","dragon","magic","brave","quick","stone","earth","flame","storm",
+      "spark","sharp","clear","green","blue","yellow","orange","purple","silver","golden"
+    ])],
+    layout: [
+      ['q','w','e','r','t','y','u','i','o','p'],
+      ['a','s','d','f','g','h','j','k','l'],
+      ['z','x','c','v','b','n','m',',','.']
+    ],
+    milestones: [
+      "Great Start!","You're a Master!","Incredible Speed!",
+      "Keep it Up!","Keyboard Genius!","Outstanding!","You're on Fire!"
+    ],
+    success: ["Great!","Awesome!","Well done!","Excellent!","Super!","Bravo!","On fire!","Nailed it!"],
+    labels: {
+      words:"Words", errors:"Errors", record:"Record", acc:"Accuracy",
+      wpm:"WPM", streak:"Streak", btnNext:"Next",
+      pressAny:"Press any key", mTitle:"Super!",
+      mWords:"words!"
+    }
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   DOM refs
+══════════════════════════════════════════════════════════════ */
+const esc = s => window.CSS?.escape ? CSS.escape(s) : String(s).replace(/["'\\[\]]/g,'\\$&');
+const $   = id => document.getElementById(id);
+
+const el = {
+  word:    $('word-display'),
+  score:   $('st-score'),   errors: $('st-errors'),
+  record:  $('st-record'),  wpm:    $('st-wpm'),
+  acc:     $('st-acc'),     streak: $('st-streak'),
+  prog:    $('prog-bar'),
+  msgArea: $('msg-area'),   msgText: $('msg-text'), msgIcon: $('msg-icon'),
+  mModal:  $('milestone-modal'), mTitle: $('m-title'), mText: $('m-text'),
+  mNextBtn:$('m-next-btn'), mBtnLabel:$('m-btn-label'), mHint: $('m-hint'),
+  startModal: $('start-modal'), startBtn: $('start-btn'),
+  confirmModal: $('confirm-modal'), confirmYes: $('confirm-yes'), confirmCancel: $('confirm-cancel'),
+  langBtn: $('lang-btn'),   langLabel: $('lang-label'),
+  soundBtn:$('sound-btn'),  kb: $('kb')
+};
+
+/* ══════════════════════════════════════════════════════════════
+   UI
+══════════════════════════════════════════════════════════════ */
+function updateLabels(lang) {
+  const L = DATA[lang].labels;
+  document.querySelector('[data-label="words"]').textContent    = L.words;
+  document.querySelector('[data-label="errors"]').textContent   = L.errors;
+  document.querySelector('[data-label="record"]').textContent   = L.record;
+  document.querySelector('[data-label="accuracy"]').textContent = L.acc;
+  document.querySelector('[data-label="wpm"]').textContent      = L.wpm;
+  document.querySelector('[data-label="streak"]').textContent   = L.streak;
+  el.mBtnLabel.textContent = L.btnNext;
+  el.mHint.textContent     = L.pressAny;
+  el.mTitle.textContent    = L.mTitle;
+  el.langLabel.textContent = lang.toUpperCase();
+}
+
+function updateKeyboard(lang) {
+  const layout = DATA[lang].layout;
+  const rows   = document.querySelectorAll('.kb-letter-row');
+
+  [0,1,2].forEach(ri => {
+    const keys = rows[ri].querySelectorAll('.letter');
+    keys.forEach(k => k.classList.remove('hidden-key'));
+
+    const offset = (ri === 2 && lang === 'en') ? 1 : 0;
+    if (offset) keys[0].classList.add('hidden-key');
+
+    layout[ri].forEach((ch, i) => {
+      const k = keys[i + offset];
+      if (k) { k.textContent = ch.toUpperCase(); k.dataset.char = ch; }
+    });
+    for (let i = layout[ri].length + offset; i < keys.length; i++) {
+      keys[i].classList.add('hidden-key');
+    }
+  });
+
+  document.querySelectorAll('.letter.hidden-key').forEach(k => delete k.dataset.char);
+}
+
+function renderWord(word, idx) {
+  el.word.innerHTML = '';
+  for (let i = 0; i < word.length; i++) {
+    const s = document.createElement('span');
+    s.textContent = word[i];
+    if      (i < idx)   s.style.cssText = 'color:var(--sage-dk);';
+    else if (i === idx) s.style.cssText = 'color:var(--teal-dk);border-bottom:4px solid var(--teal);padding-bottom:2px;';
+    else                s.style.cssText = 'color:#C8C8C8;';
+    el.word.appendChild(s);
+  }
+}
+
+let _msgTimer = null;
+function showMsg(text, isRecord) {
+  el.msgText.textContent = text;
+  el.msgIcon.className   = isRecord
+    ? 'fa-solid fa-trophy'
+    : 'fa-solid fa-check-circle';
+  el.msgArea.style.color   = isRecord ? 'var(--amber-dk)' : 'var(--sage-dk)';
+  el.msgArea.style.opacity = '1';
+  el.msgArea.style.transform = 'scale(1.15)';
+  clearTimeout(_msgTimer);
+  _msgTimer = setTimeout(() => {
+    el.msgArea.style.opacity   = '0';
+    el.msgArea.style.transform = 'scale(1)';
+  }, 950);
+}
+
+function updateStats(st) {
+  el.score.textContent  = st.score;
+  el.errors.textContent = st.errors;
+  el.record.textContent = st.best;
+  el.streak.textContent = st.streak;
+
+  // Accuracy: correct keystrokes / (correct + errors)
+  // Backspace does NOT affect this — it is a navigation key, not a mistake
+  const tot = st.totalHits + st.errors;
+  const pct = tot <= 0 ? 100 : (st.totalHits / tot) * 100;
+  el.acc.textContent  = `${pct.toFixed(1)}%`;
+  el.acc.style.color  = pct > 95 ? 'var(--sage-dk)' : pct > 80 ? 'var(--amber-dk)' : 'var(--coral-dk)';
+
+  const wInCycle = st.score % 5;
+  const wordProg = st.word.length > 0 ? st.charIdx / st.word.length : 0;
+  el.prog.style.width = `${Math.min((wInCycle + wordProg) * 20, 100)}%`;
+}
+
+function updateWPM(st) {
+  if (!st.startTime || st.score === 0) { el.wpm.textContent = '0'; return; }
+  const mins = (Date.now() - st.startTime) / 60000;
+  el.wpm.textContent = mins < .001 ? '0' : String(Math.round(st.score / mins));
+}
+
+function clearHints() { el.kb.querySelectorAll('.hint').forEach(k => k.classList.remove('hint')); }
+
+function highlightKey(ch) {
+  clearHints();
+  if (!ch) return;
+  const sel = ch === ' ' ? '[data-code="Space"]' : `[data-char="${esc(ch.toLowerCase())}"]`;
+  el.kb.querySelector(sel)?.classList.add('hint');
+}
+
+function flashKey(ch, cls) {
+  if (!ch) return;
+  const sel = ch === ' ' ? '[data-code="Space"]' : `[data-char="${esc(ch.toLowerCase())}"]`;
+  const k = el.kb.querySelector(sel);
+  if (!k) return;
+  k.classList.add(cls);
+  setTimeout(() => k.classList.remove(cls), 170);
+}
+
+function shakeWord() {
+  el.word.classList.add('shake','word-wrong');
+  setTimeout(() => el.word.classList.remove('shake','word-wrong'), 440);
+}
+
+const isOpen = m => !m.classList.contains('hidden');
+
+/* ══════════════════════════════════════════════════════════════
+   GAME
+══════════════════════════════════════════════════════════════ */
+const IGNORED = new Set([
+  'Shift','Control','Alt','Meta','Tab','CapsLock','Escape',
+  'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter',
+  'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'
+]);
+
+const G = {
+  lang: 'uk', wordList: [], wpmTick: null, closing: false,
+  st: {
+    wordIdx: 0, charIdx: 0, score: 0, errors: 0, totalHits: 0,
+    best: 0, startTime: null, word: '', paused: true,
+    started: false, streak: 0
+  },
+
+  init() {
+    updateLabels(this.lang);
+    updateKeyboard(this.lang);
+    renderWord('...', 0);
+    updateStats(this.st);
+    this._bindEvents();
+  },
+
+  _bindEvents() {
+    el.startBtn.addEventListener('click', () => {
+      el.startModal.classList.add('hidden');
+      this.st.started = true; this.st.paused = false;
+      Snd._init(); Snd._resume();
+      this._startGame();
+    });
+
+    el.soundBtn.addEventListener('click', () => Snd.toggleMute(el.soundBtn));
+    el.langBtn.addEventListener('click',  () => this._toggleLang());
+    el.mNextBtn.addEventListener('click', () => this._closeMilestone());
+
+    el.confirmYes.addEventListener('click', () => {
+      el.confirmModal.classList.add('hidden');
+      this.st.paused = false;
+      this._switchLang();
+    });
+    el.confirmCancel.addEventListener('click', () => {
+      el.confirmModal.classList.add('hidden');
+      this.st.paused = false;
+    });
+
+    document.addEventListener('keydown', e => this._onKey(e), { passive: false });
+
+    // On-screen keyboard (pointer works for both mouse and touch)
+    el.kb.addEventListener('pointerdown', e => {
+      const k = e.target.closest('.key');
+      if (!k) return;
+      const hasAction = k.dataset.action || k.dataset.char || k.dataset.code;
+      if (!hasAction) return;
+      e.preventDefault(); e.stopPropagation();
+
+      if (!this.st.started || this.st.paused) {
+        if (isOpen(el.mModal)) this._closeMilestone();
+        return;
+      }
+      if (k.dataset.action === 'backspace') this._backspace();
+      else this._input(k.dataset.char || ' ');
+    });
+  },
+
+  _toggleLang() {
+    const hasProgress = this.st.score > 0 || this.st.errors > 0 || this.st.totalHits > 0;
+    if (this.st.started && hasProgress) {
+      this.st.paused = true;
+      el.confirmModal.classList.remove('hidden');
+      return;
+    }
+    this._switchLang();
+  },
+
+  _switchLang() {
+    this.lang = this.lang === 'uk' ? 'en' : 'uk';
+    updateLabels(this.lang);
+    updateKeyboard(this.lang);
+    clearHints();
+    el.langBtn.blur();
+    if (this.st.started) this._startGame();
+    else { this.st.best = Store.get(this.lang); updateStats(this.st); }
+  },
+
+  _startGame() {
+    clearInterval(this.wpmTick);
+    Object.assign(this.st, {
+      wordIdx: 0, charIdx: 0, score: 0, errors: 0, totalHits: 0,
+      best: Store.get(this.lang), startTime: null, word: '', streak: 0
+    });
+
+    // Fisher-Yates shuffle
+    const words = [...DATA[this.lang].words];
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+    this.wordList = words;
+
+    this._loadWord();
+    updateStats(this.st);
+    updateWPM(this.st);
+
+    // Real-time WPM update every second
+    this.wpmTick = setInterval(() => {
+      if (!this.st.paused) updateWPM(this.st);
+    }, 1000);
+  },
+
+  _loadWord() {
+    if (this.st.wordIdx >= this.wordList.length) this.st.wordIdx = 0;
+    this.st.word    = this.wordList[this.st.wordIdx] || '';
+    this.st.charIdx = 0;
+    renderWord(this.st.word, 0);
+    highlightKey(this.st.word[0] || null);
+    updateStats(this.st);
+  },
+
+  _input(ch) {
+    if (!this.st.started || this.st.paused) return;
+    if (!this.st.startTime) this.st.startTime = Date.now();
+
+    Snd.click();
+    const target = this.st.word[this.st.charIdx];
+    if (!target) return;
+
+    if (ch.toLowerCase() === target.toLowerCase()) {
+      // ✅ Correct keystroke
+      flashKey(ch, 'correct');
+      this.st.charIdx++;
+      this.st.totalHits++;
+      renderWord(this.st.word, this.st.charIdx);
+
+      if (this.st.charIdx === this.st.word.length) {
+        this._wordDone();
+      } else {
+        highlightKey(this.st.word[this.st.charIdx]);
+      }
+    } else {
+      // ❌ Wrong keystroke — flash wrong key red
+      flashKey(ch, 'wrong');
+      this.st.errors++;
+      this.st.streak = 0;
+      Snd.error();
+      shakeWord();
+    }
+
+    updateStats(this.st);
+  },
+
+  _backspace() {
+    if (!this.st.started || this.st.paused || this.st.charIdx === 0) return;
+    Snd.click();
+    this.st.charIdx--;
+    // IMPORTANT: do NOT modify totalHits or errors here.
+    // Backspace is a correction tool — it must not skew accuracy tracking.
+    renderWord(this.st.word, this.st.charIdx);
+    highlightKey(this.st.word[this.st.charIdx] || null);
+    updateStats(this.st);
+  },
+
+  _wordDone() {
+    this.st.score++;
+    this.st.streak++;
+    const isRecord = Store.save(this.st.score, this.lang);
+    if (isRecord) this.st.best = this.st.score;
+
+    const msgs = DATA[this.lang].success;
+    showMsg(msgs[Math.floor(Math.random() * msgs.length)], isRecord);
+
+    if (this.st.streak > 0 && this.st.streak % 5 === 0) Snd.streak();
+    else Snd.success();
+
+    updateWPM(this.st);
+    this.st.wordIdx++;
+
+    if (this.st.score % 5 === 0) this._milestone();
+    else setTimeout(() => this._loadWord(), 190);
+  },
+
+  _milestone() {
+    this.st.paused = true;
+    try { confetti({ particleCount: 240, spread: 95, origin: { y: .6 } }); } catch(_){}
+    const phrases = DATA[this.lang].milestones;
+    const phrase  = phrases[Math.floor(Math.random() * phrases.length)];
+    const mWords  = DATA[this.lang].labels.mWords;
+    el.mText.textContent = `${phrase}\n${this.st.score} ${mWords}`;
+    el.mModal.classList.remove('hidden');
+    el.prog.style.width = '100%';
+    setTimeout(() => el.mNextBtn.focus(), 80);
+  },
+
+  _closeMilestone() {
+    if (this.closing || !isOpen(el.mModal)) return;
+    this.closing = true;
+    el.mModal.classList.add('hidden');
+    this.st.paused = false;
+    el.prog.style.width = '0%';
+    this._loadWord();
+    setTimeout(() => { this.closing = false; }, 260);
+  },
+
+  _onKey(e) {
+    if (!this.st.started || isOpen(el.startModal)) return;
+
+    if (this.st.paused) {
+      if (isOpen(el.mModal)) {
+        e.preventDefault(); this._closeMilestone();
+      } else if (isOpen(el.confirmModal)) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          el.confirmModal.classList.add('hidden');
+          this.st.paused = false;
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          el.confirmModal.classList.add('hidden');
+          this.st.paused = false;
+          this._switchLang();
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'Backspace') { e.preventDefault(); this._backspace(); return; }
+    if (IGNORED.has(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key?.length === 1) this._input(e.key);
+  }
+};
+
+G.init();
+</script>
+</body>
+</html>

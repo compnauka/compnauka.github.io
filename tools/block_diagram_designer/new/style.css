@@ -1,59 +1,113 @@
-/* Глобальні змінні кольорів */
+/* ===== ДИТЯЧИЙ РЕДАКТОР БЛОК-СХЕМ — CSS ===== */
+
 :root {
-    --primary: #3f51b5;
-    --primary-light: #757de8;
-    --primary-dark: #002984;
-    --secondary: #ff9800;
-    --success: #4caf50;
-    --danger: #f44336;
-    --neutral: #f5f5f5;
-    --dark: #212121;
-    --light: #ffffff;
-    --gray: #9e9e9e;
-    --shadow: 0 2px 8px rgba(0,0,0,0.15);
+    --primary:        #4361ee;
+    --primary-dark:   #2b47c9;
+    --primary-light:  #eef0fd;
+    --success:        #4caf50;
+    --success-dark:   #388e3c;
+    --danger:         #f44336;
+    --danger-dark:    #c62828;
+    --warning:        #ff9800;
+    --warning-dark:   #e65100;
+    --undo:           #607d8b;
+    --undo-dark:      #37474f;
+    --bg:             #f0f4ff;
+    --sidebar-bg:     #ffffff;
+    --dark:           #1a1a2e;
+    --gray:           #90a4ae;
+    --light-border:   #e8eaf6;
+    --shadow:         0 4px 16px rgba(67,97,238,0.12);
+    --shadow-sm:      0 2px 8px rgba(0,0,0,0.10);
+    --radius:         14px;
+    --radius-sm:      8px;
+    --font:           'Nunito', 'Segoe UI', sans-serif;
 }
 
-* {
-    box-sizing: border-box;
-    font-family: 'Roboto', Arial, sans-serif;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
     height: 100%;
-}
-
-body {
     margin: 0;
     padding: 0;
-    background-color: var(--light);
-    display: flex;
-    flex-direction: column;
+    font-family: var(--font);
+    background: var(--bg);
     color: var(--dark);
-    /* Забороняємо стандартне виділення тексту при перетягуванні */
     user-select: none;
     -webkit-user-select: none;
+    overscroll-behavior: none;
 }
 
-/* Заголовок */
+/* ===== HEADER ===== */
 header {
-    background-color: var(--primary);
-    color: var(--light);
-    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary) 0%, #7b2ff7 100%);
+    color: #fff;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow);
-    z-index: 10;
+    box-shadow: 0 3px 12px rgba(67,97,238,0.35);
+    z-index: 20;
     flex-shrink: 0;
+    min-height: 58px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    font-size: 28px;
+    line-height: 1;
 }
 
 h1 {
     margin: 0;
-    font-size: 22px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
 }
 
-/* Основний контейнер */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-link {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.header-link:hover { background: rgba(255,255,255,0.30); }
+
+.icon-btn {
+    background: rgba(255,255,255,0.18);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+    touch-action: manipulation;
+    color: #fff;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.30); transform: scale(1.08); }
+.icon-btn:active { transform: scale(0.92); }
+
+/* ===== LAYOUT ===== */
 .container {
     display: flex;
     flex: 1 1 auto;
@@ -61,155 +115,193 @@ h1 {
     overflow: hidden;
 }
 
-/* Бокова панель */
+/* ===== SIDEBAR ===== */
 .sidebar {
-    width: 220px;
-    min-width: 180px;
-    background-color: var(--light);
-    padding: 16px;
+    width: 210px;
+    min-width: 170px;
+    background: var(--sidebar-bg);
+    padding: 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    z-index: 5;
+    gap: 14px;
+    box-shadow: 3px 0 12px rgba(67,97,238,0.08);
+    z-index: 10;
     overflow-y: auto;
     flex-shrink: 0;
 }
 
-.sidebar h3 {
-    font-size: 16px;
-    margin: 0 0 8px 0;
-    color: var(--primary-dark);
-    font-weight: 500;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #eee;
+.sidebar-section {}
+.sidebar-heading {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 2px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--primary-light);
 }
 
-/* Кнопки фігур */
+/* ===== SHAPE BUTTONS ===== */
 .shape-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
 }
 
 .shape-button {
-    padding: 10px 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--neutral);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    color: var(--dark);
-    min-height: 44px; /* touch-friendly */
+    padding: 10px 11px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--font);
+    color: var(--primary-dark);
+    transition: all 0.18s ease;
+    min-height: 46px;
     touch-action: manipulation;
+    text-align: left;
+    width: 100%;
+}
+.shape-button:hover {
+    background: #dce0ff;
+    border-color: var(--primary);
+    transform: translateX(3px);
+    box-shadow: var(--shadow-sm);
+}
+.shape-button:active { transform: scale(0.96); }
+
+.shape-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: block;
 }
 
-.shape-button:hover, .shape-button:active {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    background-color: #eeeeee;
+/* Міні-іконки фігур */
+.se-icon {
+    background: var(--success);
+    border-radius: 14px;
+}
+.proc-icon {
+    background: #03a9f4;
+    border-radius: 5px;
+}
+.dec-icon {
+    background: var(--warning);
+    border-radius: 3px;
+    transform: rotate(45deg);
+    width: 22px;
+    height: 22px;
+    margin: 3px;
+}
+.io-icon {
+    background: var(--primary);
+    border-radius: 3px;
+    transform: skew(-18deg);
 }
 
-/* Вибір кольору */
+.shape-label { flex: 1; }
+
+/* ===== COLOUR PICKER ===== */
 .color-picker {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 4px;
+    padding: 2px 0;
 }
 
 .color-option {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    border: 3px solid transparent;
     cursor: pointer;
-    border: 2px solid transparent;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
     touch-action: manipulation;
 }
-
-.color-option:hover {
-    transform: scale(1.15);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
-
+.color-option:hover { transform: scale(1.2); box-shadow: 0 3px 8px rgba(0,0,0,0.22); }
 .color-option.selected {
-    border: 2.5px solid var(--dark);
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+    border-color: var(--dark);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 3px 8px rgba(0,0,0,0.20);
+    transform: scale(1.12);
 }
 
-/* Кнопки інструментів */
-.tools {
-    margin-top: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+/* ===== TOOL BUTTONS ===== */
+.tools-section { display: flex; flex-direction: column; gap: 0; }
+.tool-divider { height: 1px; background: var(--light-border); margin: 8px 0; }
 
 .tool-button {
-    padding: 10px 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--neutral);
-    cursor: pointer;
-    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    color: var(--dark);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    min-height: 44px;
+    gap: 7px;
+    padding: 11px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--font);
+    transition: all 0.18s ease;
+    min-height: 46px;
     touch-action: manipulation;
+    width: 100%;
+    margin-bottom: 6px;
+}
+.tool-button:active { transform: scale(0.96); }
+
+.undo-btn   { background: #eceff1; color: var(--undo); }
+.undo-btn:hover { background: #cfd8dc; }
+.undo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.danger-btn  { background: #ffebee; color: var(--danger-dark); }
+.danger-btn:hover { background: var(--danger); color: #fff; }
+
+.warning-btn { background: #fff3e0; color: var(--warning-dark); }
+.warning-btn:hover { background: var(--warning); color: #fff; }
+
+.success-btn { background: #e8f5e9; color: var(--success-dark); }
+.success-btn:hover { background: var(--success); color: #fff; box-shadow: 0 4px 14px rgba(76,175,80,0.4); }
+
+/* ===== ARROW TIP ===== */
+.arrow-tip {
+    background: linear-gradient(135deg, #e8f4fd, #f0e8fd);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #37474f;
+    border-left: 3px solid var(--primary);
 }
 
-.tool-button:hover {
-    background-color: #e0e0e0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
-
-.tool-button.primary {
-    background-color: var(--primary);
-    color: white;
-}
-.tool-button.primary:hover { background-color: var(--primary-dark); }
-
-.tool-button.danger {
-    background-color: var(--danger);
-    color: white;
-}
-.tool-button.danger:hover { background-color: #d32f2f; }
-
-/* Контейнер полотна */
+/* ===== CANVAS ===== */
 .canvas-container {
     flex: 1;
     position: relative;
     overflow: auto;
-    background-color: white;
+    background-color: #fafbff;
     background-image:
-        linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
-    background-size: 20px 20px;
-    touch-action: none; /* керуємо самі */
+        radial-gradient(circle, #d0d7f5 1px, transparent 1px);
+    background-size: 24px 24px;
+    touch-action: none;
+    cursor: default;
 }
 
-/* Полотно */
 #flowchart-canvas {
     position: absolute;
     top: 0;
     left: 0;
-    width: 2000px;
-    height: 2000px;
+    width: 2400px;
+    height: 2400px;
     transform-origin: 0 0;
 }
 
-/* SVG шар з'єднань (всередині #flowchart-canvas) */
 #connectors-layer {
     position: absolute;
     inset: 0;
@@ -220,24 +312,35 @@ h1 {
     pointer-events: none;
 }
 
-/* Маркери з'єднань (handles) — SVG circle елементи */
+/* З'єднання — видима лінія */
+.conn-line {
+    cursor: pointer;
+    pointer-events: stroke;
+    stroke-linecap: round;
+}
+
+/* Хітзона для кліку на стрілку */
+.conn-hit {
+    stroke: transparent;
+    stroke-width: 18;
+    fill: none;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+/* Ручки з'єднання */
 #connectors-layer circle.conn-handle {
     cursor: crosshair;
     pointer-events: all;
     opacity: 0;
-    transition: opacity 0.15s, r 0.15s;
+    transition: opacity 0.15s;
+    filter: drop-shadow(0 2px 4px rgba(67,97,238,0.4));
 }
-
-#connectors-layer circle.conn-handle.visible {
-    opacity: 0.55;
-}
-
+#connectors-layer circle.conn-handle.visible { opacity: 0.65; }
 #connectors-layer circle.conn-handle:hover,
-#connectors-layer circle.conn-handle.hovered {
-    opacity: 1;
-}
+#connectors-layer circle.conn-handle.hovered { opacity: 1; }
 
-/* Базовий стиль фігур */
+/* ===== ФІГУРИ ===== */
 .shape {
     position: absolute;
     cursor: move;
@@ -246,49 +349,49 @@ h1 {
     justify-content: center;
     text-align: center;
     color: white;
-    padding: 10px 14px;
-    min-width: 120px;
-    min-height: 50px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 12px 16px;
+    min-width: 130px;
+    min-height: 54px;
     z-index: 1;
-    font-size: 17px;
-    transition: box-shadow 0.2s ease;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font);
+    line-height: 1.3;
+    transition: box-shadow 0.2s, filter 0.15s;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+    word-break: break-word;
 }
-
+.shape:hover {
+    filter: brightness(1.07);
+}
 .shape.selected {
-    outline: 2.5px dashed var(--primary);
-    outline-offset: 3px;
-    z-index: 2;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    outline: 3px dashed #e91e63;
+    outline-offset: 4px;
+    z-index: 3;
+    box-shadow: 0 6px 20px rgba(233,30,99,0.25);
+    filter: brightness(1.04);
 }
 
-/* Початок/Кінець — овал */
+/* Стилі фігур */
 .shape.start-end {
-    border-radius: 35px;
-    background-color: var(--success);
-    color: white;
+    border-radius: 40px;
+    background: var(--success);
+    box-shadow: 0 4px 14px rgba(76,175,80,0.35);
 }
-
-/* Дія — прямокутник */
 .shape.process {
-    border-radius: 8px;
-    background-color: rgb(3, 169, 244);
-    color: #fff;
+    border-radius: 10px;
+    background: #03a9f4;
+    box-shadow: 0 4px 14px rgba(3,169,244,0.35);
 }
-
-/* Умова — ромб */
 .shape.decision {
     transform: rotate(45deg);
-    background-color: var(--secondary);
-    aspect-ratio: 1 / 1;
-    color: white;
-    border-radius: 4px;
+    background: var(--warning);
+    aspect-ratio: 1/1;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(255,152,0,0.35);
 }
-
-/* Текст в ромбі — контр-поворот */
 .shape.decision .content {
     transform: rotate(-45deg);
     display: flex;
@@ -299,274 +402,302 @@ h1 {
     height: 90%;
     word-break: break-word;
 }
-
-/* Ввід/Вивід — паралелограм */
 .shape.input-output {
-    border-radius: 4px;
+    border-radius: 5px;
     transform: skew(-20deg);
-    background-color: var(--primary);
-    color: white;
+    background: var(--primary);
+    box-shadow: 0 4px 14px rgba(67,97,238,0.35);
 }
-
 .shape.input-output .content {
     transform: skew(20deg);
 }
 
-/* Контроль масштабу */
+/* Анімація появи фігури */
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
+}
+@keyframes popInDecision {
+    0%   { transform: rotate(45deg) scale(0.5); opacity: 0; }
+    70%  { transform: rotate(45deg) scale(1.08); opacity: 1; }
+    100% { transform: rotate(45deg) scale(1); }
+}
+@keyframes popInIO {
+    0%   { transform: skew(-20deg) scale(0.5); opacity: 0; }
+    70%  { transform: skew(-20deg) scale(1.08); opacity: 1; }
+    100% { transform: skew(-20deg) scale(1); }
+}
+.shape.new-pop           { animation: popIn 0.3s cubic-bezier(.36,.07,.19,.97) forwards; }
+.shape.decision.new-pop  { animation: popInDecision 0.3s cubic-bezier(.36,.07,.19,.97) forwards; }
+.shape.input-output.new-pop { animation: popInIO 0.3s cubic-bezier(.36,.07,.19,.97) forwards; }
+
+/* ===== ZOOM ===== */
 .zoom-controls {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    bottom: 18px;
+    right: 18px;
     display: flex;
-    gap: 6px;
+    align-items: center;
+    gap: 5px;
     z-index: 100;
-    background-color: white;
-    padding: 6px;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
+    background: white;
+    padding: 6px 8px;
+    border-radius: 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
 }
 
-.zoom-button {
-    width: 38px;
-    height: 38px;
+.zoom-btn {
+    width: 36px;
+    height: 36px;
     border: none;
     border-radius: 50%;
-    background-color: var(--primary);
+    background: var(--primary);
     color: white;
     font-size: 18px;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    outline: none;
+    transition: all 0.18s;
     touch-action: manipulation;
+    font-family: var(--font);
 }
-
-.zoom-button:hover { background-color: var(--primary-dark); }
-.zoom-button:active { transform: scale(0.92); }
+.zoom-btn:hover { background: var(--primary-dark); transform: scale(1.08); }
+.zoom-btn:active { transform: scale(0.92); }
+.zoom-reset-btn { font-size: 16px; }
 
 .zoom-text {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-width: 50px;
+    text-align: center;
     font-size: 14px;
-    font-weight: 500;
-    min-width: 52px;
-    user-select: none;
+    font-weight: 800;
+    color: var(--dark);
 }
 
-/* Модальні вікна */
+/* ===== CONNECTION BAR ===== */
+.connection-bar {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 2.5px solid #e91e63;
+    border-radius: 30px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 14px rgba(233,30,99,0.2);
+    z-index: 200;
+    font-size: 14px;
+    font-weight: 700;
+    color: #c2185b;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+}
+.connection-bar.hidden { display: none; }
+
+.conn-delete-btn {
+    background: #e91e63;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+    touch-action: manipulation;
+}
+.conn-delete-btn:hover { background: #ad1457; }
+.conn-delete-btn:active { transform: scale(0.94); }
+
+/* ===== MODALS ===== */
 .modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(26,26,46,0.52);
+    backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
     z-index: 1100;
-    backdrop-filter: blur(3px);
+    padding: 20px;
 }
+.modal.active { display: flex; }
 
 .modal-content {
-    background-color: white;
-    padding: 24px;
-    border-radius: 14px;
-    width: 340px;
-    max-width: 92vw;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    background: white;
+    padding: 28px 26px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+    animation: modalIn 0.22s ease;
+}
+@keyframes modalIn {
+    from { transform: scale(0.88) translateY(20px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .modal h2 {
-    margin-top: 0;
-    color: var(--primary);
+    margin: 0 0 14px;
     font-size: 20px;
-    font-weight: 500;
+    font-weight: 800;
+    color: var(--primary);
 }
+.modal p { margin: 0 0 10px; font-size: 15px; line-height: 1.5; }
 
 .modal textarea {
     width: 100%;
     padding: 12px;
-    margin: 12px 0;
-    border: 1.5px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 15px;
+    border: 2px solid var(--light-border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: var(--font);
+    font-weight: 600;
     resize: none;
-    height: 110px;
-    transition: border-color 0.2s ease;
-    font-family: 'Roboto', sans-serif;
+    height: 100px;
+    transition: border-color 0.2s;
+    margin-bottom: 14px;
+    display: block;
 }
+.modal textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,97,238,0.14); }
 
-.modal textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.18);
-}
+.modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 
-.modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.modal-button {
-    padding: 10px 22px;
+.modal-btn {
+    padding: 11px 22px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    min-height: 44px;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: var(--font);
+    transition: all 0.18s;
+    min-height: 46px;
     touch-action: manipulation;
 }
+.modal-btn:active { transform: scale(0.95); }
+.cancel-btn { background: #f5f5f5; color: #555; }
+.cancel-btn:hover { background: #e0e0e0; }
+.ok-btn     { background: var(--primary); color: white; }
+.ok-btn:hover { background: var(--primary-dark); }
 
-.modal-button.cancel {
-    background-color: #f5f5f5;
-    color: var(--dark);
+.conn-choice {
+    display: flex;
+    gap: 14px;
+    margin: 18px 0 6px;
 }
-.modal-button.cancel:hover { background-color: #e0e0e0; }
+.yes-btn { flex: 1; background: var(--success); color: white; font-size: 17px; }
+.yes-btn:hover { background: var(--success-dark); }
+.no-btn  { flex: 1; background: var(--danger); color: white; font-size: 17px; }
+.no-btn:hover { background: var(--danger-dark); }
 
-.modal-button.save {
-    background-color: var(--primary);
-    color: white;
+/* ===== HELP PANEL ===== */
+.help-panel {
+    position: fixed;
+    top: 68px;
+    right: 14px;
+    background: white;
+    border-radius: 18px;
+    padding: 22px 22px 20px;
+    box-shadow: 0 8px 32px rgba(67,97,238,0.18);
+    z-index: 1050;
+    width: 310px;
+    max-width: 92vw;
+    animation: slideIn 0.22s ease;
 }
-.modal-button.save:hover { background-color: var(--primary-dark); }
+.help-panel[hidden] { display: none; }
+@keyframes slideIn {
+    from { transform: translateY(-12px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
 
-/* Кнопка довідки */
-.help-button {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
+.help-panel h3 {
+    margin: 0 0 14px;
     font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+    padding-right: 30px;
+}
+
+.help-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: #f0f0f0;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    touch-action: manipulation;
+    transition: background 0.15s, color 0.15s;
+    color: #555;
 }
+.help-close-btn:hover { background: var(--danger); color: white; }
 
-.help-button:hover {
-    background-color: rgba(255, 255, 255, 0.35);
+.help-steps { display: flex; flex-direction: column; gap: 11px; }
+.help-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: #333;
 }
-
-/* Панель довідки */
-.help-content {
-    display: none;
-    position: fixed;
-    background-color: white;
-    border-radius: 14px;
-    padding: 20px 20px 20px 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-    z-index: 1000;
-    max-width: 320px;
-    width: 90vw;
-    right: 16px;
-    top: 70px;
-}
-
-.help-content.active { display: block; }
-
-.help-content h3 {
-    margin-top: 0;
-    color: var(--primary);
-    font-size: 17px;
-    font-weight: 500;
-    padding-right: 24px;
-}
-
-.help-content ul {
-    padding-left: 18px;
-    margin-bottom: 0;
-    margin-top: 8px;
-}
-
-.help-content li {
-    margin-bottom: 8px;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.help-close {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    font-size: 26px;
-    color: var(--gray);
-    cursor: pointer;
-    z-index: 10;
-    padding: 2px 8px;
+.step-num {
+    background: var(--primary);
+    color: white;
     border-radius: 50%;
-    transition: background 0.2s, color 0.2s;
-    line-height: 1;
-}
-.help-close:hover {
-    background: #eee;
-    color: var(--danger);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
-/* Повідомлення / підтвердження */
-#message-modal {
-    display: none;
+/* ===== CONFETTI ===== */
+#confetti-canvas {
     position: fixed;
     inset: 0;
-    background-color: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 1200;
-    backdrop-filter: blur(3px);
-}
-#message-modal.active { display: flex; }
-#message-modal .modal-content {
-    background: #fff;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
-    min-width: 280px;
-    max-width: 90vw;
-    text-align: center;
-    font-size: 16px;
-}
-#message-modal-buttons {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-}
-
-/* Мітки з'єднань */
-.connection-label {
-    position: absolute;
-    background-color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
     pointer-events: none;
-    border: 1px solid #333;
+    z-index: 9999;
+    width: 100%;
+    height: 100%;
 }
-.connection-label.yes { color: var(--success); border-color: var(--success); }
-.connection-label.no  { color: var(--danger);  border-color: var(--danger);  }
 
-/* Адаптивність для малих екранів */
-@media (max-width: 600px) {
+/* ===== RESPONSIVE ===== */
+@media (max-width: 620px) {
     .sidebar {
-        width: 160px;
-        padding: 10px;
-        font-size: 13px;
+        width: 150px;
+        min-width: 130px;
+        padding: 10px 8px;
+        gap: 10px;
     }
-    h1 { font-size: 17px; }
-    .shape-button { padding: 8px; font-size: 12px; min-height: 40px; }
-    .tool-button  { font-size: 12px; min-height: 40px; }
+    h1 { font-size: 15px; }
+    .header-link { display: none; }
+    .shape-label { font-size: 12px; }
+    .shape-button { padding: 8px; gap: 7px; min-height: 42px; }
+    .tool-button { font-size: 12px; min-height: 42px; }
+    .shape-icon { width: 22px; height: 22px; }
     .color-option { width: 28px; height: 28px; }
+    .arrow-tip { font-size: 11px; }
+    .help-panel { width: calc(100vw - 28px); right: 14px; }
+}
+
+@media (max-width: 400px) {
+    .sidebar { width: 120px; }
+    .shape-label { display: none; }
 }

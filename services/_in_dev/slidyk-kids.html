@@ -1,0 +1,2629 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>СЛАЙДИК Kids 🎨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&family=Nunito:wght@400;700;900&display=swap');
+
+    :root {
+      --h: 52px;
+      --sidebar: 260px;
+      --primary: #6C63FF;
+      --primary-dark: #4F46E5;
+      --secondary: #FF6584;
+      --accent: #FFD166;
+      --green: #06D6A0;
+      --orange: #FF9F1C;
+      --bg-app: #F0F4FF;
+      --bg-header: #1a1040;
+      --bg-sidebar: #1a1040;
+      --bg-tb: #ffffff;
+      --text-main: #1a1040;
+      --slide-w: 960px;
+      --slide-h: 540px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+      background: var(--bg-app);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* ─── Header ─── */
+    #appHeader {
+      height: var(--h);
+      background: var(--bg-header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      flex-shrink: 0;
+      gap: 8px;
+      border-bottom: 3px solid #312060;
+      position: relative;
+      z-index: 100;
+    }
+
+    #appHeader .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #appHeader .logo .icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(108, 99, 255, .5);
+    }
+
+    #appHeader .logo .name {
+      font-size: 18px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #a78bfa, #f9a8d4, #fcd34d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: .5px;
+    }
+
+    .hbtn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 10px;
+      transition: transform .12s, box-shadow .12s, opacity .12s;
+      letter-spacing: .3px;
+    }
+
+    .hbtn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hbtn:active {
+      transform: translateY(0);
+      opacity: .85;
+    }
+
+    .hbtn-undo {
+      background: #312060;
+      color: #a78bfa;
+      border: 2px solid #4c3d80;
+    }
+
+    .hbtn-present {
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(6, 214, 160, .4);
+    }
+
+    .hbtn-pdf {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(108, 99, 255, .4);
+    }
+
+    .hbtn-danger {
+      background: linear-gradient(135deg, var(--secondary), #e11d48);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(255, 101, 132, .4);
+    }
+
+    .hbtn-accent {
+      background: linear-gradient(135deg, var(--accent), #f59e0b);
+      color: #1a1040;
+      box-shadow: 0 3px 10px rgba(255, 209, 102, .4);
+    }
+
+    /* ─── Body layout ─── */
+    #appBody {
+      display: flex;
+      height: calc(100vh - var(--h));
+      overflow: hidden;
+    }
+
+    /* ─── Sidebar ─── */
+    #sidebar {
+      width: var(--sidebar);
+      flex-shrink: 0;
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      border-right: 3px solid #312060;
+      overflow: hidden;
+    }
+
+    #sidebarHead {
+      padding: 10px 10px 8px;
+      border-bottom: 2px solid #312060;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #sidebarHead .label {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #7c6faa;
+      text-transform: uppercase;
+    }
+
+    .sbbtn {
+      width: 28px;
+      height: 28px;
+      background: #312060;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      color: #a78bfa;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+
+    .sbbtn:hover {
+      background: #4c3d80;
+    }
+
+    #slideList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #slideList::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #slideList::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #slideList::-webkit-scrollbar-thumb {
+      background: #4c3d80;
+      border-radius: 2px;
+    }
+
+    /* Slide item */
+    .slide-item {
+      position: relative;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color .15s, transform .12s;
+    }
+
+    .slide-item:hover {
+      transform: scale(1.01);
+    }
+
+    .slide-item.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, .3);
+    }
+
+    .slide-num {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      font-size: 9px;
+      font-weight: 900;
+      background: rgba(0, 0, 0, .45);
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: 5px;
+      z-index: 5;
+      letter-spacing: .5px;
+    }
+
+    .slide-actions {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      display: none;
+      gap: 3px;
+      z-index: 10;
+    }
+
+    .slide-item:hover .slide-actions,
+    .slide-item.active .slide-actions {
+      display: flex;
+    }
+
+    .sa-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .sa-dup {
+      background: rgba(108, 99, 255, .8);
+    }
+
+    .sa-del {
+      background: rgba(255, 101, 132, .8);
+    }
+
+    /* Thumbnail */
+    .thumb-wrap {
+      width: 100%;
+      padding-bottom: 56.25%;
+      /* 16:9 */
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .thumb-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 960px;
+      height: 540px;
+      transform-origin: top left;
+      pointer-events: none;
+    }
+
+    #sidebarFoot {
+      padding: 8px;
+      border-top: 2px solid #312060;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sbfoot-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .sbfoot-btn {
+      flex: 1;
+      padding: 9px 6px;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: transform .12s, opacity .12s;
+      letter-spacing: .2px;
+    }
+
+    .sbfoot-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .sbfoot-btn:active {
+      opacity: .8;
+      transform: translateY(0);
+    }
+
+    .sbfoot-new {
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(6, 214, 160, .35);
+    }
+
+    .sbfoot-tpl {
+      background: #312060;
+      color: #a78bfa;
+      border: 2px solid #4c3d80;
+    }
+
+    .sbfoot-move {
+      background: #312060;
+      color: #7c6faa;
+      border: 2px solid #312060;
+      font-size: 13px;
+      flex: 0 0 36px;
+      padding: 0;
+    }
+
+    /* ─── Main area ─── */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── Toolbar ─── */
+    #toolbar {
+      background: var(--bg-tb);
+      border-bottom: 2px solid #e2e8f0;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+    }
+
+    #toolbar::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    #toolbar::-webkit-scrollbar-thumb {
+      background: #c7d2fe;
+      border-radius: 2px;
+    }
+
+    .tb-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 8px;
+      position: relative;
+    }
+
+    .tb-group+.tb-group::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 1px;
+      background: #e2e8f0;
+    }
+
+    .tb-label {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .tb-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* Tool button */
+    .tb {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      background: transparent;
+      color: #475569;
+      font-family: 'Baloo 2', sans-serif;
+      transition: background .15s, color .15s, transform .12s;
+      position: relative;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+
+    .tb:hover {
+      background: #f1f5f9;
+      color: #1a1040;
+    }
+
+    .tb:active {
+      transform: scale(.93);
+    }
+
+    .tb.active-btn {
+      background: #EDE9FE;
+      color: var(--primary);
+    }
+
+    .tb i {
+      font-size: 14px;
+    }
+
+    .tb span {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      white-space: nowrap;
+    }
+
+    /* Compact tool button */
+    .tbs {
+      width: 34px;
+      height: 34px;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      background: transparent;
+      color: #475569;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s, transform .12s;
+      flex-shrink: 0;
+    }
+
+    .tbs:hover {
+      background: #f1f5f9;
+      color: #1a1040;
+    }
+
+    .tbs:active {
+      transform: scale(.9);
+    }
+
+    /* Color swatch button */
+    .col-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      flex-shrink: 0;
+    }
+
+    .col-swatch:hover {
+      transform: scale(1.15);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+    }
+
+    /* Font size select */
+    #selFontSize {
+      height: 34px;
+      padding: 0 6px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1040;
+      background: #f8fafc;
+      cursor: pointer;
+      outline: none;
+    }
+
+    #selFontSize:focus {
+      border-color: var(--primary);
+    }
+
+    /* Slide counter */
+    #slideCounter {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+      white-space: nowrap;
+      padding: 0 6px;
+    }
+
+    /* ─── Workspace ─── */
+    #workspace {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(108, 99, 255, .06) 0%, transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(255, 101, 132, .06) 0%, transparent 60%),
+        #e8ecf8;
+      position: relative;
+    }
+
+    /* Checkerboard pattern for visual depth */
+    #workspace::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: .3;
+      background-image:
+        linear-gradient(45deg, #c7d2fe 25%, transparent 25%),
+        linear-gradient(-45deg, #c7d2fe 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #c7d2fe 75%),
+        linear-gradient(-45deg, transparent 75%, #c7d2fe 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      pointer-events: none;
+    }
+
+    #stageWrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Stage (960×540 logical) */
+    #stage {
+      width: 960px;
+      height: 540px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      transform-origin: top left;
+      box-shadow:
+        0 0 0 3px rgba(108, 99, 255, .15),
+        0 20px 60px rgba(0, 0, 0, .2),
+        0 4px 12px rgba(0, 0, 0, .1);
+    }
+
+    /* ─── Elements on stage ─── */
+    .el {
+      position: absolute;
+      box-sizing: border-box;
+      border: 2px solid transparent;
+      min-width: 40px;
+      min-height: 30px;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .el.selected {
+      border-color: var(--primary);
+      cursor: grab;
+    }
+
+    .el.selected::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border: 2px dashed rgba(108, 99, 255, .4);
+      pointer-events: none;
+      border-radius: 2px;
+    }
+
+    .el.dragging {
+      cursor: grabbing;
+    }
+
+    .el .content {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .textBox {
+      width: 100%;
+      height: 100%;
+      padding: 8px;
+      user-select: text !important;
+      cursor: text;
+      outline: none;
+      line-height: 1.2;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: transparent;
+    }
+
+    .shape {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Resize handles */
+    .handles {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .el.selected .handles {
+      display: block;
+    }
+
+    .handle {
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border: 2px solid var(--primary);
+      border-radius: 3px;
+      position: absolute;
+      pointer-events: auto;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+    }
+
+    .handle.nw {
+      left: -7px;
+      top: -7px;
+      cursor: nwse-resize;
+    }
+
+    .handle.n {
+      left: 50%;
+      top: -7px;
+      transform: translateX(-50%);
+      cursor: ns-resize;
+    }
+
+    .handle.ne {
+      right: -7px;
+      top: -7px;
+      cursor: nesw-resize;
+    }
+
+    .handle.e {
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+    }
+
+    .handle.se {
+      right: -7px;
+      bottom: -7px;
+      cursor: nwse-resize;
+    }
+
+    .handle.s {
+      left: 50%;
+      bottom: -7px;
+      transform: translateX(-50%);
+      cursor: ns-resize;
+    }
+
+    .handle.sw {
+      left: -7px;
+      bottom: -7px;
+      cursor: nesw-resize;
+    }
+
+    .handle.w {
+      left: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+    }
+
+    /* ─── Status bar ─── */
+    #statusBar {
+      height: 28px;
+      background: #1a1040;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      flex-shrink: 0;
+    }
+
+    #statusBar span {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #7c6faa;
+    }
+
+    #saveStatus {
+      color: #a78bfa !important;
+    }
+
+    #saveStatus.saved {
+      color: var(--green) !important;
+    }
+
+    /* ─── Popovers ─── */
+    .popover {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+      padding: 16px;
+      z-index: 200;
+      animation: popIn .2s ease-out;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .popover-title {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .popover-close {
+      width: 24px;
+      height: 24px;
+      border: none;
+      cursor: pointer;
+      background: #f1f5f9;
+      border-radius: 6px;
+      color: #94a3b8;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+
+    .popover-close:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+    }
+
+    .color-btn {
+      width: 28px;
+      height: 28px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform .12s, border-color .12s;
+    }
+
+    .color-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .color-btn.picked {
+      border-color: #1a1040;
+    }
+
+    .color-section {
+      margin-bottom: 12px;
+    }
+
+    .color-section-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .custom-color-wrap {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .custom-color-wrap label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .custom-color-input {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .emoji-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .12s, transform .12s;
+    }
+
+    .emoji-btn:hover {
+      background: #f1f5f9;
+      transform: scale(1.15);
+    }
+
+    /* ─── Modal ─── */
+    #modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 16, 64, .7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    #modalOverlay.show {
+      display: flex;
+    }
+
+    #modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .3);
+      position: relative;
+      animation: modalIn .2s ease-out;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(.9)translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)translateY(0);
+      }
+    }
+
+    #modalTitle {
+      font-size: 18px;
+      font-weight: 900;
+      color: #1a1040;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    #modalBody {
+      margin-bottom: 20px;
+    }
+
+    #modalActions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform .12s, opacity .12s;
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .modal-btn:active {
+      opacity: .8;
+      transform: translateY(0);
+    }
+
+    .modal-cancel {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .modal-ok {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(108, 99, 255, .4);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      cursor: pointer;
+      background: #f1f5f9;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Template grid */
+    .tpl-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tpl-card {
+      padding: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .15s, background .15s, transform .12s;
+    }
+
+    .tpl-card:hover {
+      border-color: var(--primary);
+      background: #f5f3ff;
+      transform: translateY(-2px);
+    }
+
+    .tpl-card .tpl-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .tpl-card .tpl-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1a1040;
+    }
+
+    .tpl-card .tpl-desc {
+      font-size: 10px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Image dialog */
+    .img-tab-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .img-tab {
+      flex: 1;
+      padding: 9px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #64748b;
+      background: transparent;
+      transition: all .15s;
+    }
+
+    .img-tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .drop-zone {
+      border: 2px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      background: #f8f7ff;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      background: #ede9fe;
+      border-color: var(--primary);
+    }
+
+    .drop-zone .dz-icon {
+      font-size: 36px;
+      color: #c7d2fe;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone .dz-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    /* ─── Present overlay ─── */
+    #presentOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #presentOverlay.show {
+      display: flex;
+    }
+
+    #presentStageWrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    #presentNavBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, .8));
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    #presentOverlay:hover #presentNavBar {
+      opacity: 1;
+    }
+
+    .pnav-btn {
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      background: rgba(255, 255, 255, .1);
+      color: #fff;
+      cursor: pointer;
+      border-radius: 12px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      transition: background .15s;
+    }
+
+    .pnav-btn:hover {
+      background: rgba(255, 255, 255, .25);
+    }
+
+    #presentCounter {
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, .7);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    #presentProgress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: width .3s ease;
+    }
+
+    #presentClose {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, .1);
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .3s, background .15s;
+    }
+
+    #presentOverlay:hover #presentClose {
+      opacity: 1;
+    }
+
+    #presentClose:hover {
+      background: rgba(255, 255, 255, .25);
+    }
+
+    /* ─── Scroll bars global ─── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c7d2fe;
+      border-radius: 3px;
+    }
+
+    /* ─── Toast notification ─── */
+    #toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1040;
+      color: #a78bfa;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all .3s;
+      z-index: 3000;
+      letter-spacing: .3px;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Input / field styles */
+    .field {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1040;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .field:focus {
+      border-color: var(--primary);
+    }
+
+    /* ─── Drag ghost prev disabled ─── */
+    img {
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #818cf8;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header id="appHeader">
+    <div class="logo">
+      <div class="icon">🎨</div>
+      <div class="name">СЛАЙДИК Kids</div>
+      <span style="font-size:9px;font-weight:700;color:#4c3d80;letter-spacing:.5px;margin-left:4px;display:none;"
+        id="headerTagline">для 3–4 класу</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="hbtn hbtn-undo" id="btnUndo" title="Скасувати (Ctrl+Z)">
+        <i class="fa-solid fa-rotate-left"></i><span style="display:none;" class="hbtn-label">Назад</span>
+      </button>
+      <button class="hbtn hbtn-undo" id="btnRedo" title="Повторити (Ctrl+Y)">
+        <i class="fa-solid fa-rotate-right"></i><span style="display:none;" class="hbtn-label">Вперед</span>
+      </button>
+      <div style="width:1px;height:28px;background:#312060;margin:0 4px;"></div>
+      <button class="hbtn hbtn-present" id="btnPresent">
+        <i class="fa-solid fa-play"></i><span>Перегляд</span>
+      </button>
+      <button class="hbtn hbtn-pdf" id="btnPDF">
+        <i class="fa-solid fa-file-pdf"></i><span>PDF</span>
+      </button>
+      <button class="hbtn hbtn-danger" id="btnReset" title="Очистити все">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ BODY ═══ -->
+  <div id="appBody">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div id="sidebarHead">
+        <div class="label">Слайди</div>
+        <div style="display:flex;gap:4px;">
+          <button class="sbbtn" id="btnSlideUp" title="Вгору"><i class="fa-solid fa-arrow-up"></i></button>
+          <button class="sbbtn" id="btnSlideDown" title="Вниз"><i class="fa-solid fa-arrow-down"></i></button>
+        </div>
+      </div>
+      <div id="slideList"></div>
+      <div id="sidebarFoot">
+        <button class="sbfoot-btn sbfoot-new" id="btnNewSlide">
+          <i class="fa-solid fa-plus"></i> Новий слайд
+        </button>
+        <button class="sbfoot-btn sbfoot-tpl" id="btnTemplates">
+          <i class="fa-solid fa-table-cells-large"></i> Макети
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main id="main">
+
+      <!-- Toolbar -->
+      <div id="toolbar">
+
+        <!-- Slide tools -->
+        <div class="tb-group">
+          <div class="tb-label">Слайд</div>
+          <div class="tb-row">
+            <button class="tb" id="btnDupSlide" title="Дублювати слайд">
+              <i class="fa-regular fa-copy" style="color:#6C63FF;"></i>
+              <span>Копія</span>
+            </button>
+            <button class="tb" id="btnDelSlide" title="Видалити слайд">
+              <i class="fa-regular fa-trash-can" style="color:#ef4444;"></i>
+              <span>Видалити</span>
+            </button>
+            <button class="tb" id="btnBg" title="Фон слайда">
+              <i class="fa-solid fa-fill-drip" style="color:#f97316;"></i>
+              <span>Фон</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Insert -->
+        <div class="tb-group">
+          <div class="tb-label">Вставка</div>
+          <div class="tb-row">
+            <button class="tb" id="btnAddText" title="Додати текст">
+              <i class="fa-solid fa-font" style="color:#3b82f6;"></i>
+              <span>Текст</span>
+            </button>
+            <button class="tb" id="btnAddImage" title="Додати фото">
+              <i class="fa-regular fa-image" style="color:#8b5cf6;"></i>
+              <span>Фото</span>
+            </button>
+            <button class="tb" id="btnEmoji" title="Додати смайлик">
+              <i class="fa-regular fa-face-smile" style="color:#f59e0b;"></i>
+              <span>Смайлик</span>
+            </button>
+            <button class="tb" id="btnShapeRect" title="Прямокутник">
+              <i class="fa-regular fa-square" style="color:#64748b;"></i>
+              <span>Квадрат</span>
+            </button>
+            <button class="tb" id="btnShapeCircle" title="Коло">
+              <i class="fa-regular fa-circle" style="color:#64748b;"></i>
+              <span>Коло</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Text formatting -->
+        <div class="tb-group">
+          <div class="tb-label">Текст</div>
+          <div class="tb-row" style="align-items:center;">
+            <select id="selFontSize" title="Розмір тексту">
+              <option value="16">XS</option>
+              <option value="22">S</option>
+              <option value="32" selected>M</option>
+              <option value="44">L</option>
+              <option value="60">XL</option>
+              <option value="80">XXL</option>
+            </select>
+            <button class="tbs" id="btnBold" title="Жирний (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+            <button class="tbs" id="btnItalic" title="Курсив"><i class="fa-solid fa-italic"></i></button>
+            <button class="tbs" id="btnUnderline" title="Підкреслення"><i class="fa-solid fa-underline"></i></button>
+            <div style="width:1px;height:20px;background:#e2e8f0;margin:0 2px;"></div>
+            <button class="tbs" id="btnAlignLeft" title="Ліворуч"><i class="fa-solid fa-align-left"></i></button>
+            <button class="tbs" id="btnAlignCenter" title="По центру"><i class="fa-solid fa-align-center"></i></button>
+            <button class="tbs" id="btnAlignRight" title="Праворуч"><i class="fa-solid fa-align-right"></i></button>
+            <div style="width:1px;height:20px;background:#e2e8f0;margin:0 2px;"></div>
+            <button class="tb" id="btnTextColor" title="Колір тексту" style="width:38px;height:38px;">
+              <i class="fa-solid fa-palette" style="color:#6C63FF;font-size:16px;"></i>
+              <span>Колір</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Object tools -->
+        <div class="tb-group">
+          <div class="tb-label">Об'єкт</div>
+          <div class="tb-row">
+            <button class="tb" id="btnFill" title="Заливка фігури">
+              <i class="fa-solid fa-droplet" style="color:#06d6a0;"></i>
+              <span>Заливка</span>
+            </button>
+            <button class="tb" id="btnStroke" title="Контур фігури">
+              <i class="fa-solid fa-pen-ruler" style="color:#0ea5e9;"></i>
+              <span>Контур</span>
+            </button>
+            <button class="tbs" id="btnBringFront" title="На передній план"><i
+                class="fa-solid fa-layer-group"></i></button>
+            <button class="tbs" id="btnSendBack" title="На задній план"><i
+                class="fa-solid fa-layer-group fa-flip-vertical"></i></button>
+            <button class="tbs" id="btnDupEl" title="Дублювати (Ctrl+D)" style="color:#6C63FF;"><i
+                class="fa-regular fa-clone"></i></button>
+            <button class="tbs" id="btnDelEl" title="Видалити (Delete)" style="color:#ef4444;"><i
+                class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- Spacer -->
+        <div style="flex:1;min-width:8px;"></div>
+
+        <!-- Slide counter -->
+        <div id="slideCounter">Слайд 1/1</div>
+
+      </div>
+
+      <!-- Workspace -->
+      <div id="workspace">
+        <div id="stageWrap">
+          <div id="stage" aria-label="Полотно слайда"></div>
+        </div>
+
+        <!-- Color popover -->
+        <div id="colorPopover" class="popover" style="display:none;max-width:320px;">
+          <div class="popover-head">
+            <div class="popover-title" id="colorTitle">КОЛІР</div>
+            <button class="popover-close" id="btnCloseColor"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="color-section">
+            <div class="color-section-label">Базові кольори</div>
+            <div id="colorGrid" class="color-grid"></div>
+          </div>
+          <div class="color-section">
+            <div class="color-section-label">Пастельні</div>
+            <div id="colorGridPastel" class="color-grid"></div>
+          </div>
+          <div class="custom-color-wrap">
+            <label>Свій колір:</label>
+            <input type="color" id="customColorInput" class="custom-color-input" value="#6C63FF" />
+            <button class="modal-btn modal-ok" id="btnApplyCustomColor"
+              style="flex:none;padding:8px 14px;font-size:11px;">Застосувати</button>
+          </div>
+        </div>
+
+        <!-- Emoji popover -->
+        <div id="emojiPopover" class="popover" style="display:none;max-width:340px;">
+          <div class="popover-head">
+            <div class="popover-title">СМАЙЛИКИ ТА СИМВОЛИ</div>
+            <button class="popover-close" id="btnCloseEmoji"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="emojiGrid" class="emoji-grid"></div>
+        </div>
+
+      </div>
+
+      <!-- Status bar -->
+      <div id="statusBar">
+        <span id="slideInfo">Полотно: 16:9 (960×540)</span>
+        <span id="saveStatus">Готово ✓</span>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div id="modal">
+      <button class="modal-close" id="btnModalClose"><i class="fa-solid fa-xmark"></i></button>
+      <div id="modalTitle"></div>
+      <div id="modalBody"></div>
+      <div id="modalActions">
+        <button class="modal-btn modal-cancel" id="btnModalCancel">Скасувати</button>
+        <button class="modal-btn modal-ok" id="btnModalOk">Добре</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presentation overlay -->
+  <div id="presentOverlay">
+    <div id="presentProgress"></div>
+    <div id="presentStageWrap"></div>
+    <button id="presentClose"><i class="fa-solid fa-xmark"></i></button>
+    <div id="presentNavBar">
+      <button class="pnav-btn" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
+      <div id="presentCounter">1 / 1</div>
+      <button class="pnav-btn" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    /* ═══════════════════════════════════════════
+       СЛАЙДИК Kids v3.0 — Redesigned & Fixed
+    ═══════════════════════════════════════════ */
+
+    const STORAGE_KEY = 'slidyk_kids_v3';
+    const MAX_HISTORY = 80;
+    const BASE_W = 960;
+    const BASE_H = 540;
+
+    const COLORS_VIVID = [
+      '#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981',
+      '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e', '#64748b', '#1e293b', '#94a3b8'
+    ];
+    const COLORS_PASTEL = [
+      '#fecaca', '#fed7aa', '#fef08a', '#d9f99d', '#a7f3d0', '#99f6e4', '#bae6fd', '#bfdbfe',
+      '#c7d2fe', '#ddd6fe', '#f5d0fe', '#fbcfe8', '#ffe4e6', '#fef9c3', '#f0fdf4', '#f0f9ff', '#faf5ff', '#fdf2f8'
+    ];
+    const EMOJIS = [
+      '😀', '😁', '😅', '😍', '😎', '🤩', '🥳', '😂', '🤔', '😴', '🤖', '👽', '🦁', '🐱', '🐶', '🐸', '🦊', '🐼', '🐨', '🐧', '🦄', '🐉', '🦋', '🌸', '🌺', '🌻', '🌈', '⭐', '🌟', '✨', '🔥', '💧', '❄️', '🍕', '🍦', '🎂', '🍩', '🍎', '🍓', '🥑',
+      '👋', '👍', '👏', '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤝', '✌️', '👌', '🙏', '💪', '🎨', '🎮', '🎸', '⚽', '🏀', '🎯', '🏆', '🥇', '🚀', '🌍', '🏠', '🚗', '🎁', '🎉', '🎊', '🔑', '💡', '📚', '✏️', '🧩', '🔭', '🧪', '🌡️'
+    ];
+
+    const TEMPLATES = [
+      { id: 'title', icon: '📣', name: 'Титульний', desc: 'Заголовок + ім\'я автора' },
+      { id: 'two', icon: '📋', name: 'Текст + фото', desc: 'Текст ліворуч, фото праворуч' },
+      { id: 'three', icon: '🏛', name: '3 блоки', desc: 'Три рівних блоки' },
+      { id: 'fact', icon: '💡', name: 'Цікавий факт', desc: 'Велика картка з фактом' },
+      { id: 'list', icon: '📝', name: 'Список', desc: 'Заголовок + пункти' },
+      { id: 'compare', icon: '🔄', name: 'Порівняння', desc: 'Два стовпчики' },
+    ];
+
+    const uid = () => Math.floor(Date.now() * Math.random() * 1000 + Math.random() * 1e9);
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const deepClone = o => JSON.parse(JSON.stringify(o));
+
+    function safeParse(s, fb) {
+      try { return JSON.parse(s); } catch { return fb; }
+    }
+
+    function normalizeEl(e) {
+      return {
+        id: typeof e.id === 'number' ? e.id : uid(),
+        type: ['text', 'image', 'shape'].includes(e.type) ? e.type : 'text',
+        x: Number.isFinite(e.x) ? e.x : 100,
+        y: Number.isFinite(e.y) ? e.y : 100,
+        w: Number.isFinite(e.w) ? e.w : 260,
+        h: Number.isFinite(e.h) ? e.h : 80,
+        z: Number.isFinite(e.z) ? e.z : 1,
+        content: typeof e.content === 'string' ? e.content : '',
+        style: {
+          fontSize: Number.isFinite(e.style?.fontSize) ? e.style.fontSize : 32,
+          color: typeof e.style?.color === 'string' ? e.style.color : '#1a1040',
+          bold: !!e.style?.bold,
+          italic: !!e.style?.italic,
+          underline: !!e.style?.underline,
+          align: ['left', 'center', 'right'].includes(e.style?.align) ? e.style.align : 'left',
+          fill: typeof e.style?.fill === 'string' ? e.style.fill : '#c7d2fe',
+          stroke: typeof e.style?.stroke === 'string' ? e.style.stroke : '#6366f1'
+        },
+        shape: ['rect', 'circle'].includes(e.shape) ? e.shape : 'rect'
+      };
+    }
+
+    function normalizeState(raw) {
+      if (!raw || !Array.isArray(raw.slides) || !raw.slides.length) return null;
+      const slides = raw.slides.map(s => ({
+        id: typeof s.id === 'number' ? s.id : uid(),
+        background: typeof s.background === 'string' ? s.background : '#ffffff',
+        elements: Array.isArray(s.elements) ? s.elements.map(normalizeEl) : []
+      }));
+      return {
+        slides,
+        current: clamp(Number.isFinite(raw.current) ? raw.current : 0, 0, slides.length - 1),
+        selected: null
+      };
+    }
+
+    /* ───── App ───── */
+    const App = (() => {
+      let state;
+      let undoStack = [], redoStack = [];
+      const dom = {};
+      const elDom = new Map(); // id → DOM node
+      const ptr = { mode: 'none', elId: null, handle: null, startX: 0, startY: 0, startBox: null, dragOff: { x: 0, y: 0 } };
+      let colorMode = 'textColor';
+      let clip = null;
+      let saveTimer = null, thumbTimer = null;
+
+      const $ = id => document.getElementById(id);
+
+      const slide = () => state.slides[state.current];
+      const elements = () => slide().elements;
+      const selectedEl = () => state.selected ? elements().find(e => e.id === state.selected) || null : null;
+
+      /* ── Z normalization ── */
+      function normalizeZ(sl) {
+        [...sl.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1)).forEach((e, i) => e.z = i + 1);
+      }
+
+      /* ── Toast ── */
+      let toastTimer;
+      function toast(msg, dur = 2000) {
+        dom.toast.textContent = msg;
+        dom.toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => dom.toast.classList.remove('show'), dur);
+      }
+
+      /* ── Save status ── */
+      function setSave(text, ok = false) {
+        dom.saveStatus.textContent = text;
+        dom.saveStatus.classList.toggle('saved', ok);
+      }
+
+      function scheduleSave() {
+        setSave('Зберігаємо…', false);
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          setSave(`Збережено ✓`, true);
+        }, 400);
+      }
+
+      function debounceThumbs() {
+        if (thumbTimer) clearTimeout(thumbTimer);
+        thumbTimer = setTimeout(renderThumbnails, 250);
+      }
+
+      /* ── History ── */
+      function pushHistory() {
+        const snap = JSON.stringify(state);
+        if (undoStack.length && undoStack[undoStack.length - 1] === snap) return;
+        undoStack.push(snap);
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        updateUndoRedo();
+      }
+
+      function updateUndoRedo() {
+        dom.btnUndo.style.opacity = undoStack.length > 1 ? '1' : '0.4';
+        dom.btnRedo.style.opacity = redoStack.length > 0 ? '1' : '0.4';
+      }
+
+      function undo() {
+        if (undoStack.length <= 1) return;
+        redoStack.push(undoStack.pop());
+        const prev = undoStack[undoStack.length - 1];
+        state = normalizeState(safeParse(prev, null)) || state;
+        renderAll(); scheduleSave(); updateUndoRedo();
+        toast('↩ Скасовано');
+      }
+
+      function redo() {
+        if (!redoStack.length) return;
+        const next = redoStack.pop();
+        undoStack.push(next);
+        state = normalizeState(safeParse(next, null)) || state;
+        renderAll(); scheduleSave(); updateUndoRedo();
+        toast('↪ Повторено');
+      }
+
+      /* ── Stage scaling ── */
+      function scaleStage() {
+        const ws = dom.workspace;
+        const pad = 64;
+        const availW = ws.clientWidth - pad;
+        const availH = ws.clientHeight - pad;
+        const scale = Math.min(availW / BASE_W, availH / BASE_H, 1);
+        dom.stage.style.transform = `scale(${scale})`;
+        dom.stageWrap.style.width = (BASE_W * scale) + 'px';
+        dom.stageWrap.style.height = (BASE_H * scale) + 'px';
+        dom.stage.dataset.scale = String(scale);
+      }
+
+      /* ── Coordinate mapping ── */
+      function toStagePoint(cx, cy) {
+        const r = dom.stage.getBoundingClientRect();
+        // getBoundingClientRect() already accounts for CSS transform scale
+        const sx = BASE_W / r.width;
+        const sy = BASE_H / r.height;
+        return { x: (cx - r.left) * sx, y: (cy - r.top) * sy };
+      }
+
+      /* ── Selection ── */
+      function selectEl(id) {
+        state.selected = id;
+        closePopovers();
+        for (const [eid, node] of elDom) node.classList.toggle('selected', eid === id);
+        updateSlideCounter();
+      }
+
+      function deselect() {
+        state.selected = null;
+        closePopovers();
+        for (const node of elDom.values()) node.classList.remove('selected');
+      }
+
+      /* ── Popovers ── */
+      function initPopovers() {
+        // Vivid colors
+        dom.colorGrid.innerHTML = '';
+        COLORS_VIVID.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'color-btn'; b.style.background = c; b.title = c;
+          b.onclick = () => { applyColor(c); closePopovers(); };
+          dom.colorGrid.appendChild(b);
+        });
+        // Pastel colors
+        dom.colorGridPastel.innerHTML = '';
+        COLORS_PASTEL.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'color-btn'; b.style.background = c; b.title = c;
+          b.onclick = () => { applyColor(c); closePopovers(); };
+          dom.colorGridPastel.appendChild(b);
+        });
+        // Emoji
+        dom.emojiGrid.innerHTML = '';
+        EMOJIS.forEach(em => {
+          const b = document.createElement('button');
+          b.className = 'emoji-btn'; b.textContent = em;
+          b.onclick = () => { addEmoji(em); closePopovers(); };
+          dom.emojiGrid.appendChild(b);
+        });
+      }
+
+      function openColor(mode) {
+        colorMode = mode;
+        dom.colorTitle.textContent = {
+          textColor: 'КОЛІР ТЕКСТУ', bg: 'ФОН СЛАЙДА',
+          fill: 'ЗАЛИВКА ФІГУРИ', stroke: 'КОНТУР ФІГУРИ'
+        }[mode] || 'КОЛІР';
+        closePopovers();
+        dom.colorPopover.style.display = 'block';
+      }
+
+      function openEmoji() {
+        closePopovers();
+        dom.emojiPopover.style.display = 'block';
+      }
+
+      function closePopovers() {
+        dom.colorPopover.style.display = 'none';
+        dom.emojiPopover.style.display = 'none';
+      }
+
+      function applyColor(c) {
+        pushHistory();
+        if (colorMode === 'bg') {
+          slide().background = c;
+          dom.stage.style.background = c;
+          renderThumbnails(); scheduleSave(); return;
+        }
+        const el = selectedEl(); if (!el) return;
+        if (colorMode === 'textColor' && el.type === 'text') {
+          el.style.color = c;
+          const t = elDom.get(el.id)?.querySelector('.textBox');
+          if (t) t.style.color = c;
+        }
+        if (colorMode === 'fill' && el.type === 'shape') {
+          el.style.fill = c;
+          const s = elDom.get(el.id)?.querySelector('svg [fill]');
+          if (s) s.setAttribute('fill', c);
+        }
+        if (colorMode === 'stroke' && el.type === 'shape') {
+          el.style.stroke = c;
+          const s = elDom.get(el.id)?.querySelector('svg [stroke]');
+          if (s) s.setAttribute('stroke', c);
+        }
+        debounceThumbs(); scheduleSave();
+      }
+
+      /* ── Modal ── */
+      function openModal({ title, bodyHTML, okText = 'Добре', cancelText = 'Скасувати', onOk, showActions = true }) {
+        dom.modalTitle.textContent = title;
+        dom.modalBody.innerHTML = bodyHTML;
+        dom.modalActions.style.display = showActions ? 'flex' : 'none';
+        dom.btnModalOk.textContent = okText;
+        dom.btnModalCancel.textContent = cancelText;
+        dom.btnModalOk.onclick = () => { onOk?.(); closeModal(); };
+        dom.btnModalCancel.onclick = closeModal;
+        dom.modalOverlay.classList.add('show');
+      }
+
+      function closeModal() { dom.modalOverlay.classList.remove('show'); }
+
+      function confirm({ title, msg, okText = 'Так', onYes }) {
+        openModal({ title, bodyHTML: `<p style="font-size:14px;font-weight:700;color:#475569;line-height:1.6;">${msg}</p>`, okText, cancelText: 'Ні', onOk: onYes });
+      }
+
+      /* ── Render all ── */
+      function renderAll() { renderThumbnails(); renderStage(); updateSlideCounter(); }
+
+      function updateSlideCounter() {
+        dom.slideCounter.textContent = `Слайд ${state.current + 1}/${state.slides.length}`;
+        dom.slideInfo.textContent = `Полотно 16:9 • ${state.slides.length} слайд(ів)`;
+      }
+
+      /* ── Thumbnail thumb scale ── */
+      function getThumbScale() {
+        // sidebar width 260px - padding 8*2 - gap etc ≈ 234px content
+        const firstThumb = dom.slideList.querySelector('.thumb-wrap');
+        if (!firstThumb) return 234 / BASE_W;
+        return firstThumb.clientWidth / BASE_W;
+      }
+
+      function renderThumbnails() {
+        dom.slideList.innerHTML = '';
+        state.slides.forEach((s, idx) => {
+          // Slide item
+          const item = document.createElement('div');
+          item.className = 'slide-item' + (idx === state.current ? ' active' : '');
+          item.onclick = () => {
+            state.current = idx; state.selected = null;
+            closePopovers(); renderAll(); scheduleSave();
+          };
+
+          // Slide actions (hover)
+          const acts = document.createElement('div');
+          acts.className = 'slide-actions';
+          const makeSaBtn = (cls, icon, tip, fn) => {
+            const b = document.createElement('button');
+            b.className = 'sa-btn ' + cls; b.title = tip;
+            b.innerHTML = `<i class="${icon}"></i>`;
+            b.onclick = e => { e.stopPropagation(); fn(); };
+            return b;
+          };
+          acts.appendChild(makeSaBtn('sa-dup', 'fa-regular fa-copy', 'Дублювати', () => duplicateSlide(idx)));
+          acts.appendChild(makeSaBtn('sa-del', 'fa-solid fa-trash', 'Видалити', () => confirmDeleteSlide(idx)));
+          item.appendChild(acts);
+
+          // Slide number
+          const num = document.createElement('div');
+          num.className = 'slide-num';
+          num.textContent = idx + 1;
+          item.appendChild(num);
+
+          // Thumbnail
+          const wrap = document.createElement('div');
+          wrap.className = 'thumb-wrap';
+          const inner = document.createElement('div');
+          inner.className = 'thumb-inner';
+          inner.style.background = s.background;
+
+          // Calculate scale after DOM is available
+          requestAnimationFrame(() => {
+            const sc = wrap.clientWidth / BASE_W;
+            inner.style.transform = `scale(${sc})`;
+          });
+
+          // Render elements into thumbnail
+          const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+          sorted.forEach(el => {
+            const d = document.createElement('div');
+            d.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`;
+            if (el.type === 'text') {
+              Object.assign(d.style, {
+                fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#1a1040',
+                fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal',
+                textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left',
+                whiteSpace: 'pre-wrap', padding: '8px', fontFamily: "'Baloo 2',sans-serif", lineHeight: '1.2'
+              });
+              d.textContent = el.content || '';
+            } else if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+              d.appendChild(img);
+            } else if (el.type === 'shape') {
+              d.appendChild(makeShapeSVG(el));
+            }
+            inner.appendChild(d);
+          });
+
+          wrap.appendChild(inner);
+          item.appendChild(wrap);
+          dom.slideList.appendChild(item);
+        });
+      }
+
+      /* ── SVG shape helper ── */
+      function makeShapeSVG(el) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
+        const s = document.createElementNS('http://www.w3.org/2000/svg', el.shape === 'circle' ? 'ellipse' : 'rect');
+        if (el.shape === 'circle') { s.setAttribute('cx', '50%'); s.setAttribute('cy', '50%'); s.setAttribute('rx', '48%'); s.setAttribute('ry', '48%'); }
+        else { s.setAttribute('x', '2%'); s.setAttribute('y', '2%'); s.setAttribute('width', '96%'); s.setAttribute('height', '96%'); }
+        s.setAttribute('fill', el.style.fill || '#c7d2fe');
+        s.setAttribute('stroke', el.style.stroke || '#6366f1');
+        s.setAttribute('stroke-width', '8');
+        svg.appendChild(s); return svg;
+      }
+
+      /* ── Apply text styles to DOM ── */
+      function applyTextStyle(node, el) {
+        node.style.fontSize = (el.style.fontSize || 32) + 'px';
+        node.style.color = el.style.color || '#1a1040';
+        node.style.fontWeight = el.style.bold ? '900' : '700';
+        node.style.fontStyle = el.style.italic ? 'italic' : 'normal';
+        node.style.textDecoration = el.style.underline ? 'underline' : 'none';
+        node.style.textAlign = el.style.align || 'left';
+      }
+
+      /* ── Render stage ── */
+      function renderStage() {
+        dom.stage.innerHTML = ''; elDom.clear();
+        dom.stage.style.background = slide().background;
+
+        const sorted = [...elements()].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+        sorted.forEach(el => {
+          const w = document.createElement('div');
+          w.className = 'el' + (state.selected === el.id ? ' selected' : '');
+          w.dataset.id = String(el.id);
+          w.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z || 1};`;
+
+          const content = document.createElement('div');
+          content.className = 'content';
+
+          if (el.type === 'text') {
+            const t = document.createElement('div');
+            t.className = 'textBox'; t.contentEditable = 'true'; t.spellcheck = false;
+            t.textContent = el.content || '';
+            applyTextStyle(t, el);
+            t.style.fontFamily = "'Baloo 2','Nunito',sans-serif";
+            t.addEventListener('input', () => { el.content = t.textContent || ''; scheduleSave(); debounceThumbs(); });
+            t.addEventListener('pointerdown', e => { e.stopPropagation(); selectEl(el.id); });
+            content.appendChild(t);
+          } else if (el.type === 'image') {
+            const img = document.createElement('img');
+            img.src = el.content; img.draggable = false;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;pointer-events:none;';
+            content.appendChild(img);
+          } else if (el.type === 'shape') {
+            content.appendChild(makeShapeSVG(el));
+          }
+
+          w.appendChild(content);
+
+          // Handles
+          const handles = document.createElement('div');
+          handles.className = 'handles';
+          ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(p => {
+            const h = document.createElement('div');
+            h.className = `handle ${p}`; h.dataset.handle = p;
+            h.addEventListener('pointerdown', e => onHandleDown(e, el.id, p));
+            handles.appendChild(h);
+          });
+          w.appendChild(handles);
+
+          w.addEventListener('pointerdown', e => onElDown(e, el.id));
+          elDom.set(el.id, w);
+          dom.stage.appendChild(w);
+        });
+      }
+
+      /* ── Pointer: element drag ── */
+      function onElDown(e, id) {
+        if (e.target?.classList?.contains('textBox')) return;
+        e.stopPropagation(); selectEl(id);
+        const el = elements().find(x => x.id === id);
+        const node = elDom.get(id);
+        if (!el || !node) return;
+        pushHistory();
+        const p = toStagePoint(e.clientX, e.clientY);
+        ptr.mode = 'drag'; ptr.elId = id;
+        ptr.dragOff = { x: p.x - el.x, y: p.y - el.y };
+        node.setPointerCapture(e.pointerId);
+        node.classList.add('dragging');
+        const onMove = ev => {
+          const el2 = elements().find(x => x.id === ptr.elId);
+          const n2 = elDom.get(ptr.elId);
+          if (!el2 || !n2) return;
+          const pp = toStagePoint(ev.clientX, ev.clientY);
+          el2.x = clamp(pp.x - ptr.dragOff.x, 0, BASE_W - el2.w);
+          el2.y = clamp(pp.y - ptr.dragOff.y, 0, BASE_H - el2.h);
+          n2.style.left = el2.x + 'px'; n2.style.top = el2.y + 'px';
+        };
+        const onUp = () => {
+          node.classList.remove('dragging');
+          node.removeEventListener('pointermove', onMove);
+          normalizeZ(slide()); debounceThumbs(); scheduleSave(); ptr.mode = 'none';
+        };
+        node.addEventListener('pointermove', onMove);
+        node.addEventListener('pointerup', onUp, { once: true });
+        node.addEventListener('pointercancel', onUp, { once: true });
+      }
+
+      /* ── Pointer: resize handle ── */
+      function onHandleDown(e, id, handle) {
+        e.stopPropagation(); e.preventDefault(); selectEl(id);
+        const el = elements().find(x => x.id === id);
+        const node = elDom.get(id);
+        if (!el || !node) return;
+        pushHistory();
+        const p = toStagePoint(e.clientX, e.clientY);
+        ptr.mode = 'resize'; ptr.elId = id; ptr.handle = handle;
+        ptr.startX = p.x; ptr.startY = p.y;
+        ptr.startBox = { x: el.x, y: el.y, w: el.w, h: el.h };
+        node.setPointerCapture(e.pointerId);
+        const onMove = ev => {
+          const el2 = elements().find(x => x.id === ptr.elId);
+          const n2 = elDom.get(ptr.elId);
+          if (!el2 || !n2 || !ptr.startBox) return;
+          const pp = toStagePoint(ev.clientX, ev.clientY);
+          const dx = pp.x - ptr.startX, dy = pp.y - ptr.startY;
+          let { x, y, w, h } = ptr.startBox;
+          const has = s => ptr.handle.includes(s);
+          if (has('e')) w += dx; if (has('s')) h += dy;
+          if (has('w')) { x += dx; w -= dx; } if (has('n')) { y += dy; h -= dy; }
+          w = Math.max(40, w); h = Math.max(30, h);
+          x = clamp(x, 0, BASE_W - w); y = clamp(y, 0, BASE_H - h);
+          el2.x = x; el2.y = y; el2.w = w; el2.h = h;
+          n2.style.cssText += `left:${x}px;top:${y}px;width:${w}px;height:${h}px;`;
+        };
+        const onUp = () => {
+          node.removeEventListener('pointermove', onMove);
+          normalizeZ(slide()); debounceThumbs(); scheduleSave(); ptr.mode = 'none';
+        };
+        node.addEventListener('pointermove', onMove);
+        node.addEventListener('pointerup', onUp, { once: true });
+        node.addEventListener('pointercancel', onUp, { once: true });
+      }
+
+      /* ── Slide ops ── */
+      function addSlide() {
+        pushHistory();
+        state.slides.push({ id: uid(), background: '#ffffff', elements: [] });
+        state.current = state.slides.length - 1; state.selected = null;
+        renderAll(); scheduleSave(); toast('Новий слайд 🎉');
+      }
+
+      function confirmDeleteSlide(idx = state.current) {
+        if (state.slides.length <= 1) { toast('Потрібен хоча б 1 слайд! 🙂'); return; }
+        confirm({ title: 'Видалити слайд?', msg: `Ви впевнені, що хочете видалити слайд ${idx + 1}? Це не можна скасувати.`, okText: 'Так, видалити', onYes: () => deleteSlide(idx) });
+      }
+
+      function deleteSlide(idx = state.current) {
+        if (state.slides.length <= 1) return;
+        pushHistory();
+        state.slides.splice(idx, 1);
+        state.current = clamp(state.current, 0, state.slides.length - 1);
+        state.selected = null;
+        renderAll(); scheduleSave(); toast('Слайд видалено');
+      }
+
+      function duplicateSlide(idx = state.current) {
+        pushHistory();
+        const copy = deepClone(state.slides[idx]);
+        copy.id = uid(); copy.elements.forEach(e => e.id = uid());
+        state.slides.splice(idx + 1, 0, copy);
+        state.current = idx + 1; state.selected = null;
+        renderAll(); scheduleSave(); toast('Слайд скопійовано ✓');
+      }
+
+      function moveSlide(d) {
+        const i = state.current, j = i + d;
+        if (j < 0 || j >= state.slides.length) return;
+        pushHistory();
+        [state.slides[i], state.slides[j]] = [state.slides[j], state.slides[i]];
+        state.current = j;
+        renderAll(); scheduleSave();
+      }
+
+      /* ── Element ops ── */
+      function addText() {
+        pushHistory();
+        const e = normalizeEl({
+          id: uid(), type: 'text', x: 160, y: 150, w: 640, h: 130, z: elements().length + 1,
+          content: 'Введи текст тут…',
+          style: { fontSize: 32, color: '#1a1040', bold: false, italic: false, underline: false, align: 'center', fill: '#c7d2fe', stroke: '#6366f1' }
+        });
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave();
+        requestAnimationFrame(() => {
+          const t = elDom.get(e.id)?.querySelector('.textBox');
+          if (t) { t.focus(); document.execCommand('selectAll', false, null); }
+        });
+      }
+
+      function addEmoji(em) {
+        pushHistory();
+        const e = normalizeEl({
+          id: uid(), type: 'text', x: 400, y: 200, w: 160, h: 160, z: elements().length + 1,
+          content: em,
+          style: { fontSize: 80, color: '#1a1040', bold: false, italic: false, underline: false, align: 'center', fill: '#c7d2fe', stroke: '#6366f1' }
+        });
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave();
+      }
+
+      function addShape(kind) {
+        pushHistory();
+        const fills = { rect: '#c7d2fe', circle: '#fde68a' };
+        const strokes = { rect: '#6366f1', circle: '#d97706' };
+        const e = normalizeEl({
+          id: uid(), type: 'shape', x: 240, y: 160, w: 480, h: 260, z: elements().length + 1,
+          content: '', shape: kind,
+          style: { fill: fills[kind], stroke: strokes[kind] }
+        });
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave();
+      }
+
+      function addImage() {
+        const html = `
+      <div class="img-tab-row">
+        <button class="img-tab active" id="tabFile" onclick="switchImgTab('file')"><i class="fa-solid fa-folder-open"></i> З файлу</button>
+        <button class="img-tab" id="tabUrl" onclick="switchImgTab('url')"><i class="fa-solid fa-link"></i> За посиланням</button>
+      </div>
+      <div id="imgPanelFile">
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <div class="dz-icon">🖼️</div>
+          <div class="dz-text" style="font-size:13px;font-weight:700;color:#6C63FF;">Натисни, щоб обрати фото</div>
+          <div class="dz-text" style="margin-top:4px;">або перетягни сюди</div>
+        </div>
+        <input type="file" id="fileInput" style="display:none;" accept="image/*"/>
+      </div>
+      <div id="imgPanelUrl" style="display:none;">
+        <input type="text" id="imgUrl" class="field" placeholder="Вставте посилання на зображення…"/>
+        <p style="font-size:11px;font-weight:600;color:#94a3b8;margin-top:6px;">Наприклад: https://…/photo.jpg</p>
+      </div>
+    `;
+        openModal({
+          title: '📷 Додати фото', bodyHTML: html, okText: 'Додати', cancelText: 'Закрити',
+          onOk: () => { const url = $('imgUrl')?.value.trim(); if (url) insertImage(url); }
+        });
+
+        window.switchImgTab = tab => {
+          $('tabFile').classList.toggle('active', tab === 'file');
+          $('tabUrl').classList.toggle('active', tab === 'url');
+          $('imgPanelFile').style.display = tab === 'file' ? 'block' : 'none';
+          $('imgPanelUrl').style.display = tab === 'url' ? 'block' : 'none';
+        };
+
+        const dz = $('dropZone');
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+
+        const fi = $('fileInput');
+        fi.onchange = ev => { const f = ev.target.files?.[0]; if (f) readFile(f); };
+
+        function readFile(f) {
+          const r = new FileReader();
+          r.onload = () => { insertImage(String(r.result)); closeModal(); };
+          r.readAsDataURL(f);
+        }
+      }
+
+      function insertImage(src) {
+        pushHistory();
+        const e = normalizeEl({ id: uid(), type: 'image', x: 200, y: 120, w: 560, h: 315, z: elements().length + 1, content: src });
+        elements().push(e); state.selected = e.id;
+        renderAll(); scheduleSave();
+      }
+
+      function confirmDeleteSelected() {
+        const el = selectedEl(); if (!el) { toast('Спочатку обери об\'єкт 👆'); return; }
+        const names = { text: 'текст', image: 'фото', shape: 'фігуру' };
+        confirm({ title: 'Видалити?', msg: `Видалити цей ${names[el.type]}?`, okText: 'Так, видалити', onYes: deleteSelected });
+      }
+
+      function deleteSelected() {
+        const el = selectedEl(); if (!el) return;
+        pushHistory();
+        slide().elements = slide().elements.filter(e => e.id !== el.id);
+        state.selected = null; normalizeZ(slide());
+        renderAll(); scheduleSave(); toast('Об\'єкт видалено');
+      }
+
+      function duplicateSelected() {
+        const el = selectedEl(); if (!el) { toast('Спочатку обери об\'єкт 👆'); return; }
+        pushHistory();
+        const copy = deepClone(el); copy.id = uid();
+        copy.x = clamp(copy.x + 24, 0, BASE_W - copy.w);
+        copy.y = clamp(copy.y + 24, 0, BASE_H - copy.h);
+        copy.z = elements().length + 1;
+        elements().push(copy); state.selected = copy.id; normalizeZ(slide());
+        renderAll(); scheduleSave(); toast('Скопійовано ✓');
+      }
+
+      function bringToFront() {
+        const el = selectedEl(); if (!el) return;
+        pushHistory(); el.z = elements().length + 1; normalizeZ(slide());
+        renderAll(); scheduleSave();
+      }
+
+      function sendToBack() {
+        const el = selectedEl(); if (!el) return;
+        pushHistory(); el.z = 0; normalizeZ(slide());
+        renderAll(); scheduleSave();
+      }
+
+      function setFontSize(px) {
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory(); el.style.fontSize = Number(px);
+        const t = elDom.get(el.id)?.querySelector('.textBox');
+        if (t) t.style.fontSize = el.style.fontSize + 'px';
+        debounceThumbs(); scheduleSave();
+      }
+
+      function toggleStyle(key) {
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory(); el.style[key] = !el.style[key];
+        const t = elDom.get(el.id)?.querySelector('.textBox');
+        if (t) applyTextStyle(t, el);
+        debounceThumbs(); scheduleSave();
+      }
+
+      function setAlign(align) {
+        const el = selectedEl(); if (!el || el.type !== 'text') return;
+        pushHistory(); el.style.align = align;
+        const t = elDom.get(el.id)?.querySelector('.textBox');
+        if (t) t.style.textAlign = align;
+        debounceThumbs(); scheduleSave();
+      }
+
+      /* ── Templates ── */
+      function openTemplates() {
+        const cards = TEMPLATES.map(t => `
+      <div class="tpl-card" onclick="App._applyTpl('${t.id}')">
+        <div class="tpl-icon">${t.icon}</div>
+        <div class="tpl-name">${t.name}</div>
+        <div class="tpl-desc">${t.desc}</div>
+      </div>
+    `).join('');
+        openModal({
+          title: '🎨 Обери макет',
+          bodyHTML: `<div class="tpl-grid">${cards}</div><p style="font-size:11px;font-weight:600;color:#94a3b8;margin-top:12px;text-align:center;">Макет замінить вміст поточного слайда</p>`,
+          showActions: false
+        });
+      }
+
+      function applyTemplate(kind) {
+        closeModal(); pushHistory();
+        const s = slide(); s.elements = []; s.background = '#ffffff';
+
+        const e = (overrides) => normalizeEl({ id: uid(), z: overrides.z || 1, shape: 'rect', style: { fill: '#c7d2fe', stroke: '#6366f1' }, ...overrides });
+
+        if (kind === 'title') {
+          s.background = '#F0F4FF';
+          s.elements.push(e({ type: 'shape', x: 40, y: 40, w: 880, h: 460, z: 1, shape: 'rect', style: { fill: '#EDE9FE', stroke: '#8B5CF6' } }));
+          s.elements.push(e({ type: 'text', x: 80, y: 150, w: 800, h: 180, z: 2, content: 'НАЗВА ПРЕЗЕНТАЦІЇ', style: { fontSize: 64, color: '#1a1040', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 200, y: 350, w: 560, h: 80, z: 3, content: 'Учень: Твоє ім\'я', style: { fontSize: 28, color: '#6366f1', bold: false, italic: true, underline: false, align: 'center', fill: '', stroke: '' } }));
+        }
+        if (kind === 'two') {
+          s.elements.push(e({ type: 'text', x: 40, y: 30, w: 880, h: 80, z: 1, content: 'Заголовок слайда', style: { fontSize: 48, color: '#1a1040', bold: true, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 40, y: 130, w: 420, h: 370, z: 2, content: '• Пункт перший\n• Пункт другий\n• Пункт третій\n• Ще один пункт', style: { fontSize: 28, color: '#1a1040', bold: false, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'shape', x: 480, y: 130, w: 440, h: 370, z: 3, shape: 'rect', style: { fill: '#FEF9C3', stroke: '#D97706' } }));
+          s.elements.push(e({ type: 'text', x: 520, y: 290, w: 360, h: 80, z: 4, content: '🖼️ Додай фото', style: { fontSize: 24, color: '#D97706', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+        }
+        if (kind === 'three') {
+          s.elements.push(e({ type: 'text', x: 40, y: 20, w: 880, h: 80, z: 1, content: 'МІЙ СЛАЙД', style: { fontSize: 52, color: '#1a1040', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          [{ x: 40, fill: '#DCFCE7', stroke: '#16A34A', t: 'Ідея 1' }, { x: 340, fill: '#DBEAFE', stroke: '#2563EB', t: 'Ідея 2' }, { x: 640, fill: '#FAE8FF', stroke: '#9333EA', t: 'Ідея 3' }].forEach((b, i) => {
+            s.elements.push(e({ type: 'shape', x: b.x, y: 120, w: 280, h: 390, z: 2 + i, shape: 'rect', style: { fill: b.fill, stroke: b.stroke } }));
+            s.elements.push(e({ type: 'text', x: b.x + 20, y: 138, w: 240, h: 60, z: 10 + i, content: b.t, style: { fontSize: 34, color: '#1a1040', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+            s.elements.push(e({ type: 'text', x: b.x + 20, y: 210, w: 240, h: 270, z: 20 + i, content: 'Напиши тут…', style: { fontSize: 22, color: '#475569', bold: false, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+          });
+        }
+        if (kind === 'fact') {
+          s.background = '#1a1040';
+          s.elements.push(e({ type: 'shape', x: 60, y: 50, w: 840, h: 440, z: 1, shape: 'rect', style: { fill: '#312060', stroke: '#6C63FF' } }));
+          s.elements.push(e({ type: 'text', x: 80, y: 70, w: 200, h: 60, z: 2, content: '💡 ФАКТ', style: { fontSize: 28, color: '#FFD166', bold: true, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 100, y: 150, w: 760, h: 200, z: 3, content: 'Напиши свій цікавий факт тут!', style: { fontSize: 40, color: '#ffffff', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 100, y: 380, w: 760, h: 80, z: 4, content: '— Джерело або пояснення', style: { fontSize: 24, color: '#a78bfa', bold: false, italic: true, underline: false, align: 'right', fill: '', stroke: '' } }));
+        }
+        if (kind === 'list') {
+          s.elements.push(e({ type: 'shape', x: 0, y: 0, w: 960, h: 100, z: 1, shape: 'rect', style: { fill: '#6C63FF', stroke: '#4F46E5' } }));
+          s.elements.push(e({ type: 'text', x: 30, y: 8, w: 900, h: 84, z: 2, content: 'ЗАГОЛОВОК', style: { fontSize: 52, color: '#ffffff', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 60, y: 120, w: 840, h: 380, z: 3, content: '✅ Пункт перший\n✅ Пункт другий\n✅ Пункт третій\n✅ Пункт четвертий\n✅ Пункт п\'ятий', style: { fontSize: 32, color: '#1a1040', bold: false, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+        }
+        if (kind === 'compare') {
+          s.elements.push(e({ type: 'text', x: 40, y: 20, w: 880, h: 80, z: 1, content: 'ПОРІВНЯННЯ', style: { fontSize: 52, color: '#1a1040', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'shape', x: 40, y: 115, w: 420, h: 390, z: 2, shape: 'rect', style: { fill: '#DCFCE7', stroke: '#16A34A' } }));
+          s.elements.push(e({ type: 'shape', x: 500, y: 115, w: 420, h: 390, z: 3, shape: 'rect', style: { fill: '#FEE2E2', stroke: '#DC2626' } }));
+          s.elements.push(e({ type: 'text', x: 40, y: 115, w: 420, h: 60, z: 4, content: '✅ За', style: { fontSize: 36, color: '#16A34A', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 500, y: 115, w: 420, h: 60, z: 5, content: '❌ Проти', style: { fontSize: 36, color: '#DC2626', bold: true, italic: false, underline: false, align: 'center', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 60, y: 195, w: 380, h: 280, z: 6, content: '• Напиши тут\n• Ще один плюс\n• І ще один', style: { fontSize: 24, color: '#1a1040', bold: false, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+          s.elements.push(e({ type: 'text', x: 520, y: 195, w: 380, h: 280, z: 7, content: '• Мінус перший\n• Мінус другий\n• Й інше', style: { fontSize: 24, color: '#1a1040', bold: false, italic: false, underline: false, align: 'left', fill: '', stroke: '' } }));
+        }
+
+        normalizeZ(s); state.selected = null; renderAll(); scheduleSave();
+      }
+
+      // Expose for onclick in template HTML
+      window.App = { _applyTpl: id => applyTemplate(id) };
+
+      /* ── PDF Export ── */
+      async function exportPDF() {
+        toast('Готуємо PDF… зачекайте 🔄', 5000);
+        const container = document.createElement('div');
+        container.style.cssText = 'font-family:"Baloo 2",sans-serif;';
+
+        state.slides.forEach(s => {
+          const page = document.createElement('div');
+          page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`;
+          const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+          sorted.forEach(el => {
+            const box = document.createElement('div');
+            box.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`;
+            if (el.type === 'text') {
+              Object.assign(box.style, {
+                fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#1a1040',
+                fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal',
+                textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left',
+                whiteSpace: 'pre-wrap', padding: '8px', lineHeight: '1.2', fontFamily: "'Baloo 2',sans-serif"
+              });
+              box.textContent = el.content || '';
+            } else if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+              box.appendChild(img);
+            } else if (el.type === 'shape') {
+              box.appendChild(makeShapeSVG(el));
+            }
+            page.appendChild(box);
+          });
+          container.appendChild(page);
+        });
+
+        await html2pdf().from(container).set({
+          margin: 0, filename: 'slidyk_kids.pdf',
+          image: { type: 'jpeg', quality: .98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'px', format: [960, 540], orientation: 'landscape' }
+        }).save();
+        toast('PDF збережено ✅');
+      }
+
+      /* ── Presentation ── */
+      const Present = {
+        idx: 0,
+        key: null,
+        start() {
+          this.idx = state.current;
+          dom.presentOverlay.classList.add('show');
+          this.render();
+          this.key = e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if (this.idx < state.slides.length - 1) { this.idx++; this.render(); } else this.stop(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); if (this.idx > 0) { this.idx--; this.render(); } }
+            if (e.key === 'Escape') this.stop();
+          };
+          window.addEventListener('keydown', this.key);
+        },
+        stop() {
+          dom.presentOverlay.classList.remove('show');
+          if (this.key) window.removeEventListener('keydown', this.key);
+          this.key = null;
+        },
+        render() {
+          dom.presentStageWrap.innerHTML = '';
+          const s = state.slides[this.idx];
+
+          // Scale to fill screen
+          const scale = Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H);
+          const scaledW = BASE_W * scale, scaledH = BASE_H * scale;
+
+          // Wrapper to hold scaled dimensions
+          const wrap = document.createElement('div');
+          wrap.style.cssText = `width:${scaledW}px;height:${scaledH}px;position:relative;overflow:hidden;`;
+
+          // Stage at full 960×540, scaled
+          const st = document.createElement('div');
+          st.style.cssText = `width:${BASE_W}px;height:${BASE_H}px;background:${s.background};position:absolute;top:0;left:0;transform:scale(${scale});transform-origin:top left;overflow:hidden;`;
+
+          const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+          sorted.forEach(el => {
+            const box = document.createElement('div');
+            box.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`;
+            if (el.type === 'text') {
+              Object.assign(box.style, {
+                fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#1a1040',
+                fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal',
+                textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left',
+                whiteSpace: 'pre-wrap', padding: '8px', lineHeight: '1.2', fontFamily: "'Baloo 2',sans-serif"
+              });
+              box.textContent = el.content || '';
+            } else if (el.type === 'image') {
+              const img = document.createElement('img');
+              img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+              box.appendChild(img);
+            } else if (el.type === 'shape') {
+              box.appendChild(makeShapeSVG(el));
+            }
+            st.appendChild(box);
+          });
+
+          wrap.appendChild(st);
+          dom.presentStageWrap.appendChild(wrap);
+
+          // Progress bar
+          const pct = ((this.idx) / (state.slides.length - 1 || 1)) * 100;
+          dom.presentProgress.style.width = pct + '%';
+          // Counter
+          dom.presentCounter.textContent = `${this.idx + 1} / ${state.slides.length}`;
+        }
+      };
+
+      /* ── Reset all ── */
+      function resetAll() {
+        confirm({
+          title: '🗑️ Очистити все?',
+          msg: 'Це видалить усі слайди та розпочне наново. Впевнені?',
+          okText: 'Так, очистити',
+          onYes: () => { localStorage.removeItem(STORAGE_KEY); location.reload(); }
+        });
+      }
+
+      /* ── Keyboard ── */
+      function initKeyboard() {
+        window.addEventListener('keydown', e => {
+          const isTyping = document.activeElement?.classList?.contains('textBox');
+          const mod = e.ctrlKey || e.metaKey;
+
+          if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+          if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+          if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+
+          if (!isTyping && mod && e.key.toLowerCase() === 'c') {
+            const el = selectedEl(); if (el) { clip = deepClone(el); toast('Скопійовано ✓'); } return;
+          }
+          if (!isTyping && mod && e.key.toLowerCase() === 'v') {
+            if (clip) {
+              pushHistory();
+              const copy = deepClone(clip); copy.id = uid();
+              copy.x = clamp(copy.x + 24, 0, BASE_W - copy.w); copy.y = clamp(copy.y + 24, 0, BASE_H - copy.h);
+              copy.z = elements().length + 1; elements().push(copy); state.selected = copy.id;
+              normalizeZ(slide()); renderAll(); scheduleSave(); toast('Вставлено ✓');
+            }
+            return;
+          }
+          if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); confirmDeleteSelected(); return; }
+          if (!isTyping && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            const el = selectedEl(); if (!el) return;
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 2;
+            if (e.key === 'ArrowUp') el.y = clamp(el.y - step, 0, BASE_H - el.h);
+            if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, BASE_H - el.h);
+            if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, BASE_W - el.w);
+            if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, BASE_W - el.w);
+            const node = elDom.get(el.id);
+            if (node) { node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; }
+            debounceThumbs(); scheduleSave();
+          }
+        });
+      }
+
+      /* ── Init state ── */
+      function initState() {
+        const saved = safeParse(localStorage.getItem(STORAGE_KEY), null);
+        const norm = normalizeState(saved);
+        if (norm) { state = norm; undoStack = [JSON.stringify(state)]; redoStack = []; return; }
+
+        // Default welcome slide
+        state = {
+          slides: [{
+            id: uid(), background: '#F0F4FF', elements: [
+              normalizeEl({ id: uid(), type: 'shape', x: 40, y: 40, w: 880, h: 460, z: 1, shape: 'rect', style: { fill: '#EDE9FE', stroke: '#8B5CF6' } }),
+              normalizeEl({ id: uid(), type: 'text', x: 80, y: 100, w: 800, h: 220, z: 2, content: 'Привіт! 👋\nНатисни, щоб почати', style: { fontSize: 64, color: '#1a1040', bold: true, italic: false, underline: false, align: 'center' } }),
+              normalizeEl({ id: uid(), type: 'text', x: 100, y: 340, w: 760, h: 100, z: 3, content: '✨ Створи свою першу презентацію!', style: { fontSize: 32, color: '#6366f1', bold: false, italic: false, underline: false, align: 'center' } })
+            ]
+          }],
+          current: 0, selected: null
+        };
+        undoStack = [JSON.stringify(state)]; redoStack = [];
+        scheduleSave();
+      }
+
+      /* ── Bind UI ── */
+      function bindUI() {
+        // Header
+        dom.btnUndo.onclick = undo; dom.btnRedo.onclick = redo;
+        dom.btnPresent.onclick = () => Present.start();
+        dom.btnPDF.onclick = exportPDF;
+        dom.btnReset.onclick = resetAll;
+
+        // Sidebar
+        dom.btnNewSlide.onclick = addSlide;
+        dom.btnTemplates.onclick = openTemplates;
+        dom.btnSlideUp.onclick = () => moveSlide(-1);
+        dom.btnSlideDown.onclick = () => moveSlide(1);
+
+        // Toolbar: Slide
+        $('btnDupSlide').onclick = () => duplicateSlide();
+        $('btnDelSlide').onclick = () => confirmDeleteSlide();
+        $('btnBg').onclick = () => openColor('bg');
+
+        // Toolbar: Insert
+        $('btnAddText').onclick = addText;
+        $('btnAddImage').onclick = addImage;
+        $('btnEmoji').onclick = openEmoji;
+        $('btnShapeRect').onclick = () => addShape('rect');
+        $('btnShapeCircle').onclick = () => addShape('circle');
+
+        // Toolbar: Text
+        $('selFontSize').onchange = e => setFontSize(e.target.value);
+        $('btnBold').onclick = () => toggleStyle('bold');
+        $('btnItalic').onclick = () => toggleStyle('italic');
+        $('btnUnderline').onclick = () => toggleStyle('underline');
+        $('btnAlignLeft').onclick = () => setAlign('left');
+        $('btnAlignCenter').onclick = () => setAlign('center');
+        $('btnAlignRight').onclick = () => setAlign('right');
+        $('btnTextColor').onclick = () => openColor('textColor');
+
+        // Toolbar: Object
+        $('btnFill').onclick = () => openColor('fill');
+        $('btnStroke').onclick = () => openColor('stroke');
+        $('btnBringFront').onclick = bringToFront;
+        $('btnSendBack').onclick = sendToBack;
+        $('btnDupEl').onclick = duplicateSelected;
+        $('btnDelEl').onclick = confirmDeleteSelected;
+
+        // Color popover
+        $('btnCloseColor').onclick = closePopovers;
+        $('btnApplyCustomColor').onclick = () => { applyColor($('customColorInput').value); closePopovers(); };
+
+        // Emoji popover
+        $('btnCloseEmoji').onclick = closePopovers;
+
+        // Modal
+        $('btnModalClose').onclick = closeModal;
+        dom.modalOverlay.addEventListener('pointerdown', e => { if (e.target === dom.modalOverlay) closeModal(); });
+
+        // Stage & workspace clicks
+        dom.stage.addEventListener('pointerdown', e => { if (e.target === dom.stage) deselect(); });
+        dom.workspace.addEventListener('pointerdown', e => {
+          if (!dom.colorPopover.contains(e.target) && !dom.emojiPopover.contains(e.target))
+            closePopovers();
+        });
+
+        // Present nav
+        $('btnPrev').onclick = () => { if (Present.idx > 0) { Present.idx--; Present.render(); } };
+        $('btnNext').onclick = () => { if (Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } else Present.stop(); };
+        $('presentClose').onclick = () => Present.stop();
+
+        // Touch swipe in presentation
+        let touchStartX = 0;
+        dom.presentStageWrap.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+        dom.presentStageWrap.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          if (dx < -50) { if (Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } }
+          if (dx > 50) { if (Present.idx > 0) { Present.idx--; Present.render(); } }
+        });
+
+        // Stage click on empty (present) swipe too
+        dom.presentStageWrap.addEventListener('click', e => {
+          if (e.target === dom.presentStageWrap || e.target.tagName === 'DIV') {
+            if (Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } else Present.stop();
+          }
+        });
+      }
+
+      /* ── DOM refs ── */
+      function initDom() {
+        dom.stage = $('stage');
+        dom.stageWrap = $('stageWrap');
+        dom.workspace = $('workspace');
+        dom.slideList = $('slideList');
+        dom.slideCounter = $('slideCounter');
+        dom.slideInfo = $('slideInfo');
+        dom.saveStatus = $('saveStatus');
+        dom.colorPopover = $('colorPopover');
+        dom.colorGrid = $('colorGrid');
+        dom.colorGridPastel = $('colorGridPastel');
+        dom.colorTitle = $('colorTitle');
+        dom.emojiPopover = $('emojiPopover');
+        dom.emojiGrid = $('emojiGrid');
+        dom.modalOverlay = $('modalOverlay');
+        dom.modalTitle = $('modalTitle');
+        dom.modalBody = $('modalBody');
+        dom.modalActions = $('modalActions');
+        dom.btnModalOk = $('btnModalOk');
+        dom.btnModalCancel = $('btnModalCancel');
+        dom.presentOverlay = $('presentOverlay');
+        dom.presentStageWrap = $('presentStageWrap');
+        dom.presentProgress = $('presentProgress');
+        dom.presentCounter = $('presentCounter');
+        dom.btnUndo = $('btnUndo');
+        dom.btnRedo = $('btnRedo');
+        dom.toast = $('toast');
+        dom.stage.dataset.baseW = String(BASE_W);
+        dom.stage.dataset.baseH = String(BASE_H);
+      }
+
+      /* ── Boot ── */
+      function boot() {
+        initDom(); initPopovers(); initState(); bindUI(); initKeyboard();
+        scaleStage(); renderAll(); updateUndoRedo();
+
+        // Scale on resize
+        const ro = new ResizeObserver(() => { scaleStage(); });
+        ro.observe(dom.workspace);
+
+        // Also re-render thumbnails after fonts load (scale might change)
+        document.fonts?.ready?.then(() => { renderThumbnails(); scaleStage(); });
+
+        // Keyboard shortcut hint on first load
+        if (!localStorage.getItem(STORAGE_KEY + '_visited')) {
+          localStorage.setItem(STORAGE_KEY + '_visited', '1');
+          setTimeout(() => toast('👆 Натисни на слайд, щоб почати!', 3000), 800);
+        }
+      }
+
+      return { boot };
+    })();
+
+    window.addEventListener('load', () => App.boot());
+  </script>
+</body>
+
+</html>
