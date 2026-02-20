@@ -18,6 +18,12 @@ table {
     table-layout: fixed;
 }
 
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+}
+
 th {
     background-color: var(--th-bg);
     color: var(--th-text);
@@ -32,14 +38,15 @@ th {
 
 /* Окремий стиль для нумерації рядків */
 .row-header {
-    width: 50px;         /* Фіксована ширина */
-    min-width: 50px;     /* Заборона зменшення */
-    max-width: 50px;     /* Заборона розширення */
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
     font-weight: 700;
     cursor: default;
     position: sticky;
     left: 0;
-    z-index: 30;
+    top: 0;
+    z-index: 35;
     background-color: var(--th-bg);
 }
 
@@ -68,6 +75,7 @@ td {
     padding: 0;
     position: relative;
     background-color: white;
+    overflow: hidden;
 }
 
 .cell-input {
@@ -83,17 +91,29 @@ td {
     padding: 0 4px;
 }
 
-.cell-input:focus { background-color: #fff; }
-
-td.selected-cell {
-    outline: 3px solid var(--primary);
-    outline-offset: -3px;
-    z-index: 20;
+.cell-input:focus {
+    background-color: rgba(255, 255, 255, 0.85);
 }
 
-td.in-range { background-color: rgba(59, 130, 246, 0.15); }
+/* ВИДІЛЕННЯ (працює навіть на розфарбованих клітинках) */
+td.in-range::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(59, 130, 246, 0.15);
+    pointer-events: none;
+}
+
+td.selected-cell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 3px var(--primary);
+    pointer-events: none;
+}
 
 td.error-cell input { color: #dc2626; }
+
 td.error-cell { background-color: #fee2e2 !important; }
 
 /* Modal Styles */
@@ -108,21 +128,97 @@ td.error-cell { background-color: #fee2e2 !important; }
 
 .modal-content {
     background: white; padding: 2rem; border-radius: 1rem;
-    max-width: 400px; width: 90%; text-align: center;
+    max-width: 420px; width: 92%; text-align: center;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: modalPop 0.2s ease-out;
 }
 @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+/* Style classes saved to storage (тільки ці класи зберігаються!) */
 .style-border-all { border: 3px solid #0f172a !important; }
 .style-bg-yellow { background-color: #fef08a !important; }
 .style-bg-green { background-color: #bbf7d0 !important; }
 .style-bg-red { background-color: #fecaca !important; }
 
-.undo-redo-btn {
-    transition: all 0.2s;
+.undo-redo-btn { transition: all 0.2s; }
+.undo-redo-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Hover кнопки "+" для вставки */
+.insert-btn {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    border: 2px solid rgba(255,255,255,0.85);
+    z-index: 60;
 }
-.undo-redo-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+
+.insert-btn:hover {
+    filter: brightness(1.05);
+}
+
+
+/* ===== TOUCH / MOBILE ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Збільшуємо клітинки на сенсорних екранах */
+  td {
+    height: 52px;
+  }
+
+  .cell-input {
+    font-size: 1rem;
+    padding: 0 6px;
+  }
+
+  th {
+    height: 46px;
+  }
+
+  /* Ховер-кнопки вставки приховуємо — на тач вони заважають */
+  .insert-btn {
+    display: none !important;
+  }
+
+  /* Resize handle — ширше, легше торкнутись */
+  .resize-handle {
+    width: 16px;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+/* Фокус завжди видимий */
+.cell-input:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: -3px;
+  background-color: rgba(255,255,255,0.95);
+}
+
+/* Контрастна рамка помилки для слабозорих */
+td.error-cell {
+  outline: 2px dashed #dc2626;
+}
+
+/* Скрінрідер-only клас */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Клавіатурний фокус на кнопках */
+button:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 2px;
 }

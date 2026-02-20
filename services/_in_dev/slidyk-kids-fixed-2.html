@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>СЛАЙДИК Kids</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --bg: #f5f0e8;
+      --yellow: #FFE135;
+      --blue: #4169E1;
+      --red: #FF3B3B;
+      --green: #00C853;
+      --purple: #7C3AED;
+      --orange: #FF6B00;
+      --pink: #FF4081;
+      --sidebar-bg: #1a1a2e;
+      --header-bg: #0a0a0a;
+      --border: 3px solid #0a0a0a;
+      --border-thick: 4px solid #0a0a0a;
+      --shadow: 4px 4px 0px #0a0a0a;
+      --shadow-lg: 6px 6px 0px #0a0a0a;
+      --h: 58px;
+      --sidebar-w: 220px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    #appHeader {
+      height: var(--h);
+      background: var(--header-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      flex-shrink: 0;
+      gap: 8px;
+      border-bottom: var(--border-thick);
+      position: relative;
+      z-index: 100;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--yellow);
+      border: 3px solid var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--black);
+      font-weight: 900;
+      box-shadow: 3px 3px 0 rgba(255, 255, 255, .2);
+    }
+
+    .logo-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .logo-badge {
+      background: var(--yellow);
+      color: var(--black);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border: 2px solid var(--yellow);
+      text-transform: uppercase;
+    }
+
+    .hbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      border: var(--border);
+      transition: transform .08s, box-shadow .08s;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+
+    .hbtn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hbtn:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .hbtn-undo {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .hbtn-undo:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .hbtn-present {
+      background: var(--yellow);
+      color: var(--black);
+      box-shadow: var(--shadow);
+    }
+
+    .hbtn-pdf {
+      background: var(--blue);
+      color: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .hbtn-danger {
+      background: var(--red);
+      color: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    /* BODY */
+    #appBody {
+      display: flex;
+      height: calc(100vh - var(--h));
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: var(--border-thick);
+    }
+
+    .sb-new-btn {
+      margin: 10px;
+      padding: 13px;
+      cursor: pointer;
+      background: var(--green);
+      color: var(--black);
+      border: var(--border-thick);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      box-shadow: var(--shadow);
+      transition: transform .08s, box-shadow .08s;
+    }
+
+    .sb-new-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sb-new-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    #slideList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #slideList::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    #slideList::-webkit-scrollbar-thumb {
+      background: #444;
+    }
+
+    .slide-item {
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      border: 3px solid #333;
+      transition: border-color .12s;
+    }
+
+    .slide-item:hover {
+      border-color: #666;
+    }
+
+    .slide-item.active {
+      border-color: var(--yellow);
+      box-shadow: 3px 3px 0 var(--yellow);
+    }
+
+    .slide-num {
+      position: absolute;
+      bottom: 3px;
+      right: 5px;
+      font-size: 9px;
+      font-weight: 900;
+      background: rgba(0, 0, 0, .7);
+      color: var(--white);
+      padding: 2px 5px;
+      z-index: 5;
+    }
+
+    .slide-actions {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      display: none;
+      gap: 3px;
+      z-index: 10;
+    }
+
+    .slide-item:hover .slide-actions,
+    .slide-item.active .slide-actions {
+      display: flex;
+    }
+
+    .sa-btn {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--black);
+      cursor: pointer;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+    }
+
+    .sa-dup {
+      background: var(--blue);
+    }
+
+    .sa-del {
+      background: var(--red);
+    }
+
+    .thumb-wrap {
+      width: 100%;
+      padding-bottom: 56.25%;
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .thumb-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 960px;
+      height: 540px;
+      transform-origin: top left;
+      pointer-events: none;
+    }
+
+    .sb-move-row {
+      display: flex;
+      gap: 6px;
+      padding: 6px 8px;
+    }
+
+    .sb-move-btn {
+      flex: 1;
+      padding: 8px 4px;
+      background: #222;
+      border: 2px solid #444;
+      cursor: pointer;
+      color: #aaa;
+      font-family: 'Nunito', sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-transform: uppercase;
+      transition: background .12s, border-color .12s;
+    }
+
+    .sb-move-btn:hover {
+      background: #333;
+      border-color: #666;
+      color: var(--white);
+    }
+
+    .sb-footer {
+      padding: 8px;
+      border-top: 3px solid #333;
+    }
+
+    .sb-tpl-btn {
+      width: 100%;
+      padding: 12px;
+      cursor: pointer;
+      background: #2a2a4a;
+      color: #aaa;
+      border: 2px solid #444;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+
+    .sb-tpl-btn:hover {
+      background: #3a3a6a;
+      border-color: #7C3AED;
+      color: var(--white);
+    }
+
+    /* MAIN */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOOLBAR */
+    #toolbar {
+      background: var(--white);
+      border-bottom: var(--border-thick);
+      padding: 5px 8px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    #toolbar::-webkit-scrollbar {
+      height: 0;
+    }
+
+    .tb-section {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 2px 8px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .tb-section+.tb-section {
+      border-left: var(--border);
+    }
+
+    .tb-sec-label {
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #999;
+      text-align: center;
+    }
+
+    .tb-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tb-big {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      height: 52px;
+      padding: 0 6px;
+      border: var(--border);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: transform .08s, box-shadow .08s;
+      gap: 3px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+    }
+
+    .tb-big:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .tb-big:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .tb-big i {
+      font-size: 16px;
+    }
+
+    .tb-big .lbl {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tb-text-btn {
+      background: #DBEAFE;
+      color: #1d4ed8;
+    }
+
+    .tb-photo-btn {
+      background: #EDE9FE;
+      color: #6d28d9;
+    }
+
+    .tb-emoji-btn {
+      background: #FEF3C7;
+      color: #92400e;
+    }
+
+    .tb-shape {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      border: var(--border);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: transform .08s, box-shadow .08s;
+      gap: 2px;
+      flex-shrink: 0;
+      box-shadow: 3px 3px 0 var(--black);
+    }
+
+    .tb-shape:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .tb-shape:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .tb-shape i {
+      font-size: 14px;
+    }
+
+    .tb-shape .lbl {
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+
+    .sh-rect {
+      background: #DBEAFE;
+      color: #1d4ed8;
+    }
+
+    .sh-circle {
+      background: #FCE7F3;
+      color: #9d174d;
+    }
+
+    .sh-star {
+      background: #FEF3C7;
+      color: #92400e;
+    }
+
+    .sh-heart {
+      background: #FFE4E6;
+      color: #be123c;
+    }
+
+    .sh-tri {
+      background: #DCFCE7;
+      color: #166534;
+    }
+
+    .tb-sm {
+      width: 36px;
+      height: 36px;
+      border: var(--border);
+      cursor: pointer;
+      background: var(--white);
+      color: var(--black);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .08s, box-shadow .08s;
+      flex-shrink: 0;
+      font-weight: 900;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .tb-sm:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 var(--black);
+    }
+
+    .tb-sm:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .tb-sm.active-btn {
+      background: var(--yellow);
+      color: var(--black);
+    }
+
+    #selFontSize {
+      height: 36px;
+      padding: 0 7px;
+      border: var(--border);
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--black);
+      background: var(--white);
+      cursor: pointer;
+      outline: none;
+      min-width: 96px;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    #slideCounter {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--black);
+      white-space: nowrap;
+      padding: 4px 10px;
+      background: var(--yellow);
+      border: var(--border);
+      display: flex;
+      align-items: center;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    /* WORKSPACE */
+    #workspace {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background: #d9d3c8;
+      position: relative;
+    }
+
+    #workspace::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(var(--black) 1px, transparent 1px), linear-gradient(90deg, var(--black) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: .07;
+      pointer-events: none;
+    }
+
+    #stageWrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    #stage {
+      width: 960px;
+      height: 540px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      transform-origin: top left;
+      border: var(--border-thick);
+      box-shadow: 8px 8px 0px var(--black);
+    }
+
+    /* ELEMENTS */
+    .el {
+      position: absolute;
+      box-sizing: border-box;
+      border: 2px solid transparent;
+      min-width: 40px;
+      min-height: 30px;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .el.selected {
+      border: 3px solid var(--blue);
+      cursor: grab;
+    }
+
+    .el.selected::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 2px dashed var(--blue);
+      pointer-events: none;
+    }
+
+    .el.dragging {
+      cursor: grabbing;
+    }
+
+    .el .content {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .textBox {
+      width: 100%;
+      height: 100%;
+      padding: 8px;
+      user-select: text !important;
+      cursor: text;
+      outline: none;
+      line-height: 1.25;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: transparent;
+    }
+
+    .handles {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .el.selected .handles {
+      display: block;
+    }
+
+    .handle {
+      width: 12px;
+      height: 12px;
+      background: var(--white);
+      border: 2px solid var(--blue);
+      position: absolute;
+      pointer-events: auto;
+    }
+
+    .handle.nw {
+      left: -7px;
+      top: -7px;
+      cursor: nwse-resize;
+    }
+
+    .handle.n {
+      left: 50%;
+      top: -7px;
+      transform: translateX(-50%);
+      cursor: ns-resize;
+    }
+
+    .handle.ne {
+      right: -7px;
+      top: -7px;
+      cursor: nesw-resize;
+    }
+
+    .handle.e {
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+    }
+
+    .handle.se {
+      right: -7px;
+      bottom: -7px;
+      cursor: nwse-resize;
+    }
+
+    .handle.s {
+      left: 50%;
+      bottom: -7px;
+      transform: translateX(-50%);
+      cursor: ns-resize;
+    }
+
+    .handle.sw {
+      left: -7px;
+      bottom: -7px;
+      cursor: nesw-resize;
+    }
+
+    .handle.w {
+      left: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+    }
+
+    /* STATUS */
+    #statusBar {
+      height: 26px;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      flex-shrink: 0;
+      border-top: var(--border);
+    }
+
+    #statusBar span {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    #saveStatus {
+      color: #777 !important;
+    }
+
+    #saveStatus.saved {
+      color: #00C853 !important;
+    }
+
+    /* POPOVERS */
+    .popover {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--white);
+      border: var(--border-thick);
+      box-shadow: var(--shadow-lg);
+      padding: 16px;
+      z-index: 200;
+      animation: popIn .15s ease-out;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -52%) scale(.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .popover-title {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .popover-close {
+      width: 26px;
+      height: 26px;
+      border: var(--border);
+      cursor: pointer;
+      background: var(--white);
+      color: var(--black);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .popover-close:hover {
+      background: var(--red);
+      color: var(--white);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+    }
+
+    .color-btn {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--black);
+      cursor: pointer;
+      transition: transform .08s, box-shadow .08s;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .color-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 var(--black);
+    }
+
+    .color-btn.picked {
+      border-width: 3px;
+      border-color: var(--blue);
+    }
+
+    .color-section {
+      margin-bottom: 12px;
+    }
+
+    .color-section-label {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 6px;
+    }
+
+    .custom-color-wrap {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 2px solid #eee;
+      padding-top: 10px;
+    }
+
+    .custom-color-wrap label {
+      font-size: 10px;
+      font-weight: 900;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .custom-color-input {
+      width: 36px;
+      height: 36px;
+      border: var(--border);
+      cursor: pointer;
+      padding: 2px;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .emoji-btn {
+      width: 38px;
+      height: 38px;
+      border: 2px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .1s, background .1s, transform .08s;
+    }
+
+    .emoji-btn:hover {
+      border-color: var(--black);
+      background: #f5f5f5;
+      transform: scale(1.15);
+    }
+
+    /* MODAL */
+    #modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    #modalOverlay.show {
+      display: flex;
+    }
+
+    #modal {
+      background: var(--white);
+      border: var(--border-thick);
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+      max-width: 520px;
+      width: 100%;
+      position: relative;
+      animation: modalIn .15s ease-out;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(.93);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    #modalTitle {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--black);
+      text-align: center;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    #modalBody {
+      margin-bottom: 20px;
+    }
+
+    #modalActions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 13px;
+      border: var(--border-thick);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      transition: transform .08s, box-shadow .08s;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    .modal-cancel {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .modal-ok {
+      background: var(--yellow);
+      color: var(--black);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 30px;
+      height: 30px;
+      border: var(--border);
+      cursor: pointer;
+      background: var(--white);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 2px 0 var(--black);
+      transition: background .1s;
+    }
+
+    .modal-close:hover {
+      background: var(--red);
+      color: var(--white);
+    }
+
+    /* TEMPLATE GRID */
+    .tpl-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tpl-card {
+      padding: 14px;
+      border: var(--border-thick);
+      cursor: pointer;
+      text-align: center;
+      transition: transform .08s, box-shadow .08s;
+      box-shadow: var(--shadow);
+      background: var(--white);
+    }
+
+    .tpl-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: var(--shadow-lg);
+      background: var(--yellow);
+    }
+
+    .tpl-card:active {
+      transform: translate(3px, 3px);
+      box-shadow: none;
+    }
+
+    .tpl-card .tpl-icon {
+      font-size: 26px;
+      margin-bottom: 6px;
+      color: var(--black);
+    }
+
+    .tpl-card .tpl-name {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--black);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .tpl-card .tpl-desc {
+      font-size: 10px;
+      font-weight: 700;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    /* IMAGE DIALOG */
+    .img-tab-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .img-tab {
+      flex: 1;
+      padding: 10px;
+      border: var(--border);
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      color: var(--black);
+      background: var(--white);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      transition: background .1s, transform .08s;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .img-tab.active {
+      background: var(--yellow);
+      box-shadow: none;
+      transform: translate(2px, 2px);
+    }
+
+    .drop-zone {
+      border: 3px dashed var(--black);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .1s;
+      background: #fafafa;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      background: var(--yellow);
+    }
+
+    .drop-zone .dz-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: var(--black);
+    }
+
+    .drop-zone .dz-text {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--black);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* PRESENTATION */
+    #presentOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #presentOverlay.show {
+      display: flex;
+    }
+
+    #presentStageWrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    #presentNavBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, .9));
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    #presentOverlay:hover #presentNavBar {
+      opacity: 1;
+    }
+
+    .pnav-btn {
+      width: 42px;
+      height: 42px;
+      border: 2px solid rgba(255, 255, 255, .4);
+      background: rgba(255, 255, 255, .1);
+      color: var(--white);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .12s;
+    }
+
+    .pnav-btn:hover {
+      background: rgba(255, 255, 255, .25);
+    }
+
+    #presentCounter {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, .8);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    #presentProgress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: var(--yellow);
+      transition: width .35s ease;
+    }
+
+    #presentClose {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, .12);
+      border: 2px solid rgba(255, 255, 255, .3);
+      cursor: pointer;
+      color: var(--white);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .3s, background .12s;
+    }
+
+    #presentOverlay:hover #presentClose {
+      opacity: 1;
+    }
+
+    #presentClose:hover {
+      background: rgba(255, 0, 0, .4);
+    }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--black);
+      color: var(--yellow);
+      padding: 11px 22px;
+      border: var(--border-thick);
+      box-shadow: var(--shadow-lg);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      z-index: 3000;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* WELCOME */
+    #welcomeOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+
+    #welcomeBox {
+      background: var(--white);
+      border: var(--border-thick);
+      box-shadow: var(--shadow-lg);
+      padding: 36px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      animation: modalIn .2s ease-out;
+    }
+
+    .welcome-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--yellow);
+      border: var(--border-thick);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+
+    .welcome-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--black);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+
+    .welcome-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .welcome-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .welcome-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: var(--border);
+      padding: 10px 14px;
+      background: #fafafa;
+    }
+
+    .welcome-step .step-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--yellow);
+      border: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--black);
+      flex-shrink: 0;
+    }
+
+    .welcome-step span {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--black);
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      line-height: 1.4;
+    }
+
+    .welcome-start {
+      width: 100%;
+      padding: 16px;
+      border: var(--border-thick);
+      cursor: pointer;
+      background: var(--yellow);
+      color: var(--black);
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: var(--shadow);
+      transition: transform .08s, box-shadow .08s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .welcome-start:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .welcome-start:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
+    /* FIELD */
+    .field {
+      width: 100%;
+      padding: 10px 12px;
+      border: var(--border);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      outline: none;
+      background: var(--white);
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .field:focus {
+      border-color: var(--blue);
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #999;
+    }
+
+    img {
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    button:focus-visible,
+    select:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <header id="appHeader">
+    <div class="logo-wrap">
+      <div class="logo-icon"><i class="fa-solid fa-palette"></i></div>
+      <div class="logo-name">СЛАЙДИК</div>
+      <div class="logo-badge">Kids</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="hbtn hbtn-undo" id="btnUndo"><i class="fa-solid fa-rotate-left"></i> Назад</button>
+      <button class="hbtn hbtn-undo" id="btnRedo"><i class="fa-solid fa-rotate-right"></i> Вперед</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="hbtn hbtn-present" id="btnPresent"><i class="fa-solid fa-play"></i> ПОКАЗАТИ!</button>
+      <button class="hbtn hbtn-pdf" id="btnPDF"><i class="fa-solid fa-print"></i> Роздрукувати</button>
+      <button class="hbtn hbtn-danger" id="btnReset"><i class="fa-solid fa-trash"></i></button>
+    </div>
+  </header>
+  <div id="appBody">
+    <aside id="sidebar">
+      <button class="sb-new-btn" id="btnNewSlide"><i class="fa-solid fa-plus"></i> Новий слайд</button>
+      <div id="slideList"></div>
+      <div class="sb-move-row">
+        <button class="sb-move-btn" id="btnSlideUp"><i class="fa-solid fa-arrow-up"></i> Вгору</button>
+        <button class="sb-move-btn" id="btnSlideDown"><i class="fa-solid fa-arrow-down"></i> Вниз</button>
+      </div>
+      <div class="sb-footer">
+        <button class="sb-tpl-btn" id="btnTemplates"><i class="fa-solid fa-wand-magic-sparkles"></i> Готові
+          макети</button>
+      </div>
+    </aside>
+    <main id="main">
+      <div id="toolbar">
+        <div class="tb-section">
+          <div class="tb-sec-label">Слайд</div>
+          <div class="tb-row">
+            <button class="tb-sm" id="btnDupSlide" title="Копіювати"><i class="fa-regular fa-copy"></i></button>
+            <button class="tb-sm" id="btnDelSlide" title="Видалити" style="color:var(--red);"><i
+                class="fa-regular fa-trash-can"></i></button>
+            <button class="tb-sm" id="btnBg" title="Колір фону"><i class="fa-solid fa-fill-drip"></i></button>
+          </div>
+        </div>
+        <div class="tb-section">
+          <div class="tb-sec-label">Додати</div>
+          <div class="tb-row">
+            <button class="tb-big tb-text-btn" id="btnAddText"><i class="fa-solid fa-font"></i><span
+                class="lbl">Текст</span></button>
+            <button class="tb-big tb-photo-btn" id="btnAddImage"><i class="fa-regular fa-image"></i><span
+                class="lbl">Фото</span></button>
+            <button class="tb-big tb-emoji-btn" id="btnEmoji"><i class="fa-regular fa-face-smile"></i><span
+                class="lbl">Смайлик</span></button>
+          </div>
+        </div>
+        <div class="tb-section">
+          <div class="tb-sec-label">Фігури</div>
+          <div class="tb-row">
+            <button class="tb-shape sh-rect" id="btnShapeRect"><i class="fa-regular fa-square"></i><span
+                class="lbl">Квадрат</span></button>
+            <button class="tb-shape sh-circle" id="btnShapeCircle"><i class="fa-regular fa-circle"></i><span
+                class="lbl">Коло</span></button>
+            <button class="tb-shape sh-star" id="btnShapeStar"><i class="fa-regular fa-star"></i><span
+                class="lbl">Зірка</span></button>
+            <button class="tb-shape sh-heart" id="btnShapeHeart"><i class="fa-regular fa-heart"></i><span
+                class="lbl">Серце</span></button>
+            <button class="tb-shape sh-tri" id="btnShapeTri"><i class="fa-solid fa-play"
+                style="transform:rotate(-90deg);display:inline-block;"></i><span class="lbl">Трикут</span></button>
+          </div>
+        </div>
+        <div class="tb-section">
+          <div class="tb-sec-label">Текст</div>
+          <div class="tb-row" style="align-items:center;">
+            <select id="selFontSize">
+              <option value="16">Дрібний</option>
+              <option value="22">Малий</option>
+              <option value="32" selected>Середній</option>
+              <option value="44">Великий</option>
+              <option value="60">Дуже великий</option>
+              <option value="80">Велетень!</option>
+            </select>
+            <button class="tb-sm" id="btnBold"><b>Ж</b></button>
+            <button class="tb-sm" id="btnItalic"><i>К</i></button>
+            <button class="tb-sm" id="btnUnderline"><u>П</u></button>
+            <div style="width:3px;height:24px;background:var(--black);margin:0 2px;"></div>
+            <button class="tb-sm" id="btnAlignLeft"><i class="fa-solid fa-align-left"></i></button>
+            <button class="tb-sm" id="btnAlignCenter"><i class="fa-solid fa-align-center"></i></button>
+            <button class="tb-sm" id="btnAlignRight"><i class="fa-solid fa-align-right"></i></button>
+            <div style="width:3px;height:24px;background:var(--black);margin:0 2px;"></div>
+            <button class="tb-sm" id="btnTextColor"><i class="fa-solid fa-palette"></i></button>
+          </div>
+        </div>
+        <div class="tb-section">
+          <div class="tb-sec-label">Фігура</div>
+          <div class="tb-row">
+            <button class="tb-sm" id="btnFill"><i class="fa-solid fa-fill"></i></button>
+            <button class="tb-sm" id="btnStroke"><i class="fa-solid fa-pen-nib"></i></button>
+            <div style="width:3px;height:24px;background:var(--black);margin:0 2px;"></div>
+            <button class="tb-sm" id="btnBringFront"><i class="fa-solid fa-layer-group"></i></button>
+            <button class="tb-sm" id="btnSendBack"><i class="fa-solid fa-layer-group"
+                style="transform:scaleY(-1);display:inline-block;"></i></button>
+            <div style="width:3px;height:24px;background:var(--black);margin:0 2px;"></div>
+            <button class="tb-sm" id="btnDupEl" style="color:var(--blue);"><i class="fa-regular fa-clone"></i></button>
+            <button class="tb-sm" id="btnDelEl" style="color:var(--red);"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:8px;"></div>
+        <div id="slideCounter" style="align-self:center;">Слайд 1/1</div>
+      </div>
+      <div id="workspace">
+        <div id="stageWrap">
+          <div id="stage" aria-label="Полотно слайда"></div>
+        </div>
+        <div id="colorPopover" class="popover" style="display:none;min-width:300px;">
+          <div class="popover-head">
+            <div class="popover-title" id="colorTitle">КОЛІР</div>
+            <button class="popover-close" id="btnCloseColor"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="color-section">
+            <div class="color-section-label">Яскраві</div>
+            <div id="colorGrid" class="color-grid"></div>
+          </div>
+          <div class="color-section">
+            <div class="color-section-label">Ніжні</div>
+            <div id="colorGridPastel" class="color-grid"></div>
+          </div>
+          <div class="custom-color-wrap">
+            <label>Свій:</label>
+            <input type="color" id="customColorInput" class="custom-color-input" value="#4169E1" />
+            <button class="modal-btn modal-ok" id="btnApplyCustomColor"
+              style="flex:none;padding:8px 14px;font-size:11px;"><i class="fa-solid fa-check"></i> Обрати</button>
+          </div>
+        </div>
+        <div id="emojiPopover" class="popover" style="display:none;min-width:340px;">
+          <div class="popover-head">
+            <div class="popover-title">СМАЙЛИКИ</div>
+            <button class="popover-close" id="btnCloseEmoji"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="emojiGrid" class="emoji-grid"></div>
+        </div>
+      </div>
+      <div id="statusBar">
+        <span id="slideInfo">16:9 • 960x540px</span>
+        <span id="saveStatus">Готово</span>
+      </div>
+    </main>
+  </div>
+  <div id="modalOverlay">
+    <div id="modal">
+      <button class="modal-close" id="btnModalClose"><i class="fa-solid fa-xmark"></i></button>
+      <div id="modalTitle"></div>
+      <div id="modalBody"></div>
+      <div id="modalActions">
+        <button class="modal-btn modal-cancel" id="btnModalCancel">Назад</button>
+        <button class="modal-btn modal-ok" id="btnModalOk">Добре!</button>
+      </div>
+    </div>
+  </div>
+  <div id="presentOverlay">
+    <div id="presentProgress"></div>
+    <div id="presentStageWrap"></div>
+    <button id="presentClose"><i class="fa-solid fa-xmark"></i></button>
+    <div id="presentNavBar">
+      <button class="pnav-btn" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
+      <div id="presentCounter">1 / 1</div>
+      <button class="pnav-btn" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+  <div id="welcomeOverlay">
+    <div id="welcomeBox">
+      <div class="welcome-icon"><i class="fa-solid fa-palette"></i></div>
+      <div class="welcome-title">Привіт! Я Слайдик!</div>
+      <div class="welcome-sub">Допоможу тобі зробити<br>круту презентацію для школи!</div>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <div class="step-icon"><i class="fa-solid fa-font"></i></div><span>Натисни "Текст" — і пиши що хочеш!</span>
+        </div>
+        <div class="welcome-step">
+          <div class="step-icon"><i class="fa-solid fa-fill-drip"></i></div><span>Обирай кольори та фігури — роби
+            красиво!</span>
+        </div>
+        <div class="welcome-step">
+          <div class="step-icon"><i class="fa-solid fa-play"></i></div><span>Натисни "ПОКАЗАТИ!" — і дивись!</span>
+        </div>
+      </div>
+      <button class="welcome-start" id="btnWelcomeStart"><i class="fa-solid fa-rocket"></i> Починаємо!</button>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <script>
+    const STORAGE_KEY = 'slidyk_kids_v4';
+    const MAX_HISTORY = 80;
+    const BASE_W = 960, BASE_H = 540;
+    const COLORS_VIVID = ['#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e', '#64748b', '#1e293b', '#94a3b8'];
+    const COLORS_PASTEL = ['#fecaca', '#fed7aa', '#fef08a', '#d9f99d', '#a7f3d0', '#99f6e4', '#bae6fd', '#bfdbfe', '#c7d2fe', '#ddd6fe', '#f5d0fe', '#fbcfe8', '#ffe4e6', '#fef9c3', '#f0fdf4', '#f0f9ff', '#faf5ff', '#fdf2f8'];
+    const EMOJIS = ['😀', '😁', '😅', '😍', '😎', '🤩', '🥳', '😂', '🤔', '😴', '🤖', '👽', '🦁', '🐱', '🐶', '🐸', '🦊', '🐼', '🐨', '🐧', '🦄', '🐉', '🦋', '🌸', '🌺', '🌻', '🌈', '⭐', '🌟', '✨', '🔥', '💧', '❄️', '🍕', '🍦', '🎂', '🍩', '🍎', '🍓', '🥑', '👋', '👍', '👏', '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '✌️', '👌', '💪', '🎨', '🎮', '🎸', '⚽', '🏀', '🎯', '🏆', '🥇', '🚀', '🌍', '🏠', '🚗', '🎁', '🎉', '📚', '✏️', '🧩', '🔭', '💡'];
+    const TEMPLATES = [
+      { id: 'title', icon: 'fa-solid fa-star', name: 'Титульний', desc: 'Назва + автор' },
+      { id: 'two', icon: 'fa-solid fa-table-columns', name: 'Текст + Фото', desc: 'Текст і картинка' },
+      { id: 'three', icon: 'fa-solid fa-table-cells', name: '3 блоки', desc: 'Три кольорових блоки' },
+      { id: 'fact', icon: 'fa-solid fa-lightbulb', name: 'Цікавий факт', desc: 'Картка з фактом' },
+      { id: 'list', icon: 'fa-solid fa-list-check', name: 'Список', desc: 'Заголовок і пункти' },
+      { id: 'compare', icon: 'fa-solid fa-code-compare', name: 'Порівняння', desc: 'За і Проти' },
+    ];
+    const uid = () => Math.floor(Date.now() * Math.random() * 1000 + Math.random() * 1e9);
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const deepClone = o => JSON.parse(JSON.stringify(o));
+    const safeParse = (s, fb) => { try { return JSON.parse(s); } catch { return fb; } };
+    function normalizeEl(e) { return { id: typeof e.id === 'number' ? e.id : uid(), type: ['text', 'image', 'shape'].includes(e.type) ? e.type : 'text', x: Number.isFinite(e.x) ? e.x : 100, y: Number.isFinite(e.y) ? e.y : 100, w: Number.isFinite(e.w) ? e.w : 260, h: Number.isFinite(e.h) ? e.h : 80, z: Number.isFinite(e.z) ? e.z : 1, content: typeof e.content === 'string' ? e.content : '', style: { fontSize: Number.isFinite(e.style?.fontSize) ? e.style.fontSize : 32, color: typeof e.style?.color === 'string' ? e.style.color : '#0a0a0a', bold: !!e.style?.bold, italic: !!e.style?.italic, underline: !!e.style?.underline, align: ['left', 'center', 'right'].includes(e.style?.align) ? e.style.align : 'left', fill: typeof e.style?.fill === 'string' ? e.style.fill : '#bfdbfe', stroke: typeof e.style?.stroke === 'string' ? e.style.stroke : '#1d4ed8' }, shape: ['rect', 'circle', 'star', 'heart', 'triangle'].includes(e.shape) ? e.shape : 'rect' }; }
+    function normalizeState(raw) { if (!raw || !Array.isArray(raw.slides) || !raw.slides.length) return null; const slides = raw.slides.map(s => ({ id: typeof s.id === 'number' ? s.id : uid(), background: typeof s.background === 'string' ? s.background : '#ffffff', elements: Array.isArray(s.elements) ? s.elements.map(normalizeEl) : [] })); return { slides, current: clamp(Number.isFinite(raw.current) ? raw.current : 0, 0, slides.length - 1), selected: null }; }
+
+    const App = (() => {
+      let state; let undoStack = [], redoStack = []; const dom = {}; const elDom = new Map();
+      const ptr = { mode: 'none', elId: null, handle: null, startX: 0, startY: 0, startBox: null, dragOff: { x: 0, y: 0 } };
+      let colorMode = 'textColor'; let clip = null; let saveTimer = null, thumbTimer = null;
+      const $ = id => document.getElementById(id);
+      const slide = () => state.slides[state.current];
+      const elements = () => slide().elements;
+      const selectedEl = () => state.selected ? elements().find(e => e.id === state.selected) || null : null;
+      function normalizeZ(sl) { [...sl.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1)).forEach((e, i) => e.z = i + 1); }
+      let toastTimer;
+      function toast(msg, dur = 2200) { dom.toast.textContent = msg; dom.toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => dom.toast.classList.remove('show'), dur); }
+      function setSave(t, ok = false) { dom.saveStatus.textContent = t; dom.saveStatus.classList.toggle('saved', ok); }
+      function scheduleSave() { setSave('Зберігаємо...', false); if (saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); setSave('Збережено', true); }, 400); }
+      function debounceThumbs() { if (thumbTimer) clearTimeout(thumbTimer); thumbTimer = setTimeout(renderThumbnails, 250); }
+      function pushHistory() { const snap = JSON.stringify(state); if (undoStack.length && undoStack[undoStack.length - 1] === snap) return; undoStack.push(snap); if (undoStack.length > MAX_HISTORY) undoStack.shift(); redoStack = []; updateUndoRedo(); }
+      function updateUndoRedo() { dom.btnUndo.style.opacity = undoStack.length > 1 ? '1' : '0.4'; dom.btnRedo.style.opacity = redoStack.length > 0 ? '1' : '0.4'; }
+      function undo() { if (undoStack.length <= 1) return; redoStack.push(undoStack.pop()); state = normalizeState(safeParse(undoStack[undoStack.length - 1], null)) || state; renderAll(); scheduleSave(); updateUndoRedo(); toast('СКАСОВАНО'); }
+      function redo() { if (!redoStack.length) return; const next = redoStack.pop(); undoStack.push(next); state = normalizeState(safeParse(next, null)) || state; renderAll(); scheduleSave(); updateUndoRedo(); toast('ПОВТОРЕНО'); }
+      function scaleStage() { const ws = dom.workspace; const pad = 56; const scale = Math.min((ws.clientWidth - pad) / BASE_W, (ws.clientHeight - pad) / BASE_H, 1); dom.stage.style.transform = `scale(${scale})`; dom.stageWrap.style.width = (BASE_W * scale) + 'px'; dom.stageWrap.style.height = (BASE_H * scale) + 'px'; dom.stage.dataset.scale = String(scale); }
+      function toStagePoint(cx, cy) { const r = dom.stage.getBoundingClientRect(); return { x: (cx - r.left) * (BASE_W / r.width), y: (cy - r.top) * (BASE_H / r.height) }; }
+      function selectEl(id) { state.selected = id; closePopovers(); for (const [eid, node] of elDom) node.classList.toggle('selected', eid === id); updateSlideCounter(); }
+      function deselect() { state.selected = null; closePopovers(); for (const node of elDom.values()) node.classList.remove('selected'); }
+      function initPopovers() {
+        dom.colorGrid.innerHTML = ''; COLORS_VIVID.forEach(c => { const b = document.createElement('button'); b.className = 'color-btn'; b.style.background = c; b.title = c; b.onclick = () => { applyColor(c); closePopovers(); }; dom.colorGrid.appendChild(b); });
+        dom.colorGridPastel.innerHTML = ''; COLORS_PASTEL.forEach(c => { const b = document.createElement('button'); b.className = 'color-btn'; b.style.background = c; b.title = c; b.onclick = () => { applyColor(c); closePopovers(); }; dom.colorGridPastel.appendChild(b); });
+        dom.emojiGrid.innerHTML = ''; EMOJIS.forEach(em => { const b = document.createElement('button'); b.className = 'emoji-btn'; b.textContent = em; b.onclick = () => { addEmoji(em); closePopovers(); }; dom.emojiGrid.appendChild(b); });
+      }
+      function openColor(mode) { colorMode = mode; dom.colorTitle.textContent = { textColor: 'КОЛІР ТЕКСТУ', bg: 'КОЛІР ФОНУ', fill: 'КОЛІР ЗАЛИВКИ', stroke: 'КОЛІР РАМКИ' }[mode] || 'КОЛІР'; closePopovers(); dom.colorPopover.style.display = 'block'; }
+      function openEmoji() { closePopovers(); dom.emojiPopover.style.display = 'block'; }
+      function closePopovers() { dom.colorPopover.style.display = 'none'; dom.emojiPopover.style.display = 'none'; }
+      function applyColor(c) { pushHistory(); if (colorMode === 'bg') { slide().background = c; dom.stage.style.background = c; renderThumbnails(); scheduleSave(); return; } const el = selectedEl(); if (!el) return; if (colorMode === 'textColor' && el.type === 'text') { el.style.color = c; const t = elDom.get(el.id)?.querySelector('.textBox'); if (t) t.style.color = c; } if (colorMode === 'fill' && el.type === 'shape') { el.style.fill = c; const s = elDom.get(el.id)?.querySelector('svg [fill]'); if (s) s.setAttribute('fill', c); } if (colorMode === 'stroke' && el.type === 'shape') { el.style.stroke = c; const s = elDom.get(el.id)?.querySelector('svg [stroke]'); if (s) s.setAttribute('stroke', c); } debounceThumbs(); scheduleSave(); }
+      function openModal({ title, bodyHTML, okText = 'Добре!', cancelText = 'Назад', onOk, showActions = true }) { dom.modalTitle.textContent = title; dom.modalBody.innerHTML = bodyHTML; dom.modalActions.style.display = showActions ? 'flex' : 'none'; dom.btnModalOk.textContent = okText; dom.btnModalCancel.textContent = cancelText; dom.btnModalOk.onclick = () => { onOk?.(); closeModal(); }; dom.btnModalCancel.onclick = closeModal; dom.modalOverlay.classList.add('show'); }
+      function closeModal() { dom.modalOverlay.classList.remove('show'); }
+      function confirmDialog({ title, msg, okText = 'Так', onYes }) { openModal({ title, bodyHTML: `<p style="font-size:14px;font-weight:700;color:#555;line-height:1.65;">${msg}</p>`, okText, cancelText: 'Ні, назад', onOk: onYes }); }
+      function renderAll() { renderThumbnails(); renderStage(); updateSlideCounter(); }
+      function updateSlideCounter() { dom.slideCounter.textContent = `Слайд ${state.current + 1}/${state.slides.length}`; dom.slideInfo.textContent = `16:9 \u2022 ${state.slides.length} сл.`; }
+      function renderThumbnails() {
+        dom.slideList.innerHTML = '';
+        state.slides.forEach((s, idx) => {
+          const item = document.createElement('div'); item.className = 'slide-item' + (idx === state.current ? ' active' : '');
+          item.onclick = () => { state.current = idx; state.selected = null; closePopovers(); renderAll(); scheduleSave(); };
+          const acts = document.createElement('div'); acts.className = 'slide-actions';
+          const mkBtn = (cls, icon, tip, fn) => { const b = document.createElement('button'); b.className = 'sa-btn ' + cls; b.title = tip; b.innerHTML = `<i class="${icon}"></i>`; b.onclick = e => { e.stopPropagation(); fn(); }; return b; };
+          acts.appendChild(mkBtn('sa-dup', 'fa-regular fa-copy', 'Копіювати', () => duplicateSlide(idx)));
+          acts.appendChild(mkBtn('sa-del', 'fa-solid fa-trash', 'Видалити', () => confirmDeleteSlide(idx)));
+          item.appendChild(acts);
+          const num = document.createElement('div'); num.className = 'slide-num'; num.textContent = idx + 1; item.appendChild(num);
+          const wrap = document.createElement('div'); wrap.className = 'thumb-wrap';
+          const inner = document.createElement('div'); inner.className = 'thumb-inner'; inner.style.background = s.background;
+          requestAnimationFrame(() => { const sc = wrap.clientWidth / BASE_W; inner.style.transform = `scale(${sc})`; });
+          const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+          sorted.forEach(el => {
+            const d = document.createElement('div'); d.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`;
+            if (el.type === 'text') { Object.assign(d.style, { fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#0a0a0a', fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal', textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left', whiteSpace: 'pre-wrap', padding: '8px', fontFamily: "'Nunito',sans-serif", lineHeight: '1.2' }); d.textContent = el.content || ''; }
+            else if (el.type === 'image') { const img = document.createElement('img'); img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;'; d.appendChild(img); }
+            else if (el.type === 'shape') { d.appendChild(makeShapeSVG(el)); }
+            inner.appendChild(d);
+          });
+          wrap.appendChild(inner); item.appendChild(wrap); dom.slideList.appendChild(item);
+        });
+      }
+      function makeShapeSVG(el) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none');
+        const fill = el.style.fill || '#bfdbfe', stroke = el.style.stroke || '#1d4ed8'; let s;
+        if (el.shape === 'circle') { s = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse'); s.setAttribute('cx', '50'); s.setAttribute('cy', '50'); s.setAttribute('rx', '47'); s.setAttribute('ry', '47'); }
+        else if (el.shape === 'star') { s = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); s.setAttribute('points', '50,4 61,36 95,36 69,57 79,91 50,71 21,91 31,57 5,36 39,36'); }
+        else if (el.shape === 'heart') { s = document.createElementNS('http://www.w3.org/2000/svg', 'path'); s.setAttribute('d', 'M50,82 C50,82 7,52 7,28 C7,14 17,4 32,4 C40,4 47,9 50,16 C53,9 60,4 68,4 C83,4 93,14 93,28 C93,52 50,82 50,82 Z'); }
+        else if (el.shape === 'triangle') { s = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); s.setAttribute('points', '50,4 96,93 4,93'); }
+        else { s = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); s.setAttribute('x', '2'); s.setAttribute('y', '2'); s.setAttribute('width', '96'); s.setAttribute('height', '96'); }
+        s.setAttribute('fill', fill); s.setAttribute('stroke', stroke); s.setAttribute('stroke-width', '5'); svg.appendChild(s); return svg;
+      }
+      function applyTextStyle(node, el) { node.style.fontSize = (el.style.fontSize || 32) + 'px'; node.style.color = el.style.color || '#0a0a0a'; node.style.fontWeight = el.style.bold ? '900' : '700'; node.style.fontStyle = el.style.italic ? 'italic' : 'normal'; node.style.textDecoration = el.style.underline ? 'underline' : 'none'; node.style.textAlign = el.style.align || 'left'; }
+      function renderStage() {
+        dom.stage.innerHTML = ''; elDom.clear(); dom.stage.style.background = slide().background;
+        const sorted = [...elements()].sort((a, b) => (a.z ?? 1) - (b.z ?? 1));
+        sorted.forEach(el => {
+          const w = document.createElement('div'); w.className = 'el' + (state.selected === el.id ? ' selected' : ''); w.dataset.id = String(el.id); w.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z || 1};`;
+          const content = document.createElement('div'); content.className = 'content';
+          if (el.type === 'text') { const t = document.createElement('div'); t.className = 'textBox'; t.contentEditable = 'true'; t.spellcheck = false; t.textContent = el.content || ''; applyTextStyle(t, el); t.style.fontFamily = "'Nunito',sans-serif"; t.addEventListener('input', () => { el.content = t.textContent || ''; scheduleSave(); debounceThumbs(); }); t.addEventListener('pointerdown', e => { e.stopPropagation(); selectEl(el.id); }); content.appendChild(t); }
+          else if (el.type === 'image') { const img = document.createElement('img'); img.src = el.content; img.draggable = false; img.style.cssText = 'width:100%;height:100%;object-fit:cover;pointer-events:none;'; content.appendChild(img); }
+          else if (el.type === 'shape') { content.appendChild(makeShapeSVG(el)); }
+          w.appendChild(content);
+          const handles = document.createElement('div'); handles.className = 'handles';
+          ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(p => { const h = document.createElement('div'); h.className = `handle ${p}`; h.dataset.handle = p; h.addEventListener('pointerdown', e => onHandleDown(e, el.id, p)); handles.appendChild(h); });
+          w.appendChild(handles); w.addEventListener('pointerdown', e => onElDown(e, el.id)); elDom.set(el.id, w); dom.stage.appendChild(w);
+        });
+      }
+      function onElDown(e, id) { if (e.target?.classList?.contains('textBox')) return; e.stopPropagation(); selectEl(id); const el = elements().find(x => x.id === id); const node = elDom.get(id); if (!el || !node) return; pushHistory(); const p = toStagePoint(e.clientX, e.clientY); ptr.mode = 'drag'; ptr.elId = id; ptr.dragOff = { x: p.x - el.x, y: p.y - el.y }; node.setPointerCapture(e.pointerId); node.classList.add('dragging'); const onMove = ev => { const el2 = elements().find(x => x.id === ptr.elId); const n2 = elDom.get(ptr.elId); if (!el2 || !n2) return; const pp = toStagePoint(ev.clientX, ev.clientY); el2.x = clamp(pp.x - ptr.dragOff.x, 0, BASE_W - el2.w); el2.y = clamp(pp.y - ptr.dragOff.y, 0, BASE_H - el2.h); n2.style.left = el2.x + 'px'; n2.style.top = el2.y + 'px'; }; const onUp = () => { node.classList.remove('dragging'); node.removeEventListener('pointermove', onMove); normalizeZ(slide()); debounceThumbs(); scheduleSave(); ptr.mode = 'none'; }; node.addEventListener('pointermove', onMove); node.addEventListener('pointerup', onUp, { once: true }); node.addEventListener('pointercancel', onUp, { once: true }); }
+      function onHandleDown(e, id, handle) { e.stopPropagation(); e.preventDefault(); selectEl(id); const el = elements().find(x => x.id === id); const node = elDom.get(id); if (!el || !node) return; pushHistory(); const p = toStagePoint(e.clientX, e.clientY); ptr.mode = 'resize'; ptr.elId = id; ptr.handle = handle; ptr.startX = p.x; ptr.startY = p.y; ptr.startBox = { x: el.x, y: el.y, w: el.w, h: el.h }; node.setPointerCapture(e.pointerId); const onMove = ev => { const el2 = elements().find(x => x.id === ptr.elId); const n2 = elDom.get(ptr.elId); if (!el2 || !n2 || !ptr.startBox) return; const pp = toStagePoint(ev.clientX, ev.clientY); const dx = pp.x - ptr.startX, dy = pp.y - ptr.startY; let { x, y, w, h } = ptr.startBox; const has = s => ptr.handle.includes(s); if (has('e')) w += dx; if (has('s')) h += dy; if (has('w')) { x += dx; w -= dx; } if (has('n')) { y += dy; h -= dy; } w = Math.max(40, w); h = Math.max(30, h); x = clamp(x, 0, BASE_W - w); y = clamp(y, 0, BASE_H - h); el2.x = x; el2.y = y; el2.w = w; el2.h = h; n2.style.left = x + 'px'; n2.style.top = y + 'px'; n2.style.width = w + 'px'; n2.style.height = h + 'px'; }; const onUp = () => { node.removeEventListener('pointermove', onMove); normalizeZ(slide()); debounceThumbs(); scheduleSave(); ptr.mode = 'none'; }; node.addEventListener('pointermove', onMove); node.addEventListener('pointerup', onUp, { once: true }); node.addEventListener('pointercancel', onUp, { once: true }); }
+      function addSlide() { pushHistory(); state.slides.push({ id: uid(), background: '#ffffff', elements: [] }); state.current = state.slides.length - 1; state.selected = null; renderAll(); scheduleSave(); toast('НОВИЙ СЛАЙД!'); }
+      function confirmDeleteSlide(idx = state.current) { if (state.slides.length <= 1) { toast('ПОТРІБЕН ХОЧ 1 СЛАЙД!'); return; } confirmDialog({ title: 'Видалити слайд?', msg: `Видалити слайд ${idx + 1}? Це назавжди!`, okText: 'Так, видалити!', onYes: () => deleteSlide(idx) }); }
+      function deleteSlide(idx = state.current) { if (state.slides.length <= 1) return; pushHistory(); state.slides.splice(idx, 1); state.current = clamp(state.current, 0, state.slides.length - 1); state.selected = null; renderAll(); scheduleSave(); toast('СЛАЙД ВИДАЛЕНО'); }
+      function duplicateSlide(idx = state.current) { pushHistory(); const copy = deepClone(state.slides[idx]); copy.id = uid(); copy.elements.forEach(e => e.id = uid()); state.slides.splice(idx + 1, 0, copy); state.current = idx + 1; state.selected = null; renderAll(); scheduleSave(); toast('СЛАЙД СКОПІЙОВАНО'); }
+      function moveSlide(d) { const i = state.current, j = i + d; if (j < 0 || j >= state.slides.length) return; pushHistory();[state.slides[i], state.slides[j]] = [state.slides[j], state.slides[i]]; state.current = j; renderAll(); scheduleSave(); }
+      function addText() { pushHistory(); const e = normalizeEl({ id: uid(), type: 'text', x: 160, y: 150, w: 640, h: 130, z: elements().length + 1, content: 'Введи текст тут...', style: { fontSize: 32, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'center' } }); elements().push(e); state.selected = e.id; renderAll(); scheduleSave(); requestAnimationFrame(() => { const t = elDom.get(e.id)?.querySelector('.textBox'); if (t) { t.focus(); document.execCommand('selectAll', false, null); } }); }
+      function addEmoji(em) { pushHistory(); const e = normalizeEl({ id: uid(), type: 'text', x: 390, y: 190, w: 180, h: 180, z: elements().length + 1, content: em, style: { fontSize: 100, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'center' } }); elements().push(e); state.selected = e.id; renderAll(); scheduleSave(); }
+      function addShape(kind) { pushHistory(); const fills = { rect: '#bfdbfe', circle: '#fde68a', star: '#fef08a', heart: '#fecaca', triangle: '#bbf7d0' }; const strokes = { rect: '#1d4ed8', circle: '#d97706', star: '#d97706', heart: '#e11d48', triangle: '#166534' }; const e = normalizeEl({ id: uid(), type: 'shape', x: 240, y: 150, w: 480, h: 240, z: elements().length + 1, content: '', shape: kind, style: { fill: fills[kind] || '#bfdbfe', stroke: strokes[kind] || '#1d4ed8' } }); elements().push(e); state.selected = e.id; renderAll(); scheduleSave(); }
+      function addImage() {
+        const html = `<div class="img-tab-row"><button class="img-tab active" id="tabFile" onclick="(function(){document.getElementById('tabFile').classList.add('active');document.getElementById('tabUrl').classList.remove('active');document.getElementById('imgPanelFile').style.display='block';document.getElementById('imgPanelUrl').style.display='none';})()"><i class='fa-solid fa-folder-open'></i> З файлу</button><button class="img-tab" id="tabUrl" onclick="(function(){document.getElementById('tabUrl').classList.add('active');document.getElementById('tabFile').classList.remove('active');document.getElementById('imgPanelUrl').style.display='block';document.getElementById('imgPanelFile').style.display='none';})()"><i class='fa-solid fa-link'></i> З інтернету</button></div><div id="imgPanelFile"><div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"><div class="dz-icon"><i class='fa-regular fa-image fa-2x'></i></div><div class="dz-text">Натисни або перетягни фото сюди</div></div><input type="file" id="fileInput" style="display:none;" accept="image/*"/></div><div id="imgPanelUrl" style="display:none;"><input type="text" id="imgUrl" class="field" placeholder="https://...посилання на фото..."/></div>`;
+        openModal({ title: 'ДОДАТИ ФОТО', bodyHTML: html, okText: 'Додати!', cancelText: 'Закрити', onOk: () => { const url = $('imgUrl')?.value.trim(); if (url) insertImage(url); } });
+        setTimeout(() => { const dz = $('dropZone'); if (!dz) return; dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); }); dz.addEventListener('dragleave', () => dz.classList.remove('drag-over')); dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) readFile(f); }); const fi = $('fileInput'); fi.onchange = ev => { const f = ev.target.files?.[0]; if (f) readFile(f); }; }, 50);
+        function readFile(f) { const r = new FileReader(); r.onload = () => { insertImage(String(r.result)); closeModal(); }; r.readAsDataURL(f); }
+      }
+      function insertImage(src) { pushHistory(); const e = normalizeEl({ id: uid(), type: 'image', x: 200, y: 115, w: 560, h: 310, z: elements().length + 1, content: src }); elements().push(e); state.selected = e.id; renderAll(); scheduleSave(); }
+      function confirmDeleteSelected() { const el = selectedEl(); if (!el) { toast('СПОЧАТКУ НАТИСНИ НА ЩОСЬ'); return; } const names = { text: 'текст', image: 'фото', shape: 'фігуру' }; confirmDialog({ title: 'Видалити?', msg: `Видалити цю ${names[el.type]}?`, okText: 'Так, видалити!', onYes: deleteSelected }); }
+      function deleteSelected() { const el = selectedEl(); if (!el) return; pushHistory(); slide().elements = slide().elements.filter(e => e.id !== el.id); state.selected = null; normalizeZ(slide()); renderAll(); scheduleSave(); toast('ВИДАЛЕНО'); }
+      function duplicateSelected() { const el = selectedEl(); if (!el) { toast('СПОЧАТКУ НАТИСНИ НА ЩОСЬ'); return; } pushHistory(); const copy = deepClone(el); copy.id = uid(); copy.x = clamp(copy.x + 24, 0, BASE_W - copy.w); copy.y = clamp(copy.y + 24, 0, BASE_H - copy.h); copy.z = elements().length + 1; elements().push(copy); state.selected = copy.id; normalizeZ(slide()); renderAll(); scheduleSave(); toast('СКОПІЙОВАНО'); }
+      function bringToFront() { const el = selectedEl(); if (!el) return; pushHistory(); el.z = elements().length + 1; normalizeZ(slide()); renderAll(); scheduleSave(); }
+      function sendToBack() { const el = selectedEl(); if (!el) return; pushHistory(); el.z = 0; normalizeZ(slide()); renderAll(); scheduleSave(); }
+      function setFontSize(px) { const el = selectedEl(); if (!el || el.type !== 'text') return; pushHistory(); el.style.fontSize = Number(px); const t = elDom.get(el.id)?.querySelector('.textBox'); if (t) t.style.fontSize = el.style.fontSize + 'px'; debounceThumbs(); scheduleSave(); }
+      function toggleStyle(key) { const el = selectedEl(); if (!el || el.type !== 'text') return; pushHistory(); el.style[key] = !el.style[key]; const t = elDom.get(el.id)?.querySelector('.textBox'); if (t) applyTextStyle(t, el); debounceThumbs(); scheduleSave(); }
+      function setAlign(align) { const el = selectedEl(); if (!el || el.type !== 'text') return; pushHistory(); el.style.align = align; const t = elDom.get(el.id)?.querySelector('.textBox'); if (t) t.style.textAlign = align; debounceThumbs(); scheduleSave(); }
+
+      /* ═══ TEMPLATES — виправлено: DOM замість inline onclick ═══ */
+      function openTemplates() {
+        const grid = document.createElement('div');
+        grid.className = 'tpl-grid';
+        TEMPLATES.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'tpl-card';
+          card.innerHTML = `<div class="tpl-icon"><i class="${t.icon}"></i></div><div class="tpl-name">${t.name}</div><div class="tpl-desc">${t.desc}</div>`;
+          card.addEventListener('click', () => { closeModal(); applyTemplate(t.id); });
+          grid.appendChild(card);
+        });
+        const note = document.createElement('p');
+        note.style.cssText = 'font-size:10px;font-weight:700;color:#999;margin-top:12px;text-align:center;text-transform:uppercase;letter-spacing:.5px;';
+        note.textContent = 'Увага: замінить вміст поточного слайда';
+        dom.modalTitle.textContent = 'ОБЕРИ МАКЕТ';
+        dom.modalBody.innerHTML = '';
+        dom.modalBody.appendChild(grid);
+        dom.modalBody.appendChild(note);
+        dom.modalActions.style.display = 'none';
+        dom.modalOverlay.classList.add('show');
+      }
+
+      function applyTemplate(kind) {
+        pushHistory();
+        const s = slide(); s.elements = []; s.background = '#ffffff';
+        const e = ov => normalizeEl({ id: uid(), z: ov.z || 1, shape: 'rect', style: { fill: '#bfdbfe', stroke: '#1d4ed8' }, ...ov });
+        if (kind === 'title') { s.background = '#fffbeb'; s.elements.push(e({ type: 'shape', x: 30, y: 30, w: 900, h: 480, z: 1, shape: 'rect', style: { fill: '#fff', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 80, y: 140, w: 800, h: 200, z: 2, content: 'НАЗВА ПРЕЗЕНТАЦІЇ', style: { fontSize: 64, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'text', x: 200, y: 360, w: 560, h: 70, z: 3, content: "Учень: Твоє ім'я", style: { fontSize: 28, color: '#555', bold: false, italic: true, underline: false, align: 'center' } })); }
+        if (kind === 'two') { s.elements.push(e({ type: 'text', x: 40, y: 28, w: 880, h: 82, z: 1, content: 'Заголовок слайда', style: { fontSize: 48, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'left' } })); s.elements.push(e({ type: 'shape', x: 40, y: 120, w: 12, h: 380, z: 2, shape: 'rect', style: { fill: '#FFE135', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 70, y: 130, w: 400, h: 360, z: 3, content: '• Пункт перший\n• Пункт другий\n• Пункт третій\n• Ще один пункт', style: { fontSize: 28, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'left' } })); s.elements.push(e({ type: 'shape', x: 490, y: 120, w: 440, h: 380, z: 4, shape: 'rect', style: { fill: '#f5f5f5', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 500, y: 280, w: 420, h: 80, z: 5, content: '[ Постав фото тут ]', style: { fontSize: 22, color: '#aaa', bold: false, italic: true, underline: false, align: 'center' } })); }
+        if (kind === 'three') { s.elements.push(e({ type: 'shape', x: 0, y: 0, w: 960, h: 90, z: 1, shape: 'rect', style: { fill: '#0a0a0a', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 40, y: 4, w: 880, h: 82, z: 2, content: 'МІЙ СЛАЙД', style: { fontSize: 52, color: '#FFE135', bold: true, italic: false, underline: false, align: 'center' } }));[{ x: 40, fill: '#bfdbfe', stroke: '#1d4ed8', t: 'Ідея 1' }, { x: 340, fill: '#bbf7d0', stroke: '#166534', t: 'Ідея 2' }, { x: 640, fill: '#fde68a', stroke: '#d97706', t: 'Ідея 3' }].forEach((b, i) => { s.elements.push(e({ type: 'shape', x: b.x, y: 108, w: 280, h: 402, z: 3 + i, shape: 'rect', style: { fill: b.fill, stroke: b.stroke } })); s.elements.push(e({ type: 'text', x: b.x + 14, y: 120, w: 252, h: 56, z: 10 + i, content: b.t, style: { fontSize: 32, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'text', x: b.x + 14, y: 188, w: 252, h: 300, z: 20 + i, content: 'Напиши тут...', style: { fontSize: 22, color: '#555', bold: false, italic: false, underline: false, align: 'left' } })); }); }
+        if (kind === 'fact') { s.background = '#0a0a0a'; s.elements.push(e({ type: 'shape', x: 50, y: 40, w: 860, h: 460, z: 1, shape: 'rect', style: { fill: '#FFE135', stroke: '#FFE135' } })); s.elements.push(e({ type: 'text', x: 80, y: 60, w: 800, h: 60, z: 2, content: 'ЦІКАВИЙ ФАКТ!', style: { fontSize: 28, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'left' } })); s.elements.push(e({ type: 'text', x: 90, y: 140, w: 780, h: 210, z: 3, content: 'Напиши свій цікавий факт тут!', style: { fontSize: 42, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'text', x: 90, y: 380, w: 780, h: 80, z: 4, content: '— Джерело або пояснення', style: { fontSize: 22, color: '#555', bold: false, italic: true, underline: false, align: 'right' } })); }
+        if (kind === 'list') { s.elements.push(e({ type: 'shape', x: 0, y: 0, w: 960, h: 96, z: 1, shape: 'rect', style: { fill: '#0a0a0a', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 30, y: 8, w: 900, h: 80, z: 2, content: 'ЗАГОЛОВОК', style: { fontSize: 52, color: '#FFE135', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'shape', x: 40, y: 110, w: 8, h: 400, z: 3, shape: 'rect', style: { fill: '#FFE135', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 70, y: 118, w: 860, h: 390, z: 4, content: "✅ Пункт перший\n✅ Пункт другий\n✅ Пункт третій\n✅ Пункт четвертий\n✅ Пункт п'ятий", style: { fontSize: 32, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'left' } })); }
+        if (kind === 'compare') { s.elements.push(e({ type: 'shape', x: 0, y: 0, w: 960, h: 90, z: 1, shape: 'rect', style: { fill: '#0a0a0a', stroke: '#0a0a0a' } })); s.elements.push(e({ type: 'text', x: 30, y: 6, w: 900, h: 78, z: 2, content: 'ПОРІВНЯННЯ', style: { fontSize: 48, color: '#FFE135', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'shape', x: 20, y: 106, w: 455, h: 404, z: 3, shape: 'rect', style: { fill: '#bbf7d0', stroke: '#166534' } })); s.elements.push(e({ type: 'shape', x: 485, y: 106, w: 455, h: 404, z: 4, shape: 'rect', style: { fill: '#fecaca', stroke: '#be123c' } })); s.elements.push(e({ type: 'text', x: 20, y: 110, w: 455, h: 60, z: 5, content: '✅ ЗА', style: { fontSize: 36, color: '#166534', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'text', x: 485, y: 110, w: 455, h: 60, z: 6, content: '❌ ПРОТИ', style: { fontSize: 36, color: '#be123c', bold: true, italic: false, underline: false, align: 'center' } })); s.elements.push(e({ type: 'text', x: 40, y: 185, w: 415, h: 290, z: 7, content: '• Напиши тут\n• Ще один плюс\n• І ще один', style: { fontSize: 24, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'left' } })); s.elements.push(e({ type: 'text', x: 505, y: 185, w: 415, h: 290, z: 8, content: '• Мінус перший\n• Мінус другий\n• Й інше', style: { fontSize: 24, color: '#0a0a0a', bold: false, italic: false, underline: false, align: 'left' } })); }
+        normalizeZ(s); state.selected = null; renderAll(); scheduleSave(); toast('МАКЕТ ЗАСТОСОВАНО!');
+      }
+
+      async function exportPDF() {
+        toast('ГОТУЄМО ФАЙЛ... ЗАЧЕКАЙ!', 5000);
+        const container = document.createElement('div'); container.style.cssText = 'font-family:"Nunito",sans-serif;';
+        state.slides.forEach(s => { const page = document.createElement('div'); page.style.cssText = `width:960px;height:540px;background:${s.background};position:relative;overflow:hidden;page-break-after:always;`; const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1)); sorted.forEach(el => { const box = document.createElement('div'); box.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`; if (el.type === 'text') { Object.assign(box.style, { fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#0a0a0a', fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal', textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left', whiteSpace: 'pre-wrap', padding: '8px', lineHeight: '1.2', fontFamily: "'Nunito',sans-serif" }); box.textContent = el.content || ''; } else if (el.type === 'image') { const img = document.createElement('img'); img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;'; box.appendChild(img); } else if (el.type === 'shape') { box.appendChild(makeShapeSVG(el)); } page.appendChild(box); }); container.appendChild(page); });
+        await html2pdf().from(container).set({ margin: 0, filename: 'slidyk_kids.pdf', image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [960, 540], orientation: 'landscape' } }).save();
+        toast('ФАЙЛ ЗБЕРЕЖЕНО!');
+      }
+
+      const Present = {
+        idx: 0, key: null,
+        start() { this.idx = state.current; dom.presentOverlay.classList.add('show'); this.render(); this.key = e => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if (this.idx < state.slides.length - 1) { this.idx++; this.render(); } else this.stop(); } if (e.key === 'ArrowLeft') { e.preventDefault(); if (this.idx > 0) { this.idx--; this.render(); } } if (e.key === 'Escape') this.stop(); }; window.addEventListener('keydown', this.key); },
+        stop() { dom.presentOverlay.classList.remove('show'); if (this.key) window.removeEventListener('keydown', this.key); this.key = null; },
+        render() { dom.presentStageWrap.innerHTML = ''; const s = state.slides[this.idx]; const scale = Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H); const wrap = document.createElement('div'); wrap.style.cssText = `width:${BASE_W * scale}px;height:${BASE_H * scale}px;position:relative;overflow:hidden;`; const st = document.createElement('div'); st.style.cssText = `width:${BASE_W}px;height:${BASE_H}px;background:${s.background};position:absolute;top:0;left:0;transform:scale(${scale});transform-origin:top left;overflow:hidden;`; const sorted = [...s.elements].sort((a, b) => (a.z ?? 1) - (b.z ?? 1)); sorted.forEach(el => { const box = document.createElement('div'); box.style.cssText = `position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;`; if (el.type === 'text') { Object.assign(box.style, { fontSize: (el.style.fontSize || 32) + 'px', color: el.style.color || '#0a0a0a', fontWeight: el.style.bold ? '900' : '700', fontStyle: el.style.italic ? 'italic' : 'normal', textDecoration: el.style.underline ? 'underline' : 'none', textAlign: el.style.align || 'left', whiteSpace: 'pre-wrap', padding: '8px', lineHeight: '1.2', fontFamily: "'Nunito',sans-serif" }); box.textContent = el.content || ''; } else if (el.type === 'image') { const img = document.createElement('img'); img.src = el.content; img.style.cssText = 'width:100%;height:100%;object-fit:cover;'; box.appendChild(img); } else if (el.type === 'shape') { box.appendChild(makeShapeSVG(el)); } st.appendChild(box); }); wrap.appendChild(st); dom.presentStageWrap.appendChild(wrap); dom.presentProgress.style.width = ((this.idx) / (state.slides.length - 1 || 1) * 100) + '%'; dom.presentCounter.textContent = `${this.idx + 1} / ${state.slides.length}`; }
+      };
+
+      function resetAll() { confirmDialog({ title: 'ОЧИСТИТИ ВСЕ?', msg: 'Це видалить усі слайди і почне заново. Впевнені?', okText: 'Так, стерти все!', onYes: () => { localStorage.removeItem(STORAGE_KEY); location.reload(); } }); }
+
+      function initKeyboard() {
+        window.addEventListener('keydown', e => {
+          const isTyping = document.activeElement?.classList?.contains('textBox'); const mod = e.ctrlKey || e.metaKey;
+          if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+          if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+          if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+          if (!isTyping && mod && e.key.toLowerCase() === 'c') { const el = selectedEl(); if (el) { clip = deepClone(el); toast('СКОПІЙОВАНО'); } return; }
+          if (!isTyping && mod && e.key.toLowerCase() === 'v') { if (clip) { pushHistory(); const copy = deepClone(clip); copy.id = uid(); copy.x = clamp(copy.x + 24, 0, BASE_W - copy.w); copy.y = clamp(copy.y + 24, 0, BASE_H - copy.h); copy.z = elements().length + 1; elements().push(copy); state.selected = copy.id; normalizeZ(slide()); renderAll(); scheduleSave(); toast('ВСТАВЛЕНО'); } return; }
+          if (!isTyping && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); confirmDeleteSelected(); return; }
+          if (!isTyping && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) { const el = selectedEl(); if (!el) return; e.preventDefault(); const step = e.shiftKey ? 10 : 2; if (e.key === 'ArrowUp') el.y = clamp(el.y - step, 0, BASE_H - el.h); if (e.key === 'ArrowDown') el.y = clamp(el.y + step, 0, BASE_H - el.h); if (e.key === 'ArrowLeft') el.x = clamp(el.x - step, 0, BASE_W - el.w); if (e.key === 'ArrowRight') el.x = clamp(el.x + step, 0, BASE_W - el.w); const node = elDom.get(el.id); if (node) { node.style.left = el.x + 'px'; node.style.top = el.y + 'px'; } debounceThumbs(); scheduleSave(); }
+        });
+      }
+
+      function initDom() {
+        dom.stage = $('stage'); dom.stageWrap = $('stageWrap'); dom.workspace = $('workspace'); dom.slideList = $('slideList'); dom.slideCounter = $('slideCounter'); dom.slideInfo = $('slideInfo'); dom.saveStatus = $('saveStatus'); dom.colorPopover = $('colorPopover'); dom.colorGrid = $('colorGrid'); dom.colorGridPastel = $('colorGridPastel'); dom.colorTitle = $('colorTitle'); dom.emojiPopover = $('emojiPopover'); dom.emojiGrid = $('emojiGrid'); dom.modalOverlay = $('modalOverlay'); dom.modalTitle = $('modalTitle'); dom.modalBody = $('modalBody'); dom.modalActions = $('modalActions'); dom.btnModalOk = $('btnModalOk'); dom.btnModalCancel = $('btnModalCancel'); dom.presentOverlay = $('presentOverlay'); dom.presentStageWrap = $('presentStageWrap'); dom.presentProgress = $('presentProgress'); dom.presentCounter = $('presentCounter'); dom.btnUndo = $('btnUndo'); dom.btnRedo = $('btnRedo'); dom.btnPresent = $('btnPresent'); dom.btnPDF = $('btnPDF'); dom.btnReset = $('btnReset'); dom.btnNewSlide = $('btnNewSlide'); dom.btnTemplates = $('btnTemplates'); dom.btnSlideUp = $('btnSlideUp'); dom.btnSlideDown = $('btnSlideDown'); dom.toast = $('toast');
+      }
+
+      function bindUI() {
+        dom.btnUndo.onclick = undo; dom.btnRedo.onclick = redo; dom.btnPresent.onclick = () => Present.start(); dom.btnPDF.onclick = exportPDF; dom.btnReset.onclick = resetAll; dom.btnNewSlide.onclick = addSlide; dom.btnTemplates.onclick = openTemplates; dom.btnSlideUp.onclick = () => moveSlide(-1); dom.btnSlideDown.onclick = () => moveSlide(1);
+        $('btnDupSlide').onclick = () => duplicateSlide(); $('btnDelSlide').onclick = () => confirmDeleteSlide(); $('btnBg').onclick = () => openColor('bg');
+        $('btnAddText').onclick = addText; $('btnAddImage').onclick = addImage; $('btnEmoji').onclick = openEmoji;
+        $('btnShapeRect').onclick = () => addShape('rect'); $('btnShapeCircle').onclick = () => addShape('circle'); $('btnShapeStar').onclick = () => addShape('star'); $('btnShapeHeart').onclick = () => addShape('heart'); $('btnShapeTri').onclick = () => addShape('triangle');
+        $('selFontSize').onchange = e => setFontSize(e.target.value);
+        $('btnBold').onclick = () => toggleStyle('bold'); $('btnItalic').onclick = () => toggleStyle('italic'); $('btnUnderline').onclick = () => toggleStyle('underline');
+        $('btnAlignLeft').onclick = () => setAlign('left'); $('btnAlignCenter').onclick = () => setAlign('center'); $('btnAlignRight').onclick = () => setAlign('right'); $('btnTextColor').onclick = () => openColor('textColor');
+        $('btnFill').onclick = () => openColor('fill'); $('btnStroke').onclick = () => openColor('stroke'); $('btnBringFront').onclick = bringToFront; $('btnSendBack').onclick = sendToBack; $('btnDupEl').onclick = duplicateSelected; $('btnDelEl').onclick = confirmDeleteSelected;
+        $('btnCloseColor').onclick = closePopovers; $('btnApplyCustomColor').onclick = () => { applyColor($('customColorInput').value); closePopovers(); }; $('btnCloseEmoji').onclick = closePopovers;
+        $('btnModalClose').onclick = closeModal; dom.modalOverlay.addEventListener('pointerdown', e => { if (e.target === dom.modalOverlay) closeModal(); });
+        dom.stage.addEventListener('pointerdown', e => { if (e.target === dom.stage) deselect(); });
+        dom.workspace.addEventListener('pointerdown', e => { if (!dom.colorPopover.contains(e.target) && !dom.emojiPopover.contains(e.target)) closePopovers(); });
+        $('btnPrev').onclick = () => { if (Present.idx > 0) { Present.idx--; Present.render(); } }; $('btnNext').onclick = () => { if (Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } else Present.stop(); }; $('presentClose').onclick = () => Present.stop();
+        let touchStartX = 0; dom.presentStageWrap.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true }); dom.presentStageWrap.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - touchStartX; if (dx < -50 && Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } if (dx > 50 && Present.idx > 0) { Present.idx--; Present.render(); } });
+        dom.presentStageWrap.addEventListener('click', e => { if (e.target === dom.presentStageWrap) { if (Present.idx < state.slides.length - 1) { Present.idx++; Present.render(); } else Present.stop(); } });
+        $('btnWelcomeStart').onclick = () => { $('welcomeOverlay').style.display = 'none'; localStorage.setItem(STORAGE_KEY + '_welcomed', '1'); setTimeout(() => toast('НАТИСНИ "ТЕКСТ" ЩОБ ПОЧАТИ!', 3500), 300); };
+      }
+
+      function initState() {
+        const saved = safeParse(localStorage.getItem(STORAGE_KEY), null); const norm = normalizeState(saved);
+        if (norm) { state = norm; undoStack = [JSON.stringify(state)]; redoStack = []; return; }
+        state = { slides: [{ id: uid(), background: '#fffbeb', elements: [normalizeEl({ id: uid(), type: 'shape', x: 20, y: 20, w: 920, h: 500, z: 1, shape: 'rect', style: { fill: '#fff', stroke: '#0a0a0a' } }), normalizeEl({ id: uid(), type: 'text', x: 80, y: 90, w: 800, h: 220, z: 2, content: 'Привіт!\nНатисни тут, щоб почати', style: { fontSize: 60, color: '#0a0a0a', bold: true, italic: false, underline: false, align: 'center' } }), normalizeEl({ id: uid(), type: 'text', x: 100, y: 340, w: 760, h: 80, z: 3, content: 'Натисни «Новий слайд» або «Готові макети» ←', style: { fontSize: 24, color: '#777', bold: false, italic: false, underline: false, align: 'center' } })] }], current: 0, selected: null };
+        undoStack = [JSON.stringify(state)]; redoStack = []; scheduleSave();
+      }
+
+      function boot() {
+        initDom(); initPopovers(); initState(); bindUI(); initKeyboard();
+        scaleStage(); renderAll(); updateUndoRedo();
+        new ResizeObserver(() => scaleStage()).observe(dom.workspace);
+        document.fonts?.ready?.then(() => { renderThumbnails(); scaleStage(); });
+        if (!localStorage.getItem(STORAGE_KEY + '_welcomed')) { $('welcomeOverlay').style.display = 'flex'; } else { $('welcomeOverlay').style.display = 'none'; }
+      }
+      return { boot };
+    })();
+
+    window.addEventListener('load', () => App.boot());
+  </script>
+</body>
+
+</html>
