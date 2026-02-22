@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="candy">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Клавіатурний Старт | Веселе знайомство з клавіатурою для малечі</title>
+    <meta name="description" content="Ігровий клавіатурний тренажер для дітей 7+.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="hdr">
+        <h1><i class="fas fa-keyboard hdr-ico"></i> Клавіатурний Старт</h1>
+        <div class="hdr-ctrl">
+            <button id="langbtn" class="ibtn ua" onclick="toggleLang()" title="Мова" aria-label="Мова">
+                <i class="fas fa-globe"></i><span id="langlbl">UA</span>
+            </button>
+            <button class="ibtn" onclick="cycleTheme()" title="Тема" aria-label="Тема">
+                <i class="fas fa-palette"></i>
+            </button>
+            <button class="ibtn" onclick="toggleSound()" title="Звук" aria-label="Звук">
+                <i id="sndico" class="fas fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN GAME CARD -->
+    <div id="gc">
+
+        <!-- ── STATS ROW ────────────────────────── -->
+        <div id="ip">
+            <div id="score" class="ic" aria-live="polite">
+                <div class="ic-badge"><i class="fas fa-trophy"></i></div>
+                <div class="ic-body">
+                    <div class="ic-val" id="sval">0</div>
+                    <div class="ic-lbl">Балів</div>
+                </div>
+            </div>
+            <div id="timer" class="ic" aria-live="polite">
+                <div class="ic-badge"><i class="fas fa-clock"></i></div>
+                <div class="ic-body">
+                    <div class="ic-val" id="tval">30</div>
+                    <div class="ic-lbl">Секунд</div>
+                </div>
+            </div>
+            <div id="streak" class="ic" aria-live="polite">
+                <div class="ic-badge"><i class="fas fa-fire"></i></div>
+                <div class="ic-body">
+                    <div class="ic-val" id="stval">0</div>
+                    <div class="ic-lbl">Серія</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── GAME FIELD ────────────────────────── -->
+        <div id="gf" role="region" aria-label="Ігрове поле">
+            <div id="fb" aria-live="polite"></div>
+            <div id="countdown" style="display:none"></div>
+        </div>
+
+        <!-- ── PRE-GAME: level/speed/start (hidden during game) ── -->
+        <div id="pre-game-zone">
+            <div id="settings-grid">
+                <div class="setting-col">
+                    <div class="section-label">
+                        <i class="fas fa-layer-group"></i> Рівень
+                    </div>
+                    <div class="brow" id="levels" role="group">
+                        <button id="beginner" class="btn sel" onclick="selectLevel('beginner')">
+                            <i class="fas fa-star btn-ico"></i>
+                            <span>Дуже простий</span>
+                        </button>
+                        <button id="easy" class="btn" onclick="selectLevel('easy')">
+                            <i class="fas fa-face-smile btn-ico"></i>
+                            <span>Простий</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting-col">
+                    <div class="section-label">
+                        <i class="fas fa-bolt"></i> Швидкість
+                    </div>
+                    <div class="brow" id="speed-control" role="group">
+                        <button id="slow" class="btn sel" onclick="selectSpeed('slow')">
+                            <i class="fas fa-gauge-simple-low btn-ico"></i>
+                            <span>Повільно</span>
+                        </button>
+                        <button id="medium-speed" class="btn" onclick="selectSpeed('medium')">
+                            <i class="fas fa-person-walking btn-ico"></i>
+                            <span>Середньо</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="sbtn" class="btn start-btn" onclick="startGame()">
+                <i class="fas fa-rocket"></i> Почати гру!
+            </button>
+        </div><!-- /#pre-game-zone -->
+
+        <!-- ── IN-GAME: virtual keyboard + stop (shown during game) ── -->
+        <div id="in-game-zone" style="display:none">
+            <div id="vkb-wrap">
+                <div id="vkb-hint">
+                    <i class="fas fa-hand-point-down"></i> Яку клавішу натиснути
+                </div>
+                <div id="vkb" aria-label="Клавіатура-підказка"></div>
+            </div>
+
+            <button id="rbtn" class="btn stop-btn" onclick="askStop()">
+                <i class="fas fa-stop"></i> Зупинити гру
+            </button>
+        </div><!-- /#in-game-zone -->
+
+    </div><!-- /#gc -->
+
+    <!-- INSTRUCTIONS (collapsible) -->
+    <div id="ins">
+        <button id="ins-toggle" onclick="toggleIns()">
+            <i class="fas fa-circle-info ins-ico"></i>
+            <span>Як грати?</span>
+            <i class="fas fa-chevron-down ins-arrow" id="ins-arrow"></i>
+        </button>
+        <div id="ins-body" hidden>
+            <div class="ins-steps">
+                <div class="ins-step">
+                    <span class="step-num">1</span>
+                    <span>Обери рівень і швидкість, натисни «Почати гру».</span>
+                </div>
+                <div class="ins-step">
+                    <span class="step-num">2</span>
+                    <span>Літери летять зліва направо — встигни натиснути потрібну клавішу!</span>
+                </div>
+                <div class="ins-step">
+                    <span class="step-num">3</span>
+                    <span>Клавіатура внизу підказує потрібну клавішу — вона підсвічується жовтим.</span>
+                </div>
+                <div class="ins-step">
+                    <span class="step-num">4</span>
+                    <span>Кілька правильних натискань підряд — це серія <i class="fas fa-fire"
+                            style="color:var(--c1)"></i> і більше балів!</span>
+                </div>
+                <div class="ins-step">
+                    <span class="step-num">5</span>
+                    <span>У тебе <strong>30 секунд</strong> — бий рекорди!</span>
+                </div>
+            </div>
+            <div class="ins-note">
+                <i class="fas fa-triangle-exclamation"></i>
+                Перед початком переключи мову клавіатури: <strong>UA</strong> або <strong>EN</strong> угорі праворуч.
+            </div>
+        </div>
+    </div>
+
+    <!-- EXTRA LINKS -->
+    <div id="ext">
+        <div class="ext-grid">
+            <a href="https://itnauka.org/services/digital_literacy/typing_skills/tyts/index.html" class="ext-card"
+                target="_blank">
+                <i class="fas fa-keyboard"></i>
+                <span>Перші клавіші</span>
+            </a>
+            <a href="https://itnauka.org/services/digital_literacy/typing_skills/key_sprint/index.html" class="ext-card"
+                target="_blank">
+                <i class="fas fa-person-running"></i>
+                <span>Клавіатурний Спринт</span>
+            </a>
+            <a href="https://itnauka.org/services/digital_literacy/typing_skills/truetyper/index.html" class="ext-card"
+                target="_blank">
+                <i class="fas fa-pen-fancy"></i>
+                <span>Справжній Друк</span>
+            </a>
+        </div>
+    </div>
+
+    <footer><i class="fas fa-graduation-cap"></i> 2026 — Комп'ютерна наука з паном Артемом</footer>
+
+    <!-- MODAL: зупинити? -->
+    <div id="cmod" class="moverlay" style="display:none" role="dialog" aria-modal="true">
+        <div class="mbox">
+            <div class="modal-ico-wrap"><i class="fas fa-triangle-exclamation"></i></div>
+            <h3>Зупинити гру?</h3>
+            <p>Весь прогрес (бали, серія) буде скинуто. Ти впевнений?</p>
+            <div class="mactions">
+                <button class="btn start-btn" onclick="closeConfirm()">
+                    <i class="fas fa-play"></i> Продовжити
+                </button>
+                <button class="btn stop-btn" onclick="confirmStop()">
+                    <i class="fas fa-stop"></i> Зупинити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME-OVER OVERLAY -->
+    <div id="go" style="display:none" role="dialog" aria-modal="true">
+        <div class="gopanel">
+            <div class="go-accent-bar"></div>
+            <div class="gohdr">
+                <div class="go-trophy-wrap">
+                    <i class="fas fa-flag-checkered" id="go-trophy-ico"></i>
+                </div>
+                <h2>Час вийшов!</h2>
+                <div id="goach-badge"></div>
+            </div>
+
+            <div class="sgrid">
+                <div class="scard sc1">
+                    <div class="sc-icon-wrap"><i class="fas fa-trophy"></i></div>
+                    <div class="sc-body">
+                        <div class="sval" id="goscore">0</div>
+                        <div class="slbl">Балів</div>
+                    </div>
+                </div>
+                <div class="scard sc2">
+                    <div class="sc-icon-wrap"><i class="fas fa-bullseye"></i></div>
+                    <div class="sc-body">
+                        <div class="sval" id="goacc">0%</div>
+                        <div class="slbl">Точність</div>
+                    </div>
+                </div>
+                <div class="scard sc3">
+                    <div class="sc-icon-wrap"><i class="fas fa-fire"></i></div>
+                    <div class="sc-body">
+                        <div class="sval" id="gostr">0</div>
+                        <div class="slbl">Серія</div>
+                    </div>
+                </div>
+                <div class="scard sc4">
+                    <div class="sc-icon-wrap"><i class="fas fa-star"></i></div>
+                    <div class="sc-body">
+                        <div class="sval go-stars-val" id="gorating"></div>
+                        <div class="slbl">Оцінка</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gobest" style="display:none" class="best-banner"></div>
+
+            <div class="gsec" id="gomisssec" style="display:none">
+                <div class="gsec-title">
+                    <i class="fas fa-magnifying-glass"></i> Найважчі літери:
+                </div>
+                <div class="mrow" id="gomissrow"></div>
+            </div>
+
+            <div class="gsec">
+                <div class="gsec-title">
+                    <i class="fas fa-lightbulb"></i> Порада:
+                </div>
+                <div id="gotip" class="tip-box"></div>
+            </div>
+
+            <div class="garow">
+                <button class="btn start-btn" onclick="startFromGO()">
+                    <i class="fas fa-rotate-right"></i> Ще раз!
+                </button>
+                <button class="btn stop-btn" onclick="closeGO()">
+                    <i class="fas fa-xmark"></i> Закрити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streak burst -->
+    <div id="sburst-overlay">
+        <div id="sburst"></div>
+    </div>
+    <!-- Star particles -->
+    <div id="stars-overlay"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -40,7 +40,7 @@ const CHARS = {
         hard: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
     }
 };
-const RARE = { ua: { beginner: "", easy: "ґ", medium: "ґҐ", hard: "ґҐ" }, en: { beginner: "", easy: "", medium: "", hard: "" } };
+const RARE = { ua: { beginner: "", easy: "", medium: "ґҐ", hard: "ґҐ" }, en: { beginner: "", easy: "", medium: "", hard: "" } };
 const SPEEDS = { slow: { anim: 10000, spawn: 2500 }, medium: { anim: 6000, spawn: 1500 }, fast: { anim: 3500, spawn: 800 } };
 const LV_MOD = { beginner: 1.2, easy: 1.0, medium: .9, hard: .8 };
 const THEMES = ['sunny', 'ocean', 'night', 'berry'];
