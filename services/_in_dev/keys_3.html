@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="sunny">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Клавіатурний тренажер для дітей</title>
+    <meta name="description"
+        content="Безкоштовний онлайн тренажер клавіатури для дітей українською. Вивчайте комп'ютерну грамотність граючи!" />
+    <meta name="keywords" content="клавіатурний тренажер, діти, навчання, українська, гра, typing, keyboard, kids" />
+    <meta name="author" content="Пан Артем" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical"
+        href="https://itnauka.org/services/digital_literacy/typing_skills/detect_and_type/index.html" />
+    <meta property="og:title" content="Тренажер клавіатури для дітей" />
+    <meta property="og:description" content="Безкоштовний онлайн тренажер клавіатури для дітей українською." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta name="theme-color" content="#FFE500" />
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date()); gtag('config', 'G-N8T05K3NGT');
+    </script>
+    <!-- Plausible -->
+    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+    <script>
+        window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments) };
+        window.plausible.init = window.plausible.init || function (i) { window.plausible.o = i || {} };
+        window.plausible.init();
+    </script>
+
+    <!-- Nunito font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* ════════════════════════════════════════════════
+       THEMES — 4 кольорові схеми
+    ════════════════════════════════════════════════ */
+
+        /* 🌞 СОНЯЧНИЙ (default) */
+        :root,
+        [data-theme="sunny"] {
+            --bg: #FFE500;
+            --bg-dot: rgba(0, 0, 0, 0.11);
+            --surface: #FFFFFF;
+            --field-bg: #FFFEF0;
+            --text: #1A1A1A;
+            --text-muted: #555555;
+            --border-col: #1A1A1A;
+            --shadow: 4px 4px 0 #1A1A1A;
+            --shadow-lg: 6px 6px 0 #1A1A1A;
+            --radius: 10px;
+            /* 3 accent colors */
+            --c1: #FF4757;
+            /* score / primary */
+            --c2: #00BCD4;
+            /* timer / teal */
+            --c3: #43A047;
+            /* streak / green */
+            /* Letter tile colors (3 cycling) */
+            --lc0: #FFE500;
+            --lt0: #1A1A1A;
+            --lc1: #FF4757;
+            --lt1: #FFFFFF;
+            --lc2: #00BCD4;
+            --lt2: #1A1A1A;
+            /* Buttons */
+            --btn-l1: #43A047;
+            --btn-l2: #00BCD4;
+            --btn-l3: #FF9800;
+            --btn-l4: #FF4757;
+            --btn-s1: #B2EBF2;
+            --btn-s2: #00BCD4;
+            --btn-s3: #FF8A65;
+            --btn-start: #43A047;
+            --btn-stop: #FF4757;
+            --tip-bg: #FFFDE7;
+        }
+
+        /* 🌊 МОРСЬКИЙ */
+        [data-theme="ocean"] {
+            --bg: #C5E8F8;
+            --bg-dot: rgba(0, 30, 60, 0.09);
+            --surface: #FFFFFF;
+            --field-bg: #EBF5FC;
+            --text: #0D2233;
+            --text-muted: #3A607A;
+            --border-col: #0D2233;
+            --shadow: 4px 4px 0 #0D2233;
+            --shadow-lg: 6px 6px 0 #0D2233;
+            --c1: #0277BD;
+            --c2: #FF7043;
+            --c3: #00897B;
+            --lc0: #C5E8F8;
+            --lt0: #0D2233;
+            --lc1: #0277BD;
+            --lt1: #FFFFFF;
+            --lc2: #FF7043;
+            --lt2: #FFFFFF;
+            --btn-l1: #00897B;
+            --btn-l2: #0277BD;
+            --btn-l3: #FF7043;
+            --btn-l4: #E53935;
+            --btn-s1: #B2EBF2;
+            --btn-s2: #0277BD;
+            --btn-s3: #FF7043;
+            --btn-start: #00897B;
+            --btn-stop: #E53935;
+            --tip-bg: #E8F5E9;
+        }
+
+        /* 🌙 НІЧНИЙ (висока контрастність) */
+        [data-theme="night"] {
+            --bg: #14141F;
+            --bg-dot: rgba(255, 255, 255, 0.05);
+            --surface: #1E1E2E;
+            --field-bg: #12121C;
+            --text: #F0F0F0;
+            --text-muted: #AAAAAA;
+            --border-col: #F0F0F0;
+            --shadow: 4px 4px 0 #FFD700;
+            --shadow-lg: 6px 6px 0 #FFD700;
+            --c1: #FF4D6A;
+            --c2: #00E5FF;
+            --c3: #FFD700;
+            --lc0: #FFD700;
+            --lt0: #14141F;
+            --lc1: #FF4D6A;
+            --lt1: #FFFFFF;
+            --lc2: #00E5FF;
+            --lt2: #14141F;
+            --btn-l1: #2E7D32;
+            --btn-l2: #00695C;
+            --btn-l3: #E65100;
+            --btn-l4: #B71C1C;
+            --btn-s1: #1A237E;
+            --btn-s2: #00695C;
+            --btn-s3: #880E4F;
+            --btn-start: #2E7D32;
+            --btn-stop: #B71C1C;
+            --tip-bg: #1E1E2E;
+        }
+
+        /* 🩷 ЯГІДНИЙ */
+        [data-theme="berry"] {
+            --bg: #FFDDE8;
+            --bg-dot: rgba(100, 0, 50, 0.07);
+            --surface: #FFFFFF;
+            --field-bg: #FFF5F8;
+            --text: #1A1A1A;
+            --text-muted: #665566;
+            --border-col: #1A1A1A;
+            --shadow: 4px 4px 0 #1A1A1A;
+            --shadow-lg: 6px 6px 0 #1A1A1A;
+            --c1: #C62A47;
+            --c2: #7B1FA2;
+            --c3: #00897B;
+            --lc0: #FFDDE8;
+            --lt0: #1A1A1A;
+            --lc1: #C62A47;
+            --lt1: #FFFFFF;
+            --lc2: #7B1FA2;
+            --lt2: #FFFFFF;
+            --btn-l1: #00897B;
+            --btn-l2: #7B1FA2;
+            --btn-l3: #E64A19;
+            --btn-l4: #C62A47;
+            --btn-s1: #F3E5F5;
+            --btn-s2: #7B1FA2;
+            --btn-s3: #C62A47;
+            --btn-start: #00897B;
+            --btn-stop: #C62A47;
+            --tip-bg: #F3E5F5;
+        }
+
+        /* ════════════════════════════════════════════════
+       BASE RESET
+    ════════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle, var(--bg-dot) 1.5px, transparent 1.5px);
+            background-size: 26px 26px;
+            min-height: 100vh;
+            padding: 18px 14px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text);
+            transition: background-color 0.4s, color 0.4s;
+        }
+
+        /* ════════════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════════════ */
+        .site-header {
+            width: 100%;
+            max-width: 920px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: clamp(1.5em, 3.8vw, 2.2em);
+            font-weight: 900;
+            color: var(--text);
+            text-shadow: 2px 2px 0 var(--surface);
+            line-height: 1.15;
+        }
+
+        h1 i {
+            margin-right: 6px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            min-width: 50px;
+            height: 50px;
+            padding: 0 12px;
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.92em;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .icon-btn i {
+            font-size: 1.15em;
+        }
+
+        .icon-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .icon-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--border-col);
+        }
+
+        .icon-btn:focus-visible {
+            outline: 3px solid var(--c2);
+            outline-offset: 3px;
+        }
+
+        .lang-btn.ua-active {
+            background: #0057B7;
+            color: #FFD700;
+            border-color: #003A8C;
+        }
+
+        .lang-btn.en-active {
+            background: #B22234;
+            color: #FFFFFF;
+            border-color: #7A0019;
+        }
+
+        /* ════════════════════════════════════════════════
+       GAME CONTAINER
+    ════════════════════════════════════════════════ */
+        #game-container {
+            width: 100%;
+            max-width: 920px;
+            background: var(--surface);
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow-lg);
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            transition: background-color 0.4s;
+        }
+
+        /* ── INFO PANEL ─────────────────────────────── */
+        #info-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .info-card {
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            padding: 11px 8px;
+            text-align: center;
+            font-size: clamp(1em, 2.4vw, 1.2em);
+            font-weight: 900;
+            color: #fff;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .info-card i {
+            margin-right: 5px;
+        }
+
+        #score {
+            background: var(--c1);
+        }
+
+        #timer {
+            background: var(--c2);
+        }
+
+        #streak {
+            background: var(--c3);
+        }
+
+        .info-card.pop {
+            transform: scale(1.07);
+            box-shadow: var(--shadow-lg);
+        }
+
+        #timer.timer-low {
+            background: #FF2222 !important;
+            animation: timerPulse 0.55s infinite alternate;
+        }
+
+        @keyframes timerPulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.06);
+            }
+        }
+
+        /* ── ADAPTIVE BAR ───────────────────────────── */
+        #adaptive-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        #adaptive-bar.visible {
+            opacity: 1;
+        }
+
+        #adaptive-bar i {
+            color: var(--c2);
+        }
+
+        #adaptive-track {
+            flex: 1;
+            height: 11px;
+            border: 2px solid var(--border-col);
+            border-radius: 8px;
+            background: var(--field-bg);
+            overflow: hidden;
+        }
+
+        #adaptive-fill {
+            height: 100%;
+            width: 50%;
+            background: var(--c3);
+            border-radius: 6px;
+            transition: width 0.7s, background 0.7s;
+        }
+
+        #adaptive-label-text {
+            min-width: 28px;
+            text-align: right;
+        }
+
+        /* ── GAME FIELD ─────────────────────────────── */
+        #game-field {
+            width: 100%;
+            height: 260px;
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            background: var(--field-bg);
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.4s;
+        }
+
+        /* ── BUTTONS ────────────────────────────────── */
+        .btn-row {
+            display: flex;
+            gap: 9px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 0;
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            padding: 11px 7px;
+            font-family: inherit;
+            font-size: clamp(0.78em, 1.7vw, 0.97em);
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--text);
+            background: var(--surface);
+            position: relative;
+            white-space: nowrap;
+            transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+        }
+
+        .btn i {
+            margin-right: 4px;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--border-col);
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid var(--c2);
+            outline-offset: 3px;
+        }
+
+        .btn.selected::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 4px;
+            right: 7px;
+            font-size: 0.65em;
+            opacity: 0.65;
+        }
+
+        .btn.selected {
+            filter: brightness(0.86);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Level colors */
+        #beginner {
+            background: var(--btn-l1);
+            color: #fff;
+        }
+
+        #easy {
+            background: var(--btn-l2);
+            color: #fff;
+        }
+
+        #medium {
+            background: var(--btn-l3);
+            color: #fff;
+        }
+
+        #hard {
+            background: var(--btn-l4);
+            color: #fff;
+        }
+
+        /* Speed colors */
+        #slow {
+            background: var(--btn-s1);
+        }
+
+        #medium-speed {
+            background: var(--btn-s2);
+            color: #fff;
+        }
+
+        #fast {
+            background: var(--btn-s3);
+            color: #fff;
+        }
+
+        /* Action buttons */
+        .action-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #start-button,
+        #restart-button {
+            flex: unset;
+            min-width: 168px;
+            font-size: clamp(0.95em, 2.2vw, 1.1em);
+            padding: 13px 22px;
+        }
+
+        #start-button {
+            background: var(--btn-start);
+            color: #fff;
+        }
+
+        #restart-button {
+            background: var(--btn-stop);
+            color: #fff;
+            display: none;
+        }
+
+        /* ════════════════════════════════════════════════
+       LETTERS  ← CORE ANIMATION FIXES
+    ════════════════════════════════════════════════ */
+        .letter {
+            position: absolute;
+            font-size: 2em;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 3px solid var(--border-col);
+            box-shadow: 3px 3px 0 var(--border-col);
+            /*
+        ⚠️  CRITICAL: DO NOT use "transition: all" here!
+        That caused the "letter teleports to left:0 in red" bug.
+        Only transition safe, non-animated properties:
+      */
+            transition: transform 0.22s, opacity 0.22s, background-color 0.18s, border-color 0.18s;
+            will-change: left;
+            /* Main movement animation — uses CSS variable set per-letter in JS */
+            animation: moveRight var(--letter-dur, 6000ms) linear forwards;
+        }
+
+        .letter.color-0 {
+            background: var(--lc0);
+            color: var(--lt0);
+        }
+
+        .letter.color-1 {
+            background: var(--lc1);
+            color: var(--lt1);
+        }
+
+        .letter.color-2 {
+            background: var(--lc2);
+            color: var(--lt2);
+        }
+
+        /* ✅ Correct: scale up + fade (letter is frozen in place via JS animationPlayState) */
+        .letter.correct {
+            transform: scale(1.3);
+            opacity: 0;
+            background-color: var(--c3) !important;
+            border-color: var(--c3) !important;
+        }
+
+        /* ❌ Missed: visual overrides applied via JS inline styles (highest specificity) */
+        .letter.missed {
+            opacity: 0.7;
+        }
+
+        /* ⚡ Urgent: keeps moveRight running via negative animation-delay trick
+       --letter-start-offset is set by JS when urgentTimeout fires = negative elapsed ms
+       This makes the browser "resume" moveRight exactly where it was */
+        .letter.urgent {
+            animation-name: moveRight, urgentGlow;
+            animation-duration: var(--letter-dur, 6000ms), 0.42s;
+            animation-timing-function: linear, ease;
+            animation-iteration-count: 1, infinite;
+            animation-fill-mode: forwards, none;
+            animation-direction: normal, alternate;
+            animation-delay: var(--letter-start-offset, 0ms), 0ms;
+        }
+
+        @keyframes moveRight {
+            from {
+                left: -70px;
+            }
+
+            to {
+                left: calc(100% + 10px);
+            }
+        }
+
+        @keyframes urgentGlow {
+            from {
+                box-shadow: 3px 3px 0 var(--border-col), 0 0 5px rgba(255, 50, 50, 0.3);
+                border-color: #FF4757;
+            }
+
+            to {
+                box-shadow: 3px 3px 0 var(--border-col), 0 0 18px rgba(255, 0, 0, 0.9);
+                border-color: #FF0000;
+            }
+        }
+
+        /* ════════════════════════════════════════════════
+       FEEDBACK MESSAGE
+    ════════════════════════════════════════════════ */
+        #feedback-message {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--c3);
+            color: #fff;
+            border: 2px solid var(--border-col);
+            box-shadow: 3px 3px 0 var(--border-col);
+            padding: 7px 18px;
+            border-radius: 30px;
+            font-size: clamp(0.82em, 2.2vw, 1.05em);
+            font-weight: 800;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 15;
+            white-space: nowrap;
+        }
+
+        #feedback-message.show {
+            opacity: 1;
+        }
+
+        #feedback-message.negative {
+            background: var(--c1);
+        }
+
+        #feedback-message.neutral {
+            background: var(--c2);
+        }
+
+        /* ════════════════════════════════════════════════
+       MODAL — підтвердження зупинки
+    ════════════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.52);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow-lg);
+            border-radius: 18px;
+            padding: 30px 34px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            animation: popIn 0.2s ease-out;
+        }
+
+        .modal-box h3 {
+            font-size: 1.4em;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .modal-box p {
+            color: var(--text-muted);
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 22px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        #modal-resume-btn {
+            background: var(--btn-start);
+            color: #fff;
+        }
+
+        #modal-stop-btn {
+            background: var(--btn-stop);
+            color: #fff;
+        }
+
+        /* ════════════════════════════════════════════════
+       GAME OVER OVERLAY — повна статистика
+    ════════════════════════════════════════════════ */
+        #go-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(7px);
+            padding: 20px 14px 40px;
+            overflow-y: auto;
+        }
+
+        .go-panel {
+            background: var(--surface);
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow-lg);
+            border-radius: 20px;
+            padding: 26px 24px;
+            max-width: 580px;
+            width: 100%;
+            margin: auto;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.82);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .go-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .go-header .go-icon {
+            font-size: 2.6em;
+            color: var(--c1);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .go-header h2 {
+            font-size: clamp(1.45em, 4vw, 2em);
+            font-weight: 900;
+        }
+
+        /* Stats 4-up grid */
+        .go-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        @media (min-width: 460px) {
+            .go-stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .go-stat {
+            background: var(--field-bg);
+            border: 2px solid var(--border-col);
+            border-radius: 12px;
+            padding: 13px 8px;
+            text-align: center;
+        }
+
+        .go-stat .go-stat-icon {
+            font-size: 1.3em;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .go-stat-value {
+            font-size: 1.7em;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .go-stat-label {
+            font-size: 0.72em;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .go-stat:nth-child(1) .go-stat-icon {
+            color: var(--c1);
+        }
+
+        .go-stat:nth-child(2) .go-stat-icon {
+            color: var(--c2);
+        }
+
+        .go-stat:nth-child(3) .go-stat-icon {
+            color: var(--c3);
+        }
+
+        .go-stat:nth-child(4) .go-stat-icon {
+            color: var(--c1);
+        }
+
+        /* Tags row */
+        .go-tags {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .go-tag {
+            background: var(--bg);
+            border: 2px solid var(--border-col);
+            border-radius: 8px;
+            padding: 4px 11px;
+            font-size: 0.87em;
+            font-weight: 800;
+        }
+
+        /* Missed letters */
+        .go-section {
+            margin-bottom: 14px;
+        }
+
+        .go-section h4 {
+            font-size: 0.95em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .missed-row {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .missed-chip {
+            background: var(--c1);
+            color: #fff;
+            border: 2px solid var(--border-col);
+            border-radius: 9px;
+            padding: 5px 13px;
+            font-size: 1.15em;
+            font-weight: 900;
+        }
+
+        .missed-chip sub {
+            font-size: 0.55em;
+            font-weight: 700;
+            opacity: 0.85;
+        }
+
+        /* Achievement */
+        #go-achievement {
+            background: var(--c2);
+            color: #fff;
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 1.05em;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        /* Tips */
+        .tip-item {
+            background: var(--tip-bg);
+            border: 2px solid var(--border-col);
+            border-radius: 9px;
+            padding: 9px 13px;
+            font-size: 0.88em;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 7px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .tip-item i {
+            color: #FF9800;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Best score */
+        #go-best {
+            text-align: center;
+            font-size: 1.05em;
+            font-weight: 900;
+            color: var(--c3);
+            margin-bottom: 14px;
+            padding: 9px;
+            border: 2px dashed var(--c3);
+            border-radius: 9px;
+        }
+
+        /* Actions */
+        .go-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .go-actions .btn {
+            flex: unset;
+            min-width: 155px;
+            font-size: 1.05em;
+            padding: 13px 20px;
+        }
+
+        .go-btn-play {
+            background: var(--btn-start) !important;
+            color: #fff !important;
+        }
+
+        .go-btn-close {
+            background: var(--surface) !important;
+        }
+
+        /* ════════════════════════════════════════════════
+       INSTRUCTIONS
+    ════════════════════════════════════════════════ */
+        #instructions {
+            width: 100%;
+            max-width: 920px;
+            background: var(--surface);
+            border: 2px solid var(--border-col);
+            box-shadow: var(--shadow);
+            border-radius: 16px;
+            padding: 20px 22px;
+            margin-top: 14px;
+            color: var(--text);
+            transition: background-color 0.4s;
+        }
+
+        #instructions h3 {
+            font-size: 1.1em;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        #instructions p {
+            font-size: 0.92em;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+
+        .info-block {
+            border-radius: 9px;
+            padding: 11px 13px;
+            margin: 8px 0;
+            border: 2px solid var(--border-col);
+            font-size: 0.89em;
+            font-weight: 600;
+            line-height: 1.65;
+        }
+
+        .info-block.blue {
+            background: #E3F2FD;
+        }
+
+        .info-block.purple {
+            background: #EDE7F6;
+        }
+
+        .info-block.yellow {
+            background: #FFFDE7;
+        }
+
+        [data-theme="night"] .info-block {
+            background: #1E1E2E;
+        }
+
+        /* ════════════════════════════════════════════════
+       STREAK BURST OVERLAY
+    ════════════════════════════════════════════════ */
+        #streak-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #streak-overlay.show {
+            opacity: 1;
+        }
+
+        #streak-burst {
+            font-size: clamp(2.2em, 7vw, 4em);
+            font-weight: 900;
+            color: var(--text);
+            text-shadow: 3px 3px 0 var(--surface), 6px 6px 0 var(--text);
+            animation: burstAnim 1.05s ease-out forwards;
+        }
+
+        @keyframes burstAnim {
+            0% {
+                transform: scale(0.3);
+                opacity: 1;
+            }
+
+            40% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* ════════════════════════════════════════════════
+       FOOTER
+    ════════════════════════════════════════════════ */
+        footer {
+            text-align: center;
+            margin-top: 22px;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.82em;
+            opacity: 0.55;
+        }
+
+        /* ════════════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════════════ */
+        @media (max-width: 540px) {
+            .btn-row {
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                min-width: 46%;
+            }
+
+            #game-field {
+                height: 210px;
+            }
+
+            .letter {
+                width: 50px;
+                height: 50px;
+                font-size: 1.7em;
+            }
+
+            #start-button,
+            #restart-button {
+                min-width: 140px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .icon-btn {
+                min-width: 44px;
+                height: 44px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════
+     HEADER
+══════════════════════════════════════════ -->
+    <header class="site-header">
+        <h1><i class="fas fa-gamepad"></i> Клавіатурний<br>тренажер</h1>
+        <div class="header-controls">
+            <button id="lang-toggle" class="icon-btn lang-btn ua-active" onclick="toggleLanguage()"
+                title="Змінити мову / Change language" aria-label="Переключити мову клавіатури">
+                <i class="fas fa-keyboard"></i>
+                <span id="lang-label">UA</span>
+            </button>
+            <button id="theme-toggle" class="icon-btn" onclick="cycleTheme()" title="Змінити кольорову тему"
+                aria-label="Змінити тему оформлення">
+                <i class="fas fa-palette"></i>
+            </button>
+            <button id="sound-toggle" class="icon-btn" onclick="toggleSound()" title="Увімкнути/вимкнути звук"
+                aria-label="Увімкнути або вимкнути звук">
+                <i id="sound-icon" class="fas fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════
+     GAME CONTAINER
+══════════════════════════════════════════ -->
+    <div id="game-container">
+
+        <!-- Info panel -->
+        <div id="info-panel">
+            <div id="score" class="info-card" aria-live="polite">
+                <i class="fas fa-trophy"></i><span id="score-val">0</span>
+            </div>
+            <div id="timer" class="info-card" aria-live="polite">
+                <i class="fas fa-clock"></i><span id="timer-val">60</span>
+            </div>
+            <div id="streak" class="info-card" aria-live="polite">
+                <i class="fas fa-fire"></i><span id="streak-val">0</span>
+            </div>
+        </div>
+
+        <!-- Adaptive difficulty bar -->
+        <div id="adaptive-bar" aria-label="Адаптивна складність">
+            <i class="fas fa-robot"></i>
+            <span>Темп:</span>
+            <div id="adaptive-track">
+                <div id="adaptive-fill"></div>
+            </div>
+            <span id="adaptive-label-text">50%</span>
+        </div>
+
+        <!-- Game field -->
+        <div id="game-field" role="region" aria-label="Ігрове поле">
+            <div id="feedback-message" aria-live="polite"></div>
+        </div>
+
+        <!-- Level selection -->
+        <div class="btn-row" id="levels" role="group" aria-label="Рівень складності">
+            <button id="beginner" class="btn selected" onclick="selectLevel('beginner')">
+                <i class="fas fa-star"></i> Дуже простий
+            </button>
+            <button id="easy" class="btn" onclick="selectLevel('easy')">
+                <i class="fas fa-face-smile"></i> Простий
+            </button>
+            <button id="medium" class="btn" onclick="selectLevel('medium')">
+                <i class="fas fa-dumbbell"></i> Середній
+            </button>
+            <button id="hard" class="btn" onclick="selectLevel('hard')">
+                <i class="fas fa-fire-flame-curved"></i> Складний
+            </button>
+        </div>
+
+        <!-- Speed selection -->
+        <div class="btn-row" id="speed-control" role="group" aria-label="Початкова швидкість">
+            <button id="slow" class="btn" onclick="selectSpeed('slow')">
+                <i class="fas fa-gauge-simple-low"></i> Повільно
+            </button>
+            <button id="medium-speed" class="btn selected" onclick="selectSpeed('medium')">
+                <i class="fas fa-person-walking"></i> Середньо
+            </button>
+            <button id="fast" class="btn" onclick="selectSpeed('fast')">
+                <i class="fas fa-person-running"></i> Швидко
+            </button>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-row">
+            <button id="start-button" class="btn" onclick="startGame()">
+                <i class="fas fa-rocket"></i> Почати гру
+            </button>
+            <button id="restart-button" class="btn" onclick="askStop()">
+                <i class="fas fa-stop"></i> Зупинити гру
+            </button>
+        </div>
+
+    </div><!-- /game-container -->
+
+    <!-- ═══════════════════════════════════════
+     INSTRUCTIONS
+══════════════════════════════════════════ -->
+    <div id="instructions">
+        <h3><i class="fas fa-circle-info"></i> Як грати:</h3>
+        <p><strong>1.</strong> Обери рівень та швидкість, потім натисни «Почати гру».</p>
+        <p><strong>2.</strong> Літери летять зліва направо — встигни натиснути потрібну клавішу!</p>
+        <p><strong>3.</strong> Правильні натискання підряд = більше балів і серія <i class="fas fa-fire"></i>.</p>
+        <p><strong>4.</strong> Гра сама регулює темп: добре справляєшся — прискорює, складно — сповільнює <i
+                class="fas fa-robot"></i>.</p>
+        <p><strong>5.</strong> У тебе є <span id="game-duration-text">60</span> секунд на гру.</p>
+        <div class="info-block blue">
+            <strong><i class="fas fa-layer-group"></i> Рівні:</strong><br>
+            <i class="fas fa-star"></i> <strong>Дуже простий</strong> — 10 найпростіших літер (а, о, і, е, н, т, с, р,
+            в, л)<br>
+            <i class="fas fa-face-smile"></i> <strong>Простий</strong> — всі малі літери алфавіту<br>
+            <i class="fas fa-dumbbell"></i> <strong>Середній</strong> — малі + великі (Shift + літера)<br>
+            <i class="fas fa-fire-flame-curved"></i> <strong>Складний</strong> — літери + цифри + символи
+        </div>
+        <div class="info-block purple">
+            <strong><i class="fas fa-keyboard"></i> Великі літери та символи:</strong><br>
+            • <kbd>Shift</kbd> + літера = велика (наприклад, Shift + а = А)<br>
+            • <kbd>Shift</kbd> + цифра = символ (наприклад, Shift + 1 = !)
+        </div>
+        <div class="info-block yellow">
+            <strong><i class="fas fa-triangle-exclamation"></i> Важливо:</strong>
+            Перед початком переключи мову клавіатури відповідно до режиму
+            <strong>UA / EN</strong> у правому верхньому куті.
+        </div>
+    </div>
+
+    <footer>2025 — Комп'ютерна наука з паном Артемом</footer>
+
+    <!-- ═══════════════════════════════════════
+     MODAL: підтвердження зупинки
+══════════════════════════════════════════ -->
+    <div id="confirm-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true"
+        aria-labelledby="confirm-title">
+        <div class="modal-box">
+            <h3 id="confirm-title">
+                <i class="fas fa-triangle-exclamation" style="color:var(--c1)"></i>
+                Зупинити гру?
+            </h3>
+            <p>Весь прогрес поточної гри (бали, серія, статистика) буде скинуто.<br>Хочеш продовжити грати?</p>
+            <div class="modal-actions">
+                <button id="modal-resume-btn" class="btn" onclick="closeConfirm()">
+                    <i class="fas fa-play"></i> Продовжити
+                </button>
+                <button id="modal-stop-btn" class="btn" onclick="confirmStop()">
+                    <i class="fas fa-stop"></i> Зупинити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+     GAME OVER OVERLAY — статистика
+══════════════════════════════════════════ -->
+    <div id="go-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="go-title">
+        <div class="go-panel">
+            <div class="go-header">
+                <i class="fas fa-flag-checkered go-icon"></i>
+                <h2 id="go-title">Час вийшов!</h2>
+            </div>
+
+            <!-- 4 key stats -->
+            <div class="go-stats-grid">
+                <div class="go-stat">
+                    <i class="fas fa-trophy go-stat-icon"></i>
+                    <div class="go-stat-value" id="go-score">0</div>
+                    <div class="go-stat-label">Балів</div>
+                </div>
+                <div class="go-stat">
+                    <i class="fas fa-bullseye go-stat-icon"></i>
+                    <div class="go-stat-value" id="go-accuracy">0%</div>
+                    <div class="go-stat-label">Точність</div>
+                </div>
+                <div class="go-stat">
+                    <i class="fas fa-gauge go-stat-icon"></i>
+                    <div class="go-stat-value" id="go-cpm">0</div>
+                    <div class="go-stat-label">Символів/хв</div>
+                </div>
+                <div class="go-stat">
+                    <i class="fas fa-fire go-stat-icon"></i>
+                    <div class="go-stat-value" id="go-streak">0</div>
+                    <div class="go-stat-label">Макс. серія</div>
+                </div>
+            </div>
+
+            <!-- Tags: level, speed, language -->
+            <div class="go-tags" id="go-tags"></div>
+
+            <!-- Most missed letters -->
+            <div class="go-section" id="go-missed-section" style="display:none">
+                <h4><i class="fas fa-magnifying-glass"></i> Найчастіше пропущені:</h4>
+                <div class="missed-row" id="go-missed-row"></div>
+            </div>
+
+            <!-- Achievement -->
+            <div id="go-achievement"></div>
+
+            <!-- Record -->
+            <div id="go-best" style="display:none"></div>
+
+            <!-- Tips -->
+            <div class="go-section">
+                <h4><i class="fas fa-lightbulb"></i> Поради для тебе:</h4>
+                <div id="go-tips-list"></div>
+            </div>
+
+            <div class="go-actions">
+                <button class="btn go-btn-play" onclick="startGameFromGO()">
+                    <i class="fas fa-rotate-right"></i> Грати ще раз
+                </button>
+                <button class="btn go-btn-close" onclick="closeGO()">
+                    <i class="fas fa-xmark"></i> Закрити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streak burst overlay -->
+    <div id="streak-overlay">
+        <div id="streak-burst"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════
+           CONSTANTS
+        ═══════════════════════════════════════════════════════════ */
+        const GAME_DURATION_SEC = 60;
+        const MAX_ACTIVE_LETTERS = 22;
+        const RARE_CHAR_PROB = 0.02;
+        const POINTS_FAST = 3;
+        const POINTS_MEDIUM = 2;
+        const POINTS_DEFAULT = 1;
+        const TIME_FAST_MS = 1000;
+        const TIME_MEDIUM_MS = 2000;
+        const STREAK_BONUS_DIV = 5;
+        const INITIAL_SPAWN_DELAY_MS = 900;
+        const LETTER_REMOVE_DELAY_MS = 340;
+        const LOW_TIME_THRESHOLD = 10;
+        const GAME_FIELD_H = 260;
+        const LETTER_H = 60;
+
+        /*
+          ADAPTIVE — ВИПРАВЛЕНО: набагато м'якше регулювання
+          Крок 10% (було 15%), кулдаун 7с (було 4с),
+          порогів потрібно 8 вимірів (було 5).
+          Так після серії 5 вдач темп зросте лише на 10%,
+          а не на 30%+ як раніше.
+        */
+        const AD_WINDOW = 14;     // останніх N результатів
+        const AD_COOLDOWN_MS = 7000;   // пауза між змінами
+        const AD_STEP = 0.10;   // +/- 10% за раз
+        const AD_MAX = 1.75;   // максимум прискорення
+        const AD_MIN = 0.50;
+        const AD_MIN_DATA = 8;      // мінімум вимірів перед рішенням
+        const AD_UP_THRESH = 0.82;   // ≥82% влучань → прискорити
+        const AD_DOWN_THRESH = 0.40;   // ≤40% влучань → сповільнити
+
+        /*
+          MISSED_RATIO: 0.93 → буква "замерзає" на 93% свого шляху
+          При полі ~870px: 93% = ліва межа букви ≈ 810px (з 870px) — чітко видно
+          Раніше timeout=animSpeed (100%) → буква вже йшла за екран → з'являлась у початку
+        */
+        const MISSED_RATIO = 0.93;
+        const URGENT_RATIO = 0.65;
+
+        /* ═══════════════════════════════════════════════════════════
+           CHAR SETS
+        ═══════════════════════════════════════════════════════════ */
+        const CHAR_SETS = {
+            ua: {
+                beginner: "аоієнтсрвл",
+                easy: "абвгдеєжзиіїйклмнопрстуфхцчшщьюя",
+                medium: "абвгдеєжзиіїйклмнопрстуфхцчшщьюяАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ",
+                hard: 'абвгдеєжзиіїйклмнопрстуфхцчшщьюяАБВГДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ0123456789!"№;%:?*()-_=+'
+            },
+            en: {
+                beginner: "aeioutnrsl",
+                easy: "abcdefghijklmnopqrstuvwxyz",
+                medium: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                hard: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+'
+            }
+        };
+        const RARE_CHARS = {
+            ua: { beginner: "", easy: "ґ", medium: "ґҐ", hard: "ґҐ" },
+            en: { beginner: "", easy: "", medium: "", hard: "" }
+        };
+
+        /* ═══════════════════════════════════════════════════════════
+           SPEED PRESETS
+        ═══════════════════════════════════════════════════════════ */
+        const SPEED_PRESETS = {
+            slow: { animSpeed: 10000, spawnInterval: 2500 },
+            medium: { animSpeed: 6000, spawnInterval: 1500 },
+            fast: { animSpeed: 3500, spawnInterval: 800 }
+        };
+        const LEVEL_MOD = { beginner: 1.2, easy: 1.0, medium: 0.9, hard: 0.8 };
+
+        /* ═══════════════════════════════════════════════════════════
+           MESSAGES
+        ═══════════════════════════════════════════════════════════ */
+        const MSG_OK = [
+            "Чудово!", "Супер!", "Відмінно!", "Класно!", "Молодець!", "Круто!",
+            "Браво!", "Влучно!", "Топ!", "Блискуче!", "Бомба!", "Ти зірка!",
+            "Так тримати!", "Ось це так!", "Неймовірно!", "Клас!"
+        ];
+        const MSG_MISS = [
+            "Упс!", "Промах!", "Ще спробуй!", "Не здавайся!", "Ок, далі!", "Бувало!", "Наступна!"
+        ];
+        const MSG_STREAK = {
+            5: "5 підряд! Вогонь!", 10: "10 підряд! Бомба!",
+            15: "15 підряд! Неймовірно!", 20: "20 підряд! Легенда!",
+            25: "25 підряд! Топ гравець!", 30: "30 підряд! НЕМОЖЛИВО!"
+        };
+
+        /* ═══════════════════════════════════════════════════════════
+           THEMES
+        ═══════════════════════════════════════════════════════════ */
+        const THEMES = ['sunny', 'ocean', 'night', 'berry'];
+        const THEME_NAMES = { sunny: 'Сонячний', ocean: 'Морський', night: 'Нічний', berry: 'Ягідний' };
+
+        /* ═══════════════════════════════════════════════════════════
+           GAME STATE
+        ═══════════════════════════════════════════════════════════ */
+        const gs = {
+            score: 0, timer: GAME_DURATION_SEC, streak: 0, maxStreak: 0,
+            level: "beginner", speed: "medium", lang: "ua",
+            running: false,
+            animSpeed: 6000, spawnInterval: 1500,
+            adaptMult: 1.0, recentResults: [], lastAdaptChange: 0,
+            activeLetters: new Map(),
+            timerInterval: null, spawnTimeout: null,
+            soundEnabled: true, colorIdx: 0, themeIdx: 0,
+            // session stats
+            totalCorrect: 0, totalMissed: 0,
+            missedMap: {}, correctMap: {},
+            gameStartTime: 0,
+        };
+
+        const keyMapUA = new Map();
+        let audioCtx = null;
+        let feedbackTimer = null;
+
+        /* ═══════════════════════════════════════════════════════════
+           AUDIO
+        ═══════════════════════════════════════════════════════════ */
+        function initAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                gs.soundEnabled = false;
+                updateSoundIcon();
+            }
+        }
+
+        function playTone(freq, type = 'sine', dur = 0.1, gain = 0.09, delay = 0) {
+            if (!gs.soundEnabled || !audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                g.gain.setValueAtTime(gain, audioCtx.currentTime + delay);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur + 0.04);
+                osc.start(audioCtx.currentTime + delay);
+                osc.stop(audioCtx.currentTime + delay + dur + 0.06);
+                osc.onended = () => { try { osc.disconnect(); g.disconnect(); } catch (e) { } };
+            } catch (e) { }
+        }
+
+        function playSound(type) {
+            if (!gs.soundEnabled) return;
+            switch (type) {
+                case 'correct':
+                    playTone(523, 'sine', 0.07, 0.09, 0);
+                    playTone(659, 'sine', 0.07, 0.08, 0.06);
+                    break;
+                case 'miss':
+                    playTone(220, 'square', 0.06, 0.05, 0);
+                    break;
+                case 'streak5':
+                    [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'sine', 0.09, 0.09, i * 0.08));
+                    break;
+                case 'streak10':
+                    [523, 659, 784, 880, 1047, 1175].forEach((f, i) => playTone(f, 'sine', 0.09, 0.11, i * 0.07));
+                    break;
+                case 'gameOver':
+                    [392, 330, 262, 196].forEach((f, i) => playTone(f, 'triangle', 0.22, 0.1, i * 0.22));
+                    break;
+                case 'adaptUp':
+                    playTone(880, 'sine', 0.07, 0.07, 0); playTone(1047, 'sine', 0.07, 0.07, 0.09);
+                    break;
+                case 'adaptDown':
+                    playTone(440, 'sine', 0.07, 0.07, 0); playTone(330, 'sine', 0.07, 0.07, 0.09);
+                    break;
+                case 'newRecord':
+                    [523, 659, 784, 1047, 1175, 1319].forEach((f, i) => playTone(f, 'sine', 0.1, 0.11, i * 0.07));
+                    break;
+            }
+        }
+
+        function toggleSound() {
+            gs.soundEnabled = !gs.soundEnabled;
+            updateSoundIcon();
+            if (gs.soundEnabled && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function updateSoundIcon() {
+            const ic = document.getElementById('sound-icon');
+            if (ic) ic.className = gs.soundEnabled ? 'fas fa-volume-high' : 'fas fa-volume-xmark';
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           KEY MAP (UA special chars)
+        ═══════════════════════════════════════════════════════════ */
+        function initKeyMap() {
+            const specUA = { "!": "1", '"': "2", "№": "3", ";": "4", "%": "5", ":": "6", "?": "7", "*": "8", "(": "9", ")": "0", "_": "-", "+": "=" };
+            for (const [c, k] of Object.entries(specUA)) keyMapUA.set(c, k);
+        }
+
+        function doesMatch(pressedKey, expectedChar) {
+            // Letters: case-sensitive direct match
+            if (expectedChar.toLowerCase() !== expectedChar.toUpperCase()) {
+                return pressedKey === expectedChar;
+            }
+            // Digits / symbols
+            const mapped = keyMapUA.get(expectedChar) || expectedChar;
+            return pressedKey === mapped || pressedKey === expectedChar;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           LANGUAGE TOGGLE
+        ═══════════════════════════════════════════════════════════ */
+        function toggleLanguage() {
+            gs.lang = gs.lang === 'ua' ? 'en' : 'ua';
+            const btn = document.getElementById('lang-toggle');
+            const lbl = document.getElementById('lang-label');
+            if (gs.lang === 'ua') {
+                btn.className = 'icon-btn lang-btn ua-active';
+                lbl.textContent = 'UA';
+                showFeedback('Режим: Українська', true, 'neutral');
+            } else {
+                btn.className = 'icon-btn lang-btn en-active';
+                lbl.textContent = 'EN';
+                showFeedback('Mode: English', true, 'neutral');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           THEME
+        ═══════════════════════════════════════════════════════════ */
+        function cycleTheme() {
+            gs.themeIdx = (gs.themeIdx + 1) % THEMES.length;
+            const t = THEMES[gs.themeIdx];
+            document.documentElement.setAttribute('data-theme', t);
+            showFeedback('Тема: ' + THEME_NAMES[t], true, 'neutral');
+            try { localStorage.setItem('kt-theme', t); } catch (e) { }
+        }
+        function loadTheme() {
+            try {
+                const saved = localStorage.getItem('kt-theme');
+                if (saved && THEMES.includes(saved)) {
+                    gs.themeIdx = THEMES.indexOf(saved);
+                    document.documentElement.setAttribute('data-theme', saved);
+                }
+            } catch (e) { }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           LEVEL / SPEED
+        ═══════════════════════════════════════════════════════════ */
+        function selectLevel(level) {
+            gs.level = level;
+            document.querySelectorAll('#levels .btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById(level).classList.add('selected');
+            applySpeed();
+        }
+        function selectSpeed(speed) {
+            gs.speed = speed;
+            const idMap = { slow: 'slow', medium: 'medium-speed', fast: 'fast' };
+            document.querySelectorAll('#speed-control .btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById(idMap[speed]).classList.add('selected');
+            applySpeed();
+        }
+        function applySpeed() {
+            const base = SPEED_PRESETS[gs.speed];
+            const mod = LEVEL_MOD[gs.level];
+            const am = gs.adaptMult;
+            gs.animSpeed = (base.animSpeed * mod) / am;
+            gs.spawnInterval = (base.spawnInterval * mod) / am;
+            updateAdaptBar();
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           ADAPTIVE DIFFICULTY — виправлено
+        ═══════════════════════════════════════════════════════════ */
+        function pushResult(ok) {
+            gs.recentResults.push(ok);
+            if (gs.recentResults.length > AD_WINDOW) gs.recentResults.shift();
+            if (gs.recentResults.length < AD_MIN_DATA) return;
+
+            const now = Date.now();
+            if (now - gs.lastAdaptChange < AD_COOLDOWN_MS) return;
+
+            const hitRate = gs.recentResults.filter(r => r).length / gs.recentResults.length;
+            const old = gs.adaptMult;
+
+            if (hitRate >= AD_UP_THRESH && old < AD_MAX) {
+                gs.adaptMult = Math.min(AD_MAX, +(old + AD_STEP).toFixed(2));
+                gs.lastAdaptChange = now;
+                applySpeed();
+                if (gs.adaptMult > old) { showFeedback('Темп прискорено!', true, 'neutral'); playSound('adaptUp'); }
+            } else if (hitRate <= AD_DOWN_THRESH && old > AD_MIN) {
+                gs.adaptMult = Math.max(AD_MIN, +(old - AD_STEP).toFixed(2));
+                gs.lastAdaptChange = now;
+                applySpeed();
+                if (gs.adaptMult < old) { showFeedback('Темп сповільнено', true, 'neutral'); playSound('adaptDown'); }
+            }
+        }
+
+        function updateAdaptBar() {
+            const pct = Math.round(((gs.adaptMult - AD_MIN) / (AD_MAX - AD_MIN)) * 100);
+            const fill = document.getElementById('adaptive-fill');
+            const pctEl = document.getElementById('adaptive-label-text');
+            if (!fill) return;
+            fill.style.width = pct + '%';
+            fill.style.background = pct > 70 ? 'var(--c1)' : pct > 40 ? 'var(--c3)' : 'var(--c2)';
+            pctEl.textContent = pct + '%';
+            document.getElementById('adaptive-bar').classList.toggle('visible', gs.running);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           RANDOM CHAR
+        ═══════════════════════════════════════════════════════════ */
+        function getRandChar() {
+            const rare = RARE_CHARS[gs.lang][gs.level];
+            if (rare && rare.length && Math.random() < RARE_CHAR_PROB)
+                return rare[Math.floor(Math.random() * rare.length)];
+            const pool = CHAR_SETS[gs.lang][gs.level];
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SPAWN LETTER
+        ═══════════════════════════════════════════════════════════ */
+        function spawnLetter() {
+            if (!gs.running) return;
+            if (gs.activeLetters.size >= MAX_ACTIVE_LETTERS) {
+                gs.spawnTimeout = setTimeout(spawnLetter, gs.spawnInterval / 2);
+                return;
+            }
+
+            const el = document.createElement('div');
+            const char = getRandChar();
+            const id = Date.now() + Math.random();
+            const colN = gs.colorIdx++ % 3;
+
+            el.className = `letter color-${colN}`;
+            el.textContent = char;
+            el.style.top = (Math.random() * (GAME_FIELD_H - LETTER_H)) + 'px';
+
+            // ── CSS variable for animation duration — used by both .letter and .letter.urgent ──
+            el.style.setProperty('--letter-dur', gs.animSpeed + 'ms');
+
+            // ── FIX: also set the offset variable so urgent rule doesn't use wrong default ──
+            el.style.setProperty('--letter-start-offset', '0ms');
+
+            el.id = 'ltr-' + id;
+
+            const data = { char, element: el, startTime: Date.now(), id };
+            gs.activeLetters.set(id, data);
+            document.getElementById('game-field').appendChild(el);
+
+            // ── Urgent: at 65% of journey — use --letter-start-offset trick to resume animation ──
+            data.urgentTimeout = setTimeout(() => {
+                if (!el.parentNode || el.classList.contains('correct') || el.classList.contains('missed')) return;
+                const elapsed = Date.now() - data.startTime;
+                // Negative delay resumes moveRight from current position (not restart)
+                el.style.setProperty('--letter-start-offset', `-${elapsed}ms`);
+                el.classList.add('urgent');
+            }, gs.animSpeed * URGENT_RATIO);
+
+            // ── Missed: at 93% — freeze letter in place (near right edge, still visible) ──
+            data.removeTimeout = setTimeout(() => {
+                if (!el.parentNode || !gs.activeLetters.has(id)) return;
+
+                // Pause animation — letter freezes at its current position (~93% → near right edge)
+                el.style.animationPlayState = 'paused';
+
+                // Apply missed visuals via inline styles (highest specificity — no cascade conflicts)
+                el.style.background = '#FF4757';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = '#CC0000';
+                el.style.boxShadow = '3px 3px 0 var(--border-col)';
+                el.style.opacity = '0.75';
+                el.classList.remove('urgent');
+                el.classList.add('missed');
+
+                playSound('miss');
+                gs.streak = 0; updateStreak();
+                pushResult(false);
+                gs.missedMap[char] = (gs.missedMap[char] || 0) + 1;
+                gs.totalMissed++;
+                showFeedback(MSG_MISS[Math.floor(Math.random() * MSG_MISS.length)], false);
+
+                setTimeout(() => { if (el.parentNode) el.remove(); }, 500);
+                gs.activeLetters.delete(id);
+            }, gs.animSpeed * MISSED_RATIO);
+
+            if (gs.running) gs.spawnTimeout = setTimeout(spawnLetter, gs.spawnInterval);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           KEY HANDLER
+        ═══════════════════════════════════════════════════════════ */
+        function handleKey(e) {
+            if (!gs.running) return;
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+            const pressed = e.key;
+            let found = false;
+
+            for (const [id, data] of gs.activeLetters.entries()) {
+                if (!data || !data.element) continue;
+                if (!doesMatch(pressed, data.char)) continue;
+
+                found = true;
+                if (data.urgentTimeout) clearTimeout(data.urgentTimeout);
+                if (data.removeTimeout) clearTimeout(data.removeTimeout);
+
+                const diff = Date.now() - data.startTime;
+                let pts = POINTS_DEFAULT;
+                if (diff < TIME_FAST_MS) pts = POINTS_FAST;
+                else if (diff < TIME_MEDIUM_MS) pts = POINTS_MEDIUM;
+
+                gs.streak++;
+                if (gs.streak > gs.maxStreak) gs.maxStreak = gs.streak;
+                if (gs.streak % STREAK_BONUS_DIV === 0) pts += Math.floor(gs.streak / STREAK_BONUS_DIV);
+
+                gs.score += pts;
+                gs.totalCorrect++;
+                gs.correctMap[data.char] = (gs.correctMap[data.char] || 0) + 1;
+
+                // Freeze letter in place, apply correct animation via CSS transition
+                data.element.style.animationPlayState = 'paused';
+                data.element.classList.remove('urgent');
+                data.element.classList.add('correct');
+
+                playSound('correct');
+                pushResult(true);
+
+                let msg = MSG_OK[Math.floor(Math.random() * MSG_OK.length)];
+                if (MSG_STREAK[gs.streak]) {
+                    msg = MSG_STREAK[gs.streak];
+                    showStreakBurst(msg);
+                    playSound(gs.streak >= 10 ? 'streak10' : 'streak5');
+                    launchConfetti(30);
+                }
+                if (pts > POINTS_DEFAULT) msg += ` +${pts}!`;
+                showFeedback(msg, true);
+
+                setTimeout(() => { if (data.element && data.element.parentNode) data.element.remove(); }, LETTER_REMOVE_DELAY_MS);
+                gs.activeLetters.delete(id);
+                updateScore(); updateStreak();
+                break;
+            }
+
+            if (!found && pressed.length === 1 && !'shiftaltcontrolmeta'.includes(pressed.toLowerCase())) {
+                gs.streak = 0; updateStreak();
+                pushResult(false);
+                showFeedback(MSG_MISS[Math.floor(Math.random() * MSG_MISS.length)], false);
+                playSound('miss');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           GAME FLOW
+        ═══════════════════════════════════════════════════════════ */
+        function clearAll() {
+            gs.activeLetters.forEach(d => {
+                if (d.urgentTimeout) clearTimeout(d.urgentTimeout);
+                if (d.removeTimeout) clearTimeout(d.removeTimeout);
+                if (d.element && d.element.parentNode) d.element.remove();
+            });
+            gs.activeLetters.clear();
+        }
+
+        function stopProcs() {
+            gs.running = false;
+            if (gs.timerInterval) { clearInterval(gs.timerInterval); gs.timerInterval = null; }
+            if (gs.spawnTimeout) { clearTimeout(gs.spawnTimeout); gs.spawnTimeout = null; }
+            clearAll();
+        }
+
+        function resetSession() {
+            gs.score = 0; gs.timer = GAME_DURATION_SEC; gs.streak = 0; gs.maxStreak = 0;
+            gs.adaptMult = 1.0; gs.recentResults = []; gs.lastAdaptChange = 0; gs.colorIdx = 0;
+            gs.totalCorrect = 0; gs.totalMissed = 0; gs.missedMap = {}; gs.correctMap = {};
+            gs.gameStartTime = Date.now();
+            updateScore(); updateTimer(); updateStreak(); updateAdaptBar();
+        }
+
+        function startGame() {
+            if (gs.running) return;
+            stopProcs();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            resetSession();
+            applySpeed();
+            document.getElementById('go-overlay').style.display = 'none';
+            document.getElementById('start-button').style.display = 'none';
+            document.getElementById('restart-button').style.display = 'inline-flex';
+            gs.running = true;
+            updateAdaptBar();
+
+            gs.timerInterval = setInterval(() => {
+                gs.timer--;
+                updateTimer();
+                if (gs.timer <= 0) endGame();
+            }, 1000);
+
+            gs.spawnTimeout = setTimeout(spawnLetter, INITIAL_SPAWN_DELAY_MS);
+        }
+
+        function startGameFromGO() {
+            document.getElementById('go-overlay').style.display = 'none';
+            startGame();
+        }
+
+        function endGame() {
+            stopProcs();
+            buildResults();
+            playSound('gameOver');
+            launchConfetti(50);
+            document.getElementById('go-overlay').style.display = 'flex';
+            document.getElementById('start-button').style.display = 'inline-flex';
+            document.getElementById('restart-button').style.display = 'none';
+            updateAdaptBar();
+        }
+
+        function closeGO() {
+            document.getElementById('go-overlay').style.display = 'none';
+        }
+
+        function askStop() {
+            if (!gs.running) return;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+        function closeConfirm() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+        function confirmStop() {
+            closeConfirm();
+            stopProcs();
+            resetSession();
+            document.getElementById('start-button').style.display = 'inline-flex';
+            document.getElementById('restart-button').style.display = 'none';
+            updateAdaptBar();
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           UI UPDATES
+        ═══════════════════════════════════════════════════════════ */
+        function updateScore() {
+            document.getElementById('score-val').textContent = gs.score;
+            const el = document.getElementById('score');
+            el.classList.add('pop');
+            setTimeout(() => el.classList.remove('pop'), 220);
+        }
+        function updateTimer() {
+            document.getElementById('timer-val').textContent = gs.timer;
+            document.getElementById('timer').classList.toggle('timer-low', gs.timer <= LOW_TIME_THRESHOLD);
+        }
+        function updateStreak() {
+            document.getElementById('streak-val').textContent = gs.streak;
+            if (gs.streak > 0) {
+                const el = document.getElementById('streak');
+                el.classList.add('pop');
+                setTimeout(() => el.classList.remove('pop'), 220);
+            }
+        }
+
+        function showFeedback(msg, isPos = true, variant = '') {
+            const el = document.getElementById('feedback-message');
+            el.textContent = msg;
+            el.className = 'show' + (!isPos ? ' negative' : variant === 'neutral' ? ' neutral' : '');
+            if (feedbackTimer) clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => { el.classList.remove('show'); }, 1700);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FINAL RESULTS — повна статистика з порадами
+        ═══════════════════════════════════════════════════════════ */
+        function buildResults() {
+            const total = gs.totalCorrect + gs.totalMissed;
+            const accuracy = total > 0 ? Math.round((gs.totalCorrect / total) * 100) : 0;
+            const elapsed = Math.max(1, (Date.now() - gs.gameStartTime) / 1000);
+            const cpm = Math.round((gs.totalCorrect / elapsed) * 60);
+
+            // Stats
+            document.getElementById('go-score').textContent = gs.score;
+            document.getElementById('go-accuracy').textContent = accuracy + '%';
+            document.getElementById('go-cpm').textContent = cpm;
+            document.getElementById('go-streak').textContent = gs.maxStreak;
+
+            // Tags
+            const lvlNames = { beginner: 'Дуже простий', easy: 'Простий', medium: 'Середній', hard: 'Складний' };
+            const spdNames = { slow: 'Повільна', medium: 'Середня', fast: 'Швидка' };
+            const langName = gs.lang === 'ua' ? 'Українська' : 'English';
+            document.getElementById('go-tags').innerHTML =
+                `<span class="go-tag"><i class="fas fa-star"></i> ${lvlNames[gs.level]}</span>` +
+                `<span class="go-tag"><i class="fas fa-gauge"></i> ${spdNames[gs.speed]}</span>` +
+                `<span class="go-tag"><i class="fas fa-keyboard"></i> ${langName}</span>`;
+
+            // Missed letters (top 4)
+            const missedEntries = Object.entries(gs.missedMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4);
+
+            const missedSection = document.getElementById('go-missed-section');
+            const missedRow = document.getElementById('go-missed-row');
+
+            if (missedEntries.length) {
+                missedRow.innerHTML = missedEntries
+                    .map(([ch, n]) => `<span class="missed-chip">${escapeHtml(ch)}<sub>x${n}</sub></span>`)
+                    .join('');
+                missedSection.style.display = '';
+            } else {
+                missedRow.innerHTML = '';
+                missedSection.style.display = 'none';
+            }
+
+            // Achievement
+            const achEl = document.getElementById('go-achievement');
+            achEl.textContent = getAchievementText({ accuracy, cpm, score: gs.score, maxStreak: gs.maxStreak, total });
+
+            // Best record (per mode: language + level + speed)
+            const bestEl = document.getElementById('go-best');
+            const bestStore = loadBestStore();
+            const modeKey = getModeKey();
+            const prev = bestStore[modeKey];
+
+            if (!prev || gs.score > prev.score) {
+                bestStore[modeKey] = {
+                    score: gs.score,
+                    accuracy,
+                    cpm,
+                    maxStreak: gs.maxStreak,
+                    ts: Date.now()
+                };
+                saveBestStore(bestStore);
+
+                bestEl.style.display = 'block';
+                bestEl.textContent = prev
+                    ? `🏆 Новий рекорд у цьому режимі! Було ${prev.score}, стало ${gs.score}`
+                    : `🏆 Перший рекорд у цьому режимі: ${gs.score}`;
+
+                if (prev) playSound('newRecord');
+            } else {
+                bestEl.style.display = 'block';
+                bestEl.textContent = `Твій рекорд у цьому режимі: ${prev.score} (сьогодні: ${gs.score})`;
+            }
+
+            // Tips
+            const tipsEl = document.getElementById('go-tips-list');
+            tipsEl.innerHTML = buildTipsHTML({ accuracy, cpm, missedEntries, score: gs.score, maxStreak: gs.maxStreak });
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           STREAK BURST + CONFETTI (без зовнішніх бібліотек)
+        ═══════════════════════════════════════════════════════════ */
+        function showStreakBurst(text) {
+            const overlay = document.getElementById('streak-overlay');
+            const burst = document.getElementById('streak-burst');
+            if (!overlay || !burst) return;
+
+            burst.textContent = text;
+
+            // Restart animation reliably
+            overlay.classList.remove('show');
+            burst.style.animation = 'none';
+            void burst.offsetWidth; // reflow
+            burst.style.animation = '';
+            overlay.classList.add('show');
+
+            setTimeout(() => overlay.classList.remove('show'), 1050);
+        }
+
+        function getThemePalette() {
+            const cs = getComputedStyle(document.documentElement);
+            const c1 = cs.getPropertyValue('--c1').trim() || '#FF4757';
+            const c2 = cs.getPropertyValue('--c2').trim() || '#00BCD4';
+            const c3 = cs.getPropertyValue('--c3').trim() || '#43A047';
+            const bg = cs.getPropertyValue('--bg').trim() || '#FFE500';
+            return [c1, c2, c3, bg];
+        }
+
+        function launchConfetti(count = 30) {
+            // Lightweight DOM confetti (auto-cleans)
+            const colors = getThemePalette();
+            const holder = document.createElement('div');
+            holder.style.position = 'fixed';
+            holder.style.inset = '0';
+            holder.style.pointerEvents = 'none';
+            holder.style.zIndex = '9998';
+            document.body.appendChild(holder);
+
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'absolute';
+                p.style.left = (Math.random() * 100) + 'vw';
+                p.style.top = '-20px';
+                p.style.width = (6 + Math.random() * 7) + 'px';
+                p.style.height = (10 + Math.random() * 14) + 'px';
+                p.style.borderRadius = (Math.random() > 0.7 ? '50%' : '2px');
+                p.style.opacity = '0.95';
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                p.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+                holder.appendChild(p);
+
+                const fall = 520 + Math.random() * 520;
+                const drift = (Math.random() - 0.5) * 220;
+                const spin = (Math.random() - 0.5) * 720;
+
+                p.animate([
+                    { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate(${drift}px, ${fall}px) rotate(${spin}deg)`, opacity: 0.9 },
+                    { transform: `translate(${drift * 1.3}px, ${fall + 240}px) rotate(${spin * 1.3}deg)`, opacity: 0 }
+                ], {
+                    duration: 900 + Math.random() * 700,
+                    easing: 'cubic-bezier(.18,.82,.32,1)',
+                    fill: 'forwards'
+                });
+            }
+
+            setTimeout(() => { try { holder.remove(); } catch (e) { } }, 2200);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           HELPERS: results, tips, record
+        ═══════════════════════════════════════════════════════════ */
+        const BEST_STORE_KEY = 'kt-best-modes-v1';
+
+        function getModeKey() {
+            return `${gs.lang}|${gs.level}|${gs.speed}`;
+        }
+
+        function loadBestStore() {
+            try {
+                const raw = localStorage.getItem(BEST_STORE_KEY);
+                const obj = raw ? JSON.parse(raw) : {};
+                return (obj && typeof obj === 'object') ? obj : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveBestStore(obj) {
+            try { localStorage.setItem(BEST_STORE_KEY, JSON.stringify(obj)); } catch (e) { }
+        }
+
+        function escapeHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getAchievementText({ accuracy, cpm, score, maxStreak, total }) {
+            if (total === 0) return 'Спробуй ще раз — і вийде ще краще!';
+            if (accuracy >= 95 && maxStreak >= 15) return '🎯 Майстер точності!';
+            if (maxStreak >= 25) return '🔥 Легендарна серія!';
+            if (cpm >= 220) return '⚡ Дуже швидко! Ти ракета!';
+            if (score >= 120) return '🏆 Супер-результат!';
+            if (accuracy >= 80) return '✅ Дуже добре! Так тримати!';
+            if (accuracy >= 60) return '💪 Добрий старт — тренуйся ще!';
+            return '🙂 Нічого! Кожна спроба робить тебе кращим!';
+        }
+
+        function buildTipsHTML({ accuracy, cpm, missedEntries, score, maxStreak }) {
+            const tips = [];
+
+            if (accuracy < 55) {
+                tips.push({ icon: 'fa-gauge-simple-low', text: 'Спробуй «Повільно» або «Дуже простий» — так легше тренувати точність.' });
+            } else if (accuracy < 75) {
+                tips.push({ icon: 'fa-bullseye', text: 'Твоя точність росте! Дивись на букву й натискай спокійно, без поспіху.' });
+            } else {
+                tips.push({ icon: 'fa-bullseye', text: 'Класна точність! Тепер можна поступово підвищувати швидкість.' });
+            }
+
+            if (missedEntries && missedEntries.length) {
+                const chars = missedEntries.map(([ch]) => ch).join(' ');
+                tips.push({ icon: 'fa-magnifying-glass', text: `Найчастіше губляться: ${escapeHtml(chars)}. Потренуй ці клавіші окремо.` });
+            } else {
+                tips.push({ icon: 'fa-face-smile', text: 'Ти майже нічого не пропустив(ла) — супер!' });
+            }
+
+            if (cpm < 80) {
+                tips.push({ icon: 'fa-person-walking', text: 'Головне — рівний темп. Краще повільно, але правильно.' });
+            } else if (cpm < 160) {
+                tips.push({ icon: 'fa-gauge', text: 'Хороший темп! Спробуй робити довші серії без помилок.' });
+            } else {
+                tips.push({ icon: 'fa-person-running', text: 'Вау, дуже швидко! Слідкуй, щоб точність не падала.' });
+            }
+
+            if (maxStreak < 5) {
+                tips.push({ icon: 'fa-fire', text: 'Серії дають бонуси. Спробуй зосередитись на 5 правильних підряд!' });
+            } else {
+                tips.push({ icon: 'fa-fire', text: `Твоя макс. серія: ${maxStreak}. Спробуй побити її наступного разу!` });
+            }
+
+            if (score < 40) tips.push({ icon: 'fa-star', text: 'Початок покладено! Кожна гра — це прогрес.' });
+
+            return tips
+                .slice(0, 6)
+                .map(t => `<div class="tip-item"><i class="fas ${t.icon}"></i><div>${t.text}</div></div>`)
+                .join('');
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           INIT
+        ═══════════════════════════════════════════════════════════ */
+        function init() {
+            initKeyMap();
+            loadTheme();
+            initAudio();
+            updateSoundIcon();
+
+            const durEl = document.getElementById('game-duration-text');
+            if (durEl) durEl.textContent = GAME_DURATION_SEC;
+
+            document.addEventListener('keydown', (e) => {
+                if (!gs.running) return;
+                if (e.key && (e.key.length === 1 || e.key === ' ')) e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('keydown', handleKey, { passive: false });
+
+            window.addEventListener('pointerdown', () => {
+                if (gs.soundEnabled && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            }, { once: true });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && gs.running) {
+                    stopProcs();
+                    resetSession();
+                    document.getElementById('start-button').style.display = 'inline-flex';
+                    document.getElementById('restart-button').style.display = 'none';
+                    updateAdaptBar();
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+
+</html>

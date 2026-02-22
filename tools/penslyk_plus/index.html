@@ -1,1175 +1,265 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Пензлик ➕ | Графічний редактор для дітей</title>
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-N8T05K3NGT');
-    </script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
-    <script>
-      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-      plausible.init()
-    </script>
-    
-    <style>
-      /* Загальні стилі */
-      body {
-        font-family: "Roboto", "Arial", sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f0f8ff;
-      }
-      h1 {
-        color: #ff6b6b;
-        margin-bottom: 10px;
-        text-align: center;
-        font-size: 24px;
-      }
-      .container {
-        display: flex;
-        max-width: 1200px;
-        margin: 0 auto;
-        height: 100vh;
-      }
-      .sidebar {
-        width: 250px;
-        background-color: #e6f2ff;
-        padding: 15px;
-        border-right: 3px solid #ffc0cb;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .main-content {
-        flex-grow: 1;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-      }
-      #canvas-container {
-        position: relative;
-        flex-grow: 1;
-        border: 5px solid #ffc0cb;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        background-color: white;
-      }
-      #drawing-canvas {
-        background-color: white;
-        cursor: crosshair;
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-      .tool-section {
-        background-color: #f8f8f8;
-        border-radius: 8px;
-        padding: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        margin-bottom: 5px;
-      }
-      .section-title {
-        font-weight: bold;
-        margin-bottom: 6px;
-        color: #5980d9;
-        text-align: center;
-        font-size: 14px;
-      }
-      .tools-grid,
-      .file-buttons {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
-      }
-      .tools-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .tool-button {
-        padding: 8px;
-        font-size: 14px;
-        background-color: #5980d9;
-        border: none;
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-      }
-      .tool-button:hover {
-        background-color: #7aa5f8;
-        transform: translateY(-2px);
-      }
-      .tool-button.active {
-        background-color: #3a5289;
-      }
-      .tool-button strong {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 13px;
-      }
-      .color-palette {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        margin-top: 8px;
-      }
-      .color {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: transform 0.2s;
-        border: 3px solid transparent;
-        margin: 0 auto;
-      }
-      .color:hover {
-        transform: scale(1.1);
-      }
-      .color.active {
-        border: 3px solid #333;
-      }
-      .size-control {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      .size-slider {
-        width: 100%;
-        margin: 8px 0;
-      }
-      .shapes-container,
-      .stamps-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-      }
-      .shape-btn,
-      .stamp {
-        font-size: 18px;
-        background-color: #9cc4ff;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-        height: 36px;
-        transition: all 0.3s;
-      }
-      .shape-btn:hover,
-      .stamp:hover {
-        background-color: #7aa5f8;
-        transform: scale(1.05);
-      }
-      .shape-btn.active,
-      .stamp.active {
-        background-color: #5980d9;
-      }
-      /* Стилі для кнопки завантаження зображень */
-      .file-upload {
-        position: relative;
-        overflow: hidden;
-        display: inline-block;
-        width: 100%;
-      }
-      .file-upload-label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-        background-color: #5980d9;
-        color: white;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 14px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .file-upload-label:hover {
-        background-color: #7aa5f8;
-        transform: translateY(-2px);
-      }
-      .file-upload input[type="file"] {
-        position: absolute;
-        left: 0;
-        top: 0;
-        opacity: 0;
-        width: 100%;
-        height: 100%;
-        cursor: pointer;
-      }
-      .file-upload-icon {
-        margin-right: 5px;
-      }
-      /* Стилі конструктора кольору (вбудовано до панелі Інструменти) */
-      #color-constructor {
-        margin-top: 10px;
-        padding: 12px;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        display: none;
-        width: 100%;
-        box-sizing: border-box;
-      }
-      #color-constructor h3 {
-        text-align: center;
-        margin-bottom: 10px;
-        color: #5980d9;
-        font-size: 16px;
-      }
-      .color-info {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 10px;
-      }
-      .color-info-item {
-        background-color: #f8f8f8;
-        padding: 8px;
-        border-radius: 6px;
-        text-align: center;
-        font-size: 14px;
-      }
-      .color-preview {
-        width: 50px;
-        height: 50px;
-        border-radius: 6px;
-        margin: 0 auto 8px;
-        border: 1px solid #ddd;
-      }
-      .color-sliders {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 10px;
-      }
-      .color-slider {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        flex-wrap: nowrap;
-      }
-      .color-slider label {
-        width: 70px;
-        text-align: right;
-        margin-right: 8px;
-        flex-shrink: 0;
-      }
-      .color-slider input[type="range"] {
-        flex: 1;
-        min-width: 0;
-      }
-      .color-slider span {
-        width: 30px;
-        text-align: left;
-        margin-left: 8px;
-        flex-shrink: 0;
-      }
-      .custom-color-btn {
-        background-color: #5980d9;
-        color: white;
-        border: none;
-        margin-top:10px;
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s;
-        width: 100%;
-        font-size: 14px;
-      }
-      .custom-color-btn:hover {
-        background-color: #ff6b6b;
-      }
-      /* Медіа-запити для адаптивності */
-      @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-          height: auto;
-        }
-        .sidebar {
-          width: 100%;
-          border-right: none;
-          border-bottom: 3px solid #ffc0cb;
-          padding: 10px;
-        }
-        .main-content {
-          height: 500px;
-          padding: 10px;
-        }
-        .tool-button,
-        .shape-btn,
-        .stamp {
-          font-size: 16px;
-          padding: 10px;
-        }
-        .tools-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-        h1 {
-          font-size: 22px;
-        }
-        .color-info {
-          grid-template-columns: 1fr;
-        }
-      }
-      @media (max-width: 480px) {
-        .tools-grid,
-        .shapes-container,
-        .stamps-grid,
-        .color-palette {
-          grid-template-columns: repeat(3, 1fr);
-        }
-        .sidebar {
-          padding: 8px;
-        }
-        .tool-section {
-          padding: 6px;
-        }
-        h1 {
-          font-size: 20px;
-          margin-bottom: 5px;
-        }
-        .tool-button strong {
-          font-size: 12px;
-        }
-        .color-slider label {
-          width: 60px;
-        }
-        .color-slider span {
-          width: 25px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <noscript>
-      <p style="color: red; text-align: center">
-        Для коректної роботи сайту необхідно увімкнути JavaScript.
-      </p>
-    </noscript>
-    <div class="container">
-      <div class="sidebar">
-        <h1>🎨 Пензлик ➕</h1>
-        <!-- Панель Інструментів -->
-        <div class="tool-section">
-          <div class="section-title">Інструменти</div>
-          <div class="tools-grid">
-            <button id="pencil" class="tool-button active">
-              <strong>✏️ Олівець</strong>
-            </button>
-            <button id="eraser" class="tool-button">
-              <strong>🧽 Гумка</strong>
-            </button>
-            <button id="fill" class="tool-button">
-              <strong>🥛 Заливка</strong>
-            </button>
-            <!-- Для кнопок Фігури та Штампи більше не використовуємо setActiveTool, а викликаємо функції-тоггл -->
-            <button id="shapes" class="tool-button">
-              <strong>📐 Фігури</strong>
-            </button>
-            <button id="stamps" class="tool-button">
-              <strong>🎭 Штампи</strong>
-            </button>
-            <button id="toggle-color-constructor" class="tool-button">
-              <strong>🌈 Кольори</strong>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Секція фігур (спочатку прихована) -->
-        <div class="tool-section shapes-section" style="display: none;">
-          <div class="section-title">Фігури</div>
-          <div class="shapes-container">
-            <button class="shape-btn" data-shape="line">/</button>
-            <button class="shape-btn" data-shape="rect">🔲</button>
-            <button class="shape-btn" data-shape="circle">⚪</button>
-            <button class="shape-btn" data-shape="triangle">🔺</button>
-            <button class="shape-btn" data-shape="star">⭐</button>
-            <button class="shape-btn" data-shape="flame">🔥</button>
-          </div>
-        </div>
-        
-        <!-- Секція штампів (спочатку прихована) -->
-        <div class="tool-section stamps-section" style="display: none;">
-          <div class="section-title">Штампи</div>
-          <div class="stamps-grid">
-            <div class="stamp" data-emoji="🦄">🦄</div>
-            <div class="stamp" data-emoji="🐱">🐱</div>
-            <div class="stamp" data-emoji="🐶">🐶</div>
-            <div class="stamp" data-emoji="🦖">🦖</div>
-            <div class="stamp" data-emoji="🌈">🌈</div>
-            <div class="stamp" data-emoji="🌟">🌟</div>
-            <div class="stamp" data-emoji="🍕">🍕</div>
-            <div class="stamp" data-emoji="🚀">🚀</div>
-            <div class="stamp" data-emoji="🎮">🎮</div>
-            <div class="stamp" data-emoji="🏀">🏀</div>
-            <div class="stamp" data-emoji="🌸">🌸</div>
-            <div class="stamp" data-emoji="🌞">🌞</div>
-          </div>
-        </div>
-        
-        <!-- Конструктор кольору -->
-        <div id="color-constructor">
-          <h3>Конструктор кольору</h3>
-          <div class="color-info">
-            <div class="color-info-item">
-              <div id="color-preview" class="color-preview"></div>
-              <h4>Поточний колір</h4>
-            </div>
-            <div class="color-info-item">
-              <h4>RGB</h4>
-              <p id="rgb-value">rgb(0, 0, 0)</p>
-            </div>
-            <div class="color-info-item">
-              <h4>HEX</h4>
-              <p id="hex-value">#000000</p>
-            </div>
-            <div class="color-info-item">
-              <h4>Двійковий</h4>
-              <p id="binary-value">00000000 00000000 00000000</p>
-            </div>
-          </div>
-          <div class="color-sliders">
-            <div class="color-slider">
-              <label for="red">Червоний:</label>
-              <input type="range" id="red" min="0" max="255" value="0" />
-              <span id="red-value">0</span>
-            </div>
-            <div class="color-slider">
-              <label for="green">Зелений:</label>
-              <input type="range" id="green" min="0" max="255" value="0" />
-              <span id="green-value">0</span>
-            </div>
-            <div class="color-slider">
-              <label for="blue">Синій:</label>
-              <input type="range" id="blue" min="0" max="255" value="0" />
-              <span id="blue-value">0</span>
-            </div>
-          </div>
-          <button id="use-color" class="custom-color-btn">
-            Використати колір
-          </button>
-        </div>
-        
-        <!-- Секція кольорів (палітра) -->
-        <div class="tool-section">
-          <div class="section-title">Кольори</div>
-          <div class="color-palette">
-            <div class="color active" style="background-color: #000000" data-hex="#000000"></div>
-            <div class="color" style="background-color: #ff0000" data-hex="#ff0000"></div>
-            <div class="color" style="background-color: #ff9900" data-hex="#ff9900"></div>
-            <div class="color" style="background-color: #ffff00" data-hex="#ffff00"></div>
-            <div class="color" style="background-color: #00ff00" data-hex="#00ff00"></div>
-            <div class="color" style="background-color: #00ffff" data-hex="#00ffff"></div>
-            <div class="color" style="background-color: #0000ff" data-hex="#0000ff"></div>
-            <div class="color" style="background-color: #9900ff" data-hex="#9900ff"></div>
-            <div class="color" style="background-color: #ff00ff" data-hex="#ff00ff"></div>
-            <div class="color" style="background-color: #ff6b6b" data-hex="#ff6b6b"></div>
-            <div class="color" style="background-color: #7aa5f8" data-hex="#7aa5f8"></div>
-            <div class="color" style="background-color: #ffffff" data-hex="#ffffff"></div>
-          </div>
-        </div>
-        
-        <!-- Секція розміру та додаткових функцій -->
-        <div class="tool-section">
-          <div class="section-title">Розмір та функції</div>
-          <div class="size-control">
-            <input type="range" id="size-slider" class="size-slider" min="1" max="50" value="5" />
-            <span id="size-value">5</span>
-          </div>
-          <div class="tools-grid">
-            <button id="undo" class="tool-button">
-              <strong>⏪ Назад</strong>
-            </button>
-            <button id="redo" class="tool-button">
-              <strong>Вперед ⏩</strong>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Секція файлу -->
-        <div class="tool-section">
-          <div class="section-title">Файл</div>
-          <div class="tools-grid">
-            <button id="clear" class="tool-button">
-              <strong>🗑️ Очистити</strong>
-            </button>
-            <button id="save" class="tool-button">
-              <strong>💾 Зберегти</strong>
-            </button>
-          </div>
-          <div class="section-title">Імпорт</div>
-          <div class="file-upload">
-            <label class="file-upload-label">
-              <span class="file-upload-icon">📁</span> Завантажити
-              <input type="file" id="import-file" accept="image/*" />
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="main-content">
-        <div id="canvas-container">
-          <canvas id="drawing-canvas"></canvas>
-        </div>
+  <!-- Primary Meta Tags -->
+  <title>Пензлик ➕ | Графічний редактор для дітей</title>
+  <meta name="title" content="Пензлик Плюс | Графічний редактор для дітей" />
+  <meta name="description"
+    content="Пензлик Плюс — простий, яскравий та зручний графічний редактор для дітей. Малювання пензликом, штампи, фігури та магія кольорів онлайн." />
+  <meta name="keywords"
+    content="малювання для дітей, дитячий графічний редактор, онлайн малювалка, малювання пензликом, штампи для малювання, ІТ освіта для дітей, compnauka" />
+  <meta name="author" content="Compnauka" />
+  <link rel="canonical" href="https://itnauka.org/tools/penslyk_plus/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://itnauka.org/tools/penslyk_plus/" />
+  <meta property="og:title" content="Пензлик Плюс | Графічний редактор для дітей" />
+  <meta property="og:description"
+    content="Пензлик Плюс — простий, яскравий та зручний графічний редактор для дітей. Малювання пензликом, штампи, фігури та магія кольорів онлайн." />
+  <meta property="og:image" content="https://itnauka.org/images/35.jpg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://itnauka.org/tools/penslyk_plus/" />
+  <meta property="twitter:title" content="Пензлик Плюс | Графічний редактор для дітей" />
+  <meta property="twitter:description"
+    content="Пензлик Плюс — простий, яскравий та зручний графічний редактор для дітей. Малювання пензликом, штампи, фігури та магія кольорів онлайн." />
+  <meta property="twitter:image" content="https://itnauka.org/images/35.jpg" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="https://itnauka.org/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://itnauka.org/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="https://itnauka.org/favicon-96x96.png">
+
+  <!-- Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <noscript>
+    <p class="noscript-warning">Увімкніть JavaScript для роботи редактора.</p>
+  </noscript>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div id="modal-icon" class="modal-icon"></div>
+      <div id="modal-title" class="modal-title"></div>
+      <div id="modal-text" class="modal-text"></div>
+      <div class="modal-btns">
+        <button id="modal-cancel" class="modal-btn cancel" style="display:none">Скасувати</button>
+        <button id="modal-confirm" class="modal-btn confirm">Ок</button>
       </div>
     </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Перевірка підтримки canvas
-        const canvas = document.getElementById("drawing-canvas");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          alert("Ваш браузер не підтримує canvas.");
-          return;
-        }
+  </div>
 
-        // Створення стеків для undo/redo
-        let undoStack = [];
-        let redoStack = [];
-        const maxUndo = 50; // Збільшено до 50 кроків
+  <div class="app">
 
-        // Стан малювання та загальні налаштування
-        const state = {
-          isDrawing: false,
-          lastX: 0,
-          lastY: 0,
-          currentTool: "pencil",
-          currentColor: "#000000",
-          currentSize: 5,
-          currentShape: "line",
-          startX: 0,
-          startY: 0,
-          currentStamp: null,
-          canvasSnapshot: null,
-          unsavedChanges: false,
-        };
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
 
-        // DOM елементи
-        const elements = {
-          pencilBtn: document.getElementById("pencil"),
-          eraserBtn: document.getElementById("eraser"),
-          fillBtn: document.getElementById("fill"),
-          shapesBtn: document.getElementById("shapes"),
-          stampsBtn: document.getElementById("stamps"),
-          clearBtn: document.getElementById("clear"),
-          saveBtn: document.getElementById("save"),
-          undoBtn: document.getElementById("undo"),
-          redoBtn: document.getElementById("redo"),
-          importFile: document.getElementById("import-file"),
-          colors: document.querySelectorAll(".color"),
-          sizeSlider: document.getElementById("size-slider"),
-          sizeValue: document.getElementById("size-value"),
-          shapesSection: document.querySelector(".shapes-section"),
-          shapeButtons: document.querySelectorAll(".shape-btn"),
-          stampsSection: document.querySelector(".stamps-section"),
-          stamps: document.querySelectorAll(".stamp"),
-          toggleColorConstructorBtn: document.getElementById("toggle-color-constructor"),
-          colorConstructor: document.getElementById("color-constructor"),
-          redSlider: document.getElementById("red"),
-          greenSlider: document.getElementById("green"),
-          blueSlider: document.getElementById("blue"),
-          redValue: document.getElementById("red-value"),
-          greenValue: document.getElementById("green-value"),
-          blueValue: document.getElementById("blue-value"),
-          rgbValue: document.getElementById("rgb-value"),
-          hexValue: document.getElementById("hex-value"),
-          binaryValue: document.getElementById("binary-value"),
-          colorPreview: document.getElementById("color-preview"),
-          useColorBtn: document.getElementById("use-color"),
-        };
+      <h1 class="app-title">
+        <i class="fa-solid fa-paintbrush"></i> Пензлик ➕
+      </h1>
 
-        // Функція збереження поточного стану canvas для undo
-        function pushToUndoStack() {
-          try {
-            if (undoStack.length >= maxUndo) {
-              undoStack.shift();
-            }
-            undoStack.push(canvas.toDataURL());
-            redoStack = [];
-            state.unsavedChanges = true;
-          } catch (err) {
-            console.error("Помилка при збереженні стану canvas:", err);
-          }
-        }
+      <!-- TOOLS -->
+      <section class="panel">
+        <h2 class="panel-label">Інструменти</h2>
+        <div class="tools-grid">
+          <button id="pencil" class="tool-btn active" title="Пензлик (P)">
+            <i class="fa-solid fa-paintbrush"></i><span>Пензлик</span>
+          </button>
+          <button id="eraser" class="tool-btn" title="Гумка (E)">
+            <i class="fa-solid fa-eraser"></i><span>Гумка</span>
+          </button>
+          <button id="fill" class="tool-btn" title="Заливка (F)">
+            <i class="fa-solid fa-fill-drip"></i><span>Заливка</span>
+          </button>
+          <button id="spray" class="tool-btn" title="Аерозоль (S)">
+            <i class="fa-solid fa-spray-can-sparkles"></i><span>Аерозоль</span>
+          </button>
+          <button id="shapes" class="tool-btn" title="Фігури">
+            <i class="fa-solid fa-shapes"></i><span>Фігури</span>
+          </button>
+          <button id="stamps" class="tool-btn" title="Штампи">
+            <i class="fa-solid fa-stamp"></i><span>Штампи</span>
+          </button>
+        </div>
+      </section>
 
-        // Функції undo/redo
-        function undo() {
-          if (undoStack.length > 0) {
-            redoStack.push(canvas.toDataURL());
-            const dataURL = undoStack.pop();
-            restoreFromDataURL(dataURL);
-          }
-        }
-        function redo() {
-          if (redoStack.length > 0) {
-            undoStack.push(canvas.toDataURL());
-            const dataURL = redoStack.pop();
-            restoreFromDataURL(dataURL);
-          }
-        }
-        function restoreFromDataURL(dataURL) {
-          const img = new Image();
-          img.onload = function () {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          };
-          img.src = dataURL;
-        }
+      <!-- SHAPES PANEL -->
+      <section class="panel shapes-section" style="display:none">
+        <h2 class="panel-label">Фігури</h2>
+        <div class="shapes-grid">
+          <button class="shape-btn active" data-shape="line" title="Лінія"> <i class="fa-solid fa-minus"></i></button>
+          <button class="shape-btn" data-shape="rect" title="Прямокутник"> <i class="fa-regular fa-square"></i></button>
+          <button class="shape-btn" data-shape="rect-filled" title="Зафарб. прямокутник"><i
+              class="fa-solid fa-square"></i></button>
+          <button class="shape-btn" data-shape="circle" title="Коло"> <i class="fa-regular fa-circle"></i></button>
+          <button class="shape-btn" data-shape="circle-filled" title="Зафарб. коло"> <i
+              class="fa-solid fa-circle"></i></button>
+          <button class="shape-btn" data-shape="triangle" title="Трикутник"> <i
+              class="fa-solid fa-play fa-rotate-270"></i></button>
+          <button class="shape-btn" data-shape="star" title="Зірка"> <i class="fa-solid fa-star"></i></button>
+          <button class="shape-btn" data-shape="heart" title="Серце"> <i class="fa-solid fa-heart"></i></button>
+          <button class="shape-btn" data-shape="arrow" title="Стрілка"> <i class="fa-solid fa-arrow-up"></i></button>
+        </div>
+      </section>
 
-        // Збереження зображення при зміні розміру вікна
-        function resizeCanvas() {
-          const dataURL = canvas.toDataURL();
-          const container = document.getElementById("canvas-container");
-          const rect = container.getBoundingClientRect();
-          canvas.width = rect.width;
-          canvas.height = rect.height;
-          const img = new Image();
-          img.onload = function () {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          };
-          img.src = dataURL;
-        }
-        resizeCanvas();
-        window.addEventListener("resize", resizeCanvas);
+      <!-- STAMPS PANEL -->
+      <section class="panel stamps-section" style="display:none">
+        <div class="panel-header">
+          <h2 class="panel-label" style="margin:0">Штампи</h2>
+          <button id="shuffle-stamps" class="icon-btn" title="Перемішати">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+        </div>
+        <div class="stamps-grid" id="stamps-grid"></div>
+      </section>
 
-        // Отримання координат із врахуванням масштабу
-        function getCanvasPos(e) {
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const scaleY = canvas.height / rect.height;
-          return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY,
-          };
-        }
+      <!-- COLORS + INLINE MIXER -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-label" style="margin:0">Кольори</h2>
+          <div style="display:flex;gap:5px">
+            <label class="native-color-btn" title="Власний колір">
+              <i class="fa-solid fa-eye-dropper"></i>
+              <input type="color" id="native-color-picker" value="#1a1a1a">
+            </label>
+            <button id="toggle-mixer" class="icon-btn active" title="Мікшер RGB">
+              <i class="fa-solid fa-sliders"></i>
+            </button>
+          </div>
+        </div>
 
-        // Використання Pointer Events (уніфіковано для миші та touch)
-        function pointerDown(e) {
-          e.preventDefault();
-          canvas.setPointerCapture(e.pointerId);
-          const pos = getCanvasPos(e);
-          state.isDrawing = true;
-          state.lastX = pos.x;
-          state.lastY = pos.y;
-          state.startX = pos.x;
-          state.startY = pos.y;
+        <div class="color-palette">
+          <div class="color active" style="background:#1a1a1a" data-hex="#1a1a1a"></div>
+          <div class="color" style="background:#ef4444" data-hex="#ef4444"></div>
+          <div class="color" style="background:#f97316" data-hex="#f97316"></div>
+          <div class="color" style="background:#eab308" data-hex="#eab308"></div>
+          <div class="color" style="background:#22c55e" data-hex="#22c55e"></div>
+          <div class="color" style="background:#06b6d4" data-hex="#06b6d4"></div>
+          <div class="color" style="background:#3b82f6" data-hex="#3b82f6"></div>
+          <div class="color" style="background:#8b5cf6" data-hex="#8b5cf6"></div>
+          <div class="color" style="background:#ec4899" data-hex="#ec4899"></div>
+          <div class="color" style="background:#f9a8d4" data-hex="#f9a8d4"></div>
+          <div class="color" style="background:#a7f3d0" data-hex="#a7f3d0"></div>
+          <div class="color" style="background:#ffffff;border:2px solid #ccc" data-hex="#ffffff"></div>
+        </div>
 
-          if (state.currentTool === "stamps" && state.currentStamp) {
-            pushToUndoStack();
-            placeStamp(pos.x, pos.y);
-            state.isDrawing = false;
-          } else if (state.currentTool === "fill") {
-            pushToUndoStack();
-            if (pos.x >= 0 && pos.x < canvas.width && pos.y >= 0 && pos.y < canvas.height) {
-              floodFill(Math.floor(pos.x), Math.floor(pos.y));
-            } else {
-              console.warn("Початкова точка floodFill за межами canvas.");
-            }
-            state.isDrawing = false;
-          } else if (state.currentTool === "shapes") {
-            pushToUndoStack();
-            state.canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          } else {
-            pushToUndoStack();
-          }
-        }
-        function pointerMove(e) {
-          if (!state.isDrawing) return;
-          const pos = getCanvasPos(e);
-          if (state.currentTool === "pencil") {
-            drawFreehand(pos.x, pos.y);
-          } else if (state.currentTool === "eraser") {
-            erase(pos.x, pos.y);
-          } else if (state.currentTool === "shapes") {
-            if (state.canvasSnapshot) {
-              ctx.putImageData(state.canvasSnapshot, 0, 0);
-            }
-            drawShape(pos.x, pos.y);
-          }
-          state.lastX = pos.x;
-          state.lastY = pos.y;
-        }
-        function pointerUp(e) {
-          if (state.isDrawing) {
-            state.isDrawing = false;
-            if (state.currentTool === "shapes") {
-              state.canvasSnapshot = null;
-            }
-          }
-          canvas.releasePointerCapture(e.pointerId);
-        }
-        function pointerCancel(e) {
-          state.isDrawing = false;
-        }
-        canvas.addEventListener("pointerdown", pointerDown);
-        canvas.addEventListener("pointermove", pointerMove);
-        canvas.addEventListener("pointerup", pointerUp);
-        canvas.addEventListener("pointercancel", pointerCancel);
+        <!-- Inline RGB Mixer -->
+        <div id="color-mixer" class="color-mixer">
+          <div class="mixer-top">
+            <div id="color-preview" class="mixer-swatch"></div>
+            <div class="mixer-codes">
+              <div class="code-row"><span class="code-lbl">HEX</span><span id="hex-value">#000000</span></div>
+              <div class="code-row"><span class="code-lbl">RGB</span><span id="rgb-value">0, 0, 0</span></div>
+            </div>
+          </div>
+          <div class="binary-block">
+            <span class="code-lbl">BIN</span>
+            <div id="binary-value" class="binary-display">
+              <span class="bin-r">00000000</span>
+              <span class="bin-g">00000000</span>
+              <span class="bin-b">00000000</span>
+            </div>
+          </div>
+          <div class="mixer-sliders">
+            <div class="ch-row">
+              <span class="ch-lbl r">R</span>
+              <input type="range" id="red" class="ch-range r-range" min="0" max="255" value="0">
+              <span id="red-value" class="ch-num">0</span>
+            </div>
+            <div class="ch-row">
+              <span class="ch-lbl g">G</span>
+              <input type="range" id="green" class="ch-range g-range" min="0" max="255" value="0">
+              <span id="green-value" class="ch-num">0</span>
+            </div>
+            <div class="ch-row">
+              <span class="ch-lbl b">B</span>
+              <input type="range" id="blue" class="ch-range b-range" min="0" max="255" value="0">
+              <span id="blue-value" class="ch-num">0</span>
+            </div>
+          </div>
+          <button id="use-color" class="apply-btn">
+            <i class="fa-solid fa-check"></i> Застосувати
+          </button>
+        </div>
+      </section>
 
-        // Малювання: pencil, eraser, фігури
-        function drawFreehand(x, y) {
-          ctx.strokeStyle = state.currentColor;
-          ctx.lineWidth = state.currentSize;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.beginPath();
-          ctx.moveTo(state.lastX, state.lastY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        }
-        function erase(x, y) {
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = state.currentSize;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.beginPath();
-          ctx.moveTo(state.lastX, state.lastY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        }
-        function drawShape(x, y) {
-          ctx.strokeStyle = state.currentColor;
-          ctx.fillStyle = state.currentColor;
-          ctx.lineWidth = state.currentSize;
-          switch (state.currentShape) {
-            case "line":
-              drawLine(state.startX, state.startY, x, y);
-              break;
-            case "rect":
-              drawRectangle(state.startX, state.startY, x, y);
-              break;
-            case "circle":
-              drawCircle(state.startX, state.startY, x, y);
-              break;
-            case "triangle":
-              drawTriangle(state.startX, state.startY, x, y);
-              break;
-            case "star":
-              drawStar(state.startX, state.startY, x, y);
-              break;
-            case "flame":
-              drawHeart(state.startX, state.startY, x, y);
-              break;
-          }
-        }
-        function drawLine(x1, y1, x2, y2) {
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-        }
-        function drawRectangle(x1, y1, x2, y2) {
-          const width = x2 - x1;
-          const height = y2 - y1;
-          ctx.beginPath();
-          ctx.rect(x1, y1, width, height);
-          ctx.stroke();
-        }
-        function drawCircle(x1, y1, x2, y2) {
-          const radius = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-          if (radius < 5) return;
-          ctx.beginPath();
-          ctx.arc(x1, y1, radius, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        function drawTriangle(x1, y1, x2, y2) {
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.lineTo(x1 - (x2 - x1), y2);
-          ctx.closePath();
-          ctx.stroke();
-        }
-        function drawStar(x1, y1, x2, y2) {
-          const spikes = 5;
-          const outerRadius = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-          if (outerRadius < 5) return;
-          const innerRadius = outerRadius / 2;
-          let rot = (Math.PI / 2) * 3;
-          const step = Math.PI / spikes;
-          ctx.beginPath();
-          ctx.moveTo(x1, y1 - outerRadius);
-          for (let i = 0; i < spikes; i++) {
-            ctx.lineTo(
-              x1 + Math.cos(rot) * outerRadius,
-              y1 + Math.sin(rot) * outerRadius
-            );
-            rot += step;
-            ctx.lineTo(
-              x1 + Math.cos(rot) * innerRadius,
-              y1 + Math.sin(rot) * innerRadius
-            );
-            rot += step;
-          }
-          ctx.lineTo(x1, y1 - outerRadius);
-          ctx.closePath();
-          ctx.stroke();
-        }
-        // Оновлена функція drawHeart з розрахунком за межами (bounding box)
-        function drawHeart(x1, y1, x2, y2) {
-          const left = Math.min(x1, x2);
-          const right = Math.max(x1, x2);
-          const top = Math.min(y1, y2);
-          const bottom = Math.max(y1, y2);
-          const width = right - left;
-          const height = bottom - top;
-          if (width < 5 || height < 5) return;
-          const x = left + width / 2;
-          const y = top + height / 2;
-          const topCurveHeight = height * 0.3;
-          ctx.beginPath();
-          ctx.moveTo(x, bottom);
-          ctx.bezierCurveTo(
-              x - width / 2, bottom - topCurveHeight,
-              left, y + topCurveHeight / 2,
-              x, top + topCurveHeight
-          );
-          ctx.bezierCurveTo(
-              right, y + topCurveHeight / 2,
-              x + width / 2, bottom - topCurveHeight,
-              x, bottom
-          );
-          ctx.closePath();
-          ctx.stroke();
-        }
+      <!-- SIZE + OPACITY -->
+      <section class="panel">
+        <div class="so-row">
+          <div class="so-item">
+            <h2 class="panel-label">Розмір <span id="size-value" class="badge">5</span></h2>
+            <input type="range" id="size-slider" class="range-input" min="1" max="50" value="5">
+          </div>
+          <div class="so-item">
+            <h2 class="panel-label">Прозорість <span id="opacity-value" class="badge">100%</span></h2>
+            <input type="range" id="opacity-slider" class="range-input" min="1" max="100" value="100">
+          </div>
+        </div>
+      </section>
 
-        // Flood Fill з оптимізацією через requestAnimationFrame
-        function floodFill(startX, startY) {
-          if (startX < 0 || startX >= canvas.width || startY < 0 || startY >= canvas.height) {
-            console.warn("floodFill: Початкова точка за межами canvas.");
-            return;
-          }
-          try {
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const width = canvas.width;
-            const height = canvas.height;
-            const targetColor = getPixelColor(imgData, startX, startY);
-            const fillColor = hexToRgba(state.currentColor);
-            if (colorMatch(targetColor, fillColor)) return;
-            let pixelsToCheck = [[startX, startY]];
-            function processPixels() {
-              let count = 0;
-              while (pixelsToCheck.length && count < 1000) {
-                const [x, y] = pixelsToCheck.pop();
-                if (x < 0 || x >= width || y < 0 || y >= height) continue;
-                const currentColor = getPixelColor(imgData, x, y);
-                if (!colorMatch(currentColor, targetColor)) continue;
-                setPixelColor(imgData, x, y, fillColor);
-                pixelsToCheck.push([x + 1, y]);
-                pixelsToCheck.push([x - 1, y]);
-                pixelsToCheck.push([x, y + 1]);
-                pixelsToCheck.push([x, y - 1]);
-                count++;
-              }
-              if (pixelsToCheck.length > 0) {
-                requestAnimationFrame(processPixels);
-              } else {
-                ctx.putImageData(imgData, 0, 0);
-              }
-            }
-            processPixels();
-          } catch (err) {
-            console.error("Помилка заливки:", err);
-          }
-        }
-        function getPixelColor(imageData, x, y) {
-          const index = (y * imageData.width + x) * 4;
-          return [
-            imageData.data[index],
-            imageData.data[index + 1],
-            imageData.data[index + 2],
-            imageData.data[index + 3],
-          ];
-        }
-        function setPixelColor(imageData, x, y, color) {
-          const index = (y * imageData.width + x) * 4;
-          imageData.data[index] = color[0];
-          imageData.data[index + 1] = color[1];
-          imageData.data[index + 2] = color[2];
-          imageData.data[index + 3] = color[3];
-        }
-        function colorMatch(color1, color2) {
-          const threshold = 5;
-          return (
-            Math.abs(color1[0] - color2[0]) <= threshold &&
-            Math.abs(color1[1] - color2[1]) <= threshold &&
-            Math.abs(color1[2] - color2[2]) <= threshold &&
-            Math.abs(color1[3] - color2[3]) <= threshold
-          );
-        }
-        function hexToRgba(hex) {
-          try {
-            hex = hex.replace("#", "");
-            if (hex.length === 3) {
-              hex = hex.split("").map((c) => c + c).join("");
-            }
-            if (hex.length !== 6) throw new Error("Некоректний формат HEX");
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            return [r, g, b, 255];
-          } catch (err) {
-            console.error(err);
-            return [0, 0, 0, 255];
-          }
-        }
+      <!-- ACTIONS -->
+      <section class="panel">
+        <div class="action-grid">
+          <button id="undo" class="action-btn" title="Скасувати (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i>
+            Назад</button>
+          <button id="redo" class="action-btn" title="Повторити (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i>
+            Вперед</button>
+          <button id="clear" class="action-btn danger" title="Очистити полотно"> <i class="fa-solid fa-trash"></i>
+            Очистити</button>
+          <button id="save" class="action-btn success" title="Зберегти (Ctrl+S)"> <i class="fa-solid fa-download"></i>
+            Зберегти</button>
+        </div>
+        <label class="upload-label">
+          <i class="fa-solid fa-upload"></i> Завантажити зображення
+          <input type="file" id="import-file" accept="image/*">
+        </label>
+      </section>
 
-        function placeStamp(x, y) {
-          if (!state.currentStamp) return;
-          // Використання шрифту з fallback для емодзі
-          ctx.font = `${state.currentSize * 5}px "Segoe UI Emoji", "Arial", sans-serif`;
-          ctx.fillStyle = state.currentColor;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(state.currentStamp, x, y);
-        }
+      <!-- SHORTCUTS -->
+      <section class="shortcuts-panel">
+        <div class="sc"><kbd>P</kbd>Олівець</div>
+        <div class="sc"><kbd>E</kbd>Гумка</div>
+        <div class="sc"><kbd>F</kbd>Заливка</div>
+        <div class="sc"><kbd>S</kbd>Аерозоль</div>
+        <div class="sc"><kbd>Ctrl+Z</kbd>Назад</div>
+        <div class="sc"><kbd>Ctrl+S</kbd>Зберегти</div>
+      </section>
 
-        function clearCanvas() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "white";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          pushToUndoStack();
-        }
+    </aside>
 
-        function saveCanvas() {
-          try {
-            const dataURL = canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.download = "my-drawing.png";
-            link.href = dataURL;
-            link.click();
-            state.unsavedChanges = false;
-          } catch (err) {
-            console.error("Помилка збереження:", err);
-            alert("Не вдалося зберегти зображення. Будь ласка, спробуйте знову або перевірте налаштування безпеки браузера.");
-          }
-        }
+    <!-- ═══ CANVAS ═══ -->
+    <main class="canvas-area">
+      <div id="canvas-container">
+        <canvas id="drawing-canvas"></canvas>
+        <div id="tool-indicator" class="tool-indicator">
+          <i class="fa-solid fa-pencil"></i> Олівець
+        </div>
+      </div>
+    </main>
 
-        // Функція для встановлення активного інструмента
-        function setActiveTool(tool) {
-          state.currentTool = tool;
-          // Автоматичне закриття конструктора кольору
-          elements.colorConstructor.style.display = "none";
-          // Скидання активного стану у всіх кнопок
-          elements.pencilBtn.classList.remove("active");
-          elements.eraserBtn.classList.remove("active");
-          elements.fillBtn.classList.remove("active");
-          // Закриваємо панелі Фігур та Штампів
-          elements.shapesSection.style.display = "none";
-          elements.shapesBtn.classList.remove("active");
-          elements.stampsSection.style.display = "none";
-          elements.stampsBtn.classList.remove("active");
-          if (tool === "pencil") {
-            elements.pencilBtn.classList.add("active");
-          } else if (tool === "eraser") {
-            elements.eraserBtn.classList.add("active");
-          } else if (tool === "fill") {
-            elements.fillBtn.classList.add("active");
-          }
-        }
+  </div>
+  <script src="script.js"></script>
+</body>
 
-        function updateSizeValue() {
-          elements.sizeValue.textContent = elements.sizeSlider.value;
-        }
-
-        // Функції для тоглу панелей "Фігури" та "Штампи"
-        function toggleShapesPanel() {
-          if (elements.shapesSection.style.display === "block") {
-            elements.shapesSection.style.display = "none";
-            elements.shapesBtn.classList.remove("active");
-            if (state.currentTool === "shapes") {
-              state.currentTool = "pencil";
-            }
-          } else {
-            // Закриваємо інші панелі для уніфікації роботи
-            elements.stampsSection.style.display = "none";
-            elements.stampsBtn.classList.remove("active");
-            elements.colorConstructor.style.display = "none";
-            elements.shapesSection.style.display = "block";
-            elements.shapesBtn.classList.add("active");
-            state.currentTool = "shapes";
-          }
-        }
-        function toggleStampsPanel() {
-          if (elements.stampsSection.style.display === "block") {
-            elements.stampsSection.style.display = "none";
-            elements.stampsBtn.classList.remove("active");
-            if (state.currentTool === "stamps") {
-              state.currentTool = "pencil";
-            }
-          } else {
-            elements.shapesSection.style.display = "none";
-            elements.shapesBtn.classList.remove("active");
-            elements.colorConstructor.style.display = "none";
-            elements.stampsSection.style.display = "block";
-            elements.stampsBtn.classList.add("active");
-            state.currentTool = "stamps";
-          }
-        }
-
-        // Прив’язка подій для інструментів
-        elements.pencilBtn.addEventListener("click", () => setActiveTool("pencil"));
-        elements.eraserBtn.addEventListener("click", () => setActiveTool("eraser"));
-        elements.fillBtn.addEventListener("click", () => setActiveTool("fill"));
-        elements.shapesBtn.addEventListener("click", toggleShapesPanel);
-        elements.stampsBtn.addEventListener("click", toggleStampsPanel);
-        elements.clearBtn.addEventListener("click", clearCanvas);
-        elements.saveBtn.addEventListener("click", saveCanvas);
-        elements.undoBtn.addEventListener("click", undo);
-        elements.redoBtn.addEventListener("click", redo);
-
-        // Обробка вибору кольору з палітри
-        elements.colors.forEach((color) => {
-          color.addEventListener("click", function () {
-            elements.colors.forEach((c) => c.classList.remove("active"));
-            this.classList.add("active");
-            state.currentColor = this.getAttribute("data-hex");
-          });
-        });
-
-        // Зміна розміру з валідацією
-        elements.sizeSlider.addEventListener("input", function () {
-          let newSize = Number(this.value);
-          if (newSize < 1) newSize = 1;
-          if (newSize > 50) newSize = 50;
-          state.currentSize = newSize;
-          this.value = newSize;
-          updateSizeValue();
-        });
-
-        // Події для кнопок фігур
-        elements.shapeButtons.forEach((btn) => {
-          btn.addEventListener("click", function () {
-            elements.shapeButtons.forEach((b) => b.classList.remove("active"));
-            this.classList.add("active");
-            state.currentShape = this.dataset.shape;
-          });
-        });
-
-        // Події для штампів
-        elements.stamps.forEach((stamp) => {
-          stamp.addEventListener("click", function () {
-            elements.stamps.forEach((s) => s.classList.remove("active"));
-            this.classList.add("active");
-            state.currentStamp = this.dataset.emoji;
-          });
-        });
-
-        // Імпорт зображення
-        elements.importFile.addEventListener("change", function () {
-          const file = this.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function () {
-              pushToUndoStack();
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            };
-            img.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        });
-
-        // Конструктор кольору
-        function toHex(value) {
-          const hex = parseInt(value).toString(16);
-          return hex.length === 1 ? "0" + hex : hex;
-        }
-        function toBinary(num) {
-          let binary = parseInt(num).toString(2);
-          while (binary.length < 8) {
-            binary = "0" + binary;
-          }
-          return binary;
-        }
-        function updateColorPreview() {
-          const red = elements.redSlider.value;
-          const green = elements.greenSlider.value;
-          const blue = elements.blueSlider.value;
-          elements.redValue.textContent = red;
-          elements.greenValue.textContent = green;
-          elements.blueValue.textContent = blue;
-          const rgbText = `rgb(${red}, ${green}, ${blue})`;
-          const hexText = `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
-          const binaryText = `${toBinary(red)} ${toBinary(green)} ${toBinary(blue)}`;
-          elements.rgbValue.textContent = rgbText;
-          elements.hexValue.textContent = hexText;
-          elements.binaryValue.textContent = binaryText;
-          elements.colorPreview.style.backgroundColor = rgbText;
-        }
-        function useCustomColor() {
-          const red = elements.redSlider.value;
-          const green = elements.greenSlider.value;
-          const blue = elements.blueSlider.value;
-          const hexColor = `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
-          state.currentColor = hexColor;
-          elements.colors.forEach((color) => color.classList.remove("active"));
-          if (elements.colors.length > 0) {
-            const lastColor = elements.colors[elements.colors.length - 1];
-            lastColor.style.backgroundColor = hexColor;
-            lastColor.classList.add("active");
-          }
-          toggleColorConstructor();
-        }
-        function toggleColorConstructor() {
-          if (
-            elements.colorConstructor.style.display === "none" ||
-            elements.colorConstructor.style.display === ""
-          ) {
-            elements.colorConstructor.style.display = "block";
-            let r = 0, g = 0, b = 0;
-            if (state.currentColor.startsWith("#") && state.currentColor.length === 7) {
-              r = parseInt(state.currentColor.slice(1, 3), 16);
-              g = parseInt(state.currentColor.slice(3, 5), 16);
-              b = parseInt(state.currentColor.slice(5, 7), 16);
-            }
-            elements.redSlider.value = r;
-            elements.greenSlider.value = g;
-            elements.blueSlider.value = b;
-            updateColorPreview();
-          } else {
-            elements.colorConstructor.style.display = "none";
-          }
-        }
-        elements.toggleColorConstructorBtn.addEventListener("click", toggleColorConstructor);
-        elements.redSlider.addEventListener("input", updateColorPreview);
-        elements.greenSlider.addEventListener("input", updateColorPreview);
-        elements.blueSlider.addEventListener("input", updateColorPreview);
-        elements.useColorBtn.addEventListener("click", useCustomColor);
-
-        // Попередження при спробі закрити сторінку з незбереженими змінами (перевірка підтримки Web Storage API)
-        if (typeof window.localStorage !== "undefined") {
-          window.addEventListener("beforeunload", function (e) {
-            if (state.unsavedChanges) {
-              e.preventDefault();
-              e.returnValue = "";
-            }
-          });
-        } else {
-          console.warn("Web Storage API не підтримується, попередження про незбережені зміни не працюватиме.");
-        }
-      });
-    </script>
-  </body>
 </html>

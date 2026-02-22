@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="sunny">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Клавіатурний Спринт | Тренажер клавіатури для дітей</title>
+  <meta name="description"
+    content="Клавіатурний Спринт — безкоштовний онлайн-тренажер швидкого друку для дітей 7+. Тренуй швидкість та точність набору на українській та англійській клавіатурі. Ігровий формат, 4 рівні, адаптивна складність.">
+  <meta name="keywords"
+    content="клавіатурний тренажер, тренажер друку, навчання друку, швидкий друк для дітей, клавіатура онлайн, клавіатурний спринт, тренажер клавіатури школа, навчити дитину друкувати, урок інформатики, keyboard trainer ukraine, typing game kids">
+  <meta name="author" content="Пан Артем" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://itnauka.org/services/digital_literacy/typing_skills/detect_and_type/index.html" />
+  <meta property="og:title" content="Клавіатурний Спринт | Тренажер клавіатури для дітей" />
+  <meta property="og:description"
+    content="Клавіатурний Спринт — безкоштовний онлайн-тренажер швидкого друку для дітей 7+. Тренуй швидкість та точність набору на українській та англійській клавіатурі. Ігровий формат, 4 рівні, адаптивна складність.">
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#FFE500" />
+  <meta property="og:title" content="Клавіатурний Спринт — тренажер швидкого друку для дітей">
+  <meta property="og:description"
+    content="Безкоштовний ігровий тренажер друку для дітей 7+. Лови літери, бий рекорди, тренуй швидкість на UA та EN клавіатурі!">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="uk_UA">
+  <meta property="og:image" content="https://itnauka.org/images/11.jpg">
+  <meta property="og:url"
+    content="https://itnauka.org/services/digital_literacy/typing_skills/detect_and_type/index.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    crossorigin="anonymous" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments) } gtag('js', new Date()); gtag('config', 'G-N8T05K3NGT');</script>
+  <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+  <script>window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments) }; plausible.init = plausible.init || function (i) { plausible.o = i || {} }; plausible.init();</script>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <h1><i class="fas fa-keyboard"></i> Клавіатурний Спринт</h1>
+    <div class="hdr-ctrl">
+      <button id="langbtn" class="ibtn ua" onclick="toggleLang()" title="Змінити мову / Change language"
+        aria-label="Переключити мову">
+        <i class="fas fa-keyboard"></i><span id="langlbl">UA</span>
+      </button>
+      <button class="ibtn" onclick="cycleTheme()" title="Змінити тему оформлення" aria-label="Змінити тему">
+        <i class="fas fa-palette"></i>
+      </button>
+      <button class="ibtn" onclick="toggleSound()" title="Увімкнути/вимкнути звук" aria-label="Звук">
+        <i id="sndico" class="fas fa-volume-high"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- GAME CONTAINER -->
+  <div id="gc">
+    <!-- Info panel -->
+    <div id="ip">
+      <div id="score" class="ic" aria-live="polite">
+        <i class="fas fa-trophy"></i><span id="sval">0</span>
+      </div>
+      <div id="timer" class="ic" aria-live="polite">
+        <i class="fas fa-clock"></i><span id="tval">60</span>
+      </div>
+      <div id="streak" class="ic" aria-live="polite">
+        <i class="fas fa-fire"></i><span id="stval">0</span>
+      </div>
+    </div>
+
+    <!-- Adaptive bar -->
+    <div id="abar" aria-label="Адаптивна складність">
+      <i class="fas fa-robot"></i>
+      <span>Темп:</span>
+      <div id="atrack">
+        <div id="afill"></div>
+      </div>
+      <span id="apct">50%</span>
+    </div>
+
+    <!-- Game field -->
+    <div id="gf" role="region" aria-label="Ігрове поле">
+      <div id="fb" aria-live="polite"></div>
+    </div>
+
+    <!-- Level selection -->
+    <div class="brow" id="levels" role="group" aria-label="Рівень складності">
+      <button id="beginner" class="btn sel" onclick="selectLevel('beginner')">
+        <i class="fas fa-star"></i> Дуже простий</button>
+      <button id="easy" class="btn" onclick="selectLevel('easy')">
+        <i class="fas fa-face-smile"></i> Простий</button>
+      <button id="medium" class="btn" onclick="selectLevel('medium')">
+        <i class="fas fa-dumbbell"></i> Середній</button>
+      <button id="hard" class="btn" onclick="selectLevel('hard')">
+        <i class="fas fa-fire-flame-curved"></i> Складний</button>
+    </div>
+
+    <!-- Speed selection -->
+    <div class="brow" id="speed-control" role="group" aria-label="Початкова швидкість">
+      <button id="slow" class="btn" onclick="selectSpeed('slow')">
+        <i class="fas fa-gauge-simple-low"></i> Повільно</button>
+      <button id="medium-speed" class="btn sel" onclick="selectSpeed('medium')">
+        <i class="fas fa-person-walking"></i> Середньо</button>
+      <button id="fast" class="btn" onclick="selectSpeed('fast')">
+        <i class="fas fa-person-running"></i> Швидко</button>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="arow">
+      <button id="sbtn" class="btn" onclick="startGame()">
+        <i class="fas fa-rocket"></i> Почати гру
+      </button>
+      <button id="rbtn" class="btn" onclick="askStop()">
+        <i class="fas fa-stop"></i> Зупинити гру
+      </button>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS -->
+  <div id="ins">
+    <h3><i class="fas fa-circle-info"></i> Як грати:</h3>
+    <p><strong>1.</strong> Обери рівень та швидкість, потім натисни «Почати гру».</p>
+    <p><strong>2.</strong> Літери летять зліва направо — встигни натиснути потрібну клавішу!</p>
+    <p><strong>3.</strong> Правильні натискання підряд = більше балів і серія <i class="fas fa-fire"></i>.</p>
+    <p><strong>4.</strong> Гра сама регулює темп: добре справляєшся — прискорює, складно — сповільнює.</p>
+    <p><strong>5.</strong> У тебе є <span id="gdursec">60</span> секунд на гру.</p>
+    <div class="iblock ibl">
+      <strong><i class="fas fa-layer-group"></i> Рівні:</strong><br>
+      <i class="fas fa-star"></i> <strong>Дуже простий</strong> — 10 найпростіших літер (а, о, і, е, н, т, с, р, в,
+      л)<br>
+      <i class="fas fa-face-smile"></i> <strong>Простий</strong> — всі малі літери алфавіту<br>
+      <i class="fas fa-dumbbell"></i> <strong>Середній</strong> — малі + великі (Shift + літера)<br>
+      <i class="fas fa-fire-flame-curved"></i> <strong>Складний</strong> — літери + цифри + символи
+    </div>
+    <div class="iblock ibp">
+      <strong><i class="fas fa-keyboard"></i> Великі літери та символи:</strong><br>
+      • <kbd>Shift</kbd> + літера = велика (наприклад, Shift + а = А)<br>
+      • <kbd>Shift</kbd> + цифра = символ (наприклад, Shift + 1 = !)
+    </div>
+    <div class="iblock iby">
+      <strong><i class="fas fa-triangle-exclamation"></i> Важливо:</strong>
+      Перед початком переключи мову клавіатури відповідно до режиму <strong>UA / EN</strong> у правому верхньому куті.
+    </div>
+  </div>
+
+  <footer>2026 — Комп'ютерна наука з паном Артемом</footer>
+
+  <!-- MODAL: підтвердження зупинки -->
+  <div id="cmod" class="moverlay" style="display:none" role="dialog" aria-modal="true">
+    <div class="mbox">
+      <h3><i class="fas fa-triangle-exclamation" style="color:var(--c1)"></i> Зупинити гру?</h3>
+      <p>Весь прогрес поточної гри (бали, серія, статистика) буде скинуто.<br>Хочеш продовжити грати?</p>
+      <div class="mactions">
+        <button id="mresume" class="btn" onclick="closeConfirm()">
+          <i class="fas fa-play"></i> Продовжити
+        </button>
+        <button id="mstop" class="btn" onclick="confirmStop()">
+          <i class="fas fa-stop"></i> Зупинити
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME-OVER OVERLAY -->
+  <div id="go" style="display:none" role="dialog" aria-modal="true">
+    <div class="gopanel">
+      <div class="gohdr">
+        <i class="fas fa-flag-checkered goico"></i>
+        <h2>Час вийшов!</h2>
+      </div>
+      <!-- 4 stats -->
+      <div class="sgrid">
+        <div class="scard"><i class="fas fa-trophy"></i>
+          <div class="sval" id="goscore">0</div>
+          <div class="slbl">Балів</div>
+        </div>
+        <div class="scard"><i class="fas fa-bullseye"></i>
+          <div class="sval" id="goacc">0%</div>
+          <div class="slbl">Точність</div>
+        </div>
+        <div class="scard"><i class="fas fa-gauge"></i>
+          <div class="sval" id="gocpm">0</div>
+          <div class="slbl">Символів/хв</div>
+        </div>
+        <div class="scard"><i class="fas fa-fire"></i>
+          <div class="sval" id="gostr">0</div>
+          <div class="slbl">Макс. серія</div>
+        </div>
+      </div>
+      <div class="gtags" id="gotags"></div>
+      <!-- Missed letters -->
+      <div class="gsec" id="gomisssec" style="display:none">
+        <h4><i class="fas fa-magnifying-glass"></i> Найчастіше пропущені:</h4>
+        <div class="mrow" id="gomissrow"></div>
+      </div>
+      <!-- Achievement -->
+      <div id="goach"></div>
+      <!-- Best -->
+      <div id="gobest" style="display:none"></div>
+      <!-- Tips -->
+      <div class="gsec">
+        <h4><i class="fas fa-lightbulb"></i> Поради для тебе:</h4>
+        <div id="gotips"></div>
+      </div>
+      <div class="garow">
+        <button class="btn gbplay" onclick="startFromGO()">
+          <i class="fas fa-rotate-right"></i> Грати ще раз
+        </button>
+        <button class="btn gbclose" onclick="closeGO()">
+          <i class="fas fa-xmark"></i> Закрити
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streak burst -->
+  <div id="sburst-overlay">
+    <div id="sburst"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

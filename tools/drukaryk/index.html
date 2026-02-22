@@ -2,10 +2,36 @@
 <html lang="uk">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Друкарик - простий текстовий редактор для створення та збереження історій">
-    <title>Друкарик | Текстовий редактор</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Друкарик | Текстовий редактор для дітей</title>
+    <meta name="description"
+        content="Друкарик — яскравий та безпечний онлайн-текстовий редактор для дітей. Допомагає малечі вчитися друкувати, створювати історії та розвивати творчість у зручній ігровій формі." />
+    <meta name="keywords"
+        content="друкарик, текстовий редактор для дітей, навчання письму, дитячий редактор, онлайн зошит, вчимося друкувати, редактор з емодзі, безпечний редактор" />
+    <meta name="author" content="CompNauka" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://itnauka.org/tools/drukaryk/" />
+    <meta property="og:title" content="Друкарик | Текстовий редактор для дітей" />
+    <meta property="og:description"
+        content="Яскравий та простий редактор для перших кроків у цифровому світі. Друкуй, грай з кольорами та емодзі!" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:title" content="Друкарик | Текстовий редактор для дітей" />
+    <meta property="twitter:description"
+        content="Яскравий та простий редактор для перших кроків у цифровому світі. Друкуй, грай з кольорами та емодзі!" />
+
+    <link rel="canonical" href="https://itnauka.org/tools/drukaryk/" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
@@ -16,645 +42,179 @@
         gtag('config', 'G-N8T05K3NGT');
     </script>
 
-    <style>
-        body {
-            font-family: "Roboto", "Arial", sans-serif;
-            background-color: #f0f8ff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 95%;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-        }
-
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-
-        button {
-            background-color: #74b9ff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            color: white;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            background-color: #0984e3;
-        }
-
-        button:focus {
-            outline: 3px solid #0984e3;
-            outline-offset: 2px;
-        }
-
-        .color-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-
-        .active-button {
-            background-color: #0984e3;
-            transform: scale(1.05);
-        }
-
-        #text-area {
-            width: 100%;
-            min-height: 300px;
-            border: 3px dashed #dfe6e9;
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 18px;
-            line-height: 1.6;
-            box-sizing: border-box;
-            outline: none;
-            margin-bottom: 15px;
-            overflow-y: auto;
-        }
-
-        #text-area:focus {
-            border-color: #74b9ff;
-        }
-
-        .font-size-btn {
-            font-weight: bold;
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        @media (max-width: 600px) {
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .toolbar button {
-                padding: 8px 12px;
-                font-size: 14px;
-            }
-
-            #text-area {
-                min-height: 200px;
-                font-size: 16px;
-            }
-        }
-
-        #message {
-            text-align: center;
-            color: #2ecc71;
-            font-weight: bold;
-            height: 20px;
-            margin-top: 10px;
-            min-height: 20px;
-        }
-
-        .emoji-panel {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-
-        .emoji-btn {
-            font-size: 20px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #fdcb6e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .emoji-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .file-format {
-            margin-top: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .file-format select {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #dfe6e9;
-            font-size: 16px;
-        }
-
-        .toolbar-group {
-            display: flex;
-            gap: 5px;
-            margin: 5px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .error-message {
-            color: #e74c3c;
-        }
-
-        .word-count {
-            text-align: right;
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <h1>Друкарик 📜</h1>
-
-        <div class="toolbar">
-            <div class="toolbar-group">
-                <button id="bold-btn" title="Жирний шрифт" aria-label="Жирний шрифт"><strong>Ж</strong></button>
-                <button id="italic-btn" title="Курсив" aria-label="Курсив"><em>К</em></button>
-                <button id="underline-btn" title="Підкреслений" aria-label="Підкреслений"><u>П</u></button>
-                <button id="remove-format-btn" title="Видалити форматування"
-                    aria-label="Видалити форматування">Аа</button>
-            </div>
-
-            <div class="toolbar-group">
-                <button class="font-size-btn" id="increase-font" title="Збільшити шрифт"
-                    aria-label="Збільшити шрифт">A+</button>
-                <button class="font-size-btn" id="decrease-font" title="Зменшити шрифт"
-                    aria-label="Зменшити шрифт">A-</button>
-            </div>
-
-            <div class="toolbar-group">
-                <button id="align-left-btn" title="Вирівняти ліворуч" aria-label="Вирівняти ліворуч">⟵</button>
-                <button id="align-center-btn" title="Вирівняти по центру" aria-label="Вирівняти по центру">⟷</button>
-                <button id="align-right-btn" title="Вирівняти праворуч" aria-label="Вирівняти праворуч">⟶</button>
-            </div>
-
-            <div class="toolbar-group">
-                <button class="color-btn" style="background-color: #e74c3c;" data-color="#e74c3c" title="Червоний колір"
-                    aria-label="Червоний колір"></button>
-                <button class="color-btn" style="background-color: #2ecc71;" data-color="#2ecc71" title="Зелений колір"
-                    aria-label="Зелений колір"></button>
-                <button class="color-btn" style="background-color: #3498db;" data-color="#3498db" title="Синій колір"
-                    aria-label="Синій колір"></button>
-                <button class="color-btn" style="background-color: #f1c40f;" data-color="#f1c40f" title="Жовтий колір"
-                    aria-label="Жовтий колір"></button>
-                <button class="color-btn" style="background-color: #9b59b6;" data-color="#9b59b6"
-                    title="Фіолетовий колір" aria-label="Фіолетовий колір"></button>
-                <button class="color-btn" style="background-color: #000000;" data-color="#000000" title="Чорний колір"
-                    aria-label="Чорний колір"></button>
-            </div>
-        </div>
-
-        <div class="emoji-panel" role="toolbar" aria-label="Емодзі">
-            <button class="emoji-btn" data-emoji="😊" title="Посмішка" aria-label="Додати емодзі посмішка">😊</button>
-            <button class="emoji-btn" data-emoji="😂" title="Сміх" aria-label="Додати емодзі сміх">😂</button>
-            <button class="emoji-btn" data-emoji="❤️" title="Серце" aria-label="Додати емодзі серце">❤️</button>
-            <button class="emoji-btn" data-emoji="⭐" title="Зірка" aria-label="Додати емодзі зірка">⭐</button>
-            <button class="emoji-btn" data-emoji="☀️" title="Сонце" aria-label="Додати емодзі сонце">☀️</button>
-            <button class="emoji-btn" data-emoji="🌙" title="Місяць" aria-label="Додати емодзі місяць">🌙</button>
-            <button class="emoji-btn" data-emoji="🌸" title="Квітка" aria-label="Додати емодзі квітка">🌸</button>
-            <button class="emoji-btn" data-emoji="🐶" title="Тварина" aria-label="Додати емодзі тварина">🐶</button>
-        </div>
-
-        <div id="text-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Редактор тексту">
-            Напиши тут свою історію...</div>
-
-        <div class="word-count" id="word-count">Слова: 0 | Символи: 0</div>
-
-        <div class="file-format">
-            <label for="file-format">Формат збереження:</label>
-            <select id="file-format" aria-label="Вибір формату збереження">
-                <option value="text">Текстовий файл (.txt)</option>
-                <option value="html">HTML файл (.html)</option>
-                <option value="pdf">PDF файл (.pdf)</option>
-            </select>
-        </div>
-
-        <div class="action-buttons">
-            <button id="clear-btn" title="Очистити все" aria-label="Очистити весь текст">Очистити</button>
-            <button id="copy-btn" title="Скопіювати текст" aria-label="Скопіювати текст">Скопіювати</button>
-            <button id="save-btn" title="Зберегти текст" aria-label="Зберегти текст">Зберегти</button>
-            <button id="print-btn" title="Роздрукувати" aria-label="Роздрукувати текст">Роздрукувати</button>
-        </div>
-
-        <div id="message" role="status" aria-live="polite"></div>
-    </div>
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
-        // Зібрати всі елементи інтерфейсу для кращої організації коду
-        const editor = {
-            textArea: document.getElementById('text-area'),
-            message: document.getElementById('message'),
-            fileFormat: document.getElementById('file-format'),
-            wordCount: document.getElementById('word-count'),
-            placeholderText: 'Напиши тут свою історію...',
-
-            // Ініціалізація редактора
-            init: function () {
-                // Обробка початкового тексту
-                this.textArea.addEventListener('focus', this.handleFocus.bind(this));
-                this.textArea.addEventListener('blur', this.handleBlur.bind(this));
-                this.textArea.addEventListener('input', this.updateWordCount.bind(this));
-
-                // Ініціалізація лічильника слів
-                this.updateWordCount();
-
-                // Кнопки форматування
-                document.getElementById('bold-btn').addEventListener('click', () => this.formatText('bold'));
-                document.getElementById('italic-btn').addEventListener('click', () => this.formatText('italic'));
-                document.getElementById('underline-btn').addEventListener('click', () => this.formatText('underline'));
-                document.getElementById('remove-format-btn').addEventListener('click', () => this.formatText('removeFormat'));
-
-                // Кнопки вирівнювання
-                document.getElementById('align-left-btn').addEventListener('click', () => this.formatText('justifyLeft'));
-                document.getElementById('align-center-btn').addEventListener('click', () => this.formatText('justifyCenter'));
-                document.getElementById('align-right-btn').addEventListener('click', () => this.formatText('justifyRight'));
-
-                // Кнопки зміни розміру
-                document.getElementById('increase-font').addEventListener('click', () => this.changeSize(5));
-                document.getElementById('decrease-font').addEventListener('click', () => this.changeSize(2));
-
-                // Кнопки зміни кольору
-                document.querySelectorAll('.color-btn').forEach(btn => {
-                    btn.addEventListener('click', () => this.changeColor(btn.dataset.color));
-                });
-
-                // Кнопки емодзі
-                document.querySelectorAll('.emoji-btn').forEach(btn => {
-                    btn.addEventListener('click', () => this.addEmoji(btn.dataset.emoji));
-                });
-
-                // Кнопки дій
-                document.getElementById('clear-btn').addEventListener('click', this.clearText.bind(this));
-                document.getElementById('copy-btn').addEventListener('click', this.copyText.bind(this));
-                document.getElementById('save-btn').addEventListener('click', this.saveText.bind(this));
-                document.getElementById('print-btn').addEventListener('click', this.printText.bind(this));
-
-                // Додавання обробників клавіатури для кращої доступності
-                this.addKeyboardShortcuts();
-
-                // Додавання збереження чернетки
-                this.loadDraft();
-                setInterval(this.saveDraft.bind(this), 30000); // Автозбереження кожні 30 секунд
-            },
-
-            // Методи редактора
-            handleFocus: function (e) {
-                if (e.target.textContent === this.placeholderText) {
-                    e.target.textContent = '';
-                    e.target.style.color = '#000000';
-                }
-            },
-
-            handleBlur: function (e) {
-                if (e.target.textContent.trim() === '') {
-                    e.target.textContent = this.placeholderText;
-                    e.target.style.color = '#7f8c8d';
-                }
-            },
-
-            updateWordCount: function () {
-                const text = this.textArea.textContent || '';
-                const content = text === this.placeholderText ? '' : text;
-                const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
-                const charCount = content.length;
-
-                this.wordCount.textContent = `Слова: ${wordCount} | Символи: ${charCount}`;
-
-                // Автозбереження при введенні
-                this.saveDraft();
-            },
-
-            formatText: function (command) {
-                try {
-                    document.execCommand(command, false, null);
-                    this.textArea.focus();
-
-                    // Оновлення активних кнопок
-                    this.updateButtonStates();
-                } catch (error) {
-                    this.showMessage('Помилка при форматуванні тексту', true);
-                    console.error('Помилка форматування:', error);
-                }
-            },
-
-            updateButtonStates: function () {
-                // Оновлюємо активний стан кнопок на основі поточного форматування
-                document.getElementById('bold-btn').classList.toggle('active-button', document.queryCommandState('bold'));
-                document.getElementById('italic-btn').classList.toggle('active-button', document.queryCommandState('italic'));
-                document.getElementById('underline-btn').classList.toggle('active-button', document.queryCommandState('underline'));
-
-                document.getElementById('align-left-btn').classList.toggle('active-button', document.queryCommandState('justifyLeft'));
-                document.getElementById('align-center-btn').classList.toggle('active-button', document.queryCommandState('justifyCenter'));
-                document.getElementById('align-right-btn').classList.toggle('active-button', document.queryCommandState('justifyRight'));
-            },
-
-            changeSize: function (size) {
-                try {
-                    document.execCommand('fontSize', false, size);
-                    this.textArea.focus();
-                } catch (error) {
-                    this.showMessage('Помилка при зміні розміру тексту', true);
-                    console.error('Помилка зміни розміру:', error);
-                }
-            },
-
-            changeColor: function (color) {
-                try {
-                    document.execCommand('foreColor', false, color);
-                    this.textArea.focus();
-                } catch (error) {
-                    this.showMessage('Помилка при зміні кольору тексту', true);
-                    console.error('Помилка зміни кольору:', error);
-                }
-            },
-
-            addEmoji: function (emoji) {
-                try {
-                    this.textArea.focus();
-                    document.execCommand('insertText', false, emoji);
-                    this.updateWordCount();
-                } catch (error) {
-                    this.showMessage('Помилка при додаванні емодзі', true);
-                    console.error('Помилка додавання емодзі:', error);
-                }
-            },
-
-            clearText: function () {
-                if (confirm('Ти впевнений, що хочеш видалити весь текст?')) {
-                    this.textArea.innerHTML = '';
-                    this.textArea.style.color = '#000000';
-                    this.showMessage('Текст очищено!');
-                    this.updateWordCount();
-                    this.handleBlur({ target: this.textArea });
-                }
-            },
-
-            copyText: function () {
-                try {
-                    const selection = window.getSelection();
-                    const hasSelection = selection.toString().length > 0;
-
-                    if (hasSelection) {
-                        // Копіюємо виділений текст
-                        document.execCommand('copy');
-                        this.showMessage('Виділений текст скопійовано!');
-                    } else {
-                        // Копіюємо весь текст
-                        const text = this.textArea.textContent;
-                        if (text !== this.placeholderText) {
-                            navigator.clipboard.writeText(text)
-                                .then(() => this.showMessage('Весь текст скопійовано!'))
-                                .catch(err => {
-                                    console.error('Помилка копіювання: ', err);
-                                    this.showMessage('Не вдалося скопіювати текст', true);
-                                });
-                        } else {
-                            this.showMessage('Немає тексту для копіювання!', true);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Помилка при копіюванні:', error);
-                    this.showMessage('Не вдалося скопіювати текст', true);
-                }
-            },
-
-            saveText: function () {
-                try {
-                    const format = this.fileFormat.value;
-                    let content, mimeType, fileName;
-
-                    if (this.textArea.textContent === this.placeholderText || this.textArea.textContent.trim() === '') {
-                        this.showMessage('Немає тексту для збереження!', true);
-                        return;
-                    }
-
-                    if (format === 'text') {
-                        // Зберігаємо лише текст без форматування
-                        content = this.textArea.innerText || this.textArea.textContent;
-                        mimeType = 'text/plain';
-                        fileName = 'моя_історія.txt';
-                    } else if (format === 'html') {
-                        // Зберігаємо як HTML з форматуванням
-                        content = `<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Моя історія</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-    </style>
-</head>
-<body>
-    ${this.textArea.innerHTML}
-</body>
-</html>`;
-                        mimeType = 'text/html';
-                        fileName = 'моя_історія.html';
-                    } else if (format === 'pdf') {
-                        this.printText(true);
-                        return;
-                    }
-
-                    const blob = new Blob([content], { type: mimeType });
-                    const url = URL.createObjectURL(blob);
-
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    this.showMessage('Твоя історія збережена як ' + fileName + '!');
-                } catch (error) {
-                    console.error('Помилка при збереженні:', error);
-                    this.showMessage('Помилка при збереженні файлу', true);
-                }
-            },
-
-            printText: function (asPDF = false) {
-                try {
-                    if (this.textArea.textContent === this.placeholderText || this.textArea.textContent.trim() === '') {
-                        this.showMessage('Немає тексту для друку!', true);
-                        return;
-                    }
-
-                    const content = this.textArea.innerHTML;
-                    const printWindow = window.open('', '', 'height=600,width=800');
-
-                    printWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html lang="uk">
-                        <head>
-                            <meta charset="UTF-8">
-                            <title>Моя історія</title>
-                            <style>
-                                @media print {
-                                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                                    @page { size: A4; margin: 2cm; }
-                                }
-                                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                            </style>
-                        </head>
-                        <body>
-                            ${content}
-                        </body>
-                        </html>
-                    `);
-
-                    printWindow.document.close();
-
-                    // Почекаємо поки завантажиться сторінка
-                    printWindow.onload = function () {
-                        if (asPDF) {
-                            printWindow.document.title = "моя_історія.pdf";
-                        }
-                        printWindow.print();
-                        if (!asPDF) {
-                            printWindow.close();
-                        }
-                    };
-
-                    this.showMessage(asPDF ? 'Підготовлено до збереження як PDF!' : 'Готово до друку!');
-                } catch (error) {
-                    console.error('Помилка при підготовці до друку:', error);
-                    this.showMessage('Помилка при підготовці до друку', true);
-                }
-            },
-
-            showMessage: function (msg, isError = false) {
-                this.message.textContent = msg;
-                this.message.className = isError ? 'error-message' : '';
-
-                clearTimeout(this.messageTimer);
-                this.messageTimer = setTimeout(() => {
-                    this.message.textContent = '';
-                    this.message.className = '';
-                }, 3000);
-            },
-
-            addKeyboardShortcuts: function () {
-                document.addEventListener('keydown', (e) => {
-                    // Перевіряємо, чи не в текстовому полі натиснута клавіша
-                    const isEditorFocused = document.activeElement === this.textArea;
-
-                    // Комбінації, які працюють всюди
-                    if (e.ctrlKey && e.key === 's') {
-                        e.preventDefault();
-                        this.saveText();
-                    } else if (e.ctrlKey && e.key === 'p') {
-                        e.preventDefault();
-                        this.printText();
-                    }
-
-                    // Комбінації, які працюють тільки коли активний редактор
-                    if (isEditorFocused) {
-                        // Ці комбінації вже обробляються браузером (Ctrl+B, Ctrl+I, Ctrl+U)
-                        if (e.ctrlKey && e.key === ' ') {
-                            e.preventDefault();
-                            this.formatText('removeFormat');
-                        }
-                    }
-                });
-            },
-
-            saveDraft: function () {
-                // Не зберігаємо якщо текст порожній або це плейсхолдер
-                if (this.textArea.textContent !== this.placeholderText && this.textArea.textContent.trim() !== '') {
-                    try {
-                        localStorage.setItem('drukaryk_draft_content', this.textArea.innerHTML);
-                        localStorage.setItem('drukaryk_draft_time', new Date().toISOString());
-                    } catch (error) {
-                        console.error('Помилка автозбереження:', error);
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    colors: {
+                        'neo-yellow': '#FFDE00',
+                        'neo-blue': '#3B82F6',
+                        'neo-red': '#FF4D4D',
+                        'neo-green': '#00E055',
+                        'neo-purple': '#A855F7',
+                        'neo-dark': '#1a1a1a',
+                        'dark-bg': '#121212',
+                        'dark-card': '#1e1e1e',
+                    },
+                    boxShadow: {
+                        'neo': '4px 4px 0px 0px #000000',
+                        'neo-sm': '2px 2px 0px 0px #000000',
+                        'neo-lg': '8px 8px 0px 0px #000000',
                     }
                 }
-            },
-
-            loadDraft: function () {
-                try {
-                    const savedContent = localStorage.getItem('drukaryk_draft_content');
-                    const savedTime = localStorage.getItem('drukaryk_draft_time');
-
-                    if (savedContent && savedTime) {
-                        const timeAgo = this.getTimeAgo(new Date(savedTime));
-
-                        if (confirm(`Знайдено збережений чернетку (${timeAgo}). Завантажити його?`)) {
-                            this.textArea.innerHTML = savedContent;
-                            this.textArea.style.color = '#000000';
-                            this.updateWordCount();
-                            this.showMessage('Чернетку завантажено!');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Помилка завантаження чернетки:', error);
-                }
-            },
-
-            getTimeAgo: function (date) {
-                const now = new Date();
-                const diffMs = now - date;
-                const diffMins = Math.floor(diffMs / (1000 * 60));
-
-                if (diffMins < 1) return 'щойно';
-                if (diffMins < 60) return `${diffMins} хв тому`;
-
-                const diffHours = Math.floor(diffMins / 60);
-                if (diffHours < 24) return `${diffHours} год тому`;
-
-                const diffDays = Math.floor(diffHours / 24);
-                return `${diffDays} днів тому`;
             }
-        };
-
-        // Ініціалізуємо редактор при завантаженні сторінки
-        document.addEventListener('DOMContentLoaded', () => {
-            editor.init();
-        });
+        }
     </script>
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body
+    class="bg-neo-yellow dark:bg-dark-bg flex flex-col selection:bg-neo-purple selection:text-white transition-colors duration-300">
+
+    <!-- HEADER -->
+    <header
+        class="sticky top-0 flex-none bg-neo-yellow dark:bg-dark-card border-b-4 border-black p-3 flex justify-between items-center z-50">
+        <div class="flex items-center gap-4 select-none">
+            <div
+                class="w-12 h-12 sm:w-14 sm:h-14 bg-neo-blue border-4 border-black rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl shadow-neo-sm transform -rotate-3">
+                <i class="fas fa-keyboard"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black uppercase dark:text-white tracking-tight">Друкарик</h1>
+        </div>
+
+        <div class="flex gap-2 sm:gap-3">
+            <button onmousedown="event.preventDefault()" onclick="App.toggleTheme()"
+                class="neo-btn bg-gray-700 text-white w-12 h-12 sm:w-14 sm:h-14" title="Тема" aria-label="Змінити тему">
+                <i id="theme-icon" class="fas fa-moon text-lg sm:text-xl"></i>
+            </button>
+
+            <button onmousedown="event.preventDefault()" onclick="App.clear()"
+                class="neo-btn bg-neo-red text-white w-12 h-12 sm:w-14 sm:h-14" title="Видалити"
+                aria-label="Видалити весь текст">
+                <i class="fas fa-trash-alt text-lg sm:text-xl"></i>
+            </button>
+
+            <label class="neo-btn bg-orange-400 text-black w-12 h-12 sm:w-14 sm:h-14 cursor-pointer" title="Відкрити"
+                aria-label="Відкрити файл">
+                <i class="fas fa-folder-open text-lg sm:text-xl"></i>
+                <input id="file-input" type="file" accept=".txt,.html" class="hidden" />
+            </label>
+
+            <!-- FIX #8: підказка Ctrl+S у title -->
+            <button onmousedown="event.preventDefault()" onclick="App.askSave()"
+                class="neo-btn bg-neo-green px-4 sm:px-6 h-12 sm:h-14 gap-2 text-sm sm:text-base" aria-label="Зберегти"
+                title="Зберегти (Ctrl+S)">
+                <i class="fas fa-save text-lg sm:text-xl"></i>
+                <span class="hidden md:inline font-black uppercase">Зберегти</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOOLS TOOLBAR -->
+    <div
+        class="sticky top-[76px] sm:top-[84px] flex-none bg-neo-purple border-b-4 border-black p-2 overflow-x-auto no-scrollbar z-40">
+        <div class="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3 justify-center min-w-max px-2">
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <button onmousedown="event.preventDefault()" onclick="Editor.exec('undo')"
+                    class="neo-btn bg-white w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl" aria-label="Скасувати">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button onmousedown="event.preventDefault()" onclick="Editor.exec('redo')"
+                    class="neo-btn bg-white w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl" aria-label="Повторити">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <!-- FIX #2: title пояснює що можна натиснути без виділення -->
+                <button id="cmd-bold" onmousedown="event.preventDefault()" onclick="Editor.exec('bold')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl font-black"
+                    aria-label="Жирний" title="Жирний (або натисни і друкуй)">Ж</button>
+                <button id="cmd-italic" onmousedown="event.preventDefault()" onclick="Editor.exec('italic')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl italic font-black"
+                    aria-label="Курсив" title="Курсив (або натисни і друкуй)">К</button>
+                <button id="cmd-underline" onmousedown="event.preventDefault()" onclick="Editor.exec('underline')"
+                    class="neo-btn bg-neo-blue text-white w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl underline font-black"
+                    aria-label="Підкреслення" title="Підкреслення (або натисни і друкуй)">Ч</button>
+            </div>
+
+            <div class="flex gap-1 sm:gap-2 bg-black/10 p-1 rounded-2xl">
+                <button id="sz-3" onmousedown="event.preventDefault()" onclick="Editor.setSize('3')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Малий розмір">М</button>
+                <button id="sz-5" onmousedown="event.preventDefault()" onclick="Editor.setSize('5')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Середній розмір">С</button>
+                <button id="sz-7" onmousedown="event.preventDefault()" onclick="Editor.setSize('7')"
+                    class="neo-btn bg-pink-400 w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl"
+                    aria-label="Великий розмір">В</button>
+            </div>
+
+            <div id="palette"
+                class="flex gap-2 bg-white border-4 border-black p-1.5 rounded-2xl shadow-neo-sm h-12 sm:h-14 items-center">
+            </div>
+        </div>
+    </div>
+
+    <!-- EMOJI TOOLBAR -->
+    <div
+        class="sticky top-[148px] sm:top-[160px] flex-none bg-teal-300 dark:bg-gray-800 border-b-4 border-black p-2 z-40">
+        <div
+            class="max-w-4xl mx-auto flex gap-3 justify-center items-center overflow-x-auto overflow-y-visible no-scrollbar py-1 px-2">
+            <button onmousedown="event.preventDefault()" onclick="Editor.renderEmojis()"
+                class="neo-btn bg-neo-yellow w-12 h-12 sm:w-14 sm:h-14 shrink-0 text-2xl sm:text-3xl shadow-neo-sm"
+                aria-label="Перемішати емодзі">🎲</button>
+            <div id="emojis" class="flex gap-2 min-w-max" role="group" aria-label="Емодзі"></div>
+        </div>
+    </div>
+
+    <!-- EDITOR AREA -->
+    <main class="flex-grow p-4 sm:p-8 flex flex-col bg-neo-yellow/10 dark:bg-dark-bg">
+        <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col">
+            <div
+                class="flex-grow bg-white dark:bg-dark-card border-4 border-black shadow-neo-lg rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col">
+                <div id="editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true"
+                    aria-label="Поле для написання" data-placeholder="Почни писати тут свою неймовірну історію..."
+                    class="flex-grow p-6 sm:p-14 outline-none text-2xl sm:text-4xl leading-relaxed font-bold text-neo-dark dark:text-white min-h-[400px]">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- STATUS BAR -->
+    <div class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40">
+        <div class="bg-white dark:bg-dark-card border-4 border-black px-4 py-2 sm:px-6 sm:py-3 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl shadow-neo dark:text-white"
+            aria-live="polite" aria-atomic="true">
+            <span id="word-count">0</span> СЛІВ
+        </div>
+    </div>
+
+    <!-- TOASTS -->
+    <div id="toasts"
+        class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-max"
+        aria-live="assertive" aria-atomic="true"></div>
+
+    <!-- MODAL WINDOW -->
+    <!-- FIX #6: role="dialog", aria-modal, aria-labelledby, aria-hidden -->
+    <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-msg"
+        aria-hidden="true"
+        class="fixed inset-0 bg-black/70 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div
+            class="bg-white dark:bg-dark-card border-4 border-black shadow-neo-lg rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 w-full max-w-lg text-center">
+            <h3 id="modal-title" class="text-2xl sm:text-3xl font-black uppercase mb-4 dark:text-white"></h3>
+            <p id="modal-msg" class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 sm:mb-10 font-bold"></p>
+            <div id="modal-actions" class="flex flex-col gap-3 sm:gap-4"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 
 </html>
