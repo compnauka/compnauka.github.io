@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Справжній Друк!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<!-- ── START MODAL ───────────────────────────────────────── -->
+<div id="start-modal" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal-box">
+    <div class="modal-icon"><i class="fa-solid fa-keyboard"></i></div>
+    <h1 class="modal-title">Справжній Друк!</h1>
+    <p class="modal-sub">Натискай клавіші та вчись друкувати<br>швидко і точно!</p>
+    <button id="start-btn" class="btn btn-teal btn-full btn-lg">
+      <i class="fa-solid fa-play"></i> Почати практику
+    </button>
+    <button id="start-test-btn" class="btn btn-amber btn-full" style="margin-top:10px;">
+      <i class="fa-solid fa-stopwatch"></i> Пройти тест 1 хв
+    </button>
+    <p class="modal-hint" style="margin-top:12px;">Підходить для дітей і дорослих</p>
+  </div>
+</div>
+
+<!-- ── MILESTONE MODAL ───────────────────────────────────── -->
+<div id="milestone-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="modal-box milestone-box">
+    <div class="modal-icon float"><i class="fa-solid fa-trophy"></i></div>
+    <h2 class="modal-title" id="m-title">Супер!</h2>
+    <p class="modal-sub" id="m-text">10 слів!</p>
+    <button id="m-next-btn" class="btn btn-teal btn-full btn-lg">
+      <span id="m-btn-label">Далі</span>
+      <i class="fa-solid fa-arrow-right"></i>
+    </button>
+    <p class="modal-hint" id="m-hint">Натисни будь-яку клавішу</p>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ─────────────────────────────────────── -->
+<div id="confirm-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="modal-box">
+    <div class="modal-icon"><i class="fa-solid fa-globe"></i></div>
+    <h2 class="modal-title" id="confirm-title">Зміна мови</h2>
+    <p class="modal-sub" id="confirm-sub">Поточний прогрес буде скинуто.<br>Продовжити?</p>
+    <div style="display:flex;gap:10px;">
+      <button id="confirm-cancel" class="btn btn-ghost" style="flex:1;">
+        <i class="fa-solid fa-xmark"></i> Скасувати
+      </button>
+      <button id="confirm-yes" class="btn btn-teal" style="flex:1;">
+        <i class="fa-solid fa-check"></i> Так!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── COUNTDOWN MODAL ────────────────────────────────────── -->
+<div id="countdown-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="countdown-modal-box">
+    <span id="countdown-num">3</span>
+    <p class="countdown-label" id="countdown-label">Приготуйся!</p>
+  </div>
+</div>
+
+<!-- ── TEST RESULT MODAL ──────────────────────────────────── -->
+<div id="test-result-modal" class="overlay hidden" aria-modal="true" role="dialog">
+  <div class="modal-box test-result-box">
+    <div class="modal-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+    <h2 class="modal-title" id="tr-title">Результат тесту!</h2>
+    <div class="test-stats-grid">
+      <div class="test-stat-box big" id="tr-wpm-box">
+        <span class="tsv" id="tr-wpm">0</span>
+        <span class="tsl" id="tr-wpm-lbl">WPM — Слів/хвилину</span>
+      </div>
+      <div class="test-stat-box">
+        <span class="tsv" id="tr-words">0</span>
+        <span class="tsl" id="tr-words-lbl">Слів</span>
+      </div>
+      <div class="test-stat-box">
+        <span class="tsv" id="tr-acc">100%</span>
+        <span class="tsl" id="tr-acc-lbl">Точність</span>
+      </div>
+      <div class="test-stat-box" id="tr-best-box">
+        <span class="tsv" id="tr-best">0</span>
+        <span class="tsl" id="tr-best-lbl">Рекорд WPM</span>
+      </div>
+    </div>
+    <p class="modal-sub" id="tr-comment" style="margin-bottom:16px;"></p>
+    <div class="test-btn-row">
+      <button id="tr-retry-btn" class="btn btn-amber" style="flex:1;">
+        <i class="fa-solid fa-rotate-right"></i> <span id="tr-retry-lbl">Повторити</span>
+      </button>
+      <button id="tr-back-btn" class="btn btn-ghost" style="flex:1;">
+        <i class="fa-solid fa-book-open"></i> <span id="tr-back-lbl">Практика</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ────────────────────────────────────────────── -->
+<div id="header">
+  <div class="logo">
+    <i class="fa-solid fa-keyboard"></i>
+    Справжній Друк!
+  </div>
+  <div class="hcontrols">
+    <button id="test-btn" class="icon-btn" aria-label="Пройти тест">
+      <i class="fa-solid fa-stopwatch"></i>
+      <span id="test-btn-label">Тест</span>
+    </button>
+    <button id="lang-btn" class="icon-btn">
+      <i class="fa-solid fa-globe"></i>
+      <span id="lang-label">UA</span>
+    </button>
+    <button id="sound-btn" class="icon-btn" aria-label="Toggle sound">
+      <i class="fa-solid fa-volume-high"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ── STATS ─────────────────────────────────────────────── -->
+<div id="stats-row">
+  <div class="stat s-score">
+    <i class="fa-solid fa-star stat-icon" style="color:var(--amber-dk);"></i>
+    <span class="stat-lbl" data-label="words">Слова</span>
+    <span class="stat-val" id="st-score">0</span>
+  </div>
+  <div class="stat s-streak">
+    <i class="fa-solid fa-fire stat-icon" style="color:var(--coral);"></i>
+    <span class="stat-lbl" data-label="streak">Серія</span>
+    <span class="stat-val" id="st-streak">0</span>
+  </div>
+  <div class="stat s-errors">
+    <i class="fa-solid fa-circle-xmark stat-icon" style="color:var(--coral-dk);"></i>
+    <span class="stat-lbl" data-label="errors">Помилки</span>
+    <span class="stat-val" id="st-errors">0</span>
+  </div>
+  <div class="stat s-record">
+    <i class="fa-solid fa-medal stat-icon" style="color:var(--slate);"></i>
+    <span class="stat-lbl" data-label="record">Рекорд</span>
+    <span class="stat-val" id="st-record">0</span>
+  </div>
+  <div class="stat s-wpm">
+    <i class="fa-solid fa-gauge-high stat-icon" style="color:var(--teal-dk);"></i>
+    <span class="stat-lbl" data-label="wpm">WPM</span>
+    <span class="stat-val" id="st-wpm">0</span>
+  </div>
+  <div class="stat s-acc">
+    <i class="fa-solid fa-bullseye stat-icon" style="color:var(--sage-dk);"></i>
+    <span class="stat-lbl" data-label="accuracy">Точність</span>
+    <span class="stat-val" id="st-acc">100%</span>
+  </div>
+</div>
+
+<!-- ── PROGRESS ───────────────────────────────────────────── -->
+<div id="prog-wrap"><div id="prog-bar"></div></div>
+
+<!-- ── TEST TIMER BANNER ─────────────────────────────────── -->
+<div id="test-banner" class="hidden">
+  <i class="fa-solid fa-stopwatch"></i>
+  <span id="timer-sec">60</span>с
+  <span id="diff-badge" style="margin-left:8px;" class="lvl-3">Всі рівні</span>
+</div>
+
+<!-- ── WORD + MESSAGE ────────────────────────────────────── -->
+<div id="main-area">
+  <div id="word-display" role="status" aria-live="polite"></div>
+  <div id="msg-area">
+    <i id="msg-icon" class="fa-solid fa-check-circle" style="color:var(--sage-dk);"></i>
+    <span id="msg-text"></span>
+  </div>
+</div>
+
+<!-- ── KEYBOARD ───────────────────────────────────────────── -->
+<div id="kb-wrap">
+<div id="kb">
+  <!-- Numbers row -->
+  <div class="kb-row">
+    <div class="key letter" id="apo-key" data-char="'">'</div>
+    <div class="key special">1</div><div class="key special">2</div>
+    <div class="key special">3</div><div class="key special">4</div>
+    <div class="key special">5</div><div class="key special">6</div>
+    <div class="key special">7</div><div class="key special">8</div>
+    <div class="key special">9</div><div class="key special">0</div>
+    <div class="key special">-</div><div class="key special">=</div>
+    <div class="key special w-bs" data-action="backspace">
+      <i class="fa-solid fa-delete-left"></i>
+    </div>
+  </div>
+  <!-- Row 1 -->
+  <div class="kb-row kb-letter-row" id="row1">
+    <div class="key special w-tab">Tab</div>
+    <div class="key letter" data-char="й">Й</div>
+    <div class="key letter" data-char="ц">Ц</div>
+    <div class="key letter" data-char="у">У</div>
+    <div class="key letter" data-char="к">К</div>
+    <div class="key letter" data-char="е">Е</div>
+    <div class="key letter" data-char="н">Н</div>
+    <div class="key letter" data-char="г">Г</div>
+    <div class="key letter" data-char="ш">Ш</div>
+    <div class="key letter" data-char="щ">Щ</div>
+    <div class="key letter" data-char="з">З</div>
+    <div class="key letter" data-char="х">Х</div>
+    <div class="key letter" data-char="ї">Ї</div>
+    <div class="key special" style="flex:1.2;">\</div>
+  </div>
+  <!-- Row 2 -->
+  <div class="kb-row kb-letter-row" id="row2">
+    <div class="key special w-caps">Caps</div>
+    <div class="key letter" data-char="ф">Ф</div>
+    <div class="key letter" data-char="і">І</div>
+    <div class="key letter" data-char="в">В</div>
+    <div class="key letter" data-char="а">А</div>
+    <div class="key letter" data-char="п">П</div>
+    <div class="key letter" data-char="р">Р</div>
+    <div class="key letter" data-char="о">О</div>
+    <div class="key letter" data-char="л">Л</div>
+    <div class="key letter" data-char="д">Д</div>
+    <div class="key letter" data-char="ж">Ж</div>
+    <div class="key letter" data-char="є">Є</div>
+    <div class="key special w-enter"><i class="fa-solid fa-turn-down"></i> Enter</div>
+  </div>
+  <!-- Row 3 -->
+  <div class="kb-row kb-letter-row" id="row3">
+    <div class="key special w-shift">
+      <i class="fa-solid fa-up-long"></i> Shift
+    </div>
+    <div class="key letter" data-char="ґ">Ґ</div>
+    <div class="key letter" data-char="я">Я</div>
+    <div class="key letter" data-char="ч">Ч</div>
+    <div class="key letter" data-char="с">С</div>
+    <div class="key letter" data-char="м">М</div>
+    <div class="key letter" data-char="и">И</div>
+    <div class="key letter" data-char="т">Т</div>
+    <div class="key letter" data-char="ь">Ь</div>
+    <div class="key letter" data-char="б">Б</div>
+    <div class="key letter" data-char="ю">Ю</div>
+    <div class="key letter" data-char=".">.</div>
+    <div class="key special w-shift">
+      <i class="fa-solid fa-up-long"></i> Shift
+    </div>
+  </div>
+  <!-- Space -->
+  <div class="kb-row">
+    <div class="key w-space" data-code="Space"></div>
+  </div>
+</div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
