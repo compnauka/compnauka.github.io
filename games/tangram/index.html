@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Танграм</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #faf7f2;
+            --bg-canvas: #fffcf7;
+            --bg-bar: #ffffff;
+            --bg-btn: #ffffff;
+            --bg-btn-h: #fef3c7;
+            --bg-icon-btn: #ffffff;
+            --dot: rgba(0, 0, 0, 0.04);
+            --border: #d6d3d1;
+            --border-btn: #a8a29e;
+            --shadow: rgba(0, 0, 0, 0.15);
+            --text: #1c1917;
+            --text-sub: #78716c;
+            --text-btn: #44403c;
+            --text-btn-h: #92400e;
+            --pill-bg: #ffffff;
+            --sel-bg: rgba(255, 255, 255, 0.9);
+            --toast-bg: rgba(20, 20, 20, 0.85);
+            --toast-color: #ffffff;
+            --kbd-bg: #ffffff;
+            --kbd-border: #d6d3d1;
+            --highlight: #1c1917;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1c1917;
+            --bg-canvas: #292524;
+            --bg-bar: #292524;
+            --bg-btn: #44403c;
+            --bg-btn-h: #78350f;
+            --bg-icon-btn: #44403c;
+            --dot: rgba(255, 255, 255, 0.05);
+            --border: #57534e;
+            --border-btn: #78716c;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --text: #f5f5f4;
+            --text-sub: #a8a29e;
+            --text-btn: #f5f5f4;
+            --text-btn-h: #fde68a;
+            --pill-bg: #44403c;
+            --sel-bg: rgba(41, 37, 36, 0.95);
+            --toast-bg: rgba(245, 245, 244, 0.95);
+            --toast-color: #1c1917;
+            --kbd-bg: #44403c;
+            --kbd-border: #78716c;
+            --highlight: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: #FF6B6B;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-sub);
+            letter-spacing: 1.5px;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hint-pill {
+            background: var(--pill-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .hint-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+            color: #0ea5e9;
+            border-color: #0ea5e9;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-btn);
+            background: var(--bg-icon-btn);
+            color: var(--text-btn);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-btn-h);
+            color: var(--text-btn-h);
+            border-color: var(--text-btn-h);
+            transform: scale(1.05);
+        }
+
+        /* Canvas Area */
+        #canvas-wrap {
+            flex-grow: 1;
+            position: relative;
+            margin: 0 20px;
+            background-color: var(--bg-canvas);
+            background-image: radial-gradient(var(--dot) 2px, transparent 2px);
+            background-size: 30px 30px;
+            border-radius: 24px;
+            box-shadow: inset 0 0 0 1px var(--border), 0 10px 30px var(--shadow);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+
+        /* Floating UI Elements */
+        #sel-label {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--sel-bg);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+            box-shadow: 0 4px 12px var(--shadow);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            border: 1px solid var(--border);
+        }
+
+        #sel-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        #kbd-hints {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .kbd-row {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        kbd {
+            background: var(--kbd-bg);
+            border: 1px solid var(--kbd-border);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-family: 'Nunito', sans-serif;
+            color: var(--text);
+            box-shadow: 0 2px 0 var(--kbd-border);
+        }
+
+        #snap-toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--toast-bg);
+            color: var(--toast-color);
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #snap-toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Toolbar */
+        #toolbar {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px 24px 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 14px;
+            border: 2px solid var(--border-btn);
+            background: var(--bg-btn);
+            color: var(--text-btn);
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+
+        .tool-btn i {
+            font-size: 18px;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-btn-h);
+            color: var(--text-btn-h);
+            border-color: var(--text-btn-h);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px var(--shadow);
+        }
+
+        .divider {
+            width: 2px;
+            height: 36px;
+            background: var(--border);
+            margin: 0 4px;
+            border-radius: 2px;
+        }
+
+        .save-btn {
+            background: #eff6ff;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+
+        .save-btn:hover {
+            background: #dbeafe !important;
+            color: #1e3a8a !important;
+            border-color: #3b82f6 !important;
+        }
+
+        [data-theme="dark"] .save-btn {
+            background: #1e3a8a;
+            color: #dbeafe;
+            border-color: #1e40af;
+        }
+
+        [data-theme="dark"] .save-btn:hover {
+            background: #1d4ed8 !important;
+            border-color: #60a5fa !important;
+        }
+
+        .reset-btn {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .reset-btn:hover {
+            background: #fee2e2 !important;
+            color: #7f1d1d !important;
+            border-color: #ef4444 !important;
+        }
+
+        [data-theme="dark"] .reset-btn {
+            background: #7f1d1d;
+            color: #fecaca;
+            border-color: #991b1b;
+        }
+
+        [data-theme="dark"] .reset-btn:hover {
+            background: #991b1b !important;
+            border-color: #f87171 !important;
+        }
+
+        @media (max-width: 600px) {
+
+            .hint-pill,
+            #kbd-hints {
+                display: none;
+            }
+
+            #toolbar {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .tool-btn span {
+                display: none;
+            }
+
+            .tool-btn {
+                padding: 12px;
+                border-radius: 12px;
+            }
+
+            .tool-btn i {
+                font-size: 20px;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header id="header">
+            <div class="logo-wrap">
+                <div class="logo-icon"><i class="fas fa-shapes"></i></div>
+                <div>
+                    <h1>Танграм</h1>
+                    <p class="subtitle">СКЛАДИ СВОЮ КАРТИНУ</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a href="https://uk.wikipedia.org/wiki/%D0%A2%D0%B0%D0%BD%D0%B3%D1%80%D0%B0%D0%BC" target="_blank"
+                    class="hint-pill" id="hint-pill" title="Відкрити статтю у Вікіпедії">
+                    <i class="fas fa-book-open"></i>
+                    <span>Що таке Танграм</span>
+                </a>
+                <button class="icon-btn" id="btn-theme" title="Тема" aria-label="Змінити тему">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Canvas -->
+        <div id="canvas-wrap">
+            <canvas id="canvas"></canvas>
+
+            <!-- Info -->
+            <div id="sel-label">
+                <div id="sel-color-dot"></div>
+                <span id="sel-name"></span>
+            </div>
+
+            <!-- Snap toast -->
+            <div id="snap-toast">
+                <i class="fas fa-magnet"></i> Прилипло!
+            </div>
+
+            <!-- Keyboard hints -->
+            <div id="kbd-hints">
+                <span class="kbd-row"><kbd>Q</kbd><kbd>E</kbd> повернути</span>
+                <span class="kbd-row"><kbd>F</kbd> дзеркало</span>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div id="toolbar">
+            <button class="tool-btn" id="btn-ccw" aria-label="Повернути ліворуч" title="Ліворуч (Q)">
+                <i class="fas fa-rotate-left"></i><span>45°</span>
+            </button>
+            <button class="tool-btn" id="btn-cw" aria-label="Повернути праворуч" title="Праворуч (E)">
+                <i class="fas fa-rotate-right"></i><span>45°</span>
+            </button>
+            <button class="tool-btn" id="btn-flip" aria-label="Відзеркалити" title="Дзеркало (F)">
+                <i class="fas fa-left-right"></i><span>Дзеркало</span>
+            </button>
+            <div class="divider"></div>
+            <button class="tool-btn save-btn" id="btn-save" title="Зберегти квадратне фото">
+                <i class="fas fa-download"></i><span>Зберегти</span>
+            </button>
+            <button class="tool-btn reset-btn" id="btn-reset" title="Скинути налаштування">
+                <i class="fas fa-trash-can"></i><span>Скинути</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const wrap = document.getElementById('canvas-wrap');
+            const selLabel = document.getElementById('sel-label');
+            const selName = document.getElementById('sel-name');
+            const selColorDot = document.getElementById('sel-color-dot');
+            const snapToast = document.getElementById('snap-toast');
+            const btnCCW = document.getElementById('btn-ccw');
+            const btnCW = document.getElementById('btn-cw');
+            const btnFlip = document.getElementById('btn-flip');
+            const btnSave = document.getElementById('btn-save');
+            const btnReset = document.getElementById('btn-reset');
+            const btnTheme = document.getElementById('btn-theme');
+            const htmlEl = document.documentElement;
+
+            let width, height;
+            let pieces = [];
+            let selectedId = -1;
+            let dragData = null;
+            let dpr = window.devicePixelRatio || 1;
+            const SNAP_DIST = 20;
+
+            const PIECES_META = [
+                { id: 0, color: '#FF6B6B', name: 'Великий трикутник 1', baseCoords: [{ x: -100, y: -50 }, { x: 100, y: -50 }, { x: 0, y: 50 }] },
+                { id: 1, color: '#4ECDC4', name: 'Великий трикутник 2', baseCoords: [{ x: -50, y: -100 }, { x: -50, y: 100 }, { x: 50, y: 0 }] },
+                { id: 2, color: '#45B7D1', name: 'Середній трикутник', baseCoords: [{ x: -50, y: -50 }, { x: 50, y: 50 }, { x: -50, y: 50 }] },
+                { id: 3, color: '#F9CA24', name: 'Малий трикутник 1', baseCoords: [{ x: -50, y: 0 }, { x: 50, y: 0 }, { x: 0, y: 50 }] },
+                { id: 4, color: '#F0932B', name: 'Малий трикутник 2', baseCoords: [{ x: -50, y: 0 }, { x: 50, y: 0 }, { x: 0, y: -50 }] },
+                { id: 5, color: '#6AB04C', name: 'Квадрат', baseCoords: [{ x: -50, y: 0 }, { x: 0, y: -50 }, { x: 50, y: 0 }, { x: 0, y: 50 }] },
+                { id: 6, color: '#9B59B6', name: 'Паралелограм', baseCoords: [{ x: -75, y: -25 }, { x: 25, y: -25 }, { x: 75, y: 25 }, { x: -25, y: 25 }] }
+            ];
+
+            function init() {
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                resetPieces();
+
+                canvas.addEventListener('pointerdown', onPointerDown);
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+                document.addEventListener('keydown', onKeyDown);
+
+                btnCCW.addEventListener('click', () => rotateSelected(-Math.PI / 4));
+                btnCW.addEventListener('click', () => rotateSelected(Math.PI / 4));
+                btnFlip.addEventListener('click', flipSelected);
+                btnReset.addEventListener('click', resetPieces);
+                btnSave.addEventListener('click', saveAsSquare);
+
+                btnTheme.addEventListener('click', () => {
+                    const current = htmlEl.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    htmlEl.setAttribute('data-theme', next);
+                    btnTheme.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                    draw();
+                });
+
+                draw();
+            }
+
+            function resizeCanvas() {
+                const rect = wrap.getBoundingClientRect();
+                width = rect.width;
+                height = rect.height;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                draw();
+            }
+
+            function resetPieces() {
+                pieces = PIECES_META.map((meta, i) => {
+                    const scale = width < 600 ? 0.6 : 1;
+                    return {
+                        ...meta,
+                        x: (width / 2) + (i % 3 - 1) * 120 * scale,
+                        y: (height / 2) + (Math.floor(i / 3) - 1) * 120 * scale,
+                        angle: 0,
+                        scaleX: 1,
+                        scaleY: 1,
+                        baseCoords: meta.baseCoords.map(v => ({ x: v.x * scale, y: v.y * scale }))
+                    };
+                });
+                selectPiece(-1);
+                draw();
+            }
+
+            function getTransformed(p) {
+                return p.baseCoords.map(v => {
+                    const sx = v.x * p.scaleX;
+                    const sy = v.y * p.scaleY;
+                    const rx = sx * Math.cos(p.angle) - sy * Math.sin(p.angle);
+                    const ry = sx * Math.sin(p.angle) + sy * Math.cos(p.angle);
+                    return { x: p.x + rx, y: p.y + ry };
+                });
+            }
+
+            function getAxes(poly) {
+                let axes = [];
+                for (let i = 0; i < poly.length; i++) {
+                    let p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+                    let edge = { x: p2.x - p1.x, y: p2.y - p1.y };
+                    let len = Math.hypot(edge.x, edge.y);
+                    axes.push({ x: -edge.y / len, y: edge.x / len });
+                }
+                return axes;
+            }
+
+            function project(poly, axis) {
+                let min = Infinity, max = -Infinity;
+                for (let p of poly) {
+                    let dot = p.x * axis.x + p.y * axis.y;
+                    min = Math.min(min, dot);
+                    max = Math.max(max, dot);
+                }
+                return { min, max };
+            }
+
+            function isIntersecting(poly1, poly2) {
+                let axes = [...getAxes(poly1), ...getAxes(poly2)];
+                for (let axis of axes) {
+                    let p1 = project(poly1, axis);
+                    let p2 = project(poly2, axis);
+                    if (p1.max <= p2.min + 1.0 || p2.max <= p1.min + 1.0) return false;
+                }
+                return true;
+            }
+
+            function hasOverlap(pieceIndex) {
+                const p1 = getTransformed(pieces[pieceIndex]);
+                for (let i = 0; i < pieces.length; i++) {
+                    if (i === pieceIndex) continue;
+                    const p2 = getTransformed(pieces[i]);
+                    if (isIntersecting(p1, p2)) return true;
+                }
+                return false;
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                const highlightColor = htmlEl.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1c1917';
+
+                pieces.forEach(p => {
+                    const pts = getTransformed(p);
+                    ctx.beginPath();
+                    ctx.moveTo(pts[0].x, pts[0].y);
+                    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+                    ctx.closePath();
+
+                    ctx.save();
+                    if (p.id === selectedId) {
+                        ctx.shadowColor = p.color;
+                        ctx.shadowBlur = 16;
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = highlightColor;
+                    } else {
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur = 0;
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    }
+
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                });
+            }
+
+            function isPointInPoly(pt, poly) {
+                let inside = false;
+                for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                    let xi = poly[i].x, yi = poly[i].y;
+                    let xj = poly[j].x, yj = poly[j].y;
+                    let intersect = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            }
+
+            function onPointerDown(e) {
+                const rect = canvas.getBoundingClientRect();
+                const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+                let clicked = -1;
+                for (let i = pieces.length - 1; i >= 0; i--) {
+                    if (isPointInPoly(pos, getTransformed(pieces[i]))) {
+                        clicked = i;
+                        break;
+                    }
+                }
+
+                if (clicked !== -1) {
+                    const p = pieces.splice(clicked, 1)[0];
+                    pieces.push(p);
+                    selectPiece(p.id);
+
+                    dragData = {
+                        id: p.id,
+                        offsetX: pos.x - p.x,
+                        offsetY: pos.y - p.y,
+                        originalX: p.x,
+                        originalY: p.y
+                    };
+                    canvas.setPointerCapture(e.pointerId);
+                } else {
+                    selectPiece(-1);
+                }
+                draw();
+            }
+
+            function onPointerMove(e) {
+                if (!dragData) return;
+                const rect = canvas.getBoundingClientRect();
+                const p = pieces[pieces.length - 1];
+                p.x = (e.clientX - rect.left) - dragData.offsetX;
+                p.y = (e.clientY - rect.top) - dragData.offsetY;
+                draw();
+            }
+
+            function onPointerUp(e) {
+                if (!dragData) return;
+
+                const p = pieces[pieces.length - 1];
+                let snapped = snapPiece(p);
+
+                if (hasOverlap(pieces.length - 1)) {
+                    p.x = dragData.originalX;
+                    p.y = dragData.originalY;
+                    snapped = false;
+                }
+
+                if (snapped) {
+                    snapToast.classList.add('show');
+                    setTimeout(() => snapToast.classList.remove('show'), 1000);
+                }
+
+                dragData = null;
+                canvas.releasePointerCapture(e.pointerId);
+                draw();
+            }
+
+            function snapPiece(activePiece) {
+                const activePts = getTransformed(activePiece);
+                let bestDist = SNAP_DIST;
+                let shiftX = 0, shiftY = 0;
+                let found = false;
+
+                for (const other of pieces) {
+                    if (other.id === activePiece.id) continue;
+                    const otherPts = getTransformed(other);
+
+                    for (const aPt of activePts) {
+                        for (const oPt of otherPts) {
+                            const dx = oPt.x - aPt.x;
+                            const dy = oPt.y - aPt.y;
+                            const dist = Math.hypot(dx, dy);
+                            if (dist < bestDist) {
+                                bestDist = dist;
+                                shiftX = dx; shiftY = dy;
+                                found = true;
+                            }
+                        }
+                    }
+                }
+
+                if (found) {
+                    activePiece.x += shiftX;
+                    activePiece.y += shiftY;
+                    return true;
+                }
+                return false;
+            }
+
+            function selectPiece(id) {
+                selectedId = id;
+                if (id !== -1) {
+                    const p = pieces.find(x => x.id === id);
+                    selName.textContent = p.name;
+                    selColorDot.style.backgroundColor = p.color;
+                    selLabel.style.display = 'flex';
+                } else {
+                    selLabel.style.display = 'none';
+                }
+            }
+
+            function rotateSelected(angle) {
+                if (selectedId === -1) return;
+                const p = pieces.find(x => x.id === selectedId);
+                const origAngle = p.angle;
+                p.angle += angle;
+
+                if (hasOverlap(pieces.indexOf(p))) p.angle = origAngle;
+                draw();
+            }
+
+            function flipSelected() {
+                if (selectedId === -1) return;
+                const p = pieces.find(x => x.id === selectedId);
+                const origScaleX = p.scaleX;
+                p.scaleX *= -1;
+
+                if (hasOverlap(pieces.indexOf(p))) p.scaleX = origScaleX;
+                draw();
+            }
+
+            function onKeyDown(e) {
+                if (selectedId === -1) return;
+                if (e.code === 'KeyQ') rotateSelected(-Math.PI / 4);
+                if (e.code === 'KeyE') rotateSelected(Math.PI / 4);
+                if (e.code === 'KeyF') flipSelected();
+                if (e.code === 'Escape') selectPiece(-1);
+                draw();
+            }
+
+            function saveAsSquare() {
+                if (pieces.length === 0) return;
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                pieces.forEach(p => {
+                    getTransformed(p).forEach(v => {
+                        minX = Math.min(minX, v.x);
+                        minY = Math.min(minY, v.y);
+                        maxX = Math.max(maxX, v.x);
+                        maxY = Math.max(maxY, v.y);
+                    });
+                });
+
+                const w = maxX - minX;
+                const h = maxY - minY;
+                const size = Math.max(w, h) + 80;
+                const cx = minX + w / 2;
+                const cy = minY + h / 2;
+
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = size;
+                offCanvas.height = size;
+                const oCtx = offCanvas.getContext('2d');
+
+                oCtx.fillStyle = htmlEl.getAttribute('data-theme') === 'dark' ? '#292524' : '#fffcf7';
+                oCtx.fillRect(0, 0, size, size);
+
+                oCtx.save();
+                oCtx.translate((size / 2) - cx, (size / 2) - cy);
+
+                pieces.forEach(p => {
+                    const pts = getTransformed(p);
+                    oCtx.beginPath();
+                    oCtx.moveTo(pts[0].x, pts[0].y);
+                    for (let i = 1; i < pts.length; i++) oCtx.lineTo(pts[i].x, pts[i].y);
+                    oCtx.closePath();
+
+                    oCtx.fillStyle = p.color;
+                    oCtx.fill();
+                    oCtx.lineWidth = 2;
+                    oCtx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    oCtx.stroke();
+                });
+                oCtx.restore();
+
+                const link = document.createElement('a');
+                link.download = 'my_tangram.png';
+                link.href = offCanvas.toDataURL('image/png');
+                link.click();
+            }
+
+            window.onload = init;
+        })();
+    </script>
+</body>
+
+</html>
