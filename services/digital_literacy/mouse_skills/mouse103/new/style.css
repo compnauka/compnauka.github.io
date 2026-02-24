@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+    --road-color: #334155;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    font-family: 'Nunito', sans-serif;
+}
+
+body {
+    user-select: none;
+    overflow: hidden;
+    background-color: #86efac;
+    background-image:
+        radial-gradient(#4ade80 15%, transparent 16%),
+        radial-gradient(#4ade80 15%, transparent 16%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    touch-action: none;
+}
+
+/* Дорога */
+.road-stripes {
+    background-image: linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.3) 50%);
+    background-size: 100% 200px;
+    animation: moveRoad 1s linear infinite;
+    will-change: background-position;
+}
+
+@keyframes moveRoad {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 0 200px;
+    }
+}
+
+.road-stripes.paused {
+    animation-play-state: paused;
+}
+
+/* Ефекти */
+.mouse-btn-active {
+    background-color: #4ade80 !important;
+    transform: scale(0.95);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.game-shadow {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+.modal-screen {
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes popOut {
+    0% {
+        transform: translate(-50%, 0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, 0) scale(2);
+        opacity: 0;
+    }
+}
+
+.bonus-pop {
+    animation: popOut 0.4s ease-out forwards;
+}
+
+/* Невразливість */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}
+
+.invulnerable {
+    animation: blink 0.15s step-end infinite;
+}
+
+/* HUD */
+.mode-badge {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #0f172a;
+    border: 2px solid #cbd5e1;
+}
+
+.rank-badge {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #9a3412;
+    border: 2px solid #fed7aa;
+}
+
+.lives {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.lives .heart {
+    color: #ef4444;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.15));
+}
+
+.lives .empty {
+    color: #cbd5e1;
+}
+
+.slowmo-badge {
+    font-weight: 900;
+    font-size: 12px;
+    color: white;
+    background: rgba(124, 58, 237, 0.95);
+    border: 2px solid rgba(216, 180, 254, 0.9);
+    padding: 6px 10px;
+    border-radius: 999px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.toast {
+    font-weight: 900;
+    font-size: 12px;
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid rgba(203, 213, 225, 1);
+    padding: 8px 10px;
+    border-radius: 14px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    max-width: 220px;
+}
+
+/* Карти режимів */
+.mode-card {
+    text-align: left;
+    padding: 12px;
+    border-radius: 18px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.mode-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+}
+
+.mode-card:active {
+    transform: translateY(0);
+}
+
+.mode-title {
+    font-weight: 900;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.mode-desc {
+    font-weight: 900;
+    font-size: 12px;
+    color: #334155;
+    margin-top: 2px;
+}
+
+.mode-small {
+    font-weight: 800;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+/* Нагорода */
+.reward-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 900;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #ecfeff;
+    border: 2px solid #a5f3fc;
+    color: #155e75;
+}
+
+/* Оптимізація руху */
+.player {
+    will-change: transform;
+}
+
+.game-object {
+    will-change: transform;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+    .road-stripes {
+        animation: none;
+    }
+
+    .bonus-pop {
+        animation: none;
+        opacity: 0;
+    }
+}

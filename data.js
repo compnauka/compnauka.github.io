@@ -176,14 +176,21 @@ const CATEGORIES = [
       },
       {
         name: "Конструктор блок-схем",
-        description: "Простий редактор для створення блок-схем.",
-        link: "tools/block_diagram_designer/index.html",
+        description: "Покроковий конструктор для створення простих блок-схем.",
+        link: "tools/flowchart_wizard/index.html",
+        image: "images/74.jpg",
+        tags: ["1-2 класи", "3-4 класи"]
+      },
+      {
+        name: "Редактор блок-схем",
+        description: "Редактор для створення та редагування блок-схем.",
+        link: "tools/flowchart_designer/index.html",
         image: "images/37.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },
       {
         name: "Бітовий конвертер",
-        description: "Простий конвертер з двійкової в десяткову систему.",
+        description: "Конвертер з двійкової в десяткову систему.",
         link: "tools/bit_converter/index.html",
         image: "images/5.jpg",
         tags: ["5-6 класи"]

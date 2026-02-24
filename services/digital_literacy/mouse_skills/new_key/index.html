@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="uk">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>КлавСпринт Kids</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="app" id="app" data-theme="sun">
+        <header class="topbar" role="banner">
+            <div class="brand">
+                <span class="logo" aria-hidden="true">⚡</span>
+                <div class="brandText">
+                    <div class="title">КлавСпринт <b>Kids</b></div>
+                    <div class="sub">ЙЦУКЕН • 45с спринт • neon-brutalism</div>
+                </div>
+            </div>
+
+            <div class="controls" role="group" aria-label="Налаштування">
+                <button class="chip" id="btnSound" type="button" aria-pressed="true" title="Звук">
+                    🔊 <span class="hideSm">Звук</span>
+                </button>
+
+                <button class="chip" id="btnKbMode" type="button" aria-pressed="false" title="Підказки клавіатури">
+                    ⌨️ <span class="hideSm">Підказки:</span> <span id="kbModeText">Авто</span>
+                </button>
+
+                <button class="chip" id="btnContrast" type="button" aria-pressed="false" title="High-contrast">
+                    ◐ <span class="hideSm">Контраст</span>
+                </button>
+
+                <div class="selectWrap" title="Тема">
+                    <label class="srOnly" for="themeSel">Тема</label>
+                    <select id="themeSel" aria-label="Тема">
+                        <option value="sun">☀️ Сонце</option>
+                        <option value="sea">🌊 Море</option>
+                        <option value="space">🪐 Космос</option>
+                    </select>
+                </div>
+
+                <button class="chip danger" id="btnReset" type="button" title="Скинути прогрес">
+                    ↺ <span class="hideSm">Скинути</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="main" role="main">
+            <section class="hud" aria-label="Статус гри">
+                <div class="hudLeft">
+                    <div class="pill">
+                        <span class="label">Рівень</span>
+                        <span class="value" id="lvlText">1/12</span>
+                    </div>
+                    <div class="pill">
+                        <span class="label">Етап</span>
+                        <span class="value" id="lvlName">Домашній ряд 1</span>
+                    </div>
+                    <div class="pill">
+                        <span class="label">Час</span>
+                        <span class="value" id="timeText">45</span><span class="unit">с</span>
+                    </div>
+                    <div class="pill">
+                        <span class="label">Стрик</span>
+                        <span class="value" id="streakText">0</span>
+                    </div>
+                </div>
+
+                <div class="hudRight">
+                    <div class="hearts" id="hearts" aria-label="Сердечка"></div>
+                    <div class="stars" id="stars" aria-label="Зірки"></div>
+                </div>
+            </section>
+
+            <div class="timebar" aria-label="Прогрес часу">
+                <div class="timebarFill" id="timeBar"></div>
+            </div>
+
+            <section class="stageWrap" aria-label="Поле гри">
+                <canvas id="game" width="400" height="300" aria-label="Гра: летючі літери"></canvas>
+
+                <div class="overlay" id="overlay" aria-live="polite" aria-atomic="true">
+                    <div class="card">
+                        <div class="cardTitle" id="ovTitle">КлавСпринт Kids</div>
+                        <div class="cardBody" id="ovBody">
+                            Натисни <b>Почати</b> і друкуй символи/слова, які летять зправа наліво.<br />
+                            <span class="muted">Пауза: <b>Esc</b>. Можна натискати по віртуальних клавішах.</span>
+                        </div>
+
+                        <div class="cardBtns">
+                            <button class="btn primary" id="btnStart" type="button">Почати</button>
+                            <button class="btn" id="btnReplay" type="button">Ще раз</button>
+                            <button class="btn" id="btnStay" type="button">Залишитись</button>
+                            <button class="btn" id="btnNext" type="button">Далі ▶</button>
+                            <button class="btn" id="btnCert" type="button">Сертифікат PNG</button>
+                        </div>
+
+                        <div class="req" id="reqText"></div>
+                    </div>
+                </div>
+
+                <!-- прихований input: стабільний фокус на мобільних -->
+                <input id="ghost" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            </section>
+
+            <section class="kbWrap" id="kbWrap" aria-label="Екранна клавіатура">
+                <div class="kbTop">
+                    <div class="hint" id="fingerHint">Підказка пальця: —</div>
+                    <div class="hint muted" id="targetHint">Ціль: —</div>
+                </div>
+                <div id="kb" class="kb" role="application" aria-label="Клавіатура ЙЦУКЕН"></div>
+            </section>
+
+            <footer class="footer" role="contentinfo">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="k" id="wpmText">0</div>
+                        <div class="t">WPM</div>
+                    </div>
+                    <div class="stat">
+                        <div class="k" id="cpmText">0</div>
+                        <div class="t">Уд/хв</div>
+                    </div>
+                    <div class="stat">
+                        <div class="k" id="accText">100%</div>
+                        <div class="t">Точність</div>
+                    </div>
+                    <div class="stat">
+                        <div class="k" id="bestText">—</div>
+                        <div class="t">Рекорд</div>
+                    </div>
+                </div>
+
+                <div class="footerBtns">
+                    <button class="btn" id="btnPause" type="button" title="Пауза (Esc)">⏸ Пауза</button>
+                    <button class="btn" id="btnQuit" type="button" title="Вийти з раунду">⏹ Вийти</button>
+                </div>
+            </footer>
+        </main>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

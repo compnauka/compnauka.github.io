@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Конструктор блок-схем для дітей — Створюй алгоритми онлайн</title>
+  <meta name="description"
+    content="Простий та візуальний конструктор блок-схем для дітей та початківців. Створюй алгоритми, вивчай логіку та зберігай результати безкоштовно.">
+  <meta name="keywords"
+    content="блок-схема, алгоритми, для дітей, інформатика, конструктор, онлайн, програмування, схема, flowchart">
+  <meta name="author" content="Compnauka">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://itnauka.org/tools/flowchart_wizard/">
+  <meta property="og:title" content="Конструктор блок-схем для дітей — Створюй алгоритми онлайн">
+  <meta property="og:description"
+    content="Простий та візуальний конструктор блок-схем для дітей та початківців. Створюй алгоритми, вивчай логіку та зберігай результати безкоштовно.">
+  <meta property="og:image" content="https://itnauka.org/images/74.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://itnauka.org/tools/flowchart_wizard/">
+  <meta property="twitter:title" content="Конструктор блок-схем для дітей — Створюй алгоритми онлайн">
+  <meta property="twitter:description"
+    content="Простий та візуальний конструктор блок-схем для дітей та початківців. Створюй алгоритми, вивчай логіку та зберігай результати безкоштовно.">
+  <meta property="twitter:image" content="https://itnauka.org/apple-touch-icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="../../favicon-96x96.png">
+  <link rel="manifest" href="../../site.webmanifest">
+  <meta name="theme-color" content="#7c3aed">
+
+  <link rel="canonical" href="https://itnauka.org/tools/flowchart_wizard/" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"
+    defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+</head>
+
+<body class="h-screen flex flex-col select-none bg-indigo-50">
+
+  <!-- ══════════════════════ HEADER ══════════════════════ -->
+  <header class="flex-shrink-0 bg-gradient-to-r from-violet-600 to-indigo-500
+               text-white px-3 py-2 flex items-center justify-between shadow-xl z-20 relative overflow-hidden">
+    <!-- progress strip -->
+    <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+      <div id="prog-fill" class="h-full bg-yellow-400 rounded-r" style="width:5%"></div>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-sitemap text-white text-lg"></i>
+      </div>
+      <div class="hidden sm:block">
+        <h1 class="font-black text-base leading-tight">Будуємо блок-схеми</h1>
+        <div class="text-indigo-200 text-xs font-bold">крок за кроком</div>
+      </div>
+    </div>
+
+    <div class="flex gap-1.5 items-center">
+      <button id="btn-examples" class="flex items-center gap-1.5 bg-yellow-400 hover:bg-yellow-300 text-yellow-900
+             px-3 py-2 rounded-xl text-sm font-black shadow transition" aria-label="Приклади">
+        <i class="fa-solid fa-star"></i>
+        <span class="hidden sm:inline">Приклади</span>
+      </button>
+
+      <div class="w-px h-6 bg-white/20 mx-0.5"></div>
+
+      <button id="btn-undo" disabled class="flex items-center gap-1.5 bg-white/15 hover:bg-white/25
+             disabled:opacity-30 disabled:cursor-not-allowed
+             px-2.5 py-2 rounded-xl text-sm font-bold transition" title="Ctrl+Z" aria-label="Скасувати">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span class="hidden md:inline">Скасувати</span>
+      </button>
+      <button id="btn-reset" class="flex items-center gap-1.5 bg-white/15 hover:bg-white/25
+             px-2.5 py-2 rounded-xl text-sm font-bold transition" aria-label="Очистити">
+        <i class="fa-solid fa-broom"></i>
+        <span class="hidden md:inline">Очистити</span>
+      </button>
+      <button id="btn-save" class="flex items-center gap-1.5 bg-white text-violet-700
+             hover:bg-violet-50 px-3 py-2 rounded-xl text-sm font-black shadow-md transition" aria-label="Зберегти">
+        <i class="fa-solid fa-download"></i>
+        <span class="hidden sm:inline">Зберегти</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════ CANVAS ══════════════════════ -->
+  <div id="canvas-area" class="flex-1 overflow-auto" style="touch-action:pan-x pan-y;">
+    <div id="svg-wrap">
+      <svg id="fc" xmlns="http://www.w3.org/2000/svg" style="display:block;width:1700px;">
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0,10 3.5,0 7" fill="#475569" />
+          </marker>
+          <marker id="arr-yes" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0,10 3.5,0 7" fill="#16a34a" />
+          </marker>
+          <marker id="arr-no" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0,10 3.5,0 7" fill="#dc2626" />
+          </marker>
+          <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,.14)" />
+          </filter>
+        </defs>
+        <g id="layer-title"></g>
+        <g id="layer-edges"></g>
+        <g id="layer-nodes"></g>
+        <g id="layer-plus"></g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MASCOT ══════════════════════ -->
+  <div id="mascot" class="transition-all duration-300" style="max-width:196px;">
+    <div id="mascot-msg" class="bg-white rounded-2xl shadow-lg border-2 border-indigo-100
+           px-3 py-2 text-sm font-bold text-gray-700 leading-snug mb-2"></div>
+    <div class="flex justify-center">
+      <i class="fa-solid fa-robot text-indigo-400" style="font-size:42px;"></i>
+    </div>
+  </div>
+
+  <!-- Mascot toggle (mobile) -->
+  <button id="mascot-toggle" aria-label="Підказки">
+    <i class="fa-solid fa-robot"></i>
+  </button>
+
+  <!-- ══════════════════════ ZOOM CONTROLS ══════════════════════ -->
+  <div id="view-ctrl">
+    <button class="vbtn" id="btn-zi" title="Збільшити (колесо ↑)" aria-label="Збільшити"><i
+        class="fa-solid fa-plus"></i></button>
+    <button class="vbtn" id="btn-zo" title="Зменшити (колесо ↓)" aria-label="Зменшити"><i
+        class="fa-solid fa-minus"></i></button>
+    <button class="vbtn" id="btn-fit" title="По центру" aria-label="По центру"><i
+        class="fa-solid fa-expand"></i></button>
+  </div>
+
+  <!-- ══════════════════════ NODE TOOLBAR ══════════════════════ -->
+  <div id="node-tb" class="hidden">
+    <button id="btn-edit-node" class="flex items-center gap-2 px-3 py-2 rounded-xl text-indigo-700
+           hover:bg-indigo-50 font-bold text-sm transition">
+      <i class="fa-solid fa-pen-to-square"></i><span>Змінити текст</span>
+    </button>
+    <div class="w-px bg-gray-100 my-1"></div>
+    <button id="btn-del-node" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500
+           hover:bg-red-50 font-bold text-sm transition" aria-label="Видалити">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  </div>
+
+  <!-- ══════════════════════ WIZARD ══════════════════════ -->
+  <div id="wizard-panel" class="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl z-40
+            max-h-[90vh] overflow-y-auto safe-pb" style="transform:translateY(110%);">
+    <div class="flex justify-center pt-3 pb-1">
+      <div class="w-10 h-1.5 bg-gray-200 rounded-full"></div>
+    </div>
+
+    <!-- STEP 1: type chooser -->
+    <div id="step-type" class="px-4 pb-3">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="text-lg font-black text-gray-800">
+          <i class="fa-solid fa-circle-plus text-indigo-400 mr-1.5"></i>Що додати далі?
+        </h2>
+        <span id="step-type-badge" class="text-xs font-black px-2 py-0.5 rounded-full hidden"></span>
+      </div>
+
+      <!-- MERGE SUGGESTION -->
+      <div id="merge-suggestion" class="hidden mb-3">
+        <button id="btn-merge-sibling" class="merge-card type-card w-full flex items-center gap-3 p-3.5
+               bg-green-50 border-2 border-green-300 hover:border-green-500 rounded-2xl text-left">
+          <div class="w-12 h-10 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow">
+            <i class="fa-solid fa-code-merge text-white text-lg"></i>
+          </div>
+          <div>
+            <div class="font-black text-green-700">Об'єднати гілки</div>
+            <div id="merge-hint-text" class="text-xs text-green-500 font-bold"></div>
+          </div>
+          <i class="fa-solid fa-arrow-right text-green-400 ml-auto"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+        <!-- Process -->
+        <button class="type-card flex flex-col items-center gap-2 p-3.5
+                     bg-sky-50 border-2 border-sky-200 hover:border-sky-500 rounded-2xl" data-type="process">
+          <div class="w-12 h-9 bg-sky-500 rounded-xl shadow flex items-center justify-center">
+            <i class="fa-solid fa-bolt text-white text-base"></i>
+          </div>
+          <div class="text-center">
+            <div class="font-black text-sky-700 text-sm">Дія</div>
+            <div class="text-xs text-sky-400 font-semibold mt-0.5">Щось відбувається</div>
+          </div>
+        </button>
+
+        <!-- Decision -->
+        <button class="type-card flex flex-col items-center gap-2 p-3.5
+                     bg-amber-50 border-2 border-amber-200 hover:border-amber-500 rounded-2xl" data-type="decision">
+          <div class="w-12 h-11 relative flex items-center justify-center">
+            <div class="absolute w-9 h-9 bg-amber-500 rotate-45 rounded-lg shadow"></div>
+            <i class="fa-solid fa-question text-white text-sm relative z-10 font-black"></i>
+          </div>
+          <div class="text-center">
+            <div class="font-black text-amber-700 text-sm">Питання</div>
+            <div class="text-xs text-amber-400 font-semibold mt-0.5">Перевірити умову</div>
+          </div>
+        </button>
+
+        <!-- Input/Output -->
+        <button class="type-card flex flex-col items-center gap-2 p-3.5
+                     bg-violet-50 border-2 border-violet-200 hover:border-violet-500 rounded-2xl"
+          data-type="input-output">
+          <div class="w-12 h-9 bg-violet-500 shadow flex items-center justify-center"
+            style="clip-path:polygon(14% 0%,100% 0%,86% 100%,0% 100%)">
+            <i class="fa-solid fa-right-left text-white text-sm"></i>
+          </div>
+          <div class="text-center">
+            <div class="font-black text-violet-700 text-sm">Ввід / Вивід</div>
+            <div class="text-xs text-violet-400 font-semibold mt-0.5">Дані або результат</div>
+          </div>
+        </button>
+
+        <!-- End -->
+        <button class="type-card flex flex-col items-center gap-2 p-3.5
+                     bg-rose-50 border-2 border-rose-200 hover:border-rose-500 rounded-2xl" data-type="end">
+          <div class="w-12 h-9 bg-rose-500 rounded-full shadow flex items-center justify-center">
+            <i class="fa-solid fa-flag-checkered text-white text-base"></i>
+          </div>
+          <div class="text-center">
+            <div class="font-black text-rose-700 text-sm">Кінець</div>
+            <div class="text-xs text-rose-400 font-semibold mt-0.5">Завершити гілку</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Connect to existing node -->
+      <button id="btn-connect-exist" class="type-card w-full flex items-center gap-3 p-3
+             bg-slate-50 border-2 border-slate-200 hover:border-slate-400 rounded-xl mb-2.5">
+        <div class="w-10 h-9 bg-slate-400 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-link text-white"></i>
+        </div>
+        <div class="text-left">
+          <div class="font-bold text-slate-600 text-sm">З'єднати з іншим блоком</div>
+          <div class="text-xs text-slate-400 font-semibold">Якщо блок вже є на схемі</div>
+        </div>
+      </button>
+
+      <button id="btn-cancel-wiz" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl
+             font-bold text-gray-500 text-sm transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-xmark"></i> Скасувати
+      </button>
+    </div>
+
+    <!-- STEP 1b: block explanation + text input -->
+    <div id="step-explain" class="px-4 pb-3 hidden">
+      <div id="explain-content" class="flex items-start gap-3 p-4 rounded-2xl border-2 mb-4"></div>
+
+      <label class="text-base font-black text-gray-700 mb-2 block">
+        <i class="fa-solid fa-pen text-indigo-400 mr-2"></i>Що написати у блоці?
+      </label>
+      <input id="text-inp" type="text" maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full border-2 border-indigo-300 focus:border-indigo-600 rounded-xl
+             px-4 py-3 text-xl font-bold focus:outline-none transition mb-3">
+      <div class="flex gap-3">
+        <button id="btn-back-text"
+          class="w-11 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition flex-shrink-0"
+          aria-label="Назад">
+          <i class="fa-solid fa-arrow-left text-gray-600"></i>
+        </button>
+        <button id="btn-ok" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl
+               font-black text-lg shadow-lg transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i> Готово!
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: existing nodes list -->
+    <div id="step-existing" class="px-4 pb-3 hidden">
+      <div class="flex items-center gap-3 mb-3">
+        <button id="btn-back-exist"
+          class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+          aria-label="Назад">
+          <i class="fa-solid fa-arrow-left text-gray-600"></i>
+        </button>
+        <h2 class="text-base font-black text-gray-800">
+          <i class="fa-solid fa-link text-slate-400 mr-2"></i>Вибери блок для з'єднання
+        </h2>
+      </div>
+      <div id="existing-list" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1"></div>
+      <p id="no-exist-msg" class="text-center text-gray-400 text-sm font-bold py-5 hidden">
+        <i class="fa-solid fa-circle-xmark text-2xl mb-2 block text-gray-300"></i>
+        Немає підходящих блоків
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ EXAMPLES MODAL ══════════════════════ -->
+  <div id="ex-modal" class="fixed inset-0 z-[100] hidden modal-bg items-center justify-center p-4"
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[88vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white rounded-t-3xl px-6 pt-5 pb-3 border-b border-gray-100 z-10">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-gray-800">
+              <i class="fa-solid fa-star text-yellow-500 mr-2"></i>Приклади алгоритмів
+            </h2>
+            <p class="text-sm text-gray-400 font-semibold mt-0.5">Натисни — і схема завантажиться на полотно</p>
+          </div>
+          <button id="btn-ex-close"
+            class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+            aria-label="Закрити приклади">
+            <i class="fa-solid fa-xmark text-gray-500"></i>
+          </button>
+        </div>
+      </div>
+      <div class="px-5 py-4 grid gap-3" id="ex-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ DELETE MODAL ══════════════════════ -->
+  <div id="del-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+      <div class="flex flex-col items-center text-center mb-5">
+        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-3">
+          <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-800 mb-1">Видалити блок?</h3>
+        <p id="del-msg" class="text-sm text-gray-500 font-semibold leading-snug"></p>
+      </div>
+      <div class="flex gap-3">
+        <button id="del-cancel"
+          class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-black text-gray-600 transition">
+          <i class="fa-solid fa-xmark mr-1.5"></i>Скасувати
+        </button>
+        <button id="del-confirm"
+          class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black shadow transition">
+          <i class="fa-solid fa-trash mr-1.5"></i>Видалити
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ RESET MODAL ══════════════════════ -->
+  <div id="reset-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+      <div class="flex flex-col items-center text-center mb-5">
+        <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-3">
+          <i class="fa-solid fa-broom text-orange-500 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-800 mb-1">Очистити всю схему?</h3>
+        <p class="text-sm text-gray-500 font-semibold">Всі блоки та з'єднання будуть видалені.</p>
+      </div>
+      <div class="flex gap-3">
+        <button id="reset-cancel"
+          class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-black text-gray-600 transition">
+          <i class="fa-solid fa-xmark mr-1.5"></i>Скасувати
+        </button>
+        <button id="reset-confirm"
+          class="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-black shadow transition">
+          <i class="fa-solid fa-broom mr-1.5"></i>Очистити
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SAVE TITLE MODAL ══════════════════════ -->
+  <div id="save-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+      <div class="flex flex-col items-center text-center mb-4">
+        <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-3">
+          <i class="fa-solid fa-heading text-indigo-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-800 mb-1">Назва алгоритму</h3>
+        <p class="text-sm text-gray-500 font-semibold leading-snug">
+          Напиши назву — вона з’явиться над схемою та допоможе не плутатись у збережених файлах.
+        </p>
+      </div>
+
+      <label class="block text-sm font-black text-gray-700 mb-1.5" for="save-title-inp">
+        <i class="fa-solid fa-font text-indigo-400 mr-1.5"></i>Назва
+      </label>
+      <input id="save-title-inp" type="text" maxlength="48" class="w-full px-4 py-3 rounded-2xl border-2 border-indigo-100 focus:border-indigo-400 outline-none
+             font-bold text-gray-800 placeholder-gray-300" placeholder="Наприклад: Перевірка паролю">
+
+      <div class="flex gap-3 mt-5">
+        <button id="save-cancel"
+          class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-black text-gray-600 transition">
+          <i class="fa-solid fa-xmark mr-1.5"></i>Скасувати
+        </button>
+        <button id="save-confirm"
+          class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow transition">
+          <i class="fa-solid fa-download mr-1.5"></i>Зберегти
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti + Toast -->
+  <canvas id="cfc" class="fixed inset-0 pointer-events-none z-[500]" style="width:100%;height:100%;"></canvas>
+  <div id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

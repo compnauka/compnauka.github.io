@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Чарівний Лабіринт | Тренажер для роботи з мишкою</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
+    <script>
+        window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments) };
+        plausible.init = plausible.init || function (i) { plausible.o = i || {} };
+        plausible.init();
+    </script>
+</head>
+
+<body class="h-screen w-screen flex flex-col items-center justify-center text-slate-800">
+
+    <!-- Заголовок -->
+    <div class="mb-4 text-center z-10 px-3">
+        <h1 class="text-4xl md:text-5xl font-black text-indigo-600 mb-2 title-shadow tracking-tight">
+            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Чарівний Лабіринт
+        </h1>
+
+        <!-- Інфо-панель -->
+        <div
+            class="flex flex-wrap gap-3 justify-center items-center text-lg font-bold bg-white/80 px-5 py-3 rounded-full border-2 border-indigo-100 shadow-sm backdrop-blur-sm">
+            <button id="menu-btn"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-full shadow active:scale-95 transition"
+                aria-label="Меню">
+                <i class="fa-solid fa-bars"></i> Меню
+            </button>
+
+            <span class="text-slate-300 hidden sm:inline">|</span>
+
+            <span class="text-indigo-700">
+                Режим: <span id="mode-name" class="text-indigo-600">—</span>
+            </span>
+
+            <span class="text-slate-300 hidden sm:inline">|</span>
+
+            <span class="text-indigo-700">
+                Рівень: <span id="level-num" class="text-indigo-600">—</span> / <span id="level-total"
+                    class="text-indigo-600">—</span>
+            </span>
+
+            <span class="text-slate-300 hidden sm:inline">|</span>
+
+            <span class="text-amber-600 flex items-center gap-2">
+                <span class="text-xl">⭐</span>
+                <span><span id="stars-now">0</span>/<span id="stars-need">0</span></span>
+            </span>
+
+            <span class="text-slate-300 hidden sm:inline">|</span>
+
+            <span class="text-rose-600 flex items-center gap-2">
+                <i class="fa-solid fa-heart"></i>
+                <span id="lives-wrap">—</span>
+            </span>
+
+            <span class="text-slate-300 hidden sm:inline">|</span>
+
+            <span class="text-slate-500 flex items-center gap-2 text-base">
+                <i class="fa-solid fa-ticket"></i>
+                <span>Сесій сьогодні: <span id="sessions-left">—</span></span>
+            </span>
+        </div>
+
+        <p class="text-sm font-bold text-slate-500 mt-3 opacity-90">
+            Затисни іскру та веди до кубка. Збирай ⭐, щоб відкрити 🏆. Не торкайся кущів.
+        </p>
+    </div>
+
+    <!-- Контейнер гри -->
+    <div class="relative p-3 bg-white/50 rounded-2xl border-2 border-white shadow-xl backdrop-blur-md">
+        <canvas id="game-canvas" width="600" height="400"></canvas>
+
+        <!-- Тост -->
+        <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+        <!-- Оверлей -->
+        <div id="overlay"
+            class="absolute inset-0 bg-white/95 rounded-xl flex flex-col items-center justify-center z-20 transition-opacity duration-300">
+            <div class="text-center p-6 max-w-md">
+                <div class="mb-4 text-7xl text-indigo-500 animate-bounce">
+                    <i class="fa-solid fa-hat-wizard"></i>
+                </div>
+                <h2 id="overlay-title" class="text-3xl font-black text-indigo-800 mb-2">Вітаю, Чародію!</h2>
+                <p id="overlay-message" class="text-lg text-slate-600 mb-6 font-bold">
+                    Обери режим і починай подорож.
+                </p>
+
+                <div id="overlay-actions" class="flex flex-col gap-3"></div>
+                <p id="overlay-footer" class="text-sm text-slate-500 mt-5 font-bold"></p>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script src="script.js" defer></script>
+</body>
+
+</html>
