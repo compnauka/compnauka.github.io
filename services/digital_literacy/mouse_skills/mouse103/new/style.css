@@ -1,19 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
 
-:root {
-    --road-color: #334155;
-}
+html, body { width: 100%; height: 100%; margin: 0; }
 
-*,
-*::before,
-*::after {
+*, *::before, *::after {
     box-sizing: border-box;
     font-family: 'Nunito', sans-serif;
 }
 
 body {
-    user-select: none;
-    overflow: hidden;
+    min-height: 100dvh; height: 100dvh;
+    user-select: none; overflow: hidden;
     background-color: #86efac;
     background-image:
         radial-gradient(#4ade80 15%, transparent 16%),
@@ -23,208 +19,180 @@ body {
     touch-action: none;
 }
 
-/* Дорога */
+/* ── Дорога ── */
 .road-stripes {
-    background-image: linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.3) 50%);
+    background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,.28) 50%);
     background-size: 100% 200px;
     animation: moveRoad 1s linear infinite;
     will-change: background-position;
 }
-
 @keyframes moveRoad {
-    from {
-        background-position: 0 0;
-    }
-
-    to {
-        background-position: 0 200px;
-    }
+    from { background-position: 0 0; }
+    to   { background-position: 0 200px; }
 }
+.road-stripes.paused { animation-play-state: paused; }
 
-.road-stripes.paused {
-    animation-play-state: paused;
+/* ── Таймер-смужка ── */
+#timeBar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: #22c55e;
+    transform-origin: left center;
+    transform: scaleX(1);
+    z-index: 15;
+    border-radius: 0 3px 3px 0;
+    transition: background .5s;
 }
+#timeBar.warn   { background: #f59e0b; }
+#timeBar.danger { background: #ef4444; }
 
-/* Ефекти */
-.mouse-btn-active {
-    background-color: #4ade80 !important;
-    transform: scale(0.95);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+/* ── Флеш при аварії ── */
+#crashFlash {
+    position: absolute; inset: 0;
+    background: rgba(239,68,68,.55);
+    pointer-events: none; z-index: 50;
+    opacity: 0;
 }
-
-.game-shadow {
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+@keyframes flashOut {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
 }
+#crashFlash.active { animation: flashOut .35s ease-out forwards; }
 
-.modal-screen {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+/* ── Тряска контейнера ── */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    18%  { transform: translateX(-7px); }
+    36%  { transform: translateX( 7px); }
+    54%  { transform: translateX(-4px); }
+    72%  { transform: translateX( 4px); }
 }
+.shake { animation: shake .38s ease-out; }
 
+/* ── Бонусний поп ── */
 @keyframes popOut {
-    0% {
-        transform: translate(-50%, 0) scale(1);
-        opacity: 1;
-    }
-
-    100% {
-        transform: translate(-50%, 0) scale(2);
-        opacity: 0;
-    }
+    0%   { transform: translate(-50%, 0) scale(1);   opacity: 1; }
+    100% { transform: translate(-50%, 0) scale(2.4); opacity: 0; }
 }
+.bonus-pop { animation: popOut .42s ease-out forwards; }
 
-.bonus-pop {
-    animation: popOut 0.4s ease-out forwards;
-}
-
-/* Невразливість */
+/* ── Невразливість ── */
 @keyframes blink {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.35;
-    }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .3; }
 }
+.invulnerable { animation: blink .15s step-end infinite; }
 
-.invulnerable {
-    animation: blink 0.15s step-end infinite;
-}
-
-/* HUD */
+/* ── HUD badges ── */
 .mode-badge {
-    font-size: 11px;
-    font-weight: 900;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #e2e8f0;
-    color: #0f172a;
+    font-size: 11px; font-weight: 900;
+    padding: 4px 10px; border-radius: 999px;
+    background: #e2e8f0; color: #0f172a;
     border: 2px solid #cbd5e1;
 }
-
 .rank-badge {
-    font-size: 11px;
-    font-weight: 900;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #fff7ed;
-    color: #9a3412;
+    font-size: 11px; font-weight: 900;
+    padding: 4px 10px; border-radius: 999px;
+    background: #fff7ed; color: #9a3412;
     border: 2px solid #fed7aa;
 }
+.lives { display: inline-flex; gap: 3px; align-items: center; }
+.lives .heart { color: #ef4444; }
+.lives .empty { color: #cbd5e1; }
 
-.lives {
-    display: inline-flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.lives .heart {
-    color: #ef4444;
-    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.15));
-}
-
-.lives .empty {
-    color: #cbd5e1;
-}
-
+/* ── Slowmo ── */
 .slowmo-badge {
-    font-weight: 900;
-    font-size: 12px;
-    color: white;
-    background: rgba(124, 58, 237, 0.95);
-    border: 2px solid rgba(216, 180, 254, 0.9);
-    padding: 6px 10px;
-    border-radius: 999px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    font-weight: 900; font-size: 12px; color: white;
+    background: rgba(124,58,237,.92);
+    border: 2px solid rgba(216,180,254,.9);
+    padding: 5px 10px; border-radius: 999px;
+    box-shadow: 0 6px 14px rgba(0,0,0,.2);
 }
 
+/* ── Toast ── */
 .toast {
-    font-weight: 900;
-    font-size: 12px;
-    color: #0f172a;
-    background: rgba(255, 255, 255, 0.92);
-    border: 2px solid rgba(203, 213, 225, 1);
-    padding: 8px 10px;
-    border-radius: 14px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-    max-width: 220px;
+    font-weight: 900; font-size: 12px; color: #0f172a;
+    background: rgba(255,255,255,.93);
+    border: 2px solid #cbd5e1;
+    padding: 7px 11px; border-radius: 13px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.2);
+    max-width: 210px; text-align: center;
 }
 
-/* Карти режимів */
-.mode-card {
-    text-align: left;
-    padding: 12px;
-    border-radius: 18px;
-    border: 2px solid #e2e8f0;
-    background: #f8fafc;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-}
-
-.mode-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-    background: #ffffff;
-}
-
-.mode-card:active {
-    transform: translateY(0);
-}
-
-.mode-title {
-    font-weight: 900;
-    font-size: 14px;
-    color: #0f172a;
-}
-
-.mode-desc {
-    font-weight: 900;
-    font-size: 12px;
-    color: #334155;
-    margin-top: 2px;
-}
-
-.mode-small {
-    font-weight: 800;
-    font-size: 11px;
-    color: #64748b;
-    margin-top: 6px;
-}
-
-/* Нагорода */
-.reward-badge {
-    display: inline-flex;
+/* ── Оверлей — без скролу ── */
+.modal-screen {
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(5px);
+    overflow: hidden;
+    display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 900;
-    font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: #ecfeff;
-    border: 2px solid #a5f3fc;
-    color: #155e75;
+    justify-content: center;
+    padding: 10px;
 }
 
-/* Оптимізація руху */
-.player {
-    will-change: transform;
+/* ── Картки режимів ── */
+.mode-card {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 5px; padding: 14px 8px 11px;
+    border-radius: 20px; border: 3px solid transparent;
+    cursor: pointer; outline: none;
+    transition: transform .12s ease, box-shadow .12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mode-card:hover  { transform: translateY(-2px); }
+.mode-card:active { transform: translateY(1px); }
+
+.mode-card--beginner {
+    border-color: #86efac; background: #f0fdf4;
+    box-shadow: 0 4px 0 #4ade80;
+}
+.mode-card--beginner:hover { background: #dcfce7; box-shadow: 0 7px 16px rgba(0,0,0,.12); }
+
+.mode-card--master {
+    border-color: #fca5a5; background: #fff1f2;
+    box-shadow: 0 4px 0 #f87171;
+}
+.mode-card--master:hover { background: #ffe4e6; box-shadow: 0 7px 16px rgba(0,0,0,.12); }
+
+.mode-card--free {
+    border-color: #93c5fd; background: #eff6ff;
+    box-shadow: 0 4px 0 #60a5fa;
+}
+.mode-card--free:hover { background: #dbeafe; box-shadow: 0 7px 16px rgba(0,0,0,.12); }
+
+.mode-card-name  { font-weight: 900; font-size: 13px; color: #0f172a; }
+.mode-card-lives { display: flex; gap: 2px; }
+.mode-card-time  { font-size: 10px; font-weight: 800; }
+
+/* ── Нагорода ── */
+.reward-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 900; font-size: 12px;
+    padding: 6px 12px; border-radius: 999px;
+    background: #ecfeff; border: 2px solid #a5f3fc; color: #155e75;
 }
 
-.game-object {
-    will-change: transform;
+/* ── Гравець ── */
+.player      { will-change: transform; }
+.game-object { will-change: transform; }
+.game-shadow { filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+.mouse-btn-active {
+    background-color: #4ade80 !important;
+    transform: scale(.95);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.2);
 }
 
-/* Reduce motion */
+/* ── Анімація рахунку ── */
+@keyframes scoreBump {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+.score-bump { animation: scoreBump .25s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
-    .road-stripes {
-        animation: none;
-    }
-
-    .bonus-pop {
-        animation: none;
-        opacity: 0;
-    }
+    .road-stripes { animation: none; }
+    .bonus-pop, .shake { animation: none; opacity: 1; }
 }
