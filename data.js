@@ -35,6 +35,13 @@ const CATEGORIES = [
         tags: ["1-2 класи", "Мишка"]
       },
       {
+        name: "Клавіатурний Пазл",
+        description: "Інтерактивна гра-пазл для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.",
+        link: "services/digital_literacy/typing_skills/key_puzzle/index.html",
+        image: "images/75.jpg",
+        tags: ["1-2 класи", "Клавіатура"]
+      },
+      {
         name: "Тиць! Перші клавіші",
         description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.",
         link: "services/digital_literacy/typing_skills/tyts/index.html",

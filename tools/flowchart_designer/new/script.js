@@ -4,40 +4,40 @@ document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
   // ================= DOM =================
-  const canvas          = document.getElementById('flowchart-canvas');
+  const canvas = document.getElementById('flowchart-canvas');
   const canvasContainer = document.getElementById('canvas-container');
-  const svgLayer        = document.getElementById('connectors-layer');
+  const svgLayer = document.getElementById('connectors-layer');
 
   const deleteButton = document.getElementById('delete-button');
-  const clearButton  = document.getElementById('clear-button');
-  const saveButton   = document.getElementById('save-button');
-  const undoButton   = document.getElementById('undo-button');
+  const clearButton = document.getElementById('clear-button');
+  const saveButton = document.getElementById('save-button');
+  const undoButton = document.getElementById('undo-button');
 
-  const textModal     = document.getElementById('text-modal');
+  const textModal = document.getElementById('text-modal');
   const shapeTextArea = document.getElementById('shape-text');
-  const cancelText    = document.getElementById('cancel-text');
-  const saveText      = document.getElementById('save-text');
+  const cancelText = document.getElementById('cancel-text');
+  const saveText = document.getElementById('save-text');
 
   const helpButton = document.getElementById('help-button');
-  const helpPanel  = document.getElementById('help-panel');
-  const helpClose  = document.getElementById('help-close');
+  const helpPanel = document.getElementById('help-panel');
+  const helpClose = document.getElementById('help-close');
 
   // topUndoBtn / topSaveBtn are now the main undo/save buttons — no delegation needed
 
-  const zoomInBtn     = document.getElementById('zoom-in');
-  const zoomOutBtn    = document.getElementById('zoom-out');
-  const zoomResetBtn  = document.getElementById('zoom-reset');
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const zoomResetBtn = document.getElementById('zoom-reset');
   const zoomLevelText = document.getElementById('zoom-level');
 
-  const connectionModal  = document.getElementById('connection-modal');
+  const connectionModal = document.getElementById('connection-modal');
   const connectionYesBtn = document.getElementById('connection-yes');
-  const connectionNoBtn  = document.getElementById('connection-no');
-  const cancelConnBtn    = document.getElementById('cancel-connection');
+  const connectionNoBtn = document.getElementById('connection-no');
+  const cancelConnBtn = document.getElementById('cancel-connection');
 
   const connectionBar = document.getElementById('connection-bar');
   const deleteConnBtn = document.getElementById('delete-conn-btn');
 
-  const titleInput   = document.getElementById('diagram-title-input');
+  const titleInput = document.getElementById('diagram-title-input');
   const titleDisplay = document.getElementById('diagram-title-display');
 
   if (!canvas || !canvasContainer || !svgLayer) {
@@ -47,9 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ================= STATE =================
   const DEFAULT_BASE_COLORS = {
-    'start-end':    '#4caf50',
-    'process':      '#03a9f4',
-    'decision':     '#ff9800',
+    'start-end': '#4caf50',
+    'process': '#03a9f4',
+    'decision': '#ff9800',
     'input-output': '#3f51b5',
   };
 
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         color: s.color,
         textRaw: s.textRaw,
         left: el ? el.offsetLeft : 0,
-        top:  el ? el.offsetTop  : 0,
+        top: el ? el.offsetTop : 0,
       };
     });
     const connSnap = state.connections.map(c => ({ ...c }));
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       (snap.connections || []).forEach(c => {
         const fromEl = document.getElementById(c.from);
-        const toEl   = document.getElementById(c.to);
+        const toEl = document.getElementById(c.to);
         if (fromEl && toEl) connectShapes(fromEl, toEl, c.type || null, c.id, true);
       });
       scheduleRefresh();
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  function openModal(modal)  { modal?.classList.add('active'); }
+  function openModal(modal) { modal?.classList.add('active'); }
   function closeModal(modal) { modal?.classList.remove('active'); }
 
   function showMessageModal(text) {
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rgb.startsWith('#')) return rgb;
     const m = rgb.match(/\d+/g);
     if (m && m.length >= 3) {
-      return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2,'0')).join('');
+      return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('');
     }
     return '#ffffff';
   }
@@ -337,11 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getDefaultText(type) {
     switch (type) {
-      case 'start-end':    return hasStartBlock() ? 'Кінець' : 'Початок';
-      case 'process':      return 'Дія';
-      case 'decision':     return 'Умова?';
+      case 'start-end': return hasStartBlock() ? 'Кінець' : 'Початок';
+      case 'process': return 'Дія';
+      case 'decision': return 'Умова?';
       case 'input-output': return 'Ввід / Вивід';
-      default:             return '';
+      default: return '';
     }
   }
 
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const shapeHandleGroups = {};
 
   const DECISION_HANDLE_OUTSET = 8; // px: handles sit slightly outside the diamond
-  const DECISION_CONN_OUTSET   = 2; // px: arrow endpoint slightly outside the diamond border
+  const DECISION_CONN_OUTSET = 12; // px: arrow endpoint slightly outside the diamond border
 
   function decisionVertexDistance(shapeEl) {
     // .decision uses transform: rotate(45deg); offsetWidth is pre-transform.
@@ -386,20 +386,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const d = decisionVertexDistance(shapeEl);
       const o = DECISION_HANDLE_OUTSET;
       return {
-        top:    { x: cx,         y: cy - d - o },
-        right:  { x: cx + d + o, y: cy         },
-        bottom: { x: cx,         y: cy + d + o },
-        left:   { x: cx - d - o, y: cy         },
+        top: { x: cx, y: cy - d - o },
+        right: { x: cx + d + o, y: cy },
+        bottom: { x: cx, y: cy + d + o },
+        left: { x: cx - d - o, y: cy },
       };
     }
 
     const hw = shapeEl.offsetWidth / 2;
     const hh = shapeEl.offsetHeight / 2;
     return {
-      top:    { x: cx,      y: cy - hh },
-      right:  { x: cx + hw, y: cy      },
-      bottom: { x: cx,      y: cy + hh },
-      left:   { x: cx - hw, y: cy      },
+      top: { x: cx, y: cy - hh },
+      right: { x: cx + hw, y: cy },
+      bottom: { x: cx, y: cy + hh },
+      left: { x: cx - hw, y: cy },
     };
   }
 
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sx = hw / (Math.abs(dx) || 0.001);
     const sy = hh / (Math.abs(dy) || 0.001);
-    const s  = Math.min(sx, sy);
+    const s = Math.min(sx, sy);
     return { x: cx + dx * s, y: cy + dy * s };
   }
 
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function createHandleGroup(shapeEl) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.dataset.shapeId = shapeEl.id;
-    ['top','right','bottom','left'].forEach(pos => {
+    ['top', 'right', 'bottom', 'left'].forEach(pos => {
       const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       c.setAttribute('r', '10');
       c.setAttribute('fill', 'white');
@@ -474,11 +474,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateHandleGroup(shapeId) {
     const el = document.getElementById(shapeId);
-    const g  = shapeHandleGroups[shapeId];
+    const g = shapeHandleGroups[shapeId];
     if (!el || !g) return;
     const pts = getHandlePositions(el);
     const circles = g.querySelectorAll('circle');
-    ['top','right','bottom','left'].forEach((pos, i) => {
+    ['top', 'right', 'bottom', 'left'].forEach((pos, i) => {
       circles[i].setAttribute('cx', pts[pos].x);
       circles[i].setAttribute('cy', pts[pos].y);
     });
@@ -579,8 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function polylineLength(points) {
     let len = 0;
     for (let i = 1; i < points.length; i++) {
-      const dx = points[i].x - points[i-1].x;
-      const dy = points[i].y - points[i-1].y;
+      const dx = points[i].x - points[i - 1].x;
+      const dy = points[i].y - points[i - 1].y;
       len += Math.hypot(dx, dy);
     }
     return len;
@@ -588,11 +588,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function pointAlongPolyline(points, t) {
     const total = polylineLength(points);
-    if (total <= 0) return points[0] || {x:0,y:0};
+    if (total <= 0) return points[0] || { x: 0, y: 0 };
     const target = total * t;
     let acc = 0;
     for (let i = 1; i < points.length; i++) {
-      const a = points[i-1], b = points[i];
+      const a = points[i - 1], b = points[i];
       const seg = Math.hypot(b.x - a.x, b.y - a.y);
       if (acc + seg >= target) {
         const r = (target - acc) / (seg || 1);
@@ -605,15 +605,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Returns the 4 cardinal connector points for a shape (center of each edge)
   function getEdgePoints(el) {
-    const cx = el.offsetLeft + el.offsetWidth  / 2;
-    const cy = el.offsetTop  + el.offsetHeight / 2;
-    const hw = el.offsetWidth  / 2;
+    const cx = el.offsetLeft + el.offsetWidth / 2;
+    const cy = el.offsetTop + el.offsetHeight / 2;
+    const hw = el.offsetWidth / 2;
     const hh = el.offsetHeight / 2;
     return {
-      top:    { x: cx,      y: cy - hh, side: 'top'    },
-      bottom: { x: cx,      y: cy + hh, side: 'bottom' },
-      left:   { x: cx - hw, y: cy,      side: 'left'   },
-      right:  { x: cx + hw, y: cy,      side: 'right'  },
+      top: { x: cx, y: cy - hh, side: 'top' },
+      bottom: { x: cx, y: cy + hh, side: 'bottom' },
+      left: { x: cx - hw, y: cy, side: 'left' },
+      right: { x: cx + hw, y: cy, side: 'right' },
     };
   }
 
@@ -627,27 +627,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Same side exits/entries that form an L naturally:
     // bottom→top or top→bottom: vertical first then horizontal if needed
     if ((exitSide === 'bottom' && entrySide === 'top') ||
-        (exitSide === 'top'    && entrySide === 'bottom')) {
+      (exitSide === 'top' && entrySide === 'bottom')) {
       if (Math.abs(dx) < 2) {
         // Already aligned — straight vertical
         pts.push(toPt);
       } else {
         const yMid = fromPt.y + dy / 2;
         pts.push({ x: fromPt.x, y: yMid });
-        pts.push({ x: toPt.x,   y: yMid });
+        pts.push({ x: toPt.x, y: yMid });
         pts.push(toPt);
       }
       return pts;
     }
 
     if ((exitSide === 'right' && entrySide === 'left') ||
-        (exitSide === 'left'  && entrySide === 'right')) {
+      (exitSide === 'left' && entrySide === 'right')) {
       if (Math.abs(dy) < 2) {
         pts.push(toPt);
       } else {
         const xMid = fromPt.x + dx / 2;
         pts.push({ x: xMid, y: fromPt.y });
-        pts.push({ x: xMid, y: toPt.y   });
+        pts.push({ x: xMid, y: toPt.y });
         pts.push(toPt);
       }
       return pts;
@@ -669,36 +669,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Choose the best exit/entry side pair given two shapes.
   // Rules: prefer bottom→top for vertical flow, left/right for horizontal.
   function chooseSides(fromEl, toEl) {
-    const fcx = fromEl.offsetLeft + fromEl.offsetWidth  / 2;
-    const fcy = fromEl.offsetTop  + fromEl.offsetHeight / 2;
-    const tcx = toEl.offsetLeft   + toEl.offsetWidth    / 2;
-    const tcy = toEl.offsetTop    + toEl.offsetHeight   / 2;
-    const dx  = tcx - fcx;
-    const dy  = tcy - fcy;
+    const fcx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
+    const fcy = fromEl.offsetTop + fromEl.offsetHeight / 2;
+    const tcx = toEl.offsetLeft + toEl.offsetWidth / 2;
+    const tcy = toEl.offsetTop + toEl.offsetHeight / 2;
+    const dx = tcx - fcx;
+    const dy = tcy - fcy;
 
-    const fhw = fromEl.offsetWidth  / 2;
+    const fhw = fromEl.offsetWidth / 2;
     const fhh = fromEl.offsetHeight / 2;
-    const thw = toEl.offsetWidth    / 2;
-    const thh = toEl.offsetHeight   / 2;
+    const thw = toEl.offsetWidth / 2;
+    const thh = toEl.offsetHeight / 2;
 
     // Gaps between edges (negative = overlapping)
-    const gapRight  = dx - fhw - thw;   // from.right → to.left
-    const gapLeft   = -dx - fhw - thw;  // from.left  → to.right
+    const gapRight = dx - fhw - thw;   // from.right → to.left
+    const gapLeft = -dx - fhw - thw;  // from.left  → to.right
     const gapBottom = dy - fhh - thh;   // from.bottom→ to.top
-    const gapTop    = -dy - fhh - thh;  // from.top   → to.bottom
+    const gapTop = -dy - fhh - thh;  // from.top   → to.bottom
 
     // Primary axis: whichever has the bigger gap wins
-    const hGap = Math.max(gapRight,  gapLeft);
+    const hGap = Math.max(gapRight, gapLeft);
     const vGap = Math.max(gapBottom, gapTop);
 
     if (vGap >= hGap) {
       // Vertical primary
-      if (dy >= 0) return { exit: 'bottom', entry: 'top'    };
-      else         return { exit: 'top',    entry: 'bottom' };
+      if (dy >= 0) return { exit: 'bottom', entry: 'top' };
+      else return { exit: 'top', entry: 'bottom' };
     } else {
       // Horizontal primary
-      if (dx >= 0) return { exit: 'right', entry: 'left'  };
-      else         return { exit: 'left',  entry: 'right' };
+      if (dx >= 0) return { exit: 'right', entry: 'left' };
+      else return { exit: 'left', entry: 'right' };
     }
   }
 
@@ -706,14 +706,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Legacy fallback — now replaced by computeConnectionGeometry calling routeOrthogonal
     // Only used if called with raw points (shouldn't happen after refactor)
     const fromPt = fromEl_or_pt;
-    const toPt   = toEl_or_pt_or_ignored;
+    const toPt = toEl_or_pt_or_ignored;
     const pts = [{ ...fromPt }];
     const dx = toPt.x - fromPt.x;
     const dy = toPt.y - fromPt.y;
     if (Math.abs(dy) < 2) { pts.push({ ...toPt }); return pts; }
     const yMid = fromPt.y + dy / 2;
     pts.push({ x: fromPt.x, y: yMid });
-    pts.push({ x: toPt.x,   y: yMid });
+    pts.push({ x: toPt.x, y: yMid });
     pts.push({ ...toPt });
     return pts;
   }
@@ -721,9 +721,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function routeOrthogonal(fromEl, toEl) {
     const { exit, entry } = chooseSides(fromEl, toEl);
     const fromEdges = getEdgePoints(fromEl);
-    const toEdges   = getEdgePoints(toEl);
+    const toEdges = getEdgePoints(toEl);
     const fromPt = fromEdges[exit];
-    const toPt   = toEdges[entry];
+    const toPt = toEdges[entry];
     return orthogonalPath(fromPt, toPt, exit, entry);
   }
 
@@ -738,16 +738,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clean orthogonal routing for Yes (LEFT exit) / No (RIGHT exit) from decision block
     const d = decisionVertexDistance(fromEl) + DECISION_CONN_OUTSET;
     const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
-    const cy = fromEl.offsetTop  + fromEl.offsetHeight / 2;
-    const toCx = toEl.offsetLeft   + toEl.offsetWidth  / 2;
-    const toCy = toEl.offsetTop    + toEl.offsetHeight / 2;
+    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
+    const toCx = toEl.offsetLeft + toEl.offsetWidth / 2;
+    const toCy = toEl.offsetTop + toEl.offsetHeight / 2;
 
     // Exit point: exact left or right diamond vertex
     const fromPt = side === 'right'
       ? { x: cx + d, y: cy }
       : { x: cx - d, y: cy };
 
-    const hwTo = toEl.offsetWidth  / 2;
+    const hwTo = toEl.offsetWidth / 2;
     const hhTo = toEl.offsetHeight / 2;
 
     const hDist = side === 'right' ? toCx - cx : cx - toCx;
@@ -775,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pts = [fromPt, toPt];
     } else if (
       (side === 'right' && toPt.x > fromPt.x + 4) ||
-      (side === 'left'  && toPt.x < fromPt.x - 4)
+      (side === 'left' && toPt.x < fromPt.x - 4)
     ) {
       // Target is in the correct side direction — simple L: horizontal then vertical
       pts = [fromPt, { x: toPt.x, y: fromPt.y }, toPt];
@@ -795,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Standard convention: Так (Yes) exits LEFT, Ні (No) exits RIGHT
     if (fromData?.type === 'decision') {
       if (connType === 'yes') return computeDecisionConnection(fromEl, toEl, 'left');
-      if (connType === 'no')  return computeDecisionConnection(fromEl, toEl, 'right');
+      if (connType === 'no') return computeDecisionConnection(fromEl, toEl, 'right');
     }
 
     const pts = routeOrthogonal(fromEl, toEl);
@@ -812,10 +812,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateConnection(connId) {
     const conn = state.connections.find(c => c.id === connId);
     const path = document.getElementById(connId);
-    const hit  = document.getElementById(`hit-${connId}`);
+    const hit = document.getElementById(`hit-${connId}`);
     if (!conn || !path) return;
     const fromEl = document.getElementById(conn.from);
-    const toEl   = document.getElementById(conn.to);
+    const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
     const geo = computeConnectionGeometry(fromEl, toEl, conn.type);
     path.setAttribute('d', geo.d);
@@ -925,7 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pts = ptsOverride;
     if (!pts) {
       const fromEl = document.getElementById(conn.from);
-      const toEl   = document.getElementById(conn.to);
+      const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
       pts = computeConnectionGeometry(fromEl, toEl, conn.type).pts;
     }
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const t = (conn.type === 'yes' || conn.type === 'no') ? 0.28 : 0.5;
     const p = pointAlongPolyline(pts, t);
     const txt = labelGroup.querySelector('text');
-    const bg  = labelGroup.querySelector('rect');
+    const bg = labelGroup.querySelector('rect');
     txt.setAttribute('x', p.x);
     txt.setAttribute('y', p.y);
     try {
@@ -943,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bg.setAttribute('y', bbox.y - pad);
       bg.setAttribute('width', bbox.width + pad * 2);
       bg.setAttribute('height', bbox.height + pad * 2);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // ================= SELECT CONNECTION =================
@@ -1019,10 +1019,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const containerRect = canvasContainer.getBoundingClientRect();
     const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - 75;
-    const defaultTop  = (canvasContainer.scrollTop  + containerRect.height / 3) / state.scale - 30;
+    const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - 30;
 
     shape.style.left = (posLeft !== undefined ? posLeft : Math.max(20, defaultLeft)) + 'px';
-    shape.style.top  = (posTop  !== undefined ? posTop  : Math.max(20, defaultTop))  + 'px';
+    shape.style.top = (posTop !== undefined ? posTop : Math.max(20, defaultTop)) + 'px';
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -1144,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const newX = Math.max(0, pt2.x - state.dragState.offsetX);
       const newY = Math.max(0, pt2.y - state.dragState.offsetY);
       el.style.left = newX + 'px';
-      el.style.top  = newY + 'px';
+      el.style.top = newY + 'px';
       updateConnectionsForShape(el.id);
       updateHandleGroup(el.id);
       scheduleTitleUpdate();
@@ -1169,16 +1169,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= ZOOM =================
   function setZoom(newScale) {
     newScale = Math.max(state.minScale, Math.min(state.maxScale, newScale));
-    const cr  = canvasContainer.getBoundingClientRect();
+    const cr = canvasContainer.getBoundingClientRect();
     const scx = (canvasContainer.scrollLeft + cr.width / 2) / state.scale;
-    const scy = (canvasContainer.scrollTop  + cr.height / 2) / state.scale;
+    const scy = (canvasContainer.scrollTop + cr.height / 2) / state.scale;
 
     state.scale = newScale;
     canvas.style.transform = `scale(${newScale})`;
     if (zoomLevelText) zoomLevelText.textContent = `${Math.round(newScale * 100)}%`;
 
     canvasContainer.scrollLeft = scx * newScale - cr.width / 2;
-    canvasContainer.scrollTop  = scy * newScale - cr.height / 2;
+    canvasContainer.scrollTop = scy * newScale - cr.height / 2;
 
     scheduleRefresh();
   }
@@ -1190,12 +1190,12 @@ document.addEventListener('DOMContentLoaded', () => {
   canvasContainer.addEventListener('wheel', (e) => {
     e.preventDefault();
     setZoom(state.scale + Math.sign(e.deltaY) * -0.1);
-  }, { passive:false });
+  }, { passive: false });
 
   // ================= PAN (drag background) =================
   let isPanning = false;
-  let panStart = {x:0,y:0};
-  let panScroll = {left:0,top:0};
+  let panStart = { x: 0, y: 0 };
+  let panScroll = { left: 0, top: 0 };
 
   function isOnBackground(target) {
     return target === canvas || target === canvasContainer || target === svgLayer;
@@ -1222,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dx = e.clientX - panStart.x;
     const dy = e.clientY - panStart.y;
     canvasContainer.scrollLeft = panScroll.left - dx;
-    canvasContainer.scrollTop  = panScroll.top  - dy;
+    canvasContainer.scrollTop = panScroll.top - dy;
   });
 
   function stopPanning() {
@@ -1375,14 +1375,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const el = document.getElementById(s.id);
       if (!el) return;
       const left = el.offsetLeft;
-      const top  = el.offsetTop;
+      const top = el.offsetTop;
       const w = el.offsetWidth;
       const h = el.offsetHeight;
-      const cx = left + w/2;
-      const cy = top + h/2;
+      const cx = left + w / 2;
+      const cy = top + h / 2;
 
       if (s.type === 'decision') {
-        const d = w/2;
+        const d = w / 2;
         minX = Math.min(minX, cx - d);
         minY = Math.min(minY, cy - d);
         maxX = Math.max(maxX, cx + d);
@@ -1403,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (titleDisplay && titleDisplay.style.display !== 'none' && titleDisplay.textContent.trim()) {
       const tLeft = titleDisplay.offsetLeft - titleDisplay.offsetWidth / 2;
-      const tTop  = titleDisplay.offsetTop;
+      const tTop = titleDisplay.offsetTop;
       minX = Math.min(minX, tLeft);
       minY = Math.min(minY, tTop);
       maxX = Math.max(maxX, tLeft + titleDisplay.offsetWidth);
@@ -1462,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (prevSel) prevSel.classList.add('selected');
       setZoom(prevScale);
       canvasContainer.scrollLeft = prevScroll.left;
-      canvasContainer.scrollTop  = prevScroll.top;
+      canvasContainer.scrollTop = prevScroll.top;
       scheduleRefresh();
     }
   }

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клавіатурний Пазл — Навчальна Гра для Вивчення Клавіатури</title>
+
+    <!-- Перевірені мета-теги SEO -->
+    <meta name="description"
+        content="Безкоштовна навчальна гра 'Клавіатурний пазл'. Збери клавіатуру з окремих клавіш, вивчи розкладку та покращ навички друку. Три рівні складності для дітей та початківців.">
+    <meta name="keywords"
+        content="клавіатурний тренажер, вивчення клавіатури, Клавіатурний Пазл, гра для дітей, розкладка клавіш, комп'ютерна грамотність, вправи для друку">
+    <meta name="author" content="Compnauka">
+    <link rel="canonical" href="https://itnauka.org/services/digital_literacy/typing_skills/key_puzzle/">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="../../../../favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="../../../../favicon-96x96.png">
+    <link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+    <link rel="apple-touch-icon" href="../../../../apple-touch-icon.png">
+    <link rel="manifest" href="../../../../site.webmanifest">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itnauka.org/services/digital_literacy/typing_skills/key_puzzle/">
+    <meta property="og:title" content="Клавіатурний Пазл — Навчальна Гра для Вивчення Клавіатури">
+    <meta property="og:description"
+        content="Збери клавіатуру власноруч! Навчальна гра 'Клавіатурний пазл' допоможе дітям легко запам'ятати розкладку клавіш.">
+    <meta property="og:image" content="https://itnauka.org/images/75.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://itnauka.org/services/digital_literacy/typing_skills/key_puzzle/">
+    <meta property="twitter:title" content="Клавіатурний Пазл — Навчальна Гра для Вивчення Клавіатури">
+    <meta property="twitter:description"
+        content="Весела гра для вивчення розкладки клавіатури. Три рівні складності: від початківця до чемпіона.">
+    <meta property="twitter:image" content="https://itnauka.org/images/75.jpg">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+
+</head>
+
+<body>
+
+    <!-- Confetti canvas (always present) -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- =====================================================
+     DIFFICULTY SELECTION SCREEN
+     ===================================================== -->
+    <div id="diff-screen">
+        <div class="diff-card">
+
+            <div class="diff-icon-header">
+                <i class="fa-solid fa-puzzle-piece"></i>
+            </div>
+
+            <h1 class="diff-title">Клавіатурний Пазл</h1>
+            <div class="diff-sub">Збери клавіатуру!</div>
+
+            <div class="diff-options">
+
+                <button class="diff-btn easy" onclick="chooseDifficulty('easy')">
+                    <div class="diff-btn-icon">
+                        <i class="fa-solid fa-seedling"></i>
+                    </div>
+                    <div class="diff-text">
+                        <div class="diff-name">Легко</div>
+                        <div class="diff-desc">На порожніх місцях видно підказку — яка клавіша туди йде</div>
+                    </div>
+                    <span class="diff-badge">Початківець</span>
+                </button>
+
+                <button class="diff-btn medium" onclick="chooseDifficulty('medium')">
+                    <div class="diff-btn-icon">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div class="diff-text">
+                        <div class="diff-name">Середньо</div>
+                        <div class="diff-desc">Підказка з'являється тільки коли наводиш клавішу на місце</div>
+                    </div>
+                    <span class="diff-badge">Гравець</span>
+                </button>
+
+                <button class="diff-btn hard" onclick="chooseDifficulty('hard')">
+                    <div class="diff-btn-icon">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <div class="diff-text">
+                        <div class="diff-name">Складно</div>
+                        <div class="diff-desc">Жодних підказок! Треба знати клавіатуру або підглядати на справжню</div>
+                    </div>
+                    <span class="diff-badge">Чемпіон</span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+     HEADER
+     ===================================================== -->
+    <div id="header">
+        <div class="logo" role="banner">
+            <i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i>
+            <span>Клавіатурний Пазл</span>
+        </div>
+
+        <div class="header-right">
+            <!-- Back to menu -->
+            <button class="menu-btn" onclick="goToMenu()" title="Повернутись до меню">
+                <i class="fa-solid fa-house"></i>
+            </button>
+            <!-- Progress counter -->
+            <div class="progress-badge">
+                <i class="fa-solid fa-keyboard"></i>
+                <span id="placed-count">0</span>
+                <span>/ <span id="total-count">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+     KEYBOARD
+     ===================================================== -->
+    <main id="main">
+        <div class="keyboard-base-outer" id="keyboard-board" role="application"
+            aria-label="Клавіатурне поле для збирання">
+            <div class="keyboard-inner" id="keyboard">
+                <!-- rows injected by script.js -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Draggable pieces live here -->
+    <div id="pieces-layer" aria-live="polite"></div>
+
+    <!-- Bottom hint -->
+    <div class="hint-pill" role="status">
+        <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+        Перетягни клавіші на їхні місця!
+    </div>
+
+    <!-- =====================================================
+     VICTORY MODAL
+     ===================================================== -->
+    <div id="victory" role="dialog" aria-labelledby="victory-title" aria-modal="true">
+        <div class="victory-card">
+
+            <div class="victory-trophy">
+                <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+            </div>
+
+            <h2 class="victory-title" id="victory-title">Молодець!</h2>
+            <div class="victory-sub">Клавіатуру зібрано!<br>Ти справжній чемпіон!</div>
+
+            <div class="stars">
+                <i class="fa-solid fa-star star-icon"></i>
+                <i class="fa-solid fa-star star-icon"></i>
+                <i class="fa-solid fa-star star-icon"></i>
+            </div>
+
+            <button class="play-again-btn" onclick="goToMenu()">
+                <i class="fa-solid fa-rotate-right"></i>
+                Грати ще раз!
+            </button>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
