@@ -2,58 +2,58 @@
     'use strict';
 
     // ===== DOM =====
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas    = document.getElementById('game-canvas');
+    const ctx       = canvas.getContext('2d');
 
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlay-title');
-    const overlayMsg = document.getElementById('overlay-message');
-    const overlayActions = document.getElementById('overlay-actions');
+    const overlay       = document.getElementById('overlay');
+    const overlayTitle  = document.getElementById('overlay-title');
+    const overlayMsg    = document.getElementById('overlay-message');
+    const overlayActions= document.getElementById('overlay-actions');
     const overlayFooter = document.getElementById('overlay-footer');
+    const overlayIcon   = document.getElementById('overlay-icon');
 
-    const menuBtn = document.getElementById('menu-btn');
+    const menuBtn       = document.getElementById('menu-btn');
 
-    const levelNumEl = document.getElementById('level-num');
-    const levelTotalEl = document.getElementById('level-total');
-    const modeNameEl = document.getElementById('mode-name');
-    const starsNowEl = document.getElementById('stars-now');
-    const starsNeedEl = document.getElementById('stars-need');
-    const livesWrapEl = document.getElementById('lives-wrap');
-    const sessionsLeftEl = document.getElementById('sessions-left');
+    const levelNumEl    = document.getElementById('level-num');
+    const levelTotalEl  = document.getElementById('level-total');
+    const modeNameEl    = document.getElementById('mode-name');
+    const starsNowEl    = document.getElementById('stars-now');
+    const starsNeedEl   = document.getElementById('stars-need');
+    const livesWrapEl   = document.getElementById('lives-wrap');
+    const sessionsLeftEl= document.getElementById('sessions-left');
 
-    const toastEl = document.getElementById('toast');
+    const toastEl       = document.getElementById('toast');
 
-    const confettiCanvas = document.getElementById('confetti-canvas');
-    const cCtx = confettiCanvas.getContext('2d');
+    const confettiCanvas= document.getElementById('confetti-canvas');
+    const cCtx          = confettiCanvas.getContext('2d');
 
     // ===== GAME CONSTANTS =====
-    const COLS = 15;
-    const ROWS = 10;
-    const CELL = 40;
+    const COLS      = 15;
+    const ROWS      = 10;
+    const CELL      = 40;
     const LOGICAL_W = COLS * CELL; // 600
     const LOGICAL_H = ROWS * CELL; // 400
 
-    const CUP_ICON = "🏆";
-    const STAR_ICON = "⭐";
-    const HERO_ICON = "\uf0d0"; // Font Awesome wand
+    // Font Awesome 6 Free Solid unicode glyphs (used in canvas)
+    const FA_WAND   = '\uf0d0'; // fa-wand-magic
+    const FA_TROPHY = '\uf091'; // fa-trophy
+    const FA_LOCK   = '\uf023'; // fa-lock
+    const FA_STAR   = '\uf005'; // fa-star
+    const FA_HEART  = '\uf004'; // fa-heart
 
-    // “Кількість ігрових сесій обмежена”
     const MAX_SESSIONS_PER_DAY = 12;
-    const STORAGE_SESSIONS = 'maze_sessions_v3';
-    const STORAGE_STATS = 'maze_stats_v3';
+    const STORAGE_SESSIONS     = 'maze_sessions_v3';
+    const STORAGE_STATS        = 'maze_stats_v3';
 
-    // Beginner має ~1.5× “ширші ходи”:
-    // робимо це чесно через hitboxScale (менша колізія => більше простору для помилки)
     const MODES = {
-        beginner: { key: 'beginner', label: 'Початківець', levelCount: 5, lives: 3, starsPerLevel: 2, wallInset: 10, hitboxScale: 0.67 },
-        master: { key: 'master', label: 'Майстер', levelCount: 10, lives: 5, starsPerLevel: 3, wallInset: 4, hitboxScale: 1.00 },
-        free: { key: 'free', label: 'Вільний режим', levelCount: 10, lives: Infinity, starsPerLevel: 3, wallInset: 6, hitboxScale: 0.85 }
+        beginner: { key: 'beginner', label: 'Початківець', levelCount: 5,  lives: 3,        starsPerLevel: 2, wallInset: 10, hitboxScale: 0.65 },
+        master:   { key: 'master',   label: 'Майстер',     levelCount: 10, lives: 5,        starsPerLevel: 3, wallInset: 4,  hitboxScale: 1.00 },
+        free:     { key: 'free',     label: 'Вільний',     levelCount: 10, lives: Infinity, starsPerLevel: 3, wallInset: 6,  hitboxScale: 0.85 }
     };
 
     // ===== LEVEL SETS =====
-    // 5 дитячих рівнів (6–7 років): широкі коридори/менше різких поворотів/більші “кімнати”.
     const BEGINNER_LEVELS = [
-        // 1) Дуже проста пряма (2 ряди коридору)
+        // 1) Широкий прямий коридор
         [
             "111111111111111",
             "111111111111111",
@@ -66,7 +66,7 @@
             "111111111111111",
             "111111111111111",
         ],
-        // 2) М’який поворот (широкий L)
+        // 2) М'який L-поворот
         [
             "111111111111111",
             "111111111111111",
@@ -79,7 +79,7 @@
             "111111111000001",
             "111111111111111",
         ],
-        // 3) U-подібний маршрут (широка “рамка”)
+        // 3) U-подібний маршрут
         [
             "111111111111111",
             "1S0111111111111",
@@ -92,7 +92,7 @@
             "100000000000001",
             "111111111111111",
         ],
-        // 4) Велика кімната з “парканчиком” і проходом
+        // 4) Велика кімната з «парканчиком»
         [
             "111111111111111",
             "1S0000000000001",
@@ -105,7 +105,7 @@
             "1000000000000E1",
             "111111111111111",
         ],
-        // 5) Широка “рамка” навколо центру (спокійний обхід)
+        // 5) Обхід центру
         [
             "111111111111111",
             "1S0000000000001",
@@ -120,7 +120,6 @@
         ]
     ];
 
-    // 10 оригінальних рівнів = Майстер + Вільний режим
     const MASTER_LEVELS = [
         [
             "111111111111111",
@@ -245,34 +244,36 @@
     ];
 
     function activeLevels() {
-        if (!mode) return MASTER_LEVELS;
-        return mode.key === 'beginner' ? BEGINNER_LEVELS : MASTER_LEVELS;
+        return mode && mode.key === 'beginner' ? BEGINNER_LEVELS : MASTER_LEVELS;
     }
 
     // ===== STATE =====
-    let gameState = 'menu'; // menu | playing | overlay
-    let mode = null;
+    let gameState   = 'menu';
+    let mode        = null;
     let currentLevel = 0;
 
-    let grid = [];
-    let isDragging = false;
+    let grid        = [];
+    let isDragging  = false;
 
-    const player = { x: 0, y: 0, r: 12 };
-    let startPos = { x: 0, y: 0 };
-    let endPos = { x: 0, y: 0 };
-    let startCell = { c: 0, r: 0 };
-    let endCell = { c: 0, r: 0 };
+    const player    = { x: 0, y: 0, r: 12 };
+    let startPos    = { x: 0, y: 0 };
+    let endPos      = { x: 0, y: 0 };
+    let startCell   = { c: 0, r: 0 };
+    let endCell     = { c: 0, r: 0 };
 
-    let stars = [];
-    let starsCollected = 0;
-    let livesLeft = Infinity;
+    let stars           = [];
+    let starsCollected  = 0;
+    let livesLeft       = Infinity;
 
-    let sessionStars = 0;
-    let sessionStartMs = 0;
+    let sessionStars    = 0;
+    let sessionStartMs  = 0;
+
+    // Star collect animation
+    let starFlashTimer  = 0;
 
     // Confetti
-    let confetti = [];
-    let confettiAnimId = null;
+    let confetti        = [];
+    let confettiAnimId  = null;
 
     // Canvas scaling
     let scaleX = 1;
@@ -309,32 +310,50 @@
     }
     function saveStats(data) { localStorage.setItem(STORAGE_STATS, JSON.stringify(data)); }
 
-    function toast(msg) {
-        toastEl.textContent = msg;
+    // ===== TOAST =====
+    let _toastTimer = null;
+    function toast(msg, iconClass = 'fa-circle-info') {
+        toastEl.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${msg}`;
         toastEl.classList.remove('hidden');
-        clearTimeout(toast._t);
-        toast._t = setTimeout(() => toastEl.classList.add('hidden'), 1400);
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 1800);
     }
 
-    function makeBtn(text, className, onClick) {
+    // ===== BUTTON FACTORY =====
+    function makeBtn(html, className, onClick, disabled = false) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = className;
-        b.textContent = text;
+        b.innerHTML = html;
+        if (disabled) {
+            b.disabled = true;
+            b.classList.add('opacity-40', 'cursor-not-allowed');
+        }
         b.addEventListener('click', onClick);
         return b;
     }
 
-    function showOverlay(title, msg, actions = [], footer = '') {
-        overlayTitle.textContent = title;
-        overlayMsg.textContent = msg;
-        overlayFooter.textContent = footer;
+    // ===== OVERLAY =====
+    // icon: Font Awesome class name e.g. 'fa-hat-wizard', 'fa-trophy'
+    // iconColor: Tailwind color class e.g. 'text-indigo-500', 'text-amber-500'
+    function showOverlay(title, msg, actions = [], footer = '', icon = 'fa-hat-wizard', iconColor = 'text-indigo-500') {
+        overlayTitle.textContent   = title;
+        overlayMsg.textContent     = msg;
+        overlayMsg.style.display   = msg ? '' : 'none';
+        overlayFooter.textContent  = footer;
+
+        overlayIcon.className = `fa-solid ${icon}`;
+        // update icon color on parent
+        const wrap = document.getElementById('overlay-icon-wrap');
+        wrap.className = `mb-3 text-6xl ${iconColor}`;
 
         overlayActions.innerHTML = '';
         actions.forEach(a => overlayActions.appendChild(a));
 
         overlay.classList.remove('opacity-0', 'pointer-events-none');
         overlay.classList.add('opacity-100', 'pointer-events-auto');
+        // scroll back to top in case content is tall
+        overlay.scrollTop = 0;
         gameState = 'overlay';
     }
 
@@ -347,16 +366,13 @@
     // ===== CANVAS DPR SCALE =====
     function fitCanvasToCSS() {
         const rect = canvas.getBoundingClientRect();
-        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const dpr  = Math.max(1, window.devicePixelRatio || 1);
 
-        const cssW = rect.width;
-        const cssH = rect.height;
+        canvas.width  = Math.round(rect.width  * dpr);
+        canvas.height = Math.round(rect.height * dpr);
 
-        canvas.width = Math.round(cssW * dpr);
-        canvas.height = Math.round(cssH * dpr);
-
-        scaleX = (cssW / LOGICAL_W);
-        scaleY = (cssH / LOGICAL_H);
+        scaleX = rect.width  / LOGICAL_W;
+        scaleY = rect.height / LOGICAL_H;
 
         ctx.setTransform(dpr * scaleX, 0, 0, dpr * scaleY, 0, 0);
         ctx.imageSmoothingEnabled = true;
@@ -364,12 +380,13 @@
 
     function getPointerPos(e) {
         const rect = canvas.getBoundingClientRect();
-        const lx = (e.clientX - rect.left) / rect.width * LOGICAL_W;
-        const ly = (e.clientY - rect.top) / rect.height * LOGICAL_H;
-        return { x: lx, y: ly };
+        return {
+            x: (e.clientX - rect.left) / rect.width  * LOGICAL_W,
+            y: (e.clientY - rect.top)  / rect.height * LOGICAL_H
+        };
     }
 
-    // deterministic PRNG
+    // ===== PRNG =====
     function mulberry32(seed) {
         return function () {
             let t = seed += 0x6D2B79F5;
@@ -388,26 +405,38 @@
     // ===== HUD =====
     function updateSessionsUI() { sessionsLeftEl.textContent = String(sessionsLeft()); }
 
+    function renderLives() {
+        if (!mode) { livesWrapEl.innerHTML = '—'; return; }
+        if (mode.lives === Infinity) {
+            livesWrapEl.innerHTML = '<i class="fa-solid fa-infinity text-indigo-500"></i>';
+            return;
+        }
+        let html = '';
+        for (let i = 0; i < mode.lives; i++) {
+            const lost = i >= livesLeft;
+            html += `<i class="fa-solid fa-heart life-icon ${lost ? 'lost text-rose-200' : 'text-rose-500'}"></i>`;
+        }
+        livesWrapEl.innerHTML = html;
+    }
+
     function updateHud() {
         if (!mode) {
-            modeNameEl.textContent = '—';
-            levelNumEl.textContent = '—';
-            levelTotalEl.textContent = '—';
-            starsNowEl.textContent = '0';
+            modeNameEl.textContent  = '—';
+            levelNumEl.textContent  = '—';
+            levelTotalEl.textContent= '—';
+            starsNowEl.textContent  = '0';
             starsNeedEl.textContent = '0';
-            livesWrapEl.textContent = '—';
+            livesWrapEl.innerHTML   = '—';
             updateSessionsUI();
             return;
         }
 
-        modeNameEl.textContent = mode.label;
-        levelNumEl.textContent = String(currentLevel + 1);
+        modeNameEl.textContent   = mode.label;
+        levelNumEl.textContent   = String(currentLevel + 1);
         levelTotalEl.textContent = String(mode.levelCount);
-
-        starsNowEl.textContent = String(starsCollected);
-        starsNeedEl.textContent = String(stars.length);
-
-        livesWrapEl.textContent = (mode.lives === Infinity) ? '∞' : `${livesLeft}/${mode.lives}`;
+        starsNowEl.textContent   = String(starsCollected);
+        starsNeedEl.textContent  = String(stars.length);
+        renderLives();
         updateSessionsUI();
     }
 
@@ -421,23 +450,21 @@
             for (let c = 0; c < COLS; c++) {
                 const cell = grid[r][c];
                 if (cell === 'S') { startCell = { r, c }; startPos = cellCenter(r, c); }
-                if (cell === 'E') { endCell = { r, c }; endPos = cellCenter(r, c); }
+                if (cell === 'E') { endCell   = { r, c }; endPos   = cellCenter(r, c); }
             }
         }
     }
 
-    // BFS reachable open cells from start (гарантує, що ⭐ завжди досяжні)
+    // BFS from start to find all reachable open cells
     function computeReachable() {
-        const q = [];
+        const q    = [];
         const seen = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
 
         q.push(startCell);
         seen[startCell.r][startCell.c] = true;
 
-        const reachable = [];
-        reachable.push({ r: startCell.r, c: startCell.c });
-
-        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        const reachable = [{ r: startCell.r, c: startCell.c }];
+        const dirs      = [[1,0],[-1,0],[0,1],[0,-1]];
 
         while (q.length) {
             const cur = q.shift();
@@ -454,52 +481,51 @@
         return { seen, reachable };
     }
 
-    // ===== STARS (guaranteed reachable) =====
+    // ===== STARS =====
     function generateStars(levelIndex) {
         const { reachable } = computeReachable();
-        const rng = mulberry32(seedFor(levelIndex, mode.key));
+        const rng  = mulberry32(seedFor(levelIndex, mode.key));
         const need = mode.starsPerLevel;
 
-        // кандидати: тільки reachable, але не близько до S/E
         const candidates = [];
         for (const cell of reachable) {
             if (cell.r === startCell.r && cell.c === startCell.c) continue;
-            if (cell.r === endCell.r && cell.c === endCell.c) continue;
+            if (cell.r === endCell.r   && cell.c === endCell.c)   continue;
 
-            const p = cellCenter(cell.r, cell.c);
+            const p  = cellCenter(cell.r, cell.c);
             const ds = Math.hypot(p.x - startPos.x, p.y - startPos.y);
-            const de = Math.hypot(p.x - endPos.x, p.y - endPos.y);
+            const de = Math.hypot(p.x - endPos.x,   p.y - endPos.y);
             if (ds < CELL * 2.0) continue;
             if (de < CELL * 1.6) continue;
 
             candidates.push({ r: cell.r, c: cell.c, x: p.x, y: p.y });
         }
 
-        // shuffle deterministically
+        // deterministic Fisher-Yates
         for (let i = candidates.length - 1; i > 0; i--) {
             const j = Math.floor(rng() * (i + 1));
             [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
 
-        const out = [];
+        const out     = [];
         const minDist = CELL * 1.5;
 
         for (const cand of candidates) {
             if (out.length >= need) break;
             const ok = out.every(s => Math.hypot(s.x - cand.x, s.y - cand.y) >= minDist);
             if (!ok) continue;
-            out.push({ x: cand.x, y: cand.y, r: 12, collected: false });
+            out.push({ x: cand.x, y: cand.y, r: 11, collected: false });
         }
 
-        // fallback
+        // fallback: relax distance constraint
         let k = 0;
         while (out.length < need && k < candidates.length) {
             const cand = candidates[k++];
             if (out.some(s => s.x === cand.x && s.y === cand.y)) continue;
-            out.push({ x: cand.x, y: cand.y, r: 12, collected: false });
+            out.push({ x: cand.x, y: cand.y, r: 11, collected: false });
         }
 
-        stars = out;
+        stars          = out;
         starsCollected = 0;
     }
 
@@ -507,35 +533,77 @@
         for (const s of stars) {
             if (s.collected) continue;
             const d = Math.hypot(player.x - s.x, player.y - s.y);
-            if (d <= player.r + s.r - 2) {
-                s.collected = true;
+            if (d <= player.r + s.r) {
+                s.collected     = true;
                 starsCollected++;
                 sessionStars++;
+                starFlashTimer  = 8; // frames to show flash
                 updateHud();
-                toast(`+1 ⭐ (${starsCollected}/${stars.length})`);
-                if (starsCollected === stars.length) toast("Кубок відкрито! 🏆");
+                if (starsCollected === stars.length) {
+                    toast(`Зібрано всі зірки! Веди до кубка.`, 'fa-trophy');
+                } else {
+                    toast(`Зірка! ${starsCollected} / ${stars.length}`, 'fa-star');
+                }
                 break;
             }
         }
     }
 
+    // ===== CANVAS DRAW HELPERS =====
+
+    /** Draw a 5-point star centred at (cx,cy) with outer radius or, inner ratio ~0.4 */
+    function drawStar5(cx, cy, outerR, fillColor, glowColor) {
+        const spikes  = 5;
+        const innerR  = outerR * 0.42;
+        const step    = Math.PI / spikes;
+
+        ctx.save();
+        if (glowColor) {
+            ctx.shadowBlur  = 14;
+            ctx.shadowColor = glowColor;
+        }
+        ctx.beginPath();
+        for (let i = 0; i < spikes * 2; i++) {
+            const angle  = i * step - Math.PI / 2;
+            const radius = i % 2 === 0 ? outerR : innerR;
+            const x      = cx + Math.cos(angle) * radius;
+            const y      = cy + Math.sin(angle) * radius;
+            if (i === 0) ctx.moveTo(x, y);
+            else         ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /** Draw a Font Awesome glyph centred at (cx,cy) */
+    function drawFAGlyph(glyph, cx, cy, size, color, glow) {
+        ctx.save();
+        ctx.font          = `900 ${size}px "Font Awesome 6 Free"`;
+        ctx.textAlign     = 'center';
+        ctx.textBaseline  = 'middle';
+        ctx.fillStyle     = color;
+        if (glow) { ctx.shadowBlur = 14; ctx.shadowColor = glow; }
+        ctx.fillText(glyph, cx, cy);
+        ctx.restore();
+    }
+
     // ===== RENDER =====
     function drawWallCell(x, y, inset) {
-        const rx = x + inset;
-        const ry = y + inset;
-        const rw = CELL - inset * 2;
-        const rh = CELL - inset * 2;
+        const rx = x + inset, ry = y + inset;
+        const rw = CELL - inset * 2, rh = CELL - inset * 2;
 
-        ctx.fillStyle = "#84cc16";
+        ctx.fillStyle = '#84cc16';
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(rx, ry, rw, rh, 8);
+        if (ctx.roundRect) ctx.roundRect(rx, ry, rw, rh, 7);
         else ctx.rect(rx, ry, rw, rh);
         ctx.fill();
 
-        ctx.fillStyle = "#a3e635";
+        // highlight dot
+        ctx.fillStyle = '#a3e635';
         ctx.beginPath();
-        ctx.arc(rx + rw * 0.25, ry + rh * 0.25, 3.5, 0, Math.PI * 2);
-        ctx.arc(rx + rw * 0.70, ry + rh * 0.75, 4.5, 0, Math.PI * 2);
+        ctx.arc(rx + rw * 0.28, ry + rh * 0.28, 3, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -544,122 +612,112 @@
 
         const inset = mode ? mode.wallInset : MODES.master.wallInset;
 
+        // Grid
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const cell = grid[r][c];
-                const x = c * CELL;
-                const y = r * CELL;
+                const x    = c * CELL, y = r * CELL;
 
                 if (cell === '1') drawWallCell(x, y, inset);
                 else {
-                    ctx.fillStyle = "#f1f5f9";
+                    // flash open cells bright when star collected
+                    if (starFlashTimer > 0) {
+                        const t = starFlashTimer / 8;
+                        ctx.fillStyle = `rgba(251,191,36,${t * 0.12})`;
+                        ctx.fillRect(x, y, CELL, CELL);
+                    }
+                    ctx.fillStyle = '#f1f5f9';
                     ctx.fillRect(x, y, CELL, CELL);
                 }
             }
         }
 
-        // stars
+        if (starFlashTimer > 0) starFlashTimer--;
+
+        // Stars
         for (const s of stars) {
             if (s.collected) continue;
-            ctx.save();
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = "rgba(251, 191, 36, 0.95)";
-            ctx.font = "22px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(STAR_ICON, s.x, s.y);
-            ctx.restore();
+            drawStar5(s.x, s.y, s.r + 1, '#fbbf24', 'rgba(251,191,36,0.9)');
         }
 
-        // cup lock
+        // Trophy / End
         const locked = starsCollected < stars.length;
         ctx.save();
-        ctx.shadowBlur = locked ? 0 : 16;
-        ctx.shadowColor = "#fbbf24";
-        ctx.globalAlpha = locked ? 0.35 : 1.0;
-        ctx.font = "28px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(CUP_ICON, endPos.x, endPos.y + 2);
+        ctx.globalAlpha = locked ? 0.30 : 1.0;
+        drawFAGlyph(
+            FA_TROPHY,
+            endPos.x, endPos.y - 2,
+            26,
+            locked ? '#94a3b8' : '#f59e0b',
+            locked ? null       : 'rgba(251,191,36,0.8)'
+        );
         ctx.restore();
 
         if (locked) {
+            // Lock badge
             ctx.save();
-            ctx.font = "14px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            ctx.fillStyle = "rgba(15, 23, 42, 0.65)";
-            ctx.fillText("🔒 зірки!", endPos.x, endPos.y + 18);
+            ctx.globalAlpha = 0.75;
+            drawFAGlyph(FA_LOCK, endPos.x + 10, endPos.y + 14, 11, '#64748b', null);
             ctx.restore();
         }
 
-        // glow
+        // Player glow (compositing lighter)
         ctx.globalCompositeOperation = 'lighter';
-        const grad = ctx.createRadialGradient(player.x, player.y, 5, player.x, player.y, 40);
-        grad.addColorStop(0, "rgba(99, 102, 241, 0.4)");
-        grad.addColorStop(1, "rgba(99, 102, 241, 0)");
+        const grad = ctx.createRadialGradient(player.x, player.y, 5, player.x, player.y, 38);
+        grad.addColorStop(0, 'rgba(99,102,241,0.38)');
+        grad.addColorStop(1, 'rgba(99,102,241,0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(player.x, player.y, 40, 0, Math.PI * 2);
+        ctx.arc(player.x, player.y, 38, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
 
-        // player
-        ctx.fillStyle = isDragging ? "#4f46e5" : "#6366f1";
+        // Player circle
+        ctx.fillStyle = isDragging ? '#4f46e5' : '#6366f1';
+        ctx.shadowBlur  = 8;
+        ctx.shadowColor = 'rgba(99,102,241,0.5)';
         ctx.beginPath();
         ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
 
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "900 14px 'Font Awesome 6 Free'";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(HERO_ICON, player.x, player.y);
+        // Player icon
+        drawFAGlyph(FA_WAND, player.x, player.y, 13, '#ffffff', null);
 
-        if (isDragging) {
-            canvas.classList.add('grabbing');
-            canvas.classList.remove('grab');
-        } else {
-            canvas.classList.add('grab');
-            canvas.classList.remove('grabbing');
-        }
+        // Cursor style
+        canvas.classList.toggle('grabbing', isDragging);
+        canvas.classList.toggle('grab', !isDragging);
     }
 
     // ===== COLLISION =====
     function circleRectCollides(cx, cy, r, rx, ry, rw, rh) {
         const closestX = clamp(cx, rx, rx + rw);
         const closestY = clamp(cy, ry, ry + rh);
-        const dx = cx - closestX;
-        const dy = cy - closestY;
+        const dx = cx - closestX, dy = cy - closestY;
         return (dx * dx + dy * dy) <= r * r;
     }
 
     function checkCollision(x, y) {
-        const base = player.r - 2;
-        const hitR = base * (mode ? mode.hitboxScale : 1);
+        const hitR  = (player.r - 2) * (mode ? mode.hitboxScale : 1);
 
-        const minC = Math.floor((x - hitR) / CELL);
-        const maxC = Math.floor((x + hitR) / CELL);
-        const minR = Math.floor((y - hitR) / CELL);
-        const maxR = Math.floor((y + hitR) / CELL);
+        const minC  = Math.floor((x - hitR) / CELL);
+        const maxC  = Math.floor((x + hitR) / CELL);
+        const minR_ = Math.floor((y - hitR) / CELL);
+        const maxR_ = Math.floor((y + hitR) / CELL);
 
-        if (minC < 0 || minR < 0 || maxC >= COLS || maxR >= ROWS) return true;
+        // Out of bounds
+        if (minC < 0 || minR_ < 0 || maxC >= COLS || maxR_ >= ROWS) return true;
 
         const inset = mode.wallInset;
 
-        for (let rr = minR; rr <= maxR; rr++) {
+        for (let rr = minR_; rr <= maxR_; rr++) {
             for (let cc = minC; cc <= maxC; cc++) {
                 if (!isWallCell(rr, cc)) continue;
-
-                const x0 = cc * CELL;
-                const y0 = rr * CELL;
-
-                const rx = x0 + inset;
-                const ry = y0 + inset;
-                const rw = CELL - inset * 2;
-                const rh = CELL - inset * 2;
-
-                if (circleRectCollides(x, y, hitR, rx, ry, rw, rh)) return true;
+                const x0 = cc * CELL, y0 = rr * CELL;
+                if (circleRectCollides(x, y, hitR,
+                    x0 + inset, y0 + inset,
+                    CELL - inset * 2, CELL - inset * 2))
+                    return true;
             }
         }
         return false;
@@ -667,20 +725,18 @@
 
     function canWinAt(x, y) {
         if (starsCollected < stars.length) return false;
-        const dx = x - endPos.x;
-        const dy = y - endPos.y;
-        return Math.sqrt(dx * dx + dy * dy) < (CELL / 2);
+        return Math.hypot(x - endPos.x, y - endPos.y) < CELL / 2;
     }
 
     // ===== LEVEL FLOW =====
     function initLevel(levelIndex, fullReset = true) {
-        const L = activeLevels();
-        grid = L[levelIndex];
+        grid = activeLevels()[levelIndex];
         findSE();
 
-        player.x = startPos.x;
-        player.y = startPos.y;
+        player.x   = startPos.x;
+        player.y   = startPos.y;
         isDragging = false;
+        starFlashTimer = 0;
 
         if (fullReset) {
             livesLeft = (mode.lives === Infinity) ? Infinity : mode.lives;
@@ -691,14 +747,15 @@
         render();
     }
 
-    function restartLevelFromScratch() {
-        toast("Рівень спочатку ✨");
+    function restartLevel() {
+        toast('Рівень спочатку', 'fa-rotate-left');
         initLevel(currentLevel, true);
     }
 
     function shake() {
-        canvas.parentElement.classList.add('shake');
-        setTimeout(() => canvas.parentElement.classList.remove('shake'), 500);
+        const p = canvas.parentElement;
+        p.classList.add('shake');
+        setTimeout(() => p.classList.remove('shake'), 500);
     }
 
     function fail() {
@@ -706,9 +763,10 @@
         shake();
 
         if (mode.lives === Infinity) {
-            player.x = startPos.x; player.y = startPos.y;
+            player.x = startPos.x;
+            player.y = startPos.y;
             render();
-            toast("Спробуй ще раз 🙂");
+            toast('Спробуй ще раз!', 'fa-rotate-left');
             return;
         }
 
@@ -716,23 +774,32 @@
         updateHud();
 
         if (livesLeft > 0) {
-            player.x = startPos.x; player.y = startPos.y;
+            player.x = startPos.x;
+            player.y = startPos.y;
             render();
-            toast(`Ой! -1 ❤️ (${livesLeft}/${mode.lives})`);
+            toast(`-1 життя  (${livesLeft} лишилось)`, 'fa-heart-crack');
             return;
         }
 
+        // No lives left
         showOverlay(
-            "😵 Життя закінчились!",
-            "Починаємо рівень спочатку. Спробуй повільніше 🙂",
+            'Життя скінчились!',
+            'Спробуй повільніше — точність важливіша за швидкість.',
             [
-                makeBtn("Почати рівень спочатку", "bg-indigo-600 hover:bg-indigo-500 text-white text-lg font-black py-4 px-8 rounded-full shadow-lg transition active:scale-95", () => {
-                    hideOverlay();
-                    restartLevelFromScratch();
-                }),
-                makeBtn("Вийти в меню", "bg-white hover:bg-slate-50 text-slate-800 text-lg font-black py-4 px-8 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => exitToMenu())
+                makeBtn(
+                    '<i class="fa-solid fa-rotate-left mr-2"></i>Спочатку',
+                    'bg-indigo-600 hover:bg-indigo-500 text-white text-base font-black py-3 px-8 rounded-full shadow-lg transition',
+                    () => { hideOverlay(); restartLevel(); }
+                ),
+                makeBtn(
+                    '<i class="fa-solid fa-door-open mr-2"></i>Вийти в меню',
+                    'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-8 rounded-full border-2 border-slate-200 shadow transition',
+                    () => exitToMenu()
+                )
             ],
-            `⭐ у сесії: ${sessionStars}. Сесій лишилось: ${sessionsLeft()}`
+            `Зірки у сесії: ${sessionStars}  |  Сесій лишилось: ${sessionsLeft()}`,
+            'fa-heart-crack',
+            'text-rose-500'
         );
     }
 
@@ -741,7 +808,7 @@
         confettiExplosion();
 
         setTimeout(() => {
-            const st = loadStats();
+            const st    = loadStats();
             st.totalStars += starsCollected;
             saveStats(st);
 
@@ -749,21 +816,28 @@
             if (next < mode.levelCount) {
                 currentLevel = next;
                 showOverlay(
-                    "✨ Чудово!",
-                    `Рівень пройдено! Ти зібрав ${starsCollected}/${stars.length} ⭐`,
+                    'Чудово!',
+                    `Рівень пройдено! Зорі: ${starsCollected} / ${stars.length}`,
                     [
-                        makeBtn("Далі", "bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-black py-4 px-12 rounded-full shadow-lg transition active:scale-95", () => {
-                            hideOverlay();
-                            initLevel(currentLevel, true);
-                        }),
-                        makeBtn("Вийти в меню", "bg-white hover:bg-slate-50 text-slate-800 text-xl font-black py-4 px-12 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => exitToMenu())
+                        makeBtn(
+                            '<i class="fa-solid fa-arrow-right mr-2"></i>Далі',
+                            'bg-indigo-600 hover:bg-indigo-500 text-white text-base font-black py-3 px-10 rounded-full shadow-lg transition',
+                            () => { hideOverlay(); initLevel(currentLevel, true); }
+                        ),
+                        makeBtn(
+                            '<i class="fa-solid fa-door-open mr-2"></i>Вийти в меню',
+                            'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-10 rounded-full border-2 border-slate-200 shadow transition',
+                            () => exitToMenu()
+                        )
                     ],
-                    `⭐ у сесії: ${sessionStars}. Всього ⭐: ${loadStats().totalStars}`
+                    `Зірки у сесії: ${sessionStars}  |  Всього зірок: ${st.totalStars}`,
+                    'fa-star',
+                    'text-amber-400'
                 );
             } else {
                 gameWin();
             }
-        }, 420);
+        }, 450);
     }
 
     function gameWin() {
@@ -773,29 +847,72 @@
 
         if (mode.key === 'free') {
             showOverlay(
-                "🏁 Фініш кола!",
-                `Ти пройшов усі ${mode.levelCount} рівнів. Хочеш ще раз?`,
+                'Коло завершено!',
+                `Всі ${mode.levelCount} рівнів пройдено. Ще раз?`,
                 [
-                    makeBtn("Ще коло!", "bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-black py-4 px-12 rounded-full shadow-lg transition active:scale-95", () => {
-                        hideOverlay();
-                        currentLevel = 0;
-                        initLevel(currentLevel, true);
-                    }),
-                    makeBtn("Вийти в меню", "bg-white hover:bg-slate-50 text-slate-800 text-xl font-black py-4 px-12 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => exitToMenu())
+                    makeBtn(
+                        '<i class="fa-solid fa-rotate mr-2"></i>Ще коло!',
+                        'bg-indigo-600 hover:bg-indigo-500 text-white text-base font-black py-3 px-10 rounded-full shadow-lg transition',
+                        () => {
+                            if (sessionsLeft() <= 0) {
+                                toast('Сесії на сьогодні закінчились', 'fa-moon');
+                                showMainMenu(false);
+                                return;
+                            }
+                            consumeSession();
+                            updateSessionsUI();
+                            currentLevel   = 0;
+                            sessionStars   = 0;
+                            sessionStartMs = Date.now();
+                            hideOverlay();
+                            initLevel(0, true);
+                        }
+                    ),
+                    makeBtn(
+                        '<i class="fa-solid fa-door-open mr-2"></i>В меню',
+                        'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-10 rounded-full border-2 border-slate-200 shadow transition',
+                        () => exitToMenu()
+                    )
                 ],
-                `⭐ у сесії: ${sessionStars}. Час: ${mm}:${ss}`
+                `Зірки у сесії: ${sessionStars}  |  Час: ${mm}:${ss}`,
+                'fa-flag-checkered',
+                'text-indigo-500'
             );
             return;
         }
 
         showOverlay(
-            "🎉 ПЕРЕМОГА!",
-            `Ти здобув Кубок Бажань! ⭐ у сесії: ${sessionStars}`,
+            'ПЕРЕМОГА!',
+            `Кубок здобуто! Зірки у сесії: ${sessionStars}`,
             [
-                makeBtn("Зіграти ще (нова сесія)", "bg-indigo-600 hover:bg-indigo-500 text-white text-lg font-black py-4 px-8 rounded-full shadow-lg transition active:scale-95", () => showMainMenu(true)),
-                makeBtn("Вийти в меню", "bg-white hover:bg-slate-50 text-slate-800 text-lg font-black py-4 px-8 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => exitToMenu())
+                makeBtn(
+                    '<i class="fa-solid fa-rotate mr-2"></i>Грати ще',
+                    'bg-indigo-600 hover:bg-indigo-500 text-white text-base font-black py-3 px-8 rounded-full shadow-lg transition',
+                    () => {
+                        // restart same mode as a new session
+                        if (sessionsLeft() <= 0) {
+                            toast('Сесії на сьогодні закінчились', 'fa-moon');
+                            showMainMenu(false);
+                            return;
+                        }
+                        consumeSession();
+                        updateSessionsUI();
+                        currentLevel   = 0;
+                        sessionStars   = 0;
+                        sessionStartMs = Date.now();
+                        hideOverlay();
+                        initLevel(0, true);
+                    }
+                ),
+                makeBtn(
+                    '<i class="fa-solid fa-door-open mr-2"></i>В меню',
+                    'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-8 rounded-full border-2 border-slate-200 shadow transition',
+                    () => exitToMenu()
+                )
             ],
-            `Час: ${mm}:${ss}. Всього ⭐: ${loadStats().totalStars}`
+            `Час: ${mm}:${ss}  |  Всього зірок: ${loadStats().totalStars}`,
+            'fa-trophy',
+            'text-amber-400'
         );
     }
 
@@ -803,26 +920,26 @@
     function startSession(modeKey) {
         if (sessionsLeft() <= 0) {
             showMainMenu(false);
-            toast("Сесії на сьогодні закінчились 🙂");
+            toast('Сесії на сьогодні закінчились', 'fa-moon');
             return;
         }
         consumeSession();
         updateSessionsUI();
 
-        mode = MODES[modeKey];
-        currentLevel = 0;
-        sessionStars = 0;
+        mode           = MODES[modeKey];
+        currentLevel   = 0;
+        sessionStars   = 0;
         sessionStartMs = Date.now();
 
         hideOverlay();
-        initLevel(currentLevel, true);
+        initLevel(0, true);
     }
 
     function exitToMenu() {
-        mode = null;
+        mode         = null;
         currentLevel = 0;
-        isDragging = false;
-        gameState = 'menu';
+        isDragging   = false;
+        gameState    = 'menu';
         updateHud();
         showMainMenu(false);
     }
@@ -830,59 +947,75 @@
     function showPauseMenu() {
         if (!mode) return;
         showOverlay(
-            "⏸ Меню",
-            "Можеш продовжити, перезапустити рівень або вийти.",
+            'Пауза',
+            `Рівень ${currentLevel + 1} / ${mode.levelCount}  •  Зірки: ${starsCollected} / ${stars.length}`,
             [
-                makeBtn("Продовжити", "bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-black py-4 px-12 rounded-full shadow-lg transition active:scale-95", () => { hideOverlay(); render(); }),
-                makeBtn("Рівень спочатку", "bg-white hover:bg-slate-50 text-slate-800 text-xl font-black py-4 px-12 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => { hideOverlay(); restartLevelFromScratch(); }),
-                makeBtn("Вийти в меню", "bg-white hover:bg-slate-50 text-slate-800 text-xl font-black py-4 px-12 rounded-full border-2 border-slate-200 shadow transition active:scale-95", () => exitToMenu())
+                makeBtn(
+                    '<i class="fa-solid fa-play mr-2"></i>Продовжити',
+                    'bg-indigo-600 hover:bg-indigo-500 text-white text-base font-black py-3 px-10 rounded-full shadow-lg transition',
+                    () => { hideOverlay(); render(); }
+                ),
+                makeBtn(
+                    '<i class="fa-solid fa-rotate-left mr-2"></i>Рівень спочатку',
+                    'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-10 rounded-full border-2 border-slate-200 shadow transition',
+                    () => { hideOverlay(); restartLevel(); }
+                ),
+                makeBtn(
+                    '<i class="fa-solid fa-door-open mr-2"></i>Вийти в меню',
+                    'bg-white hover:bg-slate-50 text-slate-700 text-base font-black py-3 px-10 rounded-full border-2 border-slate-200 shadow transition',
+                    () => exitToMenu()
+                )
             ],
-            `⭐ у сесії: ${sessionStars}. Сесій лишилось: ${sessionsLeft()}`
+            `Зірки у сесії: ${sessionStars}  |  Сесій лишилось: ${sessionsLeft()}`,
+            'fa-pause',
+            'text-indigo-400'
         );
     }
 
     function showMainMenu(fromWin) {
         updateSessionsUI();
         const left = sessionsLeft();
-        const st = loadStats();
+        const st   = loadStats();
 
-        const title = fromWin ? "Ще раз?" : "Вітаю, Чародію!";
-        const msg = left > 0
-            ? "Обери режим. Початківець має спеціальні 5 дитячих рівнів 🙂"
-            : "На сьогодні чарівних мандрів достатньо 🙂 Повернись завтра!";
+        const title = fromWin ? 'Ще раз?' : 'Вітаю, Чародію!';
+        const msg   = left <= 0
+            ? 'Сьогоднішні сесії вичерпані. Повернись завтра!'
+            : '';
 
-        const btnMain = "text-white text-lg font-black py-4 px-10 rounded-full shadow-lg transform transition active:scale-95";
-        const btnAlt = "bg-white hover:bg-slate-50 text-slate-800 text-lg font-black py-4 px-10 rounded-full border-2 border-slate-200 shadow transition active:scale-95";
+        const btnPrimary = 'text-white text-sm font-black py-3 px-8 rounded-full shadow-lg transition active:scale-95';
+        const btnSecond  = 'bg-white hover:bg-slate-50 text-slate-700 text-sm font-black py-3 px-8 rounded-full border-2 border-slate-200 shadow transition active:scale-95';
 
-        const mkStart = (key, label, extra) => {
-            const b = makeBtn(`${label} ${extra}`, `${btnMain} bg-indigo-600 hover:bg-indigo-500`, () => startSession(key));
-            if (left <= 0) {
-                b.disabled = true;
-                b.classList.add('opacity-40', 'cursor-not-allowed');
-            }
-            return b;
-        };
+        const mkMode = (key, icon, label, desc, disabled = false) => makeBtn(
+            `<i class="fa-solid ${icon} mr-2"></i>${label} <span class="font-normal opacity-75 ml-1 text-xs">${desc}</span>`,
+            `${btnPrimary} bg-indigo-600 hover:bg-indigo-500`,
+            () => startSession(key),
+            disabled || left <= 0
+        );
 
         showOverlay(
             title,
             msg,
             [
-                mkStart('beginner', 'Початківець', '(5 рівнів, 3 ❤️)'),
-                mkStart('master', 'Майстер', '(10 рівнів, 5 ❤️)'),
-                mkStart('free', 'Вільний режим', '(без ❤️)'),
-                makeBtn("Скинути статистику ⭐", btnAlt, () => { saveStats({ totalStars: 0 }); toast("Статистику скинуто"); showMainMenu(false); })
+                mkMode('beginner', 'fa-seedling',    'Початківець',   '5 рівнів · 3 життя'),
+                mkMode('master',   'fa-crown',        'Майстер',       '10 рівнів · 5 життів'),
+                mkMode('free',     'fa-infinity',     'Вільний режим', '10 рівнів · без втрат'),
+                makeBtn(
+                    '<i class="fa-solid fa-trash-can mr-2"></i>Скинути статистику',
+                    btnSecond,
+                    () => { saveStats({ totalStars: 0 }); toast('Статистику скинуто', 'fa-trash-can'); showMainMenu(false); }
+                )
             ],
-            `Сесій лишилось: ${left}/${MAX_SESSIONS_PER_DAY}. Всього ⭐: ${st.totalStars}`
+            `Сесій лишилось: ${left} / ${MAX_SESSIONS_PER_DAY}  |  Всього зірок: ${st.totalStars}`,
+            'fa-hat-wizard',
+            'text-indigo-500'
         );
     }
 
-    // ===== INPUT (Pointer events) =====
+    // ===== INPUT =====
     function handlePointerDown(e) {
         if (gameState !== 'playing') return;
         const pos = getPointerPos(e);
-        const dx = pos.x - player.x;
-        const dy = pos.y - player.y;
-        if (Math.hypot(dx, dy) < player.r + 20) {
+        if (Math.hypot(pos.x - player.x, pos.y - player.y) < player.r + 22) {
             isDragging = true;
             canvas.setPointerCapture(e.pointerId);
             render();
@@ -911,9 +1044,10 @@
             return;
         }
 
+        // Hint: near cup but stars not collected
         const dCup = Math.hypot(player.x - endPos.x, player.y - endPos.y);
-        if (dCup < (CELL / 2) && starsCollected < stars.length) {
-            toast("Спочатку зірочки ⭐");
+        if (dCup < CELL * 0.6 && starsCollected < stars.length) {
+            toast(`Збери зірки: ${starsCollected} / ${stars.length}`, 'fa-star');
         }
     }
 
@@ -926,23 +1060,35 @@
 
     // ===== CONFETTI =====
     function resizeConfetti() {
-        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.width  = window.innerWidth;
         confettiCanvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', resizeConfetti);
-    resizeConfetti();
 
     function confettiExplosion() {
-        for (let i = 0; i < 70; i++) {
+        // Spawn from canvas visual center
+        const rect = canvas.getBoundingClientRect();
+        const originX = rect.left + rect.width  / 2;
+        const originY = rect.top  + rect.height / 2;
+
+        const COLORS = [
+            '#fbbf24','#f59e0b','#ef4444','#6366f1',
+            '#22c55e','#3b82f6','#ec4899','#a855f7'
+        ];
+
+        for (let i = 0; i < 90; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 14 + 4;
             confetti.push({
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2,
-                w: Math.random() * 8 + 4,
-                h: Math.random() * 8 + 4,
-                vx: (Math.random() - 0.5) * 18,
-                vy: (Math.random() - 0.5) * 18,
-                c: `hsl(${Math.random() * 60 + 30}, 100%, 60%)`,
-                life: 1.15
+                x:    originX,
+                y:    originY,
+                w:    Math.random() * 9 + 4,
+                h:    Math.random() * 9 + 4,
+                vx:   Math.cos(angle) * speed,
+                vy:   Math.sin(angle) * speed - 4,
+                rot:  Math.random() * Math.PI * 2,
+                rotV: (Math.random() - 0.5) * 0.3,
+                c:    COLORS[Math.floor(Math.random() * COLORS.length)],
+                life: 1.2
             });
         }
         if (!confettiAnimId) updateConfetti();
@@ -953,61 +1099,63 @@
 
         for (let i = confetti.length - 1; i >= 0; i--) {
             const p = confetti[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.22;
-            p.vx *= 0.94;
-            p.life -= 0.012;
+            p.x   += p.vx;
+            p.y   += p.vy;
+            p.vy  += 0.3;
+            p.vx  *= 0.96;
+            p.rot += p.rotV;
+            p.life -= 0.014;
 
+            if (p.life <= 0) { confetti.splice(i, 1); continue; }
+
+            cCtx.save();
             cCtx.globalAlpha = Math.max(0, p.life);
-            cCtx.fillStyle = p.c;
-            cCtx.beginPath();
-            cCtx.arc(p.x, p.y, p.w / 2, 0, Math.PI * 2);
-            cCtx.fill();
-            cCtx.globalAlpha = 1;
-
-            if (p.life <= 0) confetti.splice(i, 1);
+            cCtx.fillStyle   = p.c;
+            cCtx.translate(p.x, p.y);
+            cCtx.rotate(p.rot);
+            cCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            cCtx.restore();
         }
 
         if (confetti.length) confettiAnimId = requestAnimationFrame(updateConfetti);
-        else confettiAnimId = null;
+        else { confettiAnimId = null; cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height); }
     }
 
     // ===== EVENTS =====
     canvas.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('pointermove', handlePointerMove, { passive: false });
-    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointerup',   handlePointerUp);
     window.addEventListener('pointercancel', handlePointerUp);
 
     menuBtn.addEventListener('click', () => {
+        if (gameState === 'overlay') { hideOverlay(); render(); return; }
         if (!mode) showMainMenu(false);
         else showPauseMenu();
     });
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (!mode) showMainMenu(false);
-            else {
-                if (overlay.classList.contains('opacity-100')) { hideOverlay(); render(); }
-                else showPauseMenu();
-            }
+            if (gameState === 'overlay') { hideOverlay(); render(); }
+            else if (!mode) showMainMenu(false);
+            else showPauseMenu();
         }
     });
 
     window.addEventListener('resize', () => {
         fitCanvasToCSS();
+        resizeConfetti();
         render();
     });
 
-    // ===== START =====
+    // ===== BOOT =====
     function boot() {
         updateHud();
         updateSessionsUI();
         fitCanvasToCSS();
+        resizeConfetti();
         showMainMenu(false);
     }
 
-    // Дочекатися шрифтів (щоб FA-іконка в canvas була стабільною)
     if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(boot).catch(boot);
     } else {

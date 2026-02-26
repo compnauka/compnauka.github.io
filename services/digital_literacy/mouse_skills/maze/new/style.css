@@ -3,6 +3,8 @@
 :root {
     --bg1: #f0f9ff;
     --bg2: #e0f2fe;
+    --indigo: #6366f1;
+    --indigo-dark: #4f46e5;
 }
 
 * {
@@ -24,7 +26,6 @@ body {
     border-radius: 1rem;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     cursor: crosshair;
-
     width: min(92vw, 600px);
     height: auto;
     display: block;
@@ -34,61 +35,106 @@ body {
     text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
 }
 
+/* === SHAKE === */
 .shake {
     animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 @keyframes shake {
-
-    10%,
-    90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: translate3d(2px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translate3d(-4px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: translate3d(4px, 0, 0);
-    }
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
-.grabbing {
-    cursor: grabbing !important;
-}
+/* === CURSOR === */
+.grabbing { cursor: grabbing !important; }
+.grab     { cursor: grab !important; }
 
-.grab {
-    cursor: grab !important;
-}
-
+/* === CONFETTI === */
 #confetti-canvas {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 50;
 }
 
+/* === TOAST === */
 .toast {
     position: absolute;
     left: 50%;
-    bottom: 10px;
+    bottom: 12px;
     transform: translateX(-50%);
-    padding: 10px 14px;
+    padding: 8px 16px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.92);
+    background: rgba(15, 23, 42, 0.90);
     color: white;
     font-weight: 900;
-    font-size: 14px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, .18);
+    font-size: 13px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
     max-width: min(520px, 90%);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: toastIn 0.2s ease;
+    z-index: 30;
+}
+
+.toast.hidden { display: none; }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === OVERLAY === */
+#overlay {
+    /* flex + overflow-y so buttons never clip on short screens */
+    scrollbar-width: none;
+}
+#overlay::-webkit-scrollbar { display: none; }
+
+#overlay-icon-wrap {
+    /* subtle pulse for the icon */
+    animation: iconPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.08); }
+}
+
+/* === OVERLAY BUTTONS === */
+#overlay-actions button {
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, opacity 0.1s;
+}
+#overlay-actions button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+#overlay-actions button:disabled {
+    cursor: not-allowed;
+}
+
+/* === STAR COLLECT PULSE (canvas parent) === */
+@keyframes starCollect {
+    0%   { filter: brightness(1); }
+    40%  { filter: brightness(1.35); }
+    100% { filter: brightness(1); }
+}
+.star-flash {
+    animation: starCollect 0.35s ease;
+}
+
+/* === LIVES ICONS === */
+.life-icon {
+    display: inline-block;
+    transition: transform 0.15s;
+}
+.life-icon.lost {
+    opacity: 0.25;
 }
