@@ -166,7 +166,7 @@ const FINGER_MAP = {
   "shiftright":   ["right","rh-pinky",  "мізинець",  "f-pinky"],
   "controlright": ["right","rh-pinky",  "мізинець",  "f-pinky"],
   // THUMBS — space
-  "space":        ["right","rh-thumb",  "великий",   "f-thumb"],
+  "space":        [["left","lh-thumb","великі","f-thumb"],["right","rh-thumb","великі","f-thumb"]],
 };
 
 // ----------------------------------------------------------------

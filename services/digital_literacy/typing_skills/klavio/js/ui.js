@@ -9,14 +9,35 @@
 // Text display
 // ----------------------------------------------------------------
 function updateTextDisplay() {
-  const full = exercises[state.taskNum - 1];
-  const done = full.substring(0, state.correctChars);
-  const cursor = state.taskString[0] || '';
-  const todo   = state.taskString.substring(1, 42);
+  const full = exercises[state.taskNum - 1] || '';
+  const cursorIndex = Math.min(state.correctChars, full.length);
 
-  document.getElementById('td-done').textContent   = done.slice(-22);
-  document.getElementById('td-cursor').textContent = cursor === ' ' ? '␣' : cursor;
-  document.getElementById('td-todo').textContent   = todo;
+  // One-line "window" around the cursor (active zone in the middle)
+  const VISIBLE = 64;     // total chars shown
+  const CARET_AT = 32;    // cursor position inside the window
+  const maxStart = Math.max(0, full.length - VISIBLE);
+  const start = Math.min(maxStart, Math.max(0, cursorIndex - CARET_AT));
+  const end = Math.min(full.length, start + VISIBLE);
+
+  const windowStr = full.slice(start, end);
+  const local = cursorIndex - start;
+
+  const done = windowStr.slice(0, Math.max(0, local));
+  const cursorChar = windowStr[local] ?? '';
+  const todo = windowStr.slice(Math.min(windowStr.length, local + 1));
+
+  const doneEl = document.getElementById('td-done');
+  const curEl  = document.getElementById('td-cursor');
+  const todoEl = document.getElementById('td-todo');
+
+  if (doneEl) doneEl.textContent = done;
+  if (todoEl) todoEl.textContent = todo;
+
+  if (curEl) {
+    const isSpace = cursorChar === ' ';
+    curEl.textContent = isSpace ? ' ' : cursorChar;
+    curEl.classList.toggle('is-space', isSpace);
+  }
 }
 
 // ----------------------------------------------------------------
@@ -66,16 +87,26 @@ function clearHandHighlights() {
 function highlightFinger(keyId) {
   clearHandHighlights();
   if (!DIFFICULTIES[state.difficulty].handHint) return;
+
   const info = FINGER_MAP[keyId];
   if (!info) return;
-  const [hand, fingerId, fingerName] = info;
-  const fingerEl = document.getElementById(fingerId);
-  if (fingerEl) fingerEl.classList.add('active');
-  const badge = document.getElementById(hand + '-finger-name');
-  if (badge) {
-    badge.textContent = fingerName;
-    badge.classList.add('visible');
+
+  const entries = Array.isArray(info[0]) ? info : [info];
+
+  // Highlight all matched fingers (e.g., both thumbs for space)
+  for (const entry of entries) {
+    const [hand, fingerId, fingerName] = entry;
+
+    const fingerEl = document.getElementById(fingerId);
+    if (fingerEl) fingerEl.classList.add('active');
+
+    const badge = document.getElementById(hand + '-finger-name');
+    if (badge) {
+      badge.textContent = fingerName;
+      badge.classList.add('visible');
+    }
   }
+}
 }
 
 // ----------------------------------------------------------------
