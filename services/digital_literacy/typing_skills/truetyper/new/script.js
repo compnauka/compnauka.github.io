@@ -92,7 +92,7 @@ const DATA = {
     layout: [
       ['й','ц','у','к','е','н','г','ш','щ','з','х','ї'],
       ['ф','і','в','а','п','р','о','л','д','ж','є'],
-      ['ґ','я','ч','с','м','и','т','ь','б','ю','.']
+      ['я','ч','с','м','и','т','ь','б','ю','.']
     ],
     milestones: [
       "Чудовий старт!","Ти справжній майстер!","Неймовірна швидкість!",
@@ -120,7 +120,17 @@ const DATA = {
       countdownReady:"Приготуйся!",
       countdownGo:"Вперед!",
       confirmTitle:"Зміна мови",
-      confirmSub:"Поточний прогрес буде скинуто.\nПродовжити?"
+      confirmSub:"Поточний прогрес буде скинуто.\nПродовжити?",
+      testInstrTitle:"Тест 1 хвилина",
+      testInstrL1:"Друкуй слова з клавіатури",
+      testInstrL2:"Пропускати слова не можна",
+      testInstrL3:"Backspace — повертає на крок назад",
+      testInstrL4:"Ціль — більше слів за хвилину",
+      testInstrBtn:"Почати відлік!",
+      testInstrHint:"Натисни Enter або кнопку",
+      mashWarning:"Набирай правильно, а не навмання! 🙅",
+      cancelTest:"Пізніше",
+      obClose:"Закрити"
     }
   },
   en: {
@@ -185,7 +195,17 @@ const DATA = {
       countdownReady:"Get ready!",
       countdownGo:"Go!",
       confirmTitle:"Change Language",
-      confirmSub:"Current progress will be reset.\nContinue?"
+      confirmSub:"Current progress will be reset.\nContinue?",
+      testInstrTitle:"1 Minute Test",
+      testInstrL1:"Type the words using your keyboard",
+      testInstrL2:"You cannot skip words",
+      testInstrL3:"Backspace — one step back",
+      testInstrL4:"Goal — type as many words as possible",
+      testInstrBtn:"Start Countdown!",
+      testInstrHint:"Press Enter or the button",
+      mashWarning:"Type carefully, not randomly! 🙅",
+      cancelTest:"Later",
+      obClose:"Close"
     }
   }
 };
@@ -193,11 +213,14 @@ const DATA = {
 /* Pre-split words by difficulty after DATA definition */
 ['uk','en'].forEach(lang => {
   const words = DATA[lang].words;
+  // For Ukrainian: exclude words with ґ from easy/medium pools
+  // ґ requires AltGr on most keyboards and is taught only at advanced level
+  const noGhe = lang === 'uk' ? (w => !/ґ/i.test(w)) : () => true;
   // Easy: ≤5 chars (not counting apostrophe)
-  DATA[lang].easy   = words.filter(w => w.replace(/'/g,'').length <= 5);
+  DATA[lang].easy   = words.filter(w => w.replace(/'/g,'').length <= 5).filter(noGhe);
   // Medium: 6–8 chars
-  DATA[lang].medium = words.filter(w => { const l = w.replace(/'/g,'').length; return l >= 6 && l <= 8; });
-  // Hard: 9+ chars
+  DATA[lang].medium = words.filter(w => { const l = w.replace(/'/g,'').length; return l >= 6 && l <= 8; }).filter(noGhe);
+  // Hard: 9+ chars (ґ words allowed here)
   DATA[lang].hard   = words.filter(w => w.replace(/'/g,'').length >= 9);
 });
 
@@ -220,11 +243,14 @@ const el = {
   startTestBtn: $('start-test-btn'),
   confirmModal: $('confirm-modal'),  confirmYes:  $('confirm-yes'),
   confirmCancel:$('confirm-cancel'), confirmTitle:$('confirm-title'), confirmSub:$('confirm-sub'),
+  tiModal: $('test-instr-modal'), tiTitle: $('ti-title'),
+  tiL1: $('ti-l1'), tiL2: $('ti-l2'), tiL3: $('ti-l3'), tiL4: $('ti-l4'),
+  tiStartBtn: $('ti-start-btn'), tiStartLbl: $('ti-start-lbl'), tiHint: $('ti-hint'),
   countdownModal: $('countdown-modal'), countdownNum: $('countdown-num'), countdownLabel: $('countdown-label'),
   testResultModal: $('test-result-modal'),
-  trWpm:    $('tr-wpm'),    trWords:   $('tr-words'),
+  trWpm:    $('tr-wpm'),
   trAcc:    $('tr-acc'),    trBest:    $('tr-best'),
-  trWpmLbl: $('tr-wpm-lbl'),trWordsLbl:$('tr-words-lbl'),
+  trWpmLbl: $('tr-wpm-lbl'),
   trAccLbl: $('tr-acc-lbl'),trBestLbl: $('tr-best-lbl'),
   trComment:$('tr-comment'),trTitle:   $('tr-title'),
   trWpmBox: $('tr-wpm-box'),trBestBox: $('tr-best-box'),
@@ -234,7 +260,9 @@ const el = {
   diffBadge: $('diff-badge'),
   langBtn: $('lang-btn'),   langLabel: $('lang-label'),
   soundBtn:$('sound-btn'),  kb: $('kb'),
-  testBtn: $('test-btn'),   testBtnLabel: $('test-btn-label')
+  testBtn: $('test-btn'),   testBtnLabel: $('test-btn-label'),
+  onboardModal: $('onboard-modal'),
+  obNextBtn: $('ob-next-btn'), obSkipBtn: $('ob-skip-btn')
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -255,7 +283,6 @@ function updateLabels(lang) {
   el.testBtnLabel.textContent = L.testBtn;
   el.trTitle.textContent     = L.trTitle;
   el.trWpmLbl.textContent    = L.trWpmLbl;
-  el.trWordsLbl.textContent  = L.trWordsLbl;
   el.trAccLbl.textContent    = L.trAccLbl;
   el.trBestLbl.textContent   = L.trBestLbl;
   el.trRetryLbl.textContent  = L.trRetry;
@@ -263,6 +290,28 @@ function updateLabels(lang) {
   el.confirmTitle.textContent = L.confirmTitle;
   el.confirmSub.textContent  = L.confirmSub;
   el.diffBadge.textContent   = L.diffAll;
+  // Test instructions
+  el.tiTitle.textContent     = L.testInstrTitle;
+  el.tiL1.textContent        = L.testInstrL1;
+  el.tiL2.textContent        = L.testInstrL2;
+  el.tiL3.textContent        = L.testInstrL3;
+  el.tiL4.textContent        = L.testInstrL4;
+  el.tiStartLbl.textContent  = L.testInstrBtn;
+  el.tiHint.textContent      = L.testInstrHint;
+  const tiCancelLbl = document.getElementById('ti-cancel-lbl');
+  if (tiCancelLbl) tiCancelLbl.textContent = L.cancelTest || 'Пізніше';
+  // How it works button on start screen
+  const howLbl = document.getElementById('how-lbl');
+  if (howLbl) howLbl.textContent = L.howItWorks;
+  // Onboarding text
+  const obIds = ['ob-t1','ob-t2','ob-t3','ob-d1','ob-d2','ob-d3',
+                 'ob-skip-lbl','ob-next-lbl','ob-mode1','ob-mode1d','ob-mode2','ob-mode2d'];
+  const obKeys = ['obT1','obT2','obT3','obD1','obD2','obD3',
+                  'obSkip','obNext','obMode1','obMode1d','obMode2','obMode2d'];
+  obIds.forEach((id, i) => {
+    const el2 = document.getElementById(id);
+    if (el2 && L[obKeys[i]]) el2.textContent = L[obKeys[i]];
+  });
 }
 
 function updateKeyboard(lang) {
@@ -279,7 +328,13 @@ function updateKeyboard(lang) {
 
     layout[ri].forEach((ch, i) => {
       const k = keys[i + offset];
-      if (k) { k.textContent = ch.toUpperCase(); k.dataset.char = ch; }
+      if (k) {
+        
+        const mainSpan = k.querySelector('.key-main');
+        if (mainSpan) mainSpan.textContent = ch.toUpperCase();
+        else k.textContent = ch.toUpperCase();
+        k.dataset.char = ch;
+      }
     });
     for (let i = layout[ri].length + offset; i < keys.length; i++) {
       keys[i].classList.add('hidden-key');
@@ -425,6 +480,9 @@ const G = {
   mainInterval: null,
   closing: false,
   _lastWord: '',
+  _mashTimes: [],
+  _mashWarnTimer: null,
+  _obStep: 1,
 
   st: {
     wordIdx: 0, charIdx: 0, score: 0, errors: 0, totalHits: 0,
@@ -441,24 +499,55 @@ const G = {
   },
 
   _bindEvents() {
-    // Start modal buttons
+    // Start modal buttons → always show onboarding first
     el.startBtn.addEventListener('click', () => {
       el.startModal.classList.add('hidden');
-      this.st.started = true; this.st.paused = false;
       Snd._init(); Snd._resume();
-      this._startPractice();
+      this._showOnboarding('practice');
     });
     el.startTestBtn.addEventListener('click', () => {
       el.startModal.classList.add('hidden');
       Snd._init(); Snd._resume();
-      this.st.started = true;
-      this._startCountdown();
+      this._showOnboarding('test');
+    });
+
+    // Onboarding nav
+    if (el.obNextBtn) el.obNextBtn.addEventListener('click', () => this._obNext());
+    if (el.obSkipBtn) el.obSkipBtn.addEventListener('click', () => this._obFinish());
+
+    // Header "How it works?" button — available in-game
+    const howHeaderBtn = document.getElementById('help-btn') || document.getElementById('how-header-btn');
+    if (howHeaderBtn) howHeaderBtn.addEventListener('click', () => {
+      if (isOpen(el.mModal) || isOpen(el.confirmModal) || isOpen(el.countdownModal)) return;
+      this._showOnboarding('inline');
     });
 
     // Header controls
     el.soundBtn.addEventListener('click', () => Snd.toggleMute(el.soundBtn));
     el.langBtn.addEventListener('click',  () => this._toggleLang());
     el.testBtn.addEventListener('click',  () => this._onTestBtnClick());
+
+    // Test instructions modal
+    el.tiStartBtn.addEventListener('click', () => {
+      el.tiModal.classList.add('hidden');
+      this._startCountdown();
+    });
+    // Cancel / "Later" button in test instructions
+    const tiCancelBtn = document.getElementById('ti-cancel-btn');
+    if (tiCancelBtn) {
+      tiCancelBtn.addEventListener('click', () => {
+        el.tiModal.classList.add('hidden');
+        // Return to practice if already started, else show start modal
+        if (this.st.started) {
+          this.st.paused = false;
+        } else {
+          el.startModal.classList.remove('hidden');
+        }
+      });
+    }
+    // Milestone close X
+    const mCloseX = document.getElementById('m-close-x');
+    if (mCloseX) mCloseX.addEventListener('click', () => this._closeMilestone());
 
     // Milestone modal
     el.mNextBtn.addEventListener('click', () => this._closeMilestone());
@@ -477,17 +566,30 @@ const G = {
     // Test result buttons
     el.trRetryBtn.addEventListener('click', () => {
       el.testResultModal.classList.add('hidden');
-      this._startCountdown();
+      this._showTestInstructions();
     });
     el.trBackBtn.addEventListener('click', () => {
       el.testResultModal.classList.add('hidden');
       this._startPractice();
     });
 
-    // Keyboard
+    // Onboarding dot navigation
+    document.querySelectorAll('.ob-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        this._obSetStep(parseInt(dot.dataset.step));
+      });
+    });
+    const mw = document.createElement('div');
+    mw.id = 'mash-warning';
+    document.body.appendChild(mw);
+
+    // Keyboard — block mouse clicks, only allow touch/stylus
     document.addEventListener('keydown', e => this._onKey(e), { passive: false });
 
     el.kb.addEventListener('pointerdown', e => {
+      // Block mouse — only allow touch/stylus (kids can't cheat by clicking)
+      if (e.pointerType === 'mouse') return;
+
       const k = e.target.closest('.key');
       if (!k) return;
       const hasAction = k.dataset.action || k.dataset.char || k.dataset.code;
@@ -501,6 +603,23 @@ const G = {
       if (k.dataset.action === 'backspace') this._backspace();
       else this._input(k.dataset.char || ' ');
     });
+  },
+
+  /* ── MASH WARNING ────────────────────────────────────────── */
+  _showMashWarning() {
+    const mw = document.getElementById('mash-warning');
+    if (!mw) return;
+    mw.textContent = DATA[this.lang].labels.mashWarning;
+    mw.classList.add('show');
+    clearTimeout(this._mashWarnTimer);
+    this._mashWarnTimer = setTimeout(() => mw.classList.remove('show'), 2500);
+  },
+
+  /* ── TEST INSTRUCTIONS ───────────────────────────────────── */
+  _showTestInstructions() {
+    updateLabels(this.lang); // ensure labels are up to date
+    el.tiModal.classList.remove('hidden');
+    setTimeout(() => el.tiStartBtn.focus(), 80);
   },
 
   /* ── WORD POOL (progressive difficulty) ─────────────────── */
@@ -548,7 +667,7 @@ const G = {
   /* ── TEST MODE ───────────────────────────────────────────── */
   _onTestBtnClick() {
     // Guard: don't open test during open modals
-    if (isOpen(el.mModal) || isOpen(el.confirmModal) || isOpen(el.countdownModal)) return;
+    if (isOpen(el.mModal) || isOpen(el.confirmModal) || isOpen(el.countdownModal) || isOpen(el.tiModal)) return;
 
     if (!this.st.started) {
       // Not started yet — start directly
@@ -556,12 +675,13 @@ const G = {
       Snd._init(); Snd._resume();
       this.st.started = true;
     }
-    this._startCountdown();
+    this._showTestInstructions();
   },
 
   _startCountdown() {
     // Hide any open modals first
     el.mModal.classList.add('hidden');
+    el.tiModal.classList.add('hidden');
     el.testResultModal.classList.add('hidden');
     this.st.paused = true;
 
@@ -662,7 +782,6 @@ const G = {
 
     const L = DATA[this.lang].labels;
     el.trWpm.textContent   = wpm;
-    el.trWords.textContent = this.st.score;
     el.trAcc.textContent   = `${acc}%`;
     el.trBest.textContent  = best;
     el.trComment.textContent = isNew ? L.trNew : this._wpmComment(wpm, this.lang);
@@ -755,6 +874,15 @@ const G = {
       Snd.error();
       shakeWord();
       updateStats(this.st);
+
+      // Mash detection: 5+ errors within 2 seconds
+      const now = Date.now();
+      this._mashTimes.push(now);
+      if (this._mashTimes.length > 5) this._mashTimes.shift();
+      if (this._mashTimes.length === 5 && (now - this._mashTimes[0]) < 2000) {
+        this._mashTimes = [];
+        this._showMashWarning();
+      }
     }
   },
 
@@ -836,11 +964,103 @@ const G = {
     setTimeout(() => { this.closing = false; }, 260);
   },
 
+  /* ── ONBOARDING ──────────────────────────────────────────── */
+  // mode: 'practice' | 'test' | 'inline'
+  // 'practice' / 'test' — called from start screen, launches game on finish
+  // 'inline' — called from header during game, resumes game on finish
+  _showOnboarding(mode) {
+    this._obMode = mode;
+    this._obStep = 1;
+    this._obSetStep(1);
+    // Pause game if showing inline
+    if (mode === 'inline' && this.st.started) this.st.paused = true;
+    if (el.onboardModal) el.onboardModal.classList.remove('hidden');
+  },
+
+  _obSetStep(n) {
+    this._obStep = n;
+    [1,2,3].forEach(i => {
+      const s = document.getElementById(`ob-step-${i}`);
+      if (s) s.classList.toggle('active', i === n);
+    });
+    document.querySelectorAll('.ob-dot').forEach(d => {
+      d.classList.toggle('active', parseInt(d.dataset.step) === n);
+    });
+    const L = DATA[this.lang].labels;
+    const nextLbl = document.getElementById('ob-next-lbl');
+    const nextIcon = document.getElementById('ob-next-icon');
+    if (nextLbl) {
+      if (n === 3) {
+        nextLbl.textContent = this._obMode === 'inline'
+          ? (L.obClose || 'Закрити')
+          : (L.obStart || 'Розпочати!');
+        if (nextIcon) nextIcon.className = this._obMode === 'inline'
+          ? 'fa-solid fa-xmark'
+          : 'fa-solid fa-play';
+      } else {
+        nextLbl.textContent = L.obNext || 'Далі';
+        if (nextIcon) nextIcon.className = 'fa-solid fa-arrow-right';
+      }
+    }
+    // Show/hide skip: only when launching from start screen
+    const skipBtn = document.getElementById('ob-skip-btn');
+    if (skipBtn) skipBtn.style.display = this._obMode === 'inline' ? 'none' : '';
+  },
+
+  _obNext() {
+    if (this._obStep < 3) {
+      this._obSetStep(this._obStep + 1);
+    } else {
+      this._obFinish();
+    }
+  },
+
+  _obFinish() {
+    if (el.onboardModal) el.onboardModal.classList.add('hidden');
+    if (this._obMode === 'inline') {
+      // Resume game
+      if (this.st.started) this.st.paused = false;
+      return;
+    }
+    // From start screen: launch selected mode
+    this.st.started = true; this.st.paused = false;
+    if (this._obMode === 'test') {
+      this._showTestInstructions();
+    } else {
+      this._startPractice();
+    }
+  },
+
   /* ── KEY HANDLER ─────────────────────────────────────────── */
   _onKey(e) {
+    // Onboarding modal keyboard nav — works even before game starts
+    if (el.onboardModal && isOpen(el.onboardModal)) {
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault(); this._obNext();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (this._obStep > 1) this._obSetStep(this._obStep - 1);
+      } else if (e.key === 'Escape') {
+        e.preventDefault(); this._obFinish();
+      }
+      return;
+    }
+
     if (!this.st.started || isOpen(el.startModal)) return;
 
     if (isOpen(el.countdownModal)) return; // no input during countdown
+
+    if (isOpen(el.tiModal)) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        el.tiModal.classList.add('hidden');
+        this._startCountdown();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        el.tiModal.classList.add('hidden');
+      }
+      return;
+    }
 
     if (isOpen(el.testResultModal)) {
       if (e.key === 'Enter') {
@@ -874,9 +1094,102 @@ const G = {
     }
 
     if (e.key === 'Backspace') { e.preventDefault(); this._backspace(); return; }
-    if (IGNORED.has(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (IGNORED.has(e.key) || e.ctrlKey || e.metaKey) return;
+    
+    if (e.altKey && e.key?.length !== 1) return;
     if (e.key?.length === 1) this._input(e.key);
   }
 };
 
 G.init();
+
+/* ══════════════════════════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════════════════════════ */
+const Onboard = (() => {
+  let step = 1;
+  const TOTAL = 3;
+  let _fromHeader = false; // true = opened during game, just close on finish
+
+  function _setStep(n) {
+    step = n;
+    for (let i = 1; i <= TOTAL; i++) {
+      document.getElementById(`ob-step-${i}`)?.classList.toggle('active', i === n);
+      document.querySelector(`.ob-dot[data-step="${i}"]`)?.classList.toggle('active', i === n);
+    }
+    const lbl  = document.getElementById('ob-next-lbl');
+    const icon = document.getElementById('ob-next-icon');
+    if (lbl)  lbl.textContent = n === TOTAL ? 'Почати!' : 'Далі';
+    if (icon) icon.className  = n === TOTAL ? 'fa-solid fa-play' : 'fa-solid fa-arrow-right';
+  }
+
+  function _open(fromHeader) {
+    _fromHeader = fromHeader;
+    const modal = document.getElementById('onboard-modal');
+    if (!modal) return;
+    _setStep(1);
+    modal.classList.remove('hidden');
+  }
+
+  function _finish() {
+    document.getElementById('onboard-modal').classList.add('hidden');
+    if (_fromHeader) {
+      // Opened via "?" during game — just close, resume
+      G.st.paused = false;
+      return;
+    }
+    // Opened via "Почати практику" — start game
+    Snd._init(); Snd._resume();
+    G.st.started = true; G.st.paused = false;
+    G._startPractice();
+  }
+
+  function _advance() {
+    if (step < TOTAL) {
+      _setStep(step + 1);
+    } else {
+      _finish();
+    }
+  }
+
+  function init() {
+    const modal   = document.getElementById('onboard-modal');
+    const nextBtn = document.getElementById('ob-next-btn');
+    const skipBtn = document.getElementById('ob-skip-btn');
+    if (!modal) return;
+
+    // "Почати практику" → ALWAYS show onboarding first
+    document.getElementById('start-btn').addEventListener('click', e => {
+      e.stopImmediatePropagation();
+      document.getElementById('start-modal').classList.add('hidden');
+      _open(false);
+    }, true);
+
+    // "?" header button → open during game
+    document.getElementById('help-btn')?.addEventListener('click', () => {
+      if (G.testMode) return; // don't interrupt test
+      G.st.paused = true;
+      _open(true);
+    });
+
+    nextBtn?.addEventListener('click', _advance);
+    skipBtn?.addEventListener('click', _finish);
+
+    document.querySelectorAll('.ob-dot').forEach(dot => {
+      dot.addEventListener('click', () => _setStep(parseInt(dot.dataset.step)));
+    });
+
+    // Keyboard nav inside onboarding
+    document.addEventListener('keydown', e => {
+      if (!modal || modal.classList.contains('hidden')) return;
+      if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); _advance(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); if (step > 1) _setStep(step - 1); }
+      else if (e.key === 'Escape') { e.preventDefault(); _finish(); }
+    });
+  }
+
+  return { init };
+})();
+
+Onboard.init();
+

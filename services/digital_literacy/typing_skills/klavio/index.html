@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Клавіо — Клавіатурний тренажер</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="logo">
+      <i class="fas fa-keyboard logo-icon"></i>
+      <span class="logo-text">Клавіо</span>
+    </div>
+    <nav class="app-nav">
+      <button class="nav-btn" id="btn-lessons" onclick="showLessonSelect()">
+        <i class="fas fa-book"></i> Вправи
+      </button>
+      <button class="nav-btn" id="btn-progress" onclick="showProgress()">
+        <i class="fas fa-chart-bar"></i> Поступ
+      </button>
+      <button class="nav-btn difficulty-toggle" id="btn-difficulty" onclick="cycleDifficulty()">
+        <span id="difficulty-label"></span>
+      </button>
+      <button class="nav-btn icon-only" onclick="showAbout()" title="Про програму">
+        <i class="fas fa-info-circle"></i>
+      </button>
+    </nav>
+  </header>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="stat-pill">
+      <span class="stat-value" id="wpm-value">0</span>
+      <span class="stat-label">симв/хв</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-value" id="acc-value">—</span>
+      <span class="stat-label">точність</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-value" id="streak-value">0</span>
+      <span class="stat-label"><i class="fas fa-fire" style="color:var(--c-pinky)"></i> серія</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-value" id="lesson-num">1</span>
+      <span class="stat-label">вправа</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%">
+      <div class="progress-glow"></div>
+    </div>
+  </div>
+
+  <!-- MAIN TRAINER -->
+  <main class="trainer-main">
+
+    <!-- LEFT HAND -->
+    <div class="hand-container" id="left-hand-container">
+      <div class="hand-label">Ліва рука</div>
+      <svg class="hand-svg" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Subtle inner highlights for 3D fingers -->
+          <filter id="filt-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Palm -->
+        <path class="palm" d="
+          M 22,152 L 178,152
+          C 186,152 190,158 190,166
+          L 190,256
+          C 190,268 180,276 167,276
+          L 33,276
+          C 20,276 10,268 10,256
+          L 10,166
+          C 10,158 14,152 22,152 Z
+        "/>
+
+        <!-- THUMB (left hand: lower-right, rotated) -->
+        <rect class="finger f-thumb" id="lh-thumb"
+          x="156" y="162" width="32" height="78" rx="16"
+          transform="rotate(32 172 201)"/>
+
+        <!-- PINKY -->
+        <rect class="finger f-pinky" id="lh-pinky"  x="16"  y="62"  width="36" height="90"  rx="18"/>
+        <!-- RING -->
+        <rect class="finger f-ring"  id="lh-ring"   x="58"  y="40"  width="38" height="112" rx="19"/>
+        <!-- MIDDLE -->
+        <rect class="finger f-middle" id="lh-middle" x="102" y="26"  width="40" height="126" rx="20"/>
+        <!-- INDEX -->
+        <rect class="finger f-index" id="lh-index"  x="144" y="44"  width="38" height="108" rx="19"/>
+
+        <!-- Knuckle bumps (finger–palm junction) -->
+        <circle class="knuckle-dot" cx="34"  cy="152" r="5.5"/>
+        <circle class="knuckle-dot" cx="77"  cy="150" r="5.5"/>
+        <circle class="knuckle-dot" cx="122" cy="148" r="5.5"/>
+        <circle class="knuckle-dot" cx="163" cy="150" r="5.5"/>
+
+        <!-- Joint lines — pinky (top=62, h=90) -->
+        <line class="knuckle-line" x1="17" y1="92"  x2="51" y2="92"/>
+        <line class="knuckle-line" x1="17" y1="113" x2="51" y2="113"/>
+        <!-- Joint lines — ring (top=40, h=112) -->
+        <line class="knuckle-line" x1="59"  y1="77"  x2="95"  y2="77"/>
+        <line class="knuckle-line" x1="59"  y1="101" x2="95"  y2="101"/>
+        <!-- Joint lines — middle (top=26, h=126) -->
+        <line class="knuckle-line" x1="103" y1="68"  x2="141" y2="68"/>
+        <line class="knuckle-line" x1="103" y1="94"  x2="141" y2="94"/>
+        <!-- Joint lines — index (top=44, h=108) -->
+        <line class="knuckle-line" x1="145" y1="80"  x2="181" y2="80"/>
+        <line class="knuckle-line" x1="145" y1="103" x2="181" y2="103"/>
+
+        <!-- Fingernails -->
+        <rect class="nail" x="20"  y="65"  width="28" height="13" rx="7"/>
+        <rect class="nail" x="62"  y="43"  width="30" height="13" rx="7"/>
+        <rect class="nail" x="106" y="29"  width="32" height="14" rx="7"/>
+        <rect class="nail" x="148" y="47"  width="30" height="13" rx="7"/>
+      </svg>
+      <div class="finger-name-badge" id="left-finger-name"></div>
+    </div>
+
+    <!-- CENTER: text display + keyboard -->
+    <div class="trainer-center">
+
+      <!-- TEXT DISPLAY -->
+      <div class="text-display-card">
+        <div class="text-display" id="text-display">
+          <span class="td-done"   id="td-done"></span><span
+               class="td-cursor" id="td-cursor"> </span><span
+               class="td-todo"   id="td-todo"></span>
+        </div>
+        <div class="error-flash" id="error-flash"></div>
+      </div>
+
+      <!-- STREAK BURST -->
+      <div class="streak-burst" id="streak-burst"></div>
+
+      <!-- KEYBOARD -->
+      <div class="keyboard-card">
+        <div class="keyboard" id="keyboard">
+
+          <!-- Row 0: number row  (13×1u + 1×2u = 15u) -->
+          <div class="key-row">
+            <div class="key k-pinky"  id="tilda"></div>
+            <div class="key k-pinky"  id="1"></div>
+            <div class="key k-ring"   id="2"></div>
+            <div class="key k-middle" id="3"></div>
+            <div class="key k-index1" id="4"></div>
+            <div class="key k-index2" id="5"></div>
+            <div class="key k-index2" id="6"></div>
+            <div class="key k-index1" id="7"></div>
+            <div class="key k-middle" id="8"></div>
+            <div class="key k-ring"   id="9"></div>
+            <div class="key k-pinky"  id="0"></div>
+            <div class="key k-pinky"  id="minus"></div>
+            <div class="key k-pinky"  id="plus"></div>
+            <div class="key k-pinky k-back" id="backspace"><i class="fas fa-delete-left"></i></div>
+          </div>
+
+          <!-- Row 1: Q row  (1.5u + 12×1u + 1.5u = 15u) -->
+          <div class="key-row">
+            <div class="key k-pinky k-tab"  id="tab">Tab</div>
+            <div class="key k-pinky"  id="Q"></div>
+            <div class="key k-ring"   id="W"></div>
+            <div class="key k-middle" id="E"></div>
+            <div class="key k-index1" id="R"></div>
+            <div class="key k-index2" id="T"></div>
+            <div class="key k-index2" id="Y"></div>
+            <div class="key k-index1" id="U"></div>
+            <div class="key k-middle" id="I"></div>
+            <div class="key k-ring"   id="O"></div>
+            <div class="key k-pinky"  id="P"></div>
+            <div class="key k-pinky"  id="lsc"></div>
+            <div class="key k-pinky"  id="rsc"></div>
+            <div class="key k-pinky k-tab" id="bckslash"></div>
+          </div>
+
+          <!-- Row 2: home row  (1.75u + 11×1u + 2.25u = 15u) -->
+          <div class="key-row">
+            <div class="key k-pinky k-caps" id="capslock">Caps</div>
+            <div class="key k-pinky"  id="A"></div>
+            <div class="key k-ring"   id="S"></div>
+            <div class="key k-middle" id="D"></div>
+            <div class="key k-index1 home-bump" id="F"></div>
+            <div class="key k-index2" id="G"></div>
+            <div class="key k-index2" id="H"></div>
+            <div class="key k-index1 home-bump" id="J"></div>
+            <div class="key k-middle" id="K"></div>
+            <div class="key k-ring"   id="L"></div>
+            <div class="key k-pinky"  id="ddot"></div>
+            <div class="key k-pinky"  id="apo"></div>
+            <div class="key k-pinky k-enter" id="enter">Enter <i class="fas fa-turn-down"></i></div>
+          </div>
+
+          <!-- Row 3: shift row  (2.25u + 10×1u + 2.75u = 15u) -->
+          <div class="key-row">
+            <div class="key k-pinky k-shift-l" id="shiftleft"><i class="fas fa-arrow-up"></i> Shift</div>
+            <div class="key k-pinky"  id="Z"></div>
+            <div class="key k-ring"   id="X"></div>
+            <div class="key k-middle" id="C"></div>
+            <div class="key k-index1" id="V"></div>
+            <div class="key k-index2" id="B"></div>
+            <div class="key k-index2" id="N"></div>
+            <div class="key k-index1" id="M"></div>
+            <div class="key k-middle" id="comma"></div>
+            <div class="key k-ring"   id="dot"></div>
+            <div class="key k-pinky"  id="slash"></div>
+            <div class="key k-pinky k-shift-r" id="shiftright">Shift <i class="fas fa-arrow-up"></i></div>
+          </div>
+
+          <!-- Row 4: spacebar row  (1.5+1+1.5+7+1.5+1+1.5 = 15u) -->
+          <div class="key-row">
+            <div class="key k-pinky k-ctrl"  id="controlleft">Ctrl</div>
+            <div class="key k-pinky k-meta"  id="metaleft"><i class="fas fa-square-windows fa-xs"></i></div>
+            <div class="key k-ring   k-alt"  id="altleft">Alt</div>
+            <div class="key k-thumb  k-space" id="space"></div>
+            <div class="key k-ring   k-alt"  id="altright">AltGr</div>
+            <div class="key k-pinky k-meta"  id="metaright"><i class="fas fa-square-windows fa-xs"></i></div>
+            <div class="key k-pinky k-ctrl"  id="controlright">Ctrl</div>
+          </div>
+
+        </div><!-- /keyboard -->
+      </div><!-- /keyboard-card -->
+
+    </div><!-- /trainer-center -->
+
+    <!-- RIGHT HAND -->
+    <div class="hand-container" id="right-hand-container">
+      <div class="hand-label">Права рука</div>
+      <svg class="hand-svg" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- Palm (same shape, thumb on left) -->
+        <path class="palm" d="
+          M 22,152 L 178,152
+          C 186,152 190,158 190,166
+          L 190,256
+          C 190,268 180,276 167,276
+          L 33,276
+          C 20,276 10,268 10,256
+          L 10,166
+          C 10,158 14,152 22,152 Z
+        "/>
+
+        <!-- THUMB (right hand: lower-left, rotated other way) -->
+        <rect class="finger f-thumb" id="rh-thumb"
+          x="12" y="162" width="32" height="78" rx="16"
+          transform="rotate(-32 28 201)"/>
+
+        <!-- INDEX (leftmost on right hand) -->
+        <rect class="finger f-index" id="rh-index"  x="16"  y="44"  width="38" height="108" rx="19"/>
+        <!-- MIDDLE -->
+        <rect class="finger f-middle" id="rh-middle" x="58"  y="26"  width="40" height="126" rx="20"/>
+        <!-- RING -->
+        <rect class="finger f-ring"  id="rh-ring"   x="104" y="40"  width="38" height="112" rx="19"/>
+        <!-- PINKY (rightmost) -->
+        <rect class="finger f-pinky" id="rh-pinky"  x="148" y="62"  width="36" height="90"  rx="18"/>
+
+        <!-- Knuckle bumps -->
+        <circle class="knuckle-dot" cx="35"  cy="150" r="5.5"/>
+        <circle class="knuckle-dot" cx="78"  cy="148" r="5.5"/>
+        <circle class="knuckle-dot" cx="123" cy="150" r="5.5"/>
+        <circle class="knuckle-dot" cx="166" cy="152" r="5.5"/>
+
+        <!-- Joint lines — index -->
+        <line class="knuckle-line" x1="17"  y1="80"  x2="53"  y2="80"/>
+        <line class="knuckle-line" x1="17"  y1="103" x2="53"  y2="103"/>
+        <!-- Joint lines — middle -->
+        <line class="knuckle-line" x1="59"  y1="68"  x2="97"  y2="68"/>
+        <line class="knuckle-line" x1="59"  y1="94"  x2="97"  y2="94"/>
+        <!-- Joint lines — ring -->
+        <line class="knuckle-line" x1="105" y1="77"  x2="141" y2="77"/>
+        <line class="knuckle-line" x1="105" y1="101" x2="141" y2="101"/>
+        <!-- Joint lines — pinky -->
+        <line class="knuckle-line" x1="149" y1="92"  x2="183" y2="92"/>
+        <line class="knuckle-line" x1="149" y1="113" x2="183" y2="113"/>
+
+        <!-- Fingernails -->
+        <rect class="nail" x="20"  y="47"  width="30" height="13" rx="7"/>
+        <rect class="nail" x="62"  y="29"  width="32" height="14" rx="7"/>
+        <rect class="nail" x="108" y="43"  width="30" height="13" rx="7"/>
+        <rect class="nail" x="152" y="65"  width="28" height="13" rx="7"/>
+      </svg>
+      <div class="finger-name-badge" id="right-finger-name"></div>
+    </div>
+
+  </main><!-- /trainer-main -->
+
+  <!-- MODAL OVERLAY + BOX -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header" id="modal-header">Заголовок</div>
+    <div class="modal-body"   id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-ok" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <!-- LEVEL COMPLETE OVERLAY -->
+  <div class="level-complete" id="level-complete">
+    <div class="lc-inner">
+      <i class="lc-icon fas fa-trophy" id="lc-icon"></i>
+      <div class="lc-title">Вправу виконано!</div>
+      <table id="lc-stats"></table>
+      <button class="btn-next" onclick="startNextLesson()">
+        Далі <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCRIPTS — load order matters -->
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/trainer.js"></script>
+</body>
+</html>

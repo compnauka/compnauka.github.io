@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мишачі перегони — Тренажер мишки</title>
+  <meta name="description" content="Мишачі перегони — онлайн тренажер для розвитку навичок роботи з мишкою." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://itnauka.org/" />
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
+
+  <!-- Font Awesome 6 Free -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Google Fonts — Nunito only -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     HEADER
+════════════════════════════════════════ -->
+<header class="site-header">
+  <h1 class="site-title">
+    <span class="title-icon"><i class="fa-solid fa-computer-mouse"></i></span>
+    Мишачі перегони
+  </h1>
+  <p class="site-subtitle">Тренажер точності та швидкості кліку</p>
+</header>
+
+<main class="container">
+
+  <!-- ══════════════════════════════════════
+       START SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen start-screen active">
+    <div class="card">
+
+      <div class="start-intro">
+        <h2><i class="fa-solid fa-hand-pointer"></i> Привіт, юний гравцю!</h2>
+        <p>Клікай на кольорові клітинки якнайшвидше та якнайточніше.<br>
+           Три рівні складності — від легкого до блискавичного!</p>
+      </div>
+
+      <!-- First-time view: informational (not clickable) -->
+      <div id="first-time-view">
+        <div class="levels-grid">
+
+          <div class="level-info-card">
+            <div class="lv-icon"><i class="fa-solid fa-gauge"></i></div>
+            <div class="lv-name">Повільний</div>
+            <div class="lv-desc">Великі клітинки · Без обмежень · 8 цілей</div>
+          </div>
+
+          <div class="level-info-card">
+            <div class="lv-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="lv-name">Швидкий</div>
+            <div class="lv-desc">2 с на клітинку · 15 цілей · 30 с</div>
+          </div>
+
+          <div class="level-info-card">
+            <div class="lv-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="lv-name">Блискавка</div>
+            <div class="lv-desc">1.5 с на клітинку · 20 цілей · 45 с</div>
+          </div>
+
+        </div>
+
+        <div class="start-actions">
+          <button id="start-btn" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-play"></i> Почати гру
+          </button>
+          <p class="start-note">Рівні відкриваються по черзі — від повільного до блискавки</p>
+        </div>
+      </div>
+      <!-- /first-time-view -->
+
+      <!-- Returning player view: rendered by JS -->
+      <div id="returning-view" style="display:none; text-align:center;"></div>
+
+      <p class="keyboard-hint" style="margin-top:12px;">
+        <kbd class="kbd">Пробіл</kbd> або <kbd class="kbd">Esc</kbd> — пауза під час гри
+      </p>
+
+    </div>
+  </div>
+  <!-- /start-screen -->
+
+
+  <!-- ══════════════════════════════════════
+       GAME SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen game-screen" id="game-screen">
+
+    <!-- Top bar -->
+    <div class="game-topbar">
+      <button id="btn-back" class="btn btn-outline btn-icon" title="Пауза / Меню">
+        <i class="fa-solid fa-house"></i>
+      </button>
+
+      <div class="stat-chips">
+        <div class="stat-chip chip-level"    id="chip-level">
+          <i class="fa-solid fa-layer-group"></i> —
+        </div>
+        <div class="stat-chip chip-score"    id="chip-score">
+          <i class="fa-solid fa-star"></i> 0
+        </div>
+        <div class="stat-chip chip-missed"   id="chip-missed">
+          <i class="fa-solid fa-xmark"></i> 0
+        </div>
+        <div class="stat-chip chip-time"     id="chip-time">
+          <i class="fa-solid fa-clock"></i> ∞
+        </div>
+        <div class="stat-chip chip-progress" id="chip-progress">
+          <i class="fa-solid fa-bullseye"></i> 0/0
+        </div>
+      </div>
+
+      <button id="pause-btn" class="btn btn-danger btn-icon" title="Пауза">
+        <i class="fa-solid fa-pause"></i>
+      </button>
+    </div>
+
+    <!-- Game area -->
+    <div class="game-area card">
+
+      <!-- Grid -->
+      <div id="game-grid" class="game-grid"></div>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span id="progress-label">0 / 0</span>
+          <span>Ціль</span>
+        </div>
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- /game-screen -->
+
+
+  <!-- ══════════════════════════════════════
+       LEVEL COMPLETE
+  ══════════════════════════════════════ -->
+  <div class="screen level-complete-screen result-screen">
+    <div class="card">
+
+      <div id="lc-stars" class="stars-row">
+        <i class="fa-solid fa-star"  style="color:#ffe04b"></i>
+        <i class="fa-solid fa-star"  style="color:#ffe04b"></i>
+        <i class="fa-solid fa-star"  style="color:#ffe04b"></i>
+      </div>
+
+      <div id="lc-icon" class="result-icon win">
+        <i class="fa-solid fa-flag-checkered"></i>
+      </div>
+
+      <h2 id="lc-title">Рівень пройдено!</h2>
+      <p  id="lc-body" class="result-body"></p>
+
+      <!-- Replay callout (shown if too many missed) -->
+      <div id="lc-replay" class="replay-callout" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Багато промахів! Краще пройти рівень ще раз.
+      </div>
+
+      <div class="result-stats" id="lc-stats">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="result-actions">
+        <button id="lc-replay-btn" class="btn btn-mint" style="display:none;">
+          <i class="fa-solid fa-rotate-left"></i> Ще раз
+        </button>
+        <button id="lc-btn" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-arrow-right"></i> Наступний рівень
+        </button>
+        <button class="btn btn-outline btn-to-menu">
+          <i class="fa-solid fa-house"></i> До меню
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- /level-complete-screen -->
+
+
+  <!-- ══════════════════════════════════════
+       GAME COMPLETE
+  ══════════════════════════════════════ -->
+  <div class="screen game-complete-screen result-screen">
+    <div class="card">
+
+      <div class="result-icon win" style="margin:0 auto 12px;">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <h2>Гру завершено!</h2>
+
+      <div class="final-score-big" id="gc-score">0</div>
+      <span class="final-label">балів</span>
+
+      <div class="final-msg-box" id="gc-msg"></div>
+
+      <div class="result-stats">
+        <div class="result-stat missed-stat" id="gc-missed">
+          <i class="fa-solid fa-xmark"></i> Пропущено: 0
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button id="restart-btn" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-rotate-right"></i> Грати знову
+        </button>
+        <button class="btn btn-outline btn-to-menu">
+          <i class="fa-solid fa-house"></i> До меню
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- /game-complete-screen -->
+
+</main>
+
+
+<!-- ════════════════════════════════════════
+     PAUSE OVERLAY
+════════════════════════════════════════ -->
+<div id="pause-overlay" class="pause-overlay" role="dialog" aria-modal="true" aria-label="Пауза">
+  <div class="pause-card">
+    <h2><i class="fa-solid fa-pause"></i> Пауза</h2>
+    <p>Гра призупинена.<br>Готовий продовжити?</p>
+    <div class="pause-actions">
+      <button id="resume-btn" class="btn btn-success btn-lg" style="width:100%;">
+        <i class="fa-solid fa-play"></i> Продовжити
+      </button>
+      <button id="menu-from-pause" class="btn btn-outline btn-lg" style="width:100%;">
+        <i class="fa-solid fa-house"></i> До меню
+      </button>
+    </div>
+    <p class="keyboard-hint" style="margin-top:10px;">
+      <kbd class="kbd">Пробіл</kbd> / <kbd class="kbd">Esc</kbd> — продовжити
+    </p>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer class="site-footer">
+  <i class="fa-regular fa-copyright"></i> 2025 Комп'ютерна наука з паном Артемом
+</footer>
+
+
+<script src="script.js"></script>
+</body>
+</html>
