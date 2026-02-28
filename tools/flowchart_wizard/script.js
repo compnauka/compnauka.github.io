@@ -5,7 +5,10 @@
 // ────────────────────────────────────────────────────────────────
 const SVG_W = 1700;
 const CX = SVG_W / 2;
-const NW = 164, NH = 58, DD = 72, IOW = 180;
+const NODE_W = 164;        // ширина прямокутного блоку
+const NODE_H = 58;         // висота прямокутного блоку
+const DIAMOND_HALF = 72;   // половина діагоналі ромба (Питання)
+const IO_W = 180;          // ширина паралелограма (Ввід/Вивід)
 const VG = 118, HO = 290;
 // vertical gap between rows (centers are computed from row heights)
 const ROW_GAP = 42;
@@ -162,6 +165,8 @@ const S = {
   // manual offsets (persist through auto-layout)
   manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {},
   sel: null,
+  issues: [],
+  issuesByNode: {},
   wiz: { open: false, step: 'type', pid: null, plbl: null, type: null, editId: null },
 };
 
@@ -172,10 +177,70 @@ const $ = id => document.getElementById(id);
 const svg = $('fc');
 const wrap = $('svg-wrap');
 const area = $('canvas-area');
-const L_TI = $('layer-title');
-const L_ED = $('layer-edges');
-const L_NO = $('layer-nodes');
-const L_PL = $('layer-plus');
+const layerTitle = $('layer-title');
+const layerEdges = $('layer-edges');
+const layerNodes = $('layer-nodes');
+const layerPlus = $('layer-plus');
+const titleInput = $('header-title-input');
+let _edgeOccupancy = [];
+const TITLE_MAX_LEN = 80;
+let _titleRenderTimer = 0;
+const FOCUSABLE_SEL = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+let _activeDialog = null;
+let _focusReturnEl = null;
+
+function getFocusable(container) {
+  if (!container) return [];
+  return [...container.querySelectorAll(FOCUSABLE_SEL)]
+    .filter(el => el.offsetParent !== null || el === document.activeElement);
+}
+
+function activateDialogFocus(el, preferredEl = null) {
+  if (!el) return;
+  if (_activeDialog && _activeDialog !== el) deactivateDialogFocus(_activeDialog, { restore: false });
+  _activeDialog = el;
+  _focusReturnEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  el.setAttribute('aria-hidden', 'false');
+  if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+  const target = preferredEl || getFocusable(el)[0] || el;
+  requestAnimationFrame(() => { target?.focus?.({ preventScroll: true }); });
+}
+
+function deactivateDialogFocus(el, { restore = true } = {}) {
+  if (!el) return;
+  el.setAttribute('aria-hidden', 'true');
+  if (_activeDialog !== el) return;
+  _activeDialog = null;
+  const back = _focusReturnEl;
+  _focusReturnEl = null;
+  if (restore && back && document.contains(back)) {
+    requestAnimationFrame(() => { back.focus?.({ preventScroll: true }); });
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (!_activeDialog) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    if (_activeDialog.id === 'wizard-panel') closeWiz();
+    else closeModal(_activeDialog.id);
+    return;
+  }
+  if (e.key !== 'Tab') return;
+  const focusable = getFocusable(_activeDialog);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const cur = document.activeElement;
+  if (!e.shiftKey && cur === last) {
+    e.preventDefault();
+    first.focus();
+  } else if (e.shiftKey && cur === first) {
+    e.preventDefault();
+    last.focus();
+  }
+}, true);
 
 function clearEl(el) { while (el.firstChild) el.removeChild(el.firstChild); }
 function mkSvg(tag, attrs = {}) {
@@ -184,15 +249,74 @@ function mkSvg(tag, attrs = {}) {
   return el;
 }
 
+function normalizeTitle(raw) {
+  return String(raw ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, TITLE_MAX_LEN);
+}
+
+function syncTitleInput() {
+  if (!titleInput) return;
+  const next = String(S.title ?? '');
+  if (titleInput.value !== next) titleInput.value = next;
+}
+
+function setTitle(raw, { rerender = false } = {}) {
+  const next = normalizeTitle(raw);
+  const changed = S.title !== next;
+  S.title = next;
+  syncTitleInput();
+  if (rerender && changed) render();
+  return changed;
+}
+
+function scheduleTitleRender() {
+  if (_titleRenderTimer) clearTimeout(_titleRenderTimer);
+  _titleRenderTimer = setTimeout(() => {
+    _titleRenderTimer = 0;
+    render();
+  }, 90);
+}
+
+function rerenderFlow(withLayout = true) {
+  if (withLayout) layout();
+  render();
+  mascot();
+}
+
+// ────────────────────────────────────────────────────────────────
+// EDGE CACHE  (O(1) замість O(n) при кожному виклику)
+// ────────────────────────────────────────────────────────────────
+let _cacheOut = /** @type {Map<string, object[]>} */ (new Map());
+let _cacheIn  = /** @type {Map<string, object[]>} */ (new Map());
+let _edgeCacheDirty = true;
+
+function invalidateEdgeCache() { _edgeCacheDirty = true; }
+
+function ensureEdgeCache() {
+  if (!_edgeCacheDirty) return;
+  _cacheOut = new Map();
+  _cacheIn  = new Map();
+  for (const e of S.edges) {
+    if (!_cacheOut.has(e.from)) _cacheOut.set(e.from, []);
+    _cacheOut.get(e.from).push(e);
+    if (!_cacheIn.has(e.to)) _cacheIn.set(e.to, []);
+    _cacheIn.get(e.to).push(e);
+  }
+  _edgeCacheDirty = false;
+}
+
+function outEdges(id) { ensureEdgeCache(); return _cacheOut.get(id) ?? []; }
+function inEdges(id)  { ensureEdgeCache(); return _cacheIn.get(id)  ?? []; }
+
 // ────────────────────────────────────────────────────────────────
 // GRAPH HELPERS
 // ────────────────────────────────────────────────────────────────
-const outEdges = id => S.edges.filter(e => e.from === id);
-const inEdges = id => S.edges.filter(e => e.to === id);
-const nodeH = id => S.nodes[id]?.type === 'decision' ? DD * 2 : NH;
+const nodeH = id => S.nodes[id]?.type === 'decision' ? DIAMOND_HALF * 2 : NODE_H;
 const nodeW = id => {
   const t = S.nodes[id]?.type;
-  return t === 'input-output' ? IOW : t === 'decision' ? DD * 2 : NW;
+  return t === 'input-output' ? IO_W : t === 'decision' ? DIAMOND_HALF * 2 : NODE_W;
 };
 
 function ancestors(id) {
@@ -226,14 +350,117 @@ function isDone() {
 }
 
 function connectableNodes(pid, lbl) {
-  const anc = ancestors(pid);
   return Object.values(S.nodes).filter(n => {
-    if (anc.has(n.id)) return false;
-    if (n.id === S.root) return false;
-    if (n.type === 'start') return false;
+    if (n.id === pid) return false;
     if (S.edges.some(e => e.from === pid && e.to === n.id && e.label === lbl)) return false;
     return true;
   });
+}
+
+function severityRank(level) {
+  return level === 'error' ? 3 : level === 'warn' ? 2 : 1;
+}
+
+function issueColor(level) {
+  if (level === 'error') return '#ef4444';
+  if (level === 'warn') return '#f59e0b';
+  return '#3b82f6';
+}
+
+function collectIssues() {
+  const issues = [];
+  const ids = Object.keys(S.nodes);
+
+  if (!S.root || !S.nodes[S.root]) {
+    issues.push({ level: 'error', code: 'root-missing', nodeId: null, msg: 'Схема має починатися з блоку "Початок".' });
+    return { issues, byNode: {} };
+  }
+
+  const startIds = ids.filter(id => S.nodes[id].type === 'start');
+  if (startIds.length !== 1) {
+    for (const id of startIds) {
+      issues.push({ level: 'error', code: 'start-count', nodeId: id, msg: 'На схемі має бути лише один блок "Початок".' });
+    }
+  }
+
+  const endIds = ids.filter(id => S.nodes[id].type === 'end');
+  if (!endIds.length) {
+    issues.push({ level: 'warn', code: 'no-end', nodeId: null, msg: 'Додай блок "Кінець", щоб алгоритм був завершеним.' });
+  }
+
+  for (const id of ids) {
+    const n = S.nodes[id];
+    const incoming = inEdges(id).filter(e => S.nodes[e.from]);
+    const outgoing = outEdges(id).filter(e => S.nodes[e.to]);
+
+    if (n.type === 'start' && incoming.length > 0) {
+      issues.push({ level: 'error', code: 'start-incoming', nodeId: id, msg: 'У "Початок" не повинні входити стрілки.' });
+    }
+    if (n.type === 'end' && outgoing.length > 0) {
+      issues.push({ level: 'error', code: 'end-outgoing', nodeId: id, msg: 'З блоку "Кінець" не повинні виходити стрілки.' });
+    }
+
+    if (n.type !== 'start' && incoming.length === 0) {
+      issues.push({ level: 'warn', code: 'no-input', nodeId: id, msg: 'Цей блок недосяжний: у нього не входить жодна стрілка.' });
+    }
+    if (n.type !== 'end' && outgoing.length === 0) {
+      issues.push({ level: 'warn', code: 'no-output', nodeId: id, msg: 'Цей блок не має продовження. Додай наступний крок.' });
+    }
+
+    if (n.type === 'decision') {
+      const labels = outgoing.map(e => e.label).filter(Boolean);
+      const hasYes = labels.includes('yes');
+      const hasNo = labels.includes('no');
+      if (!hasYes || !hasNo) {
+        issues.push({ level: 'warn', code: 'decision-branches', nodeId: id, msg: 'У "Питання" мають бути дві гілки: "Так" і "Ні".' });
+      }
+      const invalid = labels.filter(l => l !== 'yes' && l !== 'no');
+      if (invalid.length) {
+        issues.push({ level: 'error', code: 'decision-label', nodeId: id, msg: 'З "Питання" можна вести лише гілки "Так" і "Ні".' });
+      }
+      if (outgoing.length > 2) {
+        issues.push({ level: 'error', code: 'decision-too-many', nodeId: id, msg: 'Блок "Питання" може мати не більше двох виходів.' });
+      }
+    } else if (outgoing.some(e => e.label === 'yes' || e.label === 'no')) {
+      issues.push({ level: 'error', code: 'label-on-non-decision', nodeId: id, msg: 'Позначки "Так/Ні" можна ставити лише після блоку "Питання".' });
+    }
+  }
+
+  // Reachability from root
+  const seen = new Set();
+  const q = [S.root];
+  seen.add(S.root);
+  while (q.length) {
+    const cur = q.shift();
+    for (const e of outEdges(cur)) {
+      if (!e.to || !S.nodes[e.to] || seen.has(e.to)) continue;
+      seen.add(e.to);
+      q.push(e.to);
+    }
+  }
+  for (const id of ids) {
+    if (!seen.has(id)) {
+      issues.push({ level: 'warn', code: 'unreachable', nodeId: id, msg: 'До цього блока неможливо дійти від "Початок".' });
+    }
+  }
+
+  // Deduplicate by (code,nodeId)
+  const uniq = new Map();
+  for (const it of issues) uniq.set(`${it.code}|${it.nodeId || ''}`, it);
+  const dedup = [...uniq.values()];
+
+  const byNode = {};
+  for (const it of dedup) {
+    if (!it.nodeId) continue;
+    const cur = byNode[it.nodeId];
+    if (!cur || severityRank(it.level) > severityRank(cur.level)) {
+      byNode[it.nodeId] = { level: it.level, msgs: [it.msg] };
+    } else if (severityRank(it.level) === severityRank(cur.level)) {
+      cur.msgs.push(it.msg);
+    }
+  }
+
+  return { issues: dedup, byNode };
 }
 
 function findSiblingOpenEnd(pid, lbl) {
@@ -291,17 +518,40 @@ function undo() {
   if (!S.undo.length) return;
   const s = S.undo.pop();
   Object.assign(S, { nodes: s.nodes, edges: s.edges, root: s.root, cnt: s.cnt, sel: null, pos: s.pos || {}, manual: s.manual || {} });
+  invalidateEdgeCache();
   $('btn-undo').disabled = S.undo.length === 0;
-  closeWiz(); hideToolbar(); layout(); render(); mascot();
+  closeWiz(); hideToolbar(); rerenderFlow(true);
 }
 
 // ────────────────────────────────────────────────────────────────
-// LAYOUT  (DAG longest-path ranks)
+// LAYOUT  (cycle-safe longest-path ranks)
 // ────────────────────────────────────────────────────────────────
+function findBackEdges() {
+  const state = {};
+  const back = new Set();
+
+  function walk(id) {
+    state[id] = 1;
+    for (const e of outEdges(id)) {
+      const to = e.to;
+      if (!to || !S.nodes[to]) continue;
+      if (state[to] === 1) { back.add(e); continue; }
+      if (!state[to]) walk(to);
+    }
+    state[id] = 2;
+  }
+
+  if (S.root && S.nodes[S.root]) walk(S.root);
+  for (const id of Object.keys(S.nodes)) if (!state[id]) walk(id);
+  return back;
+}
+
 function computeRanks() {
+  const backEdges = findBackEdges();
   const indeg = {};
   for (const id of Object.keys(S.nodes)) indeg[id] = 0;
   for (const e of S.edges) {
+    if (backEdges.has(e)) continue;
     if (e.to && S.nodes[e.to]) indeg[e.to] = (indeg[e.to] || 0) + 1;
   }
   const rank = {}, q = [];
@@ -311,15 +561,20 @@ function computeRanks() {
   while (q.length) {
     const id = q.shift();
     for (const e of outEdges(id)) {
+      if (backEdges.has(e)) continue;
       if (!e.to || !S.nodes[e.to]) continue;
       rank[e.to] = Math.max(rank[e.to] ?? 0, (rank[id] ?? 0) + 1);
       if (--indeg[e.to] === 0) q.push(e.to);
     }
   }
+  for (const id of Object.keys(S.nodes)) {
+    if (rank[id] === undefined) rank[id] = 0;
+  }
   return rank;
 }
 
 function layout() {
+  const prevPos = S.pos || {};
   S.ranks = {}; S.pos = {}; S.rankY = {}; S.rankH = {}; S.baseX = {}; S.baseY = {};
   if (!S.root) return;
 
@@ -338,8 +593,13 @@ function layout() {
   for (const r of rnks) {
     for (const id of byRnk[r]) {
       if (x[id] === undefined) {
-        const pxs = inEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
-        x[id] = pxs.length ? pxs.reduce((a, b) => a + b, 0) / pxs.length : CX;
+        const prevX = prevPos[id]?.x;
+        if (typeof prevX === 'number' && Number.isFinite(prevX)) {
+          x[id] = prevX;
+        } else {
+          const pxs = inEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
+          x[id] = pxs.length ? pxs.reduce((a, b) => a + b, 0) / pxs.length : CX;
+        }
       }
       const n = S.nodes[id];
       const out = outEdges(id);
@@ -359,6 +619,9 @@ function layout() {
   // Join nodes: center by ALL parents
   for (const id of Object.keys(S.nodes)) {
     if (inEdges(id).length > 1) {
+      const hasPrevX = typeof prevPos[id]?.x === 'number' && Number.isFinite(prevPos[id].x);
+      const hasManualX = typeof S.manual?.[id]?.dx === 'number' && Number.isFinite(S.manual[id].dx);
+      if (hasPrevX || hasManualX) continue;
       const pxs = inEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
       if (pxs.length >= 2)
         x[id] = pxs.reduce((a, b) => a + b, 0) / pxs.length;
@@ -381,7 +644,7 @@ function layout() {
   const TOP = hasTitle ? 190 : 88;
   const yByRank = {};
   const hByRank = {};
-  const rowH = (r) => Math.max(...(byRnk[r] || []).map(id => nodeH(id)), NH);
+  const rowH = (r) => Math.max(...(byRnk[r] || []).map(id => nodeH(id)), NODE_H);
 
   if (!rnks.length) return;
 
@@ -427,14 +690,40 @@ function layout() {
 // ────────────────────────────────────────────────────────────────
 // RENDER
 // ────────────────────────────────────────────────────────────────
-function render() {
-  clearEl(L_TI); clearEl(L_ED); clearEl(L_NO); clearEl(L_PL);
+function render(skipIssues = false) {
+  clearEl(layerTitle); clearEl(layerEdges); clearEl(layerNodes); clearEl(layerPlus);
+  _edgeOccupancy = [];
+  // Під час drag не перераховуємо issues — структура не змінилась, а CPU економимо
+  if (!skipIssues) {
+    const v = collectIssues();
+    S.issues = v.issues;
+    S.issuesByNode = v.byNode;
+  }
   renderTitle();
   for (const e of S.edges) renderEdge(e);
   for (const id of Object.keys(S.nodes)) renderNode(id);
   for (const e of openEnds()) renderPlus(e);
   scheduleToolbarUpdate();
   updateProgress();
+}
+
+if (titleInput) {
+  titleInput.addEventListener('input', () => {
+    const hadTitle = String(S.title ?? '').trim().length > 0;
+    const next = normalizeTitle(titleInput.value);
+    if (S.title === next) return;
+    S.title = next;
+    const hasTitle = next.length > 0;
+    if (hadTitle !== hasTitle) {
+      rerenderFlow(true);
+      return;
+    }
+    scheduleTitleRender();
+  });
+  titleInput.addEventListener('blur', () => {
+    const changed = setTitle(titleInput.value);
+    if (changed) rerenderFlow(true);
+  });
 }
 
 // ── renderTitle ───────────────────────────────────────────────
@@ -451,8 +740,9 @@ function renderTitle() {
   if (!Number.isFinite(minTop)) minTop = 88;
 
   const x = CX;
-  // Put the title noticeably above the top-most block
-  const y = Math.max(72, minTop - 92);
+  // Keep title below header area and above the top-most block.
+  const TITLE_SAFE_TOP = 108;
+  const y = Math.max(TITLE_SAFE_TOP, minTop - 132);
 
   const g = mkSvg('g', { id: 'alg-title' });
   const t = mkSvg('text', {
@@ -466,15 +756,21 @@ function renderTitle() {
   });
   t.textContent = title;
   g.appendChild(t);
-  L_TI.appendChild(g);
+  layerTitle.appendChild(g);
 
   // background bubble sized from real text bbox (best effort)
   try {
     const bb = t.getBBox();
     const padX = 22, padY = 14;
+    let ry = bb.y - padY;
+    // Guarantee a visible gap between title bubble and the top block
+    const bubbleBottom = bb.y + bb.height + padY;
+    const maxBottom = minTop - 28;
+    if (bubbleBottom > maxBottom) ry -= (bubbleBottom - maxBottom);
+    ry = Math.max(TITLE_SAFE_TOP - 36, ry);
     const r = mkSvg('rect', {
       x: bb.x - padX,
-      y: bb.y - padY,
+      y: ry,
       width: bb.width + padX * 2,
       height: bb.height + padY * 2,
       rx: 18,
@@ -483,6 +779,10 @@ function renderTitle() {
       'stroke-width': 2,
       filter: 'url(#sh)'
     });
+    if (ry !== bb.y - padY) {
+      const tdy = ry - (bb.y - padY);
+      t.setAttribute('y', String(y + tdy));
+    }
     g.insertBefore(r, t);
   } catch (e) { /* ignore */ }
 }
@@ -494,8 +794,17 @@ function renderNode(id) {
   const { x, y } = p;
   const m = TYPE_META[n.type] || TYPE_META.process;
   const sel = S.sel === id;
+  const issue = S.issuesByNode?.[id];
 
   const g = mkSvg('g', { 'data-nid': id, class: 'node-g' });
+
+  if (issue) {
+    const clr = issueColor(issue.level);
+    const ring = buildShape(n.type, x, y, 'none', clr, 8);
+    ring.setAttribute('opacity', issue.level === 'error' ? '0.34' : '0.26');
+    ring.removeAttribute('filter');
+    g.appendChild(ring);
+  }
 
   if (sel) {
     const glow = buildShape(n.type, x, y, 'none', '#e879f9', 10);
@@ -526,8 +835,8 @@ function renderNode(id) {
 
   // type label above (with class)
   if (n.type !== 'start') {
-    const bx = n.type === 'decision' ? x + DD : x + nodeW(id) / 2;
-    const by = n.type === 'decision' ? y - DD - 12 : y - NH / 2 - 10;
+    const bx = n.type === 'decision' ? x + DIAMOND_HALF : x + nodeW(id) / 2;
+    const by = n.type === 'decision' ? y - DIAMOND_HALF - 12 : y - NODE_H / 2 - 10;
     const bl = mkSvg('text', {
       x: bx, y: by, 'text-anchor': 'end', fill: '#94a3b8',
       'font-size': '11', 'font-weight': '700',
@@ -538,26 +847,321 @@ function renderNode(id) {
     g.appendChild(bl);
   }
 
-  L_NO.appendChild(g);
+  if (issue) {
+    const r = 12;
+    const bx = n.type === 'decision' ? x + DIAMOND_HALF - 8 : x + nodeW(id) / 2 - 8;
+    const by = n.type === 'decision' ? y - DIAMOND_HALF + 8 : y - nodeH(id) / 2 + 8;
+    const clr = issueColor(issue.level);
+    g.appendChild(mkSvg('circle', { cx: bx, cy: by, r, fill: 'white', stroke: clr, 'stroke-width': 2.5 }));
+    const t = mkSvg('text', {
+      x: bx, y: by + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      fill: clr, 'font-size': '13', 'font-weight': '900', 'font-family': "'Nunito',sans-serif", 'pointer-events': 'none'
+    });
+    t.textContent = '!';
+    g.appendChild(t);
+  }
+
+  layerNodes.appendChild(g);
 }
 
 
 function buildShape(type, x, y, fill, stroke, sw) {
   const a = { fill, stroke, 'stroke-width': sw, filter: 'url(#sh)' };
   if (type === 'start' || type === 'end')
-    return mkSvg('rect', { ...a, x: x - NW / 2, y: y - NH / 2, width: NW, height: NH, rx: NH / 2 });
+    return mkSvg('rect', { ...a, x: x - NODE_W / 2, y: y - NODE_H / 2, width: NODE_W, height: NODE_H, rx: NODE_H / 2 });
   if (type === 'process')
-    return mkSvg('rect', { ...a, x: x - NW / 2, y: y - NH / 2, width: NW, height: NH, rx: 10 });
+    return mkSvg('rect', { ...a, x: x - NODE_W / 2, y: y - NODE_H / 2, width: NODE_W, height: NODE_H, rx: 10 });
   if (type === 'decision')
-    return mkSvg('polygon', { ...a, points: `${x},${y - DD} ${x + DD},${y} ${x},${y + DD} ${x - DD},${y}` });
+    return mkSvg('polygon', { ...a, points: `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}` });
   const s = 20;
   return mkSvg('polygon', {
     ...a,
-    points: `${x - IOW / 2 + s},${y - NH / 2} ${x + IOW / 2 + s},${y - NH / 2} ${x + IOW / 2 - s},${y + NH / 2} ${x - IOW / 2 - s},${y + NH / 2}`
+    points: `${x - IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 - s},${y + NODE_H / 2} ${x - IO_W / 2 - s},${y + NODE_H / 2}`
   });
 }
 
 // ── renderEdge ────────────────────────────────────────────────
+const EDGE_STUB = 28;
+const EDGE_END_STUB = 36;
+const EDGE_LANE_GAP = 92;
+const EDGE_HIT_PAD = 18;
+
+function nodeRect(id, pad = 0) {
+  const p = S.pos[id];
+  if (!p) return null;
+  const w = nodeW(id), h = nodeH(id);
+  return { l: p.x - w / 2 - pad, r: p.x + w / 2 + pad, t: p.y - h / 2 - pad, b: p.y + h / 2 + pad };
+}
+
+function graphBounds(pad = 0) {
+  let l = Infinity, r = -Infinity, t = Infinity, b = -Infinity;
+  for (const id of Object.keys(S.nodes)) {
+    const box = nodeRect(id, pad);
+    if (!box) continue;
+    l = Math.min(l, box.l); r = Math.max(r, box.r);
+    t = Math.min(t, box.t); b = Math.max(b, box.b);
+  }
+  if (!Number.isFinite(l)) return { l: CX - 400, r: CX + 400, t: 60, b: 700 };
+  return { l, r, t, b };
+}
+
+function edgeAnchor(id, side) {
+  const p = S.pos[id];
+  if (!p) return { x: 0, y: 0 };
+  const n = S.nodes[id];
+  if (n?.type === 'decision') {
+    if (side === 'left') return { x: p.x - DIAMOND_HALF, y: p.y };
+    if (side === 'right') return { x: p.x + DIAMOND_HALF, y: p.y };
+    if (side === 'top') return { x: p.x, y: p.y - DIAMOND_HALF };
+    return { x: p.x, y: p.y + DIAMOND_HALF };
+  }
+  const w = nodeW(id), h = nodeH(id);
+  if (side === 'left') return { x: p.x - w / 2, y: p.y };
+  if (side === 'right') return { x: p.x + w / 2, y: p.y };
+  if (side === 'top') return { x: p.x, y: p.y - h / 2 };
+  return { x: p.x, y: p.y + h / 2 };
+}
+
+function shiftBySide(pt, side, dist) {
+  if (side === 'left') return { x: pt.x - dist, y: pt.y };
+  if (side === 'right') return { x: pt.x + dist, y: pt.y };
+  if (side === 'top') return { x: pt.x, y: pt.y - dist };
+  return { x: pt.x, y: pt.y + dist };
+}
+
+function simplifyPath(pts) {
+  const out = [];
+  for (const p of pts) {
+    const q = { x: Math.round(p.x), y: Math.round(p.y) };
+    const prev = out[out.length - 1];
+    if (!prev || prev.x !== q.x || prev.y !== q.y) out.push(q);
+  }
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = 1; i < out.length - 1; i++) {
+      const a = out[i - 1], b = out[i], c = out[i + 1];
+      const collinear = (a.x === b.x && b.x === c.x) || (a.y === b.y && b.y === c.y);
+      if (collinear) { out.splice(i, 1); changed = true; break; }
+    }
+  }
+  return out;
+}
+
+function pathLen(pts) {
+  let s = 0;
+  for (let i = 1; i < pts.length; i++) s += Math.abs(pts[i].x - pts[i - 1].x) + Math.abs(pts[i].y - pts[i - 1].y);
+  return s;
+}
+
+function orthHitsRect(a, b, rect) {
+  if (a.x === b.x) {
+    const x = a.x;
+    const y1 = Math.min(a.y, b.y), y2 = Math.max(a.y, b.y);
+    return x > rect.l && x < rect.r && y2 > rect.t && y1 < rect.b;
+  }
+  if (a.y === b.y) {
+    const y = a.y;
+    const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x);
+    return y > rect.t && y < rect.b && x2 > rect.l && x1 < rect.r;
+  }
+  return false;
+}
+
+function pathCollisions(pts, fromId, toId) {
+  let hit = 0;
+  const ids = Object.keys(S.nodes).filter(id => id !== fromId && id !== toId);
+  for (let i = 1; i < pts.length; i++) {
+    for (const id of ids) {
+      const rect = nodeRect(id, EDGE_HIT_PAD);
+      if (rect && orthHitsRect(pts[i - 1], pts[i], rect)) hit++;
+    }
+  }
+  return hit;
+}
+
+function pathSegments(pts) {
+  const segs = [];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    if (a.x === b.x || a.y === b.y) segs.push({ a, b });
+  }
+  return segs;
+}
+
+function segOverlapPenalty(s1, s2) {
+  // vertical overlap on same X
+  if (s1.a.x === s1.b.x && s2.a.x === s2.b.x && s1.a.x === s2.a.x) {
+    const y1a = Math.min(s1.a.y, s1.b.y), y1b = Math.max(s1.a.y, s1.b.y);
+    const y2a = Math.min(s2.a.y, s2.b.y), y2b = Math.max(s2.a.y, s2.b.y);
+    const ov = Math.min(y1b, y2b) - Math.max(y1a, y2a);
+    if (ov > 0) return 8 + ov * 0.06;
+  }
+  // horizontal overlap on same Y
+  if (s1.a.y === s1.b.y && s2.a.y === s2.b.y && s1.a.y === s2.a.y) {
+    const x1a = Math.min(s1.a.x, s1.b.x), x1b = Math.max(s1.a.x, s1.b.x);
+    const x2a = Math.min(s2.a.x, s2.b.x), x2b = Math.max(s2.a.x, s2.b.x);
+    const ov = Math.min(x1b, x2b) - Math.max(x1a, x2a);
+    if (ov > 0) return 8 + ov * 0.06;
+  }
+  // orthogonal crossing
+  const v = (s1.a.x === s1.b.x) ? s1 : (s2.a.x === s2.b.x ? s2 : null);
+  const h = (s1.a.y === s1.b.y) ? s1 : (s2.a.y === s2.b.y ? s2 : null);
+  if (v && h && v !== h) {
+    const vx = v.a.x;
+    const vy1 = Math.min(v.a.y, v.b.y), vy2 = Math.max(v.a.y, v.b.y);
+    const hy = h.a.y;
+    const hx1 = Math.min(h.a.x, h.b.x), hx2 = Math.max(h.a.x, h.b.x);
+    if (vx > hx1 && vx < hx2 && hy > vy1 && hy < vy2) return 1.6;
+  }
+  return 0;
+}
+
+function pathOverlapPenalty(pts) {
+  if (!_edgeOccupancy.length) return 0;
+  const segs = pathSegments(pts);
+  let p = 0;
+  for (const s1 of segs) {
+    for (const s2 of _edgeOccupancy) p += segOverlapPenalty(s1, s2);
+  }
+  return p;
+}
+
+function edgeRoute(e) {
+  const fp = S.pos[e.from], tp = S.pos[e.to];
+  if (!fp || !tp) return null;
+
+  const upward = tp.y < fp.y - 18;
+  const fromNode = S.nodes[e.from];
+  const decisionBranch = fromNode?.type === 'decision' && (e.label === 'yes' || e.label === 'no');
+
+  let fromSides;
+  if (fromNode?.type === 'decision' && e.label === 'yes') fromSides = ['left'];
+  else if (fromNode?.type === 'decision' && e.label === 'no') fromSides = ['right'];
+  else if (upward) {
+    const near = tp.x >= fp.x ? 'right' : 'left';
+    const far = near === 'right' ? 'left' : 'right';
+    fromSides = ['top', near, far, 'bottom'];
+  } else {
+    fromSides = ['bottom', 'left', 'right', 'top'];
+  }
+
+  let toSides;
+  if (decisionBranch) {
+    if (upward) {
+      // For loops to blocks above: enter from side, not from top.
+      toSides = e.label === 'yes' ? ['left', 'right', 'top'] : ['right', 'left', 'top'];
+    } else {
+      toSides = ['top'];
+    }
+  } else if (upward) {
+    const near = tp.x >= fp.x ? 'left' : 'right';
+    const far = near === 'left' ? 'right' : 'left';
+    toSides = [near, 'top', far, 'bottom'];
+  } else {
+    toSides = ['top', 'left', 'right', 'bottom'];
+  }
+  const gb = graphBounds(EDGE_LANE_GAP + 20);
+  let best = null;
+
+  for (let fi = 0; fi < fromSides.length; fi++) {
+    for (let ti = 0; ti < toSides.length; ti++) {
+      const fs = fromSides[fi], ts = toSides[ti];
+      const s0 = edgeAnchor(e.from, fs);
+      const t0 = edgeAnchor(e.to, ts);
+      const startStub = (decisionBranch && upward) ? EDGE_STUB + 16 : EDGE_STUB;
+      const endStub = (decisionBranch && upward) ? EDGE_END_STUB + 14 : EDGE_END_STUB;
+      const s1 = shiftBySide(s0, fs, startStub);
+      const t1 = shiftBySide(t0, ts, endStub);
+
+      const laneL = Math.min(gb.l, Math.min(s1.x, t1.x) - EDGE_LANE_GAP);
+      const laneR = Math.max(gb.r, Math.max(s1.x, t1.x) + EDGE_LANE_GAP);
+      const laneT = Math.min(gb.t, Math.min(s1.y, t1.y) - EDGE_LANE_GAP);
+      const laneB = Math.max(gb.b, Math.max(s1.y, t1.y) + EDGE_LANE_GAP);
+
+      let variants;
+      if (decisionBranch) {
+        const sidePad = upward
+          ? Math.max(58, Math.min(132, Math.abs(t1.x - s1.x) * 0.42 + 44))
+          : Math.round(EDGE_STUB * 1.4);
+        const sideX = (fs === 'left')
+          ? Math.min(s1.x, t1.x) - sidePad
+          : Math.max(s1.x, t1.x) + sidePad;
+        const localLift = upward
+          ? Math.min(s1.y, t1.y) - Math.max(24, Math.min(68, Math.abs(s1.y - t1.y) * 0.26 + 24))
+          : Math.min(s1.y, t1.y) - Math.max(16, Math.min(28, Math.abs(s1.y - t1.y) * 0.35));
+        variants = [
+          [s0, s1, { x: sideX, y: s1.y }, { x: sideX, y: t1.y }, t1, t0],
+          [s0, s1, { x: sideX, y: s1.y }, { x: sideX, y: localLift }, { x: t1.x, y: localLift }, t1, t0],
+          [s0, s1, { x: t1.x, y: s1.y }, t1, t0],
+          [s0, s1, { x: s1.x, y: t1.y }, t1, t0],
+          [s0, s1, { x: laneL, y: s1.y }, { x: laneL, y: t1.y }, t1, t0],
+          [s0, s1, { x: laneR, y: s1.y }, { x: laneR, y: t1.y }, t1, t0],
+        ];
+      } else {
+        variants = [
+          [s0, s1, { x: t1.x, y: s1.y }, t1, t0],
+          [s0, s1, { x: s1.x, y: t1.y }, t1, t0],
+          [s0, s1, { x: laneL, y: s1.y }, { x: laneL, y: t1.y }, t1, t0],
+          [s0, s1, { x: laneR, y: s1.y }, { x: laneR, y: t1.y }, t1, t0],
+          [s0, s1, { x: s1.x, y: laneT }, { x: t1.x, y: laneT }, t1, t0],
+          [s0, s1, { x: s1.x, y: laneB }, { x: t1.x, y: laneB }, t1, t0],
+        ];
+      }
+
+      for (const raw of variants) {
+        const pts = simplifyPath(raw);
+        if (pts.length < 2) continue;
+        const minY = Math.min(...pts.map(p => p.y));
+        const minX = Math.min(...pts.map(p => p.x));
+        const maxX = Math.max(...pts.map(p => p.x));
+        const tooHigh = decisionBranch ? Math.max(0, (Math.min(fp.y, tp.y) - 72) - minY) : 0;
+        let wrongSidePenalty = 0;
+        // If source is clearly on the right/left of target, avoid routes that detour to opposite side.
+        if (upward && fp.x > tp.x + 24 && minX < tp.x - 48) wrongSidePenalty += 140;
+        if (upward && fp.x < tp.x - 24 && maxX > tp.x + 48) wrongSidePenalty += 140;
+        // Keep decision "yes/no" loops on their semantic side when going upward.
+        if (decisionBranch && upward) {
+          if (e.label === 'yes' && maxX > tp.x + 60) wrongSidePenalty += 220;
+          if (e.label === 'no' && minX < tp.x - 60) wrongSidePenalty += 220;
+        }
+        let tightAirPenalty = 0;
+        if (decisionBranch && upward) {
+          const sideSpread = Math.abs((e.label === 'yes' ? minX : maxX) - s0.x);
+          if (sideSpread < 58) tightAirPenalty += (58 - sideSpread) * 12;
+        }
+        const score = pathLen(pts)
+          + Math.max(0, pts.length - 2) * 24
+          + pathCollisions(pts, e.from, e.to) * 2400
+          + pathOverlapPenalty(pts) * 650
+          + tooHigh * 8
+          + wrongSidePenalty
+          + tightAirPenalty
+          + fi * 14 + ti * 10
+          + ((upward && fs === 'bottom') ? 90 : 0);
+        if (!best || score < best.score) best = { score, pts, fromSide: fs, fromAnchor: s0 };
+      }
+    }
+  }
+
+  if (!best && fromSides.length && toSides.length) {
+    const fs = fromSides[0], ts = toSides[0];
+    const s0 = edgeAnchor(e.from, fs);
+    const t0 = edgeAnchor(e.to, ts);
+    const s1 = shiftBySide(s0, fs, EDGE_STUB);
+    const t1 = shiftBySide(t0, ts, EDGE_END_STUB);
+    const fallback = simplifyPath([s0, s1, { x: s1.x, y: t1.y }, t1, t0]);
+    if (fallback.length >= 2) {
+      best = { score: Number.MAX_SAFE_INTEGER, pts: fallback, fromSide: fs, fromAnchor: s0 };
+    } else {
+      const plain = simplifyPath([s0, t0]);
+      if (plain.length >= 2) best = { score: Number.MAX_SAFE_INTEGER, pts: plain, fromSide: fs, fromAnchor: s0 };
+    }
+  }
+
+  return best;
+}
+
 function renderEdge(e) {
   const fp = S.pos[e.from], tp = S.pos[e.to];
   if (!fp || !tp) return;
@@ -565,45 +1169,35 @@ function renderEdge(e) {
   const isY = e.label === 'yes', isN = e.label === 'no';
   const strk = isY ? '#16a34a' : isN ? '#dc2626' : '#475569';
   const mrk = isY ? 'url(#arr-yes)' : isN ? 'url(#arr-no)' : 'url(#arr)';
-  const fn = S.nodes[e.from];
-  const toTopY = tp.y - nodeH(e.to) / 2;
+  const route = edgeRoute(e);
+  if (!route || !route.pts?.length) return;
 
-  let d;
-  if (fn.type === 'decision') {
-    const fromX = isY ? fp.x - DD : (isN ? fp.x + DD : fp.x);
-    d = Math.abs(fromX - tp.x) < 2
-      ? `M${fromX},${fp.y} L${tp.x},${toTopY}`
-      : `M${fromX},${fp.y} L${tp.x},${fp.y} L${tp.x},${toTopY}`;
-  } else {
-    const fromBotY = fp.y + nodeH(e.from) / 2;
-    if (Math.abs(fp.x - tp.x) < 2) {
-      d = `M${fp.x},${fromBotY} L${tp.x},${toTopY}`;
-    } else {
-      const midY = (fromBotY + toTopY) / 2;
-      d = `M${fp.x},${fromBotY} L${fp.x},${midY} L${tp.x},${midY} L${tp.x},${toTopY}`;
-    }
-  }
-
-  L_ED.appendChild(mkSvg('path', {
+  const d = route.pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ');
+  layerEdges.appendChild(mkSvg('path', {
     d, stroke: strk, 'stroke-width': 2.8, fill: 'none',
     'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'marker-end': mrk,
   }));
+  _edgeOccupancy.push(...pathSegments(route.pts));
 
   if (e.label) {
-    const lx = isY ? fp.x - DD - 52 : fp.x + DD + 52;
+    const s = route.fromAnchor || fp;
+    const fs = route.fromSide || (isY ? 'left' : isN ? 'right' : 'bottom');
+    const lx = s.x + (fs === 'left' ? -52 : fs === 'right' ? 52 : 0);
+    const ly = s.y + (fs === 'top' ? -32 : fs === 'bottom' ? 32 : 0);
+
     const lg = mkSvg('g');
     lg.appendChild(mkSvg('rect', {
-      x: lx - 25, y: fp.y - 15, width: 50, height: 30, rx: 15,
+      x: lx - 25, y: ly - 15, width: 50, height: 30, rx: 15,
       fill: 'white', stroke: strk, 'stroke-width': 2,
     }));
     const lt = mkSvg('text', {
-      x: lx, y: fp.y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      x: lx, y: ly, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
       fill: isY ? '#15803d' : '#b91c1c',
       'font-size': '13', 'font-weight': '800', 'font-family': "'Nunito',sans-serif",
     });
     lt.textContent = isY ? 'Так' : 'Ні';
     lg.appendChild(lt);
-    L_ED.appendChild(lg);
+    layerEdges.appendChild(lg);
   }
 }
 
@@ -615,7 +1209,7 @@ function renderPlus({ pid, lbl }) {
   const rnk = S.ranks[pid] ?? 0;
 
   // place the "+" below the node (follows small vertical moves)
-  const nextRowH = S.rankH?.[rnk + 1] ?? NH;
+  const nextRowH = S.rankH?.[rnk + 1] ?? NODE_H;
   const py = pp.y + nodeH(pid) / 2 + ROW_GAP + nextRowH / 2;
 
   let px;
@@ -623,14 +1217,14 @@ function renderPlus({ pid, lbl }) {
   const isYesNo = (lbl === 'yes' || lbl === 'no');
   if (pn.type === 'decision' && isYesNo) {
     px = lbl === 'yes' ? pp.x - HO : pp.x + HO;
-    L_PL.appendChild(mkSvg('path', {
-      d: `M${lbl === 'yes' ? pp.x - DD : pp.x + DD},${pp.y} L${px},${pp.y} L${px},${py - 38}`,
+    layerPlus.appendChild(mkSvg('path', {
+      d: `M${lbl === 'yes' ? pp.x - DIAMOND_HALF : pp.x + DIAMOND_HALF},${pp.y} L${px},${pp.y} L${px},${py - 38}`,
       stroke: lbl === 'yes' ? '#86efac' : '#fca5a5',
       'stroke-width': 2.5, fill: 'none', 'stroke-dasharray': '7 4', 'stroke-linecap': 'round',
     }));
   } else {
     px = pp.x;
-    L_PL.appendChild(mkSvg('path', {
+    layerPlus.appendChild(mkSvg('path', {
       d: `M${px},${pp.y + nodeH(pid) / 2} L${px},${py - 38}`,
       stroke: '#a5b4fc', 'stroke-width': 2.5, fill: 'none',
       'stroke-dasharray': '7 4', 'stroke-linecap': 'round',
@@ -671,7 +1265,7 @@ function renderPlus({ pid, lbl }) {
     hideToolbar();
     openWiz(pid, lbl);
   });
-  L_PL.appendChild(g);
+  layerPlus.appendChild(g);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -735,7 +1329,7 @@ svg.addEventListener('pointermove', ev => {
     if (!_nodeDrag.snapTaken) { snap(); _nodeDrag.snapTaken = true; }
     hideToolbar();
     // Mark node in layer as dragging
-    const g = L_NO.querySelector(`[data-nid="${_nodeDrag.id}"]`);
+    const g = layerNodes.querySelector(`[data-nid="${_nodeDrag.id}"]`);
     if (g) g.classList.add('dragging');
   }
 
@@ -764,7 +1358,7 @@ svg.addEventListener('pointerup', ev => {
   _ignoreClickUntil = Date.now() + 450;
   _lastTap = { id: null, t: 0 };
 
-  const gg = L_NO.querySelector(`[data-nid="${id}"]`);
+  const gg = layerNodes.querySelector(`[data-nid="${id}"]`);
   if (gg) gg.classList.remove('dragging');
 
   // persist offsets so future auto-layout doesn't reset the user's adjustments
@@ -790,7 +1384,7 @@ svg.addEventListener('pointerup', ev => {
 });
 svg.addEventListener('pointercancel', () => {
   if (_nodeDrag) {
-    const gg = L_NO.querySelector(`[data-nid="${_nodeDrag.id}"]`);
+    const gg = layerNodes.querySelector(`[data-nid="${_nodeDrag.id}"]`);
     if (gg) gg.classList.remove('dragging');
   }
   _nodeDrag = null;
@@ -799,7 +1393,7 @@ svg.addEventListener('pointercancel', () => {
 
 // Lightweight: update only the dragged node's position without full clear/rebuild
 function updateNodePosition(id) {
-  const g = L_NO.querySelector(`[data-nid="${id}"]`);
+  const g = layerNodes.querySelector(`[data-nid="${id}"]`);
   if (!g || !S.pos[id]) return;
   const { x, y } = S.pos[id];
   const n = S.nodes[id];
@@ -809,14 +1403,14 @@ function updateNodePosition(id) {
   const shape = g.querySelector('.node-shape');
   if (shape) {
     if (n.type === 'start' || n.type === 'end' || n.type === 'process') {
-      shape.setAttribute('x', x - NW / 2);
-      shape.setAttribute('y', y - NH / 2);
+      shape.setAttribute('x', x - NODE_W / 2);
+      shape.setAttribute('y', y - NODE_H / 2);
     } else if (n.type === 'decision') {
-      shape.setAttribute('points', `${x},${y - DD} ${x + DD},${y} ${x},${y + DD} ${x - DD},${y}`);
+      shape.setAttribute('points', `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}`);
     } else { // input-output
       const s = 20;
       shape.setAttribute('points',
-        `${x - IOW / 2 + s},${y - NH / 2} ${x + IOW / 2 + s},${y - NH / 2} ${x + IOW / 2 - s},${y + NH / 2} ${x - IOW / 2 - s},${y + NH / 2}`);
+        `${x - IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 - s},${y + NODE_H / 2} ${x - IO_W / 2 - s},${y + NODE_H / 2}`);
     }
   }
 
@@ -838,8 +1432,8 @@ function updateNodePosition(id) {
   // Update type label position
   const typeLabel = g.querySelector('.node-type-label');
   if (typeLabel && n.type !== 'start') {
-    const bx = n.type === 'decision' ? x + DD : x + nodeW(id) / 2;
-    const by = n.type === 'decision' ? y - DD - 12 : y - NH / 2 - 10;
+    const bx = n.type === 'decision' ? x + DIAMOND_HALF : x + nodeW(id) / 2;
+    const by = n.type === 'decision' ? y - DIAMOND_HALF - 12 : y - NODE_H / 2 - 10;
     typeLabel.setAttribute('x', bx);
     typeLabel.setAttribute('y', by);
   }
@@ -848,7 +1442,8 @@ function updateNodePosition(id) {
 
 // Partial re-render: edges + plus only (faster during drag)
 function renderEdgesAndPlus() {
-  clearEl(L_TI); clearEl(L_ED); clearEl(L_PL);
+  clearEl(layerTitle); clearEl(layerEdges); clearEl(layerPlus);
+  _edgeOccupancy = [];
   renderTitle();
   for (const e of S.edges) renderEdge(e);
   for (const e of openEnds()) renderPlus(e);
@@ -906,7 +1501,7 @@ function positionToolbar(id) {
   const tb = $('node-tb');
 
   // Use DOM rects instead of getScreenCTM() to be stable under CSS zoom (transform: scale)
-  const g = L_NO.querySelector(`[data-nid="${id}"]`);
+  const g = layerNodes.querySelector(`[data-nid="${id}"]`);
   if (!g) return;
   const shape = g.querySelector('.node-shape') || g;
 
@@ -1008,7 +1603,7 @@ $('btn-del-node').addEventListener('click', () => {
     snap();
     deleteNodeSplice(id);
     hideToolbar();
-    layout(); render(); mascot();
+    rerenderFlow(true);
   };
 });
 
@@ -1064,6 +1659,7 @@ function pruneUnreachable() {
   if (!rm.length) return;
   const rmSet = new Set(rm);
   S.edges = S.edges.filter(e => !rmSet.has(e.from) && !rmSet.has(e.to));
+  invalidateEdgeCache();
   for (const id of rmSet) {
     delete S.nodes[id];
     if (S.manual) delete S.manual[id];
@@ -1090,16 +1686,18 @@ function deleteNodeSplice(id) {
 
   const edgesToDrop = new Set();
 
-  // Rewire incoming edges to the next block (or drop them if nothing to connect to)
+  // Rewire incoming edges to the next block — create NEW edge objects (не мутуємо оригінали,
+  // щоб undo-стек зберігав коректний стан)
+  const rewiredEdges = [];
   for (const e of inc) {
     if (target && S.nodes[target] && target !== id) {
-      e.to = target;
+      rewiredEdges.push({ ...e, to: target });
     } else {
       edgesToDrop.add(e);
     }
   }
 
-  // Remove edges going from the deleted node + any dropped incoming edges + broken edges
+  // Remove edges going from the deleted node + dropped incoming edges + broken edges
   S.edges = S.edges.filter(e =>
     e.from !== id &&
     e.to !== id &&
@@ -1107,6 +1705,10 @@ function deleteNodeSplice(id) {
     e.to && S.nodes[e.to] &&
     e.from && S.nodes[e.from]
   );
+
+  // Add rewired edges (нові об'єкти)
+  S.edges.push(...rewiredEdges);
+  invalidateEdgeCache();
 
   // Remove node
   delete S.nodes[id];
@@ -1146,7 +1748,8 @@ function openWiz(pid, lbl) {
       S.nodes[mid] = { id: mid, type: 'process', text: 'Продовження' };
       S.edges.push({ from: pid, to: mid, label: lbl });
       S.edges.push({ from: sibling.pid, to: mid, label: sibling.lbl });
-      closeWiz(); layout(); render(); mascot();
+      invalidateEdgeCache();
+      closeWiz(); rerenderFlow(true);
       setTimeout(() => openWiz(mid, null), 200);
     };
   } else {
@@ -1159,13 +1762,16 @@ function openWiz(pid, lbl) {
 }
 
 function openWizPanel() {
-  $('wizard-panel').style.transform = 'translateY(0)';
+  const panel = $('wizard-panel');
+  panel.style.transform = 'translateY(0)';
+  panel.setAttribute('aria-hidden', 'false');
+  activateDialogFocus(panel, S.wiz.step === 'explain' ? $('text-inp') : null);
   // Hide mascot when wizard opens
   $('mascot').classList.add('wiz-open');
   $('mascot-toggle').style.opacity = '0';
   $('mascot-toggle').style.pointerEvents = 'none';
   requestAnimationFrame(() => {
-    const wh = $('wizard-panel').offsetHeight || 0;
+    const wh = panel.offsetHeight || 0;
     $('mascot').style.bottom = (wh + 10) + 'px';
     $('mascot-toggle').style.bottom = (wh + 10) + 'px';
   });
@@ -1173,7 +1779,9 @@ function openWizPanel() {
 
 function closeWiz() {
   S.wiz = { open: false, step: 'type', pid: null, plbl: null, type: null, editId: null };
-  $('wizard-panel').style.transform = 'translateY(110%)';
+  const panel = $('wizard-panel');
+  panel.style.transform = 'translateY(110%)';
+  deactivateDialogFocus(panel);
   // Show mascot again
   $('mascot').classList.remove('wiz-open');
   $('mascot').style.bottom = '18px';
@@ -1185,14 +1793,27 @@ function closeWiz() {
 
 function showWizStep(step) {
   ['step-type', 'step-explain', 'step-existing'].forEach(id => {
-    $(id).classList.toggle('hidden', id !== 'step-' + step);
+    const el = $(id);
+    const visible = id === 'step-' + step;
+    el.classList.toggle('hidden', !visible);
+    el.setAttribute('aria-hidden', visible ? 'false' : 'true');
   });
   S.wiz.step = step;
+  const live = $('wizard-live');
+  if (live) {
+    live.textContent = step === 'type'
+      ? 'Крок 1. Обери тип блоку.'
+      : step === 'explain'
+        ? 'Крок 2. Введи текст блоку.'
+        : 'Крок 3. Обери блок для зʼєднання.';
+  }
 }
 
 function setExplainContent(type) {
   const m = TYPE_META[type] || TYPE_META.process;
   const explain = m.explain || '';
+  const safeLabel = escHtml(m.label || '');
+  const safeExplain = escHtml(explain);
   const borderCls = {
     process: 'border-sky-200 bg-sky-50',
     decision: 'border-amber-200 bg-amber-50',
@@ -1208,8 +1829,8 @@ function setExplainContent(type) {
       <i class="fa-solid ${m.icon} text-white text-sm"></i>
     </div>
     <div class="flex-1 min-w-0">
-      <div class="font-black text-gray-800 mb-0.5">${m.label}</div>
-      ${explain ? `<div class="text-sm text-gray-500 font-semibold leading-snug">${explain}</div>` : ''}
+      <div class="font-black text-gray-800 mb-0.5">${safeLabel}</div>
+      ${safeExplain ? `<div class="text-sm text-gray-500 font-semibold leading-snug">${safeExplain}</div>` : ''}
     </div>`;
 }
 
@@ -1257,7 +1878,8 @@ $('btn-connect-exist').addEventListener('click', () => {
       btn.addEventListener('click', () => {
         snap();
         S.edges.push({ from: S.wiz.pid, to: n.id, label: S.wiz.plbl });
-        closeWiz(); layout(); render(); mascot();
+        invalidateEdgeCache();
+        closeWiz(); rerenderFlow(true);
         if (isDone()) setTimeout(confetti, 400);
       });
       list.appendChild(btn);
@@ -1279,7 +1901,7 @@ $('btn-ok').addEventListener('click', () => {
   if (S.wiz.editId) {
     snap();
     S.nodes[S.wiz.editId].text = text;
-    closeWiz(); render(); mascot();
+    closeWiz(); rerenderFlow(false);
   } else {
     snap(); commitNode(text);
   }
@@ -1294,7 +1916,8 @@ function commitNode(text) {
   const id = 'n' + (++S.cnt);
   S.nodes[id] = { id, type: S.wiz.type, text };
   S.edges.push({ from: S.wiz.pid, to: id, label: S.wiz.plbl });
-  closeWiz(); layout(); render(); mascot();
+  invalidateEdgeCache();
+  closeWiz(); rerenderFlow(true);
   const p = S.pos[id];
   if (p) {
     setTimeout(() => area.scrollTo({
@@ -1313,21 +1936,93 @@ $('btn-reset').addEventListener('click', () => openModal('reset-modal'));
 $('reset-cancel').addEventListener('click', () => closeModal('reset-modal'));
 $('reset-confirm').addEventListener('click', () => {
   closeModal('reset-modal');
-  Object.assign(S, { nodes: {}, edges: [], root: null, cnt: 0, undo: [], sel: null, ranks: {}, pos: {}, manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {}, title: '' });
+  Object.assign(S, { nodes: {}, edges: [], root: null, cnt: 0, undo: [], sel: null, ranks: {}, pos: {}, manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {}, title: '', issues: [], issuesByNode: {} });
+  invalidateEdgeCache();
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar(); init();
 });
 $('del-cancel').addEventListener('click', () => closeModal('del-modal'));
-['del-modal', 'reset-modal'].forEach(id => {
-  $(id).addEventListener('pointerdown', e => { if (e.target === $(id)) closeModal(id); });
+['del-modal', 'reset-modal', 'check-modal'].forEach(id => {
+  const modal = $(id);
+  if (!modal) return;
+  modal.addEventListener('pointerdown', e => { if (e.target === modal) closeModal(id); });
 });
 
 function openModal(id) {
-  $(id).classList.remove('hidden'); $(id).classList.add('flex');
+  const el = $(id);
+  if (!el) return;
+  el.setAttribute('aria-hidden', 'false');
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+  activateDialogFocus(el);
 }
 function closeModal(id) {
-  $(id).classList.add('hidden'); $(id).classList.remove('flex');
+  const el = $(id);
+  if (!el) return;
+  el.classList.add('hidden');
+  el.classList.remove('flex');
+  deactivateDialogFocus(el);
 }
+
+function focusNode(id) {
+  const p = S.pos[id];
+  if (!p) return;
+  hideToolbar();
+  area.scrollTo({
+    top: Math.max(0, p.y * _scale - area.clientHeight * 0.42),
+    left: Math.max(0, p.x * _scale - area.clientWidth * 0.5),
+    behavior: 'smooth',
+  });
+  setTimeout(() => selectNode(id), 120);
+}
+
+function renderCheckModal() {
+  const list = $('check-list');
+  const summary = $('check-summary');
+  if (!list || !summary) return;
+  const issues = S.issues || [];
+  list.innerHTML = '';
+
+  const errs = issues.filter(i => i.level === 'error').length;
+  const warns = issues.filter(i => i.level === 'warn').length;
+  if (!issues.length) {
+    summary.textContent = 'Помилок не знайдено. Схема виглядає добре.';
+    const ok = document.createElement('div');
+    ok.className = 'check-item ok';
+    ok.innerHTML = `<i class="fa-solid fa-circle-check text-green-500"></i><div class="font-bold">Чудово! Можна продовжувати або зберігати схему.</div>`;
+    list.appendChild(ok);
+    return;
+  }
+
+  summary.textContent = `Знайдено: ${errs} критичних, ${warns} підказок.`;
+  for (const it of issues) {
+    const row = document.createElement('button');
+    const lvl = it.level === 'error' ? 'error' : 'warn';
+    row.className = `check-item ${lvl}` + (it.nodeId ? '' : ' no-node');
+    row.type = 'button';
+    row.innerHTML = `
+      <div class="check-ico">${it.level === 'error' ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-lightbulb"></i>'}</div>
+      <div class="check-msg">${escHtml(it.msg)}</div>
+      ${it.nodeId ? '<div class="check-go"><i class="fa-solid fa-location-crosshairs"></i></div>' : ''}
+    `;
+    if (it.nodeId) {
+      row.addEventListener('click', () => {
+        closeModal('check-modal');
+        focusNode(it.nodeId);
+      });
+    } else {
+      row.disabled = true;
+    }
+    list.appendChild(row);
+  }
+}
+
+$('btn-check')?.addEventListener('click', () => {
+  render(); // refresh validation state before showing list
+  renderCheckModal();
+  openModal('check-modal');
+});
+$('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'));
 
 // ────────────────────────────────────────────────────────────────
 // EXAMPLES
@@ -1363,14 +2058,15 @@ function loadExample(ex) {
   S.nodes = {};
   ex.nodes.forEach(n => { S.nodes[n.id] = { ...n }; });
   S.edges = ex.edges.map(e => ({ ...e }));
+  invalidateEdgeCache();
   S.root = ex.root;
   S.cnt = maxId;
-  S.undo = []; S.sel = null;
+  S.undo = []; S.sel = null; S.pos = {}; S.ranks = {};
   S.manual = {}; S.baseX = {}; S.baseY = {}; S.rankY = {}; S.rankH = {};
-  S.title = ex.title || '';
+  setTitle(ex.title || '');
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar();
-  layout(); render(); mascot();
+  rerenderFlow(true);
   setTimeout(fitToScreen, 100);
   showToast(`Приклад «${ex.title}» завантажено!`);
 }
@@ -1400,10 +2096,9 @@ $('btn-save').addEventListener('click', () => {
   const runSave = async () => {
     const raw = inp.value.trim();
     if (raw.length < 2) { showToast('Напиши назву (хоч 2 літери) 🙂'); inp.focus(); return; }
-    S.title = raw;
+    setTitle(raw);
     closeModal('save-modal');
-    layout();
-    render(); // show title on canvas
+    rerenderFlow(true); // show title on canvas
 
     const btn = $('save-confirm');
     btn.disabled = true;
@@ -1416,8 +2111,12 @@ $('btn-save').addEventListener('click', () => {
     }
   };
 
-  $('save-confirm').onclick = runSave;
-  $('save-cancel').onclick = () => closeModal('save-modal');
+  const saveBtnConfirm = $('save-confirm');
+  const saveBtnCancel  = $('save-cancel');
+
+  // Use direct handlers so reopening modal never accumulates listeners.
+  saveBtnConfirm.onclick = runSave;
+  saveBtnCancel.onclick = () => closeModal('save-modal');
 
   inp.onkeydown = (e) => {
     if (e.key === 'Enter') { e.preventDefault(); runSave(); }
@@ -1443,7 +2142,7 @@ async function savePng() {
   }
 
   // Include title bounds (so it won't be clipped in the saved PNG)
-  const titleG = document.getElementById('alg-title');
+  const titleG = $('alg-title');
   if (titleG) {
     try {
       const bb = titleG.getBBox();
@@ -1464,8 +2163,8 @@ async function savePng() {
 
   const prevSel = S.sel;
   S.sel = null; render();
-  const prevVis = L_PL.getAttribute('visibility');
-  L_PL.setAttribute('visibility', 'hidden');
+  const prevVis = layerPlus.getAttribute('visibility');
+  layerPlus.setAttribute('visibility', 'hidden');
 
   const prevVB = svg.getAttribute('viewBox');
   const prevW = svg.getAttribute('width');
@@ -1476,7 +2175,7 @@ async function savePng() {
 
   const bgRect = mkSvg('rect', { x: minX, y: minY, width: W, height: H, fill: '#eef2ff' });
   // put background under ALL layers
-  svg.insertBefore(bgRect, L_TI || L_ED);
+  svg.insertBefore(bgRect, layerTitle || layerEdges);
 
   try {
     const SCALE = 2;
@@ -1496,12 +2195,15 @@ async function savePng() {
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
         cvs.toBlob(b => {
+          if (!b) { rej(new Error('toBlob повернув null')); return; }
+          const pngUrl = URL.createObjectURL(b);
           const a = document.createElement('a');
-          a.href = URL.createObjectURL(b || new Blob());
+          a.href = pngUrl;
           const safe = (title || 'блок-схема').replace(/[\\/:*?"<>|]+/g, '_').trim();
-          a.download = (safe ? safe : 'блок-схема') + '.png';
+          a.download = (safe || 'блок-схема') + '.png';
           a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+          // Гарантовано звільняємо URL після завантаження
+          setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
           confetti(); showToast('Збережено успішно! 🎉');
           res();
         }, 'image/png');
@@ -1517,7 +2219,7 @@ async function savePng() {
     if (prevVB) svg.setAttribute('viewBox', prevVB); else svg.removeAttribute('viewBox');
     if (prevW) svg.setAttribute('width', prevW); else svg.removeAttribute('width');
     if (prevH) svg.setAttribute('height', prevH); else svg.removeAttribute('height');
-    if (prevVis) L_PL.setAttribute('visibility', prevVis); else L_PL.removeAttribute('visibility');
+    if (prevVis) layerPlus.setAttribute('visibility', prevVis); else layerPlus.removeAttribute('visibility');
     S.sel = prevSel; render();
   }
 }
@@ -1564,7 +2266,7 @@ function fitToScreen() {
   }
 
   // include the title bubble in "fit" bounds
-  const titleG = document.getElementById('alg-title');
+  const titleG = $('alg-title');
   if (titleG) {
     try {
       const bb = titleG.getBBox();
@@ -1627,13 +2329,14 @@ area.addEventListener('touchend', () => { _pinch = null; });
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if ($('text-inp') === document.activeElement) return;
+  if (_activeDialog) return;
   if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); applyZoom(_scale + S_STEP); }
   if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); applyZoom(_scale - S_STEP); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); fitToScreen(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
   if (e.key === 'Escape') {
     closeWiz(); hideToolbar();
-    closeModal('del-modal'); closeModal('reset-modal'); closeModal('ex-modal'); closeModal('save-modal');
+    closeModal('del-modal'); closeModal('reset-modal'); closeModal('ex-modal'); closeModal('save-modal'); closeModal('check-modal');
   }
   if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && !S.wiz.open) $('btn-del-node').click();
 });
@@ -1747,7 +2450,12 @@ function confetti() {
 // ────────────────────────────────────────────────────────────────
 // UTILS
 // ────────────────────────────────────────────────────────────────
+const _wrapTextCache = new Map();
+
 function wrapText(str, maxCPL, maxLines = 3) {
+  const cacheKey = `${str}|${maxCPL}|${maxLines}`;
+  if (_wrapTextCache.has(cacheKey)) return _wrapTextCache.get(cacheKey);
+
   const s = String(str ?? '').trim().replace(/\s+/g, ' ');
   if (!s) return ['...'];
 
@@ -1833,6 +2541,9 @@ function wrapText(str, maxCPL, maxLines = 3) {
     }
   }
 
+  // Обмежуємо розмір кешу, щоб не витікала пам'ять при тривалій сесії
+  if (_wrapTextCache.size > 512) _wrapTextCache.clear();
+  _wrapTextCache.set(cacheKey, lines);
   return lines;
 }
 function escHtml(str) {
@@ -1847,8 +2558,8 @@ function init() {
   const id = 'n' + (++S.cnt);
   S.nodes[id] = { id, type: 'start', text: 'Початок' };
   S.root = id;
-  S.title = '';
-  layout(); render(); mascot(); updateProgress();
+  setTitle('');
+  rerenderFlow(true);
   setTimeout(() => {
     area.scrollLeft = Math.max(0, CX - area.clientWidth / 2);
   }, 60);

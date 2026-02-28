@@ -468,6 +468,13 @@ const CATEGORIES = [
     color: "#14b8a6",
     services: [
       {
+        name: "Танграм",
+        description: "Китайська головоломка, що розвиває логічне мислення та просторову уяву.",
+        link: "games/tanagram/index.html",
+        image: "images/76.jpg",
+        tags: []
+      },
+      {
         name: "Змійка",
         description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.",
         link: "games/snake.html",

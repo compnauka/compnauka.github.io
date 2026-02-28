@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 
 <head>
@@ -75,6 +75,16 @@
     </div>
 
     <div class="flex gap-1.5 items-center">
+      <label for="header-title-input" class="sr-only">Назва алгоритму</label>
+      <div id="header-title-wrap" class="hidden sm:block">
+        <div class="relative">
+          <i class="fa-solid fa-heading absolute left-3 top-1/2 -translate-y-1/2 text-white/70 text-xs pointer-events-none"></i>
+          <input id="header-title-input" type="text" maxlength="80" autocomplete="off"
+            class="w-48 md:w-60 lg:w-72 h-9 pl-8 pr-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/70
+                   font-bold text-sm outline-none focus:border-white/70 focus:bg-white/30 transition"
+            placeholder="Введіть назву алгоритму...">
+        </div>
+      </div>
       <button id="btn-examples" class="flex items-center gap-1.5 bg-yellow-400 hover:bg-yellow-300 text-yellow-900
              px-3 py-2 rounded-xl text-sm font-black shadow transition" aria-label="Приклади">
         <i class="fa-solid fa-star"></i>
@@ -93,6 +103,11 @@
              px-2.5 py-2 rounded-xl text-sm font-bold transition" aria-label="Очистити">
         <i class="fa-solid fa-broom"></i>
         <span class="hidden md:inline">Очистити</span>
+      </button>
+      <button id="btn-check" class="flex items-center gap-1.5 bg-white/15 hover:bg-white/25
+             px-2.5 py-2 rounded-xl text-sm font-bold transition" aria-label="Перевірити">
+        <i class="fa-solid fa-circle-check"></i>
+        <span class="hidden md:inline">Перевірити</span>
       </button>
       <button id="btn-save" class="flex items-center gap-1.5 bg-white text-violet-700
              hover:bg-violet-50 px-3 py-2 rounded-xl text-sm font-black shadow-md transition" aria-label="Зберегти">
@@ -167,7 +182,9 @@
 
   <!-- ══════════════════════ WIZARD ══════════════════════ -->
   <div id="wizard-panel" class="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl z-40
-            max-h-[90vh] overflow-y-auto safe-pb" style="transform:translateY(110%);">
+            max-h-[90vh] overflow-y-auto safe-pb" style="transform:translateY(110%);" role="dialog" aria-modal="true"
+    aria-labelledby="wiz-title" aria-describedby="wizard-live" aria-hidden="true">
+    <p id="wizard-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     <div class="flex justify-center pt-3 pb-1">
       <div class="w-10 h-1.5 bg-gray-200 rounded-full"></div>
     </div>
@@ -175,7 +192,7 @@
     <!-- STEP 1: type chooser -->
     <div id="step-type" class="px-4 pb-3">
       <div class="flex items-center justify-between mb-1">
-        <h2 class="text-lg font-black text-gray-800">
+        <h2 id="wiz-title" class="text-lg font-black text-gray-800">
           <i class="fa-solid fa-circle-plus text-indigo-400 mr-1.5"></i>Що додати далі?
         </h2>
         <span id="step-type-badge" class="text-xs font-black px-2 py-0.5 rounded-full hidden"></span>
@@ -311,12 +328,13 @@
 
   <!-- ══════════════════════ EXAMPLES MODAL ══════════════════════ -->
   <div id="ex-modal" class="fixed inset-0 z-[100] hidden modal-bg items-center justify-center p-4"
-    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);" role="dialog" aria-modal="true"
+    aria-labelledby="ex-modal-title" aria-hidden="true">
     <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[88vh] overflow-y-auto">
       <div class="sticky top-0 bg-white rounded-t-3xl px-6 pt-5 pb-3 border-b border-gray-100 z-10">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-xl font-black text-gray-800">
+            <h2 id="ex-modal-title" class="text-xl font-black text-gray-800">
               <i class="fa-solid fa-star text-yellow-500 mr-2"></i>Приклади алгоритмів
             </h2>
             <p class="text-sm text-gray-400 font-semibold mt-0.5">Натисни — і схема завантажиться на полотно</p>
@@ -334,13 +352,14 @@
 
   <!-- ══════════════════════ DELETE MODAL ══════════════════════ -->
   <div id="del-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
-    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);" role="dialog" aria-modal="true"
+    aria-labelledby="del-modal-title" aria-describedby="del-msg" aria-hidden="true">
     <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
       <div class="flex flex-col items-center text-center mb-5">
         <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-3">
           <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl"></i>
         </div>
-        <h3 class="text-lg font-black text-gray-800 mb-1">Видалити блок?</h3>
+        <h3 id="del-modal-title" class="text-lg font-black text-gray-800 mb-1">Видалити блок?</h3>
         <p id="del-msg" class="text-sm text-gray-500 font-semibold leading-snug"></p>
       </div>
       <div class="flex gap-3">
@@ -358,13 +377,14 @@
 
   <!-- ══════════════════════ RESET MODAL ══════════════════════ -->
   <div id="reset-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
-    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);" role="dialog" aria-modal="true"
+    aria-labelledby="reset-modal-title" aria-hidden="true">
     <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
       <div class="flex flex-col items-center text-center mb-5">
         <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-3">
           <i class="fa-solid fa-broom text-orange-500 text-2xl"></i>
         </div>
-        <h3 class="text-lg font-black text-gray-800 mb-1">Очистити всю схему?</h3>
+        <h3 id="reset-modal-title" class="text-lg font-black text-gray-800 mb-1">Очистити всю схему?</h3>
         <p class="text-sm text-gray-500 font-semibold">Всі блоки та з'єднання будуть видалені.</p>
       </div>
       <div class="flex gap-3">
@@ -380,15 +400,36 @@
     </div>
   </div>
 
+  <!-- CHECK MODAL -->
+  <div id="check-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h3 class="text-lg font-black text-gray-800 mb-1">
+            <i class="fa-solid fa-list-check text-indigo-500 mr-1.5"></i>Перевірка схеми
+          </h3>
+          <p id="check-summary" class="text-sm text-gray-500 font-semibold"></p>
+        </div>
+        <button id="btn-check-close"
+          class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+          aria-label="Закрити перевірку">
+          <i class="fa-solid fa-xmark text-gray-500"></i>
+        </button>
+      </div>
+      <div id="check-list" class="check-list max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
   <!-- ══════════════════════ SAVE TITLE MODAL ══════════════════════ -->
   <div id="save-modal" class="fixed inset-0 z-[110] hidden modal-bg items-center justify-center p-5"
-    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);">
+    style="background:rgba(15,23,42,.6);backdrop-filter:blur(6px);" role="dialog" aria-modal="true"
+    aria-labelledby="save-modal-title" aria-hidden="true">
     <div class="modal-box bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
       <div class="flex flex-col items-center text-center mb-4">
         <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-3">
           <i class="fa-solid fa-heading text-indigo-600 text-2xl"></i>
         </div>
-        <h3 class="text-lg font-black text-gray-800 mb-1">Назва алгоритму</h3>
+        <h3 id="save-modal-title" class="text-lg font-black text-gray-800 mb-1">Назва алгоритму</h3>
         <p class="text-sm text-gray-500 font-semibold leading-snug">
           Напиши назву — вона з’явиться над схемою та допоможе не плутатись у збережених файлах.
         </p>
@@ -421,3 +462,6 @@
 </body>
 
 </html>
+
+
+
