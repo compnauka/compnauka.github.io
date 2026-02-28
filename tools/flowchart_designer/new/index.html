@@ -33,7 +33,7 @@
         <div class="header-right">
             <div class="quick-actions" role="group" aria-label="Швидкі дії">
                 <button id="undo-button" class="icon-btn" aria-label="Скасувати" title="Скасувати (Ctrl+Z)"><i
-                        class="fa-solid fa-rotate-left"></i><span></span>Скасувати</span></button>
+                        class="fa-solid fa-rotate-left"></i><span>Скасувати</span></button>
                 <button id="delete-button" class="icon-btn icon-btn-danger"
                     aria-label="Видалити вибрану фігуру або стрілку" title="Видалити вибране (Delete)"><i
                         class="fa-solid fa-trash"></i><span>Видалити елемент</span></button>
@@ -153,6 +153,7 @@
             <!-- Панель вибраного з'єднання -->
             <div id="connection-bar" class="connection-bar hidden" role="status" aria-label="Вибрана стрілка">
                 <span><i class="fa-solid fa-share-nodes"></i> Вибрана стрілка</span>
+                <button id="route-conn-btn" class="conn-route-btn" aria-label="Змінити маршрут стрілки">Маршрут: Авто</button>
                 <button id="delete-conn-btn" class="conn-delete-btn" aria-label="Видалити стрілку"><i
                         class="fa-solid fa-trash"></i> Видалити стрілку</button>
             </div>
@@ -166,7 +167,7 @@
         <div class="modal-content">
             <h2 id="text-modal-title"><i class="fa-solid fa-pen"></i> Введи текст</h2>
             <textarea id="shape-text" placeholder="Наприклад: Взяти хліб" aria-label="Текст фігури"
-                maxlength="120"></textarea>
+                maxlength="72"></textarea>
             <div class="modal-buttons">
                 <button class="modal-btn cancel-btn" id="cancel-text">Скасувати</button>
                 <button class="modal-btn ok-btn" id="save-text"><i class="fa-solid fa-check"></i> Зберегти</button>
@@ -192,10 +193,26 @@
     </div>
 
     <!-- Повідомлення / підтвердження -->
-    <div id="message-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="msg-modal-text">
+    <div id="message-modal" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="msg-modal-text">
         <div class="modal-content">
             <div id="message-modal-text" style="font-size:17px;line-height:1.5"></div>
             <div id="message-modal-buttons" style="margin-top:20px;display:flex;gap:12px;justify-content:center"></div>
+        </div>
+    </div>
+
+    <!-- Запит назви перед збереженням -->
+    <div id="save-title-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="save-title-modal-title">
+        <div class="modal-content">
+            <button id="close-save-title" class="modal-close-btn" aria-label="Закрити"><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="save-title-modal-title"><i class="fa-solid fa-floppy-disk"></i> Назва перед збереженням</h2>
+            <p>Введи назву блок-схеми або збережи картинку без назви.</p>
+            <input id="save-title-input" type="text" maxlength="60" placeholder="Наприклад: Алгоритм сортування"
+                aria-label="Назва блок-схеми перед збереженням"
+                style="width:100%;padding:12px;border:2px solid var(--light-border);border-radius:10px;font-size:16px;font-family:var(--font);font-weight:800;margin-bottom:14px;display:block;">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="save-without-title">Зберегти без назви</button>
+                <button class="modal-btn ok-btn" id="save-with-title"><i class="fa-solid fa-check"></i> Зберегти</button>
+            </div>
         </div>
     </div>
 
@@ -225,22 +242,26 @@
             </div>
             <div class="help-step">
                 <span class="step-num">5</span>
-                <span><strong>Перемістити фігуру</strong> — тягни пальцем або мишкою</span>
+                <span><strong>Змінити маршрут стрілки</strong> — виділи стрілку → кнопка "Маршрут" (або клавіша R)</span>
             </div>
             <div class="help-step">
                 <span class="step-num">6</span>
-                <span><strong>Масштаб</strong> — колесо миші або кнопки + / −</span>
+                <span><strong>Перемістити фігуру</strong> — тягни пальцем або мишкою</span>
             </div>
             <div class="help-step">
                 <span class="step-num">7</span>
-                <span><strong>Скасувати</strong> — кнопка Скасувати або Ctrl+Z</span>
+                <span><strong>Масштаб</strong> — колесо миші або кнопки + / −</span>
             </div>
             <div class="help-step">
                 <span class="step-num">8</span>
-                <span><strong>Назва</strong> — назва схеми відображається над першим блоком 'Початок'</span>
+                <span><strong>Скасувати</strong> — кнопка Скасувати або Ctrl+Z</span>
             </div>
             <div class="help-step">
                 <span class="step-num">9</span>
+                <span><strong>Назва</strong> — назва схеми відображається над першим блоком 'Початок'</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">10</span>
                 <span><strong>Зберегти картинку</strong> — кнопка Зберегти</span>
             </div>
         </div>

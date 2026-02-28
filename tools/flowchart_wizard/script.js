@@ -367,6 +367,13 @@ function issueColor(level) {
   return '#3b82f6';
 }
 
+function issueHint(issue) {
+  if (!issue) return '';
+  const prefix = issue.level === 'error' ? 'Помилка' : 'Підказка';
+  const msg = issue.msg || (Array.isArray(issue.msgs) ? issue.msgs[0] : '');
+  return msg ? `${prefix}: ${msg}` : prefix;
+}
+
 function collectIssues() {
   const issues = [];
   const ids = Object.keys(S.nodes);
@@ -801,6 +808,7 @@ function renderNode(id) {
   if (issue) {
     const clr = issueColor(issue.level);
     const ring = buildShape(n.type, x, y, 'none', clr, 8);
+    ring.classList.add('node-issue-ring');
     ring.setAttribute('opacity', issue.level === 'error' ? '0.34' : '0.26');
     ring.removeAttribute('filter');
     g.appendChild(ring);
@@ -808,6 +816,7 @@ function renderNode(id) {
 
   if (sel) {
     const glow = buildShape(n.type, x, y, 'none', '#e879f9', 10);
+    glow.classList.add('node-sel-glow');
     glow.setAttribute('opacity', '0.28');
     glow.removeAttribute('filter');
     g.appendChild(glow);
@@ -852,13 +861,22 @@ function renderNode(id) {
     const bx = n.type === 'decision' ? x + DIAMOND_HALF - 8 : x + nodeW(id) / 2 - 8;
     const by = n.type === 'decision' ? y - DIAMOND_HALF + 8 : y - nodeH(id) / 2 + 8;
     const clr = issueColor(issue.level);
-    g.appendChild(mkSvg('circle', { cx: bx, cy: by, r, fill: 'white', stroke: clr, 'stroke-width': 2.5 }));
+    const badge = mkSvg('g', { class: 'node-issue-badge' });
+    const hint = mkSvg('title');
+    hint.textContent = issueHint(issue);
+    badge.appendChild(hint);
+    badge.appendChild(mkSvg('circle', {
+      cx: bx, cy: by, r, fill: 'white', stroke: clr, 'stroke-width': 2.5,
+      class: 'node-issue-badge-circle'
+    }));
     const t = mkSvg('text', {
       x: bx, y: by + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      fill: clr, 'font-size': '13', 'font-weight': '900', 'font-family': "'Nunito',sans-serif", 'pointer-events': 'none'
+      fill: clr, 'font-size': '13', 'font-weight': '900', 'font-family': "'Nunito',sans-serif",
+      'pointer-events': 'none', class: 'node-issue-badge-mark'
     });
     t.textContent = '!';
-    g.appendChild(t);
+    badge.appendChild(t);
+    g.appendChild(badge);
   }
 
   layerNodes.appendChild(g);
@@ -1399,20 +1417,24 @@ function updateNodePosition(id) {
   const n = S.nodes[id];
   if (!n) return;
 
-  // Update shape position
-  const shape = g.querySelector('.node-shape');
-  if (shape) {
+  function setShapePosition(el) {
+    if (!el) return;
     if (n.type === 'start' || n.type === 'end' || n.type === 'process') {
-      shape.setAttribute('x', x - NODE_W / 2);
-      shape.setAttribute('y', y - NODE_H / 2);
+      el.setAttribute('x', x - NODE_W / 2);
+      el.setAttribute('y', y - NODE_H / 2);
     } else if (n.type === 'decision') {
-      shape.setAttribute('points', `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}`);
+      el.setAttribute('points', `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}`);
     } else { // input-output
       const s = 20;
-      shape.setAttribute('points',
+      el.setAttribute('points',
         `${x - IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 + s},${y - NODE_H / 2} ${x + IO_W / 2 - s},${y + NODE_H / 2} ${x - IO_W / 2 - s},${y + NODE_H / 2}`);
     }
   }
+
+  // Update all same-shape overlays (base, warning ring, selected glow)
+  setShapePosition(g.querySelector('.node-shape'));
+  setShapePosition(g.querySelector('.node-issue-ring'));
+  setShapePosition(g.querySelector('.node-sel-glow'));
 
   // Update main text positions only (avoid touching type label)
   const mainTexts = [...g.querySelectorAll('.node-main-text')];
@@ -1436,6 +1458,22 @@ function updateNodePosition(id) {
     const by = n.type === 'decision' ? y - DIAMOND_HALF - 12 : y - NODE_H / 2 - 10;
     typeLabel.setAttribute('x', bx);
     typeLabel.setAttribute('y', by);
+  }
+
+  // Update issue badge position (icon + hit area + tooltip anchor)
+  const issueCircle = g.querySelector('.node-issue-badge-circle');
+  const issueMark = g.querySelector('.node-issue-badge-mark');
+  if (issueCircle || issueMark) {
+    const bx = n.type === 'decision' ? x + DIAMOND_HALF - 8 : x + nodeW(id) / 2 - 8;
+    const by = n.type === 'decision' ? y - DIAMOND_HALF + 8 : y - nodeH(id) / 2 + 8;
+    if (issueCircle) {
+      issueCircle.setAttribute('cx', bx);
+      issueCircle.setAttribute('cy', by);
+    }
+    if (issueMark) {
+      issueMark.setAttribute('x', bx);
+      issueMark.setAttribute('y', by + 0.5);
+    }
   }
 }
 

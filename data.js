@@ -182,15 +182,15 @@ const CATEGORIES = [
         tags: ["3-4 класи", "Таблиці"]
       },
       {
-        name: "Конструктор блок-схем",
-        description: "Покроковий конструктор для створення простих блок-схем.",
+        name: "Блок-схемчик",
+        description: "Онлайн конструктор для створення блок-схем крок за кроком.",
         link: "tools/flowchart_wizard/index.html",
         image: "images/74.jpg",
         tags: ["1-2 класи", "3-4 класи"]
       },
       {
         name: "Редактор блок-схем",
-        description: "Редактор для створення та редагування блок-схем.",
+        description: "Редактор для створення блок-схем.",
         link: "tools/flowchart_designer/index.html",
         image: "images/37.jpg",
         tags: ["3-4 класи", "5-7 класи"]

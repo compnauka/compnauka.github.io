@@ -36,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const connectionBar = document.getElementById('connection-bar');
   const deleteConnBtn = document.getElementById('delete-conn-btn');
+  const routeConnBtn = document.getElementById('route-conn-btn');
+  const saveTitleModal = document.getElementById('save-title-modal');
+  const saveTitleInput = document.getElementById('save-title-input');
+  const saveWithTitleBtn = document.getElementById('save-with-title');
+  const saveWithoutTitleBtn = document.getElementById('save-without-title');
+  const closeSaveTitleBtn = document.getElementById('close-save-title');
 
   const titleInput = document.getElementById('diagram-title-input');
   const titleDisplay = document.getElementById('diagram-title-display');
@@ -55,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const state = {
     shapes: [],           // {id,type,color,textRaw}
-    connections: [],      // {id,from,to,type}
+    connections: [],      // {id,from,to,type,routeMode}
     selectedShape: null,
     selectedConnId: null,
 
@@ -87,6 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
     _titleRaf: 0,
     _refreshRaf: 0,
   };
+
+  const ROUTE_MODES = ['auto', 'vertical', 'horizontal'];
+  const ROUTE_MODE_LABELS = {
+    auto: 'Авто',
+    vertical: 'Вертикально',
+    horizontal: 'Горизонтально',
+  };
+  const MERGE_LEAD = 34;
 
   // ================= UNDO SNAPSHOTS =================
   function saveSnapshot() {
@@ -128,6 +142,14 @@ document.addEventListener('DOMContentLoaded', () => {
     state.connections = [];
     state.selectedShape = null;
     state.selectedConnId = null;
+    state.activeShape = null;
+    state.dragState = null;
+    state.connDrag = null;
+    state.pendingConn = null;
+    if (state._titleRaf) cancelAnimationFrame(state._titleRaf);
+    if (state._refreshRaf) cancelAnimationFrame(state._refreshRaf);
+    state._titleRaf = 0;
+    state._refreshRaf = 0;
 
     state.baseColors = { ...DEFAULT_BASE_COLORS, ...(snap.baseColors || {}) };
     state.diagramTitle = snap.diagramTitle || '';
@@ -143,16 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Number.isNaN(num)) state.shapeCounter = Math.max(state.shapeCounter, num);
     });
 
-    setTimeout(() => {
-      (snap.connections || []).forEach(c => {
-        const fromEl = document.getElementById(c.from);
-        const toEl = document.getElementById(c.to);
-        if (fromEl && toEl) connectShapes(fromEl, toEl, c.type || null, c.id, true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        (snap.connections || []).forEach(c => {
+          const fromEl = document.getElementById(c.from);
+          const toEl = document.getElementById(c.to);
+          if (fromEl && toEl) connectShapes(fromEl, toEl, c.type || null, c.id, true, c.routeMode || 'auto');
+        });
+        scheduleRefresh();
+        updateConnectionBar();
+        syncColorPickerToCurrent();
       });
-      scheduleRefresh();
-      updateConnectionBar();
-      syncColorPickerToCurrent();
-    }, 20);
+    });
 
     if (undoButton) undoButton.disabled = state.undoStack.length === 0;
   }
@@ -233,13 +257,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function sanitizeFilename(name) {
-    const base = (name || '').trim() || 'блок-схема';
+    const fallback = 'блок-схема';
+    const base = (name || '').trim() || fallback;
     const safe = base
-      .replace(/[\\\/:*?"<>|]+/g, '')
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/[().,]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 60);
-    return safe || 'блок-схема';
+    return safe || fallback;
   }
 
   // ================= TITLE =================
@@ -370,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const shapeHandleGroups = {};
 
   const DECISION_HANDLE_OUTSET = 8; // px: handles sit slightly outside the diamond
-  const DECISION_CONN_OUTSET = 12; // px: arrow endpoint slightly outside the diamond border
+  const DECISION_CONN_OUTSET = 2; // px: keep endpoints close to diamond border
 
   function decisionVertexDistance(shapeEl) {
     // .decision uses transform: rotate(45deg); offsetWidth is pre-transform.
@@ -607,6 +633,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function getEdgePoints(el) {
     const cx = el.offsetLeft + el.offsetWidth / 2;
     const cy = el.offsetTop + el.offsetHeight / 2;
+    if (el.classList.contains('decision')) {
+      const d = decisionVertexDistance(el) + DECISION_CONN_OUTSET;
+      return {
+        top: { x: cx, y: cy - d, side: 'top' },
+        bottom: { x: cx, y: cy + d, side: 'bottom' },
+        left: { x: cx - d, y: cy, side: 'left' },
+        right: { x: cx + d, y: cy, side: 'right' },
+      };
+    }
+
     const hw = el.offsetWidth / 2;
     const hh = el.offsetHeight / 2;
     return {
@@ -668,13 +704,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Choose the best exit/entry side pair given two shapes.
   // Rules: prefer bottom→top for vertical flow, left/right for horizontal.
-  function chooseSides(fromEl, toEl) {
+  function chooseSides(fromEl, toEl, routeMode = 'auto') {
     const fcx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
     const fcy = fromEl.offsetTop + fromEl.offsetHeight / 2;
     const tcx = toEl.offsetLeft + toEl.offsetWidth / 2;
     const tcy = toEl.offsetTop + toEl.offsetHeight / 2;
     const dx = tcx - fcx;
     const dy = tcy - fcy;
+
+    if (routeMode === 'vertical') {
+      return dy >= 0 ? { exit: 'bottom', entry: 'top' } : { exit: 'top', entry: 'bottom' };
+    }
+    if (routeMode === 'horizontal') {
+      return dx >= 0 ? { exit: 'right', entry: 'left' } : { exit: 'left', entry: 'right' };
+    }
 
     const fhw = fromEl.offsetWidth / 2;
     const fhh = fromEl.offsetHeight / 2;
@@ -702,29 +745,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function elbowPoints(fromEl_or_pt, toEl_or_pt_or_ignored) {
-    // Legacy fallback — now replaced by computeConnectionGeometry calling routeOrthogonal
-    // Only used if called with raw points (shouldn't happen after refactor)
-    const fromPt = fromEl_or_pt;
-    const toPt = toEl_or_pt_or_ignored;
-    const pts = [{ ...fromPt }];
-    const dx = toPt.x - fromPt.x;
-    const dy = toPt.y - fromPt.y;
-    if (Math.abs(dy) < 2) { pts.push({ ...toPt }); return pts; }
-    const yMid = fromPt.y + dy / 2;
-    pts.push({ x: fromPt.x, y: yMid });
-    pts.push({ x: toPt.x, y: yMid });
-    pts.push({ ...toPt });
-    return pts;
-  }
-
-  function routeOrthogonal(fromEl, toEl) {
-    const { exit, entry } = chooseSides(fromEl, toEl);
+  function routeOrthogonal(fromEl, toEl, routeMode = 'auto') {
+    const { exit, entry } = chooseSides(fromEl, toEl, routeMode);
     const fromEdges = getEdgePoints(fromEl);
     const toEdges = getEdgePoints(toEl);
     const fromPt = fromEdges[exit];
     const toPt = toEdges[entry];
-    return orthogonalPath(fromPt, toPt, exit, entry);
+    const pts = orthogonalPath(fromPt, toPt, exit, entry);
+    return { pts, exit, entry };
+  }
+
+  function chooseExitSideToPoint(fromEl, toPt, routeMode = 'auto') {
+    const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
+    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
+    const dx = toPt.x - cx;
+    const dy = toPt.y - cy;
+    if (routeMode === 'vertical') return dy >= 0 ? 'bottom' : 'top';
+    if (routeMode === 'horizontal') return dx >= 0 ? 'right' : 'left';
+    return Math.abs(dy) >= Math.abs(dx)
+      ? (dy >= 0 ? 'bottom' : 'top')
+      : (dx >= 0 ? 'right' : 'left');
+  }
+
+  function routeToPoint(fromEl, toPt, routeMode = 'auto', entrySide = 'top') {
+    const fromEdges = getEdgePoints(fromEl);
+    const exit = chooseExitSideToPoint(fromEl, toPt, routeMode);
+    const fromPt = fromEdges[exit];
+    const pts = orthogonalPath(fromPt, { x: toPt.x, y: toPt.y, side: entrySide }, exit, entrySide);
+    return { pts, exit, entry: entrySide };
   }
 
   function pointsToPathD(points) {
@@ -788,17 +836,158 @@ document.addEventListener('DOMContentLoaded', () => {
     return { d: pointsToPathD(pts), pts };
   }
 
-  function computeConnectionGeometry(fromEl, toEl, connType) {
+  function getDecisionEntrySide(fromEl, toEl, side) {
+    const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
+    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
+    const toCx = toEl.offsetLeft + toEl.offsetWidth / 2;
+    const toCy = toEl.offsetTop + toEl.offsetHeight / 2;
+    const hDist = side === 'right' ? toCx - cx : cx - toCx;
+    const vDist = toCy - cy;
+    if (Math.abs(vDist) < 30 && hDist > 20) return side === 'right' ? 'left' : 'right';
+    return 'top';
+  }
+
+  function getConnectionEntrySide(conn) {
+    const fromEl = document.getElementById(conn.from);
+    const toEl = document.getElementById(conn.to);
+    if (!fromEl || !toEl) return 'top';
+
+    const fromData = state.shapes.find(s => s.id === conn.from);
+    if (fromData?.type === 'decision' && (conn.type === 'yes' || conn.type === 'no')) {
+      const side = conn.type === 'yes' ? 'left' : 'right';
+      return getDecisionEntrySide(fromEl, toEl, side);
+    }
+
+    const routeMode = ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto';
+    return chooseSides(fromEl, toEl, routeMode).entry;
+  }
+
+  function sortConnsBySourcePosition(conns, entrySide) {
+    return conns.slice().sort((a, b) => {
+      const aFrom = document.getElementById(a.from);
+      const bFrom = document.getElementById(b.from);
+      if (!aFrom || !bFrom) return a.id.localeCompare(b.id);
+      const aCx = aFrom.offsetLeft + aFrom.offsetWidth / 2;
+      const bCx = bFrom.offsetLeft + bFrom.offsetWidth / 2;
+      const aCy = aFrom.offsetTop + aFrom.offsetHeight / 2;
+      const bCy = bFrom.offsetTop + bFrom.offsetHeight / 2;
+      if (entrySide === 'left' || entrySide === 'right') return aCy - bCy || aCx - bCx;
+      return aCx - bCx || aCy - bCy;
+    });
+  }
+
+  function getFanInOffset(conn, entrySide, toEl) {
+    const incoming = state.connections
+      .filter(c => c.to === conn.to && getConnectionEntrySide(c) === entrySide);
+    const sortedIncoming = sortConnsBySourcePosition(incoming, entrySide);
+
+    if (sortedIncoming.length <= 1) return 0;
+    const idx = sortedIncoming.findIndex(c => c.id === conn.id);
+    if (idx < 0) return 0;
+
+    const slot = idx - (sortedIncoming.length - 1) / 2;
+    const spacing = 16;
+    const rawOffset = slot * spacing;
+
+    if (entrySide === 'top' || entrySide === 'bottom') {
+      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
+      return Math.max(-max, Math.min(max, rawOffset));
+    }
+    const max = Math.max(12, toEl.offsetHeight / 2 - 14);
+    return Math.max(-max, Math.min(max, rawOffset));
+  }
+
+  function applyEntryOffset(points, entrySide, offset, toEl) {
+    if (!offset || !points || points.length < 2) return points;
+    const out = points.map(p => ({ ...p }));
+    const last = out.length - 1;
+
+    if (entrySide === 'top' || entrySide === 'bottom') {
+      const cx = toEl.offsetLeft + toEl.offsetWidth / 2;
+      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
+      const shiftedX = Math.max(cx - max, Math.min(cx + max, out[last].x + offset));
+      out[last].x = shiftedX;
+      out[last - 1].x = shiftedX;
+    } else {
+      const cy = toEl.offsetTop + toEl.offsetHeight / 2;
+      const max = Math.max(12, toEl.offsetHeight / 2 - 14);
+      const shiftedY = Math.max(cy - max, Math.min(cy + max, out[last].y + offset));
+      out[last].y = shiftedY;
+      out[last - 1].y = shiftedY;
+    }
+    return out;
+  }
+
+  function buildMergeContext() {
+    const groups = new Map();
+
+    state.connections.forEach(conn => {
+      if (conn.type) return; // keep Yes/No branches independent
+      const fromEl = document.getElementById(conn.from);
+      const toEl = document.getElementById(conn.to);
+      if (!fromEl || !toEl) return;
+      const entrySide = getConnectionEntrySide(conn);
+      const key = `${conn.to}|${entrySide}`;
+      if (!groups.has(key)) groups.set(key, { toEl, entrySide, conns: [] });
+      groups.get(key).conns.push(conn);
+    });
+
+    const byConnId = {};
+    groups.forEach(group => {
+      if (group.conns.length < 2) return;
+      const targetEdges = getEdgePoints(group.toEl);
+      const targetPt = targetEdges[group.entrySide];
+      const junction = { x: targetPt.x, y: targetPt.y };
+      if (group.entrySide === 'top') junction.y -= MERGE_LEAD;
+      if (group.entrySide === 'bottom') junction.y += MERGE_LEAD;
+      if (group.entrySide === 'left') junction.x -= MERGE_LEAD;
+      if (group.entrySide === 'right') junction.x += MERGE_LEAD;
+
+      const sorted = sortConnsBySourcePosition(group.conns, group.entrySide);
+
+      const primaryIdx = Math.floor((sorted.length - 1) / 2);
+      sorted.forEach((conn, idx) => {
+        byConnId[conn.id] = {
+          isMerged: true,
+          isPrimary: idx === primaryIdx,
+          entrySide: group.entrySide,
+          junction,
+          targetPt,
+        };
+      });
+    });
+
+    return byConnId;
+  }
+
+  function computeConnectionGeometry(fromEl, toEl, conn, mergeContext) {
+    const connType = conn?.type || null;
     const fromData = state.shapes.find(s => s.id === fromEl.id);
 
-    // Special clean routing for decision Yes/No
-    // Standard convention: Так (Yes) exits LEFT, Ні (No) exits RIGHT
+    // Special clean routing for decision Yes/No.
+    // Standard convention: Так (Yes) exits LEFT, Ні (No) exits RIGHT.
     if (fromData?.type === 'decision') {
       if (connType === 'yes') return computeDecisionConnection(fromEl, toEl, 'left');
       if (connType === 'no') return computeDecisionConnection(fromEl, toEl, 'right');
     }
 
-    const pts = routeOrthogonal(fromEl, toEl);
+    const mergeMeta = mergeContext?.[conn.id];
+    if (mergeMeta?.isMerged) {
+      const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
+      let pts = routeToPoint(fromEl, mergeMeta.junction, routeMode, mergeMeta.entrySide).pts;
+      if (mergeMeta.isPrimary) {
+        const last = pts[pts.length - 1];
+        if (!last || last.x !== mergeMeta.targetPt.x || last.y !== mergeMeta.targetPt.y) {
+          pts = pts.concat([{ x: mergeMeta.targetPt.x, y: mergeMeta.targetPt.y }]);
+        }
+      }
+      return { d: pointsToPathD(pts), pts };
+    }
+
+    const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
+    const routed = routeOrthogonal(fromEl, toEl, routeMode);
+    const offset = conn ? getFanInOffset(conn, routed.entry, toEl) : 0;
+    const pts = applyEntryOffset(routed.pts, routed.entry, offset, toEl);
     const d = pointsToPathD(pts);
     return { d, pts };
   }
@@ -809,6 +998,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById(`hit-${connId}`)?.remove();
   }
 
+  function markerForConnection(conn) {
+    if (conn?.type === 'yes') return 'url(#arrowhead-yes)';
+    if (conn?.type === 'no') return 'url(#arrowhead-no)';
+    return 'url(#arrowhead)';
+  }
+
   function updateConnection(connId) {
     const conn = state.connections.find(c => c.id === connId);
     const path = document.getElementById(connId);
@@ -817,9 +1012,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const fromEl = document.getElementById(conn.from);
     const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
-    const geo = computeConnectionGeometry(fromEl, toEl, conn.type);
+    const mergeContext = buildMergeContext();
+    const mergeMeta = mergeContext[conn.id];
+    const geo = computeConnectionGeometry(fromEl, toEl, conn, mergeContext);
     path.setAttribute('d', geo.d);
     hit?.setAttribute('d', geo.d);
+    if (state.selectedConnId !== connId) {
+      path.setAttribute('marker-end', mergeMeta?.isMerged && !mergeMeta.isPrimary ? 'none' : markerForConnection(conn));
+    }
     if (conn.type) updateConnectionLabel(connId, geo.pts);
   }
 
@@ -829,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function connectShapes(fromEl, toEl, connType, forcedId, isRestore = false) {
+  function connectShapes(fromEl, toEl, connType, forcedId, isRestore = false, forcedRouteMode = 'auto') {
     connType = connType || null;
     if (!fromEl || !toEl) return null;
     if (fromEl.id === toEl.id) return null;
@@ -879,7 +1079,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (!state.connections.find(c => c.id === connId)) {
-      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType });
+      const routeMode = ROUTE_MODES.includes(forcedRouteMode) ? forcedRouteMode : 'auto';
+      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode });
     }
 
     updateConnection(connId);
@@ -927,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
-      pts = computeConnectionGeometry(fromEl, toEl, conn.type).pts;
+      pts = computeConnectionGeometry(fromEl, toEl, conn).pts;
     }
 
     const t = (conn.type === 'yes' || conn.type === 'no') ? 0.28 : 0.5;
@@ -984,8 +1185,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateConnectionBar() {
     if (!connectionBar) return;
-    if (state.selectedConnId) connectionBar.classList.remove('hidden');
+    const hasSelected = !!state.selectedConnId;
+    if (hasSelected) connectionBar.classList.remove('hidden');
     else connectionBar.classList.add('hidden');
+
+    if (!routeConnBtn) return;
+    if (!hasSelected) {
+      routeConnBtn.disabled = true;
+      routeConnBtn.textContent = 'Маршрут: Авто';
+      return;
+    }
+
+    routeConnBtn.disabled = false;
+    const conn = state.connections.find(c => c.id === state.selectedConnId);
+    const mode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
+    routeConnBtn.textContent = `Маршрут: ${ROUTE_MODE_LABELS[mode]}`;
+  }
+
+  function cycleSelectedConnectionRouteMode() {
+    if (!state.selectedConnId) return;
+    const conn = state.connections.find(c => c.id === state.selectedConnId);
+    if (!conn) return;
+
+    const current = ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto';
+    const next = ROUTE_MODES[(ROUTE_MODES.indexOf(current) + 1) % ROUTE_MODES.length];
+    saveSnapshot();
+    conn.routeMode = next;
+    updateConnection(conn.id);
+    updateConnectionBar();
   }
 
   function deleteConnection(connId) {
@@ -1000,8 +1227,65 @@ document.addEventListener('DOMContentLoaded', () => {
   deleteConnBtn?.addEventListener('click', () => {
     if (state.selectedConnId) deleteConnection(state.selectedConnId);
   });
+  routeConnBtn?.addEventListener('click', cycleSelectedConnectionRouteMode);
 
   // ================= SHAPES =================
+  function getShapeSizeHint(type) {
+    if (type === 'decision') return { w: 140, h: 140 };
+    if (type === 'start-end') return { w: 170, h: 78 };
+    if (type === 'input-output') return { w: 170, h: 84 };
+    return { w: 150, h: 84 };
+  }
+
+  function rectsOverlap(a, b, gap = 14) {
+    return !(
+      (a.left + a.w + gap) < b.left ||
+      (b.left + b.w + gap) < a.left ||
+      (a.top + a.h + gap) < b.top ||
+      (b.top + b.h + gap) < a.top
+    );
+  }
+
+  function hasShapeCollision(left, top, w, h) {
+    const nextRect = { left, top, w, h };
+    return state.shapes.some(s => {
+      const el = document.getElementById(s.id);
+      if (!el) return false;
+      const rect = {
+        left: el.offsetLeft,
+        top: el.offsetTop,
+        w: el.offsetWidth || getShapeSizeHint(s.type).w,
+        h: el.offsetHeight || getShapeSizeHint(s.type).h,
+      };
+      return rectsOverlap(nextRect, rect);
+    });
+  }
+
+  function findAutoShapePosition(type, startLeft, startTop) {
+    const hint = getShapeSizeHint(type);
+    const minLeft = 20;
+    const minTop = 20;
+    const x0 = Math.max(minLeft, Math.round(startLeft));
+    const y0 = Math.max(minTop, Math.round(startTop));
+    if (!hasShapeCollision(x0, y0, hint.w, hint.h)) return { left: x0, top: y0 };
+
+    const stepX = 56;
+    const stepY = 48;
+    const maxRing = 14;
+
+    for (let ring = 1; ring <= maxRing; ring++) {
+      for (let dx = -ring; dx <= ring; dx++) {
+        for (let dy = -ring; dy <= ring; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          const left = Math.max(minLeft, x0 + dx * stepX);
+          const top = Math.max(minTop, y0 + dy * stepY);
+          if (!hasShapeCollision(left, top, hint.w, hint.h)) return { left, top };
+        }
+      }
+    }
+    return { left: x0 + stepX, top: y0 + stepY };
+  }
+
   function createShape(type, color, textRaw, posLeft, posTop, forcedId, isRestore = false) {
     if (!forcedId) state.shapeCounter++;
     const shapeId = forcedId || `shape-${state.shapeCounter}`;
@@ -1020,9 +1304,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const containerRect = canvasContainer.getBoundingClientRect();
     const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - 75;
     const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - 30;
-
-    shape.style.left = (posLeft !== undefined ? posLeft : Math.max(20, defaultLeft)) + 'px';
-    shape.style.top = (posTop !== undefined ? posTop : Math.max(20, defaultTop)) + 'px';
+    const autoPos = (posLeft === undefined || posTop === undefined)
+      ? findAutoShapePosition(type, defaultLeft, defaultTop)
+      : null;
+    const finalLeft = posLeft !== undefined ? posLeft : autoPos.left;
+    const finalTop = posTop !== undefined ? posTop : autoPos.top;
+    shape.style.left = finalLeft + 'px';
+    shape.style.top = finalTop + 'px';
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -1049,13 +1337,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // long-press edit (touch)
     let longPressTimer = null;
-    shape.addEventListener('pointerdown', () => {
+    let longPressPointerId = null;
+    shape.addEventListener('pointerdown', (ev) => {
+      if (longPressTimer) clearTimeout(longPressTimer);
+      longPressPointerId = ev.pointerId;
       longPressTimer = setTimeout(() => {
         longPressTimer = null;
+        longPressPointerId = null;
         openTextModal(shape);
       }, 650);
     });
-    const cancelLP = () => { if (longPressTimer) clearTimeout(longPressTimer); longPressTimer = null; };
+    const cancelLP = (ev) => {
+      if (longPressPointerId !== null && ev?.pointerId !== undefined && ev.pointerId !== longPressPointerId) return;
+      if (longPressTimer) clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressPointerId = null;
+    };
     shape.addEventListener('pointerup', cancelLP);
     shape.addEventListener('pointercancel', cancelLP);
     shape.addEventListener('pointermove', cancelLP);
@@ -1261,6 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (state.baseColors[state.lastShapeType] !== hex) saveSnapshot();
     state.baseColors[state.lastShapeType] = hex;
   }
 
@@ -1382,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cy = top + h / 2;
 
       if (s.type === 'decision') {
-        const d = w / 2;
+        const d = decisionVertexDistance(el);
         minX = Math.min(minX, cx - d);
         minY = Math.min(minY, cy - d);
         maxX = Math.max(maxX, cx + d);
@@ -1413,7 +1711,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return { minX, minY, maxX, maxY, empty: false };
   }
 
-  async function exportPng() {
+  async function exportPng(options = {}) {
+    const suppressTitle = !!options.suppressTitle;
     if (!window.html2canvas) {
       showMessageModal('html2canvas не завантажився. Перевір інтернет або скрипт.');
       return;
@@ -1425,6 +1724,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const prevScale = state.scale;
     const prevScroll = { left: canvasContainer.scrollLeft, top: canvasContainer.scrollTop };
+    const prevTitleDisplay = titleDisplay ? titleDisplay.style.display : null;
+    if (suppressTitle && titleDisplay) titleDisplay.style.display = 'none';
     setZoom(1);
     await new Promise(r => setTimeout(r, 60));
 
@@ -1459,6 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       showMessageModal('Не вдалося зберегти картинку. Спробуй інший браузер або зменши масштаб.');
     } finally {
+      if (suppressTitle && titleDisplay) titleDisplay.style.display = prevTitleDisplay;
       if (prevSel) prevSel.classList.add('selected');
       setZoom(prevScale);
       canvasContainer.scrollLeft = prevScroll.left;
@@ -1467,7 +1769,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  saveButton?.addEventListener('click', exportPng);
+  function openSaveTitlePrompt() {
+    if (!saveTitleModal) {
+      exportPng();
+      return;
+    }
+    if (saveTitleInput) {
+      const current = (state.diagramTitle || titleInput?.value || '').trim();
+      saveTitleInput.value = current;
+    }
+    openModal(saveTitleModal);
+    setTimeout(() => saveTitleInput?.focus(), 40);
+  }
+
+  saveWithTitleBtn?.addEventListener('click', () => {
+    const title = (saveTitleInput?.value || '').trim();
+    if (!title) {
+      showMessageModal('Введи назву або натисни "Зберегти без назви".');
+      return;
+    }
+    state.diagramTitle = title;
+    if (titleInput) titleInput.value = title;
+    renderTitle();
+    closeModal(saveTitleModal);
+    exportPng();
+  });
+
+  saveWithoutTitleBtn?.addEventListener('click', () => {
+    closeModal(saveTitleModal);
+    exportPng({ suppressTitle: true });
+  });
+
+  closeSaveTitleBtn?.addEventListener('click', () => closeModal(saveTitleModal));
+
+  saveButton?.addEventListener('click', openSaveTitlePrompt);
 
   // ================= HELP PANEL =================
   function toggleHelp(show) {
@@ -1482,9 +1817,15 @@ document.addEventListener('DOMContentLoaded', () => {
   helpClose?.addEventListener('click', () => toggleHelp(false));
 
   // ================= GLOBAL SHORTCUTS =================
+  function detectMacPlatform() {
+    const uad = navigator.userAgentData;
+    if (uad && typeof uad.platform === 'string') return /mac/i.test(uad.platform);
+    return /mac|iphone|ipad|ipod/i.test(navigator.userAgent || '');
+  }
+  const isMacPlatform = detectMacPlatform();
+
   document.addEventListener('keydown', (e) => {
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-    const mod = isMac ? e.metaKey : e.ctrlKey;
+    const mod = isMacPlatform ? e.metaKey : e.ctrlKey;
 
     if (mod && e.key.toLowerCase() === 'z') {
       e.preventDefault();
@@ -1493,7 +1834,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (mod && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      exportPng();
+      openSaveTitlePrompt();
+      return;
+    }
+    if (!mod && e.key.toLowerCase() === 'r' && state.selectedConnId) {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea') {
+        e.preventDefault();
+        cycleSelectedConnectionRouteMode();
+      }
       return;
     }
 
@@ -1502,6 +1851,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal(textModal);
       closeModal(connectionModal);
       closeModal(document.getElementById('message-modal'));
+      closeModal(saveTitleModal);
       state.pendingConn = null;
       state.activeShape = null;
     }
