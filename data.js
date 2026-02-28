@@ -470,7 +470,7 @@ const CATEGORIES = [
       {
         name: "Танграм",
         description: "Китайська головоломка, що розвиває логічне мислення та просторову уяву.",
-        link: "games/tanagram/index.html",
+        link: "games/tangram/index.html",
         image: "images/76.jpg",
         tags: []
       },
