@@ -90,7 +90,6 @@ const lessonNames = [
 
 // ----------------------------------------------------------------
 // KEYBOARD LAYOUT MAPS
-// key-id → display character at that position
 // ----------------------------------------------------------------
 const KEYS    = ["tilda","1","2","3","4","5","6","7","8","9","0","minus","plus","Q","W","E","R","T","Y","U","I","O","P","lsc","rsc","bckslash","A","S","D","F","G","H","J","K","L","ddot","apo","Z","X","C","V","B","N","M","comma","dot","slash","space"];
 const CYR_UP  = ["ʼ","!",'"',"№",";","%",":","?","*","(",")","_","+","Й","Ц","У","К","Е","Н","Г","Ш","Щ","З","Х","Ї","Ґ","Ф","І","В","А","П","Р","О","Л","Д","Ж","Є","Я","Ч","С","М","И","Т","Ь","Б","Ю",","," "];
@@ -102,78 +101,81 @@ const ENG_LOW = ["`","1","2","3","4","5","6","7","8","9","0","-","=","q","w","e"
 // FINGER MAP  key-id → [hand, finger-svg-id, name-uk, css-class]
 // ----------------------------------------------------------------
 const FINGER_MAP = {
-  // LEFT HAND — pinky
-  "tilda":        ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "1":            ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "tab":          ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "Q":            ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "capslock":     ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "A":            ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "shiftleft":    ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "Z":            ["left", "lh-pinky",  "мізинець",  "f-pinky"],
-  "controlleft":  ["left", "lh-pinky",  "мізинець",  "f-pinky"],
+  // LEFT — pinky
+  "tilda":        ["left","lh-pinky","мізинець","f-pinky"],
+  "1":            ["left","lh-pinky","мізинець","f-pinky"],
+  "tab":          ["left","lh-pinky","мізинець","f-pinky"],
+  "Q":            ["left","lh-pinky","мізинець","f-pinky"],
+  "capslock":     ["left","lh-pinky","мізинець","f-pinky"],
+  "A":            ["left","lh-pinky","мізинець","f-pinky"],
+  "shiftleft":    ["left","lh-pinky","мізинець","f-pinky"],
+  "Z":            ["left","lh-pinky","мізинець","f-pinky"],
+  "controlleft":  ["left","lh-pinky","мізинець","f-pinky"],
   // LEFT — ring
-  "2":            ["left", "lh-ring",   "безіменний","f-ring"],
-  "W":            ["left", "lh-ring",   "безіменний","f-ring"],
-  "S":            ["left", "lh-ring",   "безіменний","f-ring"],
-  "X":            ["left", "lh-ring",   "безіменний","f-ring"],
+  "2":            ["left","lh-ring","безіменний","f-ring"],
+  "W":            ["left","lh-ring","безіменний","f-ring"],
+  "S":            ["left","lh-ring","безіменний","f-ring"],
+  "X":            ["left","lh-ring","безіменний","f-ring"],
   // LEFT — middle
-  "3":            ["left", "lh-middle", "середній",  "f-middle"],
-  "E":            ["left", "lh-middle", "середній",  "f-middle"],
-  "D":            ["left", "lh-middle", "середній",  "f-middle"],
-  "C":            ["left", "lh-middle", "середній",  "f-middle"],
+  "3":            ["left","lh-middle","середній","f-middle"],
+  "E":            ["left","lh-middle","середній","f-middle"],
+  "D":            ["left","lh-middle","середній","f-middle"],
+  "C":            ["left","lh-middle","середній","f-middle"],
   // LEFT — index
-  "4":            ["left", "lh-index",  "вказівний", "f-index"],
-  "5":            ["left", "lh-index",  "вказівний", "f-index"],
-  "R":            ["left", "lh-index",  "вказівний", "f-index"],
-  "T":            ["left", "lh-index",  "вказівний", "f-index"],
-  "F":            ["left", "lh-index",  "вказівний", "f-index"],
-  "G":            ["left", "lh-index",  "вказівний", "f-index"],
-  "V":            ["left", "lh-index",  "вказівний", "f-index"],
-  "B":            ["left", "lh-index",  "вказівний", "f-index"],
+  "4":            ["left","lh-index","вказівний","f-index"],
+  "5":            ["left","lh-index","вказівний","f-index"],
+  "R":            ["left","lh-index","вказівний","f-index"],
+  "T":            ["left","lh-index","вказівний","f-index"],
+  "F":            ["left","lh-index","вказівний","f-index"],
+  "G":            ["left","lh-index","вказівний","f-index"],
+  "V":            ["left","lh-index","вказівний","f-index"],
+  "B":            ["left","lh-index","вказівний","f-index"],
   // RIGHT — index
-  "6":            ["right","rh-index",  "вказівний", "f-index"],
-  "7":            ["right","rh-index",  "вказівний", "f-index"],
-  "Y":            ["right","rh-index",  "вказівний", "f-index"],
-  "U":            ["right","rh-index",  "вказівний", "f-index"],
-  "H":            ["right","rh-index",  "вказівний", "f-index"],
-  "J":            ["right","rh-index",  "вказівний", "f-index"],
-  "N":            ["right","rh-index",  "вказівний", "f-index"],
-  "M":            ["right","rh-index",  "вказівний", "f-index"],
+  "6":            ["right","rh-index","вказівний","f-index"],
+  "7":            ["right","rh-index","вказівний","f-index"],
+  "Y":            ["right","rh-index","вказівний","f-index"],
+  "U":            ["right","rh-index","вказівний","f-index"],
+  "H":            ["right","rh-index","вказівний","f-index"],
+  "J":            ["right","rh-index","вказівний","f-index"],
+  "N":            ["right","rh-index","вказівний","f-index"],
+  "M":            ["right","rh-index","вказівний","f-index"],
   // RIGHT — middle
-  "8":            ["right","rh-middle", "середній",  "f-middle"],
-  "I":            ["right","rh-middle", "середній",  "f-middle"],
-  "K":            ["right","rh-middle", "середній",  "f-middle"],
-  "comma":        ["right","rh-middle", "середній",  "f-middle"],
+  "8":            ["right","rh-middle","середній","f-middle"],
+  "I":            ["right","rh-middle","середній","f-middle"],
+  "K":            ["right","rh-middle","середній","f-middle"],
+  "comma":        ["right","rh-middle","середній","f-middle"],
   // RIGHT — ring
-  "9":            ["right","rh-ring",   "безіменний","f-ring"],
-  "O":            ["right","rh-ring",   "безіменний","f-ring"],
-  "L":            ["right","rh-ring",   "безіменний","f-ring"],
-  "dot":          ["right","rh-ring",   "безіменний","f-ring"],
+  "9":            ["right","rh-ring","безіменний","f-ring"],
+  "O":            ["right","rh-ring","безіменний","f-ring"],
+  "L":            ["right","rh-ring","безіменний","f-ring"],
+  "dot":          ["right","rh-ring","безіменний","f-ring"],
   // RIGHT — pinky
-  "0":            ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "minus":        ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "plus":         ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "backspace":    ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "P":            ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "lsc":          ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "rsc":          ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "bckslash":     ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "ddot":         ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "apo":          ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "slash":        ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "enter":        ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "shiftright":   ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  "controlright": ["right","rh-pinky",  "мізинець",  "f-pinky"],
-  // THUMBS — space
-  "space":        [["left","lh-thumb","великі","f-thumb"],["right","rh-thumb","великі","f-thumb"]],
+  "0":            ["right","rh-pinky","мізинець","f-pinky"],
+  "minus":        ["right","rh-pinky","мізинець","f-pinky"],
+  "plus":         ["right","rh-pinky","мізинець","f-pinky"],
+  "backspace":    ["right","rh-pinky","мізинець","f-pinky"],
+  "P":            ["right","rh-pinky","мізинець","f-pinky"],
+  "lsc":          ["right","rh-pinky","мізинець","f-pinky"],
+  "rsc":          ["right","rh-pinky","мізинець","f-pinky"],
+  "bckslash":     ["right","rh-pinky","мізинець","f-pinky"],
+  "ddot":         ["right","rh-pinky","мізинець","f-pinky"],
+  "apo":          ["right","rh-pinky","мізинець","f-pinky"],
+  "slash":        ["right","rh-pinky","мізинець","f-pinky"],
+  "enter":        ["right","rh-pinky","мізинець","f-pinky"],
+  "shiftright":   ["right","rh-pinky","мізинець","f-pinky"],
+  "controlright": ["right","rh-pinky","мізинець","f-pinky"],
+  // THUMBS — space (both)
+  "space": [
+    ["left","lh-thumb","великий","f-thumb"],
+    ["right","rh-thumb","великий","f-thumb"]
+  ],
 };
 
 // ----------------------------------------------------------------
 // DIFFICULTY LEVELS
 // ----------------------------------------------------------------
 const DIFFICULTIES = [
-  { label: 'Новачок',  iconClass: 'fa-seedling',      kbdHint: true,  handHint: true  },
-  { label: 'Учень',    iconClass: 'fa-graduation-cap', kbdHint: false, handHint: true  },
-  { label: 'Майстер',  iconClass: 'fa-fire',           kbdHint: false, handHint: false },
+  { label:'Новачок', iconClass:'fa-seedling',      kbdHint:true,  handHint:true  },
+  { label:'Учень',   iconClass:'fa-graduation-cap', kbdHint:false, handHint:true  },
+  { label:'Майстер', iconClass:'fa-fire',           kbdHint:false, handHint:false },
 ];

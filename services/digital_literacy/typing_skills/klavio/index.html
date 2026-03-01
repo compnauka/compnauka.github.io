@@ -1,75 +1,69 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Клавіо — клавіатурний тренажер</title>
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- HEADER -->
   <header class="app-header">
-    <div class="logo" aria-label="Клавіо">
-      <div class="logo-icon" aria-hidden="true"><i class="fa-solid fa-keyboard"></i></div>
+    <div class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-keyboard"></i></div>
       <div class="logo-text">Клавіо</div>
     </div>
-
-    <nav class="app-nav" aria-label="Навігація">
-      <button class="nav-btn" id="btn-lessons" type="button" onclick="Klavio.App.showLessonSelect()">
-        <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-        <span>Вправи</span>
+    <nav class="app-nav">
+      <button class="nav-btn" type="button" onclick="showLessonSelect()">
+        <i class="fa-solid fa-book-open"></i><span>Вправи</span>
       </button>
-
-      <button class="nav-btn" id="btn-progress" type="button" onclick="Klavio.App.showProgress()">
-        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-        <span>Показники</span>
+      <button class="nav-btn" type="button" onclick="showProgress()">
+        <i class="fa-solid fa-chart-line"></i><span>Показники</span>
       </button>
-
-      <button class="nav-btn difficulty-toggle" id="btn-difficulty" type="button" onclick="Klavio.App.cycleDifficulty()">
-        <i class="fa-solid fa-seedling" id="difficulty-icon" aria-hidden="true"></i>
+      <button class="nav-btn difficulty-toggle" type="button" onclick="cycleDifficulty()">
+        <i class="fa-solid fa-seedling" id="difficulty-icon"></i>
         <span id="difficulty-label">Новачок</span>
       </button>
-
-      <button class="nav-btn icon-btn" type="button" onclick="Klavio.App.showAbout()" title="Про програму" aria-label="Про програму">
-        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <button class="nav-btn icon-btn" type="button" onclick="showAbout()" title="Про програму">
+        <i class="fa-solid fa-circle-info"></i>
+      </button>
+      <button class="nav-btn icon-btn" type="button" onclick="toggleTheme()" id="theme-toggle-btn" title="Змінити тему">
+        <i class="fa-solid fa-moon" id="theme-icon"></i>
       </button>
     </nav>
   </header>
 
   <!-- STATS STRIP -->
   <div class="stats-strip" role="status" aria-live="polite">
-    <div class="stat-pill" id="stat-wpm">
+    <div class="stat-pill">
       <span class="stat-value" id="wpm-value">0</span>
       <span class="stat-label">симв/хв</span>
     </div>
-
-    <div class="stat-pill" id="stat-acc">
+    <div class="stat-pill">
       <span class="stat-value" id="acc-value">—</span>
       <span class="stat-label">точність</span>
     </div>
-
-    <div class="stat-pill" id="stat-streak">
+    <div class="stat-pill">
       <span class="stat-value" id="streak-value">0</span>
-      <span class="stat-label">серія <i class="fa-solid fa-fire" aria-hidden="true"></i></span>
+      <span class="stat-label">серія <i class="fa-solid fa-fire"></i></span>
     </div>
-
-    <div class="stat-pill" id="stat-lesson">
-      <span class="stat-label stat-lesson-label">Вправа</span>
+    <div class="stat-pill stat-pill-lesson">
+      <span class="stat-label">ВПРАВА</span>
       <span class="stat-value" id="lesson-num">1</span>
     </div>
+    <button class="stat-pill stat-pill-reset" type="button" onclick="confirmResetProgress()">
+      <i class="fa-solid fa-rotate-left"></i>
+      <span class="stat-label">Скинути</span>
+    </button>
   </div>
 
   <!-- PROGRESS BAR -->
-  <div class="progress-track" aria-hidden="true">
+  <div class="progress-track">
     <div class="progress-fill" id="progress-fill" style="width:0%">
       <div class="progress-glow"></div>
     </div>
@@ -77,142 +71,112 @@
 
   <!-- MAIN TRAINER -->
   <main class="trainer-main">
+
     <!-- LEFT HAND -->
     <div class="hand-container" id="left-hand-container">
-      <div class="hand-label">ЛІВА РУКА</div>
-
-      <!-- Stylized hand (cartoon) -->
-      <svg class="hand-svg hand-svg-flat" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <!-- Flat numbered hand (reference-like) -->
-  <path class="palm palm-flat" fill="#FFFFFF" d="M58 118
-    C52 88, 72 64, 98 62
-    C106 46, 128 42, 140 56
-    C160 72, 160 96, 150 114
-    C164 132, 158 164, 136 176
-    C130 206, 108 222, 84 216
-    C60 210, 46 190, 48 166
-    C50 146, 58 134, 58 118 Z" />
-  <!-- Fingers (left to right: 5 4 3 2) -->
-  <rect id="lh-pinky"  class="finger f-pinky"  x="52"  y="22" width="24" height="84" rx="12"/>
-  <text class="finger-num" x="64" y="64">5</text>
-
-  <rect id="lh-ring"   class="finger f-ring"   x="78"  y="14" width="26" height="92" rx="13"/>
-  <text class="finger-num" x="91" y="60">4</text>
-
-  <rect id="lh-middle" class="finger f-middle" x="106" y="10" width="26" height="96" rx="13"/>
-  <text class="finger-num" x="119" y="58">3</text>
-
-  <rect id="lh-index"  class="finger f-index"  x="134" y="18" width="26" height="88" rx="13"/>
-  <text class="finger-num" x="147" y="62">2</text>
-
-  <!-- Thumb -->
-  <rect id="lh-thumb" class="finger f-thumb" x="128" y="142" width="58" height="28" rx="14"
-        transform="rotate(-28 157 156)"/>
-  <text class="finger-num" x="157" y="156">1</text>
-
-  <!-- Outline on top -->
-  <path class="hand-outline hand-outline-flat" d="M58 118
-    C52 88, 72 64, 98 62
-    C106 46, 128 42, 140 56
-    C160 72, 160 96, 150 114
-    C164 132, 158 164, 136 176
-    C130 206, 108 222, 84 216
-    C60 210, 46 190, 48 166
-    C50 146, 58 134, 58 118 Z"/>
-</svg>
-
+      <div class="hand-label">Ліва рука</div>
+      <div class="hand-visual hand-visual-left">
+        <img class="hand-image" src="hand.svg" alt="" aria-hidden="true" />
+        <div class="finger f-pinky" id="lh-pinky"></div>
+        <div class="finger f-ring" id="lh-ring"></div>
+        <div class="finger f-middle" id="lh-middle"></div>
+        <div class="finger f-index" id="lh-index"></div>
+        <div class="finger f-thumb" id="lh-thumb"></div>
+      </div>
       <div class="finger-name-badge" id="left-finger-name"></div>
     </div>
 
     <!-- CENTER -->
     <div class="trainer-center">
       <div class="text-display-card">
-        <div class="text-display" id="text-display" aria-label="Текст для набору">
+        <div class="text-display" id="text-display">
           <span class="td-done" id="td-done"></span><span class="td-cursor" id="td-cursor"> </span><span class="td-todo" id="td-todo"></span>
         </div>
-        <div class="error-flash" id="error-flash" aria-hidden="true"></div>
+        <div class="error-flash" id="error-flash"></div>
       </div>
 
-      <div class="streak-burst" id="streak-burst" aria-hidden="true"></div>
+      <div class="streak-burst" id="streak-burst"></div>
 
       <div class="keyboard-card">
-        <div class="keyboard" id="keyboard" aria-label="Віртуальна клавіатура">
+        <div class="keyboard" id="keyboard">
 
-          <div class="key-row" data-row="0">
-            <div class="key k-pinky" id="tilda"></div>
-            <div class="key k-pinky" id="1"></div>
-            <div class="key k-ring" id="2"></div>
-            <div class="key k-middle" id="3"></div>
-            <div class="key k-index1" id="4"></div>
-            <div class="key k-index2" id="5"></div>
-            <div class="key k-index2" id="6"></div>
-            <div class="key k-index1" id="7"></div>
-            <div class="key k-middle" id="8"></div>
-            <div class="key k-ring" id="9"></div>
-            <div class="key k-pinky" id="0"></div>
-            <div class="key k-pinky" id="minus"></div>
-            <div class="key k-pinky" id="plus"></div>
-            <div class="key k-pinky k-wide" id="backspace" title="Backspace"><i class="fa-solid fa-delete-left" aria-hidden="true"></i></div>
+          <!-- Row 0: numbers -->
+          <div class="key-row">
+            <div class="key k-pinky"        id="tilda"></div>
+            <div class="key k-pinky"        id="1"></div>
+            <div class="key k-ring"         id="2"></div>
+            <div class="key k-middle"       id="3"></div>
+            <div class="key k-index1"       id="4"></div>
+            <div class="key k-index2"       id="5"></div>
+            <div class="key k-index2"       id="6"></div>
+            <div class="key k-index1"       id="7"></div>
+            <div class="key k-middle"       id="8"></div>
+            <div class="key k-ring"         id="9"></div>
+            <div class="key k-pinky"        id="0"></div>
+            <div class="key k-pinky"        id="minus"></div>
+            <div class="key k-pinky"        id="plus"></div>
+            <div class="key k-pinky k-back" id="backspace"><i class="fa-solid fa-delete-left"></i></div>
           </div>
 
-          <div class="key-row" data-row="1">
-            <div class="key k-pinky k-wide" id="tab" title="Tab">Tab</div>
-            <div class="key k-pinky" id="Q"></div>
-            <div class="key k-ring" id="W"></div>
-            <div class="key k-middle" id="E"></div>
-            <div class="key k-index1" id="R"></div>
-            <div class="key k-index2" id="T"></div>
-            <div class="key k-index2" id="Y"></div>
-            <div class="key k-index1" id="U"></div>
-            <div class="key k-middle" id="I"></div>
-            <div class="key k-ring" id="O"></div>
-            <div class="key k-pinky" id="P"></div>
-            <div class="key k-pinky" id="lsc"></div>
-            <div class="key k-pinky" id="rsc"></div>
-            <div class="key k-pinky" id="bckslash"></div>
+          <!-- Row 1: QWERTY -->
+          <div class="key-row">
+            <div class="key k-pinky k-tab"  id="tab">Tab</div>
+            <div class="key k-pinky"        id="Q"></div>
+            <div class="key k-ring"         id="W"></div>
+            <div class="key k-middle"       id="E"></div>
+            <div class="key k-index1"       id="R"></div>
+            <div class="key k-index2"       id="T"></div>
+            <div class="key k-index2"       id="Y"></div>
+            <div class="key k-index1"       id="U"></div>
+            <div class="key k-middle"       id="I"></div>
+            <div class="key k-ring"         id="O"></div>
+            <div class="key k-pinky"        id="P"></div>
+            <div class="key k-pinky"        id="lsc"></div>
+            <div class="key k-pinky"        id="rsc"></div>
+            <div class="key k-pinky k-tab"  id="bckslash"></div>
           </div>
 
-          <div class="key-row" data-row="2">
-            <div class="key k-pinky k-xwide" id="capslock" title="Caps Lock">Caps</div>
-            <div class="key k-pinky" id="A"></div>
-            <div class="key k-ring" id="S"></div>
-            <div class="key k-middle" id="D"></div>
+          <!-- Row 2: home row -->
+          <div class="key-row">
+            <div class="key k-pinky k-caps" id="capslock">Caps</div>
+            <div class="key k-pinky"        id="A"></div>
+            <div class="key k-ring"         id="S"></div>
+            <div class="key k-middle"       id="D"></div>
             <div class="key k-index1 home-bump" id="F"></div>
-            <div class="key k-index2" id="G"></div>
-            <div class="key k-index2" id="H"></div>
+            <div class="key k-index2"       id="G"></div>
+            <div class="key k-index2"       id="H"></div>
             <div class="key k-index1 home-bump" id="J"></div>
-            <div class="key k-middle" id="K"></div>
-            <div class="key k-ring" id="L"></div>
-            <div class="key k-pinky" id="ddot"></div>
-            <div class="key k-pinky" id="apo"></div>
-            <div class="key k-pinky k-wide" id="enter" title="Enter">
-              <span class="key-icon-text">Enter</span>
-              <i class="fa-solid fa-arrow-turn-down" aria-hidden="true"></i>
-            </div>
+            <div class="key k-middle"       id="K"></div>
+            <div class="key k-ring"         id="L"></div>
+            <div class="key k-pinky"        id="ddot"></div>
+            <div class="key k-pinky"        id="apo"></div>
+            <div class="key k-pinky k-enter" id="enter">Enter <i class="fa-solid fa-turn-down"></i></div>
           </div>
 
-          <div class="key-row" data-row="3">
-            <div class="key k-pinky k-xxwide" id="shiftleft" title="Shift"><i class="fa-solid fa-up-long" aria-hidden="true"></i><span> Shift</span></div>
-            <div class="key k-pinky" id="Z"></div>
-            <div class="key k-ring" id="X"></div>
-            <div class="key k-middle" id="C"></div>
-            <div class="key k-index1" id="V"></div>
-            <div class="key k-index2" id="B"></div>
-            <div class="key k-index2" id="N"></div>
-            <div class="key k-index1" id="M"></div>
-            <div class="key k-middle" id="comma"></div>
-            <div class="key k-ring" id="dot"></div>
-            <div class="key k-pinky" id="slash"></div>
-            <div class="key k-pinky k-xxwide" id="shiftright" title="Shift"><span>Shift </span><i class="fa-solid fa-up-long" aria-hidden="true"></i></div>
+          <!-- Row 3: shift -->
+          <div class="key-row">
+            <div class="key k-pinky k-shift-l" id="shiftleft"><i class="fa-solid fa-arrow-up"></i> Shift</div>
+            <div class="key k-pinky"        id="Z"></div>
+            <div class="key k-ring"         id="X"></div>
+            <div class="key k-middle"       id="C"></div>
+            <div class="key k-index1"       id="V"></div>
+            <div class="key k-index2"       id="B"></div>
+            <div class="key k-index2"       id="N"></div>
+            <div class="key k-index1"       id="M"></div>
+            <div class="key k-middle"       id="comma"></div>
+            <div class="key k-ring"         id="dot"></div>
+            <div class="key k-pinky"        id="slash"></div>
+            <div class="key k-pinky k-shift-r" id="shiftright">Shift <i class="fa-solid fa-arrow-up"></i></div>
           </div>
 
-          <div class="key-row" data-row="4">
+          <!-- Row 4: bottom -->
+          <div class="key-row">
             <div class="key k-pinky k-ctrl" id="controlleft">Ctrl</div>
-            <div class="key k-pinky k-mod" id="metaleft"><i class="fa-brands fa-windows" aria-hidden="true"></i></div>
-            <div class="key k-ring k-mod" id="altleft">Alt</div>
-            <div class="key k-thumb k-space" id="space" aria-label="Пробіл"></div>
-            <div class="key k-ring k-mod" id="altright">AltGr</div>
-            <div class="key k-pinky k-mod" id="metaright"><i class="fa-brands fa-windows" aria-hidden="true"></i></div>
+            <div class="key k-pinky k-meta" id="metaleft"><i class="fa-brands fa-windows"></i></div>
+            <div class="key k-ring  k-alt"  id="altleft">Alt</div>
+            <div class="key k-thumb k-space" id="space"></div>
+            <div class="key k-ring  k-alt"  id="altright">AltGr</div>
+            <div class="key k-pinky k-meta" id="metaright"><i class="fa-brands fa-windows"></i></div>
             <div class="key k-pinky k-ctrl" id="controlright">Ctrl</div>
           </div>
 
@@ -222,73 +186,56 @@
 
     <!-- RIGHT HAND -->
     <div class="hand-container" id="right-hand-container">
-      <div class="hand-label">ПРАВА РУКА</div>
-
-      <svg class="hand-svg hand-svg-flat" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <!-- Flat numbered hand (reference-like) -->
-  <path class="palm palm-flat" fill="#FFFFFF" d="M142 118
-    C148 88, 128 64, 102 62
-    C94 46, 72 42, 60 56
-    C40 72, 40 96, 50 114
-    C36 132, 42 164, 64 176
-    C70 206, 92 222, 116 216
-    C140 210, 154 190, 152 166
-    C150 146, 142 134, 142 118 Z" />
-  <!-- Fingers (left to right: 2 3 4 5) -->
-  <rect id="rh-index"  class="finger f-index"  x="40"  y="18" width="26" height="88" rx="13"/>
-  <text class="finger-num" x="53" y="62">2</text>
-
-  <rect id="rh-middle" class="finger f-middle" x="68"  y="10" width="26" height="96" rx="13"/>
-  <text class="finger-num" x="81" y="58">3</text>
-
-  <rect id="rh-ring"   class="finger f-ring"   x="96"  y="14" width="26" height="92" rx="13"/>
-  <text class="finger-num" x="109" y="60">4</text>
-
-  <rect id="rh-pinky"  class="finger f-pinky"  x="122" y="22" width="24" height="84" rx="12"/>
-  <text class="finger-num" x="134" y="64">5</text>
-
-  <!-- Thumb -->
-  <rect id="rh-thumb" class="finger f-thumb" x="14" y="142" width="58" height="28" rx="14"
-        transform="rotate(28 43 156)"/>
-  <text class="finger-num" x="43" y="156">1</text>
-
-  <path class="hand-outline hand-outline-flat" d="M142 118
-    C148 88, 128 64, 102 62
-    C94 46, 72 42, 60 56
-    C40 72, 40 96, 50 114
-    C36 132, 42 164, 64 176
-    C70 206, 92 222, 116 216
-    C140 210, 154 190, 152 166
-    C150 146, 142 134, 142 118 Z"/>
-</svg>
-
+      <div class="hand-label">Права рука</div>
+      <div class="hand-visual hand-visual-right">
+        <img class="hand-image" src="hand.svg" alt="" aria-hidden="true" />
+        <div class="finger f-index" id="rh-index"></div>
+        <div class="finger f-middle" id="rh-middle"></div>
+        <div class="finger f-ring" id="rh-ring"></div>
+        <div class="finger f-pinky" id="rh-pinky"></div>
+        <div class="finger f-thumb" id="rh-thumb"></div>
+      </div>
       <div class="finger-name-badge" id="right-finger-name"></div>
     </div>
+
   </main>
 
   <!-- MODAL -->
-  <div class="modal-overlay" id="modal-overlay" onclick="Klavio.App.closeModal()"></div>
-  <div class="modal-box" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-header">
-    <div class="modal-header" id="modal-header">Заголовок</div>
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+  <div class="modal-box" id="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-header" id="modal-header"></div>
     <div class="modal-body" id="modal-body"></div>
   </div>
 
-<!-- LEVEL COMPLETE -->
-  <div class="level-complete" id="level-complete" aria-hidden="true">
+  <!-- LEVEL COMPLETE -->
+  <div class="level-complete" id="level-complete">
     <div class="lc-inner">
-      <div class="lc-icon" id="lc-icon" aria-hidden="true"><i class="fa-solid fa-trophy"></i></div>
-      <div class="lc-title">Вправу виконано!</div>
-      <div class="lc-stats" id="lc-stats"></div>
-      <button class="btn-next" type="button" onclick="Klavio.App.startNextLesson()">Далі <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+      <div class="lc-icon" id="lc-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="lc-title" id="lc-title">Перейти до наступної вправи?</div>
+      <div class="lc-stats-wrap">
+        <table class="lc-stats" id="lc-stats"></table>
+      </div>
+      <div class="lc-actions">
+        <button class="btn-retry" type="button" onclick="retryCurrentLesson()">
+          Спробувати ще раз
+        </button>
+        <button class="btn-next" type="button" onclick="startNextLesson()">
+          Перейти <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <div class="toast" id="global-toast"></div>
+
   <script src="js/data.js"></script>
-<script src="js/state.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/keyboard.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/trainer.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/trainer.js"></script>
 </body>
 </html>
+
+
+

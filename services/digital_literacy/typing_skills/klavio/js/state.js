@@ -2,7 +2,7 @@
 
 // ================================================================
 // KLAVIО — state.js
-// Single source of truth for runtime state
+// Single source of truth + localStorage persistence
 // ================================================================
 
 let state = {
@@ -15,12 +15,30 @@ let state = {
   maxStreak:      0,
   started:        false,
   timeStart:      0,
-  lang:           'ua',      // 'ua' | 'eng'
+  lang:           'ua',
   capsState:      false,
   shiftId:        null,
-  difficulty:     0,         // 0=beginner, 1=student, 2=master
+  difficulty:     0,        // 0=beginner 1=student 2=master
   wpmInterval:    null,
+  lessonCompleted:false,
 };
+
+// ---- Persist lesson number and difficulty across page reloads ----
+function saveProgress() {
+  try {
+    localStorage.setItem('klavio_lesson', state.taskNum);
+    localStorage.setItem('klavio_diff',   state.difficulty);
+  } catch (e) {}
+}
+
+function loadProgress() {
+  try {
+    const lesson = parseInt(localStorage.getItem('klavio_lesson'), 10);
+    const diff   = parseInt(localStorage.getItem('klavio_diff'),   10);
+    if (lesson >= 1 && lesson <= exercises.length) state.taskNum   = lesson;
+    if (diff   >= 0 && diff   <= 2)                state.difficulty = diff;
+  } catch (e) {}
+}
 
 function resetLessonState(n) {
   state.taskNum        = n;
@@ -35,4 +53,6 @@ function resetLessonState(n) {
   state.lang           = 'ua';
   state.capsState      = false;
   state.shiftId        = null;
+  state.lessonCompleted = false;
+  saveProgress();
 }

@@ -11,7 +11,6 @@ const REMOVE_DELAY = 340;
 const LOW_TIME = 7;
 const FIELD_PLAYING_H = 210;
 const FIELD_BASE_H = 160;
-const LTR_H = 56;
 const MISSED_AT = 0.90;
 const URGENT_AT = 0.60;
 
@@ -154,6 +153,10 @@ const gs = {
     correct: 0, missed: 0, missedMap: {},
     startTime: 0
 };
+const MODAL_IDS = ['cmod', 'go'];
+const FOCUSABLE_SEL = 'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+let activeModal = null;
+let lastFocusedEl = null;
 
 /* ═══════════════════════════════════════════
    AUDIO
@@ -362,20 +365,24 @@ function spawn() {
     if (gs.letters.size >= MAX_LETTERS) {
         gs.spawnID = setTimeout(spawn, gs.spawn / 2); return;
     }
+    const field = document.getElementById('gf');
+    if (!field) return;
     const el = document.createElement('div');
     const ch = randChar();
     const id = Date.now() + Math.random();
     const col = gs.colorIdx++ % 5;
     el.className = `lt c${col}`;
     el.textContent = ch;
-    const fieldH = getFieldH();
-    el.style.top = (Math.random() * (fieldH - LTR_H)) + 'px';
     el.style.setProperty('--ldur', gs.anim + 'ms');
     el.id = 'l' + id;
+    field.appendChild(el);
+    const fieldH = field.clientHeight || getFieldH();
+    const letterH = el.offsetHeight || parseFloat(getComputedStyle(el).height) || 56;
+    const maxTop = Math.max(0, fieldH - letterH);
+    el.style.top = (Math.random() * maxTop) + 'px';
 
     const data = { ch, el, t0: Date.now(), id };
     gs.letters.set(id, data);
-    document.getElementById('gf').appendChild(el);
     updateKeyboard();
 
     data.urgTO = setTimeout(() => {
@@ -458,7 +465,7 @@ function onKey(e) {
         break;
     }
 
-    if (!found && pr.length === 1 && !'shiftaltcontrolmeta'.includes(pr.toLowerCase())) {
+    if (!found && /^\S$/u.test(pr)) {
         gs.streak = 0; updateStreak();
         showFB(MISS_MSG[Math.floor(Math.random() * MISS_MSG.length)], false);
         snd('miss');
@@ -482,6 +489,51 @@ function stopProcs() {
     if (gs.spawnID) { clearTimeout(gs.spawnID); gs.spawnID = null; }
     clearAll(); updateKeyboard();
 }
+function anyModalOpen() {
+    return MODAL_IDS.some(id => {
+        const el = document.getElementById(id);
+        return el && el.style.display === 'flex';
+    });
+}
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    lastFocusedEl = document.activeElement;
+    modal.style.display = 'flex';
+    activeModal = modal;
+    document.body.classList.add('modal-open');
+    const first = modal.querySelector(FOCUSABLE_SEL);
+    (first || modal).focus();
+}
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.style.display = 'none';
+    if (activeModal === modal) activeModal = null;
+    if (!anyModalOpen()) {
+        document.body.classList.remove('modal-open');
+        if (lastFocusedEl && document.contains(lastFocusedEl)) lastFocusedEl.focus();
+        lastFocusedEl = null;
+    }
+}
+function trapFocus(modal, e) {
+    const focusables = [...modal.querySelectorAll(FOCUSABLE_SEL)]
+        .filter(el => !el.disabled && el.offsetParent !== null);
+    if (focusables.length === 0) {
+        modal.focus();
+        e.preventDefault();
+        return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+    }
+}
 function resetSess() {
     gs.score = 0; gs.timer = GAME_SEC; gs.streak = 0; gs.maxStreak = 0;
     gs.colorIdx = 0; gs.correct = 0; gs.missed = 0; gs.missedMap = {}; gs.startTime = Date.now();
@@ -493,7 +545,7 @@ function startGame() {
     stopProcs();
     if (actx && actx.state === 'suspended') actx.resume();
     resetSess(); applySpeed();
-    document.getElementById('go').style.display = 'none';
+    closeModal('go');
     showInGameZone();
     buildKeyboard();
 
@@ -530,20 +582,20 @@ function actuallyStart() {
 }
 
 function startFromGO() {
-    document.getElementById('go').style.display = 'none';
+    closeModal('go');
     startGame();
 }
 function endGame() {
     stopProcs(); buildResults(); snd('end'); confetti(60);
-    document.getElementById('go').style.display = 'flex';
+    openModal('go');
     showPreGameZone();
 }
-function closeGO() { document.getElementById('go').style.display = 'none'; }
+function closeGO() { closeModal('go'); }
 function askStop() {
     if (!gs.running) return;
-    document.getElementById('cmod').style.display = 'flex';
+    openModal('cmod');
 }
-function closeConfirm() { document.getElementById('cmod').style.display = 'none'; }
+function closeConfirm() { closeModal('cmod'); }
 function confirmStop() {
     closeConfirm(); stopProcs(); resetSess();
     document.getElementById('countdown').style.display = 'none';
@@ -756,7 +808,21 @@ function initGame() {
     buildKeyboard();
 
     document.addEventListener('keydown', e => {
-        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+        if (activeModal) {
+            if (e.key === 'Escape') {
+                if (activeModal.id === 'cmod') closeConfirm();
+                else if (activeModal.id === 'go') closeGO();
+                e.preventDefault();
+                return;
+            }
+            if (e.key === 'Tab') {
+                trapFocus(activeModal, e);
+                return;
+            }
+            e.preventDefault();
+            return;
+        }
+        if (gs.running && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
         onKey(e);
     });
     window.addEventListener('beforeunload', () => { if (gs.running) stopProcs(); });

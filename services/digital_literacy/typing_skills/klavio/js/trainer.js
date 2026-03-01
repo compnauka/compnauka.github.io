@@ -1,26 +1,41 @@
-'use strict';
+﻿'use strict';
 
 // ================================================================
-// KLAVIО — trainer.js
-// Core training logic: start lesson, handle keys, complete lesson
+// KLAVIРћ вЂ” trainer.js
+// Core training logic
 // ================================================================
 
 // ----------------------------------------------------------------
-// Detect which character to highlight next
+// Determine which key to highlight next
 // ----------------------------------------------------------------
 function nextKey() {
   if (!state.taskString.length) return;
-  const ch = state.taskString[0];
 
-  // Sync layout language
-  if      (/[a-zA-Z]/.test(ch))             state.lang = 'eng';
-  else if (/[а-яіїєґА-ЯІЇЄҐ]/.test(ch))    state.lang = 'ua';
+  // Skip unsupported symbols (typically from broken source encoding)
+  // so the lesson can still be completed.
+  let ch = state.taskString[0];
+  let keyId = getKeyId(ch);
+  while (state.taskString.length && keyId == null) {
+    state.taskString = state.taskString.slice(1);
+    state.correctChars++;
+    updateTextDisplay();
+    updateProgress();
+    updateStats();
+    if (!state.taskString.length || state.correctChars >= state.totalChars) {
+      onLessonComplete();
+      return;
+    }
+    ch = state.taskString[0];
+    keyId = getKeyId(ch);
+  }
+
+  if      (/[a-zA-Z]/.test(ch)) state.lang = 'eng';
+  else if (/[А-Яа-яІіЇїЄєҐґ]/.test(ch)) state.lang = 'ua';
 
   layoutLow();
 
-  const keyId = getKeyId(ch);
   if (keyId) {
-    highlightKey(keyId);
+    highlightKey(keyId, ch);
     highlightFinger(keyId);
   }
 }
@@ -28,6 +43,12 @@ function nextKey() {
 // ----------------------------------------------------------------
 // Start a lesson
 // ----------------------------------------------------------------
+function safeStartStatsInterval() {
+  if (state.wpmInterval) clearInterval(state.wpmInterval);
+  state.wpmInterval = null;
+  state.wpmInterval = setInterval(updateStats, 1500);
+}
+
 function startTyping(n) {
   n = Math.max(1, Math.min(n, exercises.length));
 
@@ -43,16 +64,25 @@ function startTyping(n) {
   updateProgress();
   updateStats();
 
-  state.wpmInterval = setInterval(updateStats, 1500);
+  safeStartStatsInterval();
   nextKey();
 
-  document.getElementById('level-complete').classList.remove('show');
+  closeModal();
+  const lc = document.getElementById('level-complete');
+  if (lc) lc.classList.remove('show');
 }
 
 // ----------------------------------------------------------------
 // Correct keystroke
 // ----------------------------------------------------------------
 function onCorrectKey(ch) {
+  if (state.lessonCompleted) return;
+
+  if (!state.started) {
+    state.started = true;
+    state.timeStart = Math.floor(Date.now() / 1000);
+  }
+
   Audio.keyClick();
   if (ch === ' ') Audio.spaceKey();
 
@@ -60,7 +90,6 @@ function onCorrectKey(ch) {
   state.streak++;
   state.maxStreak = Math.max(state.maxStreak, state.streak);
 
-  // Streak milestone every 20 correct
   if (state.streak > 0 && state.streak % 20 === 0) {
     showStreakBurst(state.streak);
     Audio.streak(Math.floor(state.streak / 20));
@@ -72,7 +101,7 @@ function onCorrectKey(ch) {
   updateStats();
   clearKeySelection();
 
-  if (state.correctChars >= state.totalChars) {
+  if (!state.taskString.length || state.correctChars >= state.totalChars) {
     onLessonComplete();
   } else {
     nextKey();
@@ -83,17 +112,19 @@ function onCorrectKey(ch) {
 // Wrong keystroke
 // ----------------------------------------------------------------
 function onWrongKey(pressedEl) {
+  if (state.lessonCompleted) return;
+
   Audio.error();
   state.incorrectChars++;
   state.streak = 0;
   updateStats();
 
-  // Flash text display
   const flash = document.getElementById('error-flash');
-  flash.classList.add('flash');
-  setTimeout(() => flash.classList.remove('flash'), 200);
+  if (flash) {
+    flash.classList.add('flash');
+    setTimeout(() => flash.classList.remove('flash'), 200);
+  }
 
-  // Shake the pressed key
   if (pressedEl) {
     pressedEl.classList.add('error');
     setTimeout(() => pressedEl.classList.remove('error'), 300);
@@ -104,14 +135,17 @@ function onWrongKey(pressedEl) {
 // Lesson complete
 // ----------------------------------------------------------------
 function onLessonComplete() {
+  if (state.lessonCompleted) return;
+  state.lessonCompleted = true;
+
   clearInterval(state.wpmInterval);
+  state.wpmInterval = null;
   clearKeySelection();
   clearHandHighlights();
   Audio.levelUp();
 
   const secs = state.timeStart
-    ? Math.floor(Date.now() / 1000) - state.timeStart
-    : 0;
+    ? Math.floor(Date.now() / 1000) - state.timeStart : 0;
   const total = state.correctChars + state.incorrectChars;
   const acc   = total > 0 ? Math.round(state.correctChars / total * 100) : 100;
 
@@ -119,17 +153,28 @@ function onLessonComplete() {
     mins:      Math.floor(secs / 60),
     sec:       secs % 60,
     chars:     state.correctChars,
-    wpm:       calcWPM(),
+    wpm:       calcCPM(),
     acc,
     maxStreak: state.maxStreak,
   });
 }
 
 // ----------------------------------------------------------------
-// Proceed to next lesson
+// Next lesson
 // ----------------------------------------------------------------
 function startNextLesson() {
-  startTyping(state.taskNum + 1);
+  const next = state.taskNum + 1;
+  if (next > exercises.length) {
+    showToast('<i class="fas fa-star"></i> Усі вправи виконано! Чудова робота!');
+    const lc = document.getElementById('level-complete');
+    if (lc) lc.classList.remove('show');
+    return;
+  }
+  startTyping(next);
+}
+
+function retryCurrentLesson() {
+  startTyping(state.taskNum);
 }
 
 // ----------------------------------------------------------------
@@ -137,17 +182,39 @@ function startNextLesson() {
 // ----------------------------------------------------------------
 function cycleDifficulty() {
   state.difficulty = (state.difficulty + 1) % DIFFICULTIES.length;
+  saveProgress();
   updateDifficultyBtn();
-  showToast(`<i class="fas ${DIFFICULTIES[state.difficulty].iconClass}"></i> Режим: ${DIFFICULTIES[state.difficulty].label}`);
-  nextKey();   // re-apply (or remove) hints with new difficulty
+  const d = DIFFICULTIES[state.difficulty];
+  showToast(`<i class="fas ${d.iconClass}"></i> Режим: ${d.label}`);
+  nextKey();
 }
 
+
+function resetProgress() {
+  if (state.wpmInterval) {
+    clearInterval(state.wpmInterval);
+    state.wpmInterval = null;
+  }
+
+  state.difficulty = 0;
+  saveProgress();
+  updateDifficultyBtn();
+
+  startTyping(1);
+  showToast('<i class="fas fa-rotate-left"></i> Статистику скинуто. Починаємо знову!');
+}
 // ----------------------------------------------------------------
 // Bootstrap on DOM ready
 // ----------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+  loadProgress();            // restore saved lesson & difficulty
+  initTheme();
   layoutLow();
   updateDifficultyBtn();
   initKeyboardEvents();
-  startTyping(1);
+  startTyping(state.taskNum);
+  if (shouldShowOnboarding()) showOnboarding();
 });
+
+
+
