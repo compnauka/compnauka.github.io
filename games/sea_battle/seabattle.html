@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>РњРѕСЂСЃСЊРєРёР№ Р±С–Р№</title>
+    <title>Морський бій</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Neucha&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
         * {
@@ -25,7 +25,6 @@
             --pen-color: #2c3e50;
             --blue-pen: #3498db;
             --red-pen: #e74c3c;
-            --cell-size: 35px;
         }
 
         body {
@@ -37,7 +36,7 @@
             align-items: center;
             padding: 20px;
             overflow-y: auto; 
-            overflow-x: hidden; /* Р—Р°Р±РѕСЂРѕРЅРёС‚Рё РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅСѓ РїСЂРѕРєСЂСѓС‚РєСѓ */
+            overflow-x: hidden; /* Заборонити горизонтальну прокрутку */
             position: relative;
         }
 
@@ -178,7 +177,6 @@
             gap: 40px;
             justify-content: center;
             flex-wrap: wrap;
-            align-items: flex-start;
         }
 
         .board-container {
@@ -186,10 +184,6 @@
             flex-direction: column;
             align-items: center;
         }
-        .board-container .board-title { order: 1; }
-        .board-container .board { order: 2; }
-        .board-container .setup-actions { order: 3; }
-        .board-container .ships-list { order: 4; }
 
         .board-title {
             font-size: 26px;
@@ -198,68 +192,21 @@
             color: var(--pen-color);
         }
         
-        .setup-actions {
-            margin-top: 12px;
-            width: calc((var(--cell-size) * 10) + 4px);
-            max-width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
         .rotate-btn {
-            margin-top: 0;
-            margin-bottom: 0;
-            width: 100%;
+            margin-bottom: 10px;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(10, var(--cell-size));
-            grid-template-rows: repeat(10, var(--cell-size));
+            grid-template-columns: repeat(10, 35px);
+            grid-template-rows: repeat(10, 35px);
             gap: 0;
             background: var(--pen-color);
             border: 2px solid var(--pen-color);
         }
-        .board-shell {
-            display: grid;
-            grid-template-columns: 22px auto;
-            grid-template-rows: 22px auto;
-            column-gap: 8px;
-            row-gap: 6px;
-        }
-        .coords {
-            color: var(--pen-color);
-            opacity: 0.8;
-            user-select: none;
-        }
-        .coords-top {
-            grid-column: 2;
-            grid-row: 1;
-            display: grid;
-            grid-template-columns: repeat(10, var(--cell-size));
-            justify-items: center;
-            align-items: center;
-            font-size: 14px;
-        }
-        .coords-left {
-            grid-column: 1;
-            grid-row: 2;
-            display: grid;
-            grid-template-rows: repeat(10, var(--cell-size));
-            justify-items: center;
-            align-items: center;
-            font-size: 14px;
-        }
-        .board-shell .board {
-            grid-column: 2;
-            grid-row: 2;
-        }
         
         .board.active-turn {
             box-shadow: 0 0 15px 5px var(--blue-pen);
-        }
-        #enemyBoard:not(.active-turn) .cell {
-            cursor: default;
         }
         .board.disabled {
             pointer-events: none;
@@ -276,10 +223,6 @@
             font-size: 28px;
             border-right: 1px solid #ccc;
             border-bottom: 1px solid #ccc;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
         }
         .cell:nth-child(10n) { border-right: none; }
         .cell:nth-last-child(-n+10) { border-bottom: none; }
@@ -317,7 +260,7 @@
         }
 
         .cell.miss::after {
-            content: 'вЂў';
+            content: '•';
             color: var(--pen-color);
             font-size: 30px;
         }
@@ -340,10 +283,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-        .ships-list div.current {
-            font-weight: bold;
-            text-decoration: underline;
         }
         
         .message-overlay {
@@ -394,84 +333,49 @@
         }
         .loading.show { display: block; }
         .loading i { margin-right: 10px; }
-        .loading-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.32);
-            z-index: 1000;
-        }
-        .loading-backdrop.show { display: block; }
 
         @media (max-width: 820px) {
-            :root { --cell-size: 32px; }
             .container { padding: 15px; }
             h1 { font-size: 2.2em; }
+            .board {
+                grid-template-columns: repeat(10, 30px);
+                grid-template-rows: repeat(10, 30px);
+            }
             .boards { gap: 20px; flex-direction: column; align-items: center;}
             .button { padding: 10px 25px; font-size: 18px; }
             .board-container:last-child { margin-top: 20px; }
         }
 
         @media (max-width: 480px) {
-            :root { --cell-size: 28px; }
             body { padding: 10px; }
             h1 { font-size: 1.8em; }
+            .board {
+                grid-template-columns: repeat(10, 25px);
+                grid-template-rows: repeat(10, 25px);
+            }
             .cell { font-size: 20px; }
             .input-group { flex-direction: column; width: 100%; }
             .input-group input { min-width: 0; width: 100%;}
             .input-group button { width: 100%; }
-            .board-shell {
-                grid-template-columns: 18px auto;
-                grid-template-rows: 18px auto;
-                column-gap: 6px;
-                row-gap: 4px;
-            }
-            .coords-top, .coords-left {
-                font-size: 12px;
-            }
-        }
-        
-        @media (hover: none) and (pointer: coarse) {
-            .button, input, .game-code {
-                min-height: 44px;
-            }
-            .button {
-                padding: 12px 24px;
-            }
-            .button:hover {
-                background: transparent;
-                color: var(--pen-color);
-                transform: none;
-                box-shadow: none;
-            }
-            .button:active {
-                background: var(--pen-color);
-                color: var(--paper-color);
-            }
-            #enemyBoard .cell.valid-shot,
-            #enemyBoard .cell.valid-shot:hover {
-                background: #e0f7fa;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="loading-backdrop" id="loadingBackdrop"></div>
     <div class="loading" id="loading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ...
+        <i class="fa-solid fa-spinner fa-spin"></i> Завантаження...
     </div>
 
     <div class="container">
         <h1>
-            <i class="fa-solid fa-anchor"></i> РњРѕСЂСЃСЊРєРёР№ Р±С–Р№ <i class="fa-solid fa-anchor"></i>
-            <i id="soundToggle" class="fa-solid fa-volume-high" title="Р’РёРјРєРЅСѓС‚Рё Р·РІСѓРє"></i>
+            <i class="fa-solid fa-anchor"></i> Морський бій <i class="fa-solid fa-anchor"></i>
+            <i id="soundToggle" class="fa-solid fa-volume-high" title="Вимкнути звук"></i>
         </h1>
         
         <div class="menu" id="menu">
-            <button class="button" onclick="createGame()">РЎС‚РІРѕСЂРёС‚Рё РіСЂСѓ</button>
+            <button class="button" onclick="createGame()">Створити гру</button>
             <div class="input-group">
-                <input type="tel" id="joinCode" placeholder="Р’РІРµРґС–С‚СЊ 6-Р·РЅР°С‡РЅРёР№ РєРѕРґ" maxlength="6" pattern="[0-9]*" inputmode="numeric">
-                <button class="button" onclick="joinGame()">РџСЂРёС”РґРЅР°С‚РёСЃСЊ</button>
+                <input type="tel" id="joinCode" placeholder="Введіть 6-значний код" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+                <button class="button" onclick="joinGame()">Приєднатись</button>
             </div>
             <div id="menuMessage"></div>
         </div>
@@ -479,34 +383,23 @@
         <div class="game-area" id="gameArea">
             <div class="game-info">
                  <div class="game-meta">
-                    <div class="game-code" id="gameCodeDisplay" title="РќР°С‚РёСЃРЅС–С‚СЊ, С‰РѕР± СЃРєРѕРїС–СЋРІР°С‚Рё">РљРѕРґ РіСЂРё: <span id="displayCode"></span></div>
+                    <div class="game-code" id="gameCodeDisplay" title="Натисніть, щоб скопіювати">Код гри: <span id="displayCode"></span></div>
                     <div id="timer"></div>
                  </div>
-                <div class="status" id="status">РћС‡С–РєСѓРІР°РЅРЅСЏ СЃСѓРїРµСЂРЅРёРєР°...</div>
+                <div class="status" id="status">Очікування суперника...</div>
             </div>
 
             <div class="boards">
                 <div class="board-container">
-                    <div class="board-title">Р’Р°С€Рµ РїРѕР»Рµ</div>
-                    <div class="board-shell">
-                        <div class="coords coords-top"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span></div>
-                        <div class="coords coords-left"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
-                        <div class="board" id="myBoard"></div>
-                    </div>
-                    <div class="setup-actions">
-                    <button class="button rotate-btn" id="rotateBtn" onclick="rotateShip()"><i class="fa-solid fa-rotate"></i> РџРѕРІРµСЂРЅСѓС‚Рё РєРѕСЂР°Р±РµР»СЊ</button>
-                    <button class="button rotate-btn" id="randomBtn" onclick="randomizeShips()"><i class="fa-solid fa-wand-magic-sparkles"></i> Р’РёРїР°РґРєРѕРІРµ СЂРѕР·РјС–С‰РµРЅРЅСЏ</button>
-                    </div>
+                    <div class="board-title">Ваше поле</div>
+                    <button class="button rotate-btn" id="rotateBtn" onclick="rotateShip()"><i class="fa-solid fa-rotate"></i> Повернути корабель</button>
+                    <div class="board" id="myBoard"></div>
                     <div class="ships-list" id="shipsList"></div>
                 </div>
 
                 <div class="board-container">
-                    <div class="board-title">РџРѕР»Рµ СЃСѓРїРµСЂРЅРёРєР°</div>
-                    <div class="board-shell">
-                        <div class="coords coords-top"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span></div>
-                        <div class="coords coords-left"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
-                        <div class="board" id="enemyBoard"></div>
-                    </div>
+                    <div class="board-title">Поле суперника</div>
+                    <div class="board" id="enemyBoard"></div>
                 </div>
             </div>
         </div>
@@ -515,18 +408,18 @@
     <div class="message-overlay" id="messageOverlay">
         <div class="message-box">
             <h2 id="messageText"></h2>
-            <button class="button" onclick="location.reload()">Р“СЂР°С‚Рё Р·РЅРѕРІСѓ</button>
+            <button class="button" onclick="location.reload()">Грати знову</button>
         </div>
     </div>
 
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getDatabase, ref, onValue, update, remove, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+        import { getDatabase, ref, set, onValue, update, get, serverTimestamp, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-        // рџ”ґ РљР РРўРР§РќРћ: Р’Р°С€Р° РєРѕРЅС„С–РіСѓСЂР°С†С–СЏ Firebase РІРёРґРёРјР° РЅР° РєР»С–С”РЅС‚С–.
-        // РћР±РѕРІ'СЏР·РєРѕРІРѕ РЅР°Р»Р°С€С‚СѓР№С‚Рµ Firebase Security Rules Сѓ РІР°С€С–Р№ РєРѕРЅСЃРѕР»С– Firebase.
+        // 🔴 КРИТИЧНО: Ваша конфігурація Firebase видима на клієнті.
+        // Обов'язково налаштуйте Firebase Security Rules у вашій консолі Firebase.
         const firebaseConfig = {
             apiKey: "AIzaSyB0OEvx1SaXXClGRYeFt40P5RFTf1aantE",
             authDomain: "sea-battle-bf3c9.firebaseapp.com",
@@ -541,7 +434,7 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // --- Р—РІСѓРєРѕРІС– РµС„РµРєС‚Рё (Р±РµР· Р·РјС–РЅ) ---
+        // --- Звукові ефекти (без змін) ---
         let audioCtx;
         let isMuted = localStorage.getItem('battleshipMuted') === 'true';
         let lastSunkCount = 0;
@@ -555,7 +448,7 @@
                     miss: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(150,audioCtx.currentTime),o.frequency.linearRampToValueAtTime(80,audioCtx.currentTime+.2),g.gain.setValueAtTime(.3,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.2),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.2) },
                     hit: () => { const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine",o.frequency.setValueAtTime(440,audioCtx.currentTime),g.gain.setValueAtTime(.5,audioCtx.currentTime),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15),o.connect(g).connect(audioCtx.destination),o.start(),o.stop(audioCtx.currentTime+.15) },
                     sunk: () => { for(let i=0;i<3;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="square",o.frequency.setValueAtTime(300-40*i,audioCtx.currentTime+.1*i),g.gain.setValueAtTime(.3,audioCtx.currentTime+.1*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.1*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.1*i),o.stop(audioCtx.currentTime+.1*i+.1)} },
-                    win: () => { [261,329,392,523].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(f,audioCtx.currentTime+.15*i),g.gain.setValueAtTime(.4,audioCtx.currentTime+.15*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.15*i),o.stop(audioCtx.currentTime+.15*i+.1)}) }
+                    win: () => { [261,329,32,523].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle",o.frequency.setValueAtTime(f,audioCtx.currentTime+.15*i),g.gain.setValueAtTime(.4,audioCtx.currentTime+.15*i),g.gain.exponentialRampToValueAtTime(1e-3,audioCtx.currentTime+.15*i+.1),o.connect(g).connect(audioCtx.destination),o.start(audioCtx.currentTime+.15*i),o.stop(audioCtx.currentTime+.15*i+.1)}) }
                 };
                 if(soundGenerators[type]) soundGenerators[type]();
             }
@@ -566,7 +459,7 @@
         }
         // ----------------------
 
-        // --- РљРѕРЅСЃС‚Р°РЅС‚Рё С‚Р° DOM-РµР»РµРјРµРЅС‚Рё ---
+        // --- Константи та DOM-елементи ---
         const GAME_DURATION = 15 * 60 * 1000;
         const SHIPS_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
         let playerId;
@@ -575,32 +468,21 @@
         const enemyBoardEl = document.getElementById('enemyBoard');
         const statusEl = document.getElementById('status');
         const rotateBtn = document.getElementById('rotateBtn');
-        const randomBtn = document.getElementById('randomBtn');
         const soundToggle = document.getElementById('soundToggle');
         const timerEl = document.getElementById('timer');
 
-        // --- Р РµС„Р°РєС‚РѕСЂРёРЅРі: Р„РґРёРЅРёР№ РѕР±'С”РєС‚ СЃС‚Р°РЅСѓ РіСЂРё ---
+        // --- Рефакторинг: Єдиний об'єкт стану гри ---
         const gameState = {
             code: '', playerNumber: 0, localData: null, isHorizontal: true, currentShipIndex: 0,
             myBoard: Array(10).fill(null).map(() => Array(10).fill(0)),
-            isSetupPhase: true, isRandomizing: false, unsubscribeListener: null, sessionTimer: null, visualTimer: null,
+            isSetupPhase: true, unsubscribeListener: null, sessionTimer: null, visualTimer: null,
         };
         
-        // --- Р”РѕРїРѕРјС–Р¶РЅС– С„СѓРЅРєС†С–С— ---
+        // --- Допоміжні функції ---
         const getEnemyPlayerNum = () => gameState.playerNumber === 1 ? 2 : 1;
         const getMyPlayerData = () => gameState.localData?.[`player${gameState.playerNumber}`];
-        const showLoading = () => {
-            document.getElementById('loading').classList.add('show');
-            document.getElementById('loadingBackdrop').classList.add('show');
-        };
-        const hideLoading = () => {
-            document.getElementById('loading').classList.remove('show');
-            document.getElementById('loadingBackdrop').classList.remove('show');
-        };
-        const hasGameExpired = (createdAt) => {
-            const timestamp = Number(createdAt);
-            return Number.isFinite(timestamp) && (Date.now() - timestamp > GAME_DURATION);
-        };
+        const showLoading = () => document.getElementById('loading').classList.add('show');
+        const hideLoading = () => document.getElementById('loading').classList.remove('show');
         const debounce = (func, wait) => {
             let timeout;
             return function executedFunction(...args) {
@@ -608,20 +490,8 @@
                 timeout = setTimeout(() => func(...args), wait);
             };
         };
-        async function reserveNewGameCode(initialGameState, maxAttempts = 20) {
-            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                const candidateCode = Math.floor(100000 + Math.random() * 900000).toString();
-                const candidateRef = ref(db, `games/${candidateCode}`);
-                const txResult = await runTransaction(candidateRef, (currentData) => {
-                    if (currentData !== null) return;
-                    return initialGameState;
-                }, { applyLocally: false });
-                if (txResult.committed) return candidateCode;
-            }
-            throw new Error('NO_FREE_GAME_CODE');
-        }
 
-        // --- РћСЃРЅРѕРІРЅР° Р»РѕРіС–РєР° ---
+        // --- Основна логіка ---
         
         function cleanupGame(message) {
             if (gameState.unsubscribeListener) {
@@ -635,17 +505,17 @@
                 remove(ref(db, `games/${gameState.code}`));
             }
 
-            showMessage(message || "Р“СЂСѓ Р·Р°РІРµСЂС€РµРЅРѕ.");
+            showMessage(message || "Гру завершено.");
             enemyBoardEl.classList.add('disabled');
             myBoardEl.classList.add('disabled');
-            statusEl.textContent = "Р“СЂСѓ Р·Р°РІРµСЂС€РµРЅРѕ!";
+            statusEl.textContent = "Гру завершено!";
             timerEl.textContent = '';
         }
 
         window.addEventListener('beforeunload', (e) => {
             if (gameState.localData && !gameState.localData.winner && gameState.localData.gameStarted) {
                 e.preventDefault();
-                e.returnValue = 'Р“СЂР° С‰Рµ РЅРµ Р·Р°РІРµСЂС€РµРЅР°. Р’Рё РІРїРµРІРЅРµРЅС–, С‰Рѕ С…РѕС‡РµС‚Рµ РІРёР№С‚Рё?';
+                e.returnValue = 'Гра ще не завершена. Ви впевнені, що хочете вийти?';
                 return e.returnValue;
             }
             if (gameState.unsubscribeListener) gameState.unsubscribeListener();
@@ -665,31 +535,33 @@
                     await signInAnonymously(auth);
                 }
                 playerId = auth.currentUser.uid;
+                console.log("Успішно автентифіковано. UID:", playerId);
 
+                gameState.code = Math.floor(100000 + Math.random() * 900000).toString();
                 gameState.playerNumber = 1;
 
                 const initialGameState = {
                     player1: { id: playerId, ready: false, board: null },
                     player2: { id: null, ready: false, board: null },
                     currentTurn: 1, gameStarted: false, moves: [], winner: null,
-                    createdAt: Date.now()
+                    createdAt: serverTimestamp() 
                 };
                 
-                gameState.code = await reserveNewGameCode(initialGameState);
+                console.log(`Спроба створити гру з кодом ${gameState.code}...`);
+                await set(ref(db, `games/${gameState.code}`), initialGameState);
+                console.log("Гра успішно створена в базі даних.");
 
                 showGameArea();
                 listenToGame();
                 
                 if (gameState.sessionTimer) clearTimeout(gameState.sessionTimer);
-                gameState.sessionTimer = setTimeout(() => cleanupGame("Р§Р°СЃ РіСЂРё РІРёС‡РµСЂРїР°РЅРѕ!"), GAME_DURATION);
+                gameState.sessionTimer = setTimeout(() => cleanupGame("Час гри вичерпано!"), GAME_DURATION);
             } catch (error) {
-                console.error("РџРѕРјРёР»РєР° СЃС‚РІРѕСЂРµРЅРЅСЏ РіСЂРё:", error);
+                console.error("Помилка створення гри:", error);
                 if (String(error).includes('PERMISSION_DENIED')) {
-                    showMenuMessage("Р’С–РґРјРѕРІР»РµРЅРѕ РІ РґРѕСЃС‚СѓРїС–. РќР°Р»Р°С€С‚СѓР№С‚Рµ РїСЂР°РІРёР»Р° Р±РµР·РїРµРєРё Firebase.");
-                } else if (String(error).includes('NO_FREE_GAME_CODE')) {
-                    showMenuMessage("РќРµ РІРґР°Р»РѕСЃСЏ Р·РіРµРЅРµСЂСѓРІР°С‚Рё РІС–Р»СЊРЅРёР№ РєРѕРґ. РЎРїСЂРѕР±СѓР№С‚Рµ С‰Рµ СЂР°Р·.");
+                    showMenuMessage("Відмовлено в доступі. Налаштуйте правила безпеки Firebase.");
                 } else {
-                    showMenuMessage("РќРµ РІРґР°Р»РѕСЃСЏ СЃС‚РІРѕСЂРёС‚Рё РіСЂСѓ. РџРµСЂРµРІС–СЂС‚Рµ Р·'С”РґРЅР°РЅРЅСЏ.");
+                    showMenuMessage("Не вдалося створити гру. Перевірте з'єднання.");
                 }
             } finally {
                 hideLoading();
@@ -704,54 +576,35 @@
                     await signInAnonymously(auth);
                 }
                 playerId = auth.currentUser.uid;
+                console.log("Успішно автентифіковано. UID:", playerId);
 
                 const codeInput = document.getElementById('joinCode').value;
                 const sanitizedCode = codeInput.replace(/[^0-9]/g, '');
 
-                if (sanitizedCode.length !== 6) return showMenuMessage("РљРѕРґ РјР°С” СЃРєР»Р°РґР°С‚РёСЃСЏ Р· 6 С†РёС„СЂ!");
+                if (sanitizedCode.length !== 6) return showMenuMessage("Код має складатися з 6 цифр!");
                 
                 const gameRef = ref(db, `games/${sanitizedCode}`);
-                let joinError = '';
-                const txResult = await runTransaction(gameRef, (gameData) => {
-                    if (!gameData) {
-                        joinError = 'NOT_FOUND';
-                        return;
-                    }
-                    if (hasGameExpired(gameData.createdAt)) {
-                        joinError = 'EXPIRED';
-                        return;
-                    }
-                    if (gameData.player1?.id === playerId) {
-                        joinError = 'OWN_GAME';
-                        return;
-                    }
-                    if (gameData.player2?.id && gameData.player2.id !== playerId) {
-                        joinError = 'ROOM_TAKEN';
-                        return;
-                    }
-                    gameData.player2 = gameData.player2 || { id: null, ready: false, board: null };
-                    gameData.player2.id = playerId;
-                    return gameData;
-                }, { applyLocally: false });
+                const snapshot = await get(gameRef);
 
-                if (!txResult.committed) {
-                    if (joinError === 'NOT_FOUND') return showMenuMessage('Р“СЂР° РЅРµ Р·РЅР°Р№РґРµРЅР°!');
-                    if (joinError === 'EXPIRED') return showMenuMessage('РўРµСЂРјС–РЅ РґС–С— РіСЂРё РјРёРЅСѓРІ!');
-                    if (joinError === 'OWN_GAME') return showMenuMessage("Р’Рё РЅРµ РјРѕР¶РµС‚Рµ РїСЂРёС”РґРЅР°С‚РёСЃСЊ РґРѕ РІР»Р°СЃРЅРѕС— РіСЂРё!");
-                    if (joinError === 'ROOM_TAKEN') return showMenuMessage('РљС–РјРЅР°С‚Р° РІР¶Рµ Р·Р°Р№РЅСЏС‚Р°!');
-                    return showMenuMessage("РџРѕРјРёР»РєР° РїСЂРёС”РґРЅР°РЅРЅСЏ. РЎРїСЂРѕР±СѓР№С‚Рµ С‰Рµ СЂР°Р·.");
-                }
-
+                if (!snapshot.exists()) return showMenuMessage('Гра не знайдена!');
+                
+                const gameData = snapshot.val();
+                
+                if (Date.now() - gameData.createdAt > GAME_DURATION) return showMenuMessage('Термін дії гри минув!');
+                if (gameData.player1.id === playerId) return showMenuMessage("Ви не можете приєднатись до власної гри!");
+                if (gameData.player2.id && gameData.player2.id !== playerId) return showMenuMessage('Кімната вже зайнята!');
+                
                 gameState.code = sanitizedCode;
                 gameState.playerNumber = 2;
+                await update(ref(db, `games/${gameState.code}/player2`), { id: playerId });
                 showGameArea();
                 listenToGame();
             } catch(error) {
-                console.error("РџРѕРјРёР»РєР° РїСЂРёС”РґРЅР°РЅРЅСЏ РґРѕ РіСЂРё:", error);
+                console.error("Помилка приєднання до гри:", error);
                 if (String(error).includes('PERMISSION_DENIED')) {
-                     showMenuMessage("Р’С–РґРјРѕРІР»РµРЅРѕ РІ РґРѕСЃС‚СѓРїС–. РџРµСЂРµРІС–СЂС‚Рµ РїСЂР°РІРёР»Р° Р±РµР·РїРµРєРё.");
+                     showMenuMessage("Відмовлено в доступі. Перевірте правила безпеки.");
                 } else {
-                    showMenuMessage("РџРѕРјРёР»РєР° РїСЂРёС”РґРЅР°РЅРЅСЏ. РџРµСЂРµРІС–СЂС‚Рµ РєРѕРґ С‚Р° Р·'С”РґРЅР°РЅРЅСЏ.");
+                    showMenuMessage("Помилка приєднання. Перевірте код та з'єднання.");
                 }
             } finally {
                 hideLoading();
@@ -763,10 +616,10 @@
 
             const gameRef = ref(db, `games/${gameState.code}`);
             gameState.unsubscribeListener = onValue(gameRef, (snapshot) => {
-                if (!snapshot.exists()) return cleanupGame("Р“СЂСѓ Р±СѓР»Рѕ РІРёРґР°Р»РµРЅРѕ Р°Р±Рѕ РІРѕРЅР° Р·Р°РІРµСЂС€РёР»Р°СЃСЊ.");
+                if (!snapshot.exists()) return cleanupGame("Гру було видалено або вона завершилась.");
                 
                 const gameData = snapshot.val();
-                if (hasGameExpired(gameData.createdAt)) return cleanupGame("Р§Р°СЃ РіСЂРё РІРёС‡РµСЂРїР°РЅРѕ!");
+                if (gameData.createdAt && (Date.now() - gameData.createdAt > GAME_DURATION)) return cleanupGame("Час гри вичерпано!");
                 
                 gameState.localData = gameData;
 
@@ -780,13 +633,11 @@
         
         function updateTimer() {
             if (!gameState.localData?.createdAt) return;
-            const createdAt = Number(gameState.localData.createdAt);
-            if (!Number.isFinite(createdAt)) return;
-            const elapsed = Date.now() - createdAt;
+            const elapsed = Date.now() - gameState.localData.createdAt;
             const remaining = Math.max(0, GAME_DURATION - elapsed);
             const mins = Math.floor(remaining / 60000);
             const secs = Math.floor((remaining % 60000) / 1000);
-            timerEl.textContent = `вЏ±пёЏ ${mins}:${secs.toString().padStart(2, '0')}`;
+            timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
         function updateUI() {
@@ -809,23 +660,22 @@
                     sounds.play(gameState.localData.winner === gameState.playerNumber ? 'win' : 'sunk');
                 }
                 gameState.isSetupPhase = false;
-                showMessage(gameState.localData.winner === gameState.playerNumber ? "рџЋ‰ РџРµСЂРµРјРѕРіР°! рџЋ‰" : "рџҐ Р’Рё РїСЂРѕРіСЂР°Р»Рё рџҐ");
+                showMessage(gameState.localData.winner === gameState.playerNumber ? "🎉 Перемога! 🎉" : "😥 Ви програли 😥");
 
                  enemyBoardEl.classList.remove('active-turn');
                  myBoardEl.classList.remove('active-turn');
-                 statusEl.textContent = "Р“СЂСѓ Р·Р°РІРµСЂС€РµРЅРѕ!";
+                 statusEl.textContent = "Гру завершено!";
             } else if (gameState.localData.gameStarted) {
                 gameState.isSetupPhase = false;
                 rotateBtn.classList.add('hidden');
-                randomBtn.classList.add('hidden');
                 document.getElementById('shipsList').classList.add('hidden');
-                statusEl.textContent = isMyTurn ? "рџЋЇ Р’Р°С€ С…С–Рґ!" : `вЏі РҐС–Рґ СЃСѓРїРµСЂРЅРёРєР°...`;
+                statusEl.textContent = isMyTurn ? "🎯 Ваш хід!" : `⏳ Хід суперника...`;
                 enemyBoardEl.classList.toggle('active-turn', isMyTurn);
                 myBoardEl.classList.toggle('active-turn', !isMyTurn);
             } else {
-                if (!enemyData?.id) statusEl.textContent = "РћС‡С–РєСѓРІР°РЅРЅСЏ СЃСѓРїРµСЂРЅРёРєР°...";
-                else if (myData?.ready) statusEl.textContent = "РћС‡С–РєСѓС”РјРѕ РіРѕС‚РѕРІРЅРѕСЃС‚С– СЃСѓРїРµСЂРЅРёРєР°...";
-                else statusEl.textContent = "Р РѕР·СЃС‚Р°РІС‚Рµ СЃРІРѕС— РєРѕСЂР°Р±Р»С–!";
+                if (!enemyData?.id) statusEl.textContent = "Очікування суперника...";
+                else if (myData?.ready) statusEl.textContent = "Очікуємо готовності суперника...";
+                else statusEl.textContent = "Розставте свої кораблі!";
             }
             renderBoards();
         }
@@ -890,8 +740,7 @@
             document.getElementById('displayCode').textContent = gameState.code;
         }
         
-        const SHOT_DEBOUNCE_MS = window.matchMedia('(pointer: coarse)').matches ? 120 : 300;
-        const debouncedHandleEnemyClick = debounce(handleEnemyBoardClick, SHOT_DEBOUNCE_MS);
+        const debouncedHandleEnemyClick = debounce(handleEnemyBoardClick, 300);
 
         function createBoardDOM(boardId, clickHandler) {
             const boardEl = document.getElementById(boardId);
@@ -903,7 +752,7 @@
                 const col = i % 10;
                 
                 cell.setAttribute('role', 'button');
-                cell.setAttribute('aria-label', `РљР»С–С‚РёРЅРєР° ${String.fromCharCode(65 + col)}${row + 1}`);
+                cell.setAttribute('aria-label', `Клітинка ${String.fromCharCode(65 + col)}${row + 1}`);
                 cell.tabIndex = boardId === 'enemyBoard' ? 0 : -1;
                 
                 cell.dataset.row = row;
@@ -930,7 +779,7 @@
         function showMessage(msg) {
              const overlay = document.getElementById('messageOverlay');
              if (overlay.style.display === 'flex') return;
-             document.getElementById('messageText').textContent = msg;
+             document.getElementById('messageText').innerHTML = msg;
              overlay.style.display = 'flex';
         }
 
@@ -976,61 +825,6 @@
         }
         
         window.rotateShip = () => { gameState.isHorizontal = !gameState.isHorizontal; };
-        window.randomizeShips = async () => {
-            if (!gameState.isSetupPhase || gameState.currentShipIndex >= SHIPS_CONFIG.length || gameState.isRandomizing) return;
-            gameState.isRandomizing = true;
-            gameState.isSetupPhase = false;
-            randomBtn.disabled = true;
-            rotateBtn.disabled = true;
-            let completed = false;
-
-            const buildRandomBoard = () => {
-                const board = Array(10).fill(null).map(() => Array(10).fill(0));
-                for (let shipIndex = 0; shipIndex < SHIPS_CONFIG.length; shipIndex++) {
-                    const size = SHIPS_CONFIG[shipIndex];
-                    let placed = false;
-
-                    for (let attempt = 0; attempt < 200; attempt++) {
-                        const horizontal = Math.random() < 0.5;
-                        const row = Math.floor(Math.random() * 10);
-                        const col = Math.floor(Math.random() * 10);
-                        if (!canPlaceShip(row, col, size, horizontal, board)) continue;
-
-                        for (let i = 0; i < size; i++) {
-                            const r = horizontal ? row : row + i;
-                            const c = horizontal ? col + i : col;
-                            board[r][c] = shipIndex + 1;
-                        }
-                        placed = true;
-                        break;
-                    }
-                    if (!placed) return null;
-                }
-                return board;
-            };
-
-            try {
-                let nextBoard = null;
-                for (let retry = 0; retry < 50 && !nextBoard; retry++) {
-                    nextBoard = buildRandomBoard();
-                }
-                if (!nextBoard) return;
-
-                gameState.myBoard = nextBoard;
-                gameState.currentShipIndex = SHIPS_CONFIG.length;
-                updateShipsList();
-                renderMyPlacement();
-                await finishSetup();
-                completed = true;
-            } finally {
-                gameState.isRandomizing = false;
-                if (!completed) {
-                    gameState.isSetupPhase = true;
-                    randomBtn.disabled = false;
-                    rotateBtn.disabled = false;
-                }
-            }
-        };
 
         function canPlaceShip(row, col, size, horizontal, board) {
             for (let i = 0; i < size; i++) {
@@ -1048,20 +842,16 @@
         function updateShipsList() {
             let shipsToPlace = SHIPS_CONFIG.slice(gameState.currentShipIndex);
             if (shipsToPlace.length === 0) {
-                 document.getElementById('shipsList').innerHTML = "вњ… Р’СЃС– РєРѕСЂР°Р±Р»С– СЂРѕР·СЃС‚Р°РІР»РµРЅРѕ!";
+                 document.getElementById('shipsList').innerHTML = "✅ Всі кораблі розставлено!";
                  return;
             }
             const counts = shipsToPlace.reduce((acc, size) => ({...acc, [size]: (acc[size] || 0) + 1 }), {});
-            const currentSize = SHIPS_CONFIG[gameState.currentShipIndex];
-            document.getElementById('shipsList').innerHTML = [4,3,2,1]
-                .map(s => `<div class="${s === currentSize ? 'current' : ''}"><i class="fa-solid fa-ship"></i> x${s}: ${counts[s] || 0}</div>`)
-                .join('');
+            document.getElementById('shipsList').innerHTML = [4,3,2,1].map(s => `<div><i class="fa-solid fa-ship"></i> x${s}: ${counts[s] || 0}</div>`).join('');
         }
 
         async function finishSetup() {
             gameState.isSetupPhase = false;
             rotateBtn.classList.add('hidden');
-            randomBtn.classList.add('hidden');
             await update(ref(db, `games/${gameState.code}/player${gameState.playerNumber}`), {
                 board: gameState.myBoard,
                 ready: true
@@ -1070,37 +860,27 @@
 
         async function handleEnemyBoardClick(row, col) {
             if (!gameState.localData || gameState.localData.winner || !gameState.localData.gameStarted || gameState.isSetupPhase || gameState.localData.currentTurn !== gameState.playerNumber) return;
-            let shotResult = null;
-            const gameRef = ref(db, `games/${gameState.code}`);
-            const txResult = await runTransaction(gameRef, (gameData) => {
-                if (!gameData || gameData.winner || !gameData.gameStarted) return;
-                if (gameData.currentTurn !== gameState.playerNumber) return;
 
-                const enemyPlayerNum = gameState.playerNumber === 1 ? 2 : 1;
-                const enemyBoard = gameData[`player${enemyPlayerNum}`]?.board;
-                if (!enemyBoard) return;
+            const moves = gameState.localData.moves ? Object.values(gameState.localData.moves) : [];
+            if (moves.some(m => m.row === row && m.col === col && m.player === gameState.playerNumber)) return;
 
-                const moves = Array.isArray(gameData.moves) ? [...gameData.moves] : Object.values(gameData.moves || {});
-                const alreadyShot = moves.some(m => m.player === gameState.playerNumber && m.row === row && m.col === col);
-                if (alreadyShot) return;
+            const enemyBoard = gameState.localData[`player${getEnemyPlayerNum()}`].board;
+            const result = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
+            
+            sounds.play(result);
+            statusEl.textContent = result === 'hit' ? '🎯 Влучив! Стріляйте ще!' : '❌ Промах!';
+            
+            const newMove = { player: gameState.playerNumber, row, col, result };
+            const nextTurn = result === 'miss' ? getEnemyPlayerNum() : gameState.playerNumber;
+            const newMoves = [...moves, newMove];
 
-                shotResult = enemyBoard[row][col] > 0 ? 'hit' : 'miss';
-                moves.push({ player: gameState.playerNumber, row, col, result: shotResult });
+            const updatedData = { currentTurn: nextTurn, moves: newMoves };
+            
+            const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
+            const hitsOnEnemy = newMoves.filter(m => m.player === gameState.playerNumber && m.result === 'hit').length;
+            if (hitsOnEnemy === totalShipCells) updatedData.winner = gameState.playerNumber;
 
-                gameData.moves = moves;
-                gameData.currentTurn = shotResult === 'miss' ? enemyPlayerNum : gameState.playerNumber;
-
-                const totalShipCells = enemyBoard.flat().filter(cell => cell > 0).length;
-                const hitsOnEnemy = moves.filter(m => m.player === gameState.playerNumber && m.result === 'hit').length;
-                if (hitsOnEnemy >= totalShipCells) gameData.winner = gameState.playerNumber;
-
-                return gameData;
-            }, { applyLocally: false });
-
-            if (!txResult.committed || !shotResult) return;
-            clearActiveEnemyCell();
-            sounds.play(shotResult);
-            statusEl.textContent = shotResult === 'hit' ? 'рџЋЇ Р’Р»СѓС‡РёРІ! РЎС‚СЂС–Р»СЏР№С‚Рµ С‰Рµ!' : 'вќЊ РџСЂРѕРјР°С…!';
+            await update(ref(db, `games/${gameState.code}`), updatedData);
         }
         
         function getShipCells(shipId, board) {
@@ -1114,55 +894,33 @@
             return shipCells.every(sc => hitMoves.some(h => h.row === sc.row && h.col === sc.col));
         }
         
-        let activeEnemyCell = null;
-        function setActiveEnemyCell(cell) {
-            if (activeEnemyCell && activeEnemyCell !== cell) {
-                activeEnemyCell.classList.remove('valid-shot');
-            }
-            activeEnemyCell = cell;
-            if (activeEnemyCell && !activeEnemyCell.classList.contains('hit') && !activeEnemyCell.classList.contains('miss')) {
-                activeEnemyCell.classList.add('valid-shot');
-            }
-        }
-        function clearActiveEnemyCell() {
-            if (!activeEnemyCell) return;
-            activeEnemyCell.classList.remove('valid-shot');
-            activeEnemyCell = null;
-        }
-        
-        // --- Р†РЅС–С†С–Р°Р»С–Р·Р°С†С–СЏ ---
+        // --- Ініціалізація ---
         document.getElementById('gameCodeDisplay').onclick = () => {
             navigator.clipboard.writeText(gameState.code).then(() => {
                 const el = document.getElementById('gameCodeDisplay');
-                const originalText = `РљРѕРґ РіСЂРё: ${gameState.code}`;
-                el.textContent = 'РЎРєРѕРїС–Р№РѕРІР°РЅРѕ!';
-                setTimeout(() => { el.textContent = originalText; }, 1500);
+                const originalText = el.innerHTML;
+                el.innerHTML = 'Скопійовано!';
+                setTimeout(() => { el.innerHTML = originalText; }, 1500);
             });
         };
         
         enemyBoardEl.addEventListener('mouseover', e => {
-            if (!e.target.classList.contains('cell')) return;
-            setActiveEnemyCell(e.target);
+            if (e.target.classList.contains('cell')) {
+                const cell = e.target;
+                if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) cell.classList.add('valid-shot');
+            }
         });
         enemyBoardEl.addEventListener('mouseout', e => {
-            if (!e.target.classList.contains('cell')) return;
-            if (e.relatedTarget && e.relatedTarget.classList?.contains('cell')) return;
-            clearActiveEnemyCell();
+             if (e.target.classList.contains('cell')) e.target.classList.remove('valid-shot');
         });
-        enemyBoardEl.addEventListener('pointerdown', e => {
-            if (e.pointerType !== 'touch') return;
-            if (!e.target.classList.contains('cell')) return;
-            setActiveEnemyCell(e.target);
-        });
-        enemyBoardEl.addEventListener('touchcancel', clearActiveEnemyCell, { passive: true });
         
         soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-        soundToggle.title = isMuted ? 'РЈРІС–РјРєРЅСѓС‚Рё Р·РІСѓРє' : 'Р’РёРјРєРЅСѓС‚Рё Р·РІСѓРє';
+        soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
         soundToggle.addEventListener('click', () => {
             isMuted = !isMuted;
             localStorage.setItem('battleshipMuted', isMuted);
             soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-            soundToggle.title = isMuted ? 'РЈРІС–РјРєРЅСѓС‚Рё Р·РІСѓРє' : 'Р’РёРјРєРЅСѓС‚Рё Р·РІСѓРє';
+            soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
             if(!isMuted) initAudio();
         });
 
