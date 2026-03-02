@@ -51,8 +51,12 @@
     const ghost = $("ghost");
 
     // ---------- constants ----------
-    const VW = 400, VH = 300;
+    const VW = 960, VH = 300;
     const ROUND_SECONDS = 45;
+    const LANES = [70, 120, 170, 220];
+    const HEARTS_MAX = 3;
+    const ERRORS_PER_HEART = 4;
+    const MAX_ERRORS = HEARTS_MAX * ERRORS_PER_HEART;
 
     // ---------- utils ----------
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -69,7 +73,7 @@
     // ---------- adaptive canvas (crisp on retina) ----------
     function resizeCanvas() {
         const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-        // keep logical coordinate system 400x300
+        // keep logical coordinate system 960x300
         cvs.width = VW * dpr;
         cvs.height = VH * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -117,6 +121,32 @@
         "вітер грається з хмарами",
     ];
 
+    const MODE_LABEL = {
+        letters: "Літери",
+        words: "Слова",
+        sent: "Речення",
+        mixed: "Мікс",
+    };
+
+    const wordsCache = new Map();
+    const sentenceCache = new Map();
+
+    function getWordsForChars(chars) {
+        if (wordsCache.has(chars)) return wordsCache.get(chars);
+        const set = new Set(chars);
+        const out = WORDS.filter(w => [...w].every(c => set.has(c)));
+        wordsCache.set(chars, out);
+        return out;
+    }
+
+    function getSentencesForChars(chars) {
+        if (sentenceCache.has(chars)) return sentenceCache.get(chars);
+        const set = new Set(chars + " ");
+        const out = SENTENCES.filter(s => [...s].every(c => set.has(c)));
+        sentenceCache.set(chars, out);
+        return out;
+    }
+
     // ---------- keyboard layout (UA ЙЦУКЕН) ----------
     const ROWS = [
         ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ї"],
@@ -132,9 +162,10 @@
         ["а", "Лівий вказівний"], ["к", "Лівий вказівний"], ["м", "Лівий вказівний"],
         ["п", "Лівий вказівний"], ["е", "Лівий вказівний"], ["и", "Лівий вказівний"],
         ["р", "Правий вказівний"], ["н", "Правий вказівний"], ["т", "Правий вказівний"],
-        ["о", "Правий середній"], ["г", "Правий середній"], ["ь", "Правий середній"],
-        ["л", "Правий безіменний"], ["ш", "Правий безіменний"], ["б", "Правий безіменний"],
-        ["д", "Правий мізинець"], ["щ", "Правий мізинець"], ["ю", "Правий мізинець"],
+        ["о", "Правий вказівний"], ["г", "Правий вказівний"], ["ь", "Правий вказівний"],
+        ["л", "Правий середній"], ["ш", "Правий середній"], ["б", "Правий середній"],
+        ["д", "Правий безіменний"], ["щ", "Правий безіменний"], ["ю", "Правий безіменний"],
+        [" ", "Великий палець"],
         ["ж", "Правий мізинець"], ["з", "Правий мізинець"], ["х", "Правий мізинець"], ["ї", "Правий мізинець"], ["є", "Правий мізинець"]
     ]);
 
@@ -369,30 +400,24 @@
 
     // ---------- target creation ----------
     function makeTarget(levelDef) {
-        const baseSpeed = 68; // px/s at level 1
+        const baseSpeed = 150; // px/s at level 1
         const sp = baseSpeed * Math.pow(1.05, state.level - 1);
-
-        const lanes = [70, 120, 170, 220];
-        const y = pick(lanes);
-
-        let text = "а";
+        const y = pick(LANES);
+        let text = "";
         const chars = levelDef.chars;
+        const allowedWords = getWordsForChars(chars);
+        const allowedSentences = getSentencesForChars(chars);
 
         if (levelDef.mode === "letters") {
             text = chars[(Math.random() * chars.length) | 0];
         } else if (levelDef.mode === "words") {
-            let tries = 0;
-            while (tries++ < 30) {
-                const w = pick(WORDS);
-                if ([...w].every(c => chars.includes(c))) { text = w; break; }
-            }
-            if (!text) text = chars[(Math.random() * chars.length) | 0];
+            text = allowedWords.length ? pick(allowedWords) : chars[(Math.random() * chars.length) | 0];
         } else if (levelDef.mode === "sent") {
-            text = pick(SENTENCES);
+            text = allowedSentences.length ? pick(allowedSentences) : chars[(Math.random() * chars.length) | 0];
         } else { // mixed
             const r = Math.random();
-            if (r < 0.55) text = pick(SENTENCES);
-            else if (r < 0.93) text = pick(WORDS);
+            if (r < 0.52 && allowedSentences.length) text = pick(allowedSentences);
+            else if (r < 0.90 && allowedWords.length) text = pick(allowedWords);
             else text = pick(["1", "2", "3", "4", "5", "!", "?"]);
         }
 
@@ -417,7 +442,7 @@
 
         while (spawnIfNeeded.acc > rate) {
             spawnIfNeeded.acc -= rate;
-            const limit = (levelDef.mode === "letters" ? 4 : 3);
+            const limit = (levelDef.mode === "letters" ? 6 : (levelDef.mode === "words" ? 5 : 4));
             if (state.targets.length < limit) state.targets.push(makeTarget(levelDef));
         }
     }
@@ -490,20 +515,23 @@
         ctx.fillRect(0, 0, VW, VH);
 
         ctx.fillStyle = "rgba(0,0,0,.25)";
-        ctx.fillRect(0, 248, VW, 52);
+        ctx.fillRect(0, VH - 52, VW, 52);
 
         ctx.strokeStyle = "rgba(255,255,255,.08)";
         ctx.lineWidth = 3;
-        for (let i = 0; i < 5; i++) {
+        const colGap = 110;
+        const colCount = Math.ceil(VW / colGap) + 1;
+        for (let i = 0; i < colCount; i++) {
+            const x = i * colGap + 20;
             ctx.beginPath();
-            ctx.moveTo(i * 90 + 20, 0);
-            ctx.bezierCurveTo(i * 90 + 10, 70, i * 90 + 60, 140, i * 90 + 30, 220);
+            ctx.moveTo(x, 0);
+            ctx.bezierCurveTo(x - 10, 70, x + 40, 140, x + 10, 220);
             ctx.stroke();
         }
 
         ctx.fillStyle = "rgba(255,255,255,.06)";
         ctx.fillRect(18, 40, 10, 200);
-        ctx.fillRect(372, 30, 10, 210);
+        ctx.fillRect(VW - 28, 30, 10, 210);
 
         ctx.restore();
     }
@@ -564,7 +592,7 @@
         ctx.save();
         ctx.strokeStyle = "rgba(255,255,255,.06)";
         ctx.lineWidth = 2;
-        [70, 120, 170, 220].forEach(y => {
+        LANES.forEach(y => {
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(VW, y);
@@ -665,9 +693,9 @@
 
     // ---------- UI hearts/stars ----------
     function setHeartsByErrors() {
-        const left = clamp(3 - Math.floor(state.errors / 4), 0, 3);
+        const left = clamp(HEARTS_MAX - Math.floor(state.errors / ERRORS_PER_HEART), 0, HEARTS_MAX);
         heartsHost.innerHTML = "";
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < HEARTS_MAX; i++) {
             const s = document.createElement("span");
             s.textContent = i < left ? "❤️" : "🖤";
             heartsHost.appendChild(s);
@@ -681,6 +709,13 @@
             s.textContent = i < n ? "⭐" : "✦";
             starsHost.appendChild(s);
         }
+    }
+
+    function checkOutOfHearts() {
+        if (state.errors < MAX_ERRORS) return false;
+        state.timeLeft = 0;
+        finishRound(true);
+        return true;
     }
 
     // ---------- stats ----------
@@ -766,9 +801,9 @@
             state.streak++;
             if (state.streak > 0 && state.streak % 10 === 0) {
                 state.mult = 2;
-                state.stars += 2;
+                state.stars += 2 * state.mult;
                 beep("bonus");
-                confetti(200, 70);
+                confetti(VW / 2, 70);
                 showToast("🔥 Стрик 10! x2 бонус");
             }
 
@@ -777,7 +812,7 @@
                 burst(bx, t.y, true);
                 confetti(bx, t.y);
                 beep("hit");
-                state.stars += (t.text.length === 1 ? 1 : 2);
+                state.stars += (t.text.length === 1 ? 1 : 2) * state.mult;
 
                 state.catVy = -320;
 
@@ -785,8 +820,6 @@
                 state.targets = state.targets.filter(x => x.id !== t.id);
                 // unlock lock
                 state.lockId = null;
-
-                if (state.streak % 10 !== 0) state.mult = 1;
             } else {
                 beep("click");
             }
@@ -807,6 +840,7 @@
             burst(clamp(t.x, 40, VW - 40), t.y, false);
             setHeartsByErrors();
             streakText.textContent = "0";
+            if (checkOutOfHearts()) return;
 
             // if locked and you fail: unlock to reduce frustration
             state.lockId = null;
@@ -836,7 +870,7 @@
 
     // ---------- round control ----------
     function reqLineForLevel(levelDef) {
-        return `Вимоги: точність ≥ ${levelDef.acc}% • швидкість ≥ ${levelDef.wpm} WPM • режим: ${levelDef.mode.toUpperCase()}`;
+        return `Вимоги: точність ≥ ${levelDef.acc}% • швидкість ≥ ${levelDef.wpm} WPM • режим: ${MODE_LABEL[levelDef.mode] || levelDef.mode}`;
     }
 
     function setLevel(n) {
@@ -914,7 +948,7 @@
         }, 1000);
     }
 
-    function finishRound() {
+    function finishRound(forceFail = false) {
         state.running = false;
         state.paused = false;
 
@@ -922,7 +956,7 @@
         const minutes = ROUND_SECONDS / 60;
         const wpm = Math.round((state.correctChars / 5) / minutes);
         const acc = state.totalKeys > 0 ? Math.round((state.correctKeys / state.totalKeys) * 100) : 100;
-        const pass = (acc >= def.acc) && (wpm >= def.wpm);
+        const pass = !forceFail && (acc >= def.acc) && (wpm >= def.wpm);
 
         if (wpm > profile.bestWpm) {
             profile.bestWpm = wpm;
@@ -937,7 +971,7 @@
             ovBody.innerHTML =
                 `Результат: <b>${wpm} WPM</b>, точність: <b>${acc}%</b>.<br/>` +
                 `Котик каже: <b>Блискуче!</b> Наступний рівень — автоматично 🚀`;
-            confetti(200, 90);
+            confetti(VW / 2, 90);
             beep("level");
 
             if (state.level < 12) {
@@ -951,9 +985,15 @@
             }
         } else {
             ovTitle.textContent = "🟡 Спробуй ще раз!";
-            ovBody.innerHTML =
-                `Результат: <b>${wpm} WPM</b>, точність: <b>${acc}%</b>.<br/>` +
-                `Котик каже: <b>Без стресу</b> — ще одна спроба і буде супер 💪`;
+            if (forceFail) {
+                ovBody.innerHTML =
+                    `Сердечка закінчилися. Результат: <b>${wpm} WPM</b>, точність: <b>${acc}%</b>.<br/>` +
+                    `Котик каже: <b>Видихни</b> і спробуй ще раз 💪`;
+            } else {
+                ovBody.innerHTML =
+                    `Результат: <b>${wpm} WPM</b>, точність: <b>${acc}%</b>.<br/>` +
+                    `Котик каже: <b>Без стресу</b> — ще одна спроба і буде супер 💪`;
+            }
             beep("miss");
             btnNext.disabled = true;
             reqText.textContent = reqLineForLevel(def);
@@ -1069,7 +1109,7 @@
             const tg = state.targets[i];
             tg.x -= tg.speed * dt;
 
-            if (tg.x < -40) {
+            if (tg.x < -120) {
                 if (tg.typed < tg.text.length) {
                     tg.miss = true;
                     state.errors++;
@@ -1080,6 +1120,7 @@
                     beep("miss");
                     burst(60, tg.y, false);
                     state.shakeT = 0.14;
+                    if (checkOutOfHearts()) return;
                 }
                 state.targets.splice(i, 1);
             }

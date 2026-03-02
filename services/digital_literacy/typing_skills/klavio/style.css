@@ -5,12 +5,17 @@
 :root {
   color-scheme: light dark;
   --bg:       #E6EEF7;
-  --surface:  #FFFFFF;
+  --surface:  #EEF3FB;
   --surface-2:#F5F8FC;
   --border:   #1E2436;
   --bw:       2.5px;
   --text:     #151B2D;
   --muted:    #6A7286;
+  --surface-header: #DCE6F4;
+  --surface-button: #E8EEF8;
+  --surface-button-hover: #DDE8F8;
+  --surface-button-active: #CFE3FF;
+  --surface-icon: #E1E9F7;
 
   --c-pinky:  #FF4E75;
   --c-ring:   #F29A3A;
@@ -34,13 +39,18 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
+:root:not([data-theme]) {
     --bg:       #131A24;
     --surface:  #1D2634;
     --surface-2:#202C3D;
     --border:   #C9D3E5;
     --text:     #ECF2FF;
     --muted:    #A8B4C9;
+    --surface-header: #1D2634;
+    --surface-button: #202C3D;
+    --surface-button-hover: #263246;
+    --surface-button-active: #31425D;
+    --surface-icon: #243146;
 
     --c-pinky:  #FF6A90;
     --c-ring:   #FFAE58;
@@ -63,6 +73,11 @@
   --border:   #C9D3E5;
   --text:     #ECF2FF;
   --muted:    #A8B4C9;
+  --surface-header: #1D2634;
+  --surface-button: #202C3D;
+  --surface-button-hover: #263246;
+  --surface-button-active: #31425D;
+  --surface-icon: #243146;
 
   --c-pinky:  #FF6A90;
   --c-ring:   #FFAE58;
@@ -118,9 +133,37 @@ body::after {
   position: relative; z-index: 10;
   display: flex; align-items: center; justify-content: space-between;
   padding: 11px 24px;
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0) 42%),
+    var(--surface-header);
   border-bottom: var(--bw) solid var(--border);
   box-shadow: 0 4px 0 var(--border);
+  overflow: hidden;
+  isolation: isolate;
+}
+.app-header > * {
+  position: relative;
+  z-index: 1;
+}
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.38;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(30,36,54,0.075) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(0deg, rgba(30,36,54,0.06) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(-35deg, rgba(30,36,54,0.045) 0 2px, transparent 2px 11px);
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0) 36%),
+    radial-gradient(120% 70% at 50% -30%, rgba(255,255,255,0.3) 0%, transparent 65%);
 }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo-icon { font-size: 1.65rem; color: var(--border); }
@@ -131,27 +174,33 @@ body::after {
   font-family: var(--f-ui); font-size: 1rem; font-weight: 800;
   min-height: 44px;
   padding: 9px 18px; border-radius: var(--r-xl);
-  border: var(--bw) solid var(--border); background: var(--surface-2); color: var(--border);
+  border: var(--bw) solid var(--border); background: var(--surface-button); color: var(--border);
   cursor: pointer; box-shadow: var(--sh3);
   transition: transform 0.08s, box-shadow 0.08s, background 0.12s;
   user-select: none; white-space: nowrap;
   display: inline-flex; gap: 8px; align-items: center; justify-content: center;
   line-height: 1;
 }
-.nav-btn:hover  { background: #DFF0FF; transform: translate(-1px,-1px); box-shadow: var(--sh5); }
+.nav-btn:hover  { background: var(--surface-button-hover); transform: translate(-1px,-1px); box-shadow: var(--sh5); }
 .nav-btn:active { transform: translate(2px,2px); box-shadow: none; }
 .nav-btn.icon-btn { width: 44px; min-width: 44px; padding: 0; }
+.nav-btn.icon-btn {
+  background: var(--surface-icon);
+}
+.nav-btn.icon-btn:hover {
+  background: var(--surface-button-active);
+}
 .nav-btn:focus-visible {
   outline: 3px solid var(--c-index2);
   outline-offset: 2px;
 }
 
 .difficulty-toggle {
-  background: #DFF0FF;
-  border-color: var(--c-index2);
-  box-shadow: 3px 3px 0 var(--c-index2);
+  background: #CFE3FF;
+  border-color: #2E9FD6;
+  box-shadow: 3px 3px 0 #2E9FD6;
 }
-.difficulty-toggle:hover { background: #C8E8FF; color: var(--border); }
+.difficulty-toggle:hover { background: #BBD8FA; color: var(--border); }
 
 /* ================================================================
    STATS STRIP
@@ -160,6 +209,8 @@ body::after {
   position: relative; z-index: 5;
   display: flex; justify-content: center; gap: 10px;
   padding: 10px 20px 6px; flex-wrap: wrap;
+  background:
+    linear-gradient(95deg, rgba(126,176,230,0.10) 0%, rgba(243,214,111,0.08) 100%);
 }
 .stat-pill {
   display: flex; align-items: center; gap: 8px;
@@ -585,13 +636,13 @@ body.hand-debug .finger-name-badge {
 }
 
 .btn-danger {
-  background: #FFB1A9;
-  border-color: #B94836;
-  color: #3C130E;
-  box-shadow: 3px 3px 0 #B94836;
+  background: #F3D66F;
+  border-color: #B48712;
+  color: #2F2306;
+  box-shadow: 3px 3px 0 #B48712;
 }
 .btn-danger:hover {
-  background: #FFA095;
+  background: #F8DF85;
 }
 
 .lesson-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
@@ -690,6 +741,17 @@ body.hand-debug .finger-name-badge {
 .btn-retry:hover  { background: #E8EEF8; transform: translate(-2px,-2px); box-shadow: var(--sh7); }
 .btn-retry:active { transform: translate(3px,3px); box-shadow: none; }
 
+/* Keep destructive confirm CTA legible when .btn-danger is combined with .btn-next */
+.btn-next.btn-danger {
+  background: #F3D66F;
+  border-color: #B48712;
+  color: #2F2306;
+  box-shadow: 3px 3px 0 #B48712;
+}
+.btn-next.btn-danger:hover {
+  background: #F8DF85;
+}
+
 /* ================================================================
    TOAST
    ================================================================ */
@@ -776,6 +838,16 @@ body.hand-debug .finger-name-badge {
   box-shadow: 0 3px 0 rgba(0,0,0,0.22), var(--sh5), 0 0 0 3px rgba(255,255,255,0.4) !important;
 }
 :root[data-theme='dark'] .text-display-card::after { background: rgba(255,255,255,0.16); }
+:root[data-theme='dark'] .modal-box.modal-onboarding .btn-next {
+  background: #F1D971;
+  border-color: #E7EDF9;
+  color: #1A2232;
+  box-shadow: 3px 3px 0 rgba(9, 14, 24, 0.55);
+}
+:root[data-theme='dark'] .modal-box.modal-onboarding .btn-next:hover {
+  background: #F7E08A;
+  color: #121A28;
+}
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .difficulty-toggle {
@@ -851,6 +923,16 @@ body.hand-debug .finger-name-badge {
     box-shadow: 0 3px 0 rgba(0,0,0,0.22), var(--sh5), 0 0 0 3px rgba(255,255,255,0.4) !important;
   }
   :root:not([data-theme]) .text-display-card::after { background: rgba(255,255,255,0.16); }
+  :root:not([data-theme]) .modal-box.modal-onboarding .btn-next {
+    background: #F1D971;
+    border-color: #E7EDF9;
+    color: #1A2232;
+    box-shadow: 3px 3px 0 rgba(9, 14, 24, 0.55);
+  }
+  :root:not([data-theme]) .modal-box.modal-onboarding .btn-next:hover {
+    background: #F7E08A;
+    color: #121A28;
+  }
 }
 
 /* ================================================================
