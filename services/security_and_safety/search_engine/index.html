@@ -6,20 +6,36 @@
     <title>Шукарик | Вивчаємо пошукові системи</title>
     <link rel="stylesheet" href="style.css" />
 
-        <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <!-- Analytics (can be disabled with ?noTrack=1 or localStorage.trackingConsent='denied') -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-N8T05K3NGT');
-    </script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const trackingDenied =
+          params.get("noTrack") === "1" ||
+          localStorage.getItem("trackingConsent") === "denied";
+        if (trackingDenied) return;
 
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script async src="https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js"></script>
-    <script>
-      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-      plausible.init()
+        const ga = document.createElement("script");
+        ga.async = true;
+        ga.src = "https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT";
+        document.head.appendChild(ga);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", "G-N8T05K3NGT");
+
+        const plausibleScript = document.createElement("script");
+        plausibleScript.async = true;
+        plausibleScript.src = "https://plausible.io/js/pa-kBgdFkemKx0WM6VJQvasn.js";
+        document.head.appendChild(plausibleScript);
+        window.plausible =
+          window.plausible ||
+          function () {
+            (window.plausible.q = window.plausible.q || []).push(arguments);
+          };
+      })();
     </script>
     
   </head>
@@ -104,10 +120,10 @@
           <button
             class="search-btn"
             id="luckyBtn"
-            aria-label="Мені пощастить"
+            aria-label="Швидкий перехід"
             tabindex="0"
           >
-            Мені пощастить
+            Швидкий перехід
           </button>
           <span class="hint-container">
             <span
@@ -133,6 +149,14 @@
             tabindex="0"
           >
             ← Назад
+          </button>
+          <button
+            class="back-btn compare-btn"
+            id="compareModeBtn"
+            aria-label="Порівняти класичний і ШІ пошук"
+            tabindex="0"
+          >
+            Класичний vs ШІ
           </button>
         </div>
       </section>
@@ -173,7 +197,96 @@
             >
           </span>
         </div>
+        <div class="results-notice" id="resultsNotice" aria-live="polite"></div>
         <div id="resultsContent"></div>
+        <section
+          class="fact-check-panel"
+          id="factCheckPanel"
+          aria-label="Панель перевірки фактів"
+          hidden
+        >
+          <h3>Перевірка фактів: правило 3 незалежних джерел</h3>
+          <p id="riskWarning" class="risk-warning" hidden>
+            Увага: це потенційно ризикова тема (здоров'я, фінанси або право).
+            Не приймайте рішення без перевірки у надійних джерелах та
+            консультації з фахівцем.
+          </p>
+          <p>
+            Підтвердіть, що перевірили інформацію щонайменше у
+            <strong>трьох незалежних джерелах</strong>.
+          </p>
+          <p>
+            Незалежні джерела — це не передруки однієї новини, а різні сайти з
+            власною перевіркою фактів. За можливості знайдіть першоджерело:
+            офіційний документ, статистику або наукову публікацію.
+          </p>
+          <p class="source-counter">
+            Незалежні джерела: <span id="independentSourcesCount">0</span>/3
+          </p>
+          <div class="fact-check-list" id="factCheckChecklist">
+            <label>
+              <input
+                type="checkbox"
+                class="fact-check-input independent-source-check"
+              />
+              Джерело 1: офіційний сайт / профільна організація
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                class="fact-check-input independent-source-check"
+              />
+              Джерело 2: незалежне медіа / енциклопедія
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                class="fact-check-input independent-source-check"
+              />
+              Джерело 3: ще одне незалежне джерело
+            </label>
+            <label>
+              <input type="checkbox" class="fact-check-input" />
+              Я перевірив(ла) дату публікації та актуальність.
+            </label>
+            <label>
+              <input type="checkbox" class="fact-check-input" />
+              Твердження в різних джерелах не суперечать одне одному.
+            </label>
+          </div>
+          <button class="lesson-btn" id="runFactCheckBtn" type="button">
+            Завершити перевірку
+          </button>
+          <p id="factCheckFeedback" class="fact-check-feedback"></p>
+        </section>
+        <section
+          class="compare-panel"
+          id="comparePanel"
+          aria-label="Порівняння класичного та ШІ пошуку"
+          hidden
+        >
+          <h3>Лабораторія: Класичний vs ШІ</h3>
+          <p>
+            Створіть два запити на одну тему: короткий для класичного пошуку і
+            розгорнутий для ШІ.
+          </p>
+          <label for="classicQueryInput">Класичний запит (ключові слова)</label>
+          <input
+            type="text"
+            id="classicQueryInput"
+            placeholder="вплив цукру на здоров'я дітей дослідження"
+          />
+          <label for="aiPromptInput">ШІ-запит (розгорнутий)</label>
+          <textarea
+            id="aiPromptInput"
+            rows="4"
+            placeholder="Поясни простими словами, як надмірне споживання цукру впливає на дітей, і дай список джерел."
+          ></textarea>
+          <button class="lesson-btn" id="evaluateCompareBtn" type="button">
+            Оцінити запити
+          </button>
+          <p id="compareFeedback" class="compare-feedback"></p>
+        </section>
       </section>
 
       <div
@@ -211,7 +324,7 @@
         <ul>
           <li>Адресний рядок (де знаходиться?)</li>
           <li>Пошуковий рядок (у чому різниця?)</li>
-          <li>Кнопку пошуку та "Мені пощастить"</li>
+          <li>Кнопку пошуку та "Швидкий перехід"</li>
         </ul>
         <p>Натискайте на значки "?" для підказок.</p>
       </div>
@@ -264,8 +377,8 @@
           розгорнуті, розмовні запитання.
         </p>
         <p>
-          <strong>"Мені пощастить":</strong> Кнопка, яка намагається одразу
-          відкрити найімовірніший результат, минаючи сторінку зі списком.
+          <strong>"Швидкий перехід":</strong> Кнопка, яка намагається одразу
+          відкрити найрелевантніший результат, минаючи сторінку зі списком.
         </p>
       </div>
       <div class="task-card safe-search-links">
@@ -319,12 +432,13 @@
         <option value="addressBar">1. Адресний рядок</option>
         <option value="searchBox">2. Пошуковий рядок</option>
         <option value="keywords">3. Ключові слова</option>
-        <option value="luckyButton">3.1. Кнопка "Мені пощастить"</option>
+        <option value="luckyButton">3.1. Швидкий перехід</option>
         <option value="results">4. Аналіз результатів</option>
         <option value="classicSearch">
           4.1. Класичний пошук: Основа основ
         </option>
         <option value="aiSearch">5. ШІ-пошук: Нова ера</option>
+        <option value="miniQuiz">6. Мініквіз: Перевір себе</option>
       </select>
       <button
         class="lesson-btn"
@@ -387,8 +501,8 @@
       <div class="tooltip" id="searchBtnTip" role="tooltip">
         Натисніть <strong>"Шукати"</strong> (або Enter на клавіатурі) після
         введення запиту, щоб побачити список результатів. Кнопка
-        <strong>"Мені пощастить"</strong> спробує одразу відкрити найпершу,
-        найбільш підходящу сторінку.
+        <strong>"Швидкий перехід"</strong> спробує одразу відкрити найпершу,
+        найбільш релевантну сторінку.
       </div>
 
       <div class="tooltip" id="resultsHeaderTip" role="tooltip">
@@ -409,16 +523,16 @@
         <p><strong>Структура пошукового результату:</strong></p>
         <ul>
           <li>
-            <strong>Заголовок</strong> (синій текст) - назва веб-сторінки, яка
+            <strong>Заголовок</strong> - назва веб-сторінки, яка
             дає загальне уявлення про її вміст
           </li>
           <li>
-            <strong>Посилання</strong> (зелений текст) - веб-адреса сторінки,
-            допомагає оцінити релевантність та надійність сайту
+            <strong>Посилання</strong> - веб-адреса сторінки (домен і шлях),
+            що допомагає оцінити релевантність та тип сайту
           </li>
           <li>
-            <strong>Опис</strong> (сірий текст) - короткий фрагмент зі сторінки,
-            де виділені ваші ключові слова
+            <strong>Опис</strong> - короткий фрагмент зі сторінки, де часто
+            виділені ваші ключові слова
           </li>
         </ul>
         <p>

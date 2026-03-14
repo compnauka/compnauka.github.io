@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klavio - Тренажер фортепіано</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="topbar">
+            <h1 class="brand">Klavio</h1>
+            <div class="mode-tabs" role="tablist" aria-label="Режими">
+                <button id="mode-free" class="tab-btn active">Вільна гра</button>
+                <button id="mode-train" class="tab-btn">Тренування</button>
+                <button id="mode-dictation" class="tab-btn">Диктант</button>
+            </div>
+        </header>
+
+        <section id="learning-panel" class="card hidden">
+            <div class="control-grid">
+                <div class="control-item">
+                    <label for="module-select">Модуль</label>
+                    <select id="module-select">
+                        <option value="1">1. Орієнтація на клавіатурі</option>
+                        <option value="2">2. Ноти на нотному стані</option>
+                        <option value="3">3. Послідовності нот</option>
+                        <option value="4">4. Розширення діапазону</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="label-mode">Підписи клавіш</label>
+                    <select id="label-mode">
+                        <option value="all">Всі підписи</option>
+                        <option value="c-only">Тільки C</option>
+                        <option value="none">Без підписів</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="accidental-mode">Дієзи / бемолі</label>
+                    <select id="accidental-mode">
+                        <option value="sharp">Дієзи</option>
+                        <option value="flat">Бемолі</option>
+                        <option value="both">Обидва</option>
+                    </select>
+                </div>
+                <div class="control-actions">
+                    <button id="session-btn" class="primary-btn">Почати сесію</button>
+                    <button id="skip-btn" class="ghost-btn">Пропустити</button>
+                </div>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-title">Прогрес</div>
+                    <div id="progress-main" class="status-main">0 / 0</div>
+                    <div id="progress-sub" class="status-sub">Точність: 0%</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-title">Рівень</div>
+                    <div id="level-main" class="status-main">1 нота</div>
+                    <div id="level-sub" class="status-sub">Оцінка за останні 10 завдань</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-title">Час реакції</div>
+                    <div id="reaction-main" class="status-main">0.0 с</div>
+                    <div id="reaction-sub" class="status-sub">Середнє за сесію</div>
+                </div>
+            </div>
+
+            <div class="staff-wrap">
+                <svg id="staff-svg" width="100%" height="240" viewBox="0 0 460 240" aria-label="Нотний стан">
+                    <line x1="50" y1="70" x2="420" y2="70" stroke="#334155" stroke-width="1.5" />
+                    <line x1="50" y1="90" x2="420" y2="90" stroke="#334155" stroke-width="1.5" />
+                    <line x1="50" y1="110" x2="420" y2="110" stroke="#334155" stroke-width="1.5" />
+                    <line x1="50" y1="130" x2="420" y2="130" stroke="#334155" stroke-width="1.5" />
+                    <line x1="50" y1="150" x2="420" y2="150" stroke="#334155" stroke-width="1.5" />
+                    <text x="55" y="140" font-size="84" font-family="serif" fill="#334155">&#119070;</text>
+                    <g id="note-group"></g>
+                    <text id="sequence-arrow" x="230" y="190" text-anchor="middle" class="arrow-text hidden">← грай зліва направо →</text>
+                </svg>
+            </div>
+
+            <p id="coach-message" class="coach-message">Обери модуль і натисни "Почати сесію".</p>
+            <p id="label-tip" class="label-tip hidden">Порада: після Модуля 1 переходь на режим "Тільки C" або "Без підписів".</p>
+        </section>
+
+        <section id="dictation-panel" class="card hidden">
+            <div class="dictation-actions">
+                <button id="dictation-start" class="primary-btn">Почати диктант</button>
+                <button id="dictation-replay" class="ghost-btn">Повторити звук</button>
+            </div>
+            <p id="dictation-message" class="coach-message">Тренажер зіграє ноту. Знайди її на клавіатурі на слух.</p>
+        </section>
+
+        <section class="stats card">
+            <h2>Статистика</h2>
+            <div id="last20-chart" class="chart" aria-label="Останні 20 завдань"></div>
+            <div id="weak-notes" class="weak-notes">Проблемні ноти: -</div>
+            <div id="per-note-stats" class="per-note-stats"></div>
+        </section>
+
+        <section class="keyboard card">
+            <div class="keyboard-help">
+                <span>Комп'ютерна клавіатура: Z X C V B N M (нижня октава), A S D F G H J та W E T Y U</span>
+            </div>
+            <div class="piano-wrapper">
+                <div id="keyboard" class="piano-keyboard"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./script.js"></script>
+</body>
+</html>

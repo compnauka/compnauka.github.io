@@ -16,6 +16,19 @@ const searchButtonsContainer = document.getElementById(
 );
 const backButtonContainer = document.getElementById("backButtonContainer");
 const backBtn = document.getElementById("backBtn");
+const compareModeBtn = document.getElementById("compareModeBtn");
+const resultsNotice = document.getElementById("resultsNotice");
+const factCheckPanel = document.getElementById("factCheckPanel");
+const riskWarning = document.getElementById("riskWarning");
+const independentSourcesCount = document.getElementById("independentSourcesCount");
+const factCheckChecklist = document.getElementById("factCheckChecklist");
+const runFactCheckBtn = document.getElementById("runFactCheckBtn");
+const factCheckFeedback = document.getElementById("factCheckFeedback");
+const comparePanel = document.getElementById("comparePanel");
+const classicQueryInput = document.getElementById("classicQueryInput");
+const aiPromptInput = document.getElementById("aiPromptInput");
+const evaluateCompareBtn = document.getElementById("evaluateCompareBtn");
+const compareFeedback = document.getElementById("compareFeedback");
 
 const addressBarHostPathEl = document.getElementById("addressBarHostPath");
 
@@ -31,6 +44,8 @@ const helpToggle = document.getElementById("helpToggle");
 const helpPanel = document.getElementById("helpPanel");
 
 const BASE_URL = "https://shukaryk.fun";
+const RISKY_QUERY_PATTERN =
+  /(лікуван|симптом|хвороб|діагноз|таблет|кредит|позик|інвестиц|акці|подат|закон|суд|адвокат)/i;
 
 // ---- Дані для симуляції результатів пошуку ----
 const searchResultsData = {
@@ -194,28 +209,18 @@ function showTooltip(icon, tooltip) {
         opacity: 1 !important;
     `;
 
-  console.log(`🌟 Толтіп розміщено: ${position}`, { top, left, transform });
 }
 
 function toggleTooltip(id) {
-  console.log("🔔 toggleTooltip викликано для", id);
-
   const tooltip = document.getElementById(id);
 
   if (!tooltip) {
-    console.error("⚠️ Не знайдено tooltip елемент з id:", id);
     return;
   }
 
   // Перевіряємо поточний стан (видимий/невидимий)
   const computedStyle = window.getComputedStyle(tooltip);
   const isVisible = computedStyle.display !== "none";
-
-  console.log(
-    "🔍 Поточний computed style:",
-    computedStyle.display,
-    isVisible ? "Видимий" : "Невидимий"
-  );
 
   // Закриваємо всі інші tooltip
   document.querySelectorAll(".tooltip").forEach((tip) => {
@@ -227,23 +232,18 @@ function toggleTooltip(id) {
 
   // Отримуємо іконку, пов'язану з цим tooltip
   const icon = document.querySelector(`[data-tooltip-id='${id}']`);
-  if (!icon) {
-    console.warn("⚠️ Не знайдено іконку для tooltip:", id);
-  }
 
   // Якщо tooltip видимий - ховаємо його
   if (isVisible) {
     tooltip.style.cssText = "display: none !important;";
     tooltip.setAttribute("aria-hidden", "true");
     if (icon) icon.setAttribute("aria-expanded", "false");
-    console.log("📚 Сховано tooltip:", id);
   }
   // Якщо невидимий - показуємо його
   else {
     // Спочатку встановлюємо display:block, а потім позиціонуємо
     tooltip.setAttribute("aria-hidden", "false");
     if (icon) icon.setAttribute("aria-expanded", "true");
-    console.log("📝 Показуємо tooltip:", id);
 
     // Показуємо з невеликим таймаутом, щоб DOM оновився
     setTimeout(() => {
@@ -275,7 +275,6 @@ function toggleTooltip(id) {
                       window.innerWidth - 20
                     )}px !important;
                 `;
-        console.log("🔎 Спеціальне позиціонування для searchBoxTip");
       }
       // Для всіх інших підказок використовуємо звичайне позиціонування
       else if (icon) {
@@ -342,16 +341,58 @@ document.addEventListener("click", function (event) {
   }
 });
 
+function setResultsNotice(message, variant = "info") {
+  if (!resultsNotice) return;
+  if (!message) {
+    resultsNotice.style.display = "none";
+    resultsNotice.textContent = "";
+    return;
+  }
+  resultsNotice.style.display = "block";
+  resultsNotice.textContent = message;
+  resultsNotice.dataset.variant = variant;
+}
+
+function resetFactCheckPanel(isRisky) {
+  if (!factCheckPanel || !factCheckChecklist) return;
+
+  factCheckPanel.hidden = false;
+  riskWarning.hidden = !isRisky;
+  factCheckFeedback.textContent = "";
+  independentSourcesCount.textContent = "0";
+
+  factCheckChecklist
+    .querySelectorAll("input[type='checkbox']")
+    .forEach((input) => (input.checked = false));
+}
+
+function getIndependentSourcesCheckedCount() {
+  if (!factCheckChecklist) return 0;
+  return factCheckChecklist.querySelectorAll(
+    ".independent-source-check:checked"
+  ).length;
+}
+
+function updateIndependentSourcesCounter() {
+  independentSourcesCount.textContent = String(getIndependentSourcesCheckedCount());
+}
+
+function hideLearningPanels() {
+  factCheckPanel.hidden = true;
+  comparePanel.hidden = true;
+}
+
 // ---- Основна функція пошуку ----
 function performSearch(isLucky = false) {
   const query = searchBox.value.trim().toLowerCase(); // Залишаємо toLowerCase для ключів в searchResultsData
   const originalQuery = searchBox.value.trim(); // Зберігаємо оригінальний запит для відображення
 
   if (!query && isLucky) {
-    alert("Будь ласка, введіть запит, щоб спробувати 'Мені пощастить'!");
+    setResultsNotice("Введіть запит, щоб скористатися режимом швидкого переходу.");
     return;
   }
   if (!query && !isLucky) {
+    setResultsNotice("");
     return;
   }
 
@@ -370,20 +411,29 @@ function performSearch(isLucky = false) {
   // Приховуємо кнопки пошуку і показуємо кнопку "Назад"
   searchButtonsContainer.style.display = "none";
   backButtonContainer.style.display = "flex";
+  hideLearningPanels();
 
   resultsContent.innerHTML = "";
-  const results = searchResultsData[query] || searchResultsData["default"]; // Пошук за нормалізованим запитом
+  const resultKey =
+    Object.keys(searchResultsData).find(
+      (key) =>
+        key !== "default" && (query.includes(key) || key.includes(query))
+    ) || "default";
+  const results = searchResultsData[resultKey];
 
   resultsCountEl.textContent = results.length.toLocaleString("uk-UA");
   searchTimeEl.textContent = (Math.random() * 0.4 + 0.15).toFixed(2);
 
   if (isLucky && results.length > 0) {
-    alert(
-      `Мені пощастить! Симуляція переходу на сторінку:\n"${results[0].title}"\nURL: ${results[0].url}`
+    setResultsNotice(
+      `Режим "Швидкий перехід": система відкриває перший релевантний результат. Тут показано: ${results[0].title}.`
     );
+  } else {
+    setResultsNotice("Порівняйте результати та перевірте факти перед висновками.");
   }
 
   displayResults(results, originalQuery); // Передаємо оригінальний запит для підсвічування
+  resetFactCheckPanel(RISKY_QUERY_PATTERN.test(originalQuery));
 
   if (!isLucky || results.length === 0) {
     resultsContainer.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -398,27 +448,25 @@ function displayResults(resultsToDisplay, originalQuery) {
     const resultItem = document.createElement("div");
     resultItem.className = "result-item";
 
-    const resultTitle = document.createElement("div");
+    const resultTitle = document.createElement("a");
     resultTitle.className = "result-title";
     resultTitle.textContent = result.title;
-    resultTitle.tabIndex = 0;
-    resultTitle.setAttribute("role", "link");
+    resultTitle.href = result.url;
+    resultTitle.target = "_blank";
+    resultTitle.rel = "noopener noreferrer";
     const simulatedLinkAction = () => {
-      alert(
-        `Симуляція переходу на сторінку:\n"${result.title}"\nURL: ${result.url}\n\nУ реальному браузері ви б перейшли за цим посиланням.`
+      setResultsNotice(
+        `Відкрито джерело в новій вкладці: ${result.title}. Перевірте автора, дату і достовірність.`
       );
     };
     resultTitle.addEventListener("click", simulatedLinkAction);
-    resultTitle.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        simulatedLinkAction();
-      }
-    });
 
-    const resultUrl = document.createElement("div");
+    const resultUrl = document.createElement("a");
     resultUrl.className = "result-url";
     resultUrl.textContent = result.url;
+    resultUrl.href = result.url;
+    resultUrl.target = "_blank";
+    resultUrl.rel = "noopener noreferrer";
 
     const resultDesc = document.createElement("div");
     resultDesc.className = "result-description";
@@ -453,7 +501,7 @@ function displayResults(resultsToDisplay, originalQuery) {
 
 searchBtn.addEventListener("click", () => performSearch(false));
 luckyBtn.addEventListener("click", () => performSearch(true));
-searchBox.addEventListener("keypress", function (e) {
+searchBox.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
     e.preventDefault();
     performSearch(false);
@@ -471,6 +519,8 @@ backBtn.addEventListener("click", function () {
   // Показуємо кнопки пошуку і приховуємо кнопку "Назад"
   searchButtonsContainer.style.display = "flex";
   backButtonContainer.style.display = "none";
+  setResultsNotice("");
+  hideLearningPanels();
 
   // Повертаємо початкову URL
   if (addressBarHostPathEl) {
@@ -480,6 +530,79 @@ backBtn.addEventListener("click", function () {
     )}`;
   }
 });
+
+if (factCheckChecklist) {
+  factCheckChecklist.addEventListener("change", updateIndependentSourcesCounter);
+}
+
+if (runFactCheckBtn) {
+  runFactCheckBtn.addEventListener("click", function () {
+    const independentCount = getIndependentSourcesCheckedCount();
+    const totalChecked = factCheckChecklist.querySelectorAll(
+      "input[type='checkbox']:checked"
+    ).length;
+
+    if (independentCount < 3) {
+      factCheckFeedback.textContent =
+        "Потрібно щонайменше 3 незалежні джерела. Додайте ще джерела і перевірте повторно.";
+      return;
+    }
+
+    if (totalChecked < 5) {
+      factCheckFeedback.textContent =
+        "Майже готово: перевірте ще актуальність (дату) та відсутність суперечностей між джерелами.";
+      return;
+    }
+
+    factCheckFeedback.textContent =
+      "Перевірку завершено успішно. Ви застосували правило 3 незалежних джерел і базовий фактчек.";
+  });
+}
+
+if (compareModeBtn) {
+  compareModeBtn.addEventListener("click", function () {
+    comparePanel.hidden = false;
+    comparePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+if (evaluateCompareBtn) {
+  evaluateCompareBtn.addEventListener("click", function () {
+    const classicQuery = classicQueryInput.value.trim();
+    const aiPrompt = aiPromptInput.value.trim();
+
+    if (!classicQuery || !aiPrompt) {
+      compareFeedback.textContent =
+        "Заповніть класичний запит і ШІ-запит, щоб отримати оцінку.";
+      return;
+    }
+
+    const classicWords = classicQuery.split(/\s+/).filter(Boolean).length;
+    const aiWords = aiPrompt.split(/\s+/).filter(Boolean).length;
+    const hasSourceRequest = /(джерел|посилан|source|citation)/i.test(aiPrompt);
+
+    const notes = [];
+    if (classicWords >= 2 && classicWords <= 6) {
+      notes.push("Класичний запит виглядає достатньо конкретним.");
+    } else {
+      notes.push("Для класичного пошуку краще 2-6 точних слів або коротка фраза.");
+    }
+
+    if (aiWords >= 12) {
+      notes.push("ШІ-запит має достатній контекст.");
+    } else {
+      notes.push("Додайте більше контексту в ШІ-запит (мета, формат, обмеження).");
+    }
+
+    if (hasSourceRequest) {
+      notes.push("Добре: ви попросили ШІ вказати джерела.");
+    } else {
+      notes.push("Додайте до ШІ-запиту вимогу вказати джерела.");
+    }
+
+    compareFeedback.textContent = notes.join(" ");
+  });
+}
 
 // ---- Дані для навчальних модульів ----
 const lessons = {
@@ -500,13 +623,14 @@ const lessons = {
   <li><code>www.pravda.com.ua</code> — це <strong>доменне ім'я</strong>, тобто ім'я сайту.</li>
   <li><code>/news/2024/05/06/example-article/</code> — це <strong>шлях</strong> до конкретної сторінки чи статті на сайті.</li>
 </ul>
-<p><strong>ВАЖЛИВО:</strong> Адресний рядок — це не пошуковий рядок! Якщо ти напишеш "рецепт борщу" в адресному рядку, браузер спробує знайти сайт з такою адресою, а не шукатиме рецепти. Для пошуку є спеціальний рядок (про нього — у наступному модулі).</p>
+<p><strong>ВАЖЛИВО:</strong> У сучасних браузерах адресний рядок часто поєднаний з пошуком: він може і відкривати адреси сайтів, і надсилати пошукові запити. Різниця в намірі: коли вводиш URL (наприклад, <code>bbc.com</code>) — переходиш на сайт; коли вводиш запит ("рецепт борщу") — отримуєш результати пошуку.</p>
 <p><em>Завдання:</em> Подивись на адресний рядок зараз. Яка адреса там написана? (Підказка: це адреса нашого "Шукарика"!)</p>`,
   },
   searchBox: {
     title: "Модуль 2: Пошуковий рядок",
     content: `<p><strong>Пошуковий рядок</strong> — це спеціальне поле, куди ти можеш ввести слова або питання, щоб знайти інформацію в інтернеті.</p>
-<p><strong>Ключові слова</strong> — це головні слова твого питання. Наприклад, якщо ти хочеш дізнатися погоду, введи "погода Львів на завтра". Якщо шукаєш рецепт — "як приготувати піцу вдома". Якщо цікавить відома людина — "Тарас Шевченко біографія".</p>
+<p><strong>Ключові слова</strong> — це головні слова твого питання. Наприклад, якщо ти хочеш дізнатися погоду, введи "погода Львів завтра". Якщо шукаєш рецепт — "рецепт піци вдома". Якщо цікавить відома людина — "Тарас Шевченко біографія".</p>
+<p><strong>Порада:</strong> Не пиши занадто довге речення. Краще коротко: замість "Підкажіть будь ласка, яка завтра буде погода у Києві" пиши "погода Київ завтра".</p>
 <p>Після того, як ти написав свій запит і натиснув "Шукати" (або клавішу Enter), пошукова система шукає серед мільйонів сторінок і показує ті, які найкраще підходять до твого запиту.</p>
 <p><strong>Порада:</strong> Не бійся ставити питання, навіть якщо вони здаються простими!</p>
 <p><em>Завдання:</em> Спробуйте ввести в пошуковий рядок "Шукарика" запит "цікаві факти про котів" і натисніть "Шукати". Подивіться, що станеться.</p>`,
@@ -518,42 +642,41 @@ const lessons = {
                           <ul>
                               <li><strong>Будьте конкретними:</strong> Замість просто "машина", спробуйте "купити червоний легковий автомобіль Київ". Чим більше деталей, тим точніший результат.
                                   <br><em>Приклад з життя:</em> Якщо ви шукаєте інформацію про конкретну породу собаки, краще написати "особливості догляду за лабрадором", а не просто "собаки".</li>
-                              <li><strong>Використовуйте 2-4 ключових слова:</strong> Зазвичай цього достатньо. "Ремонт пральної машини Bosch Київ недорого" краще, ніж "ремонт".</li>
+                              <li><strong>Використовуйте 2-6 ключових слів:</strong> Зазвичай цього достатньо. "Ремонт пральної машини Bosch Київ" краще, ніж "ремонт".</li>
                               <li><strong>Подумайте, як би цю інформацію назвали інші:</strong> Які терміни використала б людина, яка створила сторінку з потрібною вам інформацією?
                                   <br><em>Приклад з життя:</em> Якщо у вас болить голова, ви можете шукати "причини головного болю", "як позбутися мігрені", "таблетки від голови".</li>
                               <li><strong>Не бійтеся використовувати запитання:</strong> "Скільки років тривала Друга світова війна?" або "Як видалити пляму від кави?".</li>
-                              <li><strong>Додавайте уточнення:</strong> Якщо шукаєте щось локальне, додайте місто ("кав'ярні центр Львова"). Якщо потрібна свіжа інформація – рік ("новини технологій 2024").</li>
+                              <li><strong>Додавайте уточнення:</strong> Якщо шукаєте щось локальне, додайте місто ("кав'ярні центр Львова"). Якщо потрібна свіжа інформація — додайте рік або період (наприклад, "новини технологій 2026").</li>
                           </ul>
                           <p><em>Завдання:</em> Уявіть, що ви хочете знайти рецепт вегетаріанської лазаньї, який підходить для початківців. Які ключові слова ви б використали?.</p>`,
   },
   luckyButton: {
-    title: "Модуль 3.1: Кнопка 'Мені пощастить'",
-    content: `<p>Кнопка <strong>"Мені пощастить"</strong> (в оригіналі "I'm Feeling Lucky") – це одна з найстаріших і найцікавіших функцій пошукових систем, зокрема Google.</p>
-                          <p>Коли ви вводите запит у пошуковий рядок і замість кнопки "Шукати" натискаєте "Мені пощастить", пошукова система намагається <strong>пропустити сторінку з результатами пошуку</strong> і одразу перенаправити вас на ту веб-сторінку, яку вона вважає <strong>найпершим та найрелевантнішим</strong> результатом для вашого запиту.</p>
+    title: "Модуль 3.1: Швидкий перехід до першого результату",
+    content: `<p><strong>Швидкий перехід</strong> — це режим, коли система одразу відкриває перший релевантний результат без показу повного списку.</p>
+                          <p>Історично в Google ця ідея відома як <em>I'm Feeling Lucky</em>. Станом на березень 2026 року це радше додаткова, а не ключова функція пошуку: у сучасному інтерфейсі більше уваги надається карткам, підказкам і ШІ-відповідям.</p>
                           <p><strong>Коли це корисно?</strong></p>
                           <ul>
-                              <li>Коли ви точно знаєте назву сайту, але не пам'ятаєте його точну адресу (наприклад, вводите "Facebook" і натискаєте "Мені пощастить").</li>
-                              <li>Коли ви шукаєте дуже популярну і однозначну інформацію, де перший результат майже гарантовано буде правильним.</li>
+                              <li>Коли ви майже впевнені, який сайт має бути першим (наприклад, офіційний сайт відомого сервісу).</li>
+                              <li>Коли хочете швидко перейти до найімовірнішого джерела без перегляду списку.</li>
                           </ul>
-                          <p><strong>Приклад з життя:</strong> Ви хочете зайти на офіційний сайт ПриватБанку. Вводите в пошук "ПриватБанк" і тиснете "Мені пощастить". Є велика ймовірність, що ви одразу потрапите на потрібний сайт.</p>
-                          <p>Однак, якщо ваш запит неоднозначний (наприклад, "цікаві факти"), результат може бути непередбачуваним, але часто веселим!</p>
-                          <p><em>Завдання:</em> Введіть у пошуковий рядок "Гугла" назву відомого сайту (наприклад, "Вікіпедія") і натисніть "Мені пощастить". Подивіться, що станеться.</p>`,
+                          <p><strong>Коли краще не використовувати?</strong> Якщо тема складна, новинна або ризикова. Тоді краще переглянути кілька результатів і перевірити інформацію мінімум у трьох незалежних джерелах.</p>
+                          <p><em>Завдання:</em> Введіть назву відомого офіційного сайту і спробуйте "Швидкий перехід". Потім порівняйте з режимом "Шукати" і оцініть, коли який спосіб зручніший.</p>`,
   },
   results: {
     title: "Модуль 4: Як аналізувати результати пошуку",
     content: `<p>Отже, ви ввели запит і отримали сторінку з результатами. Як зрозуміти, куди натискати?</p>
-                          <p>Кожен результат пошуку (зазвичай їх 10 на сторінці) містить кілька важливих елементів:</p>
+                          <p>Кожен результат пошуку має кілька важливих елементів. На екрані може бути різна кількість результатів, тому перегляньте кілька перших і за потреби уточніть запит.</p>
                           <ul>
                               <li><strong>Заголовок (Title):</strong> Це синій текст, який можна натиснути. Він дає загальне уявлення про зміст сторінки. Обирайте той, що найточніше відповідає вашому запиту.
                                   <br><em>Приклад:</em> Якщо шукали "як спекти яблучний пиріг", заголовок "Простий рецепт яблучного пирога з фото – Кулінарний блог" буде більш привабливим, ніж "Історія пирогів".</li>
-                              <li><strong>URL-адреса (Веб-адреса):</strong> Зазвичай зеленого кольору, показує адресу сайту. Звертайте увагу на домен (наприклад, <code>.gov.ua</code> – державний сайт, <code>.edu.ua</code> – освітній, <code>wikipedia.org</code> – відома енциклопедія). Це допоможе оцінити надійність джерела.
-                                  <br><em>Приклад:</em> Інформація про медичні симптоми з сайту Міністерства охорони здоров'я (<code>moz.gov.ua</code>) буде більш надійною, ніж з невідомого форуму.</li>
+                              <li><strong>URL-адреса (Веб-адреса):</strong> Показує домен і шлях сторінки. Домен (наприклад, <code>.gov.ua</code>, <code>.edu.ua</code>, <code>wikipedia.org</code>) підказує тип сайту, але не гарантує правдивість.
+                                  <br><em>Перевіряйте додатково:</em> автора, дату, першоджерело і чи не суперечать дані іншим незалежним джерелам.</li>
                               <li><strong>Опис (Snippet/Description):</strong> Короткий фрагмент тексту зі сторінки (зазвичай 1-2 речення), де часто підсвічуються ваші <span class="keyword">ключові слова</span>. Швидко прочитайте його, щоб зрозуміти, чи є на сторінці потрібна інформація.</li>
                           </ul>
                           <p><strong>Поради щодо вибору:</strong></p>
                           <ul>
                               <li>Не завжди перший результат є найкращим. Перегляньте кілька.</li>
-                              <li>Остерігайтеся сайтів з великою кількістю реклами або підозрілими заголовками ("ШОК! Ви не повірите...").</li>
+                              <li><strong>Обережно: Реклама!</strong> Перші результати часто мають позначку "Реклама" або "Спонсоровано". Це означає, що хтось заплатив, щоб бути на першому місці. Завжди прокручуй трохи нижче до звичайних результатів.</li>
                               <li>Для важливої інформації (здоров'я, фінанси, наука) шукайте офіційні, авторитетні джерела.</li>
                           </ul>
                           <p><em>Завдання:</em> Зробіть пошук за запитом "користь зеленого чаю". Проаналізуйте перші 3-4 результати: їхні заголовки, URL та описи. Який з них ви б обрали і чому?</p>`,
@@ -588,8 +711,8 @@ const lessons = {
                               <li><strong>"Бульбашка фільтрів":</strong> Персоналізація результатів може призвести до того, що ви бачитимете переважно інформацію, яка підтверджує ваші існуючі погляди.</li>
                           </ul>
 
-                          <h3>Роль класичного пошуку сьогодні (травень 2025):</h3>
-                          <p>Навіть з появою ШІ-пошуку, класичні системи є незамінними для:</p>
+                          <h3>Роль класичного пошуку сьогодні (березень 2026):</h3>
+                          <p>Навіть з розвитком ШІ-пошуку, класичні системи лишаються незамінними для:</p>
                           <ul>
                               <li>Швидкого пошуку офіційних сайтів, конкретних документів, новинних статей.</li>
                               <li>Доступу до широкого спектру думок та першоджерел.</li>
@@ -615,7 +738,7 @@ const lessons = {
                               <li><strong>Контекст та діалог:</strong> Деякі ШІ-пошуковики можуть підтримувати діалог, уточнюючи ваш запит або відповідаючи на наступні запитання в контексті попередніх.</li>
                               <li><strong>Мультимодальність:</strong> Сучасні ШІ-системи можуть обробляти та генерувати не лише текст, а й зображення, аудіо та відео.</li>
                           </ul>
-                          <p><em>Станом на травень 2025 року, яскравими прикладами є розширені можливості Google Search (з інтегрованими AI Overviews), Copilot від Microsoft Bing, Perplexity AI, You.com та інші спеціалізовані ШІ-асистенти.</em></p>
+                          <p><em>Станом на березень 2026 року, у пошуку активно використовують ШІ: Google Search (AI Overviews та AI Mode), Microsoft Bing (Copilot Search), Perplexity та інші системи з відповідями на основі джерел.</em></p>
 
                           <h3>Переваги ШІ-пошуку:</h3>
                           <ul>
@@ -626,7 +749,7 @@ const lessons = {
 
                           <h3>Виклики та недоліки ШІ-пошуку:</h3>
                           <ul>
-                              <li><strong>"Галюцинації" та точність:</strong> Іноді ШІ може генерувати неправдиву, неточну або вигадану інформацію, подаючи її як факт. Це вимагає ретельної перевірки.</li>
+                              <li><strong>"Галюцинації" (вигадки):</strong> Іноді ШІ може генерувати неправдиву інформацію, подаючи її як факт. Він схожий на учня, який не вивчив урок, але дуже переконливо фантазує біля дошки. Тому його відповіді треба перевіряти.</li>
                               <li><strong>Прозорість джерел:</strong> Не завжди легко відстежити та перевірити джерела, на основі яких ШІ згенерував відповідь, хоча багато систем намагаються їх надавати.</li>
                               <li><strong>Упередженість (Bias):</strong> Відповіді ШІ можуть відображати упередження, наявні в даних, на яких він навчався.</li>
                               <li><strong>Актуальність:</strong> Інформація може бути не найсвіжішою, якщо знання моделі ШІ обмежені певною датою оновлення.</li>
@@ -636,15 +759,99 @@ const lessons = {
                           <h3>Як ефективно та відповідально користуватися ШІ-пошуком?</h3>
                           <ol>
                               <li><strong>Формулюйте чіткі та детальні запити:</strong> Надавайте достатньо контексту, щоб ШІ краще зрозумів ваше завдання.</li>
-                              <li><strong>Будьте критичними та перевіряйте:</strong> Завжди перевіряйте важливу інформацію, отриману від ШІ, за допомогою надійних джерел (включно з класичним пошуком!). Особливо це стосується фактів, медичних, фінансових та юридичних порад.</li>
+                              <li><strong>Будьте критичними та перевіряйте:</strong> Звіряйте важливу інформацію щонайменше за трьома незалежними джерелами (включно з класичним пошуком). Незалежні — це не передруки однієї новини, а різні джерела. Краще шукати першоджерело: документ, статистику або наукову публікацію.</li>
                               <li><strong>Вивчайте джерела:</strong> Якщо ШІ-пошуковик надає посилання на джерела, перегляньте їх для підтвердження інформації.</li>
                               <li><strong>Використовуйте як інструмент, а не як абсолютну істину:</strong> ШІ-пошук – потужний помічник для натхнення, узагальнення та початкового дослідження, але не замінює власне критичне мислення.</li>
                               <li><strong>Комбінуйте з класичним пошуком:</strong> Використовуйте сильні сторони обох типів пошуку для досягнення найкращих результатів.</li>
                           </ol>
 
-                          <p><em>Завдання:</em> Уявіть, що вам потрібно написати коротке есе про вплив зміни клімату на сільське господарство в Україні. Сформулюйте запит для ШІ-пошуку, який допоможе вам зібрати основні тези та структуру роботи. Потім подумайте, які запити ви б використали в класичному пошуку для знаходження конкретних статистичних даних або наукових звітів на цю тему.</p>`,
+                          <p><em>Завдання:</em> Уявіть, що вам потрібно написати коротке есе про вплив зміни клімату на сільське господарство в Україні. Сформулюйте запит для ШІ-пошуку, який допоможе вам зібрати основні тези та структуру роботи. Потім підберіть класичні запити для пошуку конкретних статистичних даних і перевірте їх щонайменше за трьома незалежними джерелами.</p>`,
+  },
+  miniQuiz: {
+    title: "Модуль 6: Мініквіз з перевірки інформації",
+    content: `<form id="miniQuizForm">
+                          <p>Оберіть правильні варіанти і натисніть "Перевірити".</p>
+                          <p id="quizResult" class="quiz-result" aria-live="polite"></p>
+                          <p><strong>1. Скільки незалежних джерел треба для базової перевірки факту?</strong></p>
+                          <label><input type="radio" name="q1" value="a"> 1</label><br>
+                          <label><input type="radio" name="q1" value="b"> 2</label><br>
+                          <label><input type="radio" name="q1" value="c"> 3</label>
+                          <p><strong>2. Що краще для класичного пошуку?</strong></p>
+                          <label><input type="radio" name="q2" value="a"> 2-6 точних слів або коротка фраза</label><br>
+                          <label><input type="radio" name="q2" value="b"> Дуже довгий абзац без структури</label>
+                          <p><strong>3. Чи можна повністю довіряти відповіді ШІ без перевірки?</strong></p>
+                          <label><input type="radio" name="q3" value="a"> Так</label><br>
+                          <label><input type="radio" name="q3" value="b"> Ні</label>
+                          <p><strong>4. Для ризикових тем (медицина, фінанси, право) треба:</strong></p>
+                          <label><input type="radio" name="q4" value="a"> Перевірити джерела та звернутись до фахівця</label><br>
+                          <label><input type="radio" name="q4" value="b"> Довіритись першій відповіді</label>
+                          <p><strong>5. Що важливо перевіряти в джерелі?</strong></p>
+                          <label><input type="radio" name="q5" value="a"> Лише красивий дизайн</label><br>
+                          <label><input type="radio" name="q5" value="b"> Автора, дату, першоджерело</label>
+                          <p>
+                            <button class="modal-btn" type="submit">Перевірити</button>
+                          </p>
+                        </form>`,
   },
 };
+
+function initializeMiniQuiz() {
+  const quizForm = document.getElementById("miniQuizForm");
+  const quizResult = document.getElementById("quizResult");
+  if (!quizForm || !quizResult) return;
+
+  const correctAnswers = {
+    q1: "c",
+    q2: "a",
+    q3: "b",
+    q4: "a",
+    q5: "b",
+  };
+  const explanations = {
+    q1: 'Потрібно щонайменше 3 незалежні джерела, а не 1-2.',
+    q2: 'Для шкільного пошуку краще короткий точний запит: 2-6 слів.',
+    q3: "ШІ може помилятися або вигадувати факти, тому потрібна перевірка.",
+    q4: "Для медицини, фінансів і права треба перевіряти джерела і звертатися до фахівця.",
+    q5: "Важливо перевіряти автора, дату та першоджерело, а не лише вигляд сайту.",
+  };
+
+  quizForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    let score = 0;
+    let answered = 0;
+
+    const mistakes = [];
+    Object.keys(correctAnswers).forEach((name) => {
+      const selected = quizForm.querySelector(`input[name="${name}"]:checked`);
+      if (selected) {
+        answered += 1;
+        if (selected.value === correctAnswers[name]) {
+          score += 1;
+        } else {
+          mistakes.push(explanations[name]);
+        }
+      }
+    });
+
+    if (answered < Object.keys(correctAnswers).length) {
+      quizResult.textContent =
+        "Відповідайте на всі питання, щоб отримати підсумковий бал.";
+      quizResult.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    let feedbackMsg = `Ваш результат: ${score}/5.\n\n`;
+    if (score >= 4) {
+      feedbackMsg += "Добре! Ви готові до відповідального пошуку.";
+    } else {
+      feedbackMsg +=
+        "Повторіть модулі про перевірку джерел і спробуйте ще раз.\n\nЩо варто пригадати:\n" +
+        mistakes.join("\n");
+    }
+    quizResult.textContent = feedbackMsg;
+    quizResult.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
 
 startLessonBtn.addEventListener("click", function () {
   const lessonType = lessonSelect.value;
@@ -669,6 +876,10 @@ startLessonBtn.addEventListener("click", function () {
   modalBody.innerHTML = lesson.content;
   lessonModal.style.display = "flex";
   lessonModal.setAttribute("aria-hidden", "false");
+
+  if (lessonType === "miniQuiz") {
+    initializeMiniQuiz();
+  }
 
   lessonModal.focus();
   setTimeout(() => {
