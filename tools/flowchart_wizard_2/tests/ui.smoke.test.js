@@ -1,4 +1,4 @@
-const test = require('node:test');
+﻿const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -28,6 +28,7 @@ function makeElement(doc, tag = 'div') {
     appendChild(child) { child.parentNode = this; this.children.push(child); return child; },
     insertBefore(child, before) { child.parentNode = this; const i = this.children.indexOf(before); if (i === -1) this.children.push(child); else this.children.splice(i, 0, child); return child; },
     removeChild(child) { const i = this.children.indexOf(child); if (i !== -1) this.children.splice(i, 1); child.parentNode = null; return child; },
+    remove() { if (this.parentNode) this.parentNode.removeChild(this); },
     setAttribute(name, value) { const next = String(value); this.attributes[name] = next; if (name === 'id') this.id = next; if (name.startsWith('data-')) this.dataset[name.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = next; },
     getAttribute(name) { return this.attributes[name]; },
     hasAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attributes, name); },
@@ -37,7 +38,7 @@ function makeElement(doc, tag = 'div') {
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; },
     querySelectorAll(selector) {
       const out = [];
-      const match = node => selector === '[data-plus]' ? Object.hasOwn(node.attributes, 'data-plus') : selector === '[data-nid]' ? Object.hasOwn(node.attributes, 'data-nid') : selector.startsWith('[data-comment-for=\"') ? node.attributes['data-comment-for'] === selector.slice(19, -2) : selector.startsWith('[data-nid=\"') ? node.attributes['data-nid'] === selector.slice(11, -2) : selector.startsWith('.') ? node.classList.contains(selector.slice(1)) : false;
+      const match = node => selector === '[data-plus]' ? Object.hasOwn(node.attributes, 'data-plus') : selector === '[data-nid]' ? Object.hasOwn(node.attributes, 'data-nid') : selector.startsWith('[data-comment-for="') ? node.attributes['data-comment-for'] === selector.slice(19, -2) : selector.startsWith('[data-nid="') ? node.attributes['data-nid'] === selector.slice(11, -2) : selector.startsWith('.') ? node.classList.contains(selector.slice(1)) : false;
       const walk = node => node.children.forEach(child => { if (match(child)) out.push(child); walk(child); });
       walk(this); return out;
     },
@@ -51,6 +52,7 @@ function makeElement(doc, tag = 'div') {
 
 async function boot() {
   const elements = new Map();
+  const confettiCtx = { clearRect() {}, fillRectCalls: 0, fillRect() { this.fillRectCalls += 1; }, scale() {}, drawImage() {}, save() {}, restore() {}, translate() {}, rotate() {} };
   const doc = {
     activeElement: null,
     getElementById(id) {
@@ -62,7 +64,7 @@ async function boot() {
         if (id === 'node-tb') { el.classList.add('hidden'); el.offsetWidth = 280; }
         if (id.endsWith('-modal') || id === 'wizard-panel') el.classList.add('hidden');
         if (id === 'prog-fill') el.style.width = '5%';
-        if (id === 'cfc') el.getContext = () => ({ clearRect() {}, fillRect() {}, scale() {}, drawImage() {} });
+        if (id === 'cfc') el.getContext = () => confettiCtx;
         elements.set(id, el);
       }
       return elements.get(id);
@@ -87,7 +89,7 @@ async function boot() {
   ['fc','svg-wrap','canvas-area','layer-title','layer-edges','layer-nodes','layer-plus','header-title-input','btn-undo','node-tb','mascot-msg','mascot-toggle','mascot','btn-edit-node','btn-comment-node','btn-del-node','step-type-badge','merge-suggestion','merge-hint-text','btn-merge-sibling','wizard-live','wizard-panel','text-inp','explain-content','step-type','step-explain','step-existing','btn-connect-exist','existing-list','no-exist-msg','btn-cancel-wiz','btn-back-text','btn-back-exist','btn-ok','btn-reset','reset-cancel','reset-confirm','del-modal','reset-modal','check-modal','save-modal','del-cancel','del-confirm','check-list','check-summary','btn-check-close','ex-list','btn-examples','btn-ex-close','ex-modal','btn-save','save-title-inp','save-confirm','save-cancel','btn-zi','btn-zo','btn-fit','prog-fill','toast','cfc','del-msg','btn-check'].forEach(id => doc.getElementById(id));
   const url = pathToFileURL(path.join(__dirname, '..', 'app.mjs')).href + '?smoke=' + Date.now() + Math.random();
   await import(url);
-  return { doc, cleanup() { Object.assign(global, prev); } };
+  return { doc, confettiCtx, cleanup() { Object.assign(global, prev); } };
 }
 
 test('bootstrap renders start node and plus', async () => {
@@ -102,10 +104,10 @@ test('example click loads while example and closes modal', async () => {
   const env = await boot();
   try {
     const exList = env.doc.getElementById('ex-list');
-    const whileCard = exList.children.find(child => child.innerHTML.includes('\u0420\u0430\u0445\u0443\u0454\u043c\u043e \u0434\u043e 5'));
+    const whileCard = exList.children.find(child => child.innerHTML.includes('Рахуємо до 5'));
     assert.ok(whileCard);
     whileCard.dispatch('click');
-    assert.equal(env.doc.getElementById('header-title-input').value, '\u0420\u0430\u0445\u0443\u0454\u043c\u043e \u0434\u043e 5');
+    assert.equal(env.doc.getElementById('header-title-input').value, 'Рахуємо до 5');
     assert.ok(env.doc.getElementById('layer-nodes').children.length >= 6);
     assert.ok(env.doc.getElementById('layer-edges').children.length >= 6);
     assert.equal(env.doc.getElementById('ex-modal').classList.contains('hidden'), true);
@@ -123,3 +125,71 @@ test('plus opens wizard', async () => {
     assert.equal(env.doc.getElementById('mascot').classList.contains('wiz-open'), true);
   } finally { env.cleanup(); }
 });
+
+test('examples are listed in the expected teaching order', async () => {
+  const env = await boot();
+  try {
+    const titles = env.doc.getElementById('ex-list').children.map(child => {
+      const match = child.innerHTML.match(/text-base">([^<]+)</);
+      return match ? match[1] : '';
+    });
+    assert.deepEqual(titles, [
+      'Ранок школяра',
+      'Чи брати парасольку?',
+      'Прибирання кімнати',
+      'Вибір транспорту',
+      'Перевірка паролю',
+      'Купівля морозива',
+      'Рахуємо до 5',
+      'Вгадай число',
+      'Таблиця множення на 2',
+      'Знайти суму масиву',
+    ]);
+  } finally { env.cleanup(); }
+});
+
+test('completed examples validate cleanly and render teaching comments', async () => {
+  const env = await boot();
+  try {
+    const exList = env.doc.getElementById('ex-list');
+
+    const branchCard = exList.children.find(child => child.innerHTML.includes('Чи брати парасольку?'));
+    assert.ok(branchCard);
+    branchCard.dispatch('click');
+    assert.ok(env.confettiCtx.fillRectCalls > 0, 'completed example should trigger confetti');
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    env.doc.getElementById('btn-check').dispatch('click');
+    assert.equal(env.doc.getElementById('check-summary').textContent, 'Помилок не знайдено. Схема виглядає добре.');
+
+    const whileCard = exList.children.find(child => child.innerHTML.includes('Рахуємо до 5'));
+    assert.ok(whileCard);
+    whileCard.dispatch('click');
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n5"]'));
+
+    const forCard = exList.children.find(child => child.innerHTML.includes('Таблиця множення на 2'));
+    assert.ok(forCard);
+    forCard.dispatch('click');
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n5"]'));
+
+    const dowhileCard = exList.children.find(child => child.innerHTML.includes('Вгадай число'));
+    assert.ok(dowhileCard);
+    dowhileCard.dispatch('click');
+    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-nid]').length >= 6, true);
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
+    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    env.doc.getElementById('btn-check').dispatch('click');
+    assert.equal(env.doc.getElementById('check-summary').textContent, 'Помилок не знайдено. Схема виглядає добре.');
+
+    const linearCard = exList.children.find(child => child.innerHTML.includes('Ранок школяра'));
+    assert.ok(linearCard);
+    linearCard.dispatch('click');
+    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n1"]').length, 0);
+    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n2"]').length, 0);
+    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n3"]').length, 0);
+  } finally { env.cleanup(); }
+});
+

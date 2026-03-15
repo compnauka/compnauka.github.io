@@ -1,4 +1,4 @@
-const test = require('node:test');
+﻿const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -109,6 +109,31 @@ test('cycle examples exist in EXAMPLES and validate cleanly', async () => {
   }
 });
 
+test('dowhile example has output node on yes-branch before end', async () => {
+  const api = await loadLogic();
+
+  const ex = api.EXAMPLES.find(item => item.id === 'ex-dowhile');
+  assert.ok(ex, 'ex-dowhile should exist');
+
+  const yesEdge = ex.edges.find(e => e.label === 'yes');
+  assert.ok(yesEdge, 'yes-edge should exist from decision');
+
+  const yesTarget = ex.nodes.find(n => n.id === yesEdge.to);
+  assert.ok(yesTarget, 'yes-branch target node should exist');
+  assert.equal(
+    yesTarget.type,
+    'input-output',
+    'yes-branch should lead to output node, not directly to end'
+  );
+  assert.ok(
+    yesTarget.text.toLowerCase().includes('вгадав'),
+    'yes-branch output should congratulate the user'
+  );
+
+  loadExample(api, 'ex-dowhile');
+  assert.equal(api.collectIssues().issues.length, 0, 'ex-dowhile should have no validation issues');
+});
+
 test('back-edge targets are treated as reachable by validator', async () => {
   const api = await loadLogic();
 
@@ -156,9 +181,45 @@ test('incomplete if example validates and mascot explains it', async () => {
 });
 
 
+test('connectableNodes lets a missing decision branch merge into an existing end node', async () => {
+  const root = path.join(__dirname, '..');
+  const src = fs.readFileSync(path.join(root, 'app.mjs'), 'utf8');
+  const graphMod = await import(pathToFileURL(path.join(root, 'modules', 'graph.mjs')).href);
+
+  const S = {
+    nodes: {
+      n1: { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
+      n2: { id: 'n2', type: 'decision', text: '\u041a\u0456\u043c\u043d\u0430\u0442\u0430 \u0431\u0440\u0443\u0434\u043d\u0430?' },
+      n3: { id: 'n3', type: 'process', text: '\u041f\u0440\u0438\u0431\u0440\u0430\u0442\u0438 \u043a\u0456\u043c\u043d\u0430\u0442\u0443' },
+      n4: { id: 'n4', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
+    },
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: 'yes' },
+      { from: 'n3', to: 'n4', label: null },
+    ],
+    ranks: { n1: 0, n2: 1, n3: 2, n4: 3 },
+  };
+  const edgeCache = graphMod.createEdgeCacheState();
+  const sandbox = {
+    module: { exports: {} },
+    exports: {},
+    S,
+    descendants: startId => graphMod.descendants(S, edgeCache, startId),
+    outEdges: id => graphMod.outEdges(S, edgeCache, id),
+  };
+
+  const code = between(src, 'function connectableNodes(pid, lbl) {', 'function pruneUnreachable()') + '\nmodule.exports = { connectableNodes };';
+  vm.runInNewContext(code, sandbox, { filename: 'app.mjs' });
+
+  const candidates = sandbox.module.exports.connectableNodes('n2', 'no');
+  assert.ok(candidates.some(node => node.id === 'n4'));
+});
+
 test('app helpers keep validation and loop aliases wired', async () => {
   const root = path.join(__dirname, '..');
   const src = fs.readFileSync(path.join(root, 'app.mjs'), 'utf8');
+  const wizardMod = await import(pathToFileURL(path.join(root, 'modules', 'wizard.mjs')).href);
 
   assert.ok(src.includes('function findBackEdges()'));
   assert.ok(src.includes('function collectIssues()'));
@@ -168,6 +229,7 @@ test('app helpers keep validation and loop aliases wired', async () => {
   assert.ok(src.includes('function connectableNodes(pid, lbl)'));
   assert.ok(src.includes("import { buildShape as buildSvgShape, pathSegments, createWrapText } from './modules/render-utils.mjs';"));
   assert.equal(src.includes('pathSegmentsImported'), false);
+  assert.equal(wizardMod.getExplainBorderClass('subroutine'), 'border-teal-200 bg-teal-50');
 });
 
 test('render utils wrap long text with ellipsis', async () => {
@@ -208,6 +270,28 @@ test('render utils build subroutine shape with side rails', async () => {
   assert.deepEqual(shape.children.map(child => child.tagName), ['rect', 'line', 'line']);
 });
 
+test('decision edge labels stay attached to the routed branch segment', async () => {
+  const root = path.join(__dirname, '..');
+  const wizardMod = await import(pathToFileURL(path.join(root, 'modules', 'wizard.mjs')).href);
+
+  const horizontal = wizardMod.getDecisionEdgeLabelPosition({
+    pts: [
+      { x: 900, y: 300 },
+      { x: 948, y: 300 },
+      { x: 948, y: 560 },
+    ]
+  }, 'no');
+  assert.deepEqual(horizontal, { x: 924, y: 300 });
+
+  const vertical = wizardMod.getDecisionEdgeLabelPosition({
+    pts: [
+      { x: 760, y: 320 },
+      { x: 760, y: 388 },
+    ]
+  }, 'yes');
+  assert.deepEqual(vertical, { x: 732, y: 354 });
+});
+
 test('current edge routing builds a route for upward loop edges', async () => {
   const root = path.join(__dirname, '..');
   const edgeRouting = await import(pathToFileURL(path.join(root, 'modules', 'edge-routing.mjs')).href);
@@ -246,4 +330,6 @@ test('current edge routing builds a route for upward loop edges', async () => {
   assert.ok(Array.isArray(route.pts));
   assert.ok(route.pts.length >= 2);
 });
+
+
 

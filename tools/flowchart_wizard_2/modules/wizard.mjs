@@ -19,6 +19,7 @@ export function getExplainBorderClass(type) {
     process: 'border-sky-200 bg-sky-50',
     decision: 'border-amber-200 bg-amber-50',
     'input-output': 'border-violet-200 bg-violet-50',
+    subroutine: 'border-teal-200 bg-teal-50',
     end: 'border-rose-200 bg-rose-50',
     start: 'border-green-200 bg-green-50',
   }[type] || 'border-gray-200 bg-gray-50';
@@ -46,6 +47,42 @@ export function getExplainContentHtml(type, typeMeta, escHtml) {
 export function getMergeHintText(sibNodeText, siblingLabel) {
   const label = siblingLabel === 'yes' ? '\u0422\u0430\u043a' : siblingLabel === 'no' ? '\u041d\u0456' : '\u043e\u0441\u043d\u043e\u0432\u043d\u0430';
   return `\u0417'\u0454\u0434\u043d\u0430\u0442\u0438 \u0437 \u0433\u0456\u043b\u043a\u043e\u044e "${sibNodeText || '...'}" (${label})`;
+}
+
+
+export function getDecisionEdgeLabelPosition(route, label) {
+  const pts = route?.pts || [];
+  if (pts.length < 2) return null;
+
+  let segment = null;
+  for (let i = 1; i < Math.min(pts.length, 4); i++) {
+    const from = pts[i - 1];
+    const to = pts[i];
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const manhattan = Math.abs(dx) + Math.abs(dy);
+    if (manhattan < 16) continue;
+    const horizontal = Math.abs(dx) >= Math.abs(dy);
+    if (!segment || (horizontal && !segment.horizontal)) {
+      segment = { from, to, horizontal };
+      if (horizontal) break;
+    }
+  }
+
+  if (!segment) {
+    segment = {
+      from: pts[0],
+      to: pts[1],
+      horizontal: Math.abs(pts[1].x - pts[0].x) >= Math.abs(pts[1].y - pts[0].y),
+    };
+  }
+
+  const midX = Math.round((segment.from.x + segment.to.x) / 2);
+  const midY = Math.round((segment.from.y + segment.to.y) / 2);
+  if (segment.horizontal) return { x: midX, y: midY };
+
+  const side = label === 'yes' ? -28 : 28;
+  return { x: midX + side, y: midY };
 }
 
 export function getCycleConnectionHintHtml() {

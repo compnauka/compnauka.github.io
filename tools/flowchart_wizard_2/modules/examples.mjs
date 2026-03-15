@@ -1,8 +1,14 @@
-export const EXAMPLES = [
+﻿export const EXAMPLES = [
+
+  // --- 1. ЛІНІЙНИЙ АЛГОРИТМ ------------------------------------------------
   {
-    id: 'ex-linear', title: 'Ранок школяра',
-    subtitle: 'Лінійний алгоритм — дії йдуть одна за одною',
-    icon: 'fa-sun', color: '#f59e0b', bg: 'bg-amber-50', border: 'border-amber-200',
+    id: 'ex-linear',
+    title: 'Ранок школяра',
+    subtitle: 'Лінійний алгоритм - дії йдуть одна за одною',
+    icon: 'fa-sun',
+    color: '#f59e0b',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
     nodes: [
       { id: 'n1', type: 'start', text: 'Початок' },
       { id: 'n2', type: 'process', text: 'Прокинутися' },
@@ -13,16 +19,26 @@ export const EXAMPLES = [
       { id: 'n7', type: 'end', text: 'Кінець' },
     ],
     edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: null }, { from: 'n4', to: 'n5', label: null },
-      { from: 'n5', to: 'n6', label: null }, { from: 'n6', to: 'n7', label: null },
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: null },
+      { from: 'n4', to: 'n5', label: null },
+      { from: 'n5', to: 'n6', label: null },
+      { from: 'n6', to: 'n7', label: null },
     ],
     root: 'n1',
+    comments: {},
   },
+
+  // --- 2. ПОВНА ФОРМА РОЗГАЛУЖЕННЯ (if/else) -------------------------------
   {
-    id: 'ex-branch', title: 'Чи брати парасольку?',
-    subtitle: 'Розгалуження — різні дії залежно від умови',
-    icon: 'fa-umbrella', color: '#0ea5e9', bg: 'bg-sky-50', border: 'border-sky-200',
+    id: 'ex-branch',
+    title: 'Чи брати парасольку?',
+    subtitle: 'Розгалуження - різні дії залежно від умови',
+    icon: 'fa-umbrella',
+    color: '#0ea5e9',
+    bg: 'bg-sky-50',
+    border: 'border-sky-200',
     nodes: [
       { id: 'n1', type: 'start', text: 'Початок' },
       { id: 'n2', type: 'process', text: 'Подивитися у вікно' },
@@ -33,16 +49,55 @@ export const EXAMPLES = [
       { id: 'n7', type: 'end', text: 'Кінець' },
     ],
     edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: 'yes' }, { from: 'n3', to: 'n5', label: 'no' },
-      { from: 'n4', to: 'n6', label: null }, { from: 'n5', to: 'n7', label: null },
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: 'yes' },
+      { from: 'n3', to: 'n5', label: 'no' },
+      { from: 'n4', to: 'n6', label: null },
+      { from: 'n5', to: 'n7', label: null },
     ],
     root: 'n1',
+    comments: {
+      n3: 'Тут алгоритм перевіряє умову і ділиться на два різних шляхи',
+    },
   },
+
+  // --- 3. НЕПОВНА ФОРМА РОЗГАЛУЖЕННЯ (if без else) -------------------------
   {
-    id: 'ex-merge', title: 'Вибір транспорту',
-    subtitle: 'Розгалуження зі сходженням — гілки об\'єднуються',
-    icon: 'fa-bus', color: '#22c55e', bg: 'bg-green-50', border: 'border-green-200',
+    id: 'ex-if-only',
+    title: 'Прибирання кімнати',
+    subtitle: 'Неповна форма - дія виконується лише за умови',
+    icon: 'fa-broom',
+    color: '#f59e0b',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: 'Початок' },
+      { id: 'n2', type: 'decision', text: 'Кімната брудна?' },
+      { id: 'n3', type: 'process', text: 'Прибрати кімнату' },
+      { id: 'n4', type: 'end', text: 'Кінець' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: 'yes' },
+      { from: 'n2', to: 'n4', label: 'no' },
+      { from: 'n3', to: 'n4', label: null },
+    ],
+    root: 'n1',
+    comments: {
+      n2: 'Якщо умова «Ні» - дія пропускається і одразу переходимо до кінця',
+    },
+  },
+
+  // --- 4. РОЗГАЛУЖЕННЯ ЗІ ЗЛИТТЯМ ГІЛОК ------------------------------------
+  {
+    id: 'ex-merge',
+    title: 'Вибір транспорту',
+    subtitle: 'Розгалуження зі сходженням - гілки об\'єднуються',
+    icon: 'fa-bus',
+    color: '#22c55e',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
     nodes: [
       { id: 'n1', type: 'start', text: 'Початок' },
       { id: 'n2', type: 'decision', text: 'Є квиток на автобус?' },
@@ -52,16 +107,61 @@ export const EXAMPLES = [
       { id: 'n6', type: 'end', text: 'Кінець' },
     ],
     edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: 'yes' },
-      { from: 'n2', to: 'n4', label: 'no' }, { from: 'n3', to: 'n5', label: null },
-      { from: 'n4', to: 'n5', label: null }, { from: 'n5', to: 'n6', label: null },
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: 'yes' },
+      { from: 'n2', to: 'n4', label: 'no' },
+      { from: 'n3', to: 'n5', label: null },
+      { from: 'n4', to: 'n5', label: null },
+      { from: 'n5', to: 'n6', label: null },
     ],
     root: 'n1',
+    comments: {
+      n5: 'Обидві гілки з\'єднались - далі алгоритм іде одним спільним шляхом',
+    },
   },
+
+  // --- 5. ВВІД / ВИВІД + РОЗГАЛУЖЕННЯ -------------------------------------
   {
-    id: 'ex-complex', title: 'Купівля морозива',
+    id: 'ex-io',
+    title: 'Перевірка паролю',
+    subtitle: 'Ввід даних, перевірка умови та вивід результату',
+    icon: 'fa-lock',
+    color: '#a855f7',
+    bg: 'bg-violet-50',
+    border: 'border-violet-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: 'Початок' },
+      { id: 'n2', type: 'input-output', text: 'Ввести пароль' },
+      { id: 'n3', type: 'decision', text: 'Пароль правильний?' },
+      { id: 'n4', type: 'input-output', text: 'Показати: «Ласкаво просимо!»' },
+      { id: 'n5', type: 'input-output', text: 'Показати: «Помилка! Спробуй ще раз»' },
+      { id: 'n6', type: 'end', text: 'Кінець' },
+      { id: 'n7', type: 'end', text: 'Кінець' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: 'yes' },
+      { from: 'n3', to: 'n5', label: 'no' },
+      { from: 'n4', to: 'n6', label: null },
+      { from: 'n5', to: 'n7', label: null },
+    ],
+    root: 'n1',
+    comments: {
+      n2: 'Паралелограм - блок введення або виведення даних',
+      n4: 'Вивід результату залежить від умови вище',
+    },
+  },
+
+  // --- 6. ВКЛАДЕНІ УМОВИ (кілька рішень) -----------------------------------
+  {
+    id: 'ex-complex',
+    title: 'Купівля морозива',
     subtitle: 'Складніший алгоритм з кількома умовами',
-    icon: 'fa-ice-cream', color: '#f43f5e', bg: 'bg-rose-50', border: 'border-rose-200',
+    icon: 'fa-ice-cream',
+    color: '#f43f5e',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
     nodes: [
       { id: 'n1', type: 'start', text: 'Початок' },
       { id: 'n2', type: 'input-output', text: 'Порахувати гроші' },
@@ -76,128 +176,150 @@ export const EXAMPLES = [
       { id: 'n11', type: 'end', text: 'Кінець' },
     ],
     edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: 'yes' }, { from: 'n3', to: 'n5', label: 'no' },
-      { from: 'n5', to: 'n11', label: null }, { from: 'n4', to: 'n6', label: null },
-      { from: 'n6', to: 'n7', label: 'yes' }, { from: 'n6', to: 'n8', label: 'no' },
-      { from: 'n7', to: 'n9', label: null }, { from: 'n8', to: 'n9', label: null },
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: 'yes' },
+      { from: 'n3', to: 'n5', label: 'no' },
+      { from: 'n5', to: 'n11', label: null },
+      { from: 'n4', to: 'n6', label: null },
+      { from: 'n6', to: 'n7', label: 'yes' },
+      { from: 'n6', to: 'n8', label: 'no' },
+      { from: 'n7', to: 'n9', label: null },
+      { from: 'n8', to: 'n9', label: null },
       { from: 'n9', to: 'n10', label: null },
     ],
     root: 'n1',
+    comments: {
+      n3: 'Умова 1: перевіряємо, чи вистачає грошей',
+      n6: 'Умова 2: вкладена - перевіряємо смак всередині першої гілки',
+      n9: 'Гілки об\'єднались: обидва шляхи ведуть до одного блоку',
+    },
   },
 
+  // --- 7. ЦИКЛ З ПЕРЕДУМОВОЮ (while) ---------------------------------------
   {
-    id: 'ex-while', title: '\u0420\u0430\u0445\u0443\u0454\u043c\u043e \u0434\u043e 5',
-    subtitle: '\u0426\u0438\u043a\u043b \u0437 \u043f\u0435\u0440\u0435\u0434\u0443\u043c\u043e\u0432\u043e\u044e (while) \u2014 \u043f\u0435\u0440\u0435\u0432\u0456\u0440\u043a\u0430 \u043f\u0435\u0440\u0435\u0434 \u043a\u043e\u0436\u043d\u0438\u043c \u043a\u0440\u043e\u043a\u043e\u043c',
-    icon: 'fa-rotate', color: '#0ea5e9', bg: 'bg-sky-50', border: 'border-sky-200',
-    nodes: [
-      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
-      { id: 'n2', type: 'process', text: 'i = 1' },
-      { id: 'n3', type: 'decision', text: 'i \u2264 5?' },
-      { id: 'n4', type: 'input-output', text: '\u0412\u0438\u0432\u0435\u0441\u0442\u0438 i' },
-      { id: 'n5', type: 'process', text: 'i = i + 1' },
-      { id: 'n6', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
-    ],
-    edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: 'yes' }, { from: 'n4', to: 'n5', label: null },
-      { from: 'n5', to: 'n3', label: null }, { from: 'n3', to: 'n6', label: 'no' },
-    ],
-    root: 'n1',
-  },
-  {
-    id: 'ex-dowhile', title: '\u0412\u0433\u0430\u0434\u0430\u0439 \u0447\u0438\u0441\u043b\u043e',
-    subtitle: '\u0426\u0438\u043a\u043b \u0437 \u043f\u043e\u0441\u0442\u0443\u043c\u043e\u0432\u043e\u044e \u2014 \u043f\u0435\u0440\u0435\u0432\u0456\u0440\u043a\u0430 \u043f\u0456\u0441\u043b\u044f \u043a\u043e\u0436\u043d\u043e\u0457 \u0441\u043f\u0440\u043e\u0431\u0438',
-    icon: 'fa-dice', color: '#a855f7', bg: 'bg-violet-50', border: 'border-violet-200',
-    nodes: [
-      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
-      { id: 'n2', type: 'input-output', text: '\u0412\u0432\u0435\u0441\u0442\u0438 \u0447\u0438\u0441\u043b\u043e' },
-      { id: 'n3', type: 'decision', text: '\u0427\u0438\u0441\u043b\u043e = 7?' },
-      { id: 'n4', type: 'input-output', text: '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u0438: \u00ab\u041d\u0435 \u0432\u0433\u0430\u0434\u0430\u0432!\u00bb' },
-      { id: 'n5', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
-    ],
-    edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n5', label: 'yes' }, { from: 'n3', to: 'n4', label: 'no' },
-      { from: 'n4', to: 'n2', label: null },
-    ],
-    root: 'n1',
-  },
-  {
-    id: 'ex-for', title: '\u0422\u0430\u0431\u043b\u0438\u0446\u044f \u043c\u043d\u043e\u0436\u0435\u043d\u043d\u044f \u043d\u0430 2',
-    subtitle: '\u0426\u0438\u043a\u043b \u0437 \u043b\u0456\u0447\u0438\u043b\u044c\u043d\u0438\u043a\u043e\u043c (for) \u2014 \u0442\u043e\u0447\u043d\u0430 \u043a\u0456\u043b\u044c\u043a\u0456\u0441\u0442\u044c \u043f\u043e\u0432\u0442\u043e\u0440\u0435\u043d\u044c',
-    icon: 'fa-table', color: '#22c55e', bg: 'bg-green-50', border: 'border-green-200',
-    nodes: [
-      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
-      { id: 'n2', type: 'process', text: 'i = 1' },
-      { id: 'n3', type: 'decision', text: 'i \u2264 10?' },
-      { id: 'n4', type: 'input-output', text: '\u0412\u0438\u0432\u0435\u0441\u0442\u0438 2 \u00d7 i' },
-      { id: 'n5', type: 'process', text: 'i = i + 1' },
-      { id: 'n6', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
-    ],
-    edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: 'yes' }, { from: 'n4', to: 'n5', label: null },
-      { from: 'n5', to: 'n3', label: null }, { from: 'n3', to: 'n6', label: 'no' },
-    ],
-    root: 'n1',
-  },
-  {
-    id: 'ex-if-only', title: '\u041f\u0440\u0438\u0431\u0438\u0440\u0430\u043d\u043d\u044f \u043a\u0456\u043c\u043d\u0430\u0442\u0438',
-    subtitle: '\u041d\u0435\u043f\u043e\u0432\u043d\u0430 \u0444\u043e\u0440\u043c\u0430 \u2014 \u0434\u0456\u044f \u0432\u0438\u043a\u043e\u043d\u0443\u0454\u0442\u044c\u0441\u044f \u043b\u0438\u0448\u0435 \u0437\u0430 \u0443\u043c\u043e\u0432\u0438',
-    icon: 'fa-broom', color: '#f59e0b', bg: 'bg-amber-50', border: 'border-amber-200',
-    nodes: [
-      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
-      { id: 'n2', type: 'decision', text: '\u041a\u0456\u043c\u043d\u0430\u0442\u0430 \u0431\u0440\u0443\u0434\u043d\u0430?' },
-      { id: 'n3', type: 'process', text: '\u041f\u0440\u0438\u0431\u0440\u0430\u0442\u0438 \u043a\u0456\u043c\u043d\u0430\u0442\u0443' },
-      { id: 'n4', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
-    ],
-    edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: 'yes' },
-      { from: 'n2', to: 'n4', label: 'no' }, { from: 'n3', to: 'n4', label: null },
-    ],
-    root: 'n1',
-  },
-  {
-    id: 'ex-sub', title: '\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u043c\u0443 \u043c\u0430\u0441\u0438\u0432\u0443',
-    subtitle: '\u0412\u0438\u043a\u043b\u0438\u043a \u043f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0438 \u0434\u043b\u044f \u043e\u0431\u0447\u0438\u0441\u043b\u0435\u043d\u043d\u044f \u0441\u0443\u043c\u0438',
-    icon: 'fa-sigma', color: '#0f766e', bg: 'bg-teal-50', border: 'border-teal-200',
-    nodes: [
-      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
-      { id: 'n2', type: 'input-output', text: '\u0412\u0432\u0435\u0441\u0442\u0438 \u043c\u0430\u0441\u0438\u0432 A' },
-      { id: 'n3', type: 'subroutine', text: '\u0421\u0443\u043c\u0430(A)' },
-      { id: 'n4', type: 'input-output', text: '\u0412\u0438\u0432\u0435\u0441\u0442\u0438 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442' },
-      { id: 'n5', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
-    ],
-    edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: null }, { from: 'n4', to: 'n5', label: null },
-    ],
-    root: 'n1',
-  },
-  {
-    id: 'ex-io', title: 'Перевірка паролю',
-    subtitle: 'Ввід, обробка та вивід результату',
-    icon: 'fa-lock', color: '#a855f7', bg: 'bg-violet-50', border: 'border-violet-200',
+    id: 'ex-while',
+    title: 'Рахуємо до 5',
+    subtitle: 'Цикл while - умова перевіряється перед кожним повторенням',
+    icon: 'fa-rotate',
+    color: '#0ea5e9',
+    bg: 'bg-sky-50',
+    border: 'border-sky-200',
     nodes: [
       { id: 'n1', type: 'start', text: 'Початок' },
-      { id: 'n2', type: 'input-output', text: 'Ввести пароль' },
-      { id: 'n3', type: 'decision', text: 'Пароль правильний?' },
-      { id: 'n4', type: 'input-output', text: 'Показати: «Ласкаво просимо!»' },
-      { id: 'n5', type: 'input-output', text: 'Показати: «Помилка! Спробуй ще раз»' },
+      { id: 'n2', type: 'process', text: 'i = 1' },
+      { id: 'n3', type: 'decision', text: 'i ≤ 5?' },
+      { id: 'n4', type: 'input-output', text: 'Вивести i' },
+      { id: 'n5', type: 'process', text: 'i = i + 1' },
       { id: 'n6', type: 'end', text: 'Кінець' },
-      { id: 'n7', type: 'end', text: 'Кінець' },
     ],
     edges: [
-      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
-      { from: 'n3', to: 'n4', label: 'yes' }, { from: 'n3', to: 'n5', label: 'no' },
-      { from: 'n4', to: 'n6', label: null }, { from: 'n5', to: 'n7', label: null },
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: 'yes' },
+      { from: 'n4', to: 'n5', label: null },
+      { from: 'n5', to: 'n3', label: null },
+      { from: 'n3', to: 'n6', label: 'no' },
     ],
     root: 'n1',
+    comments: {
+      n2: 'Ініціалізація: встановлюємо початкове значення лічильника',
+      n3: 'Умова while: перевіряється ПЕРЕД кожним повторенням',
+      n5: 'Зміна лічильника - без цього цикл ніколи не зупиниться!',
+    },
   },
+
+  // --- 8. ЦИКЛ З ПОСТУМОВОЮ (do-while / repeat-until) ----------------------
+  {
+    id: 'ex-dowhile',
+    title: 'Вгадай число',
+    subtitle: 'Цикл do-while - умова перевіряється після кожної спроби',
+    icon: 'fa-dice',
+    color: '#a855f7',
+    bg: 'bg-violet-50',
+    border: 'border-violet-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: 'Початок' },
+      { id: 'n2', type: 'input-output', text: 'Ввести число' },
+      { id: 'n3', type: 'decision', text: 'Число = 7?' },
+      { id: 'n4', type: 'input-output', text: 'Показати: «Не вгадав!»' },
+      { id: 'n5', type: 'input-output', text: 'Показати: «Ти вгадав!»' },
+      { id: 'n6', type: 'end', text: 'Кінець' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n5', label: 'yes' },
+      { from: 'n3', to: 'n4', label: 'no' },
+      { from: 'n4', to: 'n2', label: null },
+      { from: 'n5', to: 'n6', label: null },
+    ],
+    root: 'n1',
+    comments: {
+      n2: 'Тіло циклу виконується хоча б один раз - ще до перевірки умови',
+      n3: 'Умова - тільки тут: ПІСЛЯ тіла. Ось чим do-while відрізняється від while',
+    },
+  },
+
+  // --- 9. ЦИКЛ З ЛІЧИЛЬНИКОМ (for) -----------------------------------------
+  {
+    id: 'ex-for',
+    title: 'Таблиця множення на 2',
+    subtitle: 'Цикл for - точна кількість повторень',
+    icon: 'fa-table',
+    color: '#22c55e',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: 'Початок' },
+      { id: 'n2', type: 'process', text: 'i = 1' },
+      { id: 'n3', type: 'decision', text: 'i ≤ 10?' },
+      { id: 'n4', type: 'input-output', text: 'Вивести 2 × i' },
+      { id: 'n5', type: 'process', text: 'i = i + 1' },
+      { id: 'n6', type: 'end', text: 'Кінець' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: 'yes' },
+      { from: 'n4', to: 'n5', label: null },
+      { from: 'n5', to: 'n3', label: null },
+      { from: 'n3', to: 'n6', label: 'no' },
+    ],
+    root: 'n1',
+    comments: {
+      n2: 'for, крок 1: початкове значення. Виконується один раз на початку',
+      n3: 'for, крок 2: умова. Перевіряється перед кожним повторенням',
+      n5: 'for, крок 3: зміна лічильника. Виконується після тіла циклу',
+    },
+  },
+
+  // --- 10. ДОПОМІЖНИЙ АЛГОРИТМ (підпрограма) -------------------------------
+  {
+    id: 'ex-sub',
+    title: 'Знайти суму масиву',
+    subtitle: 'Виклик підпрограми для обчислення суми',
+    icon: 'fa-sigma',
+    color: '#0f766e',
+    bg: 'bg-teal-50',
+    border: 'border-teal-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: 'Початок' },
+      { id: 'n2', type: 'input-output', text: 'Ввести масив A' },
+      { id: 'n3', type: 'subroutine', text: 'Сума(A)' },
+      { id: 'n4', type: 'input-output', text: 'Вивести результат' },
+      { id: 'n5', type: 'end', text: 'Кінець' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null },
+      { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: null },
+      { from: 'n4', to: 'n5', label: null },
+    ],
+    root: 'n1',
+    comments: {
+      n3: 'Підпрограма виконує окреме завдання і повертає результат у головний алгоритм',
+    },
+  },
+
 ];
-
-// ────────────────────────────────────────────────────────────────
-// STATE
-// ────────────────────────────────────────────────────────────────
-

@@ -1,6 +1,8 @@
-'use strict';
+﻿'use strict';
 
 import { EXAMPLES as EXAMPLES_DATA } from './modules/examples.mjs';
+import { createExampleState, getExampleCardHtml } from './modules/example-utils.mjs';
+import { applyExampleState, getExampleLoadedToastText } from './modules/example-loader.mjs';
 import {
   createEdgeCacheState,
   invalidateEdgeCache as markEdgeCacheDirty,
@@ -15,22 +17,31 @@ import {
 } from './modules/graph.mjs';
 import { collectIssues as collectIssueList } from './modules/validation.mjs';
 import { getMascotHtml } from './modules/mascot.mjs';
-import { getWizardBadge, getWizardLiveText, getExplainContentHtml, getMergeHintText, getCycleConnectionHintHtml } from './modules/wizard.mjs';
+import { getWizardBadge, getWizardLiveText, getExplainContentHtml, getMergeHintText, getDecisionEdgeLabelPosition } from './modules/wizard.mjs';
+import { createClosedWizardState, createInsertWizardState, createEditWizardState } from './modules/wizard-state.mjs';
 import { buildShape as buildSvgShape, pathSegments, createWrapText } from './modules/render-utils.mjs';
 import { computeRanks as computeGraphRanks, applyLayout } from './modules/layout.mjs';
 import { computeEdgeRoute } from './modules/edge-routing.mjs';
 import { getCommentLayout, normalizeCommentText } from './modules/comments.mjs';
 import { createStateSnapshot, restoreStateSnapshot, pushUndoSnapshot, popUndoSnapshot } from './modules/history.mjs';
+import { computeToolbarPlacement, getDeleteNodeMessage } from './modules/node-ui.mjs';
+import { getCheckSummaryText, getCheckSuccessHtml, getCheckIssueMeta } from './modules/check-ui.mjs';
+import { createEmptyWorkspaceState } from './modules/workspace-state.mjs';
+import { validateSaveTitle, makeDownloadFileName } from './modules/save-ui.mjs';
+import { showModalElement, hideModalElement } from './modules/modal-ui.mjs';
+import { getNodeFocusScroll } from './modules/focus-ui.mjs';
+import { buildExistingConnectionView } from './modules/existing-link-ui.mjs';
+import { getProgressPercent, showToastElement, hideToastElement, getRuntimeErrorMascotHtml, getRuntimeErrorToastText } from './modules/feedback-ui.mjs';
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // CONSTANTS
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 const SVG_W = 1700;
 const CX = SVG_W / 2;
-const NODE_W = 164;        // ширина прямокутного блоку
-const NODE_H = 58;         // висота прямокутного блоку
-const DIAMOND_HALF = 72;   // половина діагоналі ромба (Питання)
-const IO_W = 180;          // ширина паралелограма (Ввід/Вивід)
+const NODE_W = 164;        // width of a rectangular node
+const NODE_H = 58;         // height of a rectangular node
+const DIAMOND_HALF = 72;   // half of the decision diamond diagonal
+const IO_W = 180;          // width of the input/output parallelogram
 const VG = 118, HO = 290;
 // vertical gap between rows (centers are computed from row heights)
 const ROW_GAP = 42;
@@ -53,9 +64,9 @@ const TYPE_META = {
     explain: 'Отримати дані від користувача або показати результат на екрані.'
   },
   subroutine: {
-    label: '\u041f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430', icon: 'fa-code', fill: '#0f766e', stroke: '#0d5f58',
-    explain: '\u0412\u0438\u043a\u043b\u0438\u043a \u0434\u043e\u043f\u043e\u043c\u0456\u0436\u043d\u043e\u0433\u043e \u0430\u043b\u0433\u043e\u0440\u0438\u0442\u043c\u0443 (\u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440\u0438 \u0430\u0431\u043e \u0444\u0443\u043d\u043a\u0446\u0456\u0457). '
-      + '\u0411\u043b\u043e\u043a \u043f\u043e\u0437\u043d\u0430\u0447\u0430\u0454\u0442\u044c\u0441\u044f \u043f\u0440\u044f\u043c\u043e\u043a\u0443\u0442\u043d\u0438\u043a\u043e\u043c \u0437 \u0434\u0432\u043e\u043c\u0430 \u0431\u0456\u0447\u043d\u0438\u043c\u0438 \u0441\u043c\u0443\u0433\u0430\u043c\u0438.'
+    label: 'Підпрограма', icon: 'fa-code', fill: '#0f766e', stroke: '#0d5f58',
+    explain: 'Виклик допоміжного алгоритму (процедури або функції). '
+      + 'Блок позначається прямокутником з двома бічними смугами.'
   },
   end: {
     label: 'Кінець', icon: 'fa-flag-checkered', fill: '#f43f5e', stroke: '#be123c',
@@ -66,13 +77,13 @@ const TYPE_META = {
 const PLACEHOLDER = {
   process: 'Наприклад: Взяти рюкзак',
   decision: 'Наприклад: Є домашнє завдання?',
-  'input-output': 'Наприклад: Введіть своє ім\'я',
-  subroutine: '\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u041e\u0431\u0447\u0438\u0441\u043b\u0438\u0442\u0438 \u0441\u0443\u043c\u0443(a, b)',
+  'input-output': "\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u0412\u0432\u0435\u0434\u0456\u0442\u044c \u0441\u0432\u043e\u0454 \u0456\u043c'\u044f",
+  subroutine: 'Наприклад: Обчислити суму(a, b)',
 };
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // EXAMPLES DATA
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 const EXAMPLES = EXAMPLES_DATA;
 
 const S = {
@@ -86,12 +97,12 @@ const S = {
   issues: [],
   issuesByNode: {},
   comments: {},
-  wiz: { open: false, step: 'type', pid: null, plbl: null, type: null, editId: null },
+  wiz: createClosedWizardState(),
 };
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // DOM REFS
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const svg = $('fc');
 const wrap = $('svg-wrap');
@@ -228,9 +239,9 @@ function undo() {
   rerenderFlow(true);
 }
 
-// ────────────────────────────────────────────────────────────────
-// EDGE CACHE  (O(1) замість O(n) при кожному виклику)
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
+// EDGE CACHE (O(1) instead of O(n) per lookup)
+// ----------------------------------------------------------------
 const EDGE_CACHE = createEdgeCacheState();
 
 function invalidateEdgeCache() { markEdgeCacheDirty(EDGE_CACHE); }
@@ -278,13 +289,13 @@ function layout() {
 }
 
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // RENDER
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function render(skipIssues = false) {
   clearEl(layerTitle); clearEl(layerEdges); clearEl(layerNodes); clearEl(layerPlus);
   _edgeOccupancy = [];
-  // Під час drag не перераховуємо issues — структура не змінилась, а CPU економимо
+  // During drag we keep existing issues because graph structure does not change.
   if (!skipIssues) {
     const v = collectIssues();
     S.issues = v.issues;
@@ -317,7 +328,7 @@ if (titleInput) {
   });
 }
 
-// ── renderTitle ───────────────────────────────────────────────
+// ----------------------------------------------------------------
 function renderTitle() {
   const title = String(S.title ?? '').trim();
   if (!title) return;
@@ -378,7 +389,7 @@ function renderTitle() {
   } catch (e) { /* ignore */ }
 }
 
-// ── renderNode ────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function renderNode(id) {
   const n = S.nodes[id], p = S.pos[id];
   if (!n || !p) return;
@@ -410,7 +421,7 @@ function renderNode(id) {
   shape.classList.add('node-shape');
   g.appendChild(shape);
 
-  // Text (main) — with class for safe repositioning
+  // Text (main) - with class for safe repositioning
   const lines = wrapText(n.text || '...', n.type === 'decision' ? 10 : 16, n.type === 'decision' ? 4 : 3);
   const lh = 18;
   const startY = y - (lines.length * lh) / 2 + lh / 2;
@@ -546,7 +557,7 @@ function buildShape(type, x, y, fill, stroke, sw) {
   return buildSvgShape(mkSvg, { NODE_W, NODE_H, DIAMOND_HALF, IO_W }, type, x, y, fill, stroke, sw);
 }
 
-// renderEdge ────────────────────────────────────────────────
+// renderEdge ------------------------------------------------
 const EDGE_STUB = 28;
 const EDGE_END_STUB = 36;
 const EDGE_LANE_GAP = 92;
@@ -581,18 +592,16 @@ function renderEdge(e) {
   _edgeOccupancy.push(...pathSegments(route.pts));
 
   if (e.label) {
-    const s = route.fromAnchor || fp;
-    const fs = route.fromSide || (isY ? 'left' : isN ? 'right' : 'bottom');
-    const lx = s.x + (fs === 'left' ? -52 : fs === 'right' ? 52 : 0);
-    const ly = s.y + (fs === 'top' ? -32 : fs === 'bottom' ? 32 : 0);
+    const labelPos = getDecisionEdgeLabelPosition(route, e.label);
+    if (!labelPos) return;
 
     const lg = mkSvg('g');
     lg.appendChild(mkSvg('rect', {
-      x: lx - 25, y: ly - 15, width: 50, height: 30, rx: 15,
+      x: labelPos.x - 25, y: labelPos.y - 15, width: 50, height: 30, rx: 15,
       fill: 'white', stroke: strk, 'stroke-width': 2,
     }));
     const lt = mkSvg('text', {
-      x: lx, y: ly, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      x: labelPos.x, y: labelPos.y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
       fill: isY ? '#15803d' : '#b91c1c',
       'font-size': '13', 'font-weight': '800', 'font-family': "'Nunito',sans-serif",
     });
@@ -602,7 +611,7 @@ function renderEdge(e) {
   }
 }
 
-// ── renderPlus ────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function renderPlus({ pid, lbl }) {
   const pp = S.pos[pid];
   if (!pp) return;
@@ -656,7 +665,7 @@ function renderPlus({ pid, lbl }) {
       'font-size': '12', 'font-weight': '900', 'pointer-events': 'none',
       'font-family': "'Nunito',sans-serif",
     });
-    hint.textContent = lbl === 'yes' ? '+ Так' : '+ Ні';
+    hint.textContent = lbl === 'yes' ? '+ \u0422\u0430\u043a' : '+ \u041d\u0456';
     g.appendChild(hint);
   }
 
@@ -673,9 +682,9 @@ function renderPlus({ pid, lbl }) {
   layerPlus.appendChild(g);
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // NODE DRAG (SVG-level pointer capture)
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 let _nodeDrag = null;
 let _ignoreClickUntil = 0;
 
@@ -889,9 +898,9 @@ function renderEdgesAndPlus() {
   for (const e of openEnds()) renderPlus(e);
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // CANVAS PAN (drag on empty canvas)
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 let _canvasDrag = null;
 
 area.addEventListener('pointerdown', ev => {
@@ -927,9 +936,9 @@ area.addEventListener('pointercancel', () => {
   area.classList.remove('grabbing');
 });
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // NODE SELECTION & TOOLBAR
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function selectNode(id) {
   if (S.wiz.open) return;
   S.sel = id;
@@ -955,9 +964,14 @@ function positionToolbar(id) {
   requestAnimationFrame(() => {
     const w = tb.offsetWidth;
     const h = tb.offsetHeight || 54;
-
-    tb.style.left = Math.max(4, Math.min(window.innerWidth - w - 4, cx - w / 2)) + 'px';
-    tb.style.top = Math.max(56, top - h - 10) + 'px';
+    const placement = computeToolbarPlacement({
+      rect,
+      toolbarWidth: w,
+      toolbarHeight: h,
+      viewportWidth: window.innerWidth,
+    });
+    tb.style.left = placement.left + 'px';
+    tb.style.top = placement.top + 'px';
   });
 }
 
@@ -987,7 +1001,7 @@ svg.addEventListener('pointerdown', ev => {
   if (!onNode && !onPlus && S.sel) hideToolbar();
 });
 
-// Double-click / double-tap → edit
+// Double-click / double-tap -> edit
 let _lastTap = { id: null, t: 0 };
 svg.addEventListener('click', ev => {
   const g = ev.target.closest('[data-nid]'); if (!g) return;
@@ -1012,7 +1026,7 @@ svg.addEventListener('dblclick', ev => {
 function startEditNode(id) {
   if (S.wiz.open) return;
   hideToolbar();
-  S.wiz = { open: true, step: 'explain', pid: null, plbl: null, type: S.nodes[id].type, editId: id };
+  S.wiz = createEditWizardState(S.nodes[id].type, id);
   const inp = $('text-inp');
   inp.value = S.nodes[id].text || '';
   inp.placeholder = PLACEHOLDER[S.nodes[id].type] || '';
@@ -1057,9 +1071,7 @@ $('btn-del-node').addEventListener('click', () => {
   if (id === S.root) { showToast('Блок «Початок» не можна видалити!'); return; }
 
   const n = S.nodes[id];
-  $('del-msg').textContent = (n?.type === 'decision')
-    ? 'Це «Питання» буде видалено. Ми спробуємо з’єднати схему так, щоб алгоритм продовжився далі.'
-    : 'Блок буде видалено, а наступні блоки залишаться — ми під’єднаємо схему автоматично.';
+  $('del-msg').textContent = getDeleteNodeMessage(n?.type);
 
   openModal('del-modal');
   $('del-confirm').onclick = () => {
@@ -1135,8 +1147,17 @@ function connectableNodes(pid, lbl) {
   if (!pid || !S.nodes[pid]) return [];
 
   const banned = new Set([pid]);
-  descendants(pid).forEach(id => banned.add(id));
-  outEdges(pid).forEach(edge => { if (edge.to) banned.add(edge.to); });
+  const current = S.nodes[pid];
+  const branchRoot = current.type === 'decision' && (lbl === 'yes' || lbl === 'no')
+    ? outEdges(pid).find(edge => edge.label === lbl && edge.to && S.nodes[edge.to])?.to
+    : outEdges(pid).find(edge => !edge.label && edge.to && S.nodes[edge.to])?.to;
+
+  if (branchRoot) {
+    descendants(branchRoot).forEach(id => banned.add(id));
+  }
+  outEdges(pid)
+    .filter(edge => edge.label === lbl && edge.to)
+    .forEach(edge => banned.add(edge.to));
 
   return Object.values(S.nodes)
     .filter(node => node && !banned.has(node.id))
@@ -1195,8 +1216,8 @@ function deleteNodeSplice(id) {
 
   const edgesToDrop = new Set();
 
-  // Rewire incoming edges to the next block — create NEW edge objects (не мутуємо оригінали,
-  // щоб undo-стек зберігав коректний стан)
+  // Rewire incoming edges to the next block. Create new edge objects instead of mutating old ones,
+  // so the undo stack keeps the correct historical state.
   const rewiredEdges = [];
   for (const e of inc) {
     if (target && S.nodes[target] && target !== id) {
@@ -1215,7 +1236,7 @@ function deleteNodeSplice(id) {
     e.from && S.nodes[e.from]
   );
 
-  // Add rewired edges (нові об'єкти)
+  // Add rewired edges (new objects).
   S.edges.push(...rewiredEdges);
   invalidateEdgeCache();
 
@@ -1229,11 +1250,11 @@ function deleteNodeSplice(id) {
 }
 
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // WIZARD
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function openWiz(pid, lbl) {
-  S.wiz = { open: true, step: 'type', pid, plbl: lbl, type: null, editId: null };
+  S.wiz = createInsertWizardState(pid, lbl);
 
   const badge = $('step-type-badge');
   const badgeData = getWizardBadge(lbl);
@@ -1287,7 +1308,7 @@ function openWizPanel() {
 }
 
 function closeWiz() {
-  S.wiz = { open: false, step: 'type', pid: null, plbl: null, type: null, editId: null };
+  S.wiz = createClosedWizardState();
   const panel = $('wizard-panel');
   panel.style.transform = 'translateY(110%)';
   deactivateDialogFocus(panel);
@@ -1414,23 +1435,24 @@ function commitNode(text) {
   closeWiz(); rerenderFlow(true);
   const p = S.pos[id];
   if (p) {
-    setTimeout(() => area.scrollTo({
-      top: Math.max(0, p.y * _scale - area.clientHeight * 0.42),
-      left: Math.max(0, p.x * _scale - area.clientWidth * 0.5),
-      behavior: 'smooth',
-    }), 80);
+    setTimeout(() => area.scrollTo(getNodeFocusScroll({
+      position: p,
+      scale: _scale,
+      viewportWidth: area.clientWidth,
+      viewportHeight: area.clientHeight,
+    })), 80);
   }
   if (isDone()) setTimeout(confetti, 400);
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // RESET & MODALS
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 $('btn-reset').addEventListener('click', () => openModal('reset-modal'));
 $('reset-cancel').addEventListener('click', () => closeModal('reset-modal'));
 $('reset-confirm').addEventListener('click', () => {
   closeModal('reset-modal');
-  Object.assign(S, { nodes: {}, edges: [], root: null, cnt: 0, undo: [], sel: null, ranks: {}, pos: {}, manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {}, title: '', issues: [], issuesByNode: {}, comments: {} });
+  Object.assign(S, createEmptyWorkspaceState());
   invalidateEdgeCache();
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar(); init();
@@ -1444,29 +1466,23 @@ $('del-cancel').addEventListener('click', () => closeModal('del-modal'));
 
 function openModal(id) {
   const el = $(id);
-  if (!el) return;
-  el.setAttribute('aria-hidden', 'false');
-  el.classList.remove('hidden');
-  el.classList.add('flex');
-  activateDialogFocus(el);
+  showModalElement(el, activateDialogFocus);
 }
 function closeModal(id) {
   const el = $(id);
-  if (!el) return;
-  el.classList.add('hidden');
-  el.classList.remove('flex');
-  deactivateDialogFocus(el);
+  hideModalElement(el, deactivateDialogFocus);
 }
 
 function focusNode(id) {
   const p = S.pos[id];
   if (!p) return;
   hideToolbar();
-  area.scrollTo({
-    top: Math.max(0, p.y * _scale - area.clientHeight * 0.42),
-    left: Math.max(0, p.x * _scale - area.clientWidth * 0.5),
-    behavior: 'smooth',
-  });
+  area.scrollTo(getNodeFocusScroll({
+    position: p,
+    scale: _scale,
+    viewportWidth: area.clientWidth,
+    viewportHeight: area.clientHeight,
+  }));
   setTimeout(() => selectNode(id), 120);
 }
 
@@ -1480,22 +1496,22 @@ function renderCheckModal() {
   const errs = issues.filter(i => i.level === 'error').length;
   const warns = issues.filter(i => i.level === 'warn').length;
   if (!issues.length) {
-    summary.textContent = 'Помилок не знайдено. Схема виглядає добре.';
+    summary.textContent = getCheckSummaryText({ issueCount: 0, errors: errs, warnings: warns });
     const ok = document.createElement('div');
     ok.className = 'check-item ok';
-    ok.innerHTML = `<i class="fa-solid fa-circle-check text-green-500"></i><div class="font-bold">Чудово! Можна продовжувати або зберігати схему.</div>`;
+    ok.innerHTML = getCheckSuccessHtml();
     list.appendChild(ok);
     return;
   }
 
-  summary.textContent = `Знайдено: ${errs} критичних, ${warns} підказок.`;
+  summary.textContent = getCheckSummaryText({ issueCount: issues.length, errors: errs, warnings: warns });
   for (const it of issues) {
     const row = document.createElement('button');
-    const lvl = it.level === 'error' ? 'error' : 'warn';
-    row.className = `check-item ${lvl}` + (it.nodeId ? '' : ' no-node');
+    const meta = getCheckIssueMeta(it.level);
+    row.className = `check-item ${meta.rowClass}` + (it.nodeId ? '' : ' no-node');
     row.type = 'button';
     row.innerHTML = `
-      <div class="check-ico">${it.level === 'error' ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-lightbulb"></i>'}</div>
+      <div class="check-ico">${meta.iconHtml}</div>
       <div class="check-msg">${escHtml(it.msg)}</div>
       ${it.nodeId ? '<div class="check-go"><i class="fa-solid fa-location-crosshairs"></i></div>' : ''}
     `;
@@ -1518,24 +1534,15 @@ $('btn-check')?.addEventListener('click', () => {
 });
 $('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'));
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // EXAMPLES
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 (function buildExamplesUI() {
   const container = $('ex-list');
   EXAMPLES.forEach(ex => {
     const card = document.createElement('button');
     card.className = `ex-card w-full flex items-center gap-4 p-4 ${ex.bg} border-2 ${ex.border} rounded-2xl text-left transition`;
-    card.innerHTML = `
-      <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow"
-           style="background:${ex.color}">
-        <i class="fa-solid ${ex.icon} text-white text-xl"></i>
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="font-black text-gray-800 text-base">${ex.title}</div>
-        <div class="text-xs text-gray-500 font-semibold mt-0.5">${ex.subtitle}</div>
-      </div>
-      <i class="fa-solid fa-arrow-right text-gray-300 flex-shrink-0"></i>`;
+    card.innerHTML = getExampleCardHtml(ex);
     card.addEventListener('click', () => {
       try {
         loadExample(ex);
@@ -1549,24 +1556,16 @@ $('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'))
 })();
 
 function loadExample(ex) {
-  const maxId = ex.nodes.reduce((m, n) => {
-    const num = parseInt(n.id.replace('n', '')) || 0;
-    return Math.max(m, num);
-  }, 0);
-  S.nodes = {};
-  ex.nodes.forEach(n => { S.nodes[n.id] = { ...n }; });
-  S.edges = ex.edges.map(e => ({ ...e }));
+  const exampleState = createExampleState(ex);
+  applyExampleState(S, exampleState);
   invalidateEdgeCache();
-  S.root = ex.root;
-  S.cnt = maxId;
-  S.undo = []; S.sel = null; S.pos = {}; S.ranks = {};
-  S.manual = {}; S.baseX = {}; S.baseY = {}; S.rankY = {}; S.rankH = {}; S.comments = {};
   setTitle(ex.title || '');
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar();
   rerenderFlow(true);
+  if (isDone()) setTimeout(confetti, 400);
   setTimeout(fitToScreen, 100);
-  showToast(`Приклад «${ex.title}» завантажено!`);
+  showToast(getExampleLoadedToastText(ex.title));
 }
 
 $('btn-examples').addEventListener('click', () => openModal('ex-modal'));
@@ -1575,9 +1574,9 @@ $('ex-modal').addEventListener('pointerdown', e => {
   if (e.target === $('ex-modal')) closeModal('ex-modal');
 });
 
-// ────────────────────────────────────────────────────────────────
-// SAVE (SVG → PNG)
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
+// SAVE (SVG -> PNG)
+// ----------------------------------------------------------------
 $('btn-save').addEventListener('click', () => {
   if (!S.root || !Object.keys(S.nodes).length) {
     showToast('Спочатку створи блок-схему!');
@@ -1592,9 +1591,9 @@ $('btn-save').addEventListener('click', () => {
   setTimeout(() => { inp.focus(); inp.select(); }, 60);
 
   const runSave = async () => {
-    const raw = inp.value.trim();
-    if (raw.length < 2) { showToast('Напиши назву (хоч 2 літери) 🙂'); inp.focus(); return; }
-    setTitle(raw);
+    const titleCheck = validateSaveTitle(inp.value);
+    if (!titleCheck.ok) { showToast(titleCheck.message); inp.focus(); return; }
+    setTitle(titleCheck.value);
     closeModal('save-modal');
     rerenderFlow(true); // show title on canvas
 
@@ -1700,16 +1699,15 @@ async function savePng() {
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
         cvs.toBlob(b => {
-          if (!b) { rej(new Error('toBlob повернув null')); return; }
+          if (!b) { rej(new Error('toBlob returned null')); return; }
           const pngUrl = URL.createObjectURL(b);
           const a = document.createElement('a');
           a.href = pngUrl;
-          const safe = (title || 'блок-схема').replace(/[\\/:*?"<>|]+/g, '_').trim();
-          a.download = (safe || 'блок-схема') + '.png';
+          a.download = makeDownloadFileName(title);
           a.click();
-          // Гарантовано звільняємо URL після завантаження
+          // Release the object URL after the download starts.
           setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
-          confetti(); showToast('Збережено успішно! 🎉');
+          confetti(); showToast('Збережено успішно!');
           res();
         }, 'image/png');
       };
@@ -1729,10 +1727,10 @@ async function savePng() {
   }
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // ZOOM  (CSS transform on wrapper)
-// ────────────────────────────────────────────────────────────────
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
 let _scale = 1;
 const S_MIN = 0.3, S_MAX = 2.5, S_STEP = 0.15;
 
@@ -1854,9 +1852,9 @@ document.addEventListener('keydown', e => {
 });
 $('btn-undo').addEventListener('click', undo);
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // MASCOT
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function mascot() {
   const el = $('mascot-msg');
   const cnt = Object.keys(S.nodes).length;
@@ -1876,28 +1874,28 @@ $('mascot-toggle').addEventListener('click', () => {
   $('mascot').classList.toggle('visible');
 });
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // PROGRESS BAR
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function updateProgress() {
   const total = Object.keys(S.nodes).length;
-  const pct = !S.root ? 5
-    : total <= 1 ? 5
-      : isDone() ? 100
-        : Math.min(92, total * 11);
+  const pct = getProgressPercent({
+    hasRoot: Boolean(S.root),
+    nodeCount: total,
+    isComplete: isDone(),
+  });
   $('prog-fill').style.width = pct + '%';
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // TOAST
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 let _toastT;
 function showToast(msg, dur = 2600) {
   const t = $('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  showToastElement(t, msg);
   clearTimeout(_toastT);
-  _toastT = setTimeout(() => t.classList.remove('show'), dur);
+  _toastT = setTimeout(() => hideToastElement(t), dur);
 }
 
 function reportRuntimeError(context, error) {
@@ -1905,10 +1903,10 @@ function reportRuntimeError(context, error) {
   console.error(context, error);
   const mascotEl = $('mascot-msg');
   if (mascotEl) {
-    mascotEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Сталася помилка: ${escHtml(details)}`;
+    mascotEl.innerHTML = getRuntimeErrorMascotHtml(details, escHtml);
   }
   const toastEl = $('toast');
-  if (toastEl) showToast(`Помилка: ${details}`, 4200);
+  if (toastEl) showToast(getRuntimeErrorToastText(details), 4200);
 }
 
 window.addEventListener('error', event => {
@@ -1918,9 +1916,9 @@ window.addEventListener('unhandledrejection', event => {
   reportRuntimeError('unhandled-rejection', event.reason);
 });
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // VIRTUAL KEYBOARD
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     if (!S.wiz.open) return;
@@ -1929,9 +1927,9 @@ if (window.visualViewport) {
   });
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // CONFETTI
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function confetti() {
   const cvs = $('cfc');
   cvs.width = innerWidth; cvs.height = innerHeight;
@@ -1958,9 +1956,9 @@ function confetti() {
   })();
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // UTILS
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 const wrapText = createWrapText();
 
 
@@ -1969,9 +1967,9 @@ function escHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 // INIT
-// ────────────────────────────────────────────────────────────────
+// ----------------------------------------------------------------
 function init() {
   const id = 'n' + (++S.cnt);
   S.nodes[id] = { id, type: 'start', text: 'Початок' };
@@ -1984,3 +1982,6 @@ function init() {
 }
 
 init();
+
+
+

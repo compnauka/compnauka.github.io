@@ -21,6 +21,11 @@ const checks = [
     expected: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a',
     forbidden: ['\u0420\u045f', '\u0432\u0402', '????????'],
   },
+  {
+    file: 'app.mjs',
+    expected: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a',
+    forbidden: ['\u0420\u045f', '\u0432\u0402', '????????'],
+  },
 ];
 
 test('key ukrainian text files remain readable as UTF-8', () => {
