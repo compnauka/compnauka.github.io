@@ -12,6 +12,7 @@ const SNAPSHOT_KEYS = [
   'pos',
   'ranks',
   'comments',
+  'commentPos',
 ];
 
 function cloneValue(value) {

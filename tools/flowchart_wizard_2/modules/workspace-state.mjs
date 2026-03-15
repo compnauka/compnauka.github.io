@@ -1,4 +1,4 @@
-﻿import { createClosedWizardState } from './wizard-state.mjs';
+import { createClosedWizardState } from './wizard-state.mjs';
 
 export function createEmptyWorkspaceState() {
   return {
@@ -19,6 +19,8 @@ export function createEmptyWorkspaceState() {
     issues: [],
     issuesByNode: {},
     comments: {},
+    commentPos: {},
     wiz: createClosedWizardState(),
   };
 }
+

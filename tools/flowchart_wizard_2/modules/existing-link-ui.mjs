@@ -1,4 +1,4 @@
-﻿import { getCycleConnectionHintHtml } from './wizard.mjs';
+import { getCycleConnectionHintHtml } from './wizard.mjs';
 
 export function buildExistingConnectionView({ candidates, ancestorIds, typeMeta, escHtml }) {
   const normalizedCandidates = Array.isArray(candidates) ? candidates : [];
@@ -27,4 +27,35 @@ export function buildExistingConnectionItem(node, typeMeta, escHtml) {
         </div>
         <i class="fa-solid fa-link text-indigo-300 flex-shrink-0 text-sm"></i>`,
   };
+}
+
+export function renderExistingConnectionView({ listEl, emptyEl, view, createElement, onSelect }) {
+  if (!listEl || !emptyEl) return;
+
+  listEl.innerHTML = '';
+  if (!view?.hasCandidates) {
+    emptyEl.classList.remove('hidden');
+    listEl.classList.add('hidden');
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+  listEl.classList.remove('hidden');
+
+  if (view.hintHtml) {
+    const hint = createElement('p');
+    hint.className = 'text-xs font-bold text-sky-600 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 mb-2';
+    hint.innerHTML = view.hintHtml;
+    listEl.appendChild(hint);
+  }
+
+  view.items.forEach(item => {
+    const btn = createElement('button');
+    btn.className = 'exist-item w-full flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 text-left';
+    btn.innerHTML = item.html;
+    btn.addEventListener('click', () => {
+      onSelect(item.id);
+    });
+    listEl.appendChild(btn);
+  });
 }

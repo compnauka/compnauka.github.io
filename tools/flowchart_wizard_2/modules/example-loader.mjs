@@ -13,8 +13,10 @@ export function applyExampleState(targetState, exampleState) {
   targetState.rankY = {};
   targetState.rankH = {};
   targetState.comments = exampleState.comments;
+  targetState.commentPos = {};
 }
 
 export function getExampleLoadedToastText(title) {
-  return '??????? ?' + title + '? ???????????!';
+  return '\u041f\u0440\u0438\u043a\u043b\u0430\u0434 \u00ab' + title + '\u00bb \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e!';
 }
+

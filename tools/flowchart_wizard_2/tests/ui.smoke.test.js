@@ -1,4 +1,4 @@
-﻿const test = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -42,7 +42,7 @@ function makeElement(doc, tag = 'div') {
       const walk = node => node.children.forEach(child => { if (match(child)) out.push(child); walk(child); });
       walk(this); return out;
     },
-    closest(selector) { let node = this; while (node) { if (selector === '[data-plus]' && Object.hasOwn(node.attributes, 'data-plus')) return node; if (selector === '[data-nid]' && Object.hasOwn(node.attributes, 'data-nid')) return node; node = node.parentNode; } return null; },
+    closest(selector) { let node = this; while (node) { if (selector === '[data-plus]' && Object.hasOwn(node.attributes, 'data-plus')) return node; if (selector === '[data-nid]' && Object.hasOwn(node.attributes, 'data-nid')) return node; if (selector === '[data-comment-for]' && Object.hasOwn(node.attributes, 'data-comment-for')) return node; node = node.parentNode; } return null; },
     focus() { if (doc) doc.activeElement = this; }, select() {}, setPointerCapture() {},
     getBoundingClientRect() { return { left: 0, top: 0, width: this.offsetWidth, height: this.offsetHeight }; },
     getBBox() { return { x: 760, y: 120, width: 220, height: 56 }; },
@@ -190,6 +190,24 @@ test('completed examples validate cleanly and render teaching comments', async (
     assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n1"]').length, 0);
     assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n2"]').length, 0);
     assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n3"]').length, 0);
+  } finally { env.cleanup(); }
+});
+
+test('clicking a rendered comment shows full comment text in toast', async () => {
+  const env = await boot();
+  try {
+    const exList = env.doc.getElementById('ex-list');
+    const subCard = exList.children.find(child => child.innerHTML.includes('\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u043c\u0443 \u043c\u0430\u0441\u0438\u0432\u0443'));
+    assert.ok(subCard);
+    subCard.dispatch('click');
+
+    const comment = env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]');
+    assert.ok(comment);
+
+    env.doc.getElementById('fc').dispatch('pointerdown', { target: comment, clientX: 10, clientY: 10 });
+    env.doc.getElementById('fc').dispatch('pointerup', { target: comment, clientX: 10, clientY: 10 });
+
+    assert.equal(env.doc.getElementById('toast').textContent.includes('\u041f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430'), true);
   } finally { env.cleanup(); }
 });
 

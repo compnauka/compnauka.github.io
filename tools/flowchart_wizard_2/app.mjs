@@ -3,6 +3,7 @@
 import { EXAMPLES as EXAMPLES_DATA } from './modules/examples.mjs';
 import { createExampleState, getExampleCardHtml } from './modules/example-utils.mjs';
 import { applyExampleState, getExampleLoadedToastText } from './modules/example-loader.mjs';
+import { createExampleCardButton, isBackdropClick } from './modules/examples-modal-ui.mjs';
 import {
   createEdgeCacheState,
   invalidateEdgeCache as markEdgeCacheDirty,
@@ -17,21 +18,31 @@ import {
 } from './modules/graph.mjs';
 import { collectIssues as collectIssueList } from './modules/validation.mjs';
 import { getMascotHtml } from './modules/mascot.mjs';
+import { renderMascotMessage, toggleMascotVisibility } from './modules/mascot-ui.mjs';
 import { getWizardBadge, getWizardLiveText, getExplainContentHtml, getMergeHintText, getDecisionEdgeLabelPosition } from './modules/wizard.mjs';
 import { createClosedWizardState, createInsertWizardState, createEditWizardState } from './modules/wizard-state.mjs';
 import { buildShape as buildSvgShape, pathSegments, createWrapText } from './modules/render-utils.mjs';
 import { computeRanks as computeGraphRanks, applyLayout } from './modules/layout.mjs';
 import { computeEdgeRoute } from './modules/edge-routing.mjs';
-import { getCommentLayout, normalizeCommentText } from './modules/comments.mjs';
+import { getCommentLayout, normalizeCommentText, normalizeCommentOffset } from './modules/comments.mjs';
 import { createStateSnapshot, restoreStateSnapshot, pushUndoSnapshot, popUndoSnapshot } from './modules/history.mjs';
 import { computeToolbarPlacement, getDeleteNodeMessage } from './modules/node-ui.mjs';
+import { getDeleteModalState, bindDeleteModalButtons } from './modules/delete-modal-ui.mjs';
+import { showToolbarElement, hideToolbarElement, shouldHideToolbarOnCanvasPointer } from './modules/toolbar-ui.mjs';
 import { getCheckSummaryText, getCheckSuccessHtml, getCheckIssueMeta } from './modules/check-ui.mjs';
+import { bindCheckModalControls } from './modules/check-modal-ui.mjs';
+import { bindCheckIssueRow, hasCheckIssueTarget } from './modules/check-list-ui.mjs';
+import { bindResetModalControls } from './modules/reset-modal-ui.mjs';
+import { bindWizardControls } from './modules/wizard-controls-ui.mjs';
+import { renderWizardBadge, showWizardStepUi, openWizardPanelUi, closeWizardPanelUi } from './modules/wizard-panel-ui.mjs';
 import { createEmptyWorkspaceState } from './modules/workspace-state.mjs';
 import { validateSaveTitle, makeDownloadFileName } from './modules/save-ui.mjs';
+import { bindSaveModalControls } from './modules/save-modal-ui.mjs';
 import { showModalElement, hideModalElement } from './modules/modal-ui.mjs';
 import { getNodeFocusScroll } from './modules/focus-ui.mjs';
-import { buildExistingConnectionView } from './modules/existing-link-ui.mjs';
+import { buildExistingConnectionView, renderExistingConnectionView } from './modules/existing-link-ui.mjs';
 import { getProgressPercent, showToastElement, hideToastElement, getRuntimeErrorMascotHtml, getRuntimeErrorToastText } from './modules/feedback-ui.mjs';
+import { shouldIgnoreGlobalKeydown, shouldTriggerDeleteShortcut, closeAllEditorOverlays } from './modules/keyboard-ui.mjs';
 
 // ----------------------------------------------------------------
 // CONSTANTS
@@ -97,6 +108,7 @@ const S = {
   issues: [],
   issuesByNode: {},
   comments: {},
+  commentPos: {},
   wiz: createClosedWizardState(),
 };
 
@@ -482,6 +494,10 @@ function removeRenderedComment(id) {
   layerNodes.querySelector('[data-comment-for="' + id + '"]')?.remove();
 }
 
+function getCommentText(id) {
+  return String(S.comments?.[id] || '').trim();
+}
+
 function renderComment(id) {
   try {
     removeRenderedComment(id);
@@ -490,10 +506,15 @@ function renderComment(id) {
       position: S.pos[id],
       nodeWidth: nodeW(id),
       wrapText,
+      offset: S.commentPos?.[id],
     });
     if (!layout) return;
 
-    const g = mkSvg('g', { 'data-comment-for': id, class: 'node-comment' });
+    const g = mkSvg('g', { 'data-comment-for': id, class: 'node-comment', style: 'cursor:grab' });
+    const title = mkSvg('title');
+    title.textContent = layout.text;
+    g.appendChild(title);
+
     g.appendChild(mkSvg('line', {
       x1: layout.connector.x1,
       y1: layout.connector.y1,
@@ -543,6 +564,7 @@ function getCommentBounds(id) {
     position: S.pos[id],
     nodeWidth: nodeW(id),
     wrapText,
+    offset: S.commentPos?.[id],
   });
   if (!layout) return null;
   return {
@@ -685,8 +707,10 @@ function renderPlus({ pid, lbl }) {
 // ----------------------------------------------------------------
 // NODE DRAG (SVG-level pointer capture)
 // ----------------------------------------------------------------
+let _commentDrag = null;
 let _nodeDrag = null;
 let _ignoreClickUntil = 0;
+let _ignoreCommentClickUntil = 0;
 
 function svgClientToLocal(clientX, clientY) {
   const r = area.getBoundingClientRect();
@@ -697,7 +721,31 @@ function svgClientToLocal(clientX, clientY) {
 }
 
 svg.addEventListener('pointerdown', ev => {
-  // Only start drag from node elements (not plus buttons)
+  const comment = ev.target.closest('[data-comment-for]');
+  if (!comment) return;
+  if (S.wiz.open) return;
+  ev.stopPropagation();
+
+  const id = comment.getAttribute('data-comment-for') || comment.dataset.commentFor;
+  const loc = svgClientToLocal(ev.clientX, ev.clientY);
+  const offset = normalizeCommentOffset(S.commentPos?.[id]);
+
+  _commentDrag = {
+    id,
+    startLx: loc.x,
+    startLy: loc.y,
+    startOx: offset.x,
+    startOy: offset.y,
+    moved: false,
+    snapTaken: false,
+    pointerId: ev.pointerId,
+  };
+
+  svg.setPointerCapture(ev.pointerId);
+  area.classList.add('comment-dragging');
+});
+
+svg.addEventListener('pointerdown', ev => {
   const g = ev.target.closest('[data-nid]');
   if (!g) return;
   if (S.wiz.open) return;
@@ -725,14 +773,34 @@ svg.addEventListener('pointerdown', ev => {
 });
 
 svg.addEventListener('pointermove', ev => {
+  if (_commentDrag) {
+    const loc = svgClientToLocal(ev.clientX, ev.clientY);
+    const dx = loc.x - _commentDrag.startLx;
+    const dy = loc.y - _commentDrag.startLy;
+
+    if (!_commentDrag.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      _commentDrag.moved = true;
+      if (!_commentDrag.snapTaken) { snap(); _commentDrag.snapTaken = true; }
+      hideToolbar();
+    }
+
+    if (_commentDrag.moved) {
+      if (!S.commentPos) S.commentPos = {};
+      S.commentPos[_commentDrag.id] = {
+        x: Math.round(_commentDrag.startOx + dx),
+        y: Math.round(_commentDrag.startOy + dy),
+      };
+      renderComment(_commentDrag.id);
+    }
+    return;
+  }
+
   if (!_nodeDrag) return;
   const loc = svgClientToLocal(ev.clientX, ev.clientY);
 
   const dx = loc.x - _nodeDrag.startLx;
   const dyRaw = loc.y - _nodeDrag.startLy;
 
-  // Kids can nudge blocks up/down a little to avoid line overlaps.
-  // Hold Shift to move more vertically.
   const lim = ev.shiftKey ? DY_LIMIT_SHIFT : DY_LIMIT;
   const baseY = _nodeDrag.baseY;
   const desiredY = _nodeDrag.startPy + dyRaw;
@@ -742,7 +810,6 @@ svg.addEventListener('pointermove', ev => {
     _nodeDrag.moved = true;
     if (!_nodeDrag.snapTaken) { snap(); _nodeDrag.snapTaken = true; }
     hideToolbar();
-    // Mark node in layer as dragging
     const g = layerNodes.querySelector(`[data-nid="${_nodeDrag.id}"]`);
     if (g) g.classList.add('dragging');
   }
@@ -752,11 +819,27 @@ svg.addEventListener('pointermove', ev => {
       x: Math.round(_nodeDrag.startPx + dx),
       y: Math.round(clampedY),
     };
-    renderEdgesAndPlus(); // lightweight partial re-render
+    renderEdgesAndPlus();
     updateNodePosition(_nodeDrag.id);
   }
 });
 svg.addEventListener('pointerup', ev => {
+  if (_commentDrag) {
+    const wasMoved = _commentDrag.moved;
+    const id = _commentDrag.id;
+    _commentDrag = null;
+    area.classList.remove('comment-dragging');
+
+    if (!wasMoved) {
+      const fullText = getCommentText(id);
+      if (fullText && Date.now() >= _ignoreCommentClickUntil) showToast(fullText, 5200);
+      return;
+    }
+
+    _ignoreCommentClickUntil = Date.now() + 350;
+    return;
+  }
+
   if (!_nodeDrag) return;
   const wasMoved = _nodeDrag.moved;
   const id = _nodeDrag.id;
@@ -768,14 +851,12 @@ svg.addEventListener('pointerup', ev => {
     return;
   }
 
-  // prevent "click" after drag from triggering edit/double-tap logic
   _ignoreClickUntil = Date.now() + 450;
   _lastTap = { id: null, t: 0 };
 
   const gg = layerNodes.querySelector(`[data-nid="${id}"]`);
   if (gg) gg.classList.remove('dragging');
 
-  // persist offsets so future auto-layout doesn't reset the user's adjustments
   const baseX = S.baseX?.[id];
   const baseY = S.baseY?.[id];
   const curX = S.pos[id]?.x ?? 0;
@@ -790,13 +871,14 @@ svg.addEventListener('pointerup', ev => {
   if (!ndx && !ndy) delete S.manual[id];
   else S.manual[id] = { dx: ndx, dy: ndy };
 
-  // Fix SVG height after drag
   let maxY = 300;
   for (const [nid, p] of Object.entries(S.pos)) maxY = Math.max(maxY, p.y + nodeH(nid) / 2);
   svg.style.minHeight = (maxY + 220) + 'px';
   updateWrapSize();
 });
 svg.addEventListener('pointercancel', () => {
+  _commentDrag = null;
+  area.classList.remove('comment-dragging');
   if (_nodeDrag) {
     const gg = layerNodes.querySelector(`[data-nid="${_nodeDrag.id}"]`);
     if (gg) gg.classList.remove('dragging');
@@ -909,7 +991,7 @@ area.addEventListener('pointerdown', ev => {
   if (!isLeft && !isMid) return;
 
   // If left click: don't start pan if clicking a node or plus button
-  if (isLeft && (ev.target.closest('[data-nid]') || ev.target.closest('[data-plus]'))) return;
+  if (isLeft && (ev.target.closest('[data-nid]') || ev.target.closest('[data-plus]') || ev.target.closest('[data-comment-for]'))) return;
 
   if (isMid) ev.preventDefault(); // Prevent browser's auto-scroll on middle click
 
@@ -958,8 +1040,7 @@ function positionToolbar(id) {
   const cx = rect.left + rect.width / 2;
   const top = rect.top;
 
-  tb.classList.remove('hidden');
-  tb.style.display = 'flex';
+  showToolbarElement(tb);
 
   requestAnimationFrame(() => {
     const w = tb.offsetWidth;
@@ -977,7 +1058,7 @@ function positionToolbar(id) {
 
 function hideToolbar() {
   const tb = $('node-tb');
-  tb.classList.add('hidden'); tb.style.display = '';
+  hideToolbarElement(tb);
   if (S.sel) { S.sel = null; render(); }
 }
 
@@ -998,7 +1079,7 @@ svg.addEventListener('pointerdown', ev => {
   // Click on empty SVG area (not a node, not a plus)
   const onNode = ev.target.closest('[data-nid]');
   const onPlus = ev.target.closest('[data-plus]');
-  if (!onNode && !onPlus && S.sel) hideToolbar();
+  if (shouldHideToolbarOnCanvasPointer({ onNode, onPlus, hasSelection: Boolean(S.sel) })) hideToolbar();
 });
 
 // Double-click / double-tap -> edit
@@ -1047,8 +1128,9 @@ function editNodeComment(id) {
 
   snap();
   if (!S.comments) S.comments = {};
+  if (!S.commentPos) S.commentPos = {};
   if (next) S.comments[id] = next;
-  else delete S.comments[id];
+  else { delete S.comments[id]; delete S.commentPos[id]; }
 
   hideToolbar();
   rerenderFlow(false);
@@ -1193,6 +1275,7 @@ function pruneUnreachable() {
     delete S.nodes[id];
     if (S.manual) delete S.manual[id];
     if (S.comments) delete S.comments[id];
+    if (S.commentPos) delete S.commentPos[id];
   }
 }
 
@@ -1244,6 +1327,7 @@ function deleteNodeSplice(id) {
   delete S.nodes[id];
   if (S.manual) delete S.manual[id];
   if (S.comments) delete S.comments[id];
+  if (S.commentPos) delete S.commentPos[id];
 
   // If some blocks became unreachable (e.g., after deleting a decision), remove them
   pruneUnreachable();
@@ -1256,15 +1340,7 @@ function deleteNodeSplice(id) {
 function openWiz(pid, lbl) {
   S.wiz = createInsertWizardState(pid, lbl);
 
-  const badge = $('step-type-badge');
-  const badgeData = getWizardBadge(lbl);
-  if (badgeData) {
-    badge.textContent = badgeData.text;
-    badge.className = badgeData.className;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
+  renderWizardBadge($('step-type-badge'), getWizardBadge(lbl));
 
   const sibling = findSiblingOpenEnd(pid, lbl);
   const ms = $('merge-suggestion');
@@ -1292,47 +1368,36 @@ function openWiz(pid, lbl) {
 }
 
 function openWizPanel() {
-  const panel = $('wizard-panel');
-  panel.style.transform = 'translateY(0)';
-  panel.setAttribute('aria-hidden', 'false');
-  activateDialogFocus(panel, S.wiz.step === 'explain' ? $('text-inp') : null);
-  // Hide mascot when wizard opens
-  $('mascot').classList.add('wiz-open');
-  $('mascot-toggle').style.opacity = '0';
-  $('mascot-toggle').style.pointerEvents = 'none';
-  requestAnimationFrame(() => {
-    const wh = panel.offsetHeight || 0;
-    $('mascot').style.bottom = (wh + 10) + 'px';
-    $('mascot-toggle').style.bottom = (wh + 10) + 'px';
+  openWizardPanelUi({
+    panel: $('wizard-panel'),
+    mascotEl: $('mascot'),
+    mascotToggleEl: $('mascot-toggle'),
+    focusTarget: S.wiz.step === 'explain' ? $('text-inp') : null,
+    activateFocus: activateDialogFocus,
+    measure: fn => requestAnimationFrame(fn),
   });
 }
 
 function closeWiz() {
   S.wiz = createClosedWizardState();
-  const panel = $('wizard-panel');
-  panel.style.transform = 'translateY(110%)';
-  deactivateDialogFocus(panel);
-  // Show mascot again
-  $('mascot').classList.remove('wiz-open');
-  $('mascot').style.bottom = '18px';
-  $('mascot-toggle').style.opacity = '';
-  $('mascot-toggle').style.pointerEvents = '';
-  $('mascot-toggle').style.bottom = '16px';
+  closeWizardPanelUi({
+    panel: $('wizard-panel'),
+    mascotEl: $('mascot'),
+    mascotToggleEl: $('mascot-toggle'),
+    deactivateFocus: deactivateDialogFocus,
+  });
   mascot();
 }
 
 function showWizStep(step) {
-  ['step-type', 'step-explain', 'step-existing'].forEach(id => {
-    const el = $(id);
-    const visible = id === 'step-' + step;
-    el.classList.toggle('hidden', !visible);
-    el.setAttribute('aria-hidden', visible ? 'false' : 'true');
+  showWizardStepUi({
+    stepIds: ['step-type', 'step-explain', 'step-existing'],
+    currentStep: step,
+    getElement: $,
+    liveEl: $('wizard-live'),
+    liveText: getWizardLiveText(step),
   });
   S.wiz.step = step;
-  const live = $('wizard-live');
-  if (live) {
-    live.textContent = getWizardLiveText(step);
-  }
 }
 
 function setExplainContent(type) {
@@ -1341,92 +1406,74 @@ function setExplainContent(type) {
   $('explain-content').innerHTML = content.html;
 }
 
-// Type card buttons
-document.querySelectorAll('.type-card[data-type]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const type = btn.dataset.type;
+bindWizardControls({
+  typeCards: document.querySelectorAll('.type-card[data-type]'),
+  connectExistingButton: $('btn-connect-exist'),
+  cancelButton: $('btn-cancel-wiz'),
+  backTextButton: $('btn-back-text'),
+  backExistingButton: $('btn-back-exist'),
+  okButton: $('btn-ok'),
+  textInput: $('text-inp'),
+  onChooseType: type => {
     S.wiz.type = type;
     if (type === 'end') {
-      if (!S.wiz.editId) { snap(); commitNode('Кінець'); }
+      if (!S.wiz.editId) { snap(); commitNode('\u041a\u0456\u043d\u0435\u0446\u044c'); }
       return;
     }
     const inp = $('text-inp');
-    inp.placeholder = PLACEHOLDER[type] || 'Введіть текст...';
+    inp.placeholder = PLACEHOLDER[type] || '\u0412\u0432\u0435\u0434\u0456\u0442\u044c \u0442\u0435\u043a\u0441\u0442...' ;
     inp.value = '';
     setExplainContent(type);
     showWizStep('explain');
     setTimeout(() => inp.focus(), 300);
-  });
-});
-
-$('btn-connect-exist').addEventListener('click', () => {
-  const cands = connectableNodes(S.wiz.pid, S.wiz.plbl);
-  const list = $('existing-list');
-  list.innerHTML = '';
-  const noMsg = $('no-exist-msg');
-  if (!cands.length) {
-    noMsg.classList.remove('hidden'); list.classList.add('hidden');
-  } else {
-    noMsg.classList.add('hidden'); list.classList.remove('hidden');
-    const anc = ancestors(S.wiz.pid);
-    const backCands = cands.filter(n => anc.has(n.id));
-    if (backCands.length > 0) {
-      const hint = document.createElement('p');
-      hint.className = 'text-xs font-bold text-sky-600 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 mb-2';
-      hint.innerHTML = getCycleConnectionHintHtml();
-      list.appendChild(hint);
-    }
-    cands.forEach(n => {
-      const m = TYPE_META[n.type] || TYPE_META.process;
-      const btn = document.createElement('button');
-      btn.className = 'exist-item w-full flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 text-left';
-      btn.innerHTML = `
-        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
-             style="background:${m.fill}">
-          <i class="fa-solid ${m.icon} text-white text-sm"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="font-black text-gray-800 text-sm truncate">${escHtml(n.text || '...')}</div>
-          <div class="text-xs text-gray-400 font-bold">${m.label}</div>
-        </div>
-        <i class="fa-solid fa-link text-indigo-300 flex-shrink-0 text-sm"></i>`;
-      btn.addEventListener('click', () => {
-        snap();
-        S.edges.push({ from: S.wiz.pid, to: n.id, label: S.wiz.plbl });
-        invalidateEdgeCache();
-        closeWiz(); rerenderFlow(true);
-        if (isDone()) setTimeout(confetti, 400);
-      });
-      list.appendChild(btn);
+  },
+  onOpenExisting: () => {
+    const view = buildExistingConnectionView({
+      candidates: connectableNodes(S.wiz.pid, S.wiz.plbl),
+      ancestorIds: ancestors(S.wiz.pid),
+      typeMeta: TYPE_META,
+      escHtml,
     });
-  }
-  showWizStep('existing');
+    renderExistingConnectionView({
+      listEl: $('existing-list'),
+      emptyEl: $('no-exist-msg'),
+      view,
+      createElement: tagName => document.createElement(tagName),
+      onSelect: id => {
+        snap();
+        S.edges.push({ from: S.wiz.pid, to: id, label: S.wiz.plbl });
+        invalidateEdgeCache();
+        closeWiz();
+        rerenderFlow(true);
+        if (isDone()) setTimeout(confetti, 400);
+      },
+    });
+    showWizStep('existing');
+  },
+  onCancel: () => closeWiz(),
+  onBackText: () => {
+    if (S.wiz.editId) {
+      closeWiz();
+      return;
+    }
+    showWizStep('type');
+  },
+  onBackExisting: () => showWizStep('type'),
+  onConfirm: () => {
+    const raw = $('text-inp').value.trim();
+    const textValue = raw || (TYPE_META[S.wiz.type]?.label || '\u0411\u043b\u043e\u043a');
+    if (S.wiz.editId) {
+      snap();
+      S.nodes[S.wiz.editId].text = textValue;
+      closeWiz();
+      rerenderFlow(false);
+    } else {
+      snap();
+      commitNode(textValue);
+    }
+  },
+  onInputCancel: () => closeWiz(),
 });
-
-$('btn-cancel-wiz').addEventListener('click', closeWiz);
-$('btn-back-text').addEventListener('click', () => {
-  if (S.wiz.editId) { closeWiz(); return; }
-  showWizStep('type');
-});
-$('btn-back-exist').addEventListener('click', () => showWizStep('type'));
-
-$('btn-ok').addEventListener('click', () => {
-  const raw = $('text-inp').value.trim();
-  const text = raw || (TYPE_META[S.wiz.type]?.label || 'Блок');
-  if (S.wiz.editId) {
-    snap();
-    S.nodes[S.wiz.editId].text = text;
-    closeWiz(); rerenderFlow(false);
-  } else {
-    snap(); commitNode(text);
-  }
-});
-
-$('text-inp').addEventListener('keydown', e => {
-  if (e.key === 'Enter') $('btn-ok').click();
-  if (e.key === 'Escape') closeWiz();
-});
-
 function commitNode(text) {
   const id = 'n' + (++S.cnt);
   S.nodes[id] = { id, type: S.wiz.type, text };
@@ -1448,16 +1495,20 @@ function commitNode(text) {
 // ----------------------------------------------------------------
 // RESET & MODALS
 // ----------------------------------------------------------------
-$('btn-reset').addEventListener('click', () => openModal('reset-modal'));
-$('reset-cancel').addEventListener('click', () => closeModal('reset-modal'));
-$('reset-confirm').addEventListener('click', () => {
-  closeModal('reset-modal');
-  Object.assign(S, createEmptyWorkspaceState());
-  invalidateEdgeCache();
-  $('btn-undo').disabled = true;
-  closeWiz(); hideToolbar(); init();
+bindResetModalControls({
+  openButton: $('btn-reset'),
+  cancelButton: $('reset-cancel'),
+  confirmButton: $('reset-confirm'),
+  onOpen: () => openModal('reset-modal'),
+  onCancel: () => closeModal('reset-modal'),
+  onConfirm: () => {
+    closeModal('reset-modal');
+    Object.assign(S, createEmptyWorkspaceState());
+    invalidateEdgeCache();
+    $('btn-undo').disabled = true;
+    closeWiz(); hideToolbar(); init();
+  },
 });
-$('del-cancel').addEventListener('click', () => closeModal('del-modal'));
 ['del-modal', 'reset-modal', 'check-modal'].forEach(id => {
   const modal = $(id);
   if (!modal) return;
@@ -1513,26 +1564,27 @@ function renderCheckModal() {
     row.innerHTML = `
       <div class="check-ico">${meta.iconHtml}</div>
       <div class="check-msg">${escHtml(it.msg)}</div>
-      ${it.nodeId ? '<div class="check-go"><i class="fa-solid fa-location-crosshairs"></i></div>' : ''}
+      ${hasCheckIssueTarget(it) ? '<div class="check-go"><i class="fa-solid fa-location-crosshairs"></i></div>' : ''}
     `;
-    if (it.nodeId) {
-      row.addEventListener('click', () => {
+    bindCheckIssueRow(row, it, {
+      onFocusIssue: (nodeId) => {
         closeModal('check-modal');
-        focusNode(it.nodeId);
-      });
-    } else {
-      row.disabled = true;
-    }
-    list.appendChild(row);
+        focusNode(nodeId);
+      },
+    });
   }
 }
 
-$('btn-check')?.addEventListener('click', () => {
-  render(); // refresh validation state before showing list
-  renderCheckModal();
-  openModal('check-modal');
+bindCheckModalControls({
+  openButton: $('btn-check'),
+  closeButton: $('btn-check-close'),
+  onOpen: () => {
+    render(); // refresh validation state before showing list
+    renderCheckModal();
+    openModal('check-modal');
+  },
+  onClose: () => closeModal('check-modal'),
 });
-$('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'));
 
 // ----------------------------------------------------------------
 // EXAMPLES
@@ -1540,10 +1592,7 @@ $('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'))
 (function buildExamplesUI() {
   const container = $('ex-list');
   EXAMPLES.forEach(ex => {
-    const card = document.createElement('button');
-    card.className = `ex-card w-full flex items-center gap-4 p-4 ${ex.bg} border-2 ${ex.border} rounded-2xl text-left transition`;
-    card.innerHTML = getExampleCardHtml(ex);
-    card.addEventListener('click', () => {
+    const card = createExampleCardButton(document, ex, getExampleCardHtml(ex), () => {
       try {
         loadExample(ex);
         closeModal('ex-modal');
@@ -1571,7 +1620,8 @@ function loadExample(ex) {
 $('btn-examples').addEventListener('click', () => openModal('ex-modal'));
 $('btn-ex-close').addEventListener('click', () => closeModal('ex-modal'));
 $('ex-modal').addEventListener('pointerdown', e => {
-  if (e.target === $('ex-modal')) closeModal('ex-modal');
+  const modal = $('ex-modal');
+  if (isBackdropClick(e.target, modal)) closeModal('ex-modal');
 });
 
 // ----------------------------------------------------------------
@@ -1608,17 +1658,13 @@ $('btn-save').addEventListener('click', () => {
     }
   };
 
-  const saveBtnConfirm = $('save-confirm');
-  const saveBtnCancel  = $('save-cancel');
-
-  // Use direct handlers so reopening modal never accumulates listeners.
-  saveBtnConfirm.onclick = runSave;
-  saveBtnCancel.onclick = () => closeModal('save-modal');
-
-  inp.onkeydown = (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); runSave(); }
-    if (e.key === 'Escape') { e.preventDefault(); closeModal('save-modal'); }
-  };
+  bindSaveModalControls({
+    confirmButton: $('save-confirm'),
+    cancelButton: $('save-cancel'),
+    input: inp,
+    onConfirm: runSave,
+    onClose: () => closeModal('save-modal'),
+  });
 });
 
 $('save-modal').addEventListener('pointerdown', e => {
@@ -1838,17 +1884,15 @@ area.addEventListener('touchend', () => { _pinch = null; });
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
-  if ($('text-inp') === document.activeElement) return;
-  if (_activeDialog) return;
+  if (shouldIgnoreGlobalKeydown({ textInput: $('text-inp'), activeElement: document.activeElement, activeDialog: _activeDialog })) return;
   if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); applyZoom(_scale + S_STEP); }
   if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); applyZoom(_scale - S_STEP); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); fitToScreen(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
   if (e.key === 'Escape') {
-    closeWiz(); hideToolbar();
-    closeModal('del-modal'); closeModal('reset-modal'); closeModal('ex-modal'); closeModal('save-modal'); closeModal('check-modal');
+    closeAllEditorOverlays({ closeWizard: closeWiz, hideToolbar, closeModal });
   }
-  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && !S.wiz.open) $('btn-del-node').click();
+  if (shouldTriggerDeleteShortcut({ key: e.key, selectionId: S.sel, wizardOpen: S.wiz.open })) $('btn-del-node').click();
 });
 $('btn-undo').addEventListener('click', undo);
 
@@ -1868,10 +1912,11 @@ function mascot() {
     hasIncompleteBranch: hasIncompleteIf(),
     openEnds: oe,
   });
-  el.innerHTML = html;
+  if (typeof renderMascotMessage === 'function') renderMascotMessage(el, html);
+  else el.innerHTML = html;
 }
 $('mascot-toggle').addEventListener('click', () => {
-  $('mascot').classList.toggle('visible');
+  toggleMascotVisibility($('mascot'));
 });
 
 // ----------------------------------------------------------------

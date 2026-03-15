@@ -21,6 +21,7 @@ test('history snapshot restores comments and nodes', async () => {
     pos: { n1: { x: 1, y: 2 } },
     ranks: {},
     comments: { n1: 'memo' },
+    commentPos: { n1: { x: 22, y: 14 } },
     undo: [],
     sel: 'n1',
     issues: [{ code: 'x' }],
@@ -32,6 +33,7 @@ test('history snapshot restores comments and nodes', async () => {
 
   S.nodes = {};
   S.comments = {};
+  S.commentPos = {};
   S.title = 'Changed';
 
   const prev = history.popUndoSnapshot(S);
@@ -39,7 +41,9 @@ test('history snapshot restores comments and nodes', async () => {
 
   assert.equal(S.nodes.n1.text, 'A');
   assert.equal(S.comments.n1, 'memo');
+  assert.deepEqual(S.commentPos.n1, { x: 22, y: 14 });
   assert.equal(S.title, 'Flow');
   assert.equal(S.sel, null);
   assert.deepEqual(S.issues, []);
 });
+

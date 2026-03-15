@@ -1,4 +1,4 @@
-﻿const test = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -14,7 +14,9 @@ test('empty workspace state resets editor-owned collections', async () => {
   assert.equal(state.root, null);
   assert.equal(state.cnt, 0);
   assert.deepEqual(state.comments, {});
+  assert.deepEqual(state.commentPos, {});
   assert.deepEqual(state.undo, []);
   assert.equal(state.wiz.open, false);
   assert.equal(state.wiz.step, 'type');
 });
+
