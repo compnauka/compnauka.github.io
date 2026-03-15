@@ -579,6 +579,70 @@ function getCommentBounds(id) {
   };
 }
 
+function expandBounds(bounds, left, top, right, bottom) {
+  bounds.minX = Math.min(bounds.minX, left);
+  bounds.minY = Math.min(bounds.minY, top);
+  bounds.maxX = Math.max(bounds.maxX, right);
+  bounds.maxY = Math.max(bounds.maxY, bottom);
+}
+
+function getRenderedFlowBounds() {
+  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  const layers = [layerTitle, layerEdges, layerNodes];
+
+  for (const layer of layers) {
+    if (!layer || !(layer.children?.length || layer.childNodes?.length)) continue;
+    try {
+      const bb = layer.getBBox();
+      if (
+        Number.isFinite(bb.x) &&
+        Number.isFinite(bb.y) &&
+        Number.isFinite(bb.width) &&
+        Number.isFinite(bb.height) &&
+        bb.width >= 0 &&
+        bb.height >= 0
+      ) {
+        expandBounds(bounds, bb.x, bb.y, bb.x + bb.width, bb.y + bb.height);
+      }
+    } catch (_error) {
+      // Some browsers can throw on empty/unrendered groups; fallback handles it below.
+    }
+  }
+
+  if (Number.isFinite(bounds.minX) && Number.isFinite(bounds.minY)) return bounds;
+
+  for (const id of Object.keys(S.nodes)) {
+    const p = S.pos[id];
+    if (!p) continue;
+    expandBounds(
+      bounds,
+      p.x - nodeW(id) / 2 - 20,
+      p.y - nodeH(id) / 2 - 20,
+      p.x + nodeW(id) / 2 + 20,
+      p.y + nodeH(id) / 2 + 20
+    );
+    const commentBounds = getCommentBounds(id);
+    if (commentBounds) {
+      expandBounds(bounds, commentBounds.l - 12, commentBounds.t - 12, commentBounds.r + 12, commentBounds.b + 12);
+    }
+  }
+
+  const titleG = $('alg-title');
+  if (titleG) {
+    try {
+      const bb = titleG.getBBox();
+      const extra = 56;
+      expandBounds(bounds, bb.x - extra, bb.y - extra, bb.x + bb.width + extra, bb.y + bb.height + extra);
+    } catch (_error) {
+      if (String(S.title ?? '').trim()) bounds.minY = Math.min(bounds.minY, -220);
+    }
+  } else if (String(S.title ?? '').trim()) {
+    bounds.minY = Math.min(bounds.minY, -220);
+  }
+
+  return bounds;
+}
+
 function buildShape(type, x, y, fill, stroke, sw) {
   return buildSvgShape(mkSvg, { NODE_W, NODE_H, DIAMOND_HALF, IO_W }, type, x, y, fill, stroke, sw);
 }
@@ -1678,43 +1742,12 @@ $('save-modal').addEventListener('pointerdown', e => {
 
 async function savePng() {
   const title = String(S.title ?? '').trim();
-
-  const PAD = 80;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const id of Object.keys(S.nodes)) {
-    const p = S.pos[id]; if (!p) continue;
-    minX = Math.min(minX, p.x - nodeW(id) / 2 - 20);
-    minY = Math.min(minY, p.y - nodeH(id) / 2 - 20);
-    maxX = Math.max(maxX, p.x + nodeW(id) / 2 + 20);
-    maxY = Math.max(maxY, p.y + nodeH(id) / 2 + 20);
-    const commentBounds = getCommentBounds(id);
-    if (commentBounds) {
-      minX = Math.min(minX, commentBounds.l - 12);
-      minY = Math.min(minY, commentBounds.t - 12);
-      maxX = Math.max(maxX, commentBounds.r + 12);
-      maxY = Math.max(maxY, commentBounds.b + 12);
-    }
-  }
-
-  // Include title bounds (so it won't be clipped in the saved PNG)
-  const titleG = $('alg-title');
-  if (titleG) {
-    try {
-      const bb = titleG.getBBox();
-      const EXTRA = 56; // also covers drop-shadow filter
-      minX = Math.min(minX, bb.x - EXTRA);
-      minY = Math.min(minY, bb.y - EXTRA);
-      maxX = Math.max(maxX, bb.x + bb.width + EXTRA);
-      maxY = Math.max(maxY, bb.y + bb.height + EXTRA);
-    } catch (e) {
-      if (title) minY -= 220;
-    }
-  } else {
-    if (title) minY -= 220;
-  }
-
-  minX -= PAD; minY -= PAD; maxX += PAD; maxY += PAD;
-  const W = maxX - minX, H = maxY - minY;
+  const exportWidth = Math.max(SVG_W, Math.ceil(parseFloat(svg.style.width || String(SVG_W)) || SVG_W));
+  const exportHeight = Math.max(600, Math.ceil(parseFloat(svg.style.minHeight || '600') || 600));
+  const minX = 0;
+  const minY = 0;
+  const W = exportWidth;
+  const H = exportHeight;
 
   const exportSvg = svg.cloneNode(true);
   exportSvg.removeAttribute('style');
