@@ -197,7 +197,7 @@ test('clicking a rendered comment shows full comment text in toast', async () =>
   const env = await boot();
   try {
     const exList = env.doc.getElementById('ex-list');
-    const subCard = exList.children.find(child => child.innerHTML.includes('\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u043c\u0443 \u043c\u0430\u0441\u0438\u0432\u0443'));
+    const subCard = exList.children.find(child => child.innerHTML.includes('Знайти суму масиву'));
     assert.ok(subCard);
     subCard.dispatch('click');
 
@@ -207,7 +207,6 @@ test('clicking a rendered comment shows full comment text in toast', async () =>
     env.doc.getElementById('fc').dispatch('pointerdown', { target: comment, clientX: 10, clientY: 10 });
     env.doc.getElementById('fc').dispatch('pointerup', { target: comment, clientX: 10, clientY: 10 });
 
-    assert.equal(env.doc.getElementById('toast').textContent.includes('\u041f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430'), true);
+    assert.equal(env.doc.getElementById('toast').textContent.includes('Підпрограма'), true);
   } finally { env.cleanup(); }
 });
-

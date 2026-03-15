@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 import { EXAMPLES as EXAMPLES_DATA } from './modules/examples.mjs';
 import { createExampleState, getExampleCardHtml } from './modules/example-utils.mjs';
@@ -515,14 +515,17 @@ function renderComment(id) {
     title.textContent = layout.text;
     g.appendChild(title);
 
-    g.appendChild(mkSvg('line', {
-      x1: layout.connector.x1,
-      y1: layout.connector.y1,
-      x2: layout.connector.x2,
-      y2: layout.connector.y2,
+    const connectorPath = layout.connector.points
+      .map((point, index) => (index ? 'L' : 'M') + point.x + ',' + point.y)
+      .join(' ');
+    g.appendChild(mkSvg('path', {
+      d: connectorPath,
       stroke: '#94a3b8',
       'stroke-width': 1.5,
+      fill: 'none',
       'stroke-dasharray': '6 3',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
     }));
     g.appendChild(mkSvg('rect', {
       x: layout.box.x,
@@ -2027,6 +2030,9 @@ function init() {
 }
 
 init();
+
+
+
 
 
 

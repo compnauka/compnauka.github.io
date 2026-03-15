@@ -74,6 +74,17 @@ export function applyLayout(S, options) {
   }
 
   for (const id of Object.keys(S.nodes)) {
+    if (inEdges(id).length !== 1) continue;
+    const [incoming] = inEdges(id);
+    const parent = S.nodes[incoming.from];
+    const hasPrevX = typeof prevPos[id]?.x === 'number' && Number.isFinite(prevPos[id].x);
+    const hasManualX = typeof S.manual?.[id]?.dx === 'number' && Number.isFinite(S.manual[id].dx);
+    if (hasPrevX || hasManualX) continue;
+    if (!parent || parent.type === 'decision' || incoming.label) continue;
+    if (x[incoming.from] !== undefined) x[id] = x[incoming.from];
+  }
+
+  for (const id of Object.keys(S.nodes)) {
     if (inEdges(id).length > 1) {
       const hasPrevX = typeof prevPos[id]?.x === 'number' && Number.isFinite(prevPos[id].x);
       const hasManualX = typeof S.manual?.[id]?.dx === 'number' && Number.isFinite(S.manual[id].dx);
@@ -133,3 +144,4 @@ export function applyLayout(S, options) {
   svg.style.minHeight = (maxY + 220) + 'px';
   updateWrapSize();
 }
+

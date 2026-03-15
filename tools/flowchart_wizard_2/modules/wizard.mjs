@@ -64,27 +64,38 @@ export function getDecisionEdgeLabelPosition(route, label) {
     if (manhattan < 16) continue;
     const horizontal = Math.abs(dx) >= Math.abs(dy);
     if (!segment || (horizontal && !segment.horizontal)) {
-      segment = { from, to, horizontal };
+      segment = { from, to, horizontal, dx, dy };
       if (horizontal) break;
     }
   }
 
   if (!segment) {
+    const dx = pts[1].x - pts[0].x;
+    const dy = pts[1].y - pts[0].y;
     segment = {
       from: pts[0],
       to: pts[1],
-      horizontal: Math.abs(pts[1].x - pts[0].x) >= Math.abs(pts[1].y - pts[0].y),
+      horizontal: Math.abs(dx) >= Math.abs(dy),
+      dx,
+      dy,
     };
   }
 
   const midX = Math.round((segment.from.x + segment.to.x) / 2);
   const midY = Math.round((segment.from.y + segment.to.y) / 2);
-  if (segment.horizontal) return { x: midX, y: midY };
+  if (segment.horizontal) {
+    const bias = 0.68;
+    return {
+      x: Math.round(segment.from.x + segment.dx * bias),
+      y: midY,
+    };
+  }
 
-  const side = label === 'yes' ? -28 : 28;
+  const side = label === 'yes' ? -38 : 38;
   return { x: midX + side, y: midY };
 }
 
 export function getCycleConnectionHintHtml() {
   return '<i class="fa-solid fa-rotate mr-1"></i>\u0417\'\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0437 \u0431\u043b\u043e\u043a\u043e\u043c \u0432\u0438\u0449\u0435 \u2014 \u0446\u0435 <strong>\u0446\u0438\u043a\u043b</strong>! \u0410\u043b\u0433\u043e\u0440\u0438\u0442\u043c \u043f\u043e\u0432\u0442\u043e\u0440\u044e\u0432\u0430\u0442\u0438\u043c\u0435\u0442\u044c\u0441\u044f.';
 }
+

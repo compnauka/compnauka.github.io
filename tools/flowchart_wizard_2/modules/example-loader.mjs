@@ -7,16 +7,15 @@ export function applyExampleState(targetState, exampleState) {
   targetState.sel = null;
   targetState.pos = {};
   targetState.ranks = {};
-  targetState.manual = {};
+  targetState.manual = exampleState.manual ? { ...exampleState.manual } : {};
   targetState.baseX = {};
   targetState.baseY = {};
   targetState.rankY = {};
   targetState.rankH = {};
   targetState.comments = exampleState.comments;
-  targetState.commentPos = {};
+  targetState.commentPos = exampleState.commentPos ? { ...exampleState.commentPos } : {};
 }
 
 export function getExampleLoadedToastText(title) {
-  return '\u041f\u0440\u0438\u043a\u043b\u0430\u0434 \u00ab' + title + '\u00bb \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e!';
+  return '\\u041f\\u0440\\u0438\\u043a\\u043b\\u0430\\u0434 \\u00ab' + title + '\\u00bb \\u0437\\u0430\\u0432\\u0430\\u043d\\u0442\\u0430\\u0436\\u0435\\u043d\\u043e!';
 }
-

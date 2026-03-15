@@ -17,13 +17,17 @@ test('comment layout supports offsets and expands for multiple lines', async () 
   });
 
   assert.ok(layout);
-  assert.equal(layout.connector.x1, 182);
-  assert.equal(layout.connector.x2, 266);
-  assert.equal(layout.connector.y2, 218);
-  assert.equal(layout.box.x, 266);
+  assert.equal(layout.box.x, 282);
   assert.equal(layout.box.y, 174);
+  assert.equal(layout.box.width, 236);
   assert.equal(layout.box.height, 88);
   assert.equal(layout.lines.length, 4);
+  assert.deepEqual(layout.connector.points, [
+    { x: 182, y: 213.05 },
+    { x: 200, y: 213.05 },
+    { x: 264, y: 218 },
+    { x: 282, y: 218 },
+  ]);
 });
 
 test('comment text and offset are normalized before rendering', async () => {
@@ -35,4 +39,3 @@ test('comment text and offset are normalized before rendering', async () => {
   assert.deepEqual(comments.normalizeCommentOffset({ x: 12.7, y: '9' }), { x: 13, y: 9 });
   assert.deepEqual(comments.normalizeCommentOffset({ x: 'bad', y: null }), { x: 0, y: 0 });
 });
-

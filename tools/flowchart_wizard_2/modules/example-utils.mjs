@@ -1,4 +1,4 @@
-﻿export function getExampleMaxNodeId(example) {
+export function getExampleMaxNodeId(example) {
   return example.nodes.reduce((maxValue, node) => {
     const number = parseInt(String(node.id || '').replace('n', ''), 10) || 0;
     return Math.max(maxValue, number);
@@ -12,6 +12,8 @@ export function createExampleState(example) {
     root: example.root,
     cnt: getExampleMaxNodeId(example),
     comments: example.comments ? { ...example.comments } : {},
+    commentPos: example.commentPos ? structuredClone(example.commentPos) : {},
+    manual: example.manual ? structuredClone(example.manual) : {},
   };
 }
 

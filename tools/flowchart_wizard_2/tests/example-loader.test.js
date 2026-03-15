@@ -22,6 +22,8 @@ test('example loader applies example state into workspace-owned fields', async (
     root: 'n1',
     cnt: 2,
     comments: { n1: 'new comment' },
+    commentPos: { n1: { x: 12, y: -4 } },
+    manual: { n1: { dx: 16, dy: 8 } },
   };
 
   applyExampleState(state, exampleState);
@@ -34,18 +36,16 @@ test('example loader applies example state into workspace-owned fields', async (
   assert.equal(state.sel, null);
   assert.deepEqual(state.pos, {});
   assert.deepEqual(state.ranks, {});
-  assert.deepEqual(state.manual, {});
+  assert.deepEqual(state.manual, exampleState.manual);
   assert.deepEqual(state.baseX, {});
   assert.deepEqual(state.baseY, {});
   assert.deepEqual(state.rankY, {});
   assert.deepEqual(state.rankH, {});
   assert.equal(state.comments, exampleState.comments);
-  assert.deepEqual(state.commentPos, {});
+  assert.deepEqual(state.commentPos, exampleState.commentPos);
 });
 
 test('example loader formats loaded toast text', async () => {
   const { getExampleLoadedToastText } = await loadModule();
-  assert.equal(getExampleLoadedToastText('\u0420\u0430\u0445\u0443\u0454\u043c\u043e \u0434\u043e 5'), '\u041f\u0440\u0438\u043a\u043b\u0430\u0434 \u00ab\u0420\u0430\u0445\u0443\u0454\u043c\u043e \u0434\u043e 5\u00bb \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e!');
+  assert.equal(getExampleLoadedToastText('\\u0420\\u0430\\u0445\\u0443\\u0454\\u043c\\u043e \\u0434\\u043e 5'), '\\u041f\\u0440\\u0438\\u043a\\u043b\\u0430\\u0434 \\u00ab\\u0420\\u0430\\u0445\\u0443\\u0454\\u043c\\u043e \\u0434\\u043e 5\\u00bb \\u0437\\u0430\\u0432\\u0430\\u043d\\u0442\\u0430\\u0436\\u0435\\u043d\\u043e!');
 });
-
-

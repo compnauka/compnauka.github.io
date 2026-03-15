@@ -1,12 +1,13 @@
 export const COMMENT_BOX = Object.freeze({
-  offsetX: 72,
-  width: 220,
+  offsetX: 88,
+  width: 236,
   minHeight: 52,
   dash: '6 3',
-  textMaxCpl: 26,
+  textMaxCpl: 29,
   textMaxLines: 6,
   lineHeight: 16,
   paddingY: 12,
+  elbow: 18,
 });
 
 export function normalizeCommentText(raw, maxLen = 140) {
@@ -35,15 +36,28 @@ export function getCommentLayout({ text, position, nodeWidth, wrapText, offset }
   const boxX = position.x + nodeWidth / 2 + COMMENT_BOX.offsetX + safeOffset.x;
   const boxY = position.y - boxHeight / 2 + safeOffset.y;
   const startY = boxY + COMMENT_BOX.paddingY + COMMENT_BOX.lineHeight / 2;
+  const boxMidY = boxY + boxHeight / 2;
+  const nodeHalfW = nodeWidth / 2;
+  const nodeHalfH = 29;
+  const verticalBias = boxMidY < position.y - 10 ? -1 : boxMidY > position.y + 10 ? 1 : 0;
+  const anchorY = verticalBias < 0
+    ? position.y - nodeHalfH * 0.45
+    : verticalBias > 0
+      ? position.y + nodeHalfH * 0.45
+      : position.y;
+  const elbowX = position.x + nodeHalfW + COMMENT_BOX.elbow;
+  const leadX = Math.max(elbowX, boxX - COMMENT_BOX.elbow);
 
   return {
     text: normalized,
     offset: safeOffset,
     connector: {
-      x1: position.x + nodeWidth / 2,
-      y1: position.y,
-      x2: boxX,
-      y2: boxY + boxHeight / 2,
+      points: [
+        { x: position.x + nodeHalfW, y: anchorY },
+        { x: elbowX, y: anchorY },
+        { x: leadX, y: boxMidY },
+        { x: boxX, y: boxMidY },
+      ],
     },
     box: {
       x: boxX,

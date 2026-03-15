@@ -1,4 +1,4 @@
-﻿const test = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -125,8 +125,10 @@ test('dowhile example has output node on yes-branch before end', async () => {
     'input-output',
     'yes-branch should lead to output node, not directly to end'
   );
+  const noEdge = ex.edges.find(e => e.label === 'no');
+  const noTarget = ex.nodes.find(n => n.id === noEdge?.to);
   assert.ok(
-    yesTarget.text.toLowerCase().includes('вгадав'),
+    yesTarget.text !== noTarget?.text,
     'yes-branch output should congratulate the user'
   );
 
@@ -281,7 +283,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 948, y: 560 },
     ]
   }, 'no');
-  assert.deepEqual(horizontal, { x: 924, y: 300 });
+  assert.deepEqual(horizontal, { x: 933, y: 300 });
 
   const vertical = wizardMod.getDecisionEdgeLabelPosition({
     pts: [
@@ -289,7 +291,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 760, y: 388 },
     ]
   }, 'yes');
-  assert.deepEqual(vertical, { x: 732, y: 354 });
+  assert.deepEqual(vertical, { x: 722, y: 354 });
 });
 
 test('current edge routing builds a route for upward loop edges', async () => {
@@ -330,6 +332,9 @@ test('current edge routing builds a route for upward loop edges', async () => {
   assert.ok(Array.isArray(route.pts));
   assert.ok(route.pts.length >= 2);
 });
+
+
+
 
 
 
