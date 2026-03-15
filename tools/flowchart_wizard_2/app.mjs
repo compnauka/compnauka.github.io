@@ -1759,7 +1759,7 @@ async function savePng() {
         const ctx = cvs.getContext('2d');
         ctx.scale(SCALE, SCALE);
         ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, W, H);
         URL.revokeObjectURL(url);
         cvs.toBlob(b => {
           if (!b) { rej(new Error('toBlob returned null')); return; }
