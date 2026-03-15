@@ -1,13 +1,13 @@
-export const COMMENT_BOX = Object.freeze({
-  offsetX: 88,
-  width: 236,
+﻿export const COMMENT_BOX = Object.freeze({
+  offsetX: 132,
+  width: 220,
   minHeight: 52,
   dash: '6 3',
-  textMaxCpl: 29,
+  textMaxCpl: 25,
   textMaxLines: 6,
   lineHeight: 16,
   paddingY: 12,
-  elbow: 18,
+  elbow: 34,
 });
 
 export function normalizeCommentText(raw, maxLen = 140) {
@@ -73,3 +73,4 @@ export function getCommentLayout({ text, position, nodeWidth, wrapText, offset }
     })),
   };
 }
+

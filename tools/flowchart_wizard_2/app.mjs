@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 import { EXAMPLES as EXAMPLES_DATA } from './modules/examples.mjs';
 import { createExampleState, getExampleCardHtml } from './modules/example-utils.mjs';
@@ -61,35 +61,35 @@ const DY_LIMIT = 70;
 const DY_LIMIT_SHIFT = 160;
 
 const TYPE_META = {
-  start: { label: 'Початок', icon: 'fa-play', fill: '#22c55e', stroke: '#15803d', explain: null },
+  start: { label: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a', icon: 'fa-play', fill: '#22c55e', stroke: '#15803d', explain: null },
   process: {
-    label: 'Дія', icon: 'fa-bolt', fill: '#0ea5e9', stroke: '#0369a1',
-    explain: 'Одна конкретна дія: натиснути кнопку, прочитати книгу, приготувати їжу.'
+    label: '\u0414\u0456\u044f', icon: 'fa-bolt', fill: '#0ea5e9', stroke: '#0369a1',
+    explain: '\u041e\u0434\u043d\u0430 \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u0430 \u0434\u0456\u044f: \u043d\u0430\u0442\u0438\u0441\u043d\u0443\u0442\u0438 \u043a\u043d\u043e\u043f\u043a\u0443, \u043f\u0440\u043e\u0447\u0438\u0442\u0430\u0442\u0438 \u043a\u043d\u0438\u0433\u0443, \u043f\u0440\u0438\u0433\u043e\u0442\u0443\u0432\u0430\u0442\u0438 \u0457\u0436\u0443.'
   },
   decision: {
-    label: 'Питання', icon: 'fa-question', fill: '#f59e0b', stroke: '#b45309',
-    explain: 'Перевірка умови. Відповідь — тільки «Так» або «Ні». Схема розгалужується.'
+    label: '\u041f\u0438\u0442\u0430\u043d\u043d\u044f', icon: 'fa-question', fill: '#f59e0b', stroke: '#b45309',
+    explain: '\u041f\u0435\u0440\u0435\u0432\u0456\u0440\u043a\u0430 \u0443\u043c\u043e\u0432\u0438. \u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u044c \u2014 \u0442\u0456\u043b\u044c\u043a\u0438 \u00ab\u0422\u0430\u043a\u00bb \u0430\u0431\u043e \u00ab\u041d\u0456\u00bb. \u0421\u0445\u0435\u043c\u0430 \u0440\u043e\u0437\u0433\u0430\u043b\u0443\u0436\u0443\u0454\u0442\u044c\u0441\u044f.'
   },
   'input-output': {
-    label: 'Ввід/Вивід', icon: 'fa-right-left', fill: '#a855f7', stroke: '#7e22ce',
-    explain: 'Отримати дані від користувача або показати результат на екрані.'
+    label: '\u0412\u0432\u0456\u0434/\u0412\u0438\u0432\u0456\u0434', icon: 'fa-right-left', fill: '#a855f7', stroke: '#7e22ce',
+    explain: '\u041e\u0442\u0440\u0438\u043c\u0430\u0442\u0438 \u0434\u0430\u043d\u0456 \u0432\u0456\u0434 \u043a\u043e\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u0447\u0430 \u0430\u0431\u043e \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0438 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u043d\u0430 \u0435\u043a\u0440\u0430\u043d\u0456.'
   },
   subroutine: {
-    label: 'Підпрограма', icon: 'fa-code', fill: '#0f766e', stroke: '#0d5f58',
-    explain: 'Виклик допоміжного алгоритму (процедури або функції). '
-      + 'Блок позначається прямокутником з двома бічними смугами.'
+    label: '\u041f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430', icon: 'fa-code', fill: '#0f766e', stroke: '#0d5f58',
+    explain: '\u0412\u0438\u043a\u043b\u0438\u043a \u0434\u043e\u043f\u043e\u043c\u0456\u0436\u043d\u043e\u0433\u043e \u0430\u043b\u0433\u043e\u0440\u0438\u0442\u043c\u0443 (\u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440\u0438 \u0430\u0431\u043e \u0444\u0443\u043d\u043a\u0446\u0456\u0457). '
+      + '\u0411\u043b\u043e\u043a \u043f\u043e\u0437\u043d\u0430\u0447\u0430\u0454\u0442\u044c\u0441\u044f \u043f\u0440\u044f\u043c\u043e\u043a\u0443\u0442\u043d\u0438\u043a\u043e\u043c \u0437 \u0434\u0432\u043e\u043c\u0430 \u0431\u0456\u0447\u043d\u0438\u043c\u0438 \u0441\u043c\u0443\u0433\u0430\u043c\u0438.'
   },
   end: {
-    label: 'Кінець', icon: 'fa-flag-checkered', fill: '#f43f5e', stroke: '#be123c',
-    explain: 'Алгоритм завершено. Кожна гілка повинна мати свій блок «Кінець».'
+    label: '\u041a\u0456\u043d\u0435\u0446\u044c', icon: 'fa-flag-checkered', fill: '#f43f5e', stroke: '#be123c',
+    explain: '\u0410\u043b\u0433\u043e\u0440\u0438\u0442\u043c \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e. \u041a\u043e\u0436\u043d\u0430 \u0433\u0456\u043b\u043a\u0430 \u043f\u043e\u0432\u0438\u043d\u043d\u0430 \u043c\u0430\u0442\u0438 \u0441\u0432\u0456\u0439 \u0431\u043b\u043e\u043a \u00ab\u041a\u0456\u043d\u0435\u0446\u044c\u00bb.'
   },
 };
 
 const PLACEHOLDER = {
-  process: 'Наприклад: Взяти рюкзак',
-  decision: 'Наприклад: Є домашнє завдання?',
+  process: '\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u0412\u0437\u044f\u0442\u0438 \u0440\u044e\u043a\u0437\u0430\u043a',
+  decision: '\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u0404 \u0434\u043e\u043c\u0430\u0448\u043d\u0454 \u0437\u0430\u0432\u0434\u0430\u043d\u043d\u044f?',
   'input-output': "\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u0412\u0432\u0435\u0434\u0456\u0442\u044c \u0441\u0432\u043e\u0454 \u0456\u043c'\u044f",
-  subroutine: 'Наприклад: Обчислити суму(a, b)',
+  subroutine: '\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u041e\u0431\u0447\u0438\u0441\u043b\u0438\u0442\u0438 \u0441\u0443\u043c\u0443(a, b)',
 };
 
 // ----------------------------------------------------------------
@@ -314,6 +314,7 @@ function render(skipIssues = false) {
     S.issuesByNode = v.byNode;
   }
   renderTitle();
+  for (const id of Object.keys(S.nodes)) renderComment(id);
   for (const e of S.edges) renderEdge(e);
   for (const id of Object.keys(S.nodes)) renderNode(id);
   for (const e of openEnds()) renderPlus(e);
@@ -487,7 +488,6 @@ function renderNode(id) {
   }
 
   layerNodes.appendChild(g);
-  renderComment(id);
 }
 
 function removeRenderedComment(id) {
@@ -555,7 +555,7 @@ function renderComment(id) {
       g.appendChild(t);
     });
 
-    layerNodes.appendChild(g);
+    layerEdges.appendChild(g);
   } catch (error) {
     console.error('comment-render-failed', error);
   }
@@ -630,7 +630,7 @@ function renderEdge(e) {
       fill: isY ? '#15803d' : '#b91c1c',
       'font-size': '13', 'font-weight': '800', 'font-family': "'Nunito',sans-serif",
     });
-    lt.textContent = isY ? 'Так' : 'Ні';
+    lt.textContent = isY ? '\u0422\u0430\u043a' : '\u041d\u0456';
     lg.appendChild(lt);
     layerEdges.appendChild(lg);
   }
@@ -1123,7 +1123,7 @@ function startEditNode(id) {
 function editNodeComment(id) {
   if (!id || !S.nodes[id]) return;
   const current = S.comments?.[id] || '';
-  const raw = window.prompt('Додайте коментар до блоку:', current);
+  const raw = window.prompt('\u0414\u043e\u0434\u0430\u0439\u0442\u0435 \u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440 \u0434\u043e \u0431\u043b\u043e\u043a\u0443:', current);
   if (raw === null) return;
 
   const next = normalizeCommentText(raw);
@@ -1137,7 +1137,7 @@ function editNodeComment(id) {
 
   hideToolbar();
   rerenderFlow(false);
-  showToast(next ? 'Коментар збережено.' : 'Коментар видалено.');
+  showToast(next ? '\u041a\u043e\u043c\u0435\u043d\u0442\u0430\u0440 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e.' : '\u041a\u043e\u043c\u0435\u043d\u0442\u0430\u0440 \u0432\u0438\u0434\u0430\u043b\u0435\u043d\u043e.');
 }
 
 $('btn-edit-node').addEventListener('click', () => {
@@ -1153,7 +1153,7 @@ $('btn-comment-node').addEventListener('click', () => {
 $('btn-del-node').addEventListener('click', () => {
   if (!S.sel) return;
   const id = S.sel;
-  if (id === S.root) { showToast('Блок «Початок» не можна видалити!'); return; }
+  if (id === S.root) { showToast('\u0411\u043b\u043e\u043a \u00ab\u041f\u043e\u0447\u0430\u0442\u043e\u043a\u00bb \u043d\u0435 \u043c\u043e\u0436\u043d\u0430 \u0432\u0438\u0434\u0430\u043b\u0438\u0442\u0438!'); return; }
 
   const n = S.nodes[id];
   $('del-msg').textContent = getDeleteNodeMessage(n?.type);
@@ -1354,7 +1354,7 @@ function openWiz(pid, lbl) {
     $('btn-merge-sibling').onclick = () => {
       snap();
       const mid = 'n' + (++S.cnt);
-      S.nodes[mid] = { id: mid, type: 'process', text: 'Продовження' };
+      S.nodes[mid] = { id: mid, type: 'process', text: '\u041f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f' };
       S.edges.push({ from: pid, to: mid, label: lbl });
       S.edges.push({ from: sibling.pid, to: mid, label: sibling.lbl });
       invalidateEdgeCache();
@@ -1632,7 +1632,7 @@ $('ex-modal').addEventListener('pointerdown', e => {
 // ----------------------------------------------------------------
 $('btn-save').addEventListener('click', () => {
   if (!S.root || !Object.keys(S.nodes).length) {
-    showToast('Спочатку створи блок-схему!');
+    showToast('\u0421\u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u0441\u0442\u0432\u043e\u0440\u0438 \u0431\u043b\u043e\u043a-\u0441\u0445\u0435\u043c\u0443!');
     return;
   }
 
@@ -1756,7 +1756,7 @@ async function savePng() {
           a.click();
           // Release the object URL after the download starts.
           setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
-          confetti(); showToast('Збережено успішно!');
+          confetti(); showToast('\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e \u0443\u0441\u043f\u0456\u0448\u043d\u043e!');
           res();
         }, 'image/png');
       };
@@ -1765,7 +1765,7 @@ async function savePng() {
     });
   } catch (err) {
     console.error(err);
-    showToast('Не вдалося зберегти. Спробуй знову!');
+    showToast('\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0431\u0435\u0440\u0435\u0433\u0442\u0438. \u0421\u043f\u0440\u043e\u0431\u0443\u0439 \u0437\u043d\u043e\u0432\u0443!');
   } finally {
     if (bgRect.parentNode) bgRect.parentNode.removeChild(bgRect);
     if (prevVB) svg.setAttribute('viewBox', prevVB); else svg.removeAttribute('viewBox');
@@ -1836,14 +1836,20 @@ function fitToScreen() {
       mxY = Math.max(mxY, bb.y + bb.height + EXTRA);
     } catch (e) { /* ignore */ }
   }
-  const PAD = 64, cW = area.clientWidth, cH = area.clientHeight;
-  const sc = Math.min(cW / (mxX - mnX + PAD * 2), cH / (mxY - mnY + PAD * 2), S_MAX);
+  const PAD_TOP = 72;
+  const PAD_RIGHT = 72;
+  const PAD_BOTTOM = 220;
+  const PAD_LEFT = 280;
+  const cW = area.clientWidth, cH = area.clientHeight;
+  const fitW = mxX - mnX + PAD_LEFT + PAD_RIGHT;
+  const fitH = mxY - mnY + PAD_TOP + PAD_BOTTOM;
+  const sc = Math.min(cW / fitW, cH / fitH, S_MAX);
   _scale = sc;
   wrap.style.transform = `scale(${sc})`;
   wrap.style.transformOrigin = '0 0';
   updateWrapSize();
-  area.scrollLeft = (mnX - PAD) * sc - (cW - (mxX - mnX + PAD * 2) * sc) / 2;
-  area.scrollTop = (mnY - PAD) * sc - (cH - (mxY - mnY + PAD * 2) * sc) / 2;
+  area.scrollLeft = (mnX - PAD_LEFT) * sc - (cW - fitW * sc) / 2;
+  area.scrollTop = (mnY - PAD_TOP) * sc - (cH - fitH * sc) / 2;
   scheduleToolbarUpdate();
 }
 
@@ -2020,7 +2026,7 @@ function escHtml(str) {
 // ----------------------------------------------------------------
 function init() {
   const id = 'n' + (++S.cnt);
-  S.nodes[id] = { id, type: 'start', text: 'Початок' };
+  S.nodes[id] = { id, type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' };
   S.root = id;
   setTitle('');
   rerenderFlow(true);
@@ -2030,6 +2036,8 @@ function init() {
 }
 
 init();
+
+
 
 
 

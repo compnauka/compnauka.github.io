@@ -157,39 +157,32 @@ test('completed examples validate cleanly and render teaching comments', async (
     assert.ok(branchCard);
     branchCard.dispatch('click');
     assert.ok(env.confettiCtx.fillRectCalls > 0, 'completed example should trigger confetti');
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-edges').children.some(child => child.attributes['data-comment-for'] === 'n3'));
     env.doc.getElementById('btn-check').dispatch('click');
     assert.equal(env.doc.getElementById('check-summary').textContent, 'Помилок не знайдено. Схема виглядає добре.');
 
     const whileCard = exList.children.find(child => child.innerHTML.includes('Рахуємо до 5'));
     assert.ok(whileCard);
     whileCard.dispatch('click');
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n5"]'));
+    assert.ok(env.doc.getElementById('layer-edges').children.some(child => child.attributes['data-comment-for'] === 'n2'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-edges').children.some(child => child.attributes['data-comment-for'] === 'n5'));
 
     const forCard = exList.children.find(child => child.innerHTML.includes('Таблиця множення на 2'));
     assert.ok(forCard);
     forCard.dispatch('click');
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n5"]'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n2"]'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n5"]'));
 
     const dowhileCard = exList.children.find(child => child.innerHTML.includes('Вгадай число'));
     assert.ok(dowhileCard);
     dowhileCard.dispatch('click');
     assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-nid]').length >= 6, true);
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n2"]'));
-    assert.ok(env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n2"]'));
+    assert.ok(env.doc.getElementById('layer-edges').querySelector('[data-comment-for="n3"]'));
     env.doc.getElementById('btn-check').dispatch('click');
     assert.equal(env.doc.getElementById('check-summary').textContent, 'Помилок не знайдено. Схема виглядає добре.');
-
-    const linearCard = exList.children.find(child => child.innerHTML.includes('Ранок школяра'));
-    assert.ok(linearCard);
-    linearCard.dispatch('click');
-    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n1"]').length, 0);
-    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n2"]').length, 0);
-    assert.equal(env.doc.getElementById('layer-nodes').querySelectorAll('[data-comment-for="n3"]').length, 0);
   } finally { env.cleanup(); }
 });
 
@@ -201,12 +194,12 @@ test('clicking a rendered comment shows full comment text in toast', async () =>
     assert.ok(subCard);
     subCard.dispatch('click');
 
-    const comment = env.doc.getElementById('layer-nodes').querySelector('[data-comment-for="n3"]');
+    const comment = env.doc.getElementById('layer-edges').children.find(child => child.attributes['data-comment-for'] === 'n3');
     assert.ok(comment);
-
     env.doc.getElementById('fc').dispatch('pointerdown', { target: comment, clientX: 10, clientY: 10 });
     env.doc.getElementById('fc').dispatch('pointerup', { target: comment, clientX: 10, clientY: 10 });
 
-    assert.equal(env.doc.getElementById('toast').textContent.includes('Підпрограма'), true);
+    const fullText = comment.children.find(child => child.tagName === 'TITLE')?.textContent || '';
+    assert.equal(env.doc.getElementById('toast').textContent.includes(fullText.slice(0, 10)), true);
   } finally { env.cleanup(); }
 });

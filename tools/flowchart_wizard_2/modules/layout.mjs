@@ -1,4 +1,4 @@
-export function computeRanks(S, { outEdges, findBackEdges }) {
+﻿export function computeRanks(S, { outEdges, findBackEdges }) {
   const backEdges = findBackEdges();
   const indeg = {};
   for (const id of Object.keys(S.nodes)) indeg[id] = 0;
@@ -35,6 +35,11 @@ export function applyLayout(S, options) {
   S.ranks = {}; S.pos = {}; S.rankY = {}; S.rankH = {}; S.baseX = {}; S.baseY = {};
   if (!S.root) return;
 
+  const backEdges = findBackEdges();
+  const inForwardEdges = id => inEdges(id).filter(e => !backEdges.has(e));
+  const outForwardEdges = id => outEdges(id).filter(e => !backEdges.has(e));
+
+
   const rank = computeRanks(S, { outEdges, findBackEdges });
   S.ranks = rank;
 
@@ -54,12 +59,12 @@ export function applyLayout(S, options) {
         if (typeof prevX === 'number' && Number.isFinite(prevX)) {
           x[id] = prevX;
         } else {
-          const pxs = inEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
+          const pxs = inForwardEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
           x[id] = pxs.length ? pxs.reduce((a, b) => a + b, 0) / pxs.length : CX;
         }
       }
       const n = S.nodes[id];
-      const out = outEdges(id);
+      const out = outForwardEdges(id);
 
       if (n.type === 'decision') {
         const ye = out.find(e => e.label === 'yes');
@@ -74,8 +79,8 @@ export function applyLayout(S, options) {
   }
 
   for (const id of Object.keys(S.nodes)) {
-    if (inEdges(id).length !== 1) continue;
-    const [incoming] = inEdges(id);
+    if (inForwardEdges(id).length !== 1) continue;
+    const [incoming] = inForwardEdges(id);
     const parent = S.nodes[incoming.from];
     const hasPrevX = typeof prevPos[id]?.x === 'number' && Number.isFinite(prevPos[id].x);
     const hasManualX = typeof S.manual?.[id]?.dx === 'number' && Number.isFinite(S.manual[id].dx);
@@ -85,11 +90,11 @@ export function applyLayout(S, options) {
   }
 
   for (const id of Object.keys(S.nodes)) {
-    if (inEdges(id).length > 1) {
+    if (inForwardEdges(id).length > 1) {
       const hasPrevX = typeof prevPos[id]?.x === 'number' && Number.isFinite(prevPos[id].x);
       const hasManualX = typeof S.manual?.[id]?.dx === 'number' && Number.isFinite(S.manual[id].dx);
       if (hasPrevX || hasManualX) continue;
-      const pxs = inEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
+      const pxs = inForwardEdges(id).map(e => x[e.from]).filter(v => v !== undefined);
       if (pxs.length >= 2) x[id] = pxs.reduce((a, b) => a + b, 0) / pxs.length;
     }
   }
@@ -144,4 +149,6 @@ export function applyLayout(S, options) {
   svg.style.minHeight = (maxY + 220) + 'px';
   updateWrapSize();
 }
+
+
 

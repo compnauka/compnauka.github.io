@@ -17,16 +17,16 @@ test('comment layout supports offsets and expands for multiple lines', async () 
   });
 
   assert.ok(layout);
-  assert.equal(layout.box.x, 282);
+  assert.equal(layout.box.x, 326);
   assert.equal(layout.box.y, 174);
-  assert.equal(layout.box.width, 236);
+  assert.equal(layout.box.width, 220);
   assert.equal(layout.box.height, 88);
   assert.equal(layout.lines.length, 4);
   assert.deepEqual(layout.connector.points, [
     { x: 182, y: 213.05 },
-    { x: 200, y: 213.05 },
-    { x: 264, y: 218 },
-    { x: 282, y: 218 },
+    { x: 216, y: 213.05 },
+    { x: 292, y: 218 },
+    { x: 326, y: 218 },
   ]);
 });
 

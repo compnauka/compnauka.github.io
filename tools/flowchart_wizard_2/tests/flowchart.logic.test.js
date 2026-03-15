@@ -1,4 +1,4 @@
-const test = require('node:test');
+﻿const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -283,7 +283,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 948, y: 560 },
     ]
   }, 'no');
-  assert.deepEqual(horizontal, { x: 933, y: 300 });
+  assert.deepEqual(horizontal, { x: 952, y: 300 });
 
   const vertical = wizardMod.getDecisionEdgeLabelPosition({
     pts: [
@@ -291,7 +291,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 760, y: 388 },
     ]
   }, 'yes');
-  assert.deepEqual(vertical, { x: 722, y: 354 });
+  assert.deepEqual(vertical, { x: 690, y: 354 });
 });
 
 test('current edge routing builds a route for upward loop edges', async () => {
@@ -332,6 +332,8 @@ test('current edge routing builds a route for upward loop edges', async () => {
   assert.ok(Array.isArray(route.pts));
   assert.ok(route.pts.length >= 2);
 });
+
+
 
 
 

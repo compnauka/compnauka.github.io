@@ -1,4 +1,4 @@
-const test = require('node:test');
+﻿const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -47,5 +47,6 @@ test('example loader applies example state into workspace-owned fields', async (
 
 test('example loader formats loaded toast text', async () => {
   const { getExampleLoadedToastText } = await loadModule();
-  assert.equal(getExampleLoadedToastText('\\u0420\\u0430\\u0445\\u0443\\u0454\\u043c\\u043e \\u0434\\u043e 5'), '\\u041f\\u0440\\u0438\\u043a\\u043b\\u0430\\u0434 \\u00ab\\u0420\\u0430\\u0445\\u0443\\u0454\\u043c\\u043e \\u0434\\u043e 5\\u00bb \\u0437\\u0430\\u0432\\u0430\\u043d\\u0442\\u0430\\u0436\\u0435\\u043d\\u043e!');
+  assert.equal(getExampleLoadedToastText('Рахуємо до 5'), 'Приклад «Рахуємо до 5» завантажено!');
 });
+

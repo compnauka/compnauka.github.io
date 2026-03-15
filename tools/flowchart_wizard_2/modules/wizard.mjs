@@ -1,4 +1,4 @@
-export function getWizardBadge(lbl) {
+﻿export function getWizardBadge(lbl) {
   if (lbl !== 'yes' && lbl !== 'no') return null;
   return {
     text: lbl === 'yes' ? '\u0413\u0456\u043b\u043a\u0430 \u00ab\u0422\u0430\u043a\u00bb' : '\u0413\u0456\u043b\u043a\u0430 \u00ab\u041d\u0456\u00bb',
@@ -84,18 +84,21 @@ export function getDecisionEdgeLabelPosition(route, label) {
   const midX = Math.round((segment.from.x + segment.to.x) / 2);
   const midY = Math.round((segment.from.y + segment.to.y) / 2);
   if (segment.horizontal) {
-    const bias = 0.68;
+    const dir = Math.sign(segment.dx || (label === 'yes' ? -1 : 1));
+    const gap = Math.min(104, Math.max(52, Math.abs(segment.dx) - 24));
     return {
-      x: Math.round(segment.from.x + segment.dx * bias),
+      x: Math.round(segment.from.x + dir * gap),
       y: midY,
     };
   }
 
-  const side = label === 'yes' ? -38 : 38;
+  const side = label === 'yes' ? -70 : 70;
   return { x: midX + side, y: midY };
 }
 
 export function getCycleConnectionHintHtml() {
   return '<i class="fa-solid fa-rotate mr-1"></i>\u0417\'\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0437 \u0431\u043b\u043e\u043a\u043e\u043c \u0432\u0438\u0449\u0435 \u2014 \u0446\u0435 <strong>\u0446\u0438\u043a\u043b</strong>! \u0410\u043b\u0433\u043e\u0440\u0438\u0442\u043c \u043f\u043e\u0432\u0442\u043e\u0440\u044e\u0432\u0430\u0442\u0438\u043c\u0435\u0442\u044c\u0441\u044f.';
 }
+
+
 
