@@ -848,25 +848,66 @@ function drawCommentToCanvas(ctx, id, offsetX, offsetY) {
   ctx.restore();
 }
 
+function getFlowBounds(options = {}) {
+  const {
+    includeComments = true,
+    includeTitle = true,
+  } = options;
+
+  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+
+  for (const id of Object.keys(S.nodes)) {
+    const p = S.pos[id];
+    if (!p) continue;
+    expandBounds(
+      bounds,
+      p.x - nodeW(id) / 2 - 20,
+      p.y - nodeH(id) / 2 - 20,
+      p.x + nodeW(id) / 2 + 20,
+      p.y + nodeH(id) / 2 + 20
+    );
+
+    if (includeComments) {
+      const commentBounds = getCommentBounds(id);
+      if (commentBounds) {
+        expandBounds(bounds, commentBounds.l - 12, commentBounds.t - 12, commentBounds.r + 12, commentBounds.b + 12);
+      }
+    }
+  }
+
+  for (const edge of S.edges) {
+    const route = edgeRoute(edge);
+    if (!route?.pts?.length) continue;
+    route.pts.forEach(pt => expandBounds(bounds, pt.x - 18, pt.y - 18, pt.x + 18, pt.y + 18));
+    const labelPos = edge.label ? getDecisionEdgeLabelPosition(route, edge.label) : null;
+    if (labelPos) expandBounds(bounds, labelPos.x - 28, labelPos.y - 18, labelPos.x + 28, labelPos.y + 18);
+  }
+
+  if (includeTitle) {
+    const title = String(S.title ?? '').trim();
+    if (title) {
+      const top = Math.min(...Object.keys(S.nodes).map(id => S.pos[id]?.y - nodeH(id) / 2).filter(Number.isFinite), 88);
+      const titleY = Math.max(108, top - 132);
+      expandBounds(bounds, CX - 260, titleY - 34, CX + 260, titleY + 34);
+    }
+  }
+
+  if (!Number.isFinite(bounds.minX)) {
+    bounds.minX = 0;
+    bounds.minY = 0;
+    bounds.maxX = SVG_W;
+    bounds.maxY = 600;
+  }
+
+  return bounds;
+}
+
 function getExportBounds() {
-  const rendered = getRenderedFlowBounds();
-  const hasRenderedBounds =
-    Number.isFinite(rendered.minX) &&
-    Number.isFinite(rendered.minY) &&
-    Number.isFinite(rendered.maxX) &&
-    Number.isFinite(rendered.maxY);
-
-  const bounds = hasRenderedBounds
-    ? { ...rendered }
-    : { minX: 0, minY: 0, maxX: SVG_W, maxY: 600 };
-
-  const PAD_X = 96;
-  const PAD_TOP = 96;
-  const PAD_BOTTOM = 156;
-  bounds.minX -= PAD_X;
-  bounds.minY -= PAD_TOP;
-  bounds.maxX += PAD_X;
-  bounds.maxY += PAD_BOTTOM;
+  const bounds = getFlowBounds({ includeComments: true, includeTitle: true });
+  bounds.minX -= 84;
+  bounds.minY -= 84;
+  bounds.maxX += 84;
+  bounds.maxY += 120;
   return bounds;
 }
 
@@ -2096,38 +2137,15 @@ function updateWrapSize() {
 function fitToScreen() {
   const ids = Object.keys(S.nodes);
   if (!ids.length) return;
-  let mnX = Infinity, mnY = Infinity, mxX = -Infinity, mxY = -Infinity;
-  for (const id of ids) {
-    const p = S.pos[id]; if (!p) continue;
-    mnX = Math.min(mnX, p.x - nodeW(id) / 2);
-    mnY = Math.min(mnY, p.y - nodeH(id) / 2);
-    mxX = Math.max(mxX, p.x + nodeW(id) / 2);
-    mxY = Math.max(mxY, p.y + nodeH(id) / 2);
-    const commentBounds = getCommentBounds(id);
-    if (commentBounds) {
-      mnX = Math.min(mnX, commentBounds.l - 12);
-      mnY = Math.min(mnY, commentBounds.t - 12);
-      mxX = Math.max(mxX, commentBounds.r + 12);
-      mxY = Math.max(mxY, commentBounds.b + 12);
-    }
-  }
-
-  // include the title bubble in "fit" bounds
-  const titleG = $('alg-title');
-  if (titleG) {
-    try {
-      const bb = titleG.getBBox();
-      const EXTRA = 40;
-      mnX = Math.min(mnX, bb.x - EXTRA);
-      mnY = Math.min(mnY, bb.y - EXTRA);
-      mxX = Math.max(mxX, bb.x + bb.width + EXTRA);
-      mxY = Math.max(mxY, bb.y + bb.height + EXTRA);
-    } catch (e) { /* ignore */ }
-  }
-  const PAD_TOP = 72;
-  const PAD_RIGHT = 72;
-  const PAD_BOTTOM = 220;
-  const PAD_LEFT = 280;
+  const bounds = getFlowBounds({ includeComments: false, includeTitle: true });
+  const mnX = bounds.minX;
+  const mnY = bounds.minY;
+  const mxX = bounds.maxX;
+  const mxY = bounds.maxY;
+  const PAD_TOP = 64;
+  const PAD_RIGHT = 56;
+  const PAD_BOTTOM = 110;
+  const PAD_LEFT = 120;
   const cW = area.clientWidth, cH = area.clientHeight;
   const fitW = mxX - mnX + PAD_LEFT + PAD_RIGHT;
   const fitH = mxY - mnY + PAD_TOP + PAD_BOTTOM;
