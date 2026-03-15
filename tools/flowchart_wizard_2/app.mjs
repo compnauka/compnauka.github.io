@@ -492,6 +492,7 @@ function renderNode(id) {
 
 function removeRenderedComment(id) {
   layerNodes.querySelector('[data-comment-for="' + id + '"]')?.remove();
+  layerEdges.querySelector('[data-comment-for="' + id + '"]')?.remove();
 }
 
 function getCommentText(id) {
@@ -980,6 +981,7 @@ function renderEdgesAndPlus() {
   _edgeOccupancy = [];
   renderTitle();
   for (const e of S.edges) renderEdge(e);
+  for (const id of Object.keys(S.nodes)) renderComment(id);
   for (const e of openEnds()) renderPlus(e);
 }
 

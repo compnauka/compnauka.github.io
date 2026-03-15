@@ -85,14 +85,14 @@ export function getDecisionEdgeLabelPosition(route, label) {
   const midY = Math.round((segment.from.y + segment.to.y) / 2);
   if (segment.horizontal) {
     const dir = Math.sign(segment.dx || (label === 'yes' ? -1 : 1));
-    const gap = Math.min(104, Math.max(52, Math.abs(segment.dx) - 24));
+    const gap = Math.min(124, Math.max(72, Math.abs(segment.dx) - 18));
     return {
       x: Math.round(segment.from.x + dir * gap),
       y: midY,
     };
   }
 
-  const side = label === 'yes' ? -70 : 70;
+  const side = label === 'yes' ? -86 : 86;
   return { x: midX + side, y: midY };
 }
 

@@ -283,7 +283,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 948, y: 560 },
     ]
   }, 'no');
-  assert.deepEqual(horizontal, { x: 952, y: 300 });
+  assert.deepEqual(horizontal, { x: 972, y: 300 });
 
   const vertical = wizardMod.getDecisionEdgeLabelPosition({
     pts: [
@@ -291,7 +291,7 @@ test('decision edge labels stay attached to the routed branch segment', async ()
       { x: 760, y: 388 },
     ]
   }, 'yes');
-  assert.deepEqual(vertical, { x: 690, y: 354 });
+  assert.deepEqual(vertical, { x: 674, y: 354 });
 });
 
 test('current edge routing builds a route for upward loop edges', async () => {
