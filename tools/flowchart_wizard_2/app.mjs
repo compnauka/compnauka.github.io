@@ -1716,26 +1716,34 @@ async function savePng() {
   minX -= PAD; minY -= PAD; maxX += PAD; maxY += PAD;
   const W = maxX - minX, H = maxY - minY;
 
-  const prevSel = S.sel;
-  S.sel = null; render();
-  const prevVis = layerPlus.getAttribute('visibility');
-  layerPlus.setAttribute('visibility', 'hidden');
+  const exportSvg = svg.cloneNode(true);
+  exportSvg.setAttribute('viewBox', `${minX} ${minY} ${W} ${H}`);
+  exportSvg.setAttribute('width', String(W));
+  exportSvg.setAttribute('height', String(H));
 
-  const prevVB = svg.getAttribute('viewBox');
-  const prevW = svg.getAttribute('width');
-  const prevH = svg.getAttribute('height');
-  svg.setAttribute('viewBox', `${minX} ${minY} ${W} ${H}`);
-  svg.setAttribute('width', String(W));
-  svg.setAttribute('height', String(H));
+  exportSvg.querySelectorAll('.node-sel-glow').forEach(el => el.remove());
+  exportSvg.querySelectorAll('[data-nid]').forEach(g => {
+    const id = g.getAttribute('data-nid');
+    const node = S.nodes[id];
+    const shape = g.querySelector('.node-shape');
+    const meta = TYPE_META[node?.type] || TYPE_META.process;
+    if (!shape) return;
+    shape.setAttribute('stroke', meta.stroke);
+    shape.setAttribute('stroke-width', '2.5');
+  });
 
+  const exportPlus = exportSvg.querySelector('#layer-plus');
+  if (exportPlus) exportPlus.setAttribute('visibility', 'hidden');
+
+  const exportTitleLayer = exportSvg.querySelector('#layer-title');
+  const exportEdgesLayer = exportSvg.querySelector('#layer-edges');
   const bgRect = mkSvg('rect', { x: minX, y: minY, width: W, height: H, fill: '#eef2ff' });
-  // put background under ALL layers
-  svg.insertBefore(bgRect, layerTitle || layerEdges);
+  exportSvg.insertBefore(bgRect, exportTitleLayer || exportEdgesLayer);
 
   try {
     const SCALE = 2;
     const blob2 = new Blob(
-      [new XMLSerializer().serializeToString(svg)],
+      [new XMLSerializer().serializeToString(exportSvg)],
       { type: 'image/svg+xml;charset=utf-8' }
     );
     const url = URL.createObjectURL(blob2);
@@ -1768,13 +1776,6 @@ async function savePng() {
   } catch (err) {
     console.error(err);
     showToast('\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0431\u0435\u0440\u0435\u0433\u0442\u0438. \u0421\u043f\u0440\u043e\u0431\u0443\u0439 \u0437\u043d\u043e\u0432\u0443!');
-  } finally {
-    if (bgRect.parentNode) bgRect.parentNode.removeChild(bgRect);
-    if (prevVB) svg.setAttribute('viewBox', prevVB); else svg.removeAttribute('viewBox');
-    if (prevW) svg.setAttribute('width', prevW); else svg.removeAttribute('width');
-    if (prevH) svg.setAttribute('height', prevH); else svg.removeAttribute('height');
-    if (prevVis) layerPlus.setAttribute('visibility', prevVis); else layerPlus.removeAttribute('visibility');
-    S.sel = prevSel; render();
   }
 }
 
