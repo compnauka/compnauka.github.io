@@ -1717,6 +1717,10 @@ async function savePng() {
   const W = maxX - minX, H = maxY - minY;
 
   const exportSvg = svg.cloneNode(true);
+  exportSvg.removeAttribute('style');
+  exportSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  exportSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  exportSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   exportSvg.setAttribute('viewBox', `${minX} ${minY} ${W} ${H}`);
   exportSvg.setAttribute('width', String(W));
   exportSvg.setAttribute('height', String(H));
