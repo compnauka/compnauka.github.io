@@ -7,6 +7,36 @@ export function buildShape(mkSvg, constants, type, x, y, fill, stroke, sw) {
   if (type === 'process') {
     return mkSvg('rect', { ...a, x: x - NODE_W / 2, y: y - NODE_H / 2, width: NODE_W, height: NODE_H, rx: 10 });
   }
+  if (type === 'subroutine') {
+    const g = mkSvg('g', { filter: 'url(#sh)' });
+    g.appendChild(mkSvg('rect', {
+      fill,
+      stroke,
+      'stroke-width': sw,
+      x: x - NODE_W / 2,
+      y: y - NODE_H / 2,
+      width: NODE_W,
+      height: NODE_H,
+      rx: 10,
+    }));
+    g.appendChild(mkSvg('line', {
+      x1: x - NODE_W / 2 + 14,
+      y1: y - NODE_H / 2,
+      x2: x - NODE_W / 2 + 14,
+      y2: y + NODE_H / 2,
+      stroke,
+      'stroke-width': sw,
+    }));
+    g.appendChild(mkSvg('line', {
+      x1: x + NODE_W / 2 - 14,
+      y1: y - NODE_H / 2,
+      x2: x + NODE_W / 2 - 14,
+      y2: y + NODE_H / 2,
+      stroke,
+      'stroke-width': sw,
+    }));
+    return g;
+  }
   if (type === 'decision') {
     return mkSvg('polygon', { ...a, points: `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}` });
   }

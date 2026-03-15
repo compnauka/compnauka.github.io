@@ -159,6 +159,23 @@ export const EXAMPLES = [
     root: 'n1',
   },
   {
+    id: 'ex-sub', title: '\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u043c\u0443 \u043c\u0430\u0441\u0438\u0432\u0443',
+    subtitle: '\u0412\u0438\u043a\u043b\u0438\u043a \u043f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0438 \u0434\u043b\u044f \u043e\u0431\u0447\u0438\u0441\u043b\u0435\u043d\u043d\u044f \u0441\u0443\u043c\u0438',
+    icon: 'fa-sigma', color: '#0f766e', bg: 'bg-teal-50', border: 'border-teal-200',
+    nodes: [
+      { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
+      { id: 'n2', type: 'input-output', text: '\u0412\u0432\u0435\u0441\u0442\u0438 \u043c\u0430\u0441\u0438\u0432 A' },
+      { id: 'n3', type: 'subroutine', text: '\u0421\u0443\u043c\u0430(A)' },
+      { id: 'n4', type: 'input-output', text: '\u0412\u0438\u0432\u0435\u0441\u0442\u0438 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442' },
+      { id: 'n5', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
+    ],
+    edges: [
+      { from: 'n1', to: 'n2', label: null }, { from: 'n2', to: 'n3', label: null },
+      { from: 'n3', to: 'n4', label: null }, { from: 'n4', to: 'n5', label: null },
+    ],
+    root: 'n1',
+  },
+  {
     id: 'ex-io', title: 'Перевірка паролю',
     subtitle: 'Ввід, обробка та вивід результату',
     icon: 'fa-lock', color: '#a855f7', bg: 'bg-violet-50', border: 'border-violet-200',

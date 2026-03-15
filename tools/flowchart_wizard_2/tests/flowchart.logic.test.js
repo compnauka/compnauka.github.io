@@ -91,6 +91,14 @@ test('existing linear and merge examples remain valid', async () => {
   assert.equal(api.collectIssues().issues.length, 0);
 });
 
+test('subroutine example exists and validates cleanly', async () => {
+  const api = await loadLogic();
+
+  const ex = loadExample(api, 'ex-sub');
+  assert.equal(api.collectIssues().issues.length, 0);
+  assert.equal(ex.nodes.some(node => node.type === 'subroutine'), true);
+});
+
 test('cycle examples exist in EXAMPLES and validate cleanly', async () => {
   const api = await loadLogic();
 
@@ -105,11 +113,11 @@ test('back-edge targets are treated as reachable by validator', async () => {
   const api = await loadLogic();
 
   api.S.nodes = {
-    n1: { id: 'n1', type: 'start', text: '???????' },
+    n1: { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
     n2: { id: 'n2', type: 'process', text: 'i = 1' },
     n3: { id: 'n3', type: 'decision', text: 'i ? 3?' },
-    n4: { id: 'n4', type: 'process', text: '????????? i' },
-    n5: { id: 'n5', type: 'end', text: '??????' },
+    n4: { id: 'n4', type: 'process', text: '\u0412\u0438\u0432\u0435\u0441\u0442\u0438 i' },
+    n5: { id: 'n5', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
   };
   api.S.edges = [
     { from: 'n1', to: 'n2', label: null },
@@ -148,6 +156,20 @@ test('incomplete if example validates and mascot explains it', async () => {
 });
 
 
+test('app helpers keep validation and loop aliases wired', async () => {
+  const root = path.join(__dirname, '..');
+  const src = fs.readFileSync(path.join(root, 'app.mjs'), 'utf8');
+
+  assert.ok(src.includes('function findBackEdges()'));
+  assert.ok(src.includes('function collectIssues()'));
+  assert.ok(src.includes('function issueColor(level)'));
+  assert.ok(src.includes('function issueHint(issue)'));
+  assert.ok(src.includes('function findSiblingOpenEnd(pid, lbl)'));
+  assert.ok(src.includes('function connectableNodes(pid, lbl)'));
+  assert.ok(src.includes("import { buildShape as buildSvgShape, pathSegments, createWrapText } from './modules/render-utils.mjs';"));
+  assert.equal(src.includes('pathSegmentsImported'), false);
+});
+
 test('render utils wrap long text with ellipsis', async () => {
   const root = path.join(__dirname, '..');
   const renderUtils = await import(pathToFileURL(path.join(root, 'modules', 'render-utils.mjs')).href);
@@ -158,16 +180,44 @@ test('render utils wrap long text with ellipsis', async () => {
   assert.ok(lines[1].includes('\u2026')); 
 });
 
+test('render utils build subroutine shape with side rails', async () => {
+  const root = path.join(__dirname, '..');
+  const renderUtils = await import(pathToFileURL(path.join(root, 'modules', 'render-utils.mjs')).href);
+
+  const makeNode = (tag, attrs = {}) => ({
+    tagName: tag,
+    attrs: { ...attrs },
+    children: [],
+    setAttribute(name, value) { this.attrs[name] = value; },
+    appendChild(child) { this.children.push(child); },
+  });
+
+  const shape = renderUtils.buildShape(
+    makeNode,
+    { NODE_W: 164, NODE_H: 58, DIAMOND_HALF: 72, IO_W: 180 },
+    'subroutine',
+    100,
+    200,
+    '#0f766e',
+    '#0d5f58',
+    2.5
+  );
+
+  assert.equal(shape.tagName, 'g');
+  assert.equal(shape.children.length, 3);
+  assert.deepEqual(shape.children.map(child => child.tagName), ['rect', 'line', 'line']);
+});
+
 test('current edge routing builds a route for upward loop edges', async () => {
   const root = path.join(__dirname, '..');
   const edgeRouting = await import(pathToFileURL(path.join(root, 'modules', 'edge-routing.mjs')).href);
 
   const S = {
     nodes: {
-      n1: { id: 'n1', type: 'start', text: '???????' },
+      n1: { id: 'n1', type: 'start', text: '\u041f\u043e\u0447\u0430\u0442\u043e\u043a' },
       n2: { id: 'n2', type: 'decision', text: 'i ? 3?' },
-      n3: { id: 'n3', type: 'process', text: '???' },
-      n4: { id: 'n4', type: 'end', text: '??????' },
+      n3: { id: 'n3', type: 'process', text: '\u0414\u0456\u044f' },
+      n4: { id: 'n4', type: 'end', text: '\u041a\u0456\u043d\u0435\u0446\u044c' },
     },
     edges: [
       { from: 'n1', to: 'n2', label: null },

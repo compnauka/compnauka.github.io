@@ -16,9 +16,11 @@ import {
 import { collectIssues as collectIssueList } from './modules/validation.mjs';
 import { getMascotHtml } from './modules/mascot.mjs';
 import { getWizardBadge, getWizardLiveText, getExplainContentHtml, getMergeHintText, getCycleConnectionHintHtml } from './modules/wizard.mjs';
-import { buildShape as buildSvgShape, shiftBySide as shiftBySideImported, simplifyPath as simplifyPathImported, pathLen as pathLenImported, orthHitsRect as orthHitsRectImported, pathSegments as pathSegmentsImported, segOverlapPenalty as segOverlapPenaltyImported, createWrapText } from './modules/render-utils.mjs';
+import { buildShape as buildSvgShape, pathSegments, createWrapText } from './modules/render-utils.mjs';
 import { computeRanks as computeGraphRanks, applyLayout } from './modules/layout.mjs';
 import { computeEdgeRoute } from './modules/edge-routing.mjs';
+import { getCommentLayout, normalizeCommentText } from './modules/comments.mjs';
+import { createStateSnapshot, restoreStateSnapshot, pushUndoSnapshot, popUndoSnapshot } from './modules/history.mjs';
 
 // ────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -50,6 +52,11 @@ const TYPE_META = {
     label: 'Ввід/Вивід', icon: 'fa-right-left', fill: '#a855f7', stroke: '#7e22ce',
     explain: 'Отримати дані від користувача або показати результат на екрані.'
   },
+  subroutine: {
+    label: '\u041f\u0456\u0434\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430', icon: 'fa-code', fill: '#0f766e', stroke: '#0d5f58',
+    explain: '\u0412\u0438\u043a\u043b\u0438\u043a \u0434\u043e\u043f\u043e\u043c\u0456\u0436\u043d\u043e\u0433\u043e \u0430\u043b\u0433\u043e\u0440\u0438\u0442\u043c\u0443 (\u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440\u0438 \u0430\u0431\u043e \u0444\u0443\u043d\u043a\u0446\u0456\u0457). '
+      + '\u0411\u043b\u043e\u043a \u043f\u043e\u0437\u043d\u0430\u0447\u0430\u0454\u0442\u044c\u0441\u044f \u043f\u0440\u044f\u043c\u043e\u043a\u0443\u0442\u043d\u0438\u043a\u043e\u043c \u0437 \u0434\u0432\u043e\u043c\u0430 \u0431\u0456\u0447\u043d\u0438\u043c\u0438 \u0441\u043c\u0443\u0433\u0430\u043c\u0438.'
+  },
   end: {
     label: 'Кінець', icon: 'fa-flag-checkered', fill: '#f43f5e', stroke: '#be123c',
     explain: 'Алгоритм завершено. Кожна гілка повинна мати свій блок «Кінець».'
@@ -60,6 +67,7 @@ const PLACEHOLDER = {
   process: 'Наприклад: Взяти рюкзак',
   decision: 'Наприклад: Є домашнє завдання?',
   'input-output': 'Наприклад: Введіть своє ім\'я',
+  subroutine: '\u041d\u0430\u043f\u0440\u0438\u043a\u043b\u0430\u0434: \u041e\u0431\u0447\u0438\u0441\u043b\u0438\u0442\u0438 \u0441\u0443\u043c\u0443(a, b)',
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -77,6 +85,7 @@ const S = {
   sel: null,
   issues: [],
   issuesByNode: {},
+  comments: {},
   wiz: { open: false, step: 'type', pid: null, plbl: null, type: null, editId: null },
 };
 
@@ -190,9 +199,33 @@ function scheduleTitleRender() {
 }
 
 function rerenderFlow(withLayout = true) {
-  if (withLayout) layout();
-  render();
-  mascot();
+  try {
+    if (withLayout) layout();
+    render();
+    mascot();
+  } catch (error) {
+    reportRuntimeError('rerender-flow', error);
+    throw error;
+  }
+}
+
+function snap() {
+  pushUndoSnapshot(S, createStateSnapshot(S));
+  $('btn-undo').disabled = false;
+}
+
+function undo() {
+  const snapshot = popUndoSnapshot(S);
+  if (!snapshot) return;
+
+  closeWiz();
+  const tb = $('node-tb');
+  tb.classList.add('hidden');
+  tb.style.display = '';
+  restoreStateSnapshot(S, snapshot);
+  invalidateEdgeCache();
+  $('btn-undo').disabled = S.undo.length === 0;
+  rerenderFlow(true);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -203,6 +236,18 @@ const EDGE_CACHE = createEdgeCacheState();
 function invalidateEdgeCache() { markEdgeCacheDirty(EDGE_CACHE); }
 function outEdges(id) { return getOutEdges(S, EDGE_CACHE, id); }
 function inEdges(id)  { return getInEdges(S, EDGE_CACHE, id); }
+function findBackEdges() { return getBackEdges(S, EDGE_CACHE); }
+function collectIssues() {
+  return collectIssueList(S, { inEdges, outEdges, findBackEdges });
+}
+function issueColor(level) {
+  return level === 'error' ? '#ef4444' : level === 'warn' ? '#f59e0b' : '#64748b';
+}
+function issueHint(issue) {
+  if (!issue) return '';
+  const msgs = Array.isArray(issue.msgs) ? issue.msgs : [];
+  return msgs.join('\n');
+}
 
 // GRAPH HELPERS
 const nodeH = id => S.nodes[id]?.type === 'decision' ? DIAMOND_HALF * 2 : NODE_H;
@@ -419,8 +464,83 @@ function renderNode(id) {
   }
 
   layerNodes.appendChild(g);
+  renderComment(id);
 }
 
+function removeRenderedComment(id) {
+  layerNodes.querySelector('[data-comment-for="' + id + '"]')?.remove();
+}
+
+function renderComment(id) {
+  try {
+    removeRenderedComment(id);
+    const layout = getCommentLayout({
+      text: S.comments?.[id],
+      position: S.pos[id],
+      nodeWidth: nodeW(id),
+      wrapText,
+    });
+    if (!layout) return;
+
+    const g = mkSvg('g', { 'data-comment-for': id, class: 'node-comment' });
+    g.appendChild(mkSvg('line', {
+      x1: layout.connector.x1,
+      y1: layout.connector.y1,
+      x2: layout.connector.x2,
+      y2: layout.connector.y2,
+      stroke: '#94a3b8',
+      'stroke-width': 1.5,
+      'stroke-dasharray': '6 3',
+    }));
+    g.appendChild(mkSvg('rect', {
+      x: layout.box.x,
+      y: layout.box.y,
+      width: layout.box.width,
+      height: layout.box.height,
+      rx: layout.box.rx,
+      fill: '#f8fafc',
+      stroke: '#94a3b8',
+      'stroke-width': 1.5,
+      'stroke-dasharray': '6 3',
+    }));
+
+    layout.lines.forEach(line => {
+      const t = mkSvg('text', {
+        x: line.x,
+        y: line.y,
+        'text-anchor': 'middle',
+        'dominant-baseline': 'middle',
+        fill: '#64748b',
+        'font-size': '12',
+        'font-weight': '700',
+        'font-family': "'Nunito',sans-serif",
+        'pointer-events': 'none',
+      });
+      t.textContent = line.text;
+      g.appendChild(t);
+    });
+
+    layerNodes.appendChild(g);
+  } catch (error) {
+    console.error('comment-render-failed', error);
+  }
+}
+
+function getCommentBounds(id) {
+  const layout = getCommentLayout({
+    text: S.comments?.[id],
+    position: S.pos[id],
+    nodeWidth: nodeW(id),
+    wrapText,
+  });
+  if (!layout) return null;
+  return {
+    l: layout.box.x,
+    t: layout.box.y,
+    r: layout.box.x + layout.box.width,
+    b: layout.box.y + layout.box.height,
+  };
+}
 
 function buildShape(type, x, y, fill, stroke, sw) {
   return buildSvgShape(mkSvg, { NODE_W, NODE_H, DIAMOND_HALF, IO_W }, type, x, y, fill, stroke, sw);
@@ -544,7 +664,11 @@ function renderPlus({ pid, lbl }) {
     ev.stopPropagation();
     if (_nodeDrag) return;
     hideToolbar();
-    openWiz(pid, lbl);
+    try {
+      openWiz(pid, lbl);
+    } catch (error) {
+      reportRuntimeError('open-plus-wizard', error);
+    }
   });
   layerPlus.appendChild(g);
 }
@@ -685,6 +809,19 @@ function updateNodePosition(id) {
     if (n.type === 'start' || n.type === 'end' || n.type === 'process') {
       el.setAttribute('x', x - NODE_W / 2);
       el.setAttribute('y', y - NODE_H / 2);
+    } else if (n.type === 'subroutine') {
+      const rect = el.querySelector('rect');
+      const rails = el.querySelectorAll('line');
+      rect?.setAttribute('x', x - NODE_W / 2);
+      rect?.setAttribute('y', y - NODE_H / 2);
+      rails[0]?.setAttribute('x1', x - NODE_W / 2 + 14);
+      rails[0]?.setAttribute('y1', y - NODE_H / 2);
+      rails[0]?.setAttribute('x2', x - NODE_W / 2 + 14);
+      rails[0]?.setAttribute('y2', y + NODE_H / 2);
+      rails[1]?.setAttribute('x1', x + NODE_W / 2 - 14);
+      rails[1]?.setAttribute('y1', y - NODE_H / 2);
+      rails[1]?.setAttribute('x2', x + NODE_W / 2 - 14);
+      rails[1]?.setAttribute('y2', y + NODE_H / 2);
     } else if (n.type === 'decision') {
       el.setAttribute('points', `${x},${y - DIAMOND_HALF} ${x + DIAMOND_HALF},${y} ${x},${y + DIAMOND_HALF} ${x - DIAMOND_HALF},${y}`);
     } else { // input-output
@@ -738,6 +875,8 @@ function updateNodePosition(id) {
       issueMark.setAttribute('y', by + 0.5);
     }
   }
+
+  renderComment(id);
 }
 
 
@@ -883,9 +1022,33 @@ function startEditNode(id) {
   setTimeout(() => { inp.focus(); inp.select(); }, 320);
 }
 
+function editNodeComment(id) {
+  if (!id || !S.nodes[id]) return;
+  const current = S.comments?.[id] || '';
+  const raw = window.prompt('Додайте коментар до блоку:', current);
+  if (raw === null) return;
+
+  const next = normalizeCommentText(raw);
+  if (next === current) return;
+
+  snap();
+  if (!S.comments) S.comments = {};
+  if (next) S.comments[id] = next;
+  else delete S.comments[id];
+
+  hideToolbar();
+  rerenderFlow(false);
+  showToast(next ? 'Коментар збережено.' : 'Коментар видалено.');
+}
+
 $('btn-edit-node').addEventListener('click', () => {
   if (!S.sel) return;
   startEditNode(S.sel);
+});
+
+$('btn-comment-node').addEventListener('click', () => {
+  if (!S.sel) return;
+  editNodeComment(S.sel);
 });
 
 $('btn-del-node').addEventListener('click', () => {
@@ -942,6 +1105,50 @@ function findCommonSuccessor(a, b) {
   return best;
 }
 
+function findSiblingOpenEnd(pid, lbl) {
+  const blocked = new Set([pid]);
+  ancestors(pid).forEach(id => blocked.add(id));
+  descendants(pid).forEach(id => blocked.add(id));
+
+  const candidates = openEnds().filter(end => {
+    if (!end || end.pid === pid) return false;
+    if (blocked.has(end.pid)) return false;
+    const otherBlocked = new Set();
+    ancestors(end.pid).forEach(id => otherBlocked.add(id));
+    descendants(end.pid).forEach(id => otherBlocked.add(id));
+    if (otherBlocked.has(pid)) return false;
+    return true;
+  });
+
+  const myRank = S.ranks?.[pid] ?? 0;
+  candidates.sort((a, b) => {
+    const rankDelta = Math.abs((S.ranks?.[a.pid] ?? 0) - myRank) - Math.abs((S.ranks?.[b.pid] ?? 0) - myRank);
+    if (rankDelta) return rankDelta;
+    if ((a.lbl === lbl) !== (b.lbl === lbl)) return (a.lbl === lbl) ? -1 : 1;
+    return String(a.pid).localeCompare(String(b.pid));
+  });
+
+  return candidates[0] || null;
+}
+
+function connectableNodes(pid, lbl) {
+  if (!pid || !S.nodes[pid]) return [];
+
+  const banned = new Set([pid]);
+  descendants(pid).forEach(id => banned.add(id));
+  outEdges(pid).forEach(edge => { if (edge.to) banned.add(edge.to); });
+
+  return Object.values(S.nodes)
+    .filter(node => node && !banned.has(node.id))
+    .filter(node => node.type !== 'start')
+    .filter(node => !(node.type === 'decision' && lbl == null))
+    .sort((a, b) => {
+      const rankDelta = (S.ranks?.[a.id] ?? 0) - (S.ranks?.[b.id] ?? 0);
+      if (rankDelta) return rankDelta;
+      return String(a.id).localeCompare(String(b.id));
+    });
+}
+
 function pruneUnreachable() {
   if (!S.root || !S.nodes[S.root]) return;
   const reachable = new Set([S.root]);
@@ -964,6 +1171,7 @@ function pruneUnreachable() {
   for (const id of rmSet) {
     delete S.nodes[id];
     if (S.manual) delete S.manual[id];
+    if (S.comments) delete S.comments[id];
   }
 }
 
@@ -1014,6 +1222,7 @@ function deleteNodeSplice(id) {
   // Remove node
   delete S.nodes[id];
   if (S.manual) delete S.manual[id];
+  if (S.comments) delete S.comments[id];
 
   // If some blocks became unreachable (e.g., after deleting a decision), remove them
   pruneUnreachable();
@@ -1221,7 +1430,7 @@ $('btn-reset').addEventListener('click', () => openModal('reset-modal'));
 $('reset-cancel').addEventListener('click', () => closeModal('reset-modal'));
 $('reset-confirm').addEventListener('click', () => {
   closeModal('reset-modal');
-  Object.assign(S, { nodes: {}, edges: [], root: null, cnt: 0, undo: [], sel: null, ranks: {}, pos: {}, manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {}, title: '', issues: [], issuesByNode: {} });
+  Object.assign(S, { nodes: {}, edges: [], root: null, cnt: 0, undo: [], sel: null, ranks: {}, pos: {}, manual: {}, baseX: {}, baseY: {}, rankY: {}, rankH: {}, title: '', issues: [], issuesByNode: {}, comments: {} });
   invalidateEdgeCache();
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar(); init();
@@ -1328,8 +1537,12 @@ $('btn-check-close')?.addEventListener('click', () => closeModal('check-modal'))
       </div>
       <i class="fa-solid fa-arrow-right text-gray-300 flex-shrink-0"></i>`;
     card.addEventListener('click', () => {
-      loadExample(ex);
-      closeModal('ex-modal');
+      try {
+        loadExample(ex);
+        closeModal('ex-modal');
+      } catch (error) {
+        reportRuntimeError(`load-example:${ex.id}`, error);
+      }
     });
     container.appendChild(card);
   });
@@ -1347,7 +1560,7 @@ function loadExample(ex) {
   S.root = ex.root;
   S.cnt = maxId;
   S.undo = []; S.sel = null; S.pos = {}; S.ranks = {};
-  S.manual = {}; S.baseX = {}; S.baseY = {}; S.rankY = {}; S.rankH = {};
+  S.manual = {}; S.baseX = {}; S.baseY = {}; S.rankY = {}; S.rankH = {}; S.comments = {};
   setTitle(ex.title || '');
   $('btn-undo').disabled = true;
   closeWiz(); hideToolbar();
@@ -1424,6 +1637,13 @@ async function savePng() {
     minY = Math.min(minY, p.y - nodeH(id) / 2 - 20);
     maxX = Math.max(maxX, p.x + nodeW(id) / 2 + 20);
     maxY = Math.max(maxY, p.y + nodeH(id) / 2 + 20);
+    const commentBounds = getCommentBounds(id);
+    if (commentBounds) {
+      minX = Math.min(minX, commentBounds.l - 12);
+      minY = Math.min(minY, commentBounds.t - 12);
+      maxX = Math.max(maxX, commentBounds.r + 12);
+      maxY = Math.max(maxY, commentBounds.b + 12);
+    }
   }
 
   // Include title bounds (so it won't be clipped in the saved PNG)
@@ -1548,6 +1768,13 @@ function fitToScreen() {
     mnY = Math.min(mnY, p.y - nodeH(id) / 2);
     mxX = Math.max(mxX, p.x + nodeW(id) / 2);
     mxY = Math.max(mxY, p.y + nodeH(id) / 2);
+    const commentBounds = getCommentBounds(id);
+    if (commentBounds) {
+      mnX = Math.min(mnX, commentBounds.l - 12);
+      mnY = Math.min(mnY, commentBounds.t - 12);
+      mxX = Math.max(mxX, commentBounds.r + 12);
+      mxY = Math.max(mxY, commentBounds.b + 12);
+    }
   }
 
   // include the title bubble in "fit" bounds
@@ -1672,6 +1899,24 @@ function showToast(msg, dur = 2600) {
   clearTimeout(_toastT);
   _toastT = setTimeout(() => t.classList.remove('show'), dur);
 }
+
+function reportRuntimeError(context, error) {
+  const details = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  console.error(context, error);
+  const mascotEl = $('mascot-msg');
+  if (mascotEl) {
+    mascotEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Сталася помилка: ${escHtml(details)}`;
+  }
+  const toastEl = $('toast');
+  if (toastEl) showToast(`Помилка: ${details}`, 4200);
+}
+
+window.addEventListener('error', event => {
+  reportRuntimeError('window-error', event.error || event.message);
+});
+window.addEventListener('unhandledrejection', event => {
+  reportRuntimeError('unhandled-rejection', event.reason);
+});
 
 // ────────────────────────────────────────────────────────────────
 // VIRTUAL KEYBOARD

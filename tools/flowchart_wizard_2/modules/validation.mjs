@@ -9,20 +9,20 @@ export function collectIssues(S, { inEdges, outEdges, findBackEdges }) {
   const backEdgeTargets = new Set([...backEdges].map(e => e.to).filter(id => id && S.nodes[id]));
 
   if (!S.root || !S.nodes[S.root]) {
-    issues.push({ level: 'error', code: 'root-missing', nodeId: null, msg: '????? ??? ?????????? ? ????? "???????".' });
+    issues.push({ level: 'error', code: 'root-missing', nodeId: null, msg: 'Немає або пошкоджено блок "Початок".' });
     return { issues, byNode: {} };
   }
 
   const startIds = ids.filter(id => S.nodes[id].type === 'start');
   if (startIds.length !== 1) {
     for (const id of startIds) {
-      issues.push({ level: 'error', code: 'start-count', nodeId: id, msg: '?? ????? ??? ???? ???? ???? ???? "???????".' });
+      issues.push({ level: 'error', code: 'start-count', nodeId: id, msg: 'У схемі має бути рівно один блок "Початок".' });
     }
   }
 
   const endIds = ids.filter(id => S.nodes[id].type === 'end');
   if (!endIds.length) {
-    issues.push({ level: 'warn', code: 'no-end', nodeId: null, msg: '????? ???? "??????", ??? ???????? ??? ??????????.' });
+    issues.push({ level: 'warn', code: 'no-end', nodeId: null, msg: 'Немає блоку "Кінець", але алгоритм має завершуватися.' });
   }
 
   for (const id of ids) {
@@ -31,17 +31,17 @@ export function collectIssues(S, { inEdges, outEdges, findBackEdges }) {
     const outgoing = outEdges(id).filter(e => S.nodes[e.to]);
 
     if (n.type === 'start' && incoming.length > 0) {
-      issues.push({ level: 'error', code: 'start-incoming', nodeId: id, msg: '? "???????" ?? ??????? ??????? ???????.' });
+      issues.push({ level: 'error', code: 'start-incoming', nodeId: id, msg: 'У "Початок" не повинно входити жодної стрілки.' });
     }
     if (n.type === 'end' && outgoing.length > 0) {
-      issues.push({ level: 'error', code: 'end-outgoing', nodeId: id, msg: '? ????? "??????" ?? ??????? ???????? ???????.' });
+      issues.push({ level: 'error', code: 'end-outgoing', nodeId: id, msg: 'Від блоку "Кінець" не повинно виходити жодної стрілки.' });
     }
 
     if (n.type !== 'start' && incoming.length === 0 && !backEdgeTargets.has(id)) {
-      issues.push({ level: 'warn', code: 'no-input', nodeId: id, msg: '??? ???? ??????????: ? ????? ?? ??????? ????? ???????.' });
+      issues.push({ level: 'warn', code: 'no-input', nodeId: id, msg: 'Цей блок ізольований: у нього не входить жодна стрілка.' });
     }
     if (n.type !== 'end' && outgoing.length === 0) {
-      issues.push({ level: 'warn', code: 'no-output', nodeId: id, msg: '??? ???? ?? ??? ???????????. ????? ????????? ????.' });
+      issues.push({ level: 'warn', code: 'no-output', nodeId: id, msg: 'Цей блок ще не має продовження. Треба додати стрілку далі.' });
     }
 
     if (n.type === 'decision') {
@@ -49,17 +49,17 @@ export function collectIssues(S, { inEdges, outEdges, findBackEdges }) {
       const hasYes = labels.includes('yes');
       const hasNo = labels.includes('no');
       if (!hasYes || !hasNo) {
-        issues.push({ level: 'warn', code: 'decision-branches', nodeId: id, msg: '? "???????" ????? ???? ??? ?????: "???" ? "??".' });
+        issues.push({ level: 'warn', code: 'decision-branches', nodeId: id, msg: 'У "Питання" мають бути дві гілки: "Так" і "Ні".' });
       }
       const invalid = labels.filter(l => l !== 'yes' && l !== 'no');
       if (invalid.length) {
-        issues.push({ level: 'error', code: 'decision-label', nodeId: id, msg: '? "???????" ????? ????? ???? ????? "???" ? "??".' });
+        issues.push({ level: 'error', code: 'decision-label', nodeId: id, msg: 'У "Питання" підписи гілок мають бути тільки "Так" і "Ні".' });
       }
       if (outgoing.length > 2) {
-        issues.push({ level: 'error', code: 'decision-too-many', nodeId: id, msg: '???? "???????" ???? ???? ?? ?????? ???? ???????.' });
+        issues.push({ level: 'error', code: 'decision-too-many', nodeId: id, msg: 'Блок "Питання" не може мати більше двох виходів.' });
       }
     } else if (outgoing.some(e => e.label === 'yes' || e.label === 'no')) {
-      issues.push({ level: 'error', code: 'label-on-non-decision', nodeId: id, msg: '???????? "???/??" ????? ??????? ???? ????? ????? "???????".' });
+      issues.push({ level: 'error', code: 'label-on-non-decision', nodeId: id, msg: 'Підписи "Так/Ні" можна ставити лише біля блоку "Питання".' });
     }
   }
 
@@ -76,12 +76,12 @@ export function collectIssues(S, { inEdges, outEdges, findBackEdges }) {
   }
   for (const id of ids) {
     if (!seen.has(id) && !backEdgeTargets.has(id)) {
-      issues.push({ level: 'warn', code: 'unreachable', nodeId: id, msg: '?? ????? ????? ????????? ????? ??? "???????".' });
+      issues.push({ level: 'warn', code: 'unreachable', nodeId: id, msg: 'До цього блоку неможливо дійти від "Початок".' });
     }
   }
 
   const uniq = new Map();
-  for (const it of issues) uniq.set(`${it.code}|${it.nodeId || ''}`, it);
+  for (const it of issues) uniq.set(it.code + '|' + (it.nodeId || ''), it);
   const dedup = [...uniq.values()];
 
   const byNode = {};

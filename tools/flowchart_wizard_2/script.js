@@ -1,1 +1,1 @@
-import('./app.mjs');
+import('./app.mjs?v=20260315-2');
