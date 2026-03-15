@@ -643,6 +643,278 @@ function getRenderedFlowBounds() {
   return bounds;
 }
 
+function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.arcTo(x + width, y, x + width, y + r, r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+  ctx.lineTo(x + r, y + height);
+  ctx.arcTo(x, y + height, x, y + height - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawNodeShapeToCanvas(ctx, id, offsetX, offsetY) {
+  const node = S.nodes[id];
+  const pos = S.pos[id];
+  if (!node || !pos) return;
+  const meta = TYPE_META[node.type] || TYPE_META.process;
+  const x = pos.x + offsetX;
+  const y = pos.y + offsetY;
+  const w = nodeW(id);
+  const h = nodeH(id);
+
+  ctx.save();
+  ctx.fillStyle = meta.fill;
+  ctx.strokeStyle = meta.stroke;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = 'rgba(15, 23, 42, 0.18)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+
+  if (node.type === 'start' || node.type === 'end') {
+    drawRoundedRectPath(ctx, x - NODE_W / 2, y - NODE_H / 2, NODE_W, NODE_H, NODE_H / 2);
+    ctx.fill();
+    ctx.stroke();
+  } else if (node.type === 'process') {
+    drawRoundedRectPath(ctx, x - NODE_W / 2, y - NODE_H / 2, NODE_W, NODE_H, 10);
+    ctx.fill();
+    ctx.stroke();
+  } else if (node.type === 'subroutine') {
+    drawRoundedRectPath(ctx, x - NODE_W / 2, y - NODE_H / 2, NODE_W, NODE_H, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.beginPath();
+    ctx.moveTo(x - NODE_W / 2 + 14, y - NODE_H / 2);
+    ctx.lineTo(x - NODE_W / 2 + 14, y + NODE_H / 2);
+    ctx.moveTo(x + NODE_W / 2 - 14, y - NODE_H / 2);
+    ctx.lineTo(x + NODE_W / 2 - 14, y + NODE_H / 2);
+    ctx.stroke();
+  } else if (node.type === 'decision') {
+    ctx.beginPath();
+    ctx.moveTo(x, y - DIAMOND_HALF);
+    ctx.lineTo(x + DIAMOND_HALF, y);
+    ctx.lineTo(x, y + DIAMOND_HALF);
+    ctx.lineTo(x - DIAMOND_HALF, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    const skew = 20;
+    ctx.beginPath();
+    ctx.moveTo(x - IO_W / 2 + skew, y - NODE_H / 2);
+    ctx.lineTo(x + IO_W / 2 + skew, y - NODE_H / 2);
+    ctx.lineTo(x + IO_W / 2 - skew, y + NODE_H / 2);
+    ctx.lineTo(x - IO_W / 2 - skew, y + NODE_H / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawCenteredLines(ctx, lines, x, y, lineHeight, color, font) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = font;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const startY = y - (lines.length * lineHeight) / 2 + lineHeight / 2;
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, startY + index * lineHeight);
+  });
+  ctx.restore();
+}
+
+function drawArrowhead(ctx, from, to, color) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (!len) return;
+  const ux = dx / len;
+  const uy = dy / len;
+  const size = 14;
+  const wing = 8;
+
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - ux * size - uy * wing, to.y - uy * size + ux * wing);
+  ctx.lineTo(to.x - ux * size + uy * wing, to.y - uy * size - ux * wing);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawEdgeToCanvas(ctx, edge, offsetX, offsetY) {
+  const isYes = edge.label === 'yes';
+  const isNo = edge.label === 'no';
+  const color = isYes ? '#16a34a' : isNo ? '#dc2626' : '#475569';
+  const route = edgeRoute(edge);
+  if (!route || !route.pts?.length) return;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  route.pts.forEach((pt, index) => {
+    const x = pt.x + offsetX;
+    const y = pt.y + offsetY;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  const last = route.pts[route.pts.length - 1];
+  const prev = route.pts[route.pts.length - 2] || last;
+  drawArrowhead(ctx, { x: prev.x + offsetX, y: prev.y + offsetY }, { x: last.x + offsetX, y: last.y + offsetY }, color);
+  ctx.restore();
+
+  if (!edge.label) return;
+  const labelPos = getDecisionEdgeLabelPosition(route, edge.label);
+  if (!labelPos) return;
+  const x = labelPos.x + offsetX;
+  const y = labelPos.y + offsetY;
+
+  ctx.save();
+  drawRoundedRectPath(ctx, x - 25, y - 15, 50, 30, 15);
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = isYes ? '#15803d' : '#b91c1c';
+  ctx.font = '800 13px Nunito, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(isYes ? 'Так' : 'Ні', x, y);
+  ctx.restore();
+}
+
+function drawCommentToCanvas(ctx, id, offsetX, offsetY) {
+  const layout = getCommentLayout({
+    text: S.comments?.[id],
+    position: S.pos[id],
+    nodeWidth: nodeW(id),
+    wrapText,
+    offset: S.commentPos?.[id],
+  });
+  if (!layout) return;
+
+  ctx.save();
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 3]);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  layout.connector.forEach((pt, index) => {
+    const x = pt.x + offsetX;
+    const y = pt.y + offsetY;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  drawRoundedRectPath(
+    ctx,
+    layout.box.x + offsetX,
+    layout.box.y + offsetY,
+    layout.box.width,
+    layout.box.height,
+    layout.box.rx
+  );
+  ctx.fillStyle = '#f8fafc';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#64748b';
+  ctx.font = '700 12px Nunito, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  layout.lines.forEach(line => {
+    ctx.fillText(line.text, line.x + offsetX, line.y + offsetY);
+  });
+  ctx.restore();
+}
+
+function getExportBounds() {
+  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  const pad = 80;
+
+  for (const id of Object.keys(S.nodes)) {
+    const p = S.pos[id];
+    if (!p) continue;
+    expandBounds(
+      bounds,
+      p.x - nodeW(id) / 2 - 20,
+      p.y - nodeH(id) / 2 - 20,
+      p.x + nodeW(id) / 2 + 20,
+      p.y + nodeH(id) / 2 + 20
+    );
+    const commentBounds = getCommentBounds(id);
+    if (commentBounds) {
+      expandBounds(bounds, commentBounds.l - 12, commentBounds.t - 12, commentBounds.r + 12, commentBounds.b + 12);
+    }
+  }
+
+  for (const edge of S.edges) {
+    const route = edgeRoute(edge);
+    if (!route?.pts?.length) continue;
+    route.pts.forEach(pt => expandBounds(bounds, pt.x - 18, pt.y - 18, pt.x + 18, pt.y + 18));
+    const labelPos = edge.label ? getDecisionEdgeLabelPosition(route, edge.label) : null;
+    if (labelPos) expandBounds(bounds, labelPos.x - 28, labelPos.y - 18, labelPos.x + 28, labelPos.y + 18);
+  }
+
+  const title = String(S.title ?? '').trim();
+  if (title) {
+    const top = Math.min(...Object.keys(S.nodes).map(id => S.pos[id]?.y - nodeH(id) / 2).filter(Number.isFinite), 88);
+    const titleY = Math.max(108, top - 132);
+    expandBounds(bounds, CX - 260, titleY - 34, CX + 260, titleY + 34);
+  }
+
+  if (!Number.isFinite(bounds.minX)) {
+    bounds.minX = 0;
+    bounds.minY = 0;
+    bounds.maxX = SVG_W;
+    bounds.maxY = 600;
+  }
+
+  bounds.minX -= pad;
+  bounds.minY -= pad;
+  bounds.maxX += pad;
+  bounds.maxY += pad;
+  return bounds;
+}
+
+async function downloadCanvasAsPng(canvas, title) {
+  await new Promise((res, rej) => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        rej(new Error('toBlob returned null'));
+        return;
+      }
+      const pngUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = makeDownloadFileName(title);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
+      res();
+    }, 'image/png');
+  });
+}
+
 function buildShape(type, x, y, fill, stroke, sw) {
   return buildSvgShape(mkSvg, { NODE_W, NODE_H, DIAMOND_HALF, IO_W }, type, x, y, fill, stroke, sw);
 }
@@ -1742,82 +2014,77 @@ $('save-modal').addEventListener('pointerdown', e => {
 
 async function savePng() {
   const title = String(S.title ?? '').trim();
-  const renderedBounds = getRenderedFlowBounds();
-  const EXPORT_PAD_RIGHT = 120;
-  const EXPORT_PAD_BOTTOM = 320;
-  const exportWidth = Math.max(SVG_W, Math.ceil(parseFloat(svg.style.width || String(SVG_W)) || SVG_W)) + EXPORT_PAD_RIGHT;
-  const renderedBottom = Number.isFinite(renderedBounds.maxY) ? renderedBounds.maxY + 140 : 0;
-  const exportHeight = Math.max(
-    600,
-    Math.ceil(parseFloat(svg.style.minHeight || '600') || 600),
-    Math.ceil(renderedBottom)
-  ) + EXPORT_PAD_BOTTOM;
-  const minX = 0;
-  const minY = 0;
-  const W = exportWidth;
-  const H = exportHeight;
-
-  const exportSvg = svg.cloneNode(true);
-  exportSvg.removeAttribute('style');
-  exportSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  exportSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-  exportSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  exportSvg.setAttribute('viewBox', `${minX} ${minY} ${W} ${H}`);
-  exportSvg.setAttribute('width', String(W));
-  exportSvg.setAttribute('height', String(H));
-
-  exportSvg.querySelectorAll('.node-sel-glow').forEach(el => el.remove());
-  exportSvg.querySelectorAll('[data-nid]').forEach(g => {
-    const id = g.getAttribute('data-nid');
-    const node = S.nodes[id];
-    const shape = g.querySelector('.node-shape');
-    const meta = TYPE_META[node?.type] || TYPE_META.process;
-    if (!shape) return;
-    shape.setAttribute('stroke', meta.stroke);
-    shape.setAttribute('stroke-width', '2.5');
-  });
-
-  const exportPlus = exportSvg.querySelector('#layer-plus');
-  if (exportPlus) exportPlus.setAttribute('visibility', 'hidden');
-
-  const exportTitleLayer = exportSvg.querySelector('#layer-title');
-  const exportEdgesLayer = exportSvg.querySelector('#layer-edges');
-  const bgRect = mkSvg('rect', { x: minX, y: minY, width: W, height: H, fill: '#eef2ff' });
-  exportSvg.insertBefore(bgRect, exportTitleLayer || exportEdgesLayer);
+  const bounds = getExportBounds();
+  const W = Math.ceil(bounds.maxX - bounds.minX);
+  const H = Math.ceil(bounds.maxY - bounds.minY);
+  const offsetX = -bounds.minX;
+  const offsetY = -bounds.minY;
 
   try {
     const SCALE = 2;
-    const blob2 = new Blob(
-      [new XMLSerializer().serializeToString(exportSvg)],
-      { type: 'image/svg+xml;charset=utf-8' }
-    );
-    const url = URL.createObjectURL(blob2);
-    await new Promise((res, rej) => {
-      const img = new Image();
-      img.onload = () => {
-        const cvs = document.createElement('canvas');
-        cvs.width = Math.round(W * SCALE); cvs.height = Math.round(H * SCALE);
-        const ctx = cvs.getContext('2d');
-        ctx.scale(SCALE, SCALE);
-        ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(img, 0, 0, W, H);
-        URL.revokeObjectURL(url);
-        cvs.toBlob(b => {
-          if (!b) { rej(new Error('toBlob returned null')); return; }
-          const pngUrl = URL.createObjectURL(b);
-          const a = document.createElement('a');
-          a.href = pngUrl;
-          a.download = makeDownloadFileName(title);
-          a.click();
-          // Release the object URL after the download starts.
-          setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
-          confetti(); showToast('\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e \u0443\u0441\u043f\u0456\u0448\u043d\u043e!');
-          res();
-        }, 'image/png');
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('fail')); };
-      img.src = url;
-    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(W * SCALE));
+    canvas.height = Math.max(1, Math.round(H * SCALE));
+    const ctx = canvas.getContext('2d');
+    ctx.scale(SCALE, SCALE);
+    ctx.fillStyle = '#eef2ff';
+    ctx.fillRect(0, 0, W, H);
+
+    const cleanTitle = String(S.title ?? '').trim();
+    if (cleanTitle) {
+      const topMost = Math.min(...Object.keys(S.nodes).map(id => S.pos[id]?.y - nodeH(id) / 2).filter(Number.isFinite), 88);
+      const titleY = Math.max(108, topMost - 132) + offsetY;
+      const titleX = CX + offsetX;
+      ctx.save();
+      ctx.font = '900 30px Nunito, sans-serif';
+      const textWidth = ctx.measureText(cleanTitle).width;
+      const boxW = Math.max(260, textWidth + 80);
+      const boxH = 68;
+      ctx.shadowColor = 'rgba(99, 102, 241, 0.18)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 4;
+      drawRoundedRectPath(ctx, titleX - boxW / 2, titleY - boxH / 2, boxW, boxH, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#c7d2fe';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '900 30px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(cleanTitle, titleX, titleY);
+    }
+
+    for (const id of Object.keys(S.nodes)) drawCommentToCanvas(ctx, id, offsetX, offsetY);
+    for (const edge of S.edges) drawEdgeToCanvas(ctx, edge, offsetX, offsetY);
+    for (const id of Object.keys(S.nodes)) {
+      drawNodeShapeToCanvas(ctx, id, offsetX, offsetY);
+      const node = S.nodes[id];
+      const pos = S.pos[id];
+      if (!node || !pos) continue;
+      const x = pos.x + offsetX;
+      const y = pos.y + offsetY;
+      const lines = wrapText(node.text || '...', node.type === 'decision' ? 10 : 16, node.type === 'decision' ? 4 : 3);
+      drawCenteredLines(ctx, lines, x, y, 18, '#ffffff', '800 14px Nunito, sans-serif');
+      if (node.type !== 'start') {
+        const meta = TYPE_META[node.type] || TYPE_META.process;
+        const labelX = node.type === 'decision' ? x + DIAMOND_HALF : x + nodeW(id) / 2;
+        const labelY = node.type === 'decision' ? y - DIAMOND_HALF - 12 : y - NODE_H / 2 - 10;
+        ctx.save();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '700 11px Nunito, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(meta.label, labelX, labelY);
+        ctx.restore();
+      }
+    }
+
+    await downloadCanvasAsPng(canvas, title);
+    confetti();
+    showToast('\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e \u0443\u0441\u043f\u0456\u0448\u043d\u043e!');
   } catch (err) {
     console.error(err);
     showToast('\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0431\u0435\u0440\u0435\u0433\u0442\u0438. \u0421\u043f\u0440\u043e\u0431\u0443\u0439 \u0437\u043d\u043e\u0432\u0443!');
