@@ -1742,8 +1742,14 @@ $('save-modal').addEventListener('pointerdown', e => {
 
 async function savePng() {
   const title = String(S.title ?? '').trim();
+  const renderedBounds = getRenderedFlowBounds();
   const exportWidth = Math.max(SVG_W, Math.ceil(parseFloat(svg.style.width || String(SVG_W)) || SVG_W));
-  const exportHeight = Math.max(600, Math.ceil(parseFloat(svg.style.minHeight || '600') || 600));
+  const renderedBottom = Number.isFinite(renderedBounds.maxY) ? renderedBounds.maxY + 140 : 0;
+  const exportHeight = Math.max(
+    600,
+    Math.ceil(parseFloat(svg.style.minHeight || '600') || 600),
+    Math.ceil(renderedBottom)
+  );
   const minX = 0;
   const minY = 0;
   const W = exportWidth;
