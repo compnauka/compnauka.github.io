@@ -849,51 +849,24 @@ function drawCommentToCanvas(ctx, id, offsetX, offsetY) {
 }
 
 function getExportBounds() {
-  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  const pad = 80;
+  const rendered = getRenderedFlowBounds();
+  const hasRenderedBounds =
+    Number.isFinite(rendered.minX) &&
+    Number.isFinite(rendered.minY) &&
+    Number.isFinite(rendered.maxX) &&
+    Number.isFinite(rendered.maxY);
 
-  for (const id of Object.keys(S.nodes)) {
-    const p = S.pos[id];
-    if (!p) continue;
-    expandBounds(
-      bounds,
-      p.x - nodeW(id) / 2 - 20,
-      p.y - nodeH(id) / 2 - 20,
-      p.x + nodeW(id) / 2 + 20,
-      p.y + nodeH(id) / 2 + 20
-    );
-    const commentBounds = getCommentBounds(id);
-    if (commentBounds) {
-      expandBounds(bounds, commentBounds.l - 12, commentBounds.t - 12, commentBounds.r + 12, commentBounds.b + 12);
-    }
-  }
+  const bounds = hasRenderedBounds
+    ? { ...rendered }
+    : { minX: 0, minY: 0, maxX: SVG_W, maxY: 600 };
 
-  for (const edge of S.edges) {
-    const route = edgeRoute(edge);
-    if (!route?.pts?.length) continue;
-    route.pts.forEach(pt => expandBounds(bounds, pt.x - 18, pt.y - 18, pt.x + 18, pt.y + 18));
-    const labelPos = edge.label ? getDecisionEdgeLabelPosition(route, edge.label) : null;
-    if (labelPos) expandBounds(bounds, labelPos.x - 28, labelPos.y - 18, labelPos.x + 28, labelPos.y + 18);
-  }
-
-  const title = String(S.title ?? '').trim();
-  if (title) {
-    const top = Math.min(...Object.keys(S.nodes).map(id => S.pos[id]?.y - nodeH(id) / 2).filter(Number.isFinite), 88);
-    const titleY = Math.max(108, top - 132);
-    expandBounds(bounds, CX - 260, titleY - 34, CX + 260, titleY + 34);
-  }
-
-  if (!Number.isFinite(bounds.minX)) {
-    bounds.minX = 0;
-    bounds.minY = 0;
-    bounds.maxX = SVG_W;
-    bounds.maxY = 600;
-  }
-
-  bounds.minX -= pad;
-  bounds.minY -= pad;
-  bounds.maxX += pad;
-  bounds.maxY += pad;
+  const PAD_X = 96;
+  const PAD_TOP = 96;
+  const PAD_BOTTOM = 156;
+  bounds.minX -= PAD_X;
+  bounds.minY -= PAD_TOP;
+  bounds.maxX += PAD_X;
+  bounds.maxY += PAD_BOTTOM;
   return bounds;
 }
 
