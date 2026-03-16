@@ -16,6 +16,7 @@ const suspiciousSequences = [
 ];
 
 const filesToCheck = [
+  'index.html',
   'script.js',
   'flowchart-core.js',
   'manual.html',

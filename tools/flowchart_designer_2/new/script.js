@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvasContainer = document.getElementById('canvas-container');
   const svgLayer = document.getElementById('connectors-layer');
 
-  const deleteButton = document.getElementById('delete-button');
   const clearButton = document.getElementById('clear-button');
   const saveButton = document.getElementById('save-button');
   const undoButton = document.getElementById('undo-button');
+  let redoButton = document.getElementById('redo-button');
   const quickActions = document.querySelector('.quick-actions');
 
   const textModal = document.getElementById('text-modal');
@@ -38,8 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelConnBtn = document.getElementById('cancel-connection');
 
   const connectionBar = document.getElementById('connection-bar');
+  let shapeBar = document.getElementById('shape-bar');
   const deleteConnBtn = document.getElementById('delete-conn-btn');
   const routeConnBtn = document.getElementById('route-conn-btn');
+  let editShapeBtn = document.getElementById('edit-shape-btn');
+  let deleteShapeBtn = document.getElementById('delete-shape-btn');
   let editConnLabelBtn = null;
   const saveTitleModal = document.getElementById('save-title-modal');
   const saveTitleInput = document.getElementById('save-title-input');
@@ -66,11 +69,49 @@ document.addEventListener('DOMContentLoaded', () => {
     return btn;
   }
 
+  const legacyDeleteButton = document.getElementById('delete-button');
+  legacyDeleteButton?.remove();
+
+  if (undoButton) {
+    undoButton.classList.add('icon-btn-compact');
+    undoButton.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+    undoButton.setAttribute('aria-label', 'Скасувати');
+    undoButton.title = 'Скасувати (Ctrl+Z)';
+  }
+
+  if (!redoButton && quickActions && undoButton) {
+    redoButton = createActionButton('redo-button', 'Повернути скасовану дію (Ctrl+Y)', 'fa-solid fa-rotate-right', '', 'icon-btn-compact');
+    redoButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+    quickActions.insertBefore(redoButton, undoButton.nextSibling);
+  }
+
+  if (saveButton) {
+    saveButton.setAttribute('aria-label', 'Зберегти зображення');
+    saveButton.title = 'Зберегти зображення (Ctrl+S)';
+    saveButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Зберегти зображення</span>';
+  }
+
   const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити проєкт');
   const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти проєкт');
   if (quickActions && saveButton) {
     quickActions.insertBefore(openProjectButton, saveButton);
     quickActions.insertBefore(saveProjectButton, saveButton);
+  }
+
+  if (!shapeBar && connectionBar?.parentElement) {
+    shapeBar = document.createElement('div');
+    shapeBar.id = 'shape-bar';
+    shapeBar.className = 'connection-bar shape-bar hidden';
+    shapeBar.setAttribute('role', 'status');
+    shapeBar.setAttribute('aria-label', 'Вибраний блок');
+    shapeBar.innerHTML = `
+      <span><i class="fa-solid fa-vector-square"></i> Вибраний блок</span>
+      <button id="edit-shape-btn" class="conn-route-btn" aria-label="Змінити текст блока"><i class="fa-solid fa-pen"></i> Текст</button>
+      <button id="delete-shape-btn" class="conn-delete-btn" aria-label="Видалити блок"><i class="fa-solid fa-trash"></i> Видалити блок</button>
+    `;
+    connectionBar.parentElement.insertBefore(shapeBar, connectionBar.nextSibling);
+    editShapeBtn = shapeBar.querySelector('#edit-shape-btn');
+    deleteShapeBtn = shapeBar.querySelector('#delete-shape-btn');
   }
 
   const projectFileInput = document.createElement('input');
@@ -156,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Undo
     undoStack: [],
+    redoStack: [],
     MAX_UNDO: 30,
 
     // schedulers
@@ -172,9 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
   ROUTE_MODE_LABELS['bypass-left'] = ROUTE_MODE_LABELS['bypass-left'] || 'Обхід ліворуч';
   ROUTE_MODE_LABELS['bypass-right'] = ROUTE_MODE_LABELS['bypass-right'] || 'Обхід праворуч';
   const MERGE_LEAD = 34;
+  const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
+  let autosaveRaf = 0;
 
   // ================= UNDO SNAPSHOTS =================
-  function saveSnapshot() {
+  function captureSnapshot() {
     const shapeSnap = state.shapes.map(s => {
       const el = document.getElementById(s.id);
       return {
@@ -188,16 +232,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const connSnap = state.connections.map(c => ({ ...c }));
 
-    state.undoStack.push({
+    return {
       shapes: shapeSnap,
       connections: connSnap,
       baseColors: { ...state.baseColors },
       diagramTitle: state.diagramTitle,
       shapeCounter: state.shapeCounter,
       lastShapeType: state.lastShapeType,
-    });
+    };
+  }
+
+  function updateHistoryButtons() {
+    if (undoButton) undoButton.disabled = state.undoStack.length === 0;
+    if (redoButton) redoButton.disabled = state.redoStack.length === 0;
+  }
+
+  function saveSnapshot() {
+    state.undoStack.push(captureSnapshot());
+
     if (state.undoStack.length > state.MAX_UNDO) state.undoStack.shift();
-    if (undoButton) undoButton.disabled = false;
+    state.redoStack = [];
+    updateHistoryButtons();
+    scheduleAutosave();
   }
 
   function restoreSnapshot(snap) {
@@ -253,19 +309,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    if (undoButton) undoButton.disabled = state.undoStack.length === 0;
+    updateHistoryButtons();
+    scheduleAutosave();
   }
 
   function undo() {
     if (state.undoStack.length === 0) return;
+    state.redoStack.push(captureSnapshot());
+    if (state.redoStack.length > state.MAX_UNDO) state.redoStack.shift();
     const snap = state.undoStack.pop();
     restoreSnapshot(snap);
   }
 
-  if (undoButton) {
-    undoButton.disabled = true;
-    undoButton.addEventListener('click', undo);
+  function redo() {
+    if (state.redoStack.length === 0) return;
+    state.undoStack.push(captureSnapshot());
+    if (state.undoStack.length > state.MAX_UNDO) state.undoStack.shift();
+    const snap = state.redoStack.pop();
+    restoreSnapshot(snap);
   }
+
+  updateHistoryButtons();
+  undoButton?.addEventListener('click', undo);
+  redoButton?.addEventListener('click', redo);
 
 
   function openModal(modal) { modal?.classList.add('active'); }
@@ -312,6 +378,37 @@ document.addEventListener('DOMContentLoaded', () => {
     btns.appendChild(ok);
     openModal(modal);
     setTimeout(() => cancel.focus(), 30);
+  }
+
+  function showRestoreDraftModal(text, onRestore, onDiscard) {
+    const modal = document.getElementById('message-modal');
+    const textEl = document.getElementById('message-modal-text');
+    const btns = document.getElementById('message-modal-buttons');
+    if (!modal || !textEl || !btns) return;
+
+    textEl.textContent = text;
+    btns.innerHTML = '';
+
+    const discard = document.createElement('button');
+    discard.textContent = 'Почати спочатку';
+    discard.className = 'modal-btn cancel-btn';
+    discard.onclick = () => {
+      closeModal(modal);
+      onDiscard?.();
+    };
+
+    const restore = document.createElement('button');
+    restore.textContent = 'Відновити';
+    restore.className = 'modal-btn ok-btn';
+    restore.onclick = () => {
+      closeModal(modal);
+      onRestore?.();
+    };
+
+    btns.appendChild(discard);
+    btns.appendChild(restore);
+    openModal(modal);
+    setTimeout(() => restore.focus(), 30);
   }
 
   // Close modals by click on backdrop
@@ -385,7 +482,83 @@ document.addEventListener('DOMContentLoaded', () => {
   titleInput?.addEventListener('input', () => {
     state.diagramTitle = titleInput.value;
     renderTitle();
+    scheduleAutosave();
   });
+
+  function persistAutosave() {
+    try {
+      const project = collectProjectData();
+      const hasContent = (project.shapes?.length || 0) > 0
+        || (project.connections?.length || 0) > 0
+        || !!String(project.diagramTitle || '').trim();
+
+      if (!hasContent) {
+        localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+        return;
+      }
+
+      localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify({
+        savedAt: new Date().toISOString(),
+        project,
+      }));
+    } catch (error) {
+      console.warn('Flowchart editor: autosave failed.', error);
+    }
+  }
+
+  function scheduleAutosave() {
+    if (autosaveRaf) return;
+    autosaveRaf = requestAnimationFrame(() => {
+      autosaveRaf = 0;
+      persistAutosave();
+    });
+  }
+
+  function clearAutosave() {
+    try {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Flowchart editor: failed to clear autosave.', error);
+    }
+  }
+
+  function readAutosaveDraft() {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      if (!raw) return null;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== 'object' || !draft.project) return null;
+      const parsedProject = core?.parseProject ? core.parseProject(draft.project) : draft.project;
+      const hasContent = (parsedProject.shapes?.length || 0) > 0
+        || (parsedProject.connections?.length || 0) > 0
+        || !!String(parsedProject.diagramTitle || '').trim();
+      if (!hasContent) return null;
+      return {
+        savedAt: draft.savedAt || null,
+        project: parsedProject,
+      };
+    } catch (error) {
+      console.warn('Flowchart editor: failed to read autosave.', error);
+      clearAutosave();
+      return null;
+    }
+  }
+
+  function promptRestoreAutosave() {
+    const draft = readAutosaveDraft();
+    if (!draft) return;
+    const when = draft.savedAt
+      ? new Date(draft.savedAt).toLocaleString('uk-UA')
+      : 'невідомий час';
+    showRestoreDraftModal(
+      `Знайдено автоматично збережену схему від ${when}. Відновити її?`,
+      () => {
+        restoreSnapshot(draft.project);
+        showMessageModal('Автозбережену схему відновлено.');
+      },
+      clearAutosave,
+    );
+  }
 
   // ================= TEXT WRAP =================
   function smartWrapText(raw, type) {
@@ -1330,24 +1503,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateConnectionBar() {
-    if (!connectionBar) return;
     const hasSelected = !!state.selectedConnId;
-    if (hasSelected) connectionBar.classList.remove('hidden');
-    else connectionBar.classList.add('hidden');
+    const hasShapeSelected = !!state.selectedShape;
+    if (connectionBar) {
+      if (hasSelected) connectionBar.classList.remove('hidden');
+      else connectionBar.classList.add('hidden');
+    }
+    if (shapeBar) {
+      if (!hasSelected && hasShapeSelected) shapeBar.classList.remove('hidden');
+      else shapeBar.classList.add('hidden');
+    }
 
     if (!routeConnBtn) return;
     if (!hasSelected) {
       routeConnBtn.disabled = true;
       routeConnBtn.textContent = 'Маршрут: Авто';
-      return;
+    } else {
+      routeConnBtn.disabled = false;
+      if (editConnLabelBtn) editConnLabelBtn.disabled = false;
+      const conn = state.connections.find(c => c.id === state.selectedConnId);
+      const mode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
+      if (editConnLabelBtn) editConnLabelBtn.textContent = conn?.label ? 'Підпис: змінити' : 'Підпис';
+      routeConnBtn.textContent = `Маршрут: ${ROUTE_MODE_LABELS[mode]}`;
     }
 
-    routeConnBtn.disabled = false;
-    if (editConnLabelBtn) editConnLabelBtn.disabled = false;
-    const conn = state.connections.find(c => c.id === state.selectedConnId);
-    const mode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-    if (editConnLabelBtn) editConnLabelBtn.textContent = conn?.label ? 'Підпис: змінити' : 'Підпис';
-    routeConnBtn.textContent = `Маршрут: ${ROUTE_MODE_LABELS[mode]}`;
+    if (editShapeBtn) editShapeBtn.disabled = !hasShapeSelected || hasSelected;
+    if (deleteShapeBtn) deleteShapeBtn.disabled = !hasShapeSelected || hasSelected;
   }
 
   function cycleSelectedConnectionRouteMode() {
@@ -1831,7 +2012,10 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleRefresh();
   }
 
-  deleteButton?.addEventListener('click', deleteSelected);
+  editShapeBtn?.addEventListener('click', () => {
+    if (state.selectedShape) openTextModal(state.selectedShape);
+  });
+  deleteShapeBtn?.addEventListener('click', deleteSelected);
 
   clearButton?.addEventListener('click', () => {
     showConfirmModal('Очистити все полотно?', () => {
@@ -1847,7 +2031,9 @@ document.addEventListener('DOMContentLoaded', () => {
       state.selectedShape = null;
       state.selectedConnId = null;
       state.shapeCounter = 0;
+      state.redoStack = [];
       hideAllHandles();
+      updateHistoryButtons();
       updateConnectionBar();
       scheduleRefresh();
     });
@@ -2078,8 +2264,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="help-step"><span class="step-num">6</span><span><strong>Зберегти проєкт</strong> — кнопка <strong>Зберегти проєкт</strong> або <strong>Ctrl+Shift+S</strong> створює JSON-файл, який можна потім відкрити знову.</span></div>
       <div class="help-step"><span class="step-num">7</span><span><strong>Відкрити проєкт</strong> — кнопка <strong>Відкрити проєкт</strong> або <strong>Ctrl+O</strong> завантажує збережений JSON.</span></div>
       <div class="help-step"><span class="step-num">8</span><span><strong>Зберегти картинку</strong> — кнопка <strong>Зберегти</strong> або <strong>Ctrl+S</strong> експортує схему в PNG.</span></div>
-      <div class="help-step"><span class="step-num">9</span><span><strong>Скасувати</strong> — кнопка <strong>Скасувати</strong> або <strong>Ctrl+Z</strong>.</span></div>
-      <div class="help-step"><span class="step-num">10</span><span><strong>Назва схеми</strong> — поле зверху ліворуч показує назву над блоком <strong>Початок</strong> і використовується в імені файлів.</span></div>
+      <div class="help-step"><span class="step-num">9</span><span><strong>Автовідновлення</strong> — редактор зберігає чернетку в браузері й після повторного відкриття пропонує її відновити.</span></div>
+      <div class="help-step"><span class="step-num">10</span><span><strong>Скасувати</strong> — кнопка <strong>Скасувати</strong> або <strong>Ctrl+Z</strong>.</span></div>
+      <div class="help-step"><span class="step-num">11</span><span><strong>Цикл while</strong> — спочатку перевіряємо умову, і лише якщо відповідь <strong>Так</strong>, виконуємо дію та повертаємось до умови.</span></div>
+      <div class="help-step"><span class="step-num">12</span><span><strong>Цикл repeat-until</strong> — спочатку виконуємо дію, а перевірку ставимо після неї. Якщо відповідь <strong>Ні</strong>, повторюємо кроки ще раз.</span></div>
+      <div class="help-step"><span class="step-num">13</span><span><strong>Назва схеми</strong> — поле зверху ліворуч показує назву над блоком <strong>Початок</strong> і використовується в імені файлів.</span></div>
     `;
   }
 
@@ -2108,8 +2297,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const mod = isMacPlatform ? e.metaKey : e.ctrlKey;
 
     if (mod && e.key.toLowerCase() === 'z') {
+      if (e.shiftKey) {
+        e.preventDefault();
+        redo();
+        return;
+      }
       e.preventDefault();
       undo();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      redo();
       return;
     }
     if (mod && e.shiftKey && e.key.toLowerCase() === 's') {
@@ -2178,6 +2377,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ================= INIT UI =================
   syncColorPickerToCurrent(state.currentColor);
   renderTitle();
+  window.addEventListener('beforeunload', persistAutosave);
+  promptRestoreAutosave();
 
   connectionModal?.addEventListener('pointerdown', (e) => {
     if (e.target === connectionModal) {
