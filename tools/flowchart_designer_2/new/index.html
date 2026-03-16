@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор блок-схем</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-left">
+            <span class="logo" aria-hidden="true"><i class="fa-solid fa-paintbrush"></i></span>
+            <h1>Редактор блок-схем</h1>
+        </div>
+        <div class="header-right">
+            <div class="quick-actions" role="group" aria-label="Швидкі дії">
+                <button id="undo-button" class="icon-btn" aria-label="Скасувати" title="Скасувати (Ctrl+Z)"><i
+                        class="fa-solid fa-rotate-left"></i><span>Скасувати</span></button>
+                <button id="delete-button" class="icon-btn icon-btn-danger"
+                    aria-label="Видалити вибрану фігуру або стрілку" title="Видалити вибране (Delete)"><i
+                        class="fa-solid fa-trash"></i><span>Видалити елемент</span></button>
+                <button id="clear-button" class="icon-btn icon-btn-warning" aria-label="Очистити все полотно"
+                    title="Очистити все"><i class="fa-solid fa-broom"></i><span>Очистити все</span></button>
+                <button id="save-button" class="icon-btn icon-btn-success" aria-label="Зберегти"
+                    title="Зберегти картинку (Ctrl+S)"><i class="fa-solid fa-floppy-disk"></i><span>Зберегти</span></button>
+            </div>
+            <a href="manual.html" class="header-link" aria-label="Що таке блок-схема" target="_blank"><i
+                    class="fa-solid fa-book-open"></i> Довідник</a>
+            <button id="help-button" class="icon-btn" aria-label="Допомога" title="Як користуватись"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- БОКОВА ПАНЕЛЬ -->
+        <aside class="sidebar" aria-label="Панель інструментів">
+
+            <section class="sidebar-section">
+                <h3 class="sidebar-heading"><i class="fa-solid fa-heading"></i> Назва</h3>
+                <div class="title-box" role="group" aria-label="Назва блок-схеми">
+                    <input id="diagram-title-input" class="title-input" type="text" maxlength="60"
+                        placeholder="Наприклад: Мій алгоритм" aria-label="Назва блок-схеми">
+                    <div class="title-hint">Порада: назва допоможе не переплутати збережені схеми</div>
+                </div>
+            </section>
+
+            <section class="sidebar-section">
+                <h3 class="sidebar-heading"><i class="fa-solid fa-shapes"></i> Фігури</h3>
+                <div class="shape-buttons" role="group" aria-label="Типи фігур">
+                    <button class="shape-button" data-shape="start-end" aria-label="Початок або Кінець — овал">
+                        <span class="shape-icon se-icon"></span>
+                        <span class="shape-label">Початок / Кінець</span>
+                    </button>
+                    <button class="shape-button" data-shape="process" aria-label="Дія — прямокутник">
+                        <span class="shape-icon proc-icon"></span>
+                        <span class="shape-label">Дія</span>
+                    </button>
+                    <button class="shape-button" data-shape="decision" aria-label="Умова — ромб">
+                        <span class="shape-icon dec-icon"></span>
+                        <span class="shape-label">Умова</span>
+                    </button>
+                    <button class="shape-button" data-shape="input-output" aria-label="Ввід або Вивід — паралелограм">
+                        <span class="shape-icon io-icon"></span>
+                        <span class="shape-label">Ввід / Вивід</span>
+                    </button>
+                    <button class="shape-button" data-shape="subroutine" aria-label="Підпрограма — прямокутник з подвійними боковими лініями">
+                        <span class="shape-icon sub-icon"></span>
+                        <span class="shape-label">Підпрограма</span>
+                    </button>
+                    <button class="shape-button" data-shape="connector" aria-label="З'єднувач — коло з короткою позначкою">
+                        <span class="shape-icon conn-icon"></span>
+                        <span class="shape-label">З'єднувач</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="sidebar-section">
+                <h3 class="sidebar-heading"><i class="fa-solid fa-palette"></i> Колір</h3>
+                <div class="color-picker" role="group" aria-label="Вибір кольору">
+                    <button class="color-option selected" style="background:#3f51b5" data-color="#3f51b5"
+                        aria-label="Синій" title="Синій"></button>
+                    <button class="color-option" style="background:#4caf50" data-color="#4caf50" aria-label="Зелений"
+                        title="Зелений"></button>
+                    <button class="color-option" style="background:#ff9800" data-color="#ff9800"
+                        aria-label="Помаранчевий" title="Помаранчевий"></button>
+                    <button class="color-option" style="background:#f44336" data-color="#f44336" aria-label="Червоний"
+                        title="Червоний"></button>
+                    <button class="color-option" style="background:#03a9f4" data-color="#03a9f4" aria-label="Блакитний"
+                        title="Блакитний"></button>
+                    <button class="color-option" style="background:#9c27b0" data-color="#9c27b0" aria-label="Фіолетовий"
+                        title="Фіолетовий"></button>
+                    <button class="color-option" style="background:#ffe066" data-color="#ffe066" aria-label="Жовтий"
+                        title="Жовтий"></button>
+                    <button class="color-option" style="background:#00bfae" data-color="#00bfae" aria-label="Бірюзовий"
+                        title="Бірюзовий"></button>
+                </div>
+                <div class="color-hint" aria-hidden="true">Порада: зміни колір вибраного блоку — і цей колір стане
+                    базовим для цього типу</div>
+            </section>
+
+            <!-- Підказка по стрілочках -->
+
+        </aside>
+
+        <!-- ПОЛОТНО -->
+        <main class="canvas-container" id="canvas-container" role="application" aria-label="Полотно для блок-схеми">
+            <div id="flowchart-canvas">
+                <div id="diagram-title-display" class="diagram-title" aria-hidden="true" style="display:none"></div>
+
+                <svg id="connectors-layer" aria-hidden="true"
+                    style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:5;pointer-events:none;">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#555" />
+                        </marker>
+                        <marker id="arrowhead-yes" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#4caf50" />
+                        </marker>
+                        <marker id="arrowhead-no" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#f44336" />
+                        </marker>
+                        <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5"
+                            orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#e91e63" />
+                        </marker>
+                        <filter id="shadow">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.18" />
+                        </filter>
+                    </defs>
+                </svg>
+            </div>
+
+            <!-- Кнопки масштабу -->
+            <div class="zoom-controls" role="group" aria-label="Масштаб">
+                <button id="zoom-out" class="zoom-btn" aria-label="Зменшити" title="Зменшити (−)">−</button>
+                <div id="zoom-level" class="zoom-text" aria-live="polite">100%</div>
+                <button id="zoom-in" class="zoom-btn" aria-label="Збільшити" title="Збільшити (+)">+</button>
+                <button id="zoom-reset" class="zoom-btn zoom-reset-btn" aria-label="Скинути масштаб"
+                    title="Скинути масштаб"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+
+            <!-- Панель вибраного з'єднання -->
+            <div id="connection-bar" class="connection-bar hidden" role="status" aria-label="Вибрана стрілка">
+                <span><i class="fa-solid fa-share-nodes"></i> Вибрана стрілка</span>
+                <button id="route-conn-btn" class="conn-route-btn" aria-label="Змінити маршрут стрілки">Маршрут: Авто</button>
+                <button id="delete-conn-btn" class="conn-delete-btn" aria-label="Видалити стрілку"><i
+                        class="fa-solid fa-trash"></i> Видалити стрілку</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== МОДАЛЬНІ ВІКНА ===== -->
+
+    <!-- Редагування тексту -->
+    <div id="text-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="text-modal-title">
+        <div class="modal-content">
+            <h2 id="text-modal-title"><i class="fa-solid fa-pen"></i> Введи текст</h2>
+            <textarea id="shape-text" placeholder="Наприклад: Взяти хліб" aria-label="Текст фігури"
+                maxlength="72"></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="cancel-text">Скасувати</button>
+                <button class="modal-btn ok-btn" id="save-text"><i class="fa-solid fa-check"></i> Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вибір Так/Ні для умовного з'єднання -->
+    <div id="connection-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="conn-modal-title">
+        <div class="modal-content">
+            <h2 id="conn-modal-title"><i class="fa-solid fa-code-branch"></i> Тип стрілки</h2>
+            <p>Від блоку <strong>«Умова»</strong> стрілки позначають результат перевірки:</p>
+            <div class="conn-choice">
+                <button id="connection-yes" class="modal-btn yes-btn" aria-label="Так"><i class="fa-solid fa-check"></i>
+                    Так</button>
+                <button id="connection-no" class="modal-btn no-btn" aria-label="Ні"><i class="fa-solid fa-xmark"></i>
+                    Ні</button>
+            </div>
+            <div class="modal-buttons" style="margin-top:8px">
+                <button class="modal-btn cancel-btn" id="cancel-connection">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Повідомлення / підтвердження -->
+    <div id="message-modal" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="msg-modal-text">
+        <div class="modal-content">
+            <div id="message-modal-text" style="font-size:17px;line-height:1.5"></div>
+            <div id="message-modal-buttons" style="margin-top:20px;display:flex;gap:12px;justify-content:center"></div>
+        </div>
+    </div>
+
+    <!-- Запит назви перед збереженням -->
+    <div id="save-title-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="save-title-modal-title">
+        <div class="modal-content">
+            <button id="close-save-title" class="modal-close-btn" aria-label="Закрити"><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="save-title-modal-title"><i class="fa-solid fa-floppy-disk"></i> Назва перед збереженням</h2>
+            <p>Введи назву блок-схеми або збережи картинку без назви.</p>
+            <input id="save-title-input" type="text" maxlength="60" placeholder="Наприклад: Алгоритм сортування"
+                aria-label="Назва блок-схеми перед збереженням"
+                style="width:100%;padding:12px;border:2px solid var(--light-border);border-radius:10px;font-size:16px;font-family:var(--font);font-weight:800;margin-bottom:14px;display:block;">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="save-without-title">Зберегти без назви</button>
+                <button class="modal-btn ok-btn" id="save-with-title"><i class="fa-solid fa-check"></i> Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Панель допомоги -->
+    <div id="help-panel" class="help-panel" role="dialog" aria-modal="true" aria-label="Довідка" hidden>
+        <button id="help-close" class="help-close-btn" aria-label="Закрити довідку"><i
+                class="fa-solid fa-xmark"></i></button>
+        <h3><i class="fa-solid fa-graduation-cap"></i> Як користуватись?</h3>
+        <div class="help-steps">
+            <div class="help-step">
+                <span class="step-num">1</span>
+                <span><strong>Додати фігуру</strong> — натисни на неї в панелі ліворуч</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">2</span>
+                <span><strong>Змінити текст</strong> — двічі натисни на фігуру</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">3</span>
+                <span><strong>З'єднати стрілкою</strong> — наведи на фігуру → тягни від білого кружечка (з синьою
+                    обводкою) до іншої фігури</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">4</span>
+                <span><strong>Видалити стрілку</strong> — натисни на стрілку → натисни <i class="fa-solid fa-trash"></i>
+                    Видалити</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">5</span>
+                <span><strong>Змінити маршрут стрілки</strong> — виділи стрілку → кнопка "Маршрут" (або клавіша R)</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">6</span>
+                <span><strong>Перемістити фігуру</strong> — тягни пальцем або мишкою</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">7</span>
+                <span><strong>Масштаб</strong> — колесо миші або кнопки + / −</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">8</span>
+                <span><strong>Скасувати</strong> — кнопка Скасувати або Ctrl+Z</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">9</span>
+                <span><strong>Назва</strong> — назва схеми відображається над першим блоком 'Початок'</span>
+            </div>
+            <div class="help-step">
+                <span class="step-num">10</span>
+                <span><strong>Зберегти картинку</strong> — кнопка Зберегти</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="flowchart-core.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
