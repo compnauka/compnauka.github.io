@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btns.innerHTML = '';
 
     const discard = document.createElement('button');
-    discard.textContent = 'Почати спочатку';
+    discard.textContent = 'Нова схема';
     discard.className = 'modal-btn cancel-btn';
     discard.onclick = () => {
       closeModal(modal);
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const restore = document.createElement('button');
-    restore.textContent = 'Відновити';
+    restore.textContent = 'Відкрити чернетку';
     restore.className = 'modal-btn ok-btn';
     restore.onclick = () => {
       closeModal(modal);
@@ -551,10 +551,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ? new Date(draft.savedAt).toLocaleString('uk-UA')
       : 'невідомий час';
     showRestoreDraftModal(
-      `Знайдено автоматично збережену схему від ${when}. Відновити її?`,
+      `Знайдено незбережену чернетку від ${when}. Хочеш продовжити роботу з нею або почати нову схему?`,
       () => {
         restoreSnapshot(draft.project);
-        showMessageModal('Автозбережену схему відновлено.');
+        showMessageModal('Чернетку відкрито.');
       },
       clearAutosave,
     );
@@ -2153,16 +2153,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevScale = state.scale;
     const prevScroll = { left: canvasContainer.scrollLeft, top: canvasContainer.scrollTop };
     const prevTitleDisplay = titleDisplay ? titleDisplay.style.display : null;
+    const prevTitleLeft = titleDisplay ? titleDisplay.style.left : '';
+    const prevTitleTop = titleDisplay ? titleDisplay.style.top : '';
+    const prevTitleTransform = titleDisplay ? titleDisplay.style.transform : '';
+    const prevCanvasWidth = canvas.style.width;
+    const prevCanvasHeight = canvas.style.height;
     if (suppressTitle && titleDisplay) titleDisplay.style.display = 'none';
     setZoom(1);
     await new Promise(r => setTimeout(r, 60));
 
-    const b = computeShapesBounds();
+    let b = computeShapesBounds();
     const pad = 90;
+    if (!suppressTitle && titleDisplay && (state.diagramTitle || '').trim()) {
+      titleDisplay.style.left = `${(b.minX + b.maxX) / 2}px`;
+      titleDisplay.style.top = `${Math.max(24, b.minY - 70)}px`;
+      titleDisplay.style.transform = 'translateX(-50%)';
+      titleDisplay.style.display = '';
+      await new Promise(r => requestAnimationFrame(r));
+      b = computeShapesBounds();
+    }
+
+    const exportRight = Math.max(canvas.offsetWidth, b.maxX + pad);
+    const exportBottom = Math.max(canvas.offsetHeight, b.maxY + pad);
+    canvas.style.width = `${Math.ceil(exportRight)}px`;
+    canvas.style.height = `${Math.ceil(exportBottom)}px`;
+    await new Promise(r => requestAnimationFrame(r));
+
     const x = Math.max(0, b.minX - pad);
     const y = Math.max(0, b.minY - pad);
-    const w = Math.min(canvas.offsetWidth, (b.maxX - b.minX) + pad * 2);
-    const h = Math.min(canvas.offsetHeight, (b.maxY - b.minY) + pad * 2);
+    const w = Math.max(1, Math.ceil((b.maxX - b.minX) + pad * 2));
+    const h = Math.max(1, Math.ceil((b.maxY - b.minY) + pad * 2));
 
     const prevSel = state.selectedShape;
     prevSel?.classList.remove('selected');
@@ -2189,6 +2209,14 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessageModal('Не вдалося зберегти картинку. Спробуй інший браузер або зменши масштаб.');
     } finally {
       if (suppressTitle && titleDisplay) titleDisplay.style.display = prevTitleDisplay;
+      if (!suppressTitle && titleDisplay) {
+        titleDisplay.style.left = prevTitleLeft;
+        titleDisplay.style.top = prevTitleTop;
+        titleDisplay.style.transform = prevTitleTransform;
+        titleDisplay.style.display = prevTitleDisplay;
+      }
+      canvas.style.width = prevCanvasWidth;
+      canvas.style.height = prevCanvasHeight;
       if (prevSel) prevSel.classList.add('selected');
       setZoom(prevScale);
       canvasContainer.scrollLeft = prevScroll.left;
