@@ -2284,22 +2284,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsWrap = helpPanel?.querySelector('.help-steps');
     if (!stepsWrap) return;
     stepsWrap.innerHTML = `
-      <div class="help-step"><span class="step-num">1</span><span><strong>Додати фігуру</strong> — обери тип у лівій панелі: базові блоки, <strong>Підпрограма</strong> або <strong>З'єднувач</strong>.</span></div>
-      <div class="help-step"><span class="step-num">2</span><span><strong>Змінити текст</strong> — двічі натисни на фігуру. Для з'єднувача краще використовувати коротку позначку: <strong>A</strong>, <strong>1</strong>, <strong>B2</strong>.</span></div>
-      <div class="help-step"><span class="step-num">3</span><span><strong>З'єднати стрілкою</strong> — наведи курсор на фігуру й потягни від білого кружечка до іншої фігури.</span></div>
-      <div class="help-step"><span class="step-num">4</span><span><strong>Підписати стрілку</strong> — виділи стрілку й натисни кнопку <strong>Підпис</strong>. Так можна задати довільний текст, наприклад <strong>i ≤ N</strong> або <strong>варіант 2</strong>.</span></div>
-      <div class="help-step"><span class="step-num">5</span><span><strong>Змінити маршрут</strong> — для виділеної стрілки натискай <strong>Маршрут</strong> або клавішу <strong>R</strong>. Для циклів використовуй обходи ліворуч або праворуч.</span></div>
-      <div class="help-step"><span class="step-num">6</span><span><strong>Зберегти проєкт</strong> — кнопка <strong>Зберегти проєкт</strong> або <strong>Ctrl+Shift+S</strong> створює JSON-файл, який можна потім відкрити знову.</span></div>
-      <div class="help-step"><span class="step-num">7</span><span><strong>Відкрити проєкт</strong> — кнопка <strong>Відкрити проєкт</strong> або <strong>Ctrl+O</strong> завантажує збережений JSON.</span></div>
-      <div class="help-step"><span class="step-num">8</span><span><strong>Зберегти картинку</strong> — кнопка <strong>Зберегти</strong> або <strong>Ctrl+S</strong> експортує схему в PNG.</span></div>
-      <div class="help-step"><span class="step-num">9</span><span><strong>Автовідновлення</strong> — редактор зберігає чернетку в браузері й після повторного відкриття пропонує її відновити.</span></div>
-      <div class="help-step"><span class="step-num">10</span><span><strong>Скасувати</strong> — кнопка <strong>Скасувати</strong> або <strong>Ctrl+Z</strong>.</span></div>
-      <div class="help-step"><span class="step-num">11</span><span><strong>Цикл while</strong> — спочатку перевіряємо умову, і лише якщо відповідь <strong>Так</strong>, виконуємо дію та повертаємось до умови.</span></div>
-      <div class="help-step"><span class="step-num">12</span><span><strong>Цикл repeat-until</strong> — спочатку виконуємо дію, а перевірку ставимо після неї. Якщо відповідь <strong>Ні</strong>, повторюємо кроки ще раз.</span></div>
-      <div class="help-step"><span class="step-num">13</span><span><strong>Назва схеми</strong> — поле зверху ліворуч показує назву над блоком <strong>Початок</strong> і використовується в імені файлів.</span></div>
+      <div class="help-step"><span class="step-num">1</span><span><strong>Додати блок</strong> — натисни на потрібну фігуру в лівій панелі.</span></div>
+      <div class="help-step"><span class="step-num">2</span><span><strong>Змінити текст</strong> — двічі натисни на блок або виділи його і натисни <strong>Текст</strong>.</span></div>
+      <div class="help-step"><span class="step-num">3</span><span><strong>З'єднати стрілкою</strong> — наведи на блок і потягни від білого кружечка до іншого блоку.</span></div>
+      <div class="help-step"><span class="step-num">4</span><span><strong>Підписати стрілку</strong> — виділи стрілку → кнопка <strong>Підпис</strong>.</span></div>
+      <div class="help-step"><span class="step-num">5</span><span><strong>Маршрут стрілки</strong> — виділи стрілку → кнопка <strong>Маршрут</strong> або клавіша <strong>R</strong>. Для циклу: «Обхід ліворуч» або «Обхід праворуч».</span></div>
+      <div class="help-step"><span class="step-num">6</span><span><strong>Перемістити блок</strong> — тягни мишею або пальцем.</span></div>
+      <div class="help-step"><span class="step-num">7</span><span><strong>Масштаб</strong> — колесо миші або кнопки <strong>+ / −</strong>.</span></div>
+      <div class="help-step"><span class="step-num">8</span><span><strong>Скасувати / Повернути</strong> — <strong>Ctrl+Z</strong> / <strong>Ctrl+Y</strong>.</span></div>
+      <div class="help-step"><span class="step-num">9</span><span><strong>Зберегти зображення</strong> — кнопка або <strong>Ctrl+S</strong>.</span></div>
+      <div class="help-step"><span class="step-num">10</span><span><strong>Зберегти / Відкрити проєкт</strong> — <strong>Ctrl+Shift+S</strong> / <strong>Ctrl+O</strong>. Редактор також зберігає чернетку автоматично.</span></div>
+      <div class="help-step help-step-link"><span class="step-num" style="background:var(--success);">?</span><span>Що таке цикли, які бувають фігури, приклади схем — <a href="manual.html" target="_blank" rel="noopener noreferrer">відкрити Довідник</a>.</span></div>
     `;
   }
-
+  
   renderHelpPanelContent();
 
   function toggleHelp(show) {
