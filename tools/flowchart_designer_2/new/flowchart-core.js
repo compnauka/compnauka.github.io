@@ -24,6 +24,31 @@
     'bypass-left': 'Обхід ліворуч',
     'bypass-right': 'Обхід праворуч',
   };
+  const PROJECT_LIMITS = {
+    maxShapes: 500,
+    maxConnections: 1000,
+    maxCoord: 4000,
+    maxText: 200,
+    maxLabel: 40,
+  };
+  const ALLOWED_SHAPE_TYPES = new Set(Object.keys(DEFAULT_BASE_COLORS));
+  const SHAPE_ID_RE = /^shape-\d+$/;
+  const CONN_ID_RE = /^conn-\d+$/;
+
+  function clampNumber(value, min, max) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return min;
+    return Math.max(min, Math.min(num, max));
+  }
+
+  function normalizeShapeType(type) {
+    const normalized = String(type || 'process');
+    return ALLOWED_SHAPE_TYPES.has(normalized) ? normalized : 'process';
+  }
+
+  function normalizeText(value, maxLength) {
+    return String(value || '').slice(0, maxLength);
+  }
 
   function resolveConnectionLabel(conn) {
     if (!conn) return '';
@@ -498,29 +523,41 @@
 
     const shapes = Array.isArray(data.shapes) ? data.shapes : [];
     const connections = Array.isArray(data.connections) ? data.connections : [];
+    if (shapes.length > PROJECT_LIMITS.maxShapes) throw new Error('Too many shapes in project.');
+    if (connections.length > PROJECT_LIMITS.maxConnections) throw new Error('Too many connections in project.');
+
+    const parsedShapes = shapes.map((shape) => {
+      const type = normalizeShapeType(shape.type);
+      return {
+        id: SHAPE_ID_RE.test(String(shape.id || '')) ? String(shape.id) : '',
+        type,
+        color: String(shape.color || DEFAULT_BASE_COLORS[type]),
+        textRaw: normalizeText(shape.textRaw, PROJECT_LIMITS.maxText),
+        left: clampNumber(shape.left, 0, PROJECT_LIMITS.maxCoord),
+        top: clampNumber(shape.top, 0, PROJECT_LIMITS.maxCoord),
+      };
+    }).filter((shape) => shape.id);
+
+    const knownShapeIds = new Set(parsedShapes.map((shape) => shape.id));
+    const parsedConnections = connections.map((conn) => ({
+      id: CONN_ID_RE.test(String(conn.id || '')) ? String(conn.id) : '',
+      from: SHAPE_ID_RE.test(String(conn.from || '')) ? String(conn.from) : '',
+      to: SHAPE_ID_RE.test(String(conn.to || '')) ? String(conn.to) : '',
+      type: conn.type === 'yes' || conn.type === 'no' ? conn.type : null,
+      routeMode: ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto',
+      label: conn.label === null || conn.label === undefined ? null : normalizeText(conn.label, PROJECT_LIMITS.maxLabel),
+    })).filter((conn) => {
+      return conn.id && conn.from && conn.to && knownShapeIds.has(conn.from) && knownShapeIds.has(conn.to);
+    });
 
     return {
       version: Number(data.version || 2),
       diagramTitle: String(data.diagramTitle || ''),
       shapeCounter: Number(data.shapeCounter || 0),
-      lastShapeType: String(data.lastShapeType || 'process'),
+      lastShapeType: normalizeShapeType(data.lastShapeType || 'process'),
       baseColors: { ...DEFAULT_BASE_COLORS, ...(data.baseColors || {}) },
-      shapes: shapes.map((shape) => ({
-        id: String(shape.id || ''),
-        type: String(shape.type || 'process'),
-        color: String(shape.color || DEFAULT_BASE_COLORS.process),
-        textRaw: String(shape.textRaw || ''),
-        left: Number(shape.left || 0),
-        top: Number(shape.top || 0),
-      })).filter((shape) => shape.id),
-      connections: connections.map((conn) => ({
-        id: String(conn.id || ''),
-        from: String(conn.from || ''),
-        to: String(conn.to || ''),
-        type: conn.type ?? null,
-        routeMode: ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto',
-        label: conn.label ?? null,
-      })).filter((conn) => conn.id && conn.from && conn.to),
+      shapes: parsedShapes,
+      connections: parsedConnections,
     };
   }
 

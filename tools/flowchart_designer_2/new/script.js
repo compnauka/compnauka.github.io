@@ -2127,7 +2127,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
+  function getImportErrorMessage(error) {
+    if (error instanceof SyntaxError) {
+      return 'Файл має помилку в JSON-форматі й не може бути відкритий.';
+    }
+
+    const message = String(error?.message || '');
+    if (message.includes('Too many shapes')) {
+      return 'У файлі занадто багато блоків. Максимум 500.';
+    }
+    if (message.includes('Too many connections')) {
+      return 'У файлі занадто багато стрілок. Максимум 1000.';
+    }
+    if (message.includes('Invalid project data')) {
+      return 'Це не схоже на JSON-проєкт із цього редактора.';
+    }
+
+    return 'Не вдалося відкрити проєкт. Перевір JSON-файл.';
+  }
+
   function importProjectData(rawProject) {
+    if (String(rawProject || '').length > 2 * 1024 * 1024) {
+      showMessageModal('Файл занадто великий. Максимум 2 МБ.');
+      return;
+    }
     const parsed = core?.parseProject ? core.parseProject(rawProject) : (typeof rawProject === 'string' ? JSON.parse(rawProject) : rawProject);
     saveSnapshot();
     restoreSnapshot(parsed);
@@ -2264,13 +2287,18 @@ document.addEventListener('DOMContentLoaded', () => {
   projectFileInput.addEventListener('change', () => {
     const file = projectFileInput.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showMessageModal('Файл занадто великий. Максимум 2 МБ.');
+      projectFileInput.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
         importProjectData(String(reader.result || ''));
       } catch (error) {
         console.error(error);
-        showMessageModal('Не вдалося відкрити проєкт. Перевір JSON-файл.');
+        showMessageModal(getImportErrorMessage(error));
       }
     };
     reader.onerror = () => {
@@ -2293,11 +2321,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="help-step"><span class="step-num">7</span><span><strong>Масштаб</strong> — колесо миші або кнопки <strong>+ / −</strong>.</span></div>
       <div class="help-step"><span class="step-num">8</span><span><strong>Скасувати / Повернути</strong> — <strong>Ctrl+Z</strong> / <strong>Ctrl+Y</strong>.</span></div>
       <div class="help-step"><span class="step-num">9</span><span><strong>Зберегти зображення</strong> — кнопка або <strong>Ctrl+S</strong>.</span></div>
-      <div class="help-step"><span class="step-num">10</span><span><strong>Зберегти / Відкрити проєкт</strong> — <strong>Ctrl+Shift+S</strong> / <strong>Ctrl+O</strong>. Редактор також зберігає чернетку автоматично.</span></div>
+      <div class="help-step"><span class="step-num">10</span><span><strong>Зберегти / Відкрити проєкт у форматі JSON</strong> — <strong>Ctrl+Shift+S</strong> / <strong>Ctrl+O</strong>. Редактор також зберігає чернетку автоматично.</span></div>
       <div class="help-step help-step-link"><span class="step-num" style="background:var(--success);">?</span><span>Що таке цикли, які бувають фігури, приклади схем — <a href="manual.html" target="_blank" rel="noopener noreferrer">відкрити Довідник</a>.</span></div>
     `;
   }
-  
+
   renderHelpPanelContent();
 
   function toggleHelp(show) {
@@ -2414,5 +2442,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
-
-
