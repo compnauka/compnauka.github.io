@@ -34,6 +34,7 @@
   const ALLOWED_SHAPE_TYPES = new Set(Object.keys(DEFAULT_BASE_COLORS));
   const SHAPE_ID_RE = /^shape-\d+$/;
   const CONN_ID_RE = /^conn-\d+$/;
+  const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
 
   function clampNumber(value, min, max) {
     const num = Number(value);
@@ -48,6 +49,11 @@
 
   function normalizeText(value, maxLength) {
     return String(value || '').slice(0, maxLength);
+  }
+
+  function normalizeShapeColor(value, type) {
+    const color = String(value || '');
+    return HEX_COLOR_RE.test(color) ? color : DEFAULT_BASE_COLORS[type];
   }
 
   function resolveConnectionLabel(conn) {
@@ -531,7 +537,7 @@
       return {
         id: SHAPE_ID_RE.test(String(shape.id || '')) ? String(shape.id) : '',
         type,
-        color: String(shape.color || DEFAULT_BASE_COLORS[type]),
+        color: normalizeShapeColor(shape.color, type),
         textRaw: normalizeText(shape.textRaw, PROJECT_LIMITS.maxText),
         left: clampNumber(shape.left, 0, PROJECT_LIMITS.maxCoord),
         top: clampNumber(shape.top, 0, PROJECT_LIMITS.maxCoord),

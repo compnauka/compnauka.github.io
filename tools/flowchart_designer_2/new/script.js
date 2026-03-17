@@ -2147,10 +2147,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function importProjectData(rawProject) {
-    if (String(rawProject || '').length > 2 * 1024 * 1024) {
-      showMessageModal('Файл занадто великий. Максимум 2 МБ.');
-      return;
-    }
     const parsed = core?.parseProject ? core.parseProject(rawProject) : (typeof rawProject === 'string' ? JSON.parse(rawProject) : rawProject);
     saveSnapshot();
     restoreSnapshot(parsed);
