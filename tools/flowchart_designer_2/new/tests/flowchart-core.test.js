@@ -34,6 +34,8 @@ test('getDecisionBranchRoute connects upward loop branches to target sides', () 
   assert.equal(noRoute.entry, 'right');
   assert.equal(yesRoute.pts.at(-1).x, target.left);
   assert.equal(noRoute.pts.at(-1).x, target.left + target.width);
+  assert.ok(Math.abs(yesRoute.pts[1].x - yesRoute.pts[0].x) >= 72);
+  assert.ok(Math.abs(noRoute.pts[1].x - noRoute.pts[0].x) >= 72);
 });
 
 test('getConnectionLabelPosition keeps yes/no label on outer loop segment', () => {
@@ -50,8 +52,8 @@ test('getConnectionLabelPosition keeps yes/no label on outer loop segment', () =
     { x: 400, y: 232 },
   ];
 
-  assert.deepEqual(core.getConnectionLabelPosition(yesPoints, 'yes'), { x: 152, y: 311 });
-  assert.deepEqual(core.getConnectionLabelPosition(noPoints, 'no'), { x: 538, y: 311 });
+  assert.deepEqual(core.getConnectionLabelPosition(yesPoints, 'yes'), { x: 248, y: 382 });
+  assert.deepEqual(core.getConnectionLabelPosition(noPoints, 'no'), { x: 472, y: 382 });
 });
 
 test('resolveConnectionLabelOverlap nudges close labels without changing side anchor', () => {
@@ -103,4 +105,42 @@ test('routeOrthogonal bypass-right creates an outer corridor right of both block
   assert.equal(routed.entry, 'right');
   assert.ok(routed.pts[1].x > maxRightEdge);
   assert.equal(routed.pts[1].x, routed.pts[2].x);
+});
+
+
+test('serializeProject and parseProject preserve exported connection ids', () => {
+  const state = {
+    diagramTitle: '????',
+    shapeCounter: 5,
+    lastShapeType: 'decision',
+    baseColors: { ...core.DEFAULT_BASE_COLORS },
+    shapes: [
+      { id: 'shape-1', type: 'start-end', color: '#4caf50', textRaw: '???????', left: 479, top: 83 },
+      { id: 'shape-2', type: 'start-end', color: '#4caf50', textRaw: '??????', left: 296, top: 525 },
+      { id: 'shape-3', type: 'process', color: '#03a9f4', textRaw: '???', left: 479, top: 193 },
+      { id: 'shape-4', type: 'process', color: '#03a9f4', textRaw: '???', left: 297, top: 427 },
+      { id: 'shape-5', type: 'decision', color: '#ff9800', textRaw: '??????', left: 479, top: 311 },
+    ],
+    connections: [
+      { id: 'conn-shape-1-shape-3', from: 'shape-1', to: 'shape-3', type: null, routeMode: 'auto', label: null },
+      { id: 'conn-shape-3-shape-5', from: 'shape-3', to: 'shape-5', type: null, routeMode: 'auto', label: null },
+      { id: 'conn-shape-5-shape-4-yes', from: 'shape-5', to: 'shape-4', type: 'yes', routeMode: 'auto', label: null },
+      { id: 'conn-shape-5-shape-3-no', from: 'shape-5', to: 'shape-3', type: 'no', routeMode: 'auto', label: null },
+      { id: 'conn-shape-4-shape-2', from: 'shape-4', to: 'shape-2', type: null, routeMode: 'auto', label: null },
+    ],
+  };
+
+  const serialized = core.serializeProject(state);
+  const parsed = core.parseProject(JSON.stringify(serialized));
+
+  assert.equal(parsed.shapes.length, state.shapes.length);
+  assert.equal(parsed.connections.length, state.connections.length);
+  assert.deepEqual(
+    parsed.connections.map((conn) => conn.id),
+    state.connections.map((conn) => conn.id),
+  );
+  assert.deepEqual(
+    parsed.connections.map((conn) => conn.type),
+    state.connections.map((conn) => conn.type),
+  );
 });

@@ -33,7 +33,7 @@
   };
   const ALLOWED_SHAPE_TYPES = new Set(Object.keys(DEFAULT_BASE_COLORS));
   const SHAPE_ID_RE = /^shape-\d+$/;
-  const CONN_ID_RE = /^conn-\d+$/;
+  const CONN_ID_RE = /^conn-shape-\d+-shape-\d+(?:-(yes|no))?$/;
   const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
 
   function clampNumber(value, min, max) {
@@ -368,47 +368,22 @@
     if (points.length === 1) return points[0];
 
     if (connType === 'yes' || connType === 'no') {
-      const segments = [];
-      for (let i = 1; i < points.length; i++) {
-        const a = points[i - 1];
-        const b = points[i];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const length = Math.hypot(dx, dy);
-        segments.push({
-          index: i - 1,
-          a,
-          b,
-          length,
-          orientation: Math.abs(dx) < Math.abs(dy) ? 'vertical' : 'horizontal',
-        });
-      }
+      const start = points[0];
+      const next = points[1] || points[0];
+      const dx = next.x - start.x;
+      const dy = next.y - start.y;
 
-      const ranked = segments
-        .filter((segment) => segment.length > 0)
-        .sort((left, right) => {
-          const leftScore = (left.orientation === 'vertical' ? 100000 : 0) + left.length;
-          const rightScore = (right.orientation === 'vertical' ? 100000 : 0) + right.length;
-          return rightScore - leftScore || left.index - right.index;
-        });
-
-      const chosen = ranked[0];
-      if (chosen) {
-        const mid = {
-          x: (chosen.a.x + chosen.b.x) / 2,
-          y: (chosen.a.y + chosen.b.y) / 2,
-        };
-        if (chosen.orientation === 'vertical') {
-          return {
-            x: mid.x + (connType === 'yes' ? -18 : 18),
-            y: mid.y,
-          };
-        }
+      if (Math.abs(dx) >= Math.abs(dy)) {
         return {
-          x: mid.x,
-          y: mid.y - 18,
+          x: start.x + (dx < 0 ? -42 : 42),
+          y: start.y - 8,
         };
       }
+
+      return {
+        x: start.x + (connType === 'yes' ? -26 : 26),
+        y: start.y + (dy < 0 ? -28 : 28),
+      };
     }
 
     return pointAlongPolyline(points, 0.5);
@@ -465,7 +440,7 @@
     }
 
     const toPt = toEdges[entry];
-    const margin = 40;
+    const margin = 72;
     let pts;
 
     if (entry === safeSide) {
