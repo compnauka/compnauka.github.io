@@ -21,29 +21,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelText = document.getElementById('cancel-text');
   const saveText = document.getElementById('save-text');
 
-  const helpButton = document.getElementById('help-button');
-  const helpPanel = document.getElementById('help-panel');
-  const helpClose = document.getElementById('help-close');
-
-  // topUndoBtn / topSaveBtn are now the main undo/save buttons — no delegation needed
+  const examplesButton = document.getElementById('examples-button');
+  const examplesPanel = document.getElementById('examples-panel');
+  const examplesClose = document.getElementById('examples-close');
+  const examplesList = document.getElementById('examples-list');
+  const LAYOUT = {
+    viewportTopOffset: 150,
+    editorTitleTop: 20,
+    editorTitleGap: 60,
+    editorStartMinTop: 170,
+    quickAdd: {
+      buttonSize: 58,
+      buttonHalf: 29,
+      placementGap: 128,
+      linearButtonGap: 56,
+      branchButtonGap: 72,
+      yesOffsetX: 352,
+      noOffsetX: 294,
+    },
+    autoPlace: {
+      minLeft: 20,
+      minTop: 20,
+      stepX: 56,
+      stepY: 48,
+    },
+    exportPad: 90,
+  };
 
   const zoomInBtn = document.getElementById('zoom-in');
   const zoomOutBtn = document.getElementById('zoom-out');
   const zoomResetBtn = document.getElementById('zoom-reset');
   const zoomLevelText = document.getElementById('zoom-level');
-
-  const connectionModal = document.getElementById('connection-modal');
-  const connectionYesBtn = document.getElementById('connection-yes');
-  const connectionNoBtn = document.getElementById('connection-no');
-  const cancelConnBtn = document.getElementById('cancel-connection');
-
-  const connectionBar = document.getElementById('connection-bar');
   let shapeBar = document.getElementById('shape-bar');
-  const deleteConnBtn = document.getElementById('delete-conn-btn');
-  const routeConnBtn = document.getElementById('route-conn-btn');
   let editShapeBtn = document.getElementById('edit-shape-btn');
   let deleteShapeBtn = document.getElementById('delete-shape-btn');
-  let editConnLabelBtn = null;
   const saveTitleModal = document.getElementById('save-title-modal');
   const saveTitleInput = document.getElementById('save-title-input');
   const saveWithTitleBtn = document.getElementById('save-with-title');
@@ -52,6 +63,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const titleInput = document.getElementById('diagram-title-input');
   const titleDisplay = document.getElementById('diagram-title-display');
+  const quickAddLayer = document.getElementById('quick-add-layer');
+  const builderWizard = document.getElementById('builder-wizard');
+  const wizardStepType = document.getElementById('wizard-step-type');
+  const wizardStepText = document.getElementById('wizard-step-text');
+  const wizardStepExisting = document.getElementById('wizard-step-existing');
+  const wizardCloseBtn = document.getElementById('wizard-close');
+  const wizardBranchBadge = document.getElementById('wizard-branch-badge');
+  const wizardTypePreview = document.getElementById('wizard-type-preview');
+  const wizardTextInput = document.getElementById('wizard-text-input');
+  const wizardSaveShape = document.getElementById('wizard-save-shape');
+  const wizardBackText = document.getElementById('wizard-back-text');
+  const wizardBackExisting = document.getElementById('wizard-back-existing');
+  const wizardConnectExisting = document.getElementById('wizard-connect-existing');
+  const wizardExistingList = document.getElementById('wizard-existing-list');
+  const wizardNoExisting = document.getElementById('wizard-no-existing');
 
   if (!canvas || !canvasContainer || !svgLayer) {
     console.error('Flowchart editor: required DOM nodes are missing.');
@@ -68,9 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.innerHTML = `<i class="${iconClass}"></i><span>${text}</span>`;
     return btn;
   }
-
-  const legacyDeleteButton = document.getElementById('delete-button');
-  legacyDeleteButton?.remove();
 
   if (undoButton) {
     undoButton.classList.add('icon-btn-compact');
@@ -91,27 +114,17 @@ document.addEventListener('DOMContentLoaded', () => {
     saveButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Зберегти зображення</span>';
   }
 
-  const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити проєкт');
-  const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти проєкт');
+  if (clearButton) {
+    clearButton.setAttribute('aria-label', 'Очистити полотно');
+    clearButton.title = 'Очистити';
+    clearButton.innerHTML = '<i class="fa-solid fa-broom"></i><span>Очистити</span>';
+  }
+
+  const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити');
+  const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти');
   if (quickActions && saveButton) {
     quickActions.insertBefore(openProjectButton, saveButton);
     quickActions.insertBefore(saveProjectButton, saveButton);
-  }
-
-  if (!shapeBar && connectionBar?.parentElement) {
-    shapeBar = document.createElement('div');
-    shapeBar.id = 'shape-bar';
-    shapeBar.className = 'connection-bar shape-bar hidden';
-    shapeBar.setAttribute('role', 'status');
-    shapeBar.setAttribute('aria-label', 'Вибраний блок');
-    shapeBar.innerHTML = `
-      <span><i class="fa-solid fa-vector-square"></i> Вибраний блок</span>
-      <button id="edit-shape-btn" class="conn-route-btn" aria-label="Змінити текст блока"><i class="fa-solid fa-pen"></i> Текст</button>
-      <button id="delete-shape-btn" class="conn-delete-btn" aria-label="Видалити блок"><i class="fa-solid fa-trash"></i> Видалити блок</button>
-    `;
-    connectionBar.parentElement.insertBefore(shapeBar, connectionBar.nextSibling);
-    editShapeBtn = shapeBar.querySelector('#edit-shape-btn');
-    deleteShapeBtn = shapeBar.querySelector('#delete-shape-btn');
   }
 
   const projectFileInput = document.createElement('input');
@@ -120,44 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
   projectFileInput.accept = '.json,application/json';
   projectFileInput.hidden = true;
   document.body.appendChild(projectFileInput);
-
-  document.querySelectorAll('.title-hint, .color-hint').forEach((el) => el.remove());
-
-  const connectionLabelModal = document.createElement('div');
-  connectionLabelModal.id = 'connection-label-modal';
-  connectionLabelModal.className = 'modal';
-  connectionLabelModal.setAttribute('role', 'dialog');
-  connectionLabelModal.setAttribute('aria-modal', 'true');
-  connectionLabelModal.setAttribute('aria-labelledby', 'connection-label-modal-title');
-  connectionLabelModal.innerHTML = `
-    <div class="modal-content">
-      <h2 id="connection-label-modal-title"><i class="fa-solid fa-tag"></i> Підпис стрілки</h2>
-      <p>Введи довільний підпис для стрілки або залиш поле порожнім, щоб прибрати власний підпис.</p>
-      <input id="connection-label-input" type="text" maxlength="40"
-        aria-label="Підпис стрілки"
-        style="width:100%;padding:12px;border:2px solid var(--light-border);border-radius:10px;font-size:16px;font-family:var(--font);font-weight:800;margin-bottom:14px;display:block;">
-      <div class="modal-buttons">
-        <button class="modal-btn cancel-btn" id="cancel-connection-label">Скасувати</button>
-        <button class="modal-btn ok-btn" id="save-connection-label"><i class="fa-solid fa-check"></i> Зберегти</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(connectionLabelModal);
-  const connectionLabelInput = connectionLabelModal.querySelector('#connection-label-input');
-  const cancelConnectionLabelBtn = connectionLabelModal.querySelector('#cancel-connection-label');
-  const saveConnectionLabelBtn = connectionLabelModal.querySelector('#save-connection-label');
-  let pendingConnectionLabelId = null;
-
-  if (connectionBar && deleteConnBtn) {
-    editConnLabelBtn = document.createElement('button');
-    editConnLabelBtn.id = 'edit-conn-label-btn';
-    editConnLabelBtn.className = 'conn-route-btn';
-    editConnLabelBtn.type = 'button';
-    editConnLabelBtn.disabled = true;
-    editConnLabelBtn.textContent = 'Підпис';
-    editConnLabelBtn.setAttribute('aria-label', 'Редагувати підпис стрілки');
-    connectionBar.insertBefore(editConnLabelBtn, deleteConnBtn);
-  }
 
   // ================= STATE =================
   const DEFAULT_BASE_COLORS = core?.DEFAULT_BASE_COLORS
@@ -173,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     shapes: [],           // {id,type,color,textRaw}
     connections: [],      // {id,from,to,type,routeMode}
     selectedShape: null,
-    selectedConnId: null,
 
     baseColors: { ...DEFAULT_BASE_COLORS },
     currentColor: '#3f51b5',
@@ -193,7 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
     activeShape: null,
     dragState: null,
     connDrag: null,
-    pendingConn: null,
+    quickAdd: {
+      open: false,
+      step: 'type',
+      sourceId: null,
+      branch: null,
+      type: null,
+    },
 
     // Undo
     undoStack: [],
@@ -216,6 +196,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const MERGE_LEAD = 34;
   const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
   let autosaveRaf = 0;
+
+  const SHAPE_LIBRARY = core?.getShapeLibrary
+    ? core.getShapeLibrary()
+    : [
+      { type: 'start-end', label: 'Початок / Кінець', description: 'Старт або завершення алгоритму.', exampleText: 'Початок' },
+      { type: 'process', label: 'Дія', description: 'Один простий крок, який треба виконати.', exampleText: 'Взяти олівець' },
+      { type: 'decision', label: 'Умова', description: 'Перевірка: так чи ні?', exampleText: 'Є зошит?' },
+      { type: 'input-output', label: 'Ввід / Вивід', description: 'Отримати дані або показати результат.', exampleText: 'Ввести ім’я' },
+      { type: 'subroutine', label: 'Підпрограма', description: 'Окрема маленька команда, яку можна викликати.', exampleText: 'Намалювати будиночок' },
+      { type: 'connector', label: 'З’єднувач', description: 'Мітка для переходу в інше місце схеми.', exampleText: 'A' },
+    ];
+  const SHAPE_INFO_BY_TYPE = new Map(SHAPE_LIBRARY.map((item) => [item.type, item]));
+  const EXAMPLE_PROJECTS = Array.isArray(window.FlowchartExamples?.EXAMPLE_PROJECTS)
+    ? window.FlowchartExamples.EXAMPLE_PROJECTS
+    : [];
 
   // ================= UNDO SNAPSHOTS =================
   function captureSnapshot() {
@@ -256,7 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleAutosave();
   }
 
-  function restoreSnapshot(snap) {
+  function restoreSnapshot(snap, options = {}) {
+    const focusMode = options.focusMode || null;
+    closeBuilderWizard();
     // remove shapes
     state.shapes.forEach(s => {
       document.getElementById(s.id)?.remove();
@@ -268,11 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     state.shapes = [];
     state.connections = [];
     state.selectedShape = null;
-    state.selectedConnId = null;
     state.activeShape = null;
     state.dragState = null;
     state.connDrag = null;
-    state.pendingConn = null;
     if (state._titleRaf) cancelAnimationFrame(state._titleRaf);
     if (state._refreshRaf) cancelAnimationFrame(state._refreshRaf);
     state._titleRaf = 0;
@@ -292,6 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Number.isNaN(num)) state.shapeCounter = Math.max(state.shapeCounter, num);
     });
 
+    alignSimpleFlowCenters(snap.connections || []);
+    ensureDecisionClearance(snap.connections || []);
+    ensureTitleClearance();
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         (snap.connections || []).forEach(c => {
@@ -305,7 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         scheduleRefresh();
         updateConnectionBar();
-        syncColorPickerToCurrent();
+        if (focusMode === 'content') {
+          requestAnimationFrame(() => centerViewportOnBounds(computeShapesBounds(false), LAYOUT.viewportTopOffset));
+        }
       });
     });
 
@@ -418,16 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  function rgbToHex(rgb) {
-    if (!rgb || rgb === 'transparent') return '#ffffff';
-    if (rgb.startsWith('#')) return rgb;
-    const m = rgb.match(/\d+/g);
-    if (m && m.length >= 3) {
-      return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('');
-    }
-    return '#ffffff';
-  }
-
   function sanitizeFilename(name) {
     const fallback = 'блок-схема';
     const base = (name || '').trim() || fallback;
@@ -441,11 +432,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ================= TITLE =================
-  function findStartElement() {
-    const startShape = state.shapes.find(s => s.type === 'start-end' && (s.textRaw || '').trim().toLowerCase() === 'початок');
-    return startShape ? document.getElementById(startShape.id) : null;
-  }
-
   function renderTitle() {
     if (!titleDisplay) return;
     const t = (state.diagramTitle || '').trim();
@@ -458,19 +444,33 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleTitleUpdate();
   }
 
+  function getStartShapeElement() {
+    const startShape = state.shapes.find((shape) =>
+      shape.type === 'start-end' && String(shape.textRaw || '').trim().toLowerCase() === 'початок');
+    return startShape ? document.getElementById(startShape.id) : null;
+  }
+
   function updateTitlePosition() {
     state._titleRaf = 0;
     if (!titleDisplay) return;
-    const startEl = findStartElement();
+    const bounds = computeShapesBounds(false);
     const titleText = (state.diagramTitle || '').trim();
-    if (!startEl || !titleText) {
+    if (bounds.empty || !titleText) {
       titleDisplay.style.display = 'none';
       return;
     }
-    const left = startEl.offsetLeft + startEl.offsetWidth / 2;
-    const top = startEl.offsetTop - 20 - (titleDisplay.offsetHeight || 48);
+    titleDisplay.style.display = '';
+    titleDisplay.style.visibility = 'hidden';
+    const measuredHeight = titleDisplay.getBoundingClientRect().height || titleDisplay.offsetHeight || 48;
+    const startEl = getStartShapeElement();
+    const left = startEl
+      ? startEl.offsetLeft + startEl.offsetWidth / 2
+      : (bounds.minX + bounds.maxX) / 2;
+    const anchorTop = startEl ? startEl.offsetTop : bounds.minY;
+    const top = Math.max(LAYOUT.editorTitleTop, anchorTop - measuredHeight - LAYOUT.editorTitleGap);
     titleDisplay.style.left = left + 'px';
     titleDisplay.style.top = top + 'px';
+    titleDisplay.style.visibility = '';
     titleDisplay.style.display = '';
   }
 
@@ -479,9 +479,110 @@ document.addEventListener('DOMContentLoaded', () => {
     state._titleRaf = requestAnimationFrame(updateTitlePosition);
   }
 
+  function ensureTitleClearance() {
+    if (!titleDisplay) return;
+    const titleText = (state.diagramTitle || '').trim();
+    if (!titleText || !state.shapes.length) return;
+
+    titleDisplay.textContent = titleText;
+    titleDisplay.style.display = '';
+    titleDisplay.style.visibility = 'hidden';
+    const measuredHeight = titleDisplay.getBoundingClientRect().height || titleDisplay.offsetHeight || 48;
+    titleDisplay.style.visibility = '';
+
+    const bounds = computeShapesBounds(false);
+    if (bounds.empty) return;
+
+    const startEl = getStartShapeElement();
+    const anchorTop = startEl ? startEl.offsetTop : bounds.minY;
+    const desiredAnchorTop = Math.max(
+      LAYOUT.editorStartMinTop,
+      LAYOUT.editorTitleTop + measuredHeight + LAYOUT.editorTitleGap
+    );
+    const shiftY = Math.ceil(desiredAnchorTop - anchorTop);
+    if (shiftY <= 0) return;
+
+    state.shapes.forEach((shape) => {
+      const el = document.getElementById(shape.id);
+      if (!el) return;
+      el.style.top = `${el.offsetTop + shiftY}px`;
+    });
+  }
+
+  function ensureDecisionClearance(connections = state.connections) {
+    const safeConnections = Array.isArray(connections) ? connections : [];
+    safeConnections.forEach((conn) => {
+      if (conn?.type) return;
+      const fromEl = document.getElementById(conn.from);
+      const toEl = document.getElementById(conn.to);
+      if (!fromEl || !toEl) return;
+
+      const fromShape = getShapeData(conn.from);
+      const toShape = getShapeData(conn.to);
+      if (!fromShape || !toShape) return;
+      if (toShape.type !== 'decision' || fromShape.type === 'decision') return;
+
+      const lift = core?.getDecisionVisualLift
+        ? core.getDecisionVisualLift({ type: 'decision', width: toEl.offsetWidth, height: toEl.offsetHeight })
+        : Math.max(0, decisionVertexDistance(toEl) - (toEl.offsetHeight / 2));
+      const visualTop = toEl.offsetTop - lift;
+      const desiredTop = fromEl.offsetTop + fromEl.offsetHeight + 18;
+      const shiftY = Math.ceil(desiredTop - visualTop);
+      if (shiftY <= 0) return;
+
+      toEl.style.top = `${toEl.offsetTop + shiftY}px`;
+    });
+  }
+
+  function alignSimpleFlowCenters(connections = state.connections) {
+    const safeConnections = Array.isArray(connections) ? connections : [];
+    if (!safeConnections.length) return;
+
+    const incoming = new Map();
+    const outgoing = new Map();
+    safeConnections.forEach((conn) => {
+      if (!incoming.has(conn.to)) incoming.set(conn.to, []);
+      if (!outgoing.has(conn.from)) outgoing.set(conn.from, []);
+      incoming.get(conn.to).push(conn);
+      outgoing.get(conn.from).push(conn);
+    });
+
+    const sortable = safeConnections
+      .filter((conn) => !conn.type)
+      .map((conn) => {
+        const fromEl = document.getElementById(conn.from);
+        return { conn, sortTop: fromEl?.offsetTop ?? 0 };
+      })
+      .sort((a, b) => a.sortTop - b.sortTop);
+
+    sortable.forEach(({ conn }) => {
+      const fromEl = document.getElementById(conn.from);
+      const toEl = document.getElementById(conn.to);
+      if (!fromEl || !toEl) return;
+
+      const parentShape = getShapeData(conn.from);
+      const childShape = getShapeData(conn.to);
+      if (!parentShape || !childShape) return;
+      if (parentShape.type === 'decision' || childShape.type === 'decision') return;
+
+      const parentOutgoing = outgoing.get(conn.from) || [];
+      const childIncoming = incoming.get(conn.to) || [];
+      if (parentOutgoing.length !== 1 || childIncoming.length !== 1) return;
+      if (parentOutgoing.some((item) => item.type) || childIncoming.some((item) => item.type)) return;
+
+      const parentCenter = fromEl.offsetLeft + fromEl.offsetWidth / 2;
+      const alignedLeft = Math.round(parentCenter - toEl.offsetWidth / 2);
+      if (Math.abs(alignedLeft - toEl.offsetLeft) < 1) return;
+
+      toEl.style.left = `${Math.max(0, alignedLeft)}px`;
+    });
+  }
+
   titleInput?.addEventListener('input', () => {
     state.diagramTitle = titleInput.value;
     renderTitle();
+    ensureTitleClearance();
+    scheduleTitleUpdate();
     scheduleAutosave();
   });
 
@@ -546,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function promptRestoreAutosave() {
     const draft = readAutosaveDraft();
-    if (!draft) return;
+    if (!draft) return false;
     const when = draft.savedAt
       ? new Date(draft.savedAt).toLocaleString('uk-UA')
       : 'невідомий час';
@@ -556,17 +657,37 @@ document.addEventListener('DOMContentLoaded', () => {
         restoreSnapshot(draft.project);
         showMessageModal('Чернетку відкрито.');
       },
-      clearAutosave,
+      () => {
+        clearAutosave();
+        resetToInitialStart();
+      },
     );
+    return true;
   }
 
   // ================= TEXT WRAP =================
-  function smartWrapText(raw, type) {
-    if (core?.smartWrapText) return core.smartWrapText(raw, type);
+  function smartWrapText(raw, type, widthHint) {
     const text = (raw || '').trim();
     if (!text) return '';
-    const maxChars = (type === 'decision') ? 12 : (type === 'start-end') ? 16 : (type === 'input-output') ? 18 : 18;
-    const maxLines = (type === 'decision') ? 4 : 4;
+    const width = Number(widthHint) || getShapeSizeHint(type).w;
+    let maxChars = 18;
+    let maxLines = 3;
+
+    if (type === 'decision') {
+      maxChars = 12;
+      maxLines = 4;
+    } else if (type === 'connector') {
+      maxChars = 3;
+      maxLines = 1;
+    } else if (type === 'start-end') {
+      maxChars = width >= 188 ? 18 : 16;
+    } else if (type === 'input-output') {
+      maxChars = width >= 224 ? 24 : width >= 196 ? 20 : 18;
+    } else if (type === 'subroutine') {
+      maxChars = width >= 238 ? 24 : width >= 210 ? 21 : 18;
+    } else {
+      maxChars = width >= 212 ? 21 : width >= 184 ? 18 : 16;
+    }
 
     const words = text.split(/\s+/).filter(Boolean);
     const lines = [];
@@ -606,6 +727,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return lines.join('\n');
   }
 
+  function getShapeSizeForText(type, rawText) {
+    const base = getShapeSizeHint(type);
+    const text = String(rawText || '').trim();
+    const length = text.length;
+
+    if (type === 'decision' || type === 'connector') return base;
+
+    return {
+      w: base.w,
+      h: base.h,
+    };
+  }
+
   function hasStartBlock() {
     return state.shapes.some(s => s.type === 'start-end' && (s.textRaw || '').trim().toLowerCase() === 'початок');
   }
@@ -625,6 +759,416 @@ document.addEventListener('DOMContentLoaded', () => {
     return state.baseColors[type] || DEFAULT_BASE_COLORS[type] || '#3f51b5';
   }
 
+  function getShapeInfo(type) {
+    if (core?.getShapeInfo) return core.getShapeInfo(type);
+    return SHAPE_INFO_BY_TYPE.get(type) || SHAPE_INFO_BY_TYPE.get('process');
+  }
+
+  function getTextPlaceholder(type) {
+    if (core?.getTextPlaceholder) return core.getTextPlaceholder(type);
+    return getShapeInfo(type)?.exampleText || '';
+  }
+
+  function updateShapeHelper() {}
+
+  function hydrateWizardCards() {
+    document.querySelectorAll('.wizard-type-card').forEach((btn) => {
+      const info = getShapeInfo(btn.dataset.wizardType);
+      if (!info) return;
+      const label = btn.querySelector('.wizard-card-label');
+      const desc = btn.querySelector('.wizard-card-desc');
+      const isEndVariant = btn.dataset.wizardVariant === 'end';
+      const resolvedLabel = isEndVariant ? 'Кінець' : info.label;
+      const resolvedDesc = isEndVariant ? 'Завершити гілку алгоритму.' : info.description;
+      if (label) label.textContent = resolvedLabel;
+      if (desc) desc.textContent = resolvedDesc;
+      btn.title = `${resolvedLabel}. ${resolvedDesc}`;
+    });
+  }
+
+  function getShapeSizeHint(type) {
+    if (core?.getShapeSize) {
+      const size = core.getShapeSize(type);
+      return { w: size.width, h: size.height };
+    }
+    if (type === 'connector') return { w: 60, h: 60 };
+    if (type === 'decision') return { w: 144, h: 144 };
+    if (type === 'start-end') return { w: 164, h: 58 };
+    if (type === 'input-output') return { w: 180, h: 58 };
+    if (type === 'subroutine') return { w: 180, h: 58 };
+    return { w: 164, h: 58 };
+  }
+
+  function getShapeData(id) {
+    return state.shapes.find((shape) => shape.id === id) || null;
+  }
+
+  function isEndTerminator(shape) {
+    if (core?.isEndTerminator) return core.isEndTerminator(shape);
+    return shape?.type === 'start-end' && String(shape?.textRaw || '').trim().toLowerCase() === 'кінець';
+  }
+
+  function getQuickAddTargets() {
+    if (core?.getQuickAddTargets) return core.getQuickAddTargets(state.shapes, state.connections);
+    if (!state.shapes.length) return [{ sourceId: null, branch: null, type: 'root' }];
+    return state.shapes.flatMap((shape) => {
+      const outgoing = state.connections.filter((conn) => conn.from === shape.id);
+      if (isEndTerminator(shape)) return [];
+      if (shape.type === 'decision') {
+        const hasYes = outgoing.some((conn) => conn.type === 'yes');
+        const hasNo = outgoing.some((conn) => conn.type === 'no');
+        const targets = [];
+        if (!hasYes) targets.push({ sourceId: shape.id, branch: 'yes', type: 'branch' });
+        if (!hasNo) targets.push({ sourceId: shape.id, branch: 'no', type: 'branch' });
+        return targets;
+      }
+      if (outgoing.length > 0) return [];
+      return [{ sourceId: shape.id, branch: null, type: 'linear' }];
+    });
+  }
+
+  function getQuickAddPlacement(parentShape, branch, childType) {
+    if (core?.getQuickAddPlacement) {
+      return core.getQuickAddPlacement(parentShape, branch, childType);
+    }
+    const childSize = getShapeSizeHint(childType);
+    return {
+      left: Math.round(parentShape.left + ((parentShape.width || 0) - childSize.w) / 2),
+      top: Math.round(parentShape.top + (parentShape.height || 0) + LAYOUT.quickAdd.placementGap),
+    };
+  }
+
+  function getQuickAddButtonPosition(parentShape, branch) {
+    const centerX = parentShape.left + parentShape.width / 2;
+    const belowY = parentShape.top + parentShape.height + LAYOUT.quickAdd.linearButtonGap;
+    if (branch === 'yes') {
+      return {
+        left: centerX - LAYOUT.quickAdd.yesOffsetX,
+        top: parentShape.top + parentShape.height + LAYOUT.quickAdd.branchButtonGap,
+      };
+    }
+    if (branch === 'no') {
+      return {
+        left: centerX + LAYOUT.quickAdd.noOffsetX,
+        top: parentShape.top + parentShape.height + LAYOUT.quickAdd.branchButtonGap,
+      };
+    }
+    return { left: centerX - LAYOUT.quickAdd.buttonHalf, top: belowY };
+  }
+
+  function centerViewportOnShape(shapeEl, topOffset = LAYOUT.viewportTopOffset) {
+    if (!shapeEl) return;
+    const centerX = shapeEl.offsetLeft + shapeEl.offsetWidth / 2;
+    const desiredLeft = Math.max(0, centerX * state.scale - canvasContainer.clientWidth / 2);
+    const desiredTop = Math.max(0, shapeEl.offsetTop * state.scale - topOffset);
+    canvasContainer.scrollTo({ left: desiredLeft, top: desiredTop, behavior: 'auto' });
+  }
+
+  function centerViewportOnBounds(bounds, topOffset = LAYOUT.viewportTopOffset) {
+    if (!bounds || bounds.empty) return;
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const desiredLeft = Math.max(0, centerX * state.scale - canvasContainer.clientWidth / 2);
+    const desiredTop = Math.max(0, bounds.minY * state.scale - topOffset);
+    canvasContainer.scrollTo({ left: desiredLeft, top: desiredTop, behavior: 'auto' });
+  }
+
+  function createInitialStartBlock() {
+    if (state.shapes.length) return null;
+    const size = getShapeSizeHint('start-end');
+    const startLeft = Math.round(canvas.offsetWidth / 2 - size.w / 2);
+    const startTop = LAYOUT.editorStartMinTop;
+    const startEl = createShape('start-end', getBaseColor('start-end'), 'Початок', startLeft, startTop);
+    if (startEl) {
+      state.lastShapeType = 'process';
+      deselectAll(false);
+      clearConnectionSelection(false);
+      requestAnimationFrame(() => {
+        centerViewportOnShape(startEl);
+        scheduleRefresh();
+      });
+    }
+    return startEl;
+  }
+
+  function resetToInitialStart() {
+    state.shapes.forEach((shape) => {
+      document.getElementById(shape.id)?.remove();
+      removeHandleGroup(shape.id);
+    });
+    state.connections.forEach((conn) => removeConnectionDom(conn.id));
+    state.shapes = [];
+    state.connections = [];
+    state.selectedShape = null;
+    state.shapeCounter = 0;
+    hideAllHandles();
+    const startEl = createInitialStartBlock();
+    updateHistoryButtons();
+    updateConnectionBar();
+    scheduleRefresh();
+    return startEl;
+  }
+
+  function appendQuickAddGuide(parentEl, branch, btnPos) {
+    if (!quickAddLayer || !parentEl) return;
+    const parentType = getShapeType(parentEl);
+    const btnCenterX = btnPos.left + LAYOUT.quickAdd.buttonHalf;
+    const btnTopY = btnPos.top;
+    const guideColor = branch === 'yes' ? '#86efac' : branch === 'no' ? '#fca5a5' : '#a5b4fc';
+
+    const makeSeg = (left, top, width, height, borderSide) => {
+      const seg = document.createElement('div');
+      seg.className = `quick-add-guide ${branch ? `branch-${branch}` : 'branch-linear'}`;
+      seg.style.left = `${Math.round(left)}px`;
+      seg.style.top = `${Math.round(top)}px`;
+      seg.style.width = `${Math.max(0, Math.round(width))}px`;
+      seg.style.height = `${Math.max(0, Math.round(height))}px`;
+      seg.style.setProperty('--guide-color', guideColor);
+      seg.dataset.border = borderSide;
+      quickAddLayer.appendChild(seg);
+    };
+
+    if (!branch) {
+      const startX = parentEl.offsetLeft + parentEl.offsetWidth / 2;
+      const startY = parentEl.offsetTop + parentEl.offsetHeight;
+      makeSeg(startX - 1, startY, 0, Math.max(0, btnTopY - startY), 'left');
+      return;
+    }
+
+    const centerX = parentEl.offsetLeft + parentEl.offsetWidth / 2;
+    const centerY = parentEl.offsetTop + parentEl.offsetHeight / 2;
+    const decisionOutset = parentType === 'decision' ? decisionVertexDistance(parentEl) + 10 : 0;
+    const anchorX = branch === 'yes'
+      ? (parentType === 'decision' ? centerX - decisionOutset : parentEl.offsetLeft)
+      : (parentType === 'decision' ? centerX + decisionOutset : parentEl.offsetLeft + parentEl.offsetWidth);
+    const anchorY = parentType === 'decision'
+      ? centerY
+      : parentEl.offsetTop + parentEl.offsetHeight;
+    const verticalTop = anchorY;
+    const verticalHeight = Math.max(0, btnTopY - anchorY);
+
+    if (branch === 'yes') {
+      makeSeg(btnCenterX, anchorY - 1, Math.max(0, anchorX - btnCenterX), 0, 'top');
+      makeSeg(btnCenterX - 1, verticalTop, 0, verticalHeight, 'left');
+      return;
+    }
+
+    makeSeg(anchorX, anchorY - 1, Math.max(0, btnCenterX - anchorX), 0, 'top');
+    makeSeg(btnCenterX - 1, verticalTop, 0, verticalHeight, 'left');
+  }
+
+  function branchLabel(branch) {
+    if (branch === 'yes') return 'Гілка "Так"';
+    if (branch === 'no') return 'Гілка "Ні"';
+    return '';
+  }
+
+  function getWizardDefaultText(type) {
+    return getDefaultText(type);
+  }
+
+  function getWizardCardLabel(type) {
+    if (type === 'start-end') return getWizardDefaultText(type);
+    return getShapeInfo(type)?.label || 'Блок';
+  }
+
+  function isWizardEndVariant(type) {
+    return type === 'start-end' && getWizardDefaultText(type) === 'Кінець';
+  }
+
+  function getWizardDescription(type) {
+    if (isWizardEndVariant(type)) return 'Завершити гілку алгоритму.';
+    return getShapeInfo(type)?.description || '';
+  }
+
+  function getConnectableTargets(sourceId) {
+    if (!sourceId) return [];
+    return state.shapes.filter((shape) => {
+      if (shape.id === sourceId) return false;
+      const branch = state.quickAdd.branch || null;
+      const connId = branch
+        ? `conn-${sourceId}-${shape.id}-${branch}`
+        : `conn-${sourceId}-${shape.id}`;
+      return !state.connections.some((conn) => conn.id === connId);
+    });
+  }
+
+  function showWizardStep(step) {
+    state.quickAdd.step = step;
+    wizardStepType.hidden = step !== 'type';
+    wizardStepText.hidden = step !== 'text';
+    wizardStepExisting.hidden = step !== 'existing';
+  }
+
+  function closeBuilderWizard() {
+    state.quickAdd = { open: false, step: 'type', sourceId: null, branch: null, type: null };
+    builderWizard?.classList.remove('active');
+    builderWizard?.setAttribute('aria-hidden', 'true');
+    showWizardStep('type');
+  }
+
+  function refreshWizardCards() {
+    document.querySelectorAll('.wizard-type-card').forEach((btn) => {
+      const type = btn.dataset.wizardType;
+      const label = btn.querySelector('.wizard-card-label');
+      const desc = btn.querySelector('.wizard-card-desc');
+      const isEndVariant = isWizardEndVariant(type);
+      if (label) label.textContent = getWizardCardLabel(type);
+      if (desc) desc.textContent = getWizardDescription(type);
+      btn.dataset.wizardVariant = isEndVariant ? 'end' : '';
+      btn.hidden = false;
+    });
+  }
+
+  function renderWizardPreview(type) {
+    const label = getWizardCardLabel(type);
+    const description = getWizardDescription(type);
+    const isEndVariant = isWizardEndVariant(type);
+    if (!wizardTypePreview) return;
+    wizardTypePreview.innerHTML = `
+      <div class="wizard-preview-title${isEndVariant ? ' end-variant' : ''}">
+        <span class="shape-icon ${type === 'start-end' ? 'se-icon' : type === 'process' ? 'proc-icon' : type === 'decision' ? 'dec-icon' : type === 'input-output' ? 'io-icon' : type === 'subroutine' ? 'sub-icon' : 'conn-icon'}"></span>
+        <span>${label}</span>
+      </div>
+      <div class="wizard-preview-text${isEndVariant ? ' end-variant' : ''}">${description}</div>
+    `;
+    wizardTypePreview.classList.toggle('end-variant', isEndVariant);
+  }
+
+  function openBuilderWizard(sourceId, branch) {
+    state.quickAdd = { open: true, step: 'type', sourceId: sourceId || null, branch: branch || null, type: null };
+    refreshWizardCards();
+    updateShapeHelper(branch ? 'decision' : 'process');
+    if (wizardBranchBadge) {
+      const label = branchLabel(branch);
+      wizardBranchBadge.hidden = !label;
+      wizardBranchBadge.textContent = label;
+    }
+    if (wizardConnectExisting) wizardConnectExisting.hidden = !sourceId;
+    builderWizard?.classList.add('active');
+    builderWizard?.setAttribute('aria-hidden', 'false');
+    showWizardStep('type');
+  }
+
+  function openWizardTextStep(type) {
+    state.quickAdd.type = type;
+    renderWizardPreview(type);
+    if (wizardTextInput) {
+      wizardTextInput.value = '';
+      wizardTextInput.placeholder = isWizardEndVariant(type) ? 'Кінець' : getTextPlaceholder(type);
+    }
+    showWizardStep('text');
+    setTimeout(() => wizardTextInput?.focus(), 40);
+  }
+
+  function renderExistingTargets() {
+    if (!wizardExistingList || !wizardNoExisting) return;
+    const sourceId = state.quickAdd.sourceId;
+    const targets = getConnectableTargets(sourceId);
+    wizardExistingList.innerHTML = '';
+    wizardNoExisting.hidden = targets.length > 0;
+
+    targets.forEach((shape) => {
+      const info = getShapeInfo(shape.type);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'wizard-existing-item';
+      btn.innerHTML = `
+        <span class="shape-icon ${shape.type === 'start-end' ? 'se-icon' : shape.type === 'process' ? 'proc-icon' : shape.type === 'decision' ? 'dec-icon' : shape.type === 'input-output' ? 'io-icon' : shape.type === 'subroutine' ? 'sub-icon' : 'conn-icon'}"></span>
+        <span class="wizard-existing-copy">
+          <strong>${shape.textRaw || getWizardCardLabel(shape.type)}</strong>
+          <span>${info?.label || shape.type}</span>
+        </span>
+        <i class="fa-solid fa-arrow-right"></i>
+      `;
+      btn.addEventListener('click', () => {
+        const fromEl = document.getElementById(sourceId);
+        const toEl = document.getElementById(shape.id);
+        if (!fromEl || !toEl) return;
+        saveSnapshot();
+        deselectAll(false);
+        clearConnectionSelection(false);
+        connectShapes(fromEl, toEl, state.quickAdd.branch || null);
+        closeBuilderWizard();
+        updateConnectionBar();
+        scheduleRefresh();
+      });
+      wizardExistingList.appendChild(btn);
+    });
+  }
+
+  function createShapeFromWizard() {
+    const type = state.quickAdd.type;
+    if (!type) return;
+    const sourceId = state.quickAdd.sourceId;
+    const branch = state.quickAdd.branch || null;
+    const text = (wizardTextInput?.value || '').trim() || getWizardDefaultText(type);
+    saveSnapshot();
+
+    let newEl = null;
+    if (!sourceId) {
+      newEl = createShape(type, getBaseColor(type), text);
+    } else {
+      const parentEl = document.getElementById(sourceId);
+      if (!parentEl) return;
+      const suggestion = getQuickAddPlacement({
+        type: getShapeType(parentEl),
+        left: parentEl.offsetLeft,
+        top: parentEl.offsetTop,
+        width: parentEl.offsetWidth,
+        height: parentEl.offsetHeight,
+      }, branch, type);
+      const resolved = findAutoShapePosition(type, suggestion.left, suggestion.top);
+      newEl = createShape(type, getBaseColor(type), text, resolved.left, resolved.top);
+      if (newEl) connectShapes(parentEl, newEl, branch);
+    }
+
+    if (newEl) {
+      ensureDecisionClearance();
+      selectShape(newEl);
+      closeBuilderWizard();
+      scheduleRefresh();
+    }
+  }
+
+  function renderQuickAddButtons() {
+    if (!quickAddLayer) return;
+    quickAddLayer.innerHTML = '';
+    const targets = getQuickAddTargets();
+    const hasShapes = state.shapes.length > 0;
+    if (!hasShapes) return;
+
+    targets.forEach((target) => {
+      if (!target.sourceId) return;
+      const parentEl = document.getElementById(target.sourceId);
+      if (!parentEl) return;
+      const pos = getQuickAddButtonPosition({
+        left: parentEl.offsetLeft,
+        top: parentEl.offsetTop,
+        width: parentEl.offsetWidth,
+        height: parentEl.offsetHeight,
+      }, target.branch);
+      appendQuickAddGuide(parentEl, target.branch, pos);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `quick-add-btn${target.branch ? ` branch-${target.branch}` : ''}`;
+      btn.style.left = `${pos.left}px`;
+      btn.style.top = `${pos.top}px`;
+      btn.setAttribute('aria-label', branchLabel(target.branch) || 'Додати наступний блок');
+      btn.innerHTML = '<span aria-hidden="true">+</span>';
+      if (target.branch) {
+        const tag = document.createElement('span');
+        tag.className = 'quick-add-tag';
+        tag.textContent = target.branch === 'yes' ? '+ Так' : '+ Ні';
+        btn.appendChild(tag);
+      }
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openBuilderWizard(target.sourceId, target.branch);
+      });
+      quickAddLayer.appendChild(btn);
+    });
+  }
+
   function setShapeText(shapeEl, raw) {
     const s = state.shapes.find(x => x.id === shapeEl.id);
     const rawText = (raw || '').trim();
@@ -632,7 +1176,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const type = s?.type || (shapeEl.classList.contains('decision') ? 'decision' : 'process');
     const content = shapeEl.querySelector('.content');
     const defaultText = getDefaultText(type);
-    if (content) content.textContent = smartWrapText(rawText || defaultText, type);
+    const isEndTerminatorShape = type === 'start-end' && String(rawText || defaultText).trim().toLowerCase() === 'кінець';
+    shapeEl.classList.toggle('end-terminator', isEndTerminatorShape);
+    if (content) {
+      const widthHint = shapeEl.offsetWidth || getShapeSizeForText(type, rawText || defaultText).w;
+      content.textContent = smartWrapText(rawText || defaultText, type, widthHint);
+    }
     shapeEl.setAttribute('aria-label', `Фігура: ${rawText || defaultText}`);
   }
 
@@ -768,48 +1317,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  function createHandleGroup(shapeEl) {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.dataset.shapeId = shapeEl.id;
-    ['top', 'right', 'bottom', 'left'].forEach(pos => {
-      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('r', '10');
-      c.setAttribute('fill', 'white');
-      c.setAttribute('stroke', '#4361ee');
-      c.setAttribute('stroke-width', '3');
-      c.classList.add('conn-handle');
-      c.dataset.shapeId = shapeEl.id;
-      c.dataset.pos = pos;
-      g.appendChild(c);
-    });
-    svgLayer.appendChild(g);
-    shapeHandleGroups[shapeEl.id] = g;
-    updateHandleGroup(shapeEl.id);
-    attachHandleListeners(shapeEl.id);
-    return g;
-  }
+  function createHandleGroup() { return null; }
 
-  function updateHandleGroup(shapeId) {
-    const el = document.getElementById(shapeId);
-    const g = shapeHandleGroups[shapeId];
-    if (!el || !g) return;
-    const pts = getHandlePositions(el);
-    const circles = g.querySelectorAll('circle');
-    ['top', 'right', 'bottom', 'left'].forEach((pos, i) => {
-      circles[i].setAttribute('cx', pts[pos].x);
-      circles[i].setAttribute('cy', pts[pos].y);
-    });
-  }
+  function updateHandleGroup() {}
 
-  function showHandlesForShape(shapeId) {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('circle').forEach(c => c.classList.remove('visible')));
-    const g = shapeHandleGroups[shapeId];
-    if (g) g.querySelectorAll('circle').forEach(c => c.classList.add('visible'));
-  }
+  function showHandlesForShape() {}
 
-  function hideAllHandles() {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('circle').forEach(c => c.classList.remove('visible')));
-  }
+  function hideAllHandles() {}
 
   function removeHandleGroup(shapeId) {
     const g = shapeHandleGroups[shapeId];
@@ -817,80 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ================= TEMP LINE (during connect drag) =================
-  const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  tempLine.setAttribute('stroke', '#4361ee');
-  tempLine.setAttribute('stroke-width', '2.5');
-  tempLine.setAttribute('stroke-dasharray', '8 5');
-  tempLine.setAttribute('marker-end', 'url(#arrowhead)');
-  tempLine.style.display = 'none';
-  tempLine.style.pointerEvents = 'none';
-  svgLayer.appendChild(tempLine);
-
-  function onHandlePointerDown(e) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const shapeId = this.dataset.shapeId;
-    const pos = this.dataset.pos;
-    const shapeEl = document.getElementById(shapeId);
-    if (!shapeEl) return;
-
-    const pts = getHandlePositions(shapeEl);
-    const startPt = pts[pos];
-
-    tempLine.setAttribute('x1', startPt.x);
-    tempLine.setAttribute('y1', startPt.y);
-    tempLine.setAttribute('x2', startPt.x);
-    tempLine.setAttribute('y2', startPt.y);
-    tempLine.style.display = '';
-    state.connDrag = { fromShapeId: shapeId };
-
-    this.setPointerCapture(e.pointerId);
-
-    const onMove = (ev) => {
-      const pt = clientToCanvas(ev.clientX, ev.clientY);
-      tempLine.setAttribute('x2', pt.x);
-      tempLine.setAttribute('y2', pt.y);
-    };
-
-    const onUp = (ev) => {
-      this.removeEventListener('pointermove', onMove);
-      this.removeEventListener('pointerup', onUp);
-      this.removeEventListener('pointercancel', onUp);
-      tempLine.style.display = 'none';
-
-      if (!state.connDrag) return;
-      const fromId = state.connDrag.fromShapeId;
-      state.connDrag = null;
-
-      const pt = clientToCanvas(ev.clientX, ev.clientY);
-      const targetEl = findShapeAt(pt.x, pt.y, fromId);
-      if (!targetEl) return;
-      if (targetEl.id === fromId) return;
-
-      const fromEl = document.getElementById(fromId);
-      const fromData = state.shapes.find(s => s.id === fromId);
-
-      if (fromData?.type === 'decision') {
-        state.pendingConn = { fromEl, toEl: targetEl };
-        openModal(connectionModal);
-      } else {
-        saveSnapshot();
-        connectShapes(fromEl, targetEl, null);
-      }
-    };
-
-    this.addEventListener('pointermove', onMove);
-    this.addEventListener('pointerup', onUp);
-    this.addEventListener('pointercancel', onUp);
-  }
-
-  function attachHandleListeners(shapeId) {
-    const g = shapeHandleGroups[shapeId];
-    if (!g) return;
-    g.querySelectorAll('circle').forEach(c => c.addEventListener('pointerdown', onHandlePointerDown));
-  }
+  function attachHandleListeners() {}
 
   // ================= CONNECTIONS (orthogonal) =================
   function polylineLength(points) {
@@ -1163,91 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function getFanInOffset(conn, entrySide, toEl) {
-    const incoming = state.connections
-      .filter(c => c.to === conn.to && getConnectionEntrySide(c) === entrySide);
-    const sortedIncoming = sortConnsBySourcePosition(incoming, entrySide);
-
-    if (sortedIncoming.length <= 1) return 0;
-    const idx = sortedIncoming.findIndex(c => c.id === conn.id);
-    if (idx < 0) return 0;
-
-    const slot = idx - (sortedIncoming.length - 1) / 2;
-    const spacing = 16;
-    const rawOffset = slot * spacing;
-
-    if (entrySide === 'top' || entrySide === 'bottom') {
-      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
-      return Math.max(-max, Math.min(max, rawOffset));
-    }
-    const max = Math.max(12, toEl.offsetHeight / 2 - 14);
-    return Math.max(-max, Math.min(max, rawOffset));
-  }
-
-  function applyEntryOffset(points, entrySide, offset, toEl) {
-    if (!offset || !points || points.length < 2) return points;
-    const out = points.map(p => ({ ...p }));
-    const last = out.length - 1;
-
-    if (entrySide === 'top' || entrySide === 'bottom') {
-      const cx = toEl.offsetLeft + toEl.offsetWidth / 2;
-      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
-      const shiftedX = Math.max(cx - max, Math.min(cx + max, out[last].x + offset));
-      out[last].x = shiftedX;
-      out[last - 1].x = shiftedX;
-    } else {
-      const cy = toEl.offsetTop + toEl.offsetHeight / 2;
-      const max = Math.max(12, toEl.offsetHeight / 2 - 14);
-      const shiftedY = Math.max(cy - max, Math.min(cy + max, out[last].y + offset));
-      out[last].y = shiftedY;
-      out[last - 1].y = shiftedY;
-    }
-    return out;
-  }
-
-  function buildMergeContext() {
-    const groups = new Map();
-
-    state.connections.forEach(conn => {
-      if (conn.type) return; // keep Yes/No branches independent
-      const fromEl = document.getElementById(conn.from);
-      const toEl = document.getElementById(conn.to);
-      if (!fromEl || !toEl) return;
-      const entrySide = getConnectionEntrySide(conn);
-      const key = `${conn.to}|${entrySide}`;
-      if (!groups.has(key)) groups.set(key, { toEl, entrySide, conns: [] });
-      groups.get(key).conns.push(conn);
-    });
-
-    const byConnId = {};
-    groups.forEach(group => {
-      if (group.conns.length < 2) return;
-      const targetEdges = getEdgePoints(group.toEl);
-      const targetPt = targetEdges[group.entrySide];
-      const junction = { x: targetPt.x, y: targetPt.y };
-      if (group.entrySide === 'top') junction.y -= MERGE_LEAD;
-      if (group.entrySide === 'bottom') junction.y += MERGE_LEAD;
-      if (group.entrySide === 'left') junction.x -= MERGE_LEAD;
-      if (group.entrySide === 'right') junction.x += MERGE_LEAD;
-
-      const sorted = sortConnsBySourcePosition(group.conns, group.entrySide);
-
-      const primaryIdx = Math.floor((sorted.length - 1) / 2);
-      sorted.forEach((conn, idx) => {
-        byConnId[conn.id] = {
-          isMerged: true,
-          isPrimary: idx === primaryIdx,
-          entrySide: group.entrySide,
-          junction,
-          targetPt,
-        };
-      });
-    });
-
-    return byConnId;
-  }
-
-  function computeConnectionGeometry(fromEl, toEl, conn, mergeContext) {
+  function computeConnectionGeometry(fromEl, toEl, conn) {
     const connType = conn?.type || null;
     const fromData = state.shapes.find(s => s.id === fromEl.id);
 
@@ -1258,23 +1615,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (connType === 'no') return computeDecisionConnection(fromEl, toEl, 'right');
     }
 
-    const mergeMeta = mergeContext?.[conn.id];
-    if (mergeMeta?.isMerged) {
-      const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-      let pts = routeToPoint(fromEl, mergeMeta.junction, routeMode, mergeMeta.entrySide).pts;
-      if (mergeMeta.isPrimary) {
-        const last = pts[pts.length - 1];
-        if (!last || last.x !== mergeMeta.targetPt.x || last.y !== mergeMeta.targetPt.y) {
-          pts = pts.concat([{ x: mergeMeta.targetPt.x, y: mergeMeta.targetPt.y }]);
-        }
-      }
-      return { d: pointsToPathD(pts), pts };
-    }
-
-    const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-    const routed = routeOrthogonal(fromEl, toEl, routeMode);
-    const offset = conn ? getFanInOffset(conn, routed.entry, toEl) : 0;
-    const pts = applyEntryOffset(routed.pts, routed.entry, offset, toEl);
+    // Kid mode keeps arrows fully automatic and predictable.
+    // We intentionally ignore custom route modes and fan-in spreading.
+    const routed = routeOrthogonal(fromEl, toEl, 'auto');
+    const pts = routed.pts;
     const d = pointsToPathD(pts);
     return { d, pts };
   }
@@ -1292,7 +1636,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getConnectionLabelText(conn) {
-    return FlowchartCore.resolveConnectionLabel(conn);
+    if (conn?.type === 'yes' || conn?.type === 'no') {
+      return FlowchartCore.resolveConnectionLabel(conn);
+    }
+    return '';
   }
 
   function updateConnection(connId) {
@@ -1303,14 +1650,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const fromEl = document.getElementById(conn.from);
     const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
-    const mergeContext = buildMergeContext();
-    const mergeMeta = mergeContext[conn.id];
-    const geo = computeConnectionGeometry(fromEl, toEl, conn, mergeContext);
+    const geo = computeConnectionGeometry(fromEl, toEl, conn);
     path.setAttribute('d', geo.d);
     hit?.setAttribute('d', geo.d);
-    if (state.selectedConnId !== connId) {
-      path.setAttribute('marker-end', mergeMeta?.isMerged && !mergeMeta.isPrimary ? 'none' : markerForConnection(conn));
-    }
+    path.setAttribute('marker-end', markerForConnection(conn));
     const labelText = getConnectionLabelText(conn);
     if (labelText) {
       if (!document.getElementById(`label-${connId}`)) addConnectionLabel(connId);
@@ -1346,16 +1689,16 @@ document.addEventListener('DOMContentLoaded', () => {
     path.setAttribute('fill', 'none');
 
     if (connType === 'yes') {
-      path.setAttribute('stroke', '#4caf50');
-      path.setAttribute('stroke-width', '2.8');
+      path.setAttribute('stroke', '#28a745');
+      path.setAttribute('stroke-width', '3.2');
       path.setAttribute('marker-end', 'url(#arrowhead-yes)');
     } else if (connType === 'no') {
-      path.setAttribute('stroke', '#f44336');
-      path.setAttribute('stroke-width', '2.8');
+      path.setAttribute('stroke', '#ef4444');
+      path.setAttribute('stroke-width', '3.2');
       path.setAttribute('marker-end', 'url(#arrowhead-no)');
     } else {
-      path.setAttribute('stroke', '#555');
-      path.setAttribute('stroke-width', '2.8');
+      path.setAttribute('stroke', '#4b5563');
+      path.setAttribute('stroke-width', '3.2');
       path.setAttribute('marker-end', 'url(#arrowhead)');
     }
     path.style.pointerEvents = 'none';
@@ -1369,15 +1712,8 @@ document.addEventListener('DOMContentLoaded', () => {
     svgLayer.insertBefore(path, firstG);
     svgLayer.insertBefore(hitPath, firstG);
 
-    hitPath.addEventListener('pointerdown', (e) => {
-      if (state.connDrag) return;
-      e.stopPropagation();
-      selectConnection(connId);
-    });
-
     if (!state.connections.find(c => c.id === connId)) {
-      const routeMode = ROUTE_MODES.includes(forcedRouteMode) ? forcedRouteMode : 'auto';
-      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode, label: null });
+      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode: 'auto', label: null });
     }
 
     updateConnection(connId);
@@ -1468,147 +1804,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ================= SELECT CONNECTION =================
   function clearConnectionSelection(updateBar = true) {
-    if (state.selectedConnId) {
-      const path = document.getElementById(state.selectedConnId);
-      if (path) {
-        path.setAttribute('stroke', path._origStroke || '#555');
-        path.setAttribute('stroke-width', '2.8');
-        path.removeAttribute('stroke-dasharray');
-        path.setAttribute('marker-end', path._origMarker || 'url(#arrowhead)');
-      }
-    }
-    state.selectedConnId = null;
     if (updateBar) updateConnectionBar();
   }
 
-  function selectConnection(connId) {
-    deselectAll(false);
-    hideAllHandles();
-    if (state.selectedConnId === connId) {
-      clearConnectionSelection();
-      return;
-    }
-    clearConnectionSelection(false);
-    state.selectedConnId = connId;
-    const path = document.getElementById(connId);
-    if (path) {
-      path._origStroke = path.getAttribute('stroke');
-      path._origMarker = path.getAttribute('marker-end');
-      path.setAttribute('stroke', '#e91e63');
-      path.setAttribute('stroke-width', '3.5');
-      path.setAttribute('stroke-dasharray', '9 4');
-      path.setAttribute('marker-end', 'url(#arrowhead-selected)');
-    }
-    updateConnectionBar();
-  }
-
   function updateConnectionBar() {
-    const hasSelected = !!state.selectedConnId;
     const hasShapeSelected = !!state.selectedShape;
-    if (connectionBar) {
-      if (hasSelected) connectionBar.classList.remove('hidden');
-      else connectionBar.classList.add('hidden');
-    }
     if (shapeBar) {
-      if (!hasSelected && hasShapeSelected) shapeBar.classList.remove('hidden');
+      if (hasShapeSelected) shapeBar.classList.remove('hidden');
       else shapeBar.classList.add('hidden');
     }
 
-    if (!routeConnBtn) return;
-    if (!hasSelected) {
-      routeConnBtn.disabled = true;
-      routeConnBtn.textContent = 'Маршрут: Авто';
-    } else {
-      routeConnBtn.disabled = false;
-      if (editConnLabelBtn) editConnLabelBtn.disabled = false;
-      const conn = state.connections.find(c => c.id === state.selectedConnId);
-      const mode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-      if (editConnLabelBtn) editConnLabelBtn.textContent = conn?.label ? 'Підпис: змінити' : 'Підпис';
-      routeConnBtn.textContent = `Маршрут: ${ROUTE_MODE_LABELS[mode]}`;
-    }
-
-    if (editShapeBtn) editShapeBtn.disabled = !hasShapeSelected || hasSelected;
-    if (deleteShapeBtn) deleteShapeBtn.disabled = !hasShapeSelected || hasSelected;
+    if (editShapeBtn) editShapeBtn.disabled = !hasShapeSelected;
+    if (deleteShapeBtn) deleteShapeBtn.disabled = !hasShapeSelected;
   }
 
-  function cycleSelectedConnectionRouteMode() {
-    if (!state.selectedConnId) return;
-    const conn = state.connections.find(c => c.id === state.selectedConnId);
-    if (!conn) return;
-
-    const current = ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto';
-    const next = ROUTE_MODES[(ROUTE_MODES.indexOf(current) + 1) % ROUTE_MODES.length];
-    saveSnapshot();
-    conn.routeMode = next;
-    updateConnection(conn.id);
-    updateConnectionBar();
-  }
-
-  function deleteConnection(connId) {
-    const conn = state.connections.find(c => c.id === connId);
-    if (!conn) return;
-    saveSnapshot();
-    removeConnectionDom(connId);
-    state.connections = state.connections.filter(c => c.id !== connId);
-    clearConnectionSelection();
-  }
-
-  function editSelectedConnectionLabel() {
-    if (!state.selectedConnId) return;
-    const conn = state.connections.find(c => c.id === state.selectedConnId);
-    if (!conn) return;
-    pendingConnectionLabelId = conn.id;
-    if (connectionLabelInput) connectionLabelInput.value = conn.label ?? '';
-    openModal(connectionLabelModal);
-    setTimeout(() => connectionLabelInput?.focus(), 40);
-  }
-
-  function saveConnectionLabel() {
-    if (!pendingConnectionLabelId) {
-      closeModal(connectionLabelModal);
-      return;
-    }
-    const conn = state.connections.find(c => c.id === pendingConnectionLabelId);
-    pendingConnectionLabelId = null;
-    if (!conn) {
-      closeModal(connectionLabelModal);
-      return;
-    }
-    const normalized = (connectionLabelInput?.value || '').trim();
-    saveSnapshot();
-    conn.label = normalized || null;
-    updateConnection(conn.id);
-    updateConnectionBar();
-    closeModal(connectionLabelModal);
-  }
-
-  deleteConnBtn?.addEventListener('click', () => {
-    if (state.selectedConnId) deleteConnection(state.selectedConnId);
-  });
-  routeConnBtn?.addEventListener('click', cycleSelectedConnectionRouteMode);
-  editConnLabelBtn?.addEventListener('click', editSelectedConnectionLabel);
-  cancelConnectionLabelBtn?.addEventListener('click', () => {
-    pendingConnectionLabelId = null;
-    closeModal(connectionLabelModal);
-  });
-  saveConnectionLabelBtn?.addEventListener('click', saveConnectionLabel);
-  connectionLabelInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      saveConnectionLabel();
-    }
-  });
 
   // ================= SHAPES =================
-  function getShapeSizeHint(type) {
-    if (type === 'connector') return { w: 60, h: 60 };
-    if (type === 'decision') return { w: 140, h: 140 };
-    if (type === 'start-end') return { w: 170, h: 78 };
-    if (type === 'input-output') return { w: 170, h: 84 };
-    if (type === 'subroutine') return { w: 190, h: 84 };
-    return { w: 150, h: 84 };
-  }
-
   function rectsOverlap(a, b, gap = 14) {
     return !(
       (a.left + a.w + gap) < b.left ||
@@ -1635,14 +1846,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function findAutoShapePosition(type, startLeft, startTop) {
     const hint = getShapeSizeHint(type);
-    const minLeft = 20;
-    const minTop = 20;
+    const minLeft = LAYOUT.autoPlace.minLeft;
+    const minTop = LAYOUT.autoPlace.minTop;
     const x0 = Math.max(minLeft, Math.round(startLeft));
     const y0 = Math.max(minTop, Math.round(startTop));
     if (!hasShapeCollision(x0, y0, hint.w, hint.h)) return { left: x0, top: y0 };
 
-    const stepX = 56;
-    const stepY = 48;
+    const stepX = LAYOUT.autoPlace.stepX;
+    const stepY = LAYOUT.autoPlace.stepY;
     const maxRing = 14;
 
     for (let ring = 1; ring <= maxRing; ring++) {
@@ -1672,10 +1883,13 @@ document.addEventListener('DOMContentLoaded', () => {
     shape.setAttribute('role', 'button');
     shape.setAttribute('tabindex', '0');
     shape.style.backgroundColor = usedColor;
+    const sizeHint = getShapeSizeForText(type, raw);
+    shape.style.width = `${sizeHint.w}px`;
+    shape.style.height = `${sizeHint.h}px`;
 
     const containerRect = canvasContainer.getBoundingClientRect();
-    const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - 75;
-    const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - 30;
+    const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - sizeHint.w / 2;
+    const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - sizeHint.h / 2;
     const autoPos = (posLeft === undefined || posTop === undefined)
       ? findAutoShapePosition(type, defaultLeft, defaultTop)
       : null;
@@ -1758,7 +1972,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function openTextModal(shapeEl) {
     state.activeShape = shapeEl;
     const s = state.shapes.find(x => x.id === shapeEl.id);
-    if (shapeTextArea) shapeTextArea.value = (s?.textRaw || '').trim();
+    if (shapeTextArea) {
+      shapeTextArea.value = (s?.textRaw || '').trim();
+      shapeTextArea.placeholder = getTextPlaceholder(s?.type || getShapeType(shapeEl));
+    }
     openModal(textModal);
     setTimeout(() => shapeTextArea?.focus(), 50);
   }
@@ -1771,9 +1988,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.setAttribute('aria-selected', 'true');
     showHandlesForShape(el.id);
 
-    const hex = rgbToHex(el.style.backgroundColor);
-    state.currentColor = hex;
-    syncColorPickerToCurrent(hex);
     updateConnectionBar();
   }
 
@@ -1875,6 +2089,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isOnBackground(e.target)) return;
 
     // deselect
+    closeBuilderWizard();
     deselectAll(false);
     clearConnectionSelection(false);
     updateConnectionBar();
@@ -1902,58 +2117,36 @@ document.addEventListener('DOMContentLoaded', () => {
   canvasContainer.addEventListener('pointerup', stopPanning);
   canvasContainer.addEventListener('pointercancel', stopPanning);
 
-  // ================= COLOR PICKER =================
-  const colorButtons = Array.from(document.querySelectorAll('.color-option'));
-  function syncColorPickerToCurrent(forcedHex) {
-    const hex = (forcedHex || state.currentColor || '').toLowerCase();
-    colorButtons.forEach(btn => {
-      const c = (btn.dataset.color || '').toLowerCase();
-      if (c === hex) btn.classList.add('selected');
-      else btn.classList.remove('selected');
-    });
-  }
-
-  function applyColor(hex) {
-    if (!hex) return;
-    state.currentColor = hex;
-    syncColorPickerToCurrent(hex);
-
-    if (state.selectedShape) {
-      saveSnapshot();
-      state.selectedShape.style.backgroundColor = hex;
-      const s = state.shapes.find(x => x.id === state.selectedShape.id);
-      if (s) {
-        s.color = hex;
-        state.baseColors[s.type] = hex;
-      }
-      scheduleRefresh();
-      return;
-    }
-
-    if (state.baseColors[state.lastShapeType] !== hex) saveSnapshot();
-    state.baseColors[state.lastShapeType] = hex;
-  }
-
-  colorButtons.forEach(btn => {
-    btn.addEventListener('click', () => applyColor(btn.dataset.color));
-  });
-
-  // ================= SHAPE BUTTONS (ADD) =================
-  document.querySelectorAll('.shape-button').forEach(btn => {
+  // ================= QUICK ADD WIZARD =================
+  document.querySelectorAll('.wizard-type-card').forEach(btn => {
     btn.addEventListener('click', () => {
-      const type = btn.dataset.shape;
+      const type = btn.dataset.wizardType;
       if (!type) return;
       state.lastShapeType = type;
-      saveSnapshot();
-      const newEl = createShape(type);
-      if (newEl) {
-        const base = getBaseColor(type);
-        newEl.style.backgroundColor = base;
-        const s = state.shapes.find(x => x.id === newEl.id);
-        if (s) s.color = base;
-        selectShape(newEl);
-      }
+      updateShapeHelper(type);
+      openWizardTextStep(type);
     });
+  });
+  wizardCloseBtn?.addEventListener('click', closeBuilderWizard);
+  wizardBackText?.addEventListener('click', () => showWizardStep('type'));
+  wizardBackExisting?.addEventListener('click', () => showWizardStep('type'));
+  wizardSaveShape?.addEventListener('click', createShapeFromWizard);
+  wizardTextInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createShapeFromWizard();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeBuilderWizard();
+    }
+  });
+  wizardConnectExisting?.addEventListener('click', () => {
+    renderExistingTargets();
+    showWizardStep('existing');
+  });
+  builderWizard?.addEventListener('pointerdown', (e) => {
+    if (e.target === builderWizard) closeBuilderWizard();
   });
 
   // ================= TEXT MODAL =================
@@ -1965,51 +2158,103 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.activeShape) { closeModal(textModal); return; }
     saveSnapshot();
     setShapeText(state.activeShape, shapeTextArea?.value || '');
+    alignSimpleFlowCenters();
+    ensureDecisionClearance();
     closeModal(textModal);
     state.activeShape = null;
     scheduleRefresh();
   });
 
-  // ================= CONNECTION MODAL =================
-  function finishDecisionConnection(kind) {
-    if (!state.pendingConn) return;
-    const { fromEl, toEl } = state.pendingConn;
-    state.pendingConn = null;
-    closeModal(connectionModal);
-    saveSnapshot();
-    connectShapes(fromEl, toEl, kind);
-    scheduleRefresh();
-  }
-  connectionYesBtn?.addEventListener('click', () => finishDecisionConnection('yes'));
-  connectionNoBtn?.addEventListener('click', () => finishDecisionConnection('no'));
-  cancelConnBtn?.addEventListener('click', () => {
-    state.pendingConn = null;
-    closeModal(connectionModal);
-  });
-
   // ================= DELETE / CLEAR =================
-  function deleteSelected() {
-    if (state.selectedConnId) {
-      deleteConnection(state.selectedConnId);
-      return;
-    }
-    if (!state.selectedShape) return;
+  function shouldCascadeDeleteTarget(fromId, toId) {
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+    if (!fromEl || !toEl) return true;
 
-    const shapeId = state.selectedShape.id;
+    const fromCenterY = fromEl.offsetTop + fromEl.offsetHeight / 2;
+    const toCenterY = toEl.offsetTop + toEl.offsetHeight / 2;
+
+    // If a connection goes upward/back into an earlier step, keep that block
+    // and remove only the connection. Cascade deletion should continue only
+    // into blocks that are visually below the deleted step.
+    return toCenterY >= fromCenterY - 4;
+  }
+
+  function collectCascadeShapeIds(rootShapeId) {
+    const toVisit = [rootShapeId];
+    const collected = new Set();
+
+    while (toVisit.length) {
+      const currentId = toVisit.pop();
+      if (!currentId || collected.has(currentId)) continue;
+      collected.add(currentId);
+
+      state.connections.forEach((conn) => {
+        if (conn.from === currentId
+          && !collected.has(conn.to)
+          && shouldCascadeDeleteTarget(currentId, conn.to)) {
+          toVisit.push(conn.to);
+        }
+      });
+    }
+
+    return collected;
+  }
+
+  function getDeleteCascadeMessage(shapeEl, cascadeIds) {
+    const selectedText = (shapeEl?.querySelector('.content')?.textContent || '').trim() || 'цей блок';
+    const totalBlocks = cascadeIds.size;
+    const downstreamCount = Math.max(0, totalBlocks - 1);
+    const isStartBlock = getShapeType(shapeEl) === 'start-end'
+      && selectedText.trim().toLowerCase() === 'початок';
+
+    if (isStartBlock) {
+      return 'Якщо видалити блок "Початок", уся схема нижче теж буде видалена. Після цього редактор одразу створить новий блок "Початок". Продовжити?';
+    }
+    if (downstreamCount === 0) {
+      return `Видалити блок «${selectedText}»?`;
+    }
+    return `Якщо видалити блок «${selectedText}», разом із ним буде видалено всі блоки після нього. Разом зникне ${totalBlocks} блоків. Продовжити?`;
+  }
+
+  function deleteShapeCascade(shapeEl) {
+    if (!shapeEl) return;
+    const cascadeIds = collectCascadeShapeIds(shapeEl.id);
+    if (!cascadeIds.size) return;
+
     saveSnapshot();
 
-    const toRemove = state.connections.filter(c => c.from === shapeId || c.to === shapeId).map(c => c.id);
-    toRemove.forEach(id => removeConnectionDom(id));
-    state.connections = state.connections.filter(c => c.from !== shapeId && c.to !== shapeId);
+    const connectionIds = state.connections
+      .filter((conn) => cascadeIds.has(conn.from) || cascadeIds.has(conn.to))
+      .map((conn) => conn.id);
+    connectionIds.forEach((id) => removeConnectionDom(id));
+    state.connections = state.connections
+      .filter((conn) => !cascadeIds.has(conn.from) && !cascadeIds.has(conn.to));
 
-    document.getElementById(shapeId)?.remove();
-    removeHandleGroup(shapeId);
-    state.shapes = state.shapes.filter(s => s.id !== shapeId);
+    cascadeIds.forEach((shapeId) => {
+      document.getElementById(shapeId)?.remove();
+      removeHandleGroup(shapeId);
+    });
+    state.shapes = state.shapes.filter((shape) => !cascadeIds.has(shape.id));
 
     deselectAll(false);
     clearConnectionSelection(false);
+
+    if (!state.shapes.length) {
+      resetToInitialStart();
+      return;
+    }
+
     updateConnectionBar();
     scheduleRefresh();
+  }
+
+  function deleteSelected() {
+    if (!state.selectedShape) return;
+    const shapeEl = state.selectedShape;
+    const cascadeIds = collectCascadeShapeIds(shapeEl.id);
+    const confirmText = getDeleteCascadeMessage(shapeEl, cascadeIds);
+    showConfirmModal(confirmText, () => deleteShapeCascade(shapeEl));
   }
 
   editShapeBtn?.addEventListener('click', () => {
@@ -2020,27 +2265,18 @@ document.addEventListener('DOMContentLoaded', () => {
   clearButton?.addEventListener('click', () => {
     showConfirmModal('Очистити все полотно?', () => {
       saveSnapshot();
-      state.shapes.forEach(s => {
-        document.getElementById(s.id)?.remove();
-        removeHandleGroup(s.id);
-      });
-      state.connections.forEach(c => removeConnectionDom(c.id));
-
-      state.shapes = [];
-      state.connections = [];
-      state.selectedShape = null;
-      state.selectedConnId = null;
+      closeBuilderWizard();
+      state.diagramTitle = '';
+      if (titleInput) titleInput.value = '';
+      renderTitle();
       state.shapeCounter = 0;
       state.redoStack = [];
-      hideAllHandles();
-      updateHistoryButtons();
-      updateConnectionBar();
-      scheduleRefresh();
+      resetToInitialStart();
     });
   });
 
   // ================= SAVE AS IMAGE =================
-  function computeShapesBounds() {
+  function computeShapesBounds(includeTitle = true) {
     if (state.shapes.length === 0) {
       return { minX: 0, minY: 0, maxX: 0, maxY: 0, empty: true };
     }
@@ -2076,7 +2312,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    if (titleDisplay && titleDisplay.style.display !== 'none' && titleDisplay.textContent.trim()) {
+    if (includeTitle && titleDisplay && titleDisplay.style.display !== 'none' && titleDisplay.textContent.trim()) {
       const tLeft = titleDisplay.offsetLeft - titleDisplay.offsetWidth / 2;
       const tTop = titleDisplay.offsetTop;
       minX = Math.min(minX, tLeft);
@@ -2182,11 +2418,15 @@ document.addEventListener('DOMContentLoaded', () => {
     await new Promise(r => setTimeout(r, 60));
 
     let b = computeShapesBounds();
-    const pad = 90;
+    const pad = LAYOUT.exportPad;
     if (!suppressTitle && titleDisplay && (state.diagramTitle || '').trim()) {
+      titleDisplay.style.display = '';
+      titleDisplay.style.visibility = 'hidden';
+      const measuredHeight = titleDisplay.getBoundingClientRect().height || titleDisplay.offsetHeight || 48;
       titleDisplay.style.left = `${(b.minX + b.maxX) / 2}px`;
-      titleDisplay.style.top = `${Math.max(24, b.minY - 70)}px`;
+      titleDisplay.style.top = `${Math.max(24, b.minY - measuredHeight - 36)}px`;
       titleDisplay.style.transform = 'translateX(-50%)';
+      titleDisplay.style.visibility = '';
       titleDisplay.style.display = '';
       await new Promise(r => requestAnimationFrame(r));
       b = computeShapesBounds();
@@ -2303,37 +2543,49 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file, 'utf-8');
   });
 
-  // ================= HELP PANEL =================
-  function renderHelpPanelContent() {
-    const stepsWrap = helpPanel?.querySelector('.help-steps');
-    if (!stepsWrap) return;
-    stepsWrap.innerHTML = `
-      <div class="help-step"><span class="step-num">1</span><span><strong>Додати блок</strong> — натисни на потрібну фігуру в лівій панелі.</span></div>
-      <div class="help-step"><span class="step-num">2</span><span><strong>Змінити текст</strong> — двічі натисни на блок або виділи його і натисни <strong>Текст</strong>.</span></div>
-      <div class="help-step"><span class="step-num">3</span><span><strong>З'єднати стрілкою</strong> — наведи на блок і потягни від білого кружечка до іншого блоку.</span></div>
-      <div class="help-step"><span class="step-num">4</span><span><strong>Підписати стрілку</strong> — виділи стрілку → кнопка <strong>Підпис</strong>.</span></div>
-      <div class="help-step"><span class="step-num">5</span><span><strong>Маршрут стрілки</strong> — виділи стрілку → кнопка <strong>Маршрут</strong> або клавіша <strong>R</strong>. Для циклу: «Обхід ліворуч» або «Обхід праворуч».</span></div>
-      <div class="help-step"><span class="step-num">6</span><span><strong>Перемістити блок</strong> — тягни мишею або пальцем.</span></div>
-      <div class="help-step"><span class="step-num">7</span><span><strong>Масштаб</strong> — колесо миші або кнопки <strong>+ / −</strong>.</span></div>
-      <div class="help-step"><span class="step-num">8</span><span><strong>Скасувати / Повернути</strong> — <strong>Ctrl+Z</strong> / <strong>Ctrl+Y</strong>.</span></div>
-      <div class="help-step"><span class="step-num">9</span><span><strong>Зберегти зображення</strong> — кнопка або <strong>Ctrl+S</strong>.</span></div>
-      <div class="help-step"><span class="step-num">10</span><span><strong>Зберегти / Відкрити проєкт у форматі JSON</strong> — <strong>Ctrl+Shift+S</strong> / <strong>Ctrl+O</strong>. Редактор також зберігає чернетку автоматично.</span></div>
-      <div class="help-step help-step-link"><span class="step-num" style="background:var(--success);">?</span><span>Що таке цикли, які бувають фігури, приклади схем — <a href="manual.html" target="_blank" rel="noopener noreferrer">відкрити Довідник</a>.</span></div>
-    `;
+  // ================= EXAMPLES PANEL =================
+  function renderExamplesPanelContent() {
+    if (!examplesList) return;
+    examplesList.innerHTML = '';
+
+    EXAMPLE_PROJECTS.forEach((example) => {
+      const card = document.createElement('article');
+      card.className = 'example-card';
+      card.innerHTML = `
+        <div class="example-icon" aria-hidden="true"><i class="fa-solid ${example.icon || 'fa-star'}"></i></div>
+        <div class="example-copy">
+          <h4 class="example-title">${example.title}</h4>
+          <p class="example-subtitle">${example.subtitle}</p>
+        </div>
+        <button class="example-open-btn" type="button">Відкрити</button>
+      `;
+      card.querySelector('.example-open-btn')?.addEventListener('click', () => {
+        try {
+          saveSnapshot();
+          restoreSnapshot(example.project, { focusMode: 'content' });
+          toggleExamplesPanel(false);
+        } catch (error) {
+          console.error(error);
+          showMessageModal('Не вдалося відкрити приклад.');
+        }
+      });
+      examplesList.appendChild(card);
+    });
   }
 
-  renderHelpPanelContent();
+  renderExamplesPanelContent();
+  hydrateWizardCards();
 
-  function toggleHelp(show) {
-    if (!helpPanel) return;
+  function toggleExamplesPanel(show) {
+    if (!examplesPanel) return;
     if (typeof show === 'boolean') {
-      helpPanel.hidden = !show;
+      examplesPanel.hidden = !show;
       return;
     }
-    helpPanel.hidden = !helpPanel.hidden;
+    examplesPanel.hidden = !examplesPanel.hidden;
   }
-  helpButton?.addEventListener('click', () => toggleHelp());
-  helpClose?.addEventListener('click', () => toggleHelp(false));
+  examplesButton?.addEventListener('click', () => toggleExamplesPanel());
+  examplesClose?.addEventListener('click', () => toggleExamplesPanel(false));
 
   // ================= GLOBAL SHORTCUTS =================
   function detectMacPlatform() {
@@ -2376,22 +2628,12 @@ document.addEventListener('DOMContentLoaded', () => {
       openSaveTitlePrompt();
       return;
     }
-    if (!mod && e.key.toLowerCase() === 'r' && state.selectedConnId) {
-      const tag = (document.activeElement?.tagName || '').toLowerCase();
-      if (tag !== 'input' && tag !== 'textarea') {
-        e.preventDefault();
-        cycleSelectedConnectionRouteMode();
-      }
-      return;
-    }
-
     if (e.key === 'Escape') {
-      if (helpPanel && !helpPanel.hidden) toggleHelp(false);
+      if (examplesPanel && !examplesPanel.hidden) toggleExamplesPanel(false);
       closeModal(textModal);
-      closeModal(connectionModal);
       closeModal(document.getElementById('message-modal'));
       closeModal(saveTitleModal);
-      state.pendingConn = null;
+      closeBuilderWizard();
       state.activeShape = null;
     }
 
@@ -2406,6 +2648,7 @@ document.addEventListener('DOMContentLoaded', () => {
   svgLayer.addEventListener('pointerdown', (e) => {
     if ((e.target instanceof SVGElement) && e.target.classList.contains('conn-hit')) return;
     if (!isOnBackground(e.target)) return;
+    closeBuilderWizard();
     deselectAll(false);
     clearConnectionSelection(false);
     updateConnectionBar();
@@ -2417,6 +2660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.connections.forEach(c => updateConnection(c.id));
     Object.keys(shapeHandleGroups).forEach(updateHandleGroup);
     scheduleTitleUpdate();
+    renderQuickAddButtons();
   }
   function scheduleRefresh() {
     if (state._refreshRaf) return;
@@ -2425,16 +2669,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', scheduleRefresh);
 
   // ================= INIT UI =================
-  syncColorPickerToCurrent(state.currentColor);
   renderTitle();
   window.addEventListener('beforeunload', persistAutosave);
-  promptRestoreAutosave();
-
-  connectionModal?.addEventListener('pointerdown', (e) => {
-    if (e.target === connectionModal) {
-      state.pendingConn = null;
-      closeModal(connectionModal);
-    }
-  });
+  const hasDraft = promptRestoreAutosave();
+  if (!hasDraft) createInitialStartBlock();
+  renderQuickAddButtons();
 
 });
