@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
     saveButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Зберегти зображення</span>';
   }
 
-  const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити проєкт');
-  const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти проєкт');
+  const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити');
+  const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти');
   const snapToggleButton = document.createElement('button');
   snapToggleButton.id = 'snap-toggle-button';
   snapToggleButton.type = 'button';
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cancel.onclick = () => closeModal(modal);
 
     const ok = document.createElement('button');
-    ok.textContent = 'Видалити';
+    ok.textContent = 'Очистити';
     ok.className = 'modal-btn no-btn';
     ok.onclick = () => { closeModal(modal); onOk?.(); };
 
