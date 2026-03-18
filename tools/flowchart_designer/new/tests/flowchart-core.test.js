@@ -1,4 +1,4 @@
-﻿const test = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
 const core = require('../flowchart-core.js');
 
@@ -113,6 +113,7 @@ test('serializeProject and parseProject preserve exported connection ids', () =>
     diagramTitle: '????',
     shapeCounter: 5,
     lastShapeType: 'decision',
+    snapEnabled: false,
     baseColors: { ...core.DEFAULT_BASE_COLORS },
     shapes: [
       { id: 'shape-1', type: 'start-end', color: '#4caf50', textRaw: '???????', left: 479, top: 83 },
@@ -143,4 +144,5 @@ test('serializeProject and parseProject preserve exported connection ids', () =>
     parsed.connections.map((conn) => conn.type),
     state.connections.map((conn) => conn.type),
   );
+  assert.equal(parsed.snapEnabled, false);
 });

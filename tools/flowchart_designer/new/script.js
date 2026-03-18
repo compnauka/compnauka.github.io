@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('flowchart-canvas');
   const canvasContainer = document.getElementById('canvas-container');
   const svgLayer = document.getElementById('connectors-layer');
+  const headerEl = document.querySelector('header');
 
   const clearButton = document.getElementById('clear-button');
   const saveButton = document.getElementById('save-button');
@@ -69,6 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return btn;
   }
 
+  function updateFloatingBarOffset() {
+    const headerHeight = headerEl?.getBoundingClientRect().height || 58;
+    document.documentElement.style.setProperty('--floating-bar-top', `${Math.round(headerHeight + 10)}px`);
+  }
+
   const legacyDeleteButton = document.getElementById('delete-button');
   legacyDeleteButton?.remove();
 
@@ -93,9 +99,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити проєкт');
   const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти проєкт');
+  const snapToggleButton = document.createElement('button');
+  snapToggleButton.id = 'snap-toggle-button';
+  snapToggleButton.type = 'button';
+  snapToggleButton.className = 'icon-btn icon-btn-compact';
+  snapToggleButton.title = 'Прив\'язка до сітки (G)';
+  snapToggleButton.setAttribute('aria-label', 'Увімкнути або вимкнути прив\'язку до сітки');
+  snapToggleButton.setAttribute('aria-pressed', 'true');
+  snapToggleButton.innerHTML = '<i class="fa-solid fa-border-all"></i>';
+
+  function updateSnapButton() {
+    const active = state.snapEnabled;
+    snapToggleButton.setAttribute('aria-pressed', String(active));
+    snapToggleButton.title = active
+      ? 'Прив\'язка до сітки увімкнена (G)'
+      : 'Прив\'язка до сітки вимкнена (G)';
+  }
+
+  snapToggleButton.addEventListener('click', () => {
+    saveSnapshot();
+    state.snapEnabled = !state.snapEnabled;
+    updateSnapButton();
+  });
+
   if (quickActions && saveButton) {
     quickActions.insertBefore(openProjectButton, saveButton);
     quickActions.insertBefore(saveProjectButton, saveButton);
+    quickActions.insertBefore(snapToggleButton, openProjectButton);
   }
 
   if (!shapeBar && connectionBar?.parentElement) {
@@ -178,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     baseColors: { ...DEFAULT_BASE_COLORS },
     currentColor: '#3f51b5',
     lastShapeType: 'process',
+    snapEnabled: true,
 
     diagramTitle: '',
 
@@ -214,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ROUTE_MODE_LABELS['bypass-left'] = ROUTE_MODE_LABELS['bypass-left'] || 'Обхід ліворуч';
   ROUTE_MODE_LABELS['bypass-right'] = ROUTE_MODE_LABELS['bypass-right'] || 'Обхід праворуч';
   const MERGE_LEAD = 34;
+  const GRID_SIZE = 20;
   const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
   let autosaveRaf = 0;
 
@@ -239,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       diagramTitle: state.diagramTitle,
       shapeCounter: state.shapeCounter,
       lastShapeType: state.lastShapeType,
+      snapEnabled: state.snapEnabled,
     };
   }
 
@@ -282,9 +315,11 @@ document.addEventListener('DOMContentLoaded', () => {
     state.diagramTitle = snap.diagramTitle || '';
     state.shapeCounter = snap.shapeCounter || 0;
     state.lastShapeType = snap.lastShapeType || 'process';
+    state.snapEnabled = snap.snapEnabled !== undefined ? !!snap.snapEnabled : true;
 
     if (titleInput) titleInput.value = state.diagramTitle;
     renderTitle();
+    updateSnapButton();
 
     (snap.shapes || []).forEach(s => {
       createShape(s.type, s.color, s.textRaw, s.left, s.top, s.id, true);
@@ -369,9 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cancel.onclick = () => closeModal(modal);
 
     const ok = document.createElement('button');
-    ok.textContent = 'Так';
-    ok.className = 'modal-btn';
-    ok.style.cssText = 'background:#f44336;color:white;';
+    ok.textContent = 'Видалити';
+    ok.className = 'modal-btn no-btn';
     ok.onclick = () => { closeModal(modal); onOk?.(); };
 
     btns.appendChild(cancel);
@@ -642,6 +676,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return { x: (clientX - r.left) / state.scale, y: (clientY - r.top) / state.scale };
   }
 
+  function snapToGrid(value) {
+    if (!state.snapEnabled) return value;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
+  }
+
   // ================= HANDLES (SVG) =================
   const shapeHandleGroups = {};
 
@@ -772,14 +811,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.dataset.shapeId = shapeEl.id;
     ['top', 'right', 'bottom', 'left'].forEach(pos => {
+      const hitCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      hitCircle.setAttribute('r', '22');
+      hitCircle.setAttribute('fill', 'transparent');
+      hitCircle.setAttribute('stroke', 'none');
+      hitCircle.classList.add('conn-handle', 'conn-handle-hit-area');
+      hitCircle.dataset.shapeId = shapeEl.id;
+      hitCircle.dataset.pos = pos;
+      g.appendChild(hitCircle);
+
       const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       c.setAttribute('r', '10');
       c.setAttribute('fill', 'white');
       c.setAttribute('stroke', '#4361ee');
       c.setAttribute('stroke-width', '3');
-      c.classList.add('conn-handle');
+      c.classList.add('conn-handle', 'conn-handle-visual');
       c.dataset.shapeId = shapeEl.id;
       c.dataset.pos = pos;
+      c.style.pointerEvents = 'none';
       g.appendChild(c);
     });
     svgLayer.appendChild(g);
@@ -794,21 +843,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const g = shapeHandleGroups[shapeId];
     if (!el || !g) return;
     const pts = getHandlePositions(el);
-    const circles = g.querySelectorAll('circle');
-    ['top', 'right', 'bottom', 'left'].forEach((pos, i) => {
-      circles[i].setAttribute('cx', pts[pos].x);
-      circles[i].setAttribute('cy', pts[pos].y);
+    const sides = ['top', 'right', 'bottom', 'left'];
+    const hitCircles = g.querySelectorAll('.conn-handle-hit-area');
+    const visualCircles = g.querySelectorAll('.conn-handle-visual');
+    sides.forEach((pos, i) => {
+      if (hitCircles[i]) {
+        hitCircles[i].setAttribute('cx', pts[pos].x);
+        hitCircles[i].setAttribute('cy', pts[pos].y);
+      }
+      if (visualCircles[i]) {
+        visualCircles[i].setAttribute('cx', pts[pos].x);
+        visualCircles[i].setAttribute('cy', pts[pos].y);
+      }
     });
   }
 
   function showHandlesForShape(shapeId) {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('circle').forEach(c => c.classList.remove('visible')));
+    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.remove('visible')));
     const g = shapeHandleGroups[shapeId];
-    if (g) g.querySelectorAll('circle').forEach(c => c.classList.add('visible'));
+    if (g) g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.add('visible'));
   }
 
   function hideAllHandles() {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('circle').forEach(c => c.classList.remove('visible')));
+    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.remove('visible')));
   }
 
   function removeHandleGroup(shapeId) {
@@ -889,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function attachHandleListeners(shapeId) {
     const g = shapeHandleGroups[shapeId];
     if (!g) return;
-    g.querySelectorAll('circle').forEach(c => c.addEventListener('pointerdown', onHandlePointerDown));
+    g.querySelectorAll('.conn-handle-hit-area').forEach(c => c.addEventListener('pointerdown', onHandlePointerDown));
   }
 
   // ================= CONNECTIONS (orthogonal) =================
@@ -1679,8 +1736,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoPos = (posLeft === undefined || posTop === undefined)
       ? findAutoShapePosition(type, defaultLeft, defaultTop)
       : null;
-    const finalLeft = posLeft !== undefined ? posLeft : autoPos.left;
-    const finalTop = posTop !== undefined ? posTop : autoPos.top;
+    const finalLeft = posLeft !== undefined ? posLeft : snapToGrid(autoPos.left);
+    const finalTop = posTop !== undefined ? posTop : snapToGrid(autoPos.top);
     shape.style.left = finalLeft + 'px';
     shape.style.top = finalTop + 'px';
 
@@ -1810,8 +1867,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!state.dragState) return;
       moved = true;
       const pt2 = clientToCanvas(ev.clientX, ev.clientY);
-      const newX = Math.max(0, pt2.x - state.dragState.offsetX);
-      const newY = Math.max(0, pt2.y - state.dragState.offsetY);
+      const rawX = Math.max(0, pt2.x - state.dragState.offsetX);
+      const rawY = Math.max(0, pt2.y - state.dragState.offsetY);
+      const newX = snapToGrid(rawX);
+      const newY = snapToGrid(rawY);
       el.style.left = newX + 'px';
       el.style.top = newY + 'px';
       updateConnectionsForShape(el.id);
@@ -1988,14 +2047,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ================= DELETE / CLEAR =================
-  function deleteSelected() {
-    if (state.selectedConnId) {
-      deleteConnection(state.selectedConnId);
-      return;
-    }
-    if (!state.selectedShape) return;
-
-    const shapeId = state.selectedShape.id;
+  function performShapeDeletion(shapeEl) {
+    if (!shapeEl) return;
+    const shapeId = shapeEl.id;
     saveSnapshot();
 
     const toRemove = state.connections.filter(c => c.from === shapeId || c.to === shapeId).map(c => c.id);
@@ -2010,6 +2064,40 @@ document.addEventListener('DOMContentLoaded', () => {
     clearConnectionSelection(false);
     updateConnectionBar();
     scheduleRefresh();
+  }
+
+  function shouldConfirmShapeDeletion(shapeEl) {
+    if (!shapeEl) return false;
+    const hasConnections = state.connections.some(c => c.from === shapeEl.id || c.to === shapeEl.id);
+    const shapeData = state.shapes.find(s => s.id === shapeEl.id);
+    const text = String(shapeData?.textRaw || '').trim();
+    const defaultText = String(getDefaultText(shapeData?.type, state.shapes) || '').trim();
+    const hasMeaningfulCustomText = !!text && text !== defaultText;
+    return hasConnections || hasMeaningfulCustomText;
+  }
+
+  function deleteSelected() {
+    if (state.selectedConnId) {
+      deleteConnection(state.selectedConnId);
+      return;
+    }
+    if (!state.selectedShape) return;
+
+    const shapeEl = state.selectedShape;
+    if (!shouldConfirmShapeDeletion(shapeEl)) {
+      performShapeDeletion(shapeEl);
+      return;
+    }
+
+    const linkedCount = state.connections.filter(c => c.from === shapeEl.id || c.to === shapeEl.id).length;
+    const shapeData = state.shapes.find(s => s.id === shapeEl.id);
+    const text = String(shapeData?.textRaw || '').trim();
+    const connectionWord = linkedCount === 1 ? "з'єднання" : "з'єднань";
+    const detail = linkedCount > 0
+      ? ` Буде також видалено ${linkedCount} ${connectionWord}.`
+      : '';
+    const label = text ? ` «${text.slice(0, 40)}${text.length > 40 ? '…' : ''}»` : '';
+    showConfirmModal(`Видалити блок${label}?${detail}`, () => performShapeDeletion(shapeEl));
   }
 
   editShapeBtn?.addEventListener('click', () => {
@@ -2310,11 +2398,12 @@ document.addEventListener('DOMContentLoaded', () => {
     stepsWrap.innerHTML = `
       <div class="help-step"><span class="step-num">1</span><span><strong>Додати блок</strong> — натисни на потрібну фігуру в лівій панелі.</span></div>
       <div class="help-step"><span class="step-num">2</span><span><strong>Змінити текст</strong> — двічі натисни на блок або виділи його і натисни <strong>Текст</strong>.</span></div>
-      <div class="help-step"><span class="step-num">3</span><span><strong>З'єднати стрілкою</strong> — наведи на блок і потягни від білого кружечка до іншого блоку.</span></div>
+      <div class="help-step"><span class="step-num">3</span><span><strong>З'єднати стрілкою</strong> — наведи на блок і потягни від білого кружечка до іншого блоку. Від <strong>ромба</strong>: <span style="color:#2e7d32">«Так»</span> виходить ліворуч, <span style="color:#c62828">«Ні»</span> — праворуч.</span></div>
       <div class="help-step"><span class="step-num">4</span><span><strong>Підписати стрілку</strong> — виділи стрілку → кнопка <strong>Підпис</strong>.</span></div>
       <div class="help-step"><span class="step-num">5</span><span><strong>Маршрут стрілки</strong> — виділи стрілку → кнопка <strong>Маршрут</strong> або клавіша <strong>R</strong>. Для циклу: «Обхід ліворуч» або «Обхід праворуч».</span></div>
       <div class="help-step"><span class="step-num">6</span><span><strong>Перемістити блок</strong> — тягни мишею або пальцем.</span></div>
       <div class="help-step"><span class="step-num">7</span><span><strong>Масштаб</strong> — колесо миші або кнопки <strong>+ / −</strong>.</span></div>
+      <div class="help-step"><span class="step-num" style="background:#546e7a;">G</span><span><strong>Сітка</strong> — кнопка <i class="fa-solid fa-border-all"></i> або клавіша <strong>G</strong> вмикає/вимикає прив'язку блоків до сітки для охайного розміщення.</span></div>
       <div class="help-step"><span class="step-num">8</span><span><strong>Скасувати / Повернути</strong> — <strong>Ctrl+Z</strong> / <strong>Ctrl+Y</strong>.</span></div>
       <div class="help-step"><span class="step-num">9</span><span><strong>Зберегти зображення</strong> — кнопка або <strong>Ctrl+S</strong>.</span></div>
       <div class="help-step"><span class="step-num">10</span><span><strong>Зберегти / Відкрити проєкт у форматі JSON</strong> — <strong>Ctrl+Shift+S</strong> / <strong>Ctrl+O</strong>. Редактор також зберігає чернетку автоматично.</span></div>
@@ -2323,6 +2412,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderHelpPanelContent();
+  updateSnapButton();
+  updateFloatingBarOffset();
 
   function toggleHelp(show) {
     if (!helpPanel) return;
@@ -2384,6 +2475,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return;
     }
+    if (!mod && e.key.toLowerCase() === 'g') {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea') {
+        e.preventDefault();
+        saveSnapshot();
+        state.snapEnabled = !state.snapEnabled;
+        updateSnapButton();
+      }
+      return;
+    }
 
     if (e.key === 'Escape') {
       if (helpPanel && !helpPanel.hidden) toggleHelp(false);
@@ -2422,7 +2523,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state._refreshRaf) return;
     state._refreshRaf = requestAnimationFrame(refreshAll);
   }
-  window.addEventListener('resize', scheduleRefresh);
+  window.addEventListener('resize', () => {
+    updateFloatingBarOffset();
+    scheduleRefresh();
+  });
 
   // ================= INIT UI =================
   syncColorPickerToCurrent(state.currentColor);

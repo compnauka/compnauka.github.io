@@ -475,6 +475,7 @@
       diagramTitle: String(state?.diagramTitle || ''),
       shapeCounter: Number(state?.shapeCounter || 0),
       lastShapeType: String(state?.lastShapeType || 'process'),
+      snapEnabled: state?.snapEnabled !== undefined ? !!state.snapEnabled : true,
       baseColors: { ...DEFAULT_BASE_COLORS, ...(state?.baseColors || {}) },
       shapes: (state?.shapes || []).map((shape) => {
         const pos = positions[shape.id] || {};
@@ -536,6 +537,7 @@
       diagramTitle: String(data.diagramTitle || ''),
       shapeCounter: Number(data.shapeCounter || 0),
       lastShapeType: normalizeShapeType(data.lastShapeType || 'process'),
+      snapEnabled: data.snapEnabled !== undefined ? !!data.snapEnabled : true,
       baseColors: { ...DEFAULT_BASE_COLORS, ...(data.baseColors || {}) },
       shapes: parsedShapes,
       connections: parsedConnections,
