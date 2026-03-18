@@ -581,10 +581,14 @@
     const toCy = toShape.top + toShape.height / 2;
     const hDist = safeSide === 'right' ? toCx - cx : cx - toCx;
     const vDist = toCy - cy;
+    const targetSpansCenter = toShape.left <= cx && (toShape.left + toShape.width) >= cx;
 
     let entry = 'top';
     if (vDist < -30) {
       // Looping back upward looks cleaner when the branch enters the side corridor.
+      entry = safeSide;
+    } else if (vDist > 30 && targetSpansCenter) {
+      // When a shared action block sits under the decision, branch lines should enter from their side.
       entry = safeSide;
     } else if (Math.abs(vDist) < 30 && hDist > 20) {
       entry = safeSide === 'right' ? 'left' : 'right';

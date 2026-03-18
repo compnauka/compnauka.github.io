@@ -38,6 +38,17 @@ test('getDecisionBranchRoute connects upward loop branches to target sides', () 
   assert.ok(Math.abs(noRoute.pts[1].x - noRoute.pts[0].x) >= 72);
 });
 
+test('getDecisionBranchRoute enters a shared lower action block from the branch side', () => {
+  const decision = { left: 300, top: 260, width: 140, height: 140, type: 'decision' };
+  const target = { left: 290, top: 540, width: 180, height: 84, type: 'process' };
+
+  const noRoute = core.getDecisionBranchRoute(decision, target, 'right', 2);
+
+  assert.equal(noRoute.entry, 'right');
+  assert.equal(noRoute.pts.at(-1).x, target.left + target.width);
+  assert.ok(noRoute.pts[1].x > noRoute.pts[0].x);
+});
+
 test('getConnectionLabelPosition keeps yes/no label on outer loop segment', () => {
   const yesPoints = [
     { x: 290, y: 390 },

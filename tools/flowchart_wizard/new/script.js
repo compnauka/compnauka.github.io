@@ -1624,9 +1624,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (connType === 'no') return computeDecisionConnection(fromEl, toEl, 'right');
     }
 
-    // Kid mode keeps arrows fully automatic and predictable.
-    // We intentionally ignore custom route modes and fan-in spreading.
-    const routed = routeOrthogonal(fromEl, toEl, 'auto');
+    const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
+    const routed = routeOrthogonal(fromEl, toEl, routeMode);
     const pts = routed.pts;
     const d = pointsToPathD(pts);
     return { d, pts };
@@ -1682,6 +1681,7 @@ document.addEventListener('DOMContentLoaded', () => {
     connType = connType || null;
     if (!fromEl || !toEl) return null;
     if (fromEl.id === toEl.id) return null;
+    const routeMode = ROUTE_MODES.includes(forcedRouteMode) ? forcedRouteMode : 'auto';
 
     const connId = forcedId || (connType
       ? `conn-${fromEl.id}-${toEl.id}-${connType}`
@@ -1722,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
     svgLayer.insertBefore(hitPath, firstG);
 
     if (!state.connections.find(c => c.id === connId)) {
-      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode: 'auto', label: null });
+      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode, label: null });
     }
 
     updateConnection(connId);
