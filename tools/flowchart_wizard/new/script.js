@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('flowchart-canvas');
   const canvasContainer = document.getElementById('canvas-container');
   const svgLayer = document.getElementById('connectors-layer');
+  const headerEl = document.querySelector('header');
 
   const clearButton = document.getElementById('clear-button');
   const saveButton = document.getElementById('save-button');
@@ -120,19 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
     clearButton.innerHTML = '<i class="fa-solid fa-broom"></i><span>Очистити</span>';
   }
 
-  const openProjectButton = createActionButton('open-project-button', 'Відкрити проєкт JSON', 'fa-solid fa-folder-open', 'Відкрити');
   const saveProjectButton = createActionButton('save-project-button', 'Зберегти проєкт JSON', 'fa-solid fa-file-arrow-down', 'Зберегти');
   if (quickActions && saveButton) {
-    quickActions.insertBefore(openProjectButton, saveButton);
     quickActions.insertBefore(saveProjectButton, saveButton);
   }
-
-  const projectFileInput = document.createElement('input');
-  projectFileInput.id = 'project-file-input';
-  projectFileInput.type = 'file';
-  projectFileInput.accept = '.json,application/json';
-  projectFileInput.hidden = true;
-  document.body.appendChild(projectFileInput);
 
   // ================= STATE =================
   const DEFAULT_BASE_COLORS = core?.DEFAULT_BASE_COLORS
@@ -194,8 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
   ROUTE_MODE_LABELS['bypass-left'] = ROUTE_MODE_LABELS['bypass-left'] || 'Обхід ліворуч';
   ROUTE_MODE_LABELS['bypass-right'] = ROUTE_MODE_LABELS['bypass-right'] || 'Обхід праворуч';
   const MERGE_LEAD = 34;
-  const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
-  let autosaveRaf = 0;
+  const AUTOSAVE_STORAGE_KEY = 'flowchart-wizard-autosave';
+  const GRID_SIZE = 10;
 
   const SHAPE_LIBRARY = core?.getShapeLibrary
     ? core.getShapeLibrary()
@@ -355,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => ok.focus(), 30);
   }
 
-  function showConfirmModal(text, onOk) {
+  function showConfirmModal(text, onOk, okLabel = 'Видалити') {
     const modal = document.getElementById('message-modal');
     const textEl = document.getElementById('message-modal-text');
     const btns = document.getElementById('message-modal-buttons');
@@ -370,9 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cancel.onclick = () => closeModal(modal);
 
     const ok = document.createElement('button');
-    ok.textContent = 'Так';
-    ok.className = 'modal-btn';
-    ok.style.cssText = 'background:#f44336;color:white;';
+    ok.textContent = okLabel;
+    ok.className = 'modal-btn no-btn';
     ok.onclick = () => { closeModal(modal); onOk?.(); };
 
     btns.appendChild(cancel);
@@ -608,11 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function scheduleAutosave() {
-    if (autosaveRaf) return;
-    autosaveRaf = requestAnimationFrame(() => {
-      autosaveRaf = 0;
-      persistAutosave();
-    });
+    // Автозбереження вимкнено: редактор працює в класі на спільному комп'ютері.
   }
 
   function clearAutosave() {
@@ -1189,6 +1176,28 @@ document.addEventListener('DOMContentLoaded', () => {
   function clientToCanvas(clientX, clientY) {
     const r = canvas.getBoundingClientRect();
     return { x: (clientX - r.left) / state.scale, y: (clientY - r.top) / state.scale };
+  }
+
+  function snapToGrid(value) {
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
+  }
+
+  function snapShapeLeft(left, width) {
+    const safeWidth = Number(width) || 0;
+    const snappedCenterX = snapToGrid(left + safeWidth / 2);
+    return Math.max(0, Math.round(snappedCenterX - safeWidth / 2));
+  }
+
+  function snapShapeTop(top) {
+    return Math.max(0, snapToGrid(top));
+  }
+
+  function updateFloatingBarOffset() {
+    const headerHeight = headerEl?.getBoundingClientRect().height || 58;
+    document.documentElement.style.setProperty(
+      '--floating-bar-top',
+      `${Math.round(headerHeight + 10)}px`
+    );
   }
 
   // ================= HANDLES (SVG) =================
@@ -1893,8 +1902,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoPos = (posLeft === undefined || posTop === undefined)
       ? findAutoShapePosition(type, defaultLeft, defaultTop)
       : null;
-    const finalLeft = posLeft !== undefined ? posLeft : autoPos.left;
-    const finalTop = posTop !== undefined ? posTop : autoPos.top;
+    const targetLeft = posLeft !== undefined ? posLeft : autoPos.left;
+    const targetTop = posTop !== undefined ? posTop : autoPos.top;
+    const finalLeft = snapShapeLeft(targetLeft, sizeHint.w);
+    const finalTop = snapShapeTop(targetTop);
     shape.style.left = finalLeft + 'px';
     shape.style.top = finalTop + 'px';
 
@@ -2024,10 +2035,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!state.dragState) return;
       moved = true;
       const pt2 = clientToCanvas(ev.clientX, ev.clientY);
-      const newX = Math.max(0, pt2.x - state.dragState.offsetX);
-      const newY = Math.max(0, pt2.y - state.dragState.offsetY);
-      el.style.left = newX + 'px';
-      el.style.top = newY + 'px';
+      const rawX = Math.max(0, pt2.x - state.dragState.offsetX);
+      const rawY = Math.max(0, pt2.y - state.dragState.offsetY);
+      el.style.left = snapShapeLeft(rawX, el.offsetWidth) + 'px';
+      el.style.top = snapShapeTop(rawY) + 'px';
       updateConnectionsForShape(el.id);
       updateHandleGroup(el.id);
       scheduleTitleUpdate();
@@ -2390,7 +2401,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openProjectFilePicker() {
-    projectFileInput.value = '';
+    const projectFileInput = document.createElement('input');
+    projectFileInput.type = 'file';
+    projectFileInput.accept = '.json,application/json';
+
+    projectFileInput.addEventListener('change', () => {
+      const file = projectFileInput.files?.[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        showMessageModal('Файл занадто великий. Максимум 2 МБ.');
+        projectFileInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          importProjectData(String(reader.result || ''));
+        } catch (error) {
+          console.error(error);
+          showMessageModal(getImportErrorMessage(error));
+        }
+      };
+      reader.onerror = () => {
+        showMessageModal('Не вдалося прочитати файл проєкту.');
+      };
+      reader.readAsText(file, 'utf-8');
+    }, { once: true });
+
     projectFileInput.click();
   }
 
@@ -2519,29 +2556,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   saveButton?.addEventListener('click', openSaveTitlePrompt);
   saveProjectButton?.addEventListener('click', downloadProjectJson);
-  openProjectButton?.addEventListener('click', openProjectFilePicker);
-  projectFileInput.addEventListener('change', () => {
-    const file = projectFileInput.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showMessageModal('Файл занадто великий. Максимум 2 МБ.');
-      projectFileInput.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        importProjectData(String(reader.result || ''));
-      } catch (error) {
-        console.error(error);
-        showMessageModal(getImportErrorMessage(error));
-      }
-    };
-    reader.onerror = () => {
-      showMessageModal('Не вдалося прочитати файл проєкту.');
-    };
-    reader.readAsText(file, 'utf-8');
-  });
 
   // ================= EXAMPLES PANEL =================
   function renderExamplesPanelContent() {
@@ -2618,11 +2632,6 @@ document.addEventListener('DOMContentLoaded', () => {
       downloadProjectJson();
       return;
     }
-    if (mod && e.key.toLowerCase() === 'o') {
-      e.preventDefault();
-      openProjectFilePicker();
-      return;
-    }
     if (mod && e.key.toLowerCase() === 's') {
       e.preventDefault();
       openSaveTitlePrompt();
@@ -2666,13 +2675,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state._refreshRaf) return;
     state._refreshRaf = requestAnimationFrame(refreshAll);
   }
-  window.addEventListener('resize', scheduleRefresh);
+  window.addEventListener('resize', () => {
+    updateFloatingBarOffset();
+    scheduleRefresh();
+  });
 
   // ================= INIT UI =================
   renderTitle();
-  window.addEventListener('beforeunload', persistAutosave);
-  const hasDraft = promptRestoreAutosave();
-  if (!hasDraft) createInitialStartBlock();
+  clearAutosave();
+  updateFloatingBarOffset();
+  createInitialStartBlock();
   renderQuickAddButtons();
 
 });
