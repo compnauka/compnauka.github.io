@@ -117,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   snapToggleButton.addEventListener('click', () => {
-    saveSnapshot();
     state.snapEnabled = !state.snapEnabled;
     updateSnapButton();
   });
@@ -2479,7 +2478,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const tag = (document.activeElement?.tagName || '').toLowerCase();
       if (tag !== 'input' && tag !== 'textarea') {
         e.preventDefault();
-        saveSnapshot();
         state.snapEnabled = !state.snapEnabled;
         updateSnapButton();
       }
