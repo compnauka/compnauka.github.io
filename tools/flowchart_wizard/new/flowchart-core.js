@@ -588,7 +588,8 @@
       // Looping back upward looks cleaner when the branch enters the side corridor.
       entry = safeSide;
     } else if (vDist > 30 && targetSpansCenter) {
-      // When a shared action block sits under the decision, branch lines should enter from their side.
+      // Kid editor: when a shared action block sits below the decision, entering from the
+      // branch side keeps the yes/no route from cutting through the central flow stack.
       entry = safeSide;
     } else if (Math.abs(vDist) < 30 && hDist > 20) {
       entry = safeSide === 'right' ? 'left' : 'right';

@@ -2283,7 +2283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.shapeCounter = 0;
       state.redoStack = [];
       resetToInitialStart();
-    });
+    }, 'Очистити');
   });
 
   // ================= SAVE AS IMAGE =================
