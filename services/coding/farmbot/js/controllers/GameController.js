@@ -44,6 +44,12 @@ class GameController {
     if (document.querySelector(CONFIG.SELECTORS.STOP_BUTTON)) {
       document.querySelector(CONFIG.SELECTORS.STOP_BUTTON).addEventListener('click', () => this.stopProgram());
     }
+
+    if (this.view.soundToggleButton) {
+      this.view.soundToggleButton.addEventListener('click', () => {
+        this.view.toggleSoundEnabled();
+      });
+    }
     
     // Обробник для кнопок команд
     this.view.commandsContainer.addEventListener('click', (e) => {
@@ -114,6 +120,7 @@ class GameController {
    */
   addCommand(command) {
     if (this.isRunning) return;
+    this.view.playSound('click');
     
     this.view.addProgramStep(command, (step) => {
       if (!this.isRunning) {
@@ -125,9 +132,12 @@ class GameController {
   /**
    * Очищення програми
    */
-  clearProgram() {
+  async clearProgram() {
     if (this.isRunning) return;
+    const shouldClear = await this.view.confirmClearProgram();
+    if (!shouldClear) return;
     this.view.clearProgram();
+    this.view.playSound('delete');
   }
 
   /**
@@ -140,6 +150,7 @@ class GameController {
     if (steps.length === 0) return;
     
     this.isRunning = true;
+    this.view.playSound('run');
     this.executeSteps(steps, 0);
   }
 
@@ -205,6 +216,7 @@ class GameController {
       // Перевірка збору предметів
       if (this.model.checkCollectibles()) {
         this.view.updateCollectibles(this.model.collectibles);
+        this.view.playSound('collect');
         
         // Перевірка завершення рівня
         if (this.model.isLevelCompleted()) {
@@ -237,6 +249,7 @@ class GameController {
     } else {
       // Обробка випадку, коли рух неможливий (стіна або край поля)
       this.view.showToast(CONFIG.ERROR_MESSAGES.WALL_COLLISION);
+      this.view.playSound('error');
       
       // Затримка перед продовженням програми
       setTimeout(() => {
@@ -256,6 +269,7 @@ class GameController {
     this.isRunning = false;
     this.model.completeLevel();
     this.view.showToast(`Молодець! Ти завершив рівень ${this.model.currentLevel}!`);
+    this.view.playSound('success');
     this.createLevelButtons();
     
     // Автоматичний перехід до наступного рівня, якщо він є
@@ -288,6 +302,9 @@ class GameController {
       this.isRunning = false;
       this.view.highlightProgramStep(-1);
       this.view.showToast("Програму зупинено");
+      this.view.playSound('stop');
     }
   }
 } 
+
+

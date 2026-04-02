@@ -23,7 +23,8 @@ const CONFIG = {
 
   // Ключі для локального сховища (localStorage)
   STORAGE_KEYS: {
-    COMPLETED_LEVELS: "robotGame_completedLevels" // Збережені пройдені рівні
+    COMPLETED_LEVELS: "robotGame_completedLevels", // Збережені пройдені рівні
+    SOUND_ENABLED_SESSION: "robotGame_soundEnabledSession"
   },
 
   // Команди робота (відповідають кнопкам керування)
@@ -32,6 +33,23 @@ const CONFIG = {
     DOWN: "вниз",   // Рух вниз
     LEFT: "вліво",  // Рух вліво
     RIGHT: "вправо" // Рух вправо
+  },
+
+  // Easter seasonal replacement (2 weeks)
+  SEASONAL_THEME: {
+    enabled: true,
+    startDate: "2026-04-02",
+    endDate: "2026-04-16",
+    eggAssets: [
+      "eggs/krashenka_blue.svg",
+      "eggs/krashenka_red.svg",
+      "eggs/pysanka_cross.svg",
+      "eggs/pysanka_dots.svg",
+      "eggs/pysanka_rhomb.svg",
+      "eggs/pysanka_solar.svg",
+      "eggs/pysanka_star.svg",
+      "eggs/pysanka_waves.svg"
+    ]
   },
 
   // Конфігурація рівнів (масив об'єктів, кожен описує рівень)
@@ -272,6 +290,10 @@ const CONFIG = {
     CLEAR_BUTTON: '#clearBtn',
     RESET_BUTTON: '#resetBtn',
     STOP_BUTTON: '#stopBtn',
+    SOUND_TOGGLE_BUTTON: '#soundToggleBtn',
+    CONFIRM_CLEAR_MODAL: '#confirmClearModal',
+    CONFIRM_CLEAR_OK_BUTTON: '#confirmClearOkBtn',
+    CONFIRM_CLEAR_CANCEL_BUTTON: '#confirmClearCancelBtn',
     LEVEL_PROGRESS: '#levelProgress',
     PROGRAM: '#program',
     ROBOT_FIELD: '#robotField',

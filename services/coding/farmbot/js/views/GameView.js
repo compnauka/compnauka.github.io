@@ -15,13 +15,18 @@ class GameView {
     this.commandsContainer = document.querySelector(CONFIG.SELECTORS.COMMANDS_CONTAINER); // Кнопки команд
     this.levelProgress = document.querySelector(CONFIG.SELECTORS.LEVEL_PROGRESS); // Прогрес рівнів
     this.levelDescription = document.querySelector(CONFIG.SELECTORS.LEVEL_DESCRIPTION); // Опис рівня
-    this.toast = document.querySelector(CONFIG.SELECTORS.TOAST); // Вікно повідомлення
+    this.toast = document.querySelector(CONFIG.SELECTORS.TOAST); // Toast message element
+    this.confirmClearModal = document.querySelector(CONFIG.SELECTORS.CONFIRM_CLEAR_MODAL);
+    this.confirmClearOkButton = document.querySelector(CONFIG.SELECTORS.CONFIRM_CLEAR_OK_BUTTON);
+    this.confirmClearCancelButton = document.querySelector(CONFIG.SELECTORS.CONFIRM_CLEAR_CANCEL_BUTTON);
+    this.soundToggleButton = document.querySelector(CONFIG.SELECTORS.SOUND_TOGGLE_BUTTON);
     
     // Поточний рівень (для підсвічування)
     this.currentLevel = 1;
     
     // Створення кнопок команд для керування роботом
     this.initCommandButtons();
+    this.initAudio();
   }
 
   /**
@@ -33,6 +38,119 @@ class GameView {
     this.initCommandButtons();
   }
 
+  initAudio() {
+    this.audioContext = null;
+    this.audioEnabled = this.readSoundEnabledFromSession();
+    this.isAudioUnlocked = false;
+    this.updateSoundToggleButton();
+
+    const unlockAudio = () => {
+      if (!this.audioEnabled || this.isAudioUnlocked) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          this.audioEnabled = false;
+          this.persistSoundEnabledState();
+          this.updateSoundToggleButton();
+          return;
+        }
+
+        this.audioContext = this.audioContext || new AudioContextClass();
+        if (this.audioContext.state === 'suspended') {
+          this.audioContext.resume();
+        }
+        this.isAudioUnlocked = true;
+      } catch (error) {
+        this.audioEnabled = false;
+        this.persistSoundEnabledState();
+        this.updateSoundToggleButton();
+      }
+    };
+
+    document.addEventListener('pointerdown', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+  }
+
+  readSoundEnabledFromSession() {
+    try {
+      return sessionStorage.getItem(CONFIG.STORAGE_KEYS.SOUND_ENABLED_SESSION) !== 'false';
+    } catch (error) {
+      return true;
+    }
+  }
+
+  persistSoundEnabledState() {
+    try {
+      sessionStorage.setItem(
+        CONFIG.STORAGE_KEYS.SOUND_ENABLED_SESSION,
+        this.audioEnabled ? 'true' : 'false'
+      );
+    } catch (error) {
+      // Ignore sessionStorage errors in restricted browser modes
+    }
+  }
+
+  updateSoundToggleButton() {
+    if (!this.soundToggleButton) return;
+
+    this.soundToggleButton.classList.toggle('is-muted', !this.audioEnabled);
+    this.soundToggleButton.setAttribute('aria-pressed', String(this.audioEnabled));
+    this.soundToggleButton.innerHTML = this.audioEnabled
+      ? '<i class="fa-solid fa-volume-high" aria-hidden="true"></i> Звук: Увімк.'
+      : '<i class="fa-solid fa-volume-xmark" aria-hidden="true"></i> Звук: Вимк.';
+  }
+
+  async toggleSoundEnabled() {
+    this.audioEnabled = !this.audioEnabled;
+    this.persistSoundEnabledState();
+    this.updateSoundToggleButton();
+
+    if (this.audioEnabled) {
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        try {
+          await this.audioContext.resume();
+        } catch (error) {
+          this.audioEnabled = false;
+          this.persistSoundEnabledState();
+          this.updateSoundToggleButton();
+          return;
+        }
+      }
+      this.playSound('confirm');
+    }
+  }
+
+  playSound(type) {
+    if (!this.audioEnabled || !this.audioContext) return;
+
+    const soundMap = {
+      click: { frequency: 560, duration: 0.06, gain: 0.03, wave: 'triangle' },
+      delete: { frequency: 250, duration: 0.08, gain: 0.035, wave: 'sawtooth' },
+      run: { frequency: 780, duration: 0.1, gain: 0.035, wave: 'square' },
+      stop: { frequency: 320, duration: 0.1, gain: 0.035, wave: 'square' },
+      collect: { frequency: 920, duration: 0.07, gain: 0.03, wave: 'sine' },
+      success: { frequency: 1040, duration: 0.12, gain: 0.04, wave: 'triangle' },
+      error: { frequency: 210, duration: 0.1, gain: 0.04, wave: 'sawtooth' },
+      confirm: { frequency: 660, duration: 0.09, gain: 0.03, wave: 'triangle' }
+    };
+
+    const config = soundMap[type] || soundMap.click;
+    const now = this.audioContext.currentTime;
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+
+    oscillator.type = config.wave;
+    oscillator.frequency.setValueAtTime(config.frequency, now);
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.exponentialRampToValueAtTime(config.gain, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + config.duration);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + config.duration + 0.01);
+  }
+
   /**
    * Ініціалізація кнопок команд (вгору, вниз, вліво, вправо)
    * Викликається при зміні рівня або при старті гри
@@ -41,10 +159,10 @@ class GameView {
     this.commandsContainer.innerHTML = '';
     
     const commands = [
-      { id: CONFIG.COMMANDS.UP, label: '⬆️ Вгору' },
-      { id: CONFIG.COMMANDS.DOWN, label: '⬇️ Вниз' },
-      { id: CONFIG.COMMANDS.LEFT, label: '⬅️ Вліво' },
-      { id: CONFIG.COMMANDS.RIGHT, label: '➡️ Вправо' }
+      { id: CONFIG.COMMANDS.UP, label: '<i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Вгору' },
+      { id: CONFIG.COMMANDS.DOWN, label: '<i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Вниз' },
+      { id: CONFIG.COMMANDS.LEFT, label: '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Вліво' },
+      { id: CONFIG.COMMANDS.RIGHT, label: '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Вправо' }
     ];
     
     commands.forEach(cmd => {
@@ -98,6 +216,64 @@ class GameView {
     this.programContainer.innerHTML = '';
   }
 
+  confirmClearProgram() {
+    return new Promise((resolve) => {
+      if (!this.confirmClearModal || !this.confirmClearOkButton || !this.confirmClearCancelButton) {
+        resolve(true);
+        return;
+      }
+
+      const onConfirm = () => {
+        this.hideConfirmClearModal();
+        this.playSound('confirm');
+        cleanup();
+        resolve(true);
+      };
+
+      const onCancel = () => {
+        this.hideConfirmClearModal();
+        cleanup();
+        resolve(false);
+      };
+
+      const onBackdropClick = (event) => {
+        if (event.target === this.confirmClearModal) {
+          onCancel();
+        }
+      };
+
+      const onEscape = (event) => {
+        if (event.key === 'Escape') {
+          onCancel();
+        }
+      };
+
+      const cleanup = () => {
+        this.confirmClearOkButton.removeEventListener('click', onConfirm);
+        this.confirmClearCancelButton.removeEventListener('click', onCancel);
+        this.confirmClearModal.removeEventListener('click', onBackdropClick);
+        document.removeEventListener('keydown', onEscape);
+      };
+
+      this.confirmClearOkButton.addEventListener('click', onConfirm);
+      this.confirmClearCancelButton.addEventListener('click', onCancel);
+      this.confirmClearModal.addEventListener('click', onBackdropClick);
+      document.addEventListener('keydown', onEscape);
+      this.showConfirmClearModal();
+      this.confirmClearCancelButton.focus();
+    });
+  }
+
+  showConfirmClearModal() {
+    this.confirmClearModal.classList.add('open');
+    this.confirmClearModal.setAttribute('aria-hidden', 'false');
+  }
+
+  hideConfirmClearModal() {
+    this.confirmClearModal.classList.remove('open');
+    this.confirmClearModal.setAttribute('aria-hidden', 'true');
+  }
+
   /**
    * Додавання кроку до програми користувача
    * @param {string} command - команда кроку
@@ -116,16 +292,20 @@ class GameView {
     let commandIcon = '';
     switch (command) {
       case CONFIG.COMMANDS.UP:
-        commandIcon = '⬆️ Вгору';
+        programStep.classList.add('command-step-up');
+        commandIcon = '<i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Вгору';
         break;
       case CONFIG.COMMANDS.DOWN:
-        commandIcon = '⬇️ Вниз';
+        programStep.classList.add('command-step-down');
+        commandIcon = '<i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Вниз';
         break;
       case CONFIG.COMMANDS.LEFT:
-        commandIcon = '⬅️ Вліво';
+        programStep.classList.add('command-step-left');
+        commandIcon = '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Вліво';
         break;
       case CONFIG.COMMANDS.RIGHT:
-        commandIcon = '➡️ Вправо';
+        programStep.classList.add('command-step-right');
+        commandIcon = '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Вправо';
         break;
     }
     
@@ -174,11 +354,12 @@ class GameView {
     // Додаємо кнопку видалення
     const deleteBtn = document.createElement('span');
     deleteBtn.className = 'delete-step';
-    deleteBtn.innerHTML = '✖';
+    deleteBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
     deleteBtn.onclick = function(e) {
       e.stopPropagation();
+      this.playSound('delete');
       deleteCallback(programStep);
-    };
+    }.bind(this);
     
     programStep.appendChild(deleteBtn);
     this.programContainer.appendChild(programStep);
@@ -229,7 +410,20 @@ class GameView {
       if (cell) {
         const collectibleIcon = document.createElement('div');
         collectibleIcon.className = 'collectible';
-        collectibleIcon.innerHTML = item.type;
+
+        if (item.eggAsset) {
+          const eggImage = document.createElement('img');
+          eggImage.className = 'collectible-image';
+          eggImage.src = item.eggAsset;
+          eggImage.alt = '';
+          eggImage.onerror = () => {
+            collectibleIcon.textContent = '🥚';
+          };
+          collectibleIcon.appendChild(eggImage);
+        } else {
+          collectibleIcon.textContent = item.type;
+        }
+
         cell.appendChild(collectibleIcon);
       }
     });
@@ -319,3 +513,5 @@ class GameView {
     return this.programContainer.querySelectorAll('.program-step');
   }
 } 
+
+

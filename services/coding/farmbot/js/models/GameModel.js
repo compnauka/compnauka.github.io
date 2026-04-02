@@ -71,6 +71,8 @@ class GameModel {
    */
   placeCollectibles() {
     this.collectibles = [];
+    const isSeasonalThemeActive = this.isSeasonalThemeActive();
+
     while (this.collectibles.length < this.gameConfig.collectiblesCount) {
       const x = Math.floor(Math.random() * this.gridSize);
       const y = Math.floor(Math.random() * this.gridSize);
@@ -80,13 +82,53 @@ class GameModel {
         !this.collectibles.some((item) => item.x === x && item.y === y) &&
         !this.walls.some((wall) => wall.x === x && wall.y === y)
       ) {
-        this.collectibles.push({ 
-          x, 
-          y, 
-          type: this.gameConfig.collectibleType 
-        });
+        const collectible = {
+          x,
+          y,
+          type: this.gameConfig.collectibleType
+        };
+
+        if (isSeasonalThemeActive) {
+          collectible.eggAsset = this.getRandomEggAsset();
+        }
+
+        this.collectibles.push(collectible);
       }
     }
+  }
+
+  /**
+   * Returns true only while the seasonal theme date window is active.
+   * @returns {boolean}
+   */
+  isSeasonalThemeActive() {
+    const theme = CONFIG.SEASONAL_THEME;
+    if (!theme || !theme.enabled) return false;
+
+    const now = new Date();
+    const start = new Date(theme.startDate);
+    const end = new Date(theme.endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return false;
+    }
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    return now >= start && now <= end;
+  }
+
+  /**
+   * Picks a random egg SVG path from config.
+   * @returns {string|null}
+   */
+  getRandomEggAsset() {
+    const assets = CONFIG.SEASONAL_THEME?.eggAssets || [];
+    if (assets.length === 0) return null;
+
+    const randomIndex = Math.floor(Math.random() * assets.length);
+    return assets[randomIndex];
   }
 
   /**
