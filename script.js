@@ -142,23 +142,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 tagsDiv.appendChild(span);
             });
             body.appendChild(tagsDiv);
-        }
+        }
+        // Buttons
+        const actions = document.createElement("div");
+        actions.style.display = "flex";
+        actions.style.gap = "10px";
+        actions.style.flexWrap = "wrap";
 
-        // Button
         const btn = document.createElement("a");
         btn.href = service.link;
-        btn.target = "_blank";
-        
+        btn.target = service.linkTarget || "_blank";
+        if (btn.target === "_blank") btn.rel = "noopener noreferrer";
+
         // Special styling for PDFs
-        if (service.link && service.link.endsWith('.pdf')) {
+        if (service.link && service.link.endsWith('.pdf') && !service.primaryLabel) {
             btn.className = "btn btn-success";
             btn.innerHTML = '<i class="fas fa-file-download" style="margin-right:8px;"></i> Завантажити';
         } else {
             btn.className = "btn btn-primary";
-            btn.innerHTML = 'Відкрити';
+            btn.innerHTML = service.primaryLabel || 'Відкрити';
         }
-        
-        body.appendChild(btn);
+        actions.appendChild(btn);
+
+        if (service.secondLink) {
+            const secondBtn = document.createElement("a");
+            secondBtn.href = service.secondLink;
+            secondBtn.target = service.secondLinkTarget || "_self";
+            if (secondBtn.target === "_blank") secondBtn.rel = "noopener noreferrer";
+            secondBtn.className = "btn btn-success";
+            secondBtn.textContent = service.secondLabel || "Докладніше";
+            actions.appendChild(secondBtn);
+        }
+
+        body.appendChild(actions);
 
         card.appendChild(imgWrapper);
         card.appendChild(body);
@@ -304,3 +320,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+

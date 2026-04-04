@@ -630,3 +630,21 @@ const CATEGORIES = [
     ]
   }
 ];
+
+const SUPPORT_PROJECT_CARD = {
+  name: "Підтримайте цей проєкт",
+  description: "Допоможіть зберігати сервіси безкоштовними та без реклами.",
+  link: "https://base.monobank.ua/9nyWYjQ3C6K2Aw",
+  linkTarget: "_blank",
+  primaryLabel: "На Базу",
+  secondLink: "support.html",
+  secondLinkTarget: "_self",
+  secondLabel: "Докладніше",
+  image: "images/support.jpg",
+  tags: []
+};
+
+
+CATEGORIES.forEach(category => {
+  category.services = [{ ...SUPPORT_PROJECT_CARD }, ...category.services];
+});
