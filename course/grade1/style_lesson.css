@@ -4,26 +4,118 @@ body {
     font-family: 'Nunito', sans-serif;
 }
 
+.skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: 0;
+    transform: translateY(-140%);
+    background: var(--color-text);
+    color: var(--color-text-inverse);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    z-index: var(--z-toast);
+}
+
+.skip-link:focus {
+    transform: translateY(var(--space-3));
+}
+
+.lesson-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
 .canvas-container {
-    cursor: url('https://cdn-icons-png.flaticon.com/32/588/588395.png'), crosshair;
+    cursor: crosshair;
     touch-action: none;
 }
 
-.draggable.dragging {
-    transform: scale(1.1);
-    opacity: 0.8;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+.draggable-chip {
+    min-width: 140px;
+    min-height: 56px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
-.drop-zone.active {
-    border-color: #3b82f6;
+.draggable-chip.is-selected,
+.draggable-chip:focus-visible,
+.draggable-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+}
+
+.draggable-chip.is-selected {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-strong);
+}
+
+.drop-zone {
+    min-height: 176px;
+}
+
+.drop-zone.active,
+.drop-zone:focus-visible,
+.drop-zone:hover {
+    border-color: var(--color-focus-ring);
     background-color: #eff6ff;
 }
 
-.quiz-option {
-    transition: all 0.2s;
+.drop-zone.is-correct {
+    border-color: var(--color-success);
+    background-color: var(--color-success-bg);
 }
 
-.quiz-option:hover {
+.quiz-option {
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.quiz-option:hover,
+.quiz-option:focus-visible {
     transform: scale(1.02);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .drop-zone,
+    .draggable-chip,
+    textarea,
+    button,
+    a {
+        border-width: 2px;
+    }
 }

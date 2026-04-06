@@ -89,6 +89,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const createServiceCard = (service, container) => {
         const card = document.createElement("div");
         card.className = "card";
+        const isSupportCard = service.secondLink === "support.html";
+        if (isSupportCard) {
+            card.classList.add("support-card");
+        }
         
         // Image Handling
         const imgWrapper = document.createElement("div");

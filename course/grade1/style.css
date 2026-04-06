@@ -4,85 +4,164 @@ body {
     font-family: 'Nunito', sans-serif;
 }
 
+.skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: 0;
+    transform: translateY(-140%);
+    background: var(--color-text);
+    color: var(--color-text-inverse);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    z-index: var(--z-toast);
+}
+
+.skip-link:focus {
+    transform: translateY(var(--space-3));
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+}
+
+.nav-link-current {
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.section-number {
+    color: var(--color-text-inverse);
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    box-shadow: var(--shadow-2);
+}
+
 .lesson-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lesson-link {
     cursor: pointer;
 }
 
-.lesson-card:hover {
+.lesson-link:hover,
+.lesson-link:focus-visible {
     transform: translateY(-8px);
+    box-shadow: var(--shadow-3);
 }
 
 .status-badge {
     display: none;
 }
 
-.is-completed .status-badge {
-    display: flex;
+.is-completed {
+    border-color: var(--color-success);
+    background-color: var(--color-success-bg);
 }
 
-.is-completed {
-    border-color: #10b981 !important;
-    background-color: #f0fdf4 !important;
+.is-completed .status-badge {
+    display: inline-flex;
 }
 
 .hero-gradient {
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #3b82f6 100%);
 }
 
-/* Footer Socials */
+.hero-icon {
+    animation: hero-float 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes hero-float {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-10px);
+    }
+}
+
 .social-link {
     width: 48px;
     height: 48px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 1rem;
-    background: white;
-    color: #64748b;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid #f1f5f9;
+    border-radius: var(--radius-lg);
+    background: var(--color-background);
+    color: var(--color-text-muted);
+    box-shadow: var(--shadow-1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--color-border-soft);
 }
 
-.social-link:hover {
-    transform: translateY(-5px);
-    color: white;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+.social-link:hover,
+.social-link:focus-visible {
+    transform: translateY(-4px);
+    color: var(--color-text-inverse);
 }
 
-.social-link:hover i.fa-linkedin-in {
-    color: #ffffff;
-}
-
-.social-link:hover i.fa-tiktok {
-    color: #ffffff;
-}
-
-.social-link:hover i.fa-instagram {
-    color: #ffffff;
-}
-
-.social-link:hover i.fa-facebook-f {
-    color: #ffffff;
-}
-
-.social-link:hover:has(.fa-linkedin-in) {
+.social-link-linkedin:hover,
+.social-link-linkedin:focus-visible {
     background: #0077b5;
     border-color: #0077b5;
 }
 
-.social-link:hover:has(.fa-tiktok) {
+.social-link-tiktok:hover,
+.social-link-tiktok:focus-visible {
     background: #000000;
     border-color: #000000;
 }
 
-.social-link:hover:has(.fa-instagram) {
+.social-link-instagram:hover,
+.social-link-instagram:focus-visible {
     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
     border-color: #dc2743;
 }
 
-.social-link:hover:has(.fa-facebook-f) {
+.social-link-facebook:hover,
+.social-link-facebook:focus-visible {
     background: #1877f2;
     border-color: #1877f2;
+}
+
+:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .lesson-card,
+    .social-link,
+    .nav-link {
+        border-width: 2px;
+    }
 }
