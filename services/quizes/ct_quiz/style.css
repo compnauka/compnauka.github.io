@@ -1,45 +1,92 @@
-:root {
-    /* Висококонтрастні кольори для дітей (WCAG AAA) */
-    --color-primary: #004aad;
-    /* Stronger Blue */
-    --color-primary-light: #e0f2fe;
-    --color-secondary: #d97706;
-    /* High contrast Amber */
-    --color-secondary-light: #fffbeb;
-    --color-correct: #047857;
-    /* High Contrast Emerald */
-    --color-correct-light: #ecfdf5;
-    --color-incorrect: #b91c1c;
-    /* High Contrast Red */
-    --color-incorrect-light: #fef2f2;
-
-    --color-text-dark: #1f2937;
-    /* Very Dark Gray */
-    --color-background-light: #ffffff;
-
-    --border-width: 4px;
-    /* Chunky borders */
-    --border-radius: 1.5rem;
-    /* Large rounded corners */
+body {
+    font-family: "Atkinson Hyperlegible", "Nunito", "Segoe UI", Arial, sans-serif;
+    background-color: var(--color-surface-subtle);
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+    padding-top: max(1rem, env(safe-area-inset-top));
+    overflow-y: auto;
 }
 
-body {
-    font-family: 'Nunito', 'Inter', sans-serif;
-    /* Friendly rounded font */
-    background-color: #e6f7ff;
-    /* Soft blue background */
-    color: var(--color-text-dark);
-    font-size: 18px;
-    /* Base size increase */
+body.screen-home {
+    overflow-y: hidden;
+    justify-content: center !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+#main-content {
+    margin-top: 0.5rem;
+}
+
+body.screen-home #main-content {
+    margin-top: 0;
+}
+
+.skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: -48px;
+    background: var(--color-primary);
+    color: var(--color-background);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    z-index: 60;
+}
+
+.skip-link:focus {
+    top: var(--space-4);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.toast-container {
+    position: fixed;
+    top: var(--space-4);
+    right: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    z-index: 60;
+}
+
+.toast {
+    max-width: 28rem;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    color: var(--color-background);
+    box-shadow: var(--shadow-card);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-info {
+    background: var(--color-primary);
+}
+
+.toast-alert {
+    background: var(--color-error);
+}
+
+.toast-hidden {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .card {
-    box-shadow: 0 10px 0px rgba(0, 0, 0, 0.1);
-    /* Flat shadow for "sticker" look */
-    border: var(--border-width) solid #e5e7eb;
-    /* Default light border for cards */
-    border-radius: var(--border-radius);
-    background-color: var(--color-background-light);
+    box-shadow: var(--shadow-card);
+    border: 4px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-background);
 }
 
 .pulse-effect {
@@ -47,7 +94,6 @@ body {
 }
 
 @keyframes pulse-grow {
-
     0%,
     100% {
         opacity: 1;
@@ -61,29 +107,26 @@ body {
 }
 
 .answer-option {
-    transition: all 0.2s ease-in-out;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
-    border: var(--border-width) solid #d1d5db;
-    background-color: #f9fafb;
+    border: 4px solid var(--color-border);
+    background-color: var(--color-surface);
     font-size: 1.35rem;
-    /* Larger text */
-    border-radius: 1rem;
-    /* Slightly smaller than card */
-    padding: 1rem 1.5rem;
-    /* More padding */
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-5);
     font-weight: 600;
+    min-height: 56px;
 }
 
-.answer-option:hover {
+.answer-option:hover,
+.answer-option:focus-visible {
     border-color: var(--color-primary);
     background-color: var(--color-primary-light);
     transform: translateY(-4px);
-    /* Larger lift */
     box-shadow: 0 6px 0 var(--color-primary);
-    /* 3D click effect hint */
+    outline: none;
 }
 
-/* Active/Active state adjustment to feel tactile */
 .answer-option:active {
     transform: translateY(-1px);
     box-shadow: 0 2px 0 var(--color-primary);
@@ -93,26 +136,21 @@ body {
     border-color: var(--color-primary);
     background-color: var(--color-primary-light);
     font-weight: 800;
-    box-shadow: 0 0 0 2px var(--color-primary-light);
-    /* Focus ring */
+    box-shadow: var(--shadow-focus);
 }
 
-/* Custom styles for showing results */
 .result-correct {
-    border-color: var(--color-correct);
-    background-color: var(--color-correct-light);
-    color: var(--color-correct);
+    border-color: var(--color-success);
+    background-color: var(--color-success-light);
 }
 
 .result-incorrect {
-    border-color: var(--color-incorrect);
-    background-color: var(--color-incorrect-light);
-    color: var(--color-incorrect);
+    border-color: var(--color-error);
+    background-color: var(--color-error-light);
 }
 
 #quiz-container {
     min-height: 600px;
-    /* Fixed height to prevent jumping */
 }
 
 #quiz-container:not(.hidden) {
@@ -123,45 +161,38 @@ body {
 #options-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
     flex-grow: 1;
-    /* Push buttons to bottom */
     justify-content: center;
-    /* Center options vertically if few */
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-6);
 }
 
-/* High contrast for main headings */
 #question-text {
     font-size: 1.6rem;
-    /* Restored size */
     line-height: 1.4;
     font-weight: 800;
-    color: var(--color-text-dark);
-    margin-bottom: 1.5rem;
+    color: var(--color-text);
+    margin-bottom: var(--space-5);
     min-height: 4.5rem;
-    /* Reserve space for ~3 lines */
     display: flex;
     align-items: center;
-    /* Center text vertically in its reserved space */
 }
 
-/* Styling for the next/skip buttons for better contrast */
 #next-button {
-    background-color: var(--color-correct);
-    border: var(--border-width) solid var(--color-correct);
-    border-radius: 1rem;
-    box-shadow: 0 6px 0 #065f46;
-    /* Darker shade of green for shadow */
+    background-color: var(--color-success);
+    border: 4px solid var(--color-success);
+    border-radius: var(--radius-md);
+    box-shadow: 0 6px 0 var(--color-success-hover);
     transition: all 0.1s;
     margin-bottom: 6px;
-    /* Space for shadow */
 }
 
-#next-button:hover:not(:disabled) {
-    background-color: #059669;
+#next-button:hover:not(:disabled),
+#next-button:focus-visible:not(:disabled) {
+    background-color: var(--color-success-hover);
     transform: translateY(2px);
-    box-shadow: 0 4px 0 #065f46;
+    box-shadow: 0 4px 0 var(--color-success-hover);
+    outline: none;
 }
 
 #next-button:active:not(:disabled) {
@@ -170,22 +201,22 @@ body {
 }
 
 #skip-button {
-    color: #92400e;
-    /* Dark amber text */
-    border: var(--border-width) solid var(--color-secondary);
-    background-color: white;
+    color: var(--color-warning);
+    border: 4px solid var(--color-secondary);
+    background-color: var(--color-background);
     font-weight: 800;
-    border-radius: 1rem;
-    box-shadow: 0 6px 0 #b45309;
-    /* Darker amber shadow */
+    border-radius: var(--radius-md);
+    box-shadow: 0 6px 0 var(--color-secondary-hover);
     transition: all 0.1s;
     margin-bottom: 6px;
 }
 
-#skip-button:hover {
+#skip-button:hover,
+#skip-button:focus-visible {
     background-color: var(--color-secondary-light);
     transform: translateY(2px);
-    box-shadow: 0 4px 0 #b45309;
+    box-shadow: 0 4px 0 var(--color-secondary-hover);
+    outline: none;
 }
 
 #skip-button:active {
@@ -194,99 +225,295 @@ body {
 }
 
 #review-button {
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
 }
 
-/* Ensure all text uses high contrast dark color */
-.text-gray-800 {
-    color: var(--color-text-dark);
-}
-
-/* --- Grade Button Styles (Extracted from JS) --- */
 .grade-button {
-    /* Base styles from JS: p-6 font-extrabold text-2xl rounded-2xl transition-all duration-100 border-4 focus:outline-none mb-4 */
-    padding: 1.5rem;
+    padding: var(--space-4) var(--space-3);
     font-weight: 800;
-    font-size: 1.5rem;
-    line-height: 2rem;
-    border-radius: 1rem;
+    font-size: 1rem;
+    line-height: 1.2;
+    border-radius: var(--radius-md);
     transition: all 0.1s;
     border-width: 4px;
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     width: 100%;
-    /* Ensure full width in grid if needed, or controlled by grid */
     text-align: center;
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.grade-button:focus-visible,
+.review-index-button:focus-visible,
+#review-close-button:focus-visible,
+#finish-cancel-button:focus-visible,
+#finish-confirm-button:focus-visible,
+#finish-early-button:focus-visible,
+#review-button:focus-visible,
+#restart-button:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
 }
 
 .btn-grade-2 {
-    /* border-amber-500 text-amber-900 bg-amber-50 */
     border-color: #f59e0b;
     color: #78350f;
     background-color: #fffbeb;
-    /* shadow-[0_6px_0_#d97706] */
     box-shadow: 0 6px 0 #d97706;
 }
 
-.btn-grade-2:hover {
-    /* hover:bg-amber-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#d97706] */
+.btn-grade-2:hover,
+.btn-grade-2:focus-visible {
     background-color: #fef3c7;
     transform: translateY(2px);
     box-shadow: 0 4px 0 #d97706;
 }
 
-.btn-grade-2:active {
-    /* active:translate-y-[6px] active:shadow-none */
-    transform: translateY(6px);
-    box-shadow: none;
-}
-
 .btn-grade-3 {
-    /* border-green-500 text-green-900 bg-green-50 */
     border-color: #22c55e;
     color: #14532d;
     background-color: #f0fdf4;
-    /* shadow-[0_6px_0_#059669] */
     box-shadow: 0 6px 0 #059669;
 }
 
-.btn-grade-3:hover {
-    /* hover:bg-green-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#059669] */
+.btn-grade-3:hover,
+.btn-grade-3:focus-visible {
     background-color: #dcfce7;
     transform: translateY(2px);
     box-shadow: 0 4px 0 #059669;
 }
 
-.btn-grade-3:active {
-    transform: translateY(6px);
-    box-shadow: none;
-}
-
 .btn-grade-4 {
-    /* border-blue-500 text-blue-900 bg-blue-50 */
     border-color: #3b82f6;
     color: #1e3a8a;
     background-color: #eff6ff;
-    /* shadow-[0_6px_0_#004aad] */
-    box-shadow: 0 6px 0 #004aad;
+    box-shadow: 0 6px 0 var(--color-primary);
 }
 
-.btn-grade-4:hover {
-    /* hover:bg-blue-100 hover:translate-y-[2px] hover:shadow-[0_4px_0_#004aad] */
+.btn-grade-4:hover,
+.btn-grade-4:focus-visible {
     background-color: #dbeafe;
     transform: translateY(2px);
-    box-shadow: 0 4px 0 #004aad;
+    box-shadow: 0 4px 0 var(--color-primary);
 }
 
-.btn-grade-4:active {
+.grade-button:active {
     transform: translateY(6px);
     box-shadow: none;
 }
 
-/* --- Accessibility: Reduced Motion --- */
-@media (prefers-reduced-motion: reduce) {
+.review-index-button {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    min-height: 48px;
+}
 
+.review-index-current {
+    background: var(--color-primary);
+    color: var(--color-background);
+}
+
+.review-index-skipped {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.review-index-answered {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.adult-summary-details {
+    cursor: default;
+}
+
+.adult-summary-details summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.adult-summary-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.adult-summary-details summary::after {
+    content: "Показати";
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.adult-summary-details[open] summary::after {
+    content: "Сховати";
+}
+
+.adult-summary-details summary:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    border-radius: var(--radius-sm);
+}
+
+.answer-option,
+.grade-button,
+#next-button,
+#skip-button,
+#finish-early-button,
+#review-button,
+#review-close-button,
+#finish-cancel-button,
+#finish-confirm-button,
+#restart-button,
+.review-index-button {
+    touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: var(--font-size-base);
+        padding: 12px !important;
+        padding-top: 14px !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+    }
+
+    #main-content {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        margin-top: 0.25rem;
+        padding: 0 !important;
+    }
+
+    #class-selection,
+    #quiz-container,
+    #results-container {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .toast-container {
+        top: var(--space-2);
+        left: var(--space-2);
+        right: var(--space-2);
+    }
+
+    .toast {
+        width: 100%;
+        max-width: none;
+        padding: var(--space-3);
+    }
+
+    #quiz-container {
+        min-height: auto;
+        padding: var(--space-3) !important;
+    }
+
+    #question-text {
+        font-size: 1.12rem;
+        min-height: auto;
+        align-items: flex-start;
+        margin-bottom: var(--space-3);
+    }
+
+    #quiz-container > div {
+        margin-bottom: var(--space-3) !important;
+        padding-bottom: var(--space-2) !important;
+    }
+
+    #quiz-container > div p,
+    #quiz-container > div > div {
+        font-size: 1rem !important;
+    }
+
+    .answer-option {
+        font-size: 1rem;
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .grade-button {
+        min-height: 88px;
+        padding: var(--space-3);
+    }
+
+    #next-button,
+    #skip-button {
+        font-size: var(--font-size-base);
+        margin-bottom: 0;
+        min-height: 48px;
+    }
+
+    #class-selection,
+    #results-container {
+        padding: 1rem !important;
+    }
+
+    #class-selection-title {
+        margin-bottom: 0.55rem !important;
+    }
+
+    #class-selection-subtitle {
+        margin-bottom: 1rem !important;
+    }
+
+    #results-container #result-message {
+        font-size: 1.7rem;
+        line-height: 1.14;
+        margin-bottom: 0.5rem;
+    }
+
+    #results-container #result-label {
+        margin-bottom: 0.75rem !important;
+        font-size: 1.25rem;
+    }
+
+    #review-button {
+        font-size: var(--font-size-base);
+    }
+
+    #review-modal {
+        padding: var(--space-2);
+    }
+
+    #review-modal .card {
+        padding: var(--space-4);
+    }
+
+    #modal-question-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--space-2);
+    }
+}
+
+@media (max-width: 420px) {
+    #result-message {
+        font-size: 1.8rem;
+        line-height: 1.2;
+    }
+
+    #score-display {
+        font-size: 2.5rem;
+    }
+
+    #modal-question-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .review-index-button {
+        min-height: 44px;
+        padding: var(--space-2);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
@@ -299,21 +526,75 @@ body {
     .pulse-effect {
         animation: none;
     }
+}
 
-    .answer-option:hover,
-    #next-button:hover,
-    #skip-button:hover,
-    .grade-button:hover {
-        transform: none !important;
-        /* Keep the shadow changes or remove them if distracting, keeping it simple for now */
+
+@media (max-width: 640px) {
+    #class-selection-title {
+        font-size: 1.8rem;
+        line-height: 1.16;
+        overflow-wrap: normal;
+        word-break: keep-all;
+        hyphens: none;
     }
 
-    .answer-option:active,
-    #next-button:active,
-    #skip-button:active,
-    .grade-button:active {
-        transform: none !important;
-        box-shadow: inherit !important;
-        /* Prevent the shadow disappearance "click" effect */
+    #class-selection-subtitle {
+        font-size: 1.05rem;
+        line-height: 1.28;
     }
+
+    .grade-button-main {
+        display: block;
+        white-space: nowrap;
+        line-height: 1.2;
+        font-size: 0.9rem;
+    }
+
+    .grade-button-meta {
+        display: block;
+        font-size: 0.82rem;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 420px) {
+    body {
+        padding: 10px !important;
+        padding-top: 12px !important;
+    }
+
+    #main-content {
+        max-width: 392px;
+    }
+
+    #class-selection-title {
+        font-size: 1.62rem;
+        line-height: 1.14;
+    }
+
+    #class-selection-subtitle {
+        font-size: 1rem;
+    }
+
+    #results-container #result-message {
+        font-size: 1.5rem;
+    }
+}
+
+.grade-button-main {
+    display: block;
+    font-size: 1.1rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow-wrap: normal;
+    hyphens: none;
+}
+
+.grade-button-meta {
+    display: block;
+    font-size: 1rem;
+    line-height: 1.25;
+    white-space: nowrap;
 }

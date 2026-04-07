@@ -1,458 +1,642 @@
-// Глобальні змінні стану тесту (передбачається, що NUM_QUESTIONS визначено в questions.js)
-let currentGrade = null;
-let selectedQuestions = [];
-let currentQuestionIndex = 0;
-let userAnswers = []; // Зберігає індекс відповіді, або null якщо пропущено
-let score = 0;
+﻿const state = {
+    currentGrade: null,
+    selectedQuestions: [],
+    currentQuestionIndex: 0,
+    userAnswers: []
+};
 
-// --- ЛОГІКА ТЕСТУ ---
+const dom = {};
+if (typeof appConfig === "undefined") {
+    throw new Error("app-config.js is required before script.js. Missing global appConfig.");
+}
 
-/**
- * Перемішує масив.
- * @param {Array} array
- */
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+const QUESTIONS_PER_QUIZ = (Number.isInteger(appConfig.questionsPerQuiz) && appConfig.questionsPerQuiz > 0)
+    ? appConfig.questionsPerQuiz
+    : 10;
+let lastFocusedElement = null;
+let latestSharePayload = null;
+let isSharedResultView = false;
+const GRADE_EMOJI = {
+    "2": "🐣",
+    "3": "🦁",
+    "4": "🚀"
+};
+
+function setScreenMode(mode) {
+    document.body.classList.toggle("screen-home", mode === "home");
+}
+
+function saveState() {
+    QuizStorage.saveStateSnapshot(window.sessionStorage, state);
+}
+
+function clearSavedState() {
+    QuizStorage.clearStateSnapshot(window.sessionStorage);
+}
+
+function loadState() {
+    return QuizStorage.loadStateSnapshot(window.sessionStorage);
+}
+
+function playUiSound(type = "info") {
+    void type;
+}
+
+function showElement(element) {
+    element.classList.remove("hidden");
+}
+
+function hideElement(element) {
+    element.classList.add("hidden");
+}
+
+function announce(message, tone = "polite") {
+    dom.announcements.setAttribute("aria-live", tone);
+    dom.announcements.textContent = message;
+}
+
+function displayMessage(message, type = "info") {
+    announce(message, type === "alert" ? "assertive" : "polite");
+    playUiSound(type);
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.setAttribute("role", type === "alert" ? "alert" : "status");
+    toast.textContent = message;
+
+    dom.toastContainer.appendChild(toast);
+
+    window.setTimeout(() => {
+        toast.classList.add("toast-hidden");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    }, 2600);
+}
+
+function createElement(tagName, className, textContent) {
+    const element = document.createElement(tagName);
+
+    if (className) {
+        element.className = className;
+    }
+
+    if (typeof textContent === "string") {
+        element.textContent = textContent;
+    }
+
+    return element;
+}
+
+function createLabeledLine(label, value, className = "") {
+    const paragraph = createElement("p", className);
+    const labelElement = createElement("span", "font-semibold", `${label} `);
+    const valueElement = createElement("span", "", value);
+    paragraph.append(labelElement, valueElement);
+    return paragraph;
+}
+
+function getResultMessage(score, totalQuestions = QUESTIONS_PER_QUIZ) {
+    if (score === totalQuestions) {
+        return uiStrings.scorePerfect;
+    }
+
+    if (score >= totalQuestions * 0.7) {
+        return uiStrings.scoreGreat;
+    }
+
+    if (score >= totalQuestions * 0.5) {
+        return uiStrings.scoreOkay;
+    }
+
+    return uiStrings.scoreNeedsWork;
+}
+
+function clearSharedHash() {
+    if (window.location.hash.startsWith(ResultShare.HASH_PREFIX)) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
     }
 }
 
-/**
- * Ініціалізація та відображення кнопок вибору класу.
- */
-function setupClassSelection() {
-    const classButtonsContainer = document.getElementById('class-buttons');
-    classButtonsContainer.innerHTML = ''; // Очистка
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        return navigator.clipboard.writeText(text);
+    }
 
-    // Оновлена мапа класів/рівнів
-    const gradeMap = {
-        '2': 'Початковий рівень (2 кл.) 🐣',
-        '3': 'Середній рівень (3 кл.) 🦁',
-        '4': 'Просунутий рівень (4 кл.) 🚀'
-    };
+    return new Promise((resolve, reject) => {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.top = "-1000px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
 
-    Object.keys(questionBank).forEach(grade => {
-        const button = document.createElement('button');
-        button.textContent = gradeMap[grade];
-        // Висококонтрастні кнопки рівнів (Refactored to use centralized CSS classes)
-        const colorClass = `btn-grade-${grade}`;
+        const isCopied = document.execCommand("copy");
+        document.body.removeChild(textarea);
 
-        button.className = `grade-button ${colorClass}`;
-        button.onclick = () => startQuiz(grade);
-        classButtonsContainer.appendChild(button);
+        if (isCopied) {
+            resolve();
+            return;
+        }
+
+        reject(new Error("copy failed"));
     });
 }
 
-/**
- * Початок тесту.
- * @param {string} grade - Обраний клас (2, 3, 4).
- */
-function startQuiz(grade) {
-    currentGrade = grade;
-    currentQuestionIndex = 0;
-    userAnswers = Array(NUM_QUESTIONS).fill(null); // Ініціалізуємо null для пропущених
-    score = 0;
+function getCurrentShareUrl() {
+    if (!latestSharePayload) {
+        return null;
+    }
 
-    const availableQuestions = questionBank[grade];
-    shuffleArray(availableQuestions);
+    return ResultShare.buildShareUrl(window.location, latestSharePayload);
+}
 
-    // Вибираємо NUM_QUESTIONS (10) випадкових питань
-    selectedQuestions = availableQuestions.slice(0, NUM_QUESTIONS);
+async function shareResults() {
+    const shareUrl = getCurrentShareUrl();
+    if (!shareUrl) {
+        displayMessage(uiStrings.shareErrorNotice, "alert");
+        return;
+    }
 
-    // Оновлюємо UI
-    document.getElementById('class-selection').classList.add('hidden');
-    document.getElementById('results-container').classList.add('hidden');
-    document.getElementById('quiz-container').classList.remove('hidden');
-
-    // Відображаємо назву рівня
-    const levelMap = {
-        '2': 'Початковий',
-        '3': 'Середній',
-        '4': 'Просунутий'
+    const shareData = {
+        title: uiStrings.shareNativeTitle,
+        text: `${uiStrings.shareNativeTitle}: ${latestSharePayload.score}/${latestSharePayload.total}`,
+        url: shareUrl
     };
-    document.getElementById('current-grade').textContent = levelMap[grade];
 
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+            return;
+        }
+
+        await copyTextToClipboard(shareUrl);
+        displayMessage(uiStrings.shareSuccessNotice, "info");
+    } catch (error) {
+        try {
+            await copyTextToClipboard(shareUrl);
+            displayMessage(uiStrings.shareUnavailableNotice, "info");
+        } catch (copyError) {
+            displayMessage(uiStrings.shareErrorNotice, "alert");
+        }
+    }
+}
+
+function renderResultsScreen({
+    score,
+    totalQuestions,
+    conceptSummary,
+    isShared,
+    detailedQuestions,
+    detailedAnswers
+}) {
+    setScreenMode("results");
+    hideElement(dom.quizContainer);
+    hideElement(dom.classSelection);
+    showElement(dom.resultsContainer);
+
+    dom.scoreDisplay.textContent = `${score}/${totalQuestions}`;
+    dom.resultMessage.textContent = getResultMessage(score, totalQuestions);
+    ResultsView.renderAdultSummary(dom, conceptSummary);
+    dom.conceptNote.textContent = uiStrings.resultConceptNote;
+    dom.conceptList.textContent = conceptSummary.all.length
+        ? `${uiStrings.conceptEncounteredLabel} ${conceptSummary.all.join(", ")}`
+        : uiStrings.resultConceptEmpty;
+    dom.needsPracticeList.textContent = conceptSummary.needsPractice.length
+        ? conceptSummary.needsPractice.join(", ")
+        : uiStrings.resultAllClear;
+
+    ResultsView.renderConceptAnalytics(dom.conceptAnalyticsList, conceptSummary, {
+        createElement,
+        createLabeledLine
+    });
+
+    dom.detailedResults.innerHTML = "";
+    if (isShared) {
+        dom.sharedResultNote.textContent = uiStrings.sharedResultDetailsNote;
+        showElement(dom.sharedResultNote);
+    } else {
+        hideElement(dom.sharedResultNote);
+        detailedQuestions.forEach((question, index) => {
+            dom.detailedResults.appendChild(
+                ResultsView.createResultItem(question, detailedAnswers[index], index, {
+                    createElement,
+                    createLabeledLine
+                })
+            );
+        });
+    }
+}
+
+function renderClassSelection() {
+    dom.classButtons.innerHTML = "";
+
+    Object.keys(questionBank).forEach(grade => {
+        const button = createElement("button", `grade-button btn-grade-${grade}`);
+        button.type = "button";
+        const mainLine = createElement("span", "grade-button-main", `${uiStrings.shortGrades[grade]} рівень`);
+        const metaLine = createElement("span", "grade-button-meta", `(${grade} кл.) ${GRADE_EMOJI[grade] || ""}`.trim());
+        button.append(mainLine, metaLine);
+        button.addEventListener("click", () => startQuiz(grade));
+        dom.classButtons.appendChild(button);
+    });
+}
+
+function startQuiz(grade) {
+    setScreenMode("quiz");
+    state.currentGrade = grade;
+    state.currentQuestionIndex = 0;
+
+    try {
+        state.selectedQuestions = QuizCore.selectQuestionsForGrade(questionBank, grade, QUESTIONS_PER_QUIZ);
+    } catch (error) {
+        displayMessage("РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РїСѓСЃС‚РёС‚Рё С‚РµСЃС‚ РґР»СЏ С†СЊРѕРіРѕ СЂС–РІРЅСЏ. РЎРїСЂРѕР±СѓР№ С‰Рµ СЂР°Р· Р°Р±Рѕ РѕР±РµСЂРё С–РЅС€РёР№ СЂС–РІРµРЅСЊ.", "alert");
+        state.currentGrade = null;
+        state.selectedQuestions = [];
+        state.currentQuestionIndex = 0;
+        state.userAnswers = [];
+        return;
+    }
+
+    state.userAnswers = Array(state.selectedQuestions.length).fill(null);
+
+    hideElement(dom.classSelection);
+    hideElement(dom.resultsContainer);
+    showElement(dom.quizContainer);
+
+    dom.currentGrade.textContent = uiStrings.shortGrades[grade];
+    dom.totalQuestions.textContent = state.selectedQuestions.length;
+
+    saveState();
     renderQuestion();
     updateReviewButton();
 }
 
-/**
- * Рендеринг поточного питання.
- * @param {number} index - Необов'язковий індекс питання для переходу.
- */
-window.renderQuestion = function (index = currentQuestionIndex) {
-    // Перевірка на завершення тесту
-    if (index >= selectedQuestions.length) {
-        // Якщо ми викликали renderQuestion з індексом, який виходить за межі,
-        // ми перевіряємо, чи всі питання відповідено, інакше повертаємося до першого пропущеного.
-        const firstSkippedIndex = userAnswers.findIndex(answer => answer === null);
-        if (firstSkippedIndex !== -1) {
-            currentQuestionIndex = firstSkippedIndex;
-            displayMessage("Кінець тесту. Повертаємося до пропущеного питання.", "info");
-            // Рекурсивно викликаємо renderQuestion з новим індексом
-            return renderQuestion(currentQuestionIndex);
-        } else {
-            showResults();
-            return;
-        }
+function restoreSession(snapshot) {
+    const restoredState = QuestionFlow.normalizeRestoredSession(snapshot, questionBank);
+    if (!restoredState) {
+        clearSavedState();
+        return false;
     }
 
-    // Оновлення індексу, якщо викликано з модального вікна
-    currentQuestionIndex = index;
+    state.currentGrade = restoredState.currentGrade;
+    state.selectedQuestions = restoredState.selectedQuestions;
+    state.currentQuestionIndex = restoredState.currentQuestionIndex;
+    state.userAnswers = restoredState.userAnswers;
+    setScreenMode("quiz");
 
-    const questionData = selectedQuestions[currentQuestionIndex];
+    hideElement(dom.classSelection);
+    hideElement(dom.resultsContainer);
+    showElement(dom.quizContainer);
+    dom.currentGrade.textContent = uiStrings.shortGrades[state.currentGrade];
+    dom.totalQuestions.textContent = state.selectedQuestions.length;
 
-    document.getElementById('current-question-index').textContent = currentQuestionIndex + 1;
-
-    // ЗМІНА: Прибираємо концепцію з основного тексту питання (залишаємо лише Q)
-    document.getElementById('question-text').textContent = questionData.q;
-
-    const optionsContainer = document.getElementById('options-container');
-    optionsContainer.innerHTML = '';
-
-    // Варіанти відповідей завжди беруться з 'options'
-    let optionsWithIndex = questionData.options.map((text, index) => ({
-        text,
-        index
-    }));
-    shuffleArray(optionsWithIndex);
-
-    optionsWithIndex.forEach(option => {
-        const button = document.createElement('button');
-
-        // Використовуємо високу контрастність
-        // Видалено p-3, rounded-xl, text-left, text-gray-800 бо це тепер є в .answer-option
-        let buttonClasses = 'answer-option w-full text-left';
-
-        button.textContent = option.text;
-        button.className = buttonClasses;
-        button.setAttribute('data-index', option.index); // Зберігаємо оригінальний індекс
-        button.onclick = () => selectAnswer(button, option.index);
-
-        // Позначаємо, якщо відповідь вже обрана
-        if (userAnswers[currentQuestionIndex] !== null && userAnswers[currentQuestionIndex] === option.index) {
-            button.classList.add('selected');
-        }
-
-        optionsContainer.appendChild(button);
-    });
-
-    // Встановлюємо стан кнопки "Далі"
-    const nextButton = document.getElementById('next-button');
-    const hasAnswer = userAnswers[currentQuestionIndex] !== null;
-    nextButton.disabled = !hasAnswer;
-
-    // Оновлюємо класи Tailwind для контрастності
-    nextButton.classList.toggle('opacity-50', !hasAnswer);
-    nextButton.classList.toggle('cursor-not-allowed', !hasAnswer);
-    nextButton.classList.toggle('opacity-100', hasAnswer);
-    nextButton.classList.toggle('cursor-pointer', hasAnswer);
-
-    const allAnswered = userAnswers.every(answer => answer !== null);
-
-    if (allAnswered) {
-        nextButton.textContent = 'Завершити тест! 🏆';
-    } else if (currentQuestionIndex === selectedQuestions.length - 1) {
-        nextButton.textContent = 'Перейти до пропущених ➡️';
-    } else {
-        nextButton.textContent = 'Далі 🚀';
-    }
-
-    document.getElementById('skip-button').textContent = userAnswers[currentQuestionIndex] === null ? 'Пропустити 🤔' : 'Очистити вибір';
-
+    renderQuestion();
     updateReviewButton();
+    displayMessage(uiStrings.stateRestoredNotice, "info");
+    return true;
 }
 
-/**
- * Обробка вибору відповіді.
- * @param {HTMLElement} selectedButton - Кнопка, яку натиснув користувач.
- * @param {number} selectedIndex - Індекс обраної відповіді в оригінальному масиві options.
- */
-function selectAnswer(selectedButton, selectedIndex) {
-    // Очищаємо всі кнопки від класу 'selected'
-    document.querySelectorAll('#options-container .answer-option').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-
-    // Позначаємо обрану кнопку
-    selectedButton.classList.add('selected');
-
-    // Зберігаємо відповідь
-    userAnswers[currentQuestionIndex] = selectedIndex;
-
-    // Активуємо кнопку "Далі"
-    const nextButton = document.getElementById('next-button');
-    nextButton.disabled = false;
-    nextButton.classList.remove('opacity-50', 'cursor-not-allowed');
-    nextButton.classList.add('opacity-100', 'cursor-pointer');
-
-    // Оновлюємо кнопку "Пропустити"
-    document.getElementById('skip-button').textContent = 'Очистити вибір';
-    updateReviewButton();
-
-    // Оновлюємо текст кнопки "Далі", оскільки це може бути останнє питання
-    const allAnswered = userAnswers.every(answer => answer !== null);
-    if (allAnswered) {
-        nextButton.textContent = 'Завершити тест! 🏆';
-    }
+function setNextButtonState() {
+    const view = QuestionFlow.getNextButtonView(state.userAnswers, state.currentQuestionIndex, uiStrings);
+    dom.nextButton.disabled = view.disabled;
+    dom.nextButton.classList.toggle("opacity-50", view.disabled);
+    dom.nextButton.classList.toggle("cursor-not-allowed", view.disabled);
+    dom.nextButton.classList.toggle("opacity-100", !view.disabled);
+    dom.nextButton.classList.toggle("cursor-pointer", !view.disabled);
+    dom.nextButton.textContent = view.label;
 }
 
-/**
- * Пропуск або очищення відповіді.
- */
-window.skipQuestion = function () {
-    if (userAnswers[currentQuestionIndex] !== null) {
-        // Очистити вибір
-        userAnswers[currentQuestionIndex] = null;
-        renderQuestion(currentQuestionIndex); // Перерендерити для зняття виділення
-        displayMessage("Вибір очищено. Питання пропущено.", "info");
-    } else {
-        // Пропустити
-        // Якщо відповідь вже null, просто переходимо до наступного питання або до першого пропущеного
-        displayMessage("Питання пропущено. Можеш повернутися до нього пізніше.", "info");
-
-        let nextIndex = currentQuestionIndex + 1;
-
-        if (nextIndex >= selectedQuestions.length) {
-            // Якщо кінець списку, шукаємо перше пропущене, інакше завершуємо
-            const firstSkippedIndex = userAnswers.findIndex(answer => answer === null);
-            if (firstSkippedIndex !== -1) {
-                currentQuestionIndex = firstSkippedIndex;
-                displayMessage("Останнє питання пропущено. Повертаємося до першого пропущеного!", "info");
-            } else {
-                // Якщо пропущених немає (хоча це неможливо після skip), завершуємо
-                showResults();
-                return;
-            }
-        } else {
-            currentQuestionIndex = nextIndex;
-        }
-
-        renderQuestion();
-    }
-    updateReviewButton();
-}
-
-/**
- * Перехід до наступного питання або завершення тесту.
- * Оновлена логіка: не завершує тест, доки всі питання не будуть відповідені.
- */
-window.nextQuestion = function () {
-    // 1. Перевірка, чи була обрана відповідь
-    if (userAnswers[currentQuestionIndex] === null || userAnswers[currentQuestionIndex] === undefined) {
-        displayMessage("Будь ласка, оберіть варіант відповіді, щоб продовжити.", "alert");
-        return;
-    }
-
-    // 2. Перевіряємо, чи всі питання відповідено.
-    const allAnswered = userAnswers.every(answer => answer !== null);
-
-    if (allAnswered) {
-        // Усі питання відповідено. Завершуємо тест.
+function renderQuestion(index = state.currentQuestionIndex) {
+    const target = QuestionFlow.resolveRenderTarget(state.selectedQuestions.length, state.userAnswers, index);
+    if (target.type === "results") {
         showResults();
         return;
     }
 
-    // 3. Якщо не всі відповідено, визначаємо наступний крок.
-
-    if (currentQuestionIndex < selectedQuestions.length - 1) {
-        // Йдемо до наступного питання послідовно
-        currentQuestionIndex++;
-        renderQuestion();
-    } else {
-        // Ми на останньому питанні (але не всі відповідено) - переходимо до першого пропущеного
-        let firstSkippedIndex = userAnswers.findIndex(answer => answer === null);
-
-        if (firstSkippedIndex !== -1) {
-            // Переходимо до першого пропущеного питання.
-            currentQuestionIndex = firstSkippedIndex;
-            renderQuestion();
-            displayMessage("Ти пройшов увесь тест. Тепер повернемося до пропущених питань!", "info");
-        } else {
-            // Страхувальний випадок (має бути оброблено allAnswered), але на всяк випадок
-            showResults();
-        }
+    if (target.noticeKey) {
+        displayMessage(uiStrings[target.noticeKey], "info");
     }
+
+    state.currentQuestionIndex = target.targetIndex;
+    const question = state.selectedQuestions[state.currentQuestionIndex];
+
+    dom.currentQuestionIndex.textContent = state.currentQuestionIndex + 1;
+    QuestionView.renderQuestion(dom, question, state.userAnswers[state.currentQuestionIndex], {
+        createElement,
+        onSelect: selectAnswer
+    });
+
+    setNextButtonState();
     updateReviewButton();
+    saveState();
 }
 
-/**
- * Оновлення стану та видимості кнопки "Переглянути пропущені питання".
- */
-function updateReviewButton() {
-    const skippedCount = userAnswers.filter(answer => answer === null).length;
-    const reviewButton = document.getElementById('review-button');
-    const skippedCountSpan = document.getElementById('skipped-count');
-
-    // Кнопка перегляду відображається, якщо є пропущені питання
-    if (skippedCount > 0) {
-        reviewButton.style.display = 'block';
-        skippedCountSpan.textContent = skippedCount;
-    } else {
-        reviewButton.style.display = 'none';
+function selectAnswer(selectedIndex) {
+    if (state.userAnswers[state.currentQuestionIndex] === selectedIndex) {
+        return;
     }
 
-    // Оновлюємо список у модальному вікні, якщо воно відкрите
-    if (!document.getElementById('review-modal').classList.contains('hidden')) {
+    state.userAnswers[state.currentQuestionIndex] = selectedIndex;
+    QuestionView.syncSelectedAnswer(dom.optionsContainer, selectedIndex);
+
+    dom.skipButton.textContent = uiStrings.clearChoice;
+    setNextButtonState();
+    updateReviewButton();
+    saveState();
+}
+
+function skipQuestion() {
+    const action = QuestionFlow.resolveSkipAction(state.userAnswers, state.currentQuestionIndex);
+
+    if (action.type === "clear-answer") {
+        state.userAnswers[state.currentQuestionIndex] = null;
+        renderQuestion(state.currentQuestionIndex);
+        displayMessage(uiStrings[action.noticeKey], "info");
+        return;
+    }
+
+    if (action.type === "results") {
+        if (action.noticeKey) {
+            displayMessage(uiStrings[action.noticeKey], "info");
+        }
+        showResults();
+        return;
+    }
+
+    if (action.noticeKey) {
+        displayMessage(uiStrings[action.noticeKey], "info");
+    }
+
+    renderQuestion(action.targetIndex);
+}
+
+function nextQuestion() {
+    const action = QuestionFlow.resolveNextAction(state.userAnswers, state.currentQuestionIndex);
+
+    if (action.noticeKey) {
+        displayMessage(uiStrings[action.noticeKey], action.messageType || "info");
+    }
+
+    if (action.type === "blocked") {
+        return;
+    }
+
+    if (action.type === "results") {
+        showResults();
+        return;
+    }
+
+    renderQuestion(action.targetIndex);
+}
+
+function finishEarly() {
+    lastFocusedElement = document.activeElement;
+    showElement(dom.finishModal);
+    dom.finishModal.focus();
+}
+
+function cancelFinishEarly() {
+    hideElement(dom.finishModal);
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        lastFocusedElement.focus();
+    }
+}
+
+function confirmFinishEarly() {
+    hideElement(dom.finishModal);
+    displayMessage(uiStrings.finishEarlyNotice, "info");
+    showResults();
+}
+
+function updateReviewButton() {
+    const skippedCount = state.userAnswers.filter(answer => answer === null).length;
+    dom.skippedCount.textContent = skippedCount;
+    dom.reviewButtonLabel.textContent = uiStrings.reviewButton;
+    dom.reviewButton.style.display = skippedCount > 0 ? "block" : "none";
+
+    if (!dom.reviewModal.classList.contains("hidden")) {
         populateReviewModal();
     }
 }
 
-/**
- * Відкриття модального вікна для перегляду пропущених питань.
- */
-window.openReviewModal = function () {
+function openReviewModal() {
+    lastFocusedElement = document.activeElement;
     populateReviewModal();
-    document.getElementById('review-modal').classList.remove('hidden');
+    showElement(dom.reviewModal);
+    dom.reviewModal.focus();
 }
 
-/**
- * Заповнення списку питань у модальному вікні.
- */
+function closeReviewModal() {
+    hideElement(dom.reviewModal);
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        lastFocusedElement.focus();
+    }
+}
+
 function populateReviewModal() {
-    const listContainer = document.getElementById('modal-question-list');
-    listContainer.innerHTML = '';
+    dom.modalQuestionList.innerHTML = "";
 
-    userAnswers.forEach((answer, index) => {
-        const button = document.createElement('button');
-        const isSkipped = answer === null;
-        const isCurrent = index === currentQuestionIndex;
+    QuestionFlow.buildReviewItems(state.userAnswers, state.currentQuestionIndex).forEach(item => {
+        const button = createElement(
+            "button",
+            `review-index-button ${item.stateClassName}`,
+            item.label
+        );
 
-        button.textContent = index + 1;
-        button.className = `p-3 rounded-xl font-bold transition duration-200 transform hover:scale-105 ${isCurrent
-            ? 'bg-blue-600 text-white shadow-xl' // Поточне
-            : isSkipped
-                ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300' // Пропущено
-                : 'bg-green-200 text-green-800 hover:bg-green-300' // Відповідено
-            }`;
-
-        button.onclick = () => {
+        button.type = "button";
+        button.addEventListener("click", () => {
             closeReviewModal();
-            renderQuestion(index);
-        };
-        listContainer.appendChild(button);
+            renderQuestion(item.index);
+        });
+
+        dom.modalQuestionList.appendChild(button);
     });
 }
 
-/**
- * Закриття модального вікна.
- */
-window.closeReviewModal = function () {
-    document.getElementById('review-modal').classList.add('hidden');
-}
-
-/**
- * Відображає кастомне повідомлення (заміна alert).
- * @param {string} message - Текст повідомлення.
- * @param {string} type - Тип (info, alert).
- */
-function displayMessage(message, type = 'info') {
-    // Створюємо тимчасовий елемент повідомлення
-    let msgDiv = document.createElement('div');
-    msgDiv.textContent = message;
-    msgDiv.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg text-white z-50 transition-all duration-300 transform translate-y-0`;
-
-    if (type === 'alert') {
-        msgDiv.classList.add('bg-red-700', 'animate-shake');
-    } else {
-        msgDiv.classList.add('bg-blue-700');
-    }
-
-    document.body.appendChild(msgDiv);
-
-    // Видаляємо повідомлення через 3 секунди
-    setTimeout(() => {
-        msgDiv.classList.add('opacity-0', 'translate-y-[-20px]');
-        msgDiv.addEventListener('transitionend', () => msgDiv.remove());
-    }, 3000);
-}
-
-/**
- * Обчислення та відображення результатів.
- */
 function showResults() {
-    // 1. Обчислюємо результат
-    score = 0;
-    userAnswers.forEach((answerIndex, qIndex) => {
-        if (answerIndex !== null && answerIndex === selectedQuestions[qIndex].correct) {
-            score++;
-        }
+    const score = QuizCore.scoreQuiz(state.selectedQuestions, state.userAnswers);
+    const conceptSummary = QuizCore.buildConceptSummary(state.selectedQuestions, state.userAnswers);
+    latestSharePayload = ResultShare.buildSharePayload(state, conceptSummary, state.selectedQuestions.length, score);
+    isSharedResultView = false;
+
+    renderResultsScreen({
+        score,
+        totalQuestions: state.selectedQuestions.length,
+        conceptSummary,
+        isShared: false,
+        detailedQuestions: state.selectedQuestions,
+        detailedAnswers: state.userAnswers
     });
 
-    // 2. Обчислюємо унікальні концепції для підсумкового блоку
-    const uniqueConcepts = [...new Set(selectedQuestions.map(q => q.concept))];
-    document.getElementById('concept-list').textContent = uniqueConcepts.join(', ');
+    playUiSound(score >= Math.ceil(QUESTIONS_PER_QUIZ * 0.5) ? "success" : "alert");
 
-    // 3. Оновлюємо UI
-    document.getElementById('quiz-container').classList.add('hidden');
-    document.getElementById('results-container').classList.remove('hidden');
+    clearSavedState();
+}
 
-    document.getElementById('score-display').textContent = `${score}/${NUM_QUESTIONS}`;
-
-    let messageText;
-    if (score === NUM_QUESTIONS) {
-        messageText = "Ти справжній IT-геній! 🚀";
-    } else if (score >= NUM_QUESTIONS * 0.7) {
-        messageText = "Дуже добре! Продовжуй вчитися! 🌟";
-    } else if (score >= NUM_QUESTIONS * 0.5) {
-        messageText = "Непогано! Але є над чим попрацювати. 💪";
-    } else {
-        messageText = "Треба ще трохи позайматися! 💡";
+function restoreSharedResultFromHash() {
+    const encoded = ResultShare.getEncodedPayloadFromHash(window.location.hash);
+    if (!encoded) {
+        return false;
     }
-    document.getElementById('result-message').textContent = messageText;
 
-    // 4. Детальний аналіз
-    const detailedResults = document.getElementById('detailed-results');
-    detailedResults.innerHTML = '';
+    const payload = ResultShare.decodeSharePayload(encoded);
+    if (!payload) {
+        clearSharedHash();
+        return false;
+    }
 
-    selectedQuestions.forEach((qData, index) => {
-        const userAnswerIndex = userAnswers[index];
-        const isAnswered = userAnswerIndex !== null;
-        const isCorrect = isAnswered && userAnswerIndex === qData.correct;
+    latestSharePayload = payload;
+    isSharedResultView = true;
+    setScreenMode("results");
 
-        const resultItem = document.createElement('div');
+    renderResultsScreen({
+        score: payload.score,
+        totalQuestions: payload.total,
+        conceptSummary: payload.conceptSummary,
+        isShared: true,
+        detailedQuestions: [],
+        detailedAnswers: []
+    });
 
-        let className = 'border-gray-300';
-        let statusText = `<span class="text-gray-500 font-bold">⚠️ Пропущено (не відповів)</span>`;
-        let answerText = '';
+    displayMessage(uiStrings.sharedResultModeLabel, "info");
+    return true;
+}
 
-        if (isCorrect) {
-            className = 'result-correct border-green-700';
-            statusText = `<span class="text-green-700 font-bold">✅ Правильно!</span>`;
-        } else if (isAnswered) {
-            className = 'result-incorrect border-red-700';
-            statusText = `<span class="text-red-700 font-bold">❌ Помилка!</span>`;
+function resetQuiz() {
+    state.currentGrade = null;
+    state.selectedQuestions = [];
+    state.currentQuestionIndex = 0;
+    state.userAnswers = [];
+    latestSharePayload = null;
+    isSharedResultView = false;
 
-            answerText = `Твоя відповідь: <span class="italic text-red-700">${qData.options[userAnswerIndex]}</span>`;
+    clearSavedState();
+    clearSharedHash();
+    hideElement(dom.quizContainer);
+    hideElement(dom.resultsContainer);
+    hideElement(dom.reviewModal);
+    hideElement(dom.finishModal);
+    hideElement(dom.sharedResultNote);
+    showElement(dom.classSelection);
+    setScreenMode("home");
+    displayMessage(uiStrings.stateResetNotice, "info");
+}
+
+function bindEvents() {
+    dom.skipButton.addEventListener("click", skipQuestion);
+    dom.nextButton.addEventListener("click", nextQuestion);
+    dom.finishEarlyButton.addEventListener("click", finishEarly);
+    dom.reviewButton.addEventListener("click", openReviewModal);
+    dom.reviewCloseButton.addEventListener("click", closeReviewModal);
+    dom.finishCancelButton.addEventListener("click", cancelFinishEarly);
+    dom.finishConfirmButton.addEventListener("click", confirmFinishEarly);
+    dom.restartButton.addEventListener("click", resetQuiz);
+    dom.shareButton.addEventListener("click", () => {
+        shareResults();
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !dom.reviewModal.classList.contains("hidden")) {
+            closeReviewModal();
+            return;
         }
 
-        resultItem.className = `p-4 rounded-xl border-2 transition-all duration-300 ${className}`;
-
-        resultItem.innerHTML = `
-            <p class="font-semibold text-lg mb-2">${index + 1}. ${qData.q}</p>
-            <p class="mb-2">${statusText} ${answerText}</p>
-            <p class="text-sm font-medium">Правильна відповідь: <span class="text-green-700">${qData.options[qData.correct]}</span></p>
-            <p class="text-sm text-gray-700 mt-1">💡 Пояснення: ${qData.explanation}</p>
-            <p class="text-xs text-gray-400 mt-2">Концепція: ${qData.concept}</p>
-        `;
-        detailedResults.appendChild(resultItem);
+        if (event.key === "Escape" && !dom.finishModal.classList.contains("hidden")) {
+            cancelFinishEarly();
+        }
     });
 }
 
-/**
- * Скидання тесту та повернення до вибору класу.
- */
-window.resetQuiz = function () {
-    document.getElementById('results-container').classList.add('hidden');
-    document.getElementById('class-selection').classList.remove('hidden');
-    currentGrade = null;
-    selectedQuestions = [];
-    currentQuestionIndex = 0;
-    userAnswers = [];
-    score = 0;
-    setupClassSelection(); // Переконатися, що кнопки класів знову налаштовані
+function initDom() {
+    dom.classSelection = document.getElementById("class-selection");
+    dom.classButtons = document.getElementById("class-buttons");
+    dom.quizContainer = document.getElementById("quiz-container");
+    dom.resultsContainer = document.getElementById("results-container");
+    dom.currentQuestionIndex = document.getElementById("current-question-index");
+    dom.totalQuestions = document.getElementById("total-questions");
+    dom.currentGrade = document.getElementById("current-grade");
+    dom.questionText = document.getElementById("question-text");
+    dom.optionsContainer = document.getElementById("options-container");
+    dom.skipButton = document.getElementById("skip-button");
+    dom.nextButton = document.getElementById("next-button");
+    dom.finishEarlyButton = document.getElementById("finish-early-button");
+    dom.reviewButton = document.getElementById("review-button");
+    dom.reviewButtonLabel = document.getElementById("review-button-label");
+    dom.skippedCount = document.getElementById("skipped-count");
+    dom.reviewModal = document.getElementById("review-modal");
+    dom.modalQuestionList = document.getElementById("modal-question-list");
+    dom.reviewCloseButton = document.getElementById("review-close-button");
+    dom.finishModal = document.getElementById("finish-modal");
+    dom.finishModalTitle = document.getElementById("finish-modal-title");
+    dom.finishModalDescription = document.getElementById("finish-modal-description");
+    dom.finishCancelButton = document.getElementById("finish-cancel-button");
+    dom.finishConfirmButton = document.getElementById("finish-confirm-button");
+    dom.resultMessage = document.getElementById("result-message");
+    dom.scoreDisplay = document.getElementById("score-display");
+    dom.adultSummaryTitle = document.getElementById("adult-summary-title");
+    dom.adultSummaryText = document.getElementById("adult-summary-text");
+    dom.adultSummaryStrength = document.getElementById("adult-summary-strength");
+    dom.adultSummaryFocus = document.getElementById("adult-summary-focus");
+    dom.adultSummaryObserved = document.getElementById("adult-summary-observed");
+    dom.conceptNote = document.getElementById("concept-note");
+    dom.conceptList = document.getElementById("concept-list");
+    dom.conceptAnalyticsList = document.getElementById("concept-analytics-list");
+    dom.needsPracticeList = document.getElementById("needs-practice-list");
+    dom.detailedResults = document.getElementById("detailed-results");
+    dom.sharedResultNote = document.getElementById("shared-result-note");
+    dom.shareButton = document.getElementById("share-button");
+    dom.restartButton = document.getElementById("restart-button");
+    dom.announcements = document.getElementById("announcements");
+    dom.toastContainer = document.getElementById("toast-container");
 }
 
-// Запуск ініціалізації при завантаженні сторінки
-document.addEventListener('DOMContentLoaded', setupClassSelection);
+function initStaticText() {
+    document.getElementById("class-selection-title").textContent = uiStrings.classSelectionTitle;
+    document.getElementById("class-selection-subtitle").textContent = uiStrings.classSelectionSubtitle;
+    document.getElementById("level-label").textContent = uiStrings.levelLabel;
+    document.getElementById("result-label").textContent = uiStrings.resultLabel;
+    document.getElementById("result-analysis-title").textContent = uiStrings.resultAnalysis;
+    document.getElementById("adult-summary-title").textContent = uiStrings.resultAdultSummary;
+    document.getElementById("concepts-title").textContent = uiStrings.resultConcepts;
+    document.getElementById("needs-practice-title").textContent = uiStrings.resultNeedsPractice;
+    document.getElementById("review-title").textContent = uiStrings.reviewTitle;
+    document.getElementById("review-description").textContent = uiStrings.reviewDescription;
+    dom.reviewCloseButton.textContent = uiStrings.reviewClose;
+    dom.finishModalTitle.textContent = uiStrings.finishModalTitle;
+    dom.finishModalDescription.textContent = uiStrings.finishModalDescription;
+    dom.finishCancelButton.textContent = uiStrings.finishModalCancel;
+    dom.finishConfirmButton.textContent = uiStrings.finishModalConfirm;
+    dom.shareButton.textContent = uiStrings.shareResults;
+    dom.restartButton.textContent = uiStrings.restart;
+    dom.skipButton.textContent = uiStrings.skip;
+    dom.nextButton.textContent = uiStrings.next;
+    dom.finishEarlyButton.textContent = uiStrings.finishEarly;
+    dom.announcements.textContent = uiStrings.liveRegionDefault;
+}
+
+function initializeApp() {
+    initDom();
+    initStaticText();
+    renderClassSelection();
+    bindEvents();
+    if (restoreSharedResultFromHash()) {
+        clearSavedState();
+        hideElement(dom.quizContainer);
+        hideElement(dom.classSelection);
+        showElement(dom.resultsContainer);
+        setScreenMode("results");
+        return;
+    }
+
+    const savedState = loadState();
+    if (!restoreSession(savedState)) {
+        showElement(dom.classSelection);
+        hideElement(dom.quizContainer);
+        hideElement(dom.resultsContainer);
+        setScreenMode("home");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", initializeApp);
+
