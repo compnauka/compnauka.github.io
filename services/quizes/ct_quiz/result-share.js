@@ -18,10 +18,18 @@
                 .map(item => {
                     const total = clampNumber(item.total, 0, 99);
                     const correct = clampNumber(item.correct, 0, total);
+                    const conceptRoot = typeof item.conceptRoot === "string" ? item.conceptRoot.trim() : "";
+                    const conceptKeys = Array.isArray(item.conceptKeys)
+                        ? item.conceptKeys
+                            .filter(key => typeof key === "string" && key.trim())
+                            .map(key => key.trim())
+                        : [];
                     return {
                         concept: item.concept.trim(),
                         total,
-                        correct
+                        correct,
+                        conceptRoot,
+                        conceptKeys
                     };
                 })
             : [];
@@ -34,7 +42,22 @@
         };
     }
 
-    function buildSharePayload(state, conceptSummary, totalQuestions, scoreOverride) {
+    function sanitizeDiagnosticProfile(diagnosticProfile) {
+        const profile = diagnosticProfile && typeof diagnosticProfile === "object" ? diagnosticProfile : {};
+
+        return {
+            strongKnowledge: clampNumber(profile.strongKnowledge, 0, 99),
+            emergingKnowledge: clampNumber(profile.emergingKnowledge, 0, 99),
+            tentativeKnowledge: clampNumber(profile.tentativeKnowledge, 0, 99),
+            falseConfidence: clampNumber(profile.falseConfidence, 0, 99),
+            uncertainError: clampNumber(profile.uncertainError, 0, 99),
+            explicitUnknown: clampNumber(profile.explicitUnknown, 0, 99),
+            skipped: clampNumber(profile.skipped, 0, 99),
+            tooFastAttempts: clampNumber(profile.tooFastAttempts, 0, 99)
+        };
+    }
+
+    function buildSharePayload(state, conceptSummary, totalQuestions, scoreOverride, diagnosticProfile) {
         const safeTotal = clampNumber(totalQuestions, 1, 99);
         const scoreSource = Number.isFinite(Number(scoreOverride))
             ? scoreOverride
@@ -48,7 +71,8 @@
             score: safeScore,
             total: safeTotal,
             sharedAt: new Date().toISOString(),
-            conceptSummary: sanitizeConceptSummary(conceptSummary)
+            conceptSummary: sanitizeConceptSummary(conceptSummary),
+            diagnosticProfile: sanitizeDiagnosticProfile(diagnosticProfile)
         };
     }
 
@@ -76,7 +100,8 @@
                 score,
                 total,
                 sharedAt: typeof parsed.sharedAt === "string" ? parsed.sharedAt : "",
-                conceptSummary: sanitizeConceptSummary(parsed.conceptSummary || { stats: [] })
+                conceptSummary: sanitizeConceptSummary(parsed.conceptSummary || { stats: [] }),
+                diagnosticProfile: sanitizeDiagnosticProfile(parsed.diagnosticProfile)
             };
         } catch (error) {
             return null;
@@ -94,7 +119,10 @@
 
     function buildShareUrl(locationObject, payload) {
         const encoded = encodeSharePayload(payload);
-        return `${locationObject.origin}${locationObject.pathname}${HASH_PREFIX}${encoded}`;
+        const origin = locationObject && typeof locationObject.origin === "string" ? locationObject.origin : "";
+        const pathname = locationObject && typeof locationObject.pathname === "string" ? locationObject.pathname : "";
+        const baseUrl = origin && origin !== "null" ? `${origin}${pathname}` : pathname;
+        return `${baseUrl}${HASH_PREFIX}${encoded}`;
     }
 
     const ResultShare = {
@@ -105,7 +133,8 @@
         decodeSharePayload,
         getEncodedPayloadFromHash,
         buildShareUrl,
-        sanitizeConceptSummary
+        sanitizeConceptSummary,
+        sanitizeDiagnosticProfile
     };
 
     global.ResultShare = ResultShare;

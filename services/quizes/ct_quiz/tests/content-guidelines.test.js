@@ -1,15 +1,16 @@
-﻿const test = require("node:test");
+const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const appConfig = require("../app-config.js");
+const uiStrings = require("../ui-strings.js");
 const QuizCore = require("../quiz-core.js");
 const { questionBank } = require("../questions.js");
 
 test("grade 2 avoids technical programming terminology", () => {
     const forbiddenPatterns = [
-        /вхідн(і|и)\s+дан(і|и)/i,
-        /умова завершення/i,
-        /кінцевий результат/i
+        /�����(�|�)\s+���(�|�)/i,
+        /����� ����������/i,
+        /������� ���������/i
     ];
 
     questionBank["2"].forEach((question, index) => {
@@ -26,10 +27,10 @@ test("grade 2 avoids technical programming terminology", () => {
 
 test("grade 3 avoids direct programming framing", () => {
     const forbiddenPatterns = [
-        /[A-Za-zА-Яа-яЇїІіЄєҐґ]+_[A-Za-zА-Яа-яЇїІіЄєҐґ]+/,
-        /тип даних/i,
-        /якби ти писав код/i,
-        /\bфункці(я|ї)\b/i,
+        /[A-Za-z�-��-���������]+_[A-Za-z�-��-���������]+/,
+        /��� �����/i,
+        /���� �� ����� ���/i,
+        /\b������(�|�)\b/i,
         /\bwhile\b/i
     ];
 
@@ -47,14 +48,14 @@ test("grade 3 avoids direct programming framing", () => {
 
 test("questions avoid gendered second-person masculine verb forms", () => {
     const forbiddenPatterns = [
-        /\bти\s+помітив\b/i,
-        /\bти\s+виявив\b/i,
-        /\bти\s+зробив\b/i,
-        /\bти\s+допоміг\b/i,
-        /\bти\s+взяв\b/i,
-        /\bти\s+одягнув\b/i,
-        /\bти\s+забув\b/i,
-        /\bти\s+запізнився\b/i
+        /\b��\s+������\b/i,
+        /\b��\s+������\b/i,
+        /\b��\s+������\b/i,
+        /\b��\s+������\b/i,
+        /\b��\s+����\b/i,
+        /\b��\s+�������\b/i,
+        /\b��\s+�����\b/i,
+        /\b��\s+���������\b/i
     ];
 
     Object.entries(questionBank).forEach(([grade, questions]) => {
@@ -97,7 +98,12 @@ test("revised questions are explicitly marked as revised and extension content s
 
 test("selection contract still respects required roots after content edits", () => {
     Object.keys(questionBank).forEach(grade => {
-        const selected = QuizCore.selectQuestionsForGrade(questionBank, grade, appConfig.questionsPerQuiz, () => 0.25);
+        const selected = QuizCore.selectQuestionsForGrade(
+            questionBank,
+            grade,
+            appConfig.getQuestionsPerQuizForGrade(grade),
+            () => 0.25
+        );
         const selectedRoots = new Set(selected.map(question => QuizCore.getConceptRoot(question)));
 
         appConfig.requiredConceptRootsByGrade[grade].forEach(root => {
@@ -172,4 +178,27 @@ test("core concept ladders keep a non-decreasing progression band across grades"
             assert.ok(grade3Max <= grade4Max, `root ${root} should not get easier from grade 3 to grade 4`);
         }
     });
+});
+
+
+test("ui strings avoid placeholder question marks", () => {
+    function assertCleanStrings(value, path) {
+        if (typeof value === "string") {
+            assert.doesNotMatch(value, /\?{3,}/u, path);
+            return;
+        }
+
+        if (Array.isArray(value)) {
+            value.forEach((item, index) => assertCleanStrings(item, `${path}[${index}]`));
+            return;
+        }
+
+        if (value && typeof value === "object") {
+            Object.entries(value).forEach(([key, nestedValue]) => {
+                assertCleanStrings(nestedValue, path ? `${path}.${key}` : key);
+            });
+        }
+    }
+
+    assertCleanStrings(uiStrings, "uiStrings");
 });

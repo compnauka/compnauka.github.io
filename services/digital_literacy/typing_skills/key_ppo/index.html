@@ -72,6 +72,9 @@
 </head>
 
 <body>
+    <a href="#start-menu" class="skip-link">Перейти до головного меню</a>
+
+    <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Ефекти на весь екран -->
     <div id="damage-overlay"></div>
@@ -113,7 +116,7 @@
 
         <div class="ui-group">
             <button class="control-btn" id="pause-btn" title="Пауза (Esc)"><i class="fa-solid fa-pause"></i></button>
-            <button class="control-btn" id="stop-btn" title="Завершити гру"><i class="fa-solid fa-stop"></i></button>
+            <button class="control-btn" id="stop-btn" title="Вийти в меню"><i class="fa-solid fa-stop"></i></button>
         </div>
     </div>
 
@@ -125,32 +128,80 @@
     <!-- МЕНЮ -->
     <!-- Головне меню -->
     <div id="start-menu" class="menu-overlay">
-        <h1>ЗАХИСНИКИ НЕБА</h1>
-        <p>Клавіатурний тренажер</p>
-        <p>СИСТЕМА ППО ГОТОВА ДО РОБОТИ<br>ВІДБИЙ АТАКУ ШАХЕДІВ ТА РАКЕТ НА МІСТО</p>
+        <div class="start-layout">
+            <section class="start-hero">
+                <p class="start-kicker">Клавіатурний тренажер українською</p>
+                <h1>ЗАХИСНИКИ НЕБА</h1>
+                <p class="start-lead">Система ППО готова до роботи. Відбивай атаки шахедів та ракет на місто й тренуй швидкість, точність і впевненість у наборі тексту.</p>
 
-        <div class="options-grid">
-            <div class="option-group">
-                <label><i class="fa-solid fa-sliders"></i> СКЛАДНІСТЬ</label>
-                <select id="level-select">
-                    <option value="beginner">НОВАЧОК (Дуже повільно)</option>
-                    <option value="easy">ЛЕГКИЙ (Повільно)</option>
-                    <option value="medium" selected>СЕРЕДНІЙ (Швидко + цифри)</option>
-                    <option value="hard">СКЛАДНИЙ (Слова)</option>
-                </select>
-            </div>
-            <div class="option-group">
-                <label><i class="fa-solid fa-volume-high"></i> ЗВУК</label>
-                <select id="sound-select">
-                    <option value="on">УВІМКНЕНО</option>
-                    <option value="off">ВИМКНЕНО</option>
-                </select>
-            </div>
+                <div class="start-features">
+                    <div class="start-feature">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <span>Швидкий ігровий запуск без зайвих кроків</span>
+                    </div>
+                    <div class="start-feature">
+                        <i class="fa-solid fa-keyboard"></i>
+                        <span>Українська розкладка, слова й символи</span>
+                    </div>
+                    <div class="start-feature">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Тренування точності, ритму та реакції</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="start-panel">
+                <div class="start-panel-head">
+                    <h2>Налаштуй режим</h2>
+                    <p>Основний формат для настільних ПК та ноутбуків: усе важливе видно одразу.</p>
+                </div>
+
+                <div class="options-grid">
+                    <div class="option-group">
+                        <label for="level-select"><i class="fa-solid fa-sliders"></i> СКЛАДНІСТЬ</label>
+                        <select id="level-select">
+                            <option value="beginner" selected>НОВАЧОК (Дуже повільно)</option>
+                            <option value="easy">ЛЕГКИЙ (Повільно)</option>
+                            <option value="medium">СЕРЕДНІЙ (Швидко + цифри)</option>
+                            <option value="hard">СКЛАДНИЙ (Слова)</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="direction-select"><i class="fa-solid fa-arrows-left-right"></i> НАПРЯМОК</label>
+                        <select id="direction-select">
+                            <option value="ltr" selected>ЗЛІВА НАПРАВО</option>
+                            <option value="rtl">СПРАВА НАЛІВО</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="word-set-select"><i class="fa-solid fa-book-open"></i> СЛОВНИК</label>
+                        <select id="word-set-select">
+                            <option value="mixed">ЗМІШАНИЙ</option>
+                            <option value="foundation" selected>БАЗОВІ СЛОВА</option>
+                            <option value="school">ШКОЛА І ПОБУТ</option>
+                            <option value="nature">ПРИРОДА</option>
+                            <option value="ukraine">УКРАЇНА</option>
+                            <option value="technology">ТЕХНОЛОГІЇ</option>
+                            <option value="challenge">СКЛАДНІ СЛОВА</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="sound-select"><i class="fa-solid fa-volume-high"></i> ЗВУК</label>
+                        <select id="sound-select">
+                            <option value="on">УВІМКНЕНО</option>
+                            <option value="off">ВИМКНЕНО</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="start-actions">
+                    <button class="btn" id="start-btn">
+                        <i class="fa-solid fa-play"></i> РОЗПОЧАТИ
+                    </button>
+                    <p class="start-hint">Порада: перед стартом перемкни розкладку на українську.</p>
+                </div>
+            </section>
         </div>
-
-        <button class="btn" onclick="game.start()">
-            <i class="fa-solid fa-play"></i> РОЗПОЧАТИ
-        </button>
     </div>
 
     <!-- Туторіал (Інструктаж) -->
@@ -174,8 +225,9 @@
         <div class="tut-info">
             <p><i class="fa-solid fa-keyboard"></i> Мова тренажера — <strong>УКРАЇНСЬКА</strong> (UA).</p>
             <p><i class="fa-solid fa-shield-halved"></i> Будь уважним! Вчись на помилках!</p>
+            <p><i class="fa-solid fa-fire"></i> 3 влучання поспіль запускають КОМБО і допомагають тримати ритм.</p>
         </div>
-        <button class="btn" onclick="game.confirmTutorial()">
+        <button class="btn" id="tutorial-confirm-btn">
             <i class="fa-solid fa-check"></i> ЗРОЗУМІЛО
         </button>
     </div>
@@ -183,12 +235,42 @@
     <!-- Меню паузи -->
     <div id="pause-menu" class="menu-overlay hidden">
         <h1><i class="fa-solid fa-pause"></i> ПАУЗА</h1>
-        <button class="btn" onclick="game.togglePause()">
+        <button class="btn" id="resume-btn">
             <i class="fa-solid fa-play"></i> ПРОДОВЖИТИ
         </button>
-        <button class="btn btn-alt" onclick="game.quit()">
+        <button class="btn btn-alt" id="quit-btn">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> МЕНЮ
         </button>
+    </div>
+
+    <div id="exit-confirm-menu" class="menu-overlay hidden">
+        <div class="confirm-panel">
+            <h2>Вийти в меню?</h2>
+            <p>Твій поточний результат у цій грі скинеться. Якщо хочеш перепочити, краще натисни паузу.</p>
+            <div class="confirm-actions">
+                <button class="btn" id="cancel-exit-btn">
+                    <i class="fa-solid fa-play"></i> ПРОДОВЖИТИ ГРУ
+                </button>
+                <button class="btn btn-alt" id="confirm-exit-btn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> ВИЙТИ В МЕНЮ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="layout-assist-menu" class="menu-overlay hidden">
+        <div class="confirm-panel">
+            <h2>Зміни розкладку</h2>
+            <p>Схоже, зараз увімкнена не українська мова клавіатури. Перемкни розкладку на українську і почни вправу заново.</p>
+            <div class="confirm-actions">
+                <button class="btn" id="layout-restart-btn">
+                    <i class="fa-solid fa-rotate-right"></i> ПОЧАТИ СПОЧАТКУ
+                </button>
+                <button class="btn btn-alt" id="layout-menu-btn">
+                    <i class="fa-solid fa-bars"></i> У МЕНЮ
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Екран кінця гри -->
@@ -196,23 +278,32 @@
         <h1 id="game-over-title" class="game-over-title"></h1>
 
         <div class="options-grid game-over-stats">
-            <p class="game-over-line">ВЛУЧАНЬ: <strong id="final-score" class="score-val">0</strong></p>
-            <p class="game-over-line">ТОЧНІСТЬ: <strong id="final-accuracy" class="health-val">0%</strong>
-            </p>
-            <p class="game-over-line">МАКС. КОМБО: <strong id="final-combo" class="score-val">0</strong>
-            </p>
+            <div class="game-over-metric">
+                <p class="game-over-line">ВЛУЧАНЬ: <strong id="final-score" class="score-val">0</strong></p>
+            </div>
+            <div class="game-over-metric">
+                <p class="game-over-line">ТОЧНІСТЬ: <strong id="final-accuracy" class="health-val">0%</strong></p>
+            </div>
+            <div class="game-over-metric">
+                <p class="game-over-line">МАКС. КОМБО: <strong id="final-combo" class="score-val">0</strong></p>
+            </div>
+            <div class="game-over-metric">
+                <p class="game-over-line">ПРОМАХИ: <strong id="final-misses" class="health-val">0</strong></p>
+            </div>
             <p id="high-score-display" class="game-over-high-score">РЕКОРД: 0
             </p>
         </div>
 
-        <button class="btn" onclick="game.restart()">
+        <button class="btn" id="restart-btn">
             <i class="fa-solid fa-rotate-right"></i> ЩЕ РАЗ
         </button>
-        <button class="btn btn-alt" onclick="location.reload()">
+        <button class="btn btn-alt" id="return-menu-btn">
             <i class="fa-solid fa-bars"></i> МЕНЮ
         </button>
     </div>
 
+    <script src="words-data.js"></script>
+    <script src="game-core.js"></script>
     <script src="script.js"></script>
 </body>
 

@@ -82,10 +82,31 @@ const REQUIRED_CONCEPT_ROOTS_BY_GRADE = {
     ]
 };
 
+const QUESTIONS_PER_QUIZ_BY_GRADE = {
+    "2": 12,
+    "3": 14,
+    "4": 16
+};
+
+function getQuestionsPerQuizForGrade(grade) {
+    const normalizedGrade = String(grade || "").trim();
+    const configuredCount = QUESTIONS_PER_QUIZ_BY_GRADE[normalizedGrade];
+
+    if (Number.isInteger(configuredCount) && configuredCount > 0) {
+        return configuredCount;
+    }
+
+    const fallbackCounts = Object.values(QUESTIONS_PER_QUIZ_BY_GRADE).filter(count => Number.isInteger(count) && count > 0);
+    return fallbackCounts.length ? Math.min(...fallbackCounts) : 10;
+}
+
 const appConfig = {
     storageKey: STORAGE_KEY,
     questionBankVersion: 2,
-    questionsPerQuiz: 10,
+    questionsPerQuiz: getQuestionsPerQuizForGrade("2"),
+    questionsPerQuizByGrade: QUESTIONS_PER_QUIZ_BY_GRADE,
+    getQuestionsPerQuizForGrade,
+    minimumAnswerTimeMs: 4000,
     conceptStatus: CONCEPT_STATUS,
     adultSummaryVariant: ADULT_SUMMARY_VARIANT,
     questionDifficulty: QUESTION_DIFFICULTY,

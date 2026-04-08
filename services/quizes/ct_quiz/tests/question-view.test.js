@@ -1,4 +1,4 @@
-﻿const test = require("node:test");
+const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const QuestionView = require("../question-view.js");
@@ -42,5 +42,30 @@ test("question options model uses precomputed option order", () => {
         { text: "A", optionIndex: 0, isSelected: false },
         { text: "D", optionIndex: 3, isSelected: true },
         { text: "B", optionIndex: 1, isSelected: false }
+    ]);
+});
+
+test("confidence options model marks selected confidence level", () => {
+    const model = QuestionView.buildConfidenceOptionsModel("medium");
+
+    assert.deepEqual(model, [
+        {
+            value: "low",
+            label: uiStrings.confidenceLevels[0].label,
+            description: uiStrings.confidenceLevels[0].description,
+            isSelected: false
+        },
+        {
+            value: "medium",
+            label: uiStrings.confidenceLevels[1].label,
+            description: uiStrings.confidenceLevels[1].description,
+            isSelected: true
+        },
+        {
+            value: "high",
+            label: uiStrings.confidenceLevels[2].label,
+            description: uiStrings.confidenceLevels[2].description,
+            isSelected: false
+        }
     ]);
 });

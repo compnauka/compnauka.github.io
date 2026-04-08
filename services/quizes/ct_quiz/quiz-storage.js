@@ -16,7 +16,10 @@
             currentGrade: state.currentGrade,
             selectedQuestions: Array.isArray(state.selectedQuestions) ? state.selectedQuestions : [],
             currentQuestionIndex: Number.isInteger(state.currentQuestionIndex) ? state.currentQuestionIndex : 0,
-            userAnswers: Array.isArray(state.userAnswers) ? state.userAnswers : []
+            userAnswers: Array.isArray(state.userAnswers) ? state.userAnswers : [],
+            userConfidence: Array.isArray(state.userConfidence) ? state.userConfidence : [],
+            questionTimings: Array.isArray(state.questionTimings) ? state.questionTimings : [],
+            responseIntent: Array.isArray(state.responseIntent) ? state.responseIntent : []
         };
     }
 

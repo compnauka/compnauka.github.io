@@ -55,7 +55,7 @@
 
 </head>
 
-<body class="min-h-screen p-4 sm:p-8 flex justify-center items-start pt-8 bg-[var(--color-surface-subtle)]">
+<body class="min-h-screen px-4 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6 flex justify-center items-start bg-[var(--color-surface-subtle)]">
     <a href="#main-content" class="skip-link">Перейти до основного вмісту</a>
     <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
@@ -69,7 +69,7 @@
         </div>
 
         <section id="quiz-container" class="hidden card bg-white p-4 sm:p-6 transition-all duration-500" aria-labelledby="question-text">
-            <div class="flex justify-between items-center mb-6 border-b pb-4 gap-4 flex-wrap">
+            <div class="flex justify-between items-center border-b pb-4 gap-4 flex-wrap">
                 <p class="text-xl font-bold text-blue-600">Завдання <span id="current-question-index">1</span> з <span id="total-questions">10</span></p>
                 <div class="text-lg font-medium text-gray-700"><span id="level-label"></span> <span id="current-grade"></span></div>
             </div>
@@ -77,18 +77,20 @@
             <h2 id="question-text" class="text-2xl font-semibold text-gray-800 mb-4"></h2>
             <div id="options-container" role="group" aria-labelledby="question-text"></div>
 
-                        <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                        <div class="quiz-action-row flex flex-col sm:flex-row gap-4">
+                <button id="dont-know-button" type="button"
+                    class="quiz-action-button quiz-action-secondary w-full sm:w-1/3 py-3 font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4"></button>
                 <button id="skip-button" type="button"
-                    class="w-full sm:w-1/2 py-3 text-yellow-600 font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-300"></button>
+                    class="quiz-action-button quiz-action-neutral w-full sm:w-1/3 py-3 font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4"></button>
                 <button id="next-button" type="button"
-                    class="w-full sm:w-1/2 py-3 text-white font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-300 opacity-50 cursor-not-allowed"
+                    class="quiz-action-button quiz-action-primary w-full sm:w-1/3 py-3 text-white font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-300 opacity-50 cursor-not-allowed"
                     disabled></button>
             </div>
 
             <button id="finish-early-button" type="button"
-                class="mt-3 w-full py-3 bg-red-100 text-red-700 font-bold text-lg rounded-xl transition duration-300 hover:bg-red-200 focus:outline-none focus:ring-4 focus:ring-red-300"></button>
+                class="utility-button utility-button-danger w-full py-3 font-bold text-lg rounded-xl transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-300"></button>
 
-            <button id="review-button" type="button" class="mt-4 w-full py-2 text-sm text-blue-500 hover:text-blue-700" style="display:none;">
+            <button id="review-button" type="button" class="utility-button utility-button-ghost w-full py-2 text-sm" style="display:none;">
                 <span id="review-button-label">Переглянути пропущені питання</span> (<span id="skipped-count">0</span>)
             </button>
         </section>
@@ -103,31 +105,12 @@
 
             <h3 id="result-analysis-title" class="text-2xl font-bold text-gray-800 mb-4 text-left"></h3>
 
-            <details id="adult-summary-details" class="adult-summary-details bg-slate-50 p-4 rounded-xl mb-4 border-l-4 border-slate-500 text-left">
-                <summary id="adult-summary-title" class="font-bold text-slate-800 text-lg"></summary>
-                <div class="adult-summary-content mt-3">
-                    <p id="adult-summary-text" class="text-sm text-gray-700 mb-2"></p>
-                    <p id="adult-summary-strength" class="text-sm text-gray-700 mb-1"></p>
-                    <p id="adult-summary-focus" class="text-sm text-gray-700 mb-1"></p>
-                    <p id="adult-summary-observed" class="text-sm text-gray-700"></p>
-                </div>
-            </details>
+            <section id="diagnostic-summary-section" class="bg-slate-50 p-4 rounded-xl mb-6 border-l-4 border-slate-500 text-left">
+                <h4 id="diagnostic-summary-title" class="font-bold text-slate-800 text-lg mb-3"></h4>
+                <div id="diagnostic-summary-list" class="diagnostic-summary-grid"></div>
+            </section>
 
-            <details id="concepts-details" class="adult-summary-details bg-blue-50 p-4 rounded-xl mb-4 border-l-4 border-blue-500 text-left">
-                <summary id="concepts-title" class="font-bold text-blue-800 text-lg"></summary>
-                <div class="adult-summary-content mt-3">
-                    <p id="concept-note" class="text-sm text-gray-700 mb-3"></p>
-                    <p id="concept-list" class="text-sm text-gray-700 mb-3"></p>
-                    <div id="concept-analytics-list" class="space-y-3"></div>
-                </div>
-            </details>
-
-            <details id="needs-practice-details" class="adult-summary-details bg-amber-50 p-4 rounded-xl mb-6 border-l-4 border-amber-500 text-left">
-                <summary id="needs-practice-title" class="font-bold text-amber-800 text-lg"></summary>
-                <div class="adult-summary-content mt-3">
-                    <p id="needs-practice-list" class="text-sm text-gray-700"></p>
-                </div>
-            </details>
+            <h4 id="per-question-title" class="text-xl font-bold text-gray-800 mb-4 text-left"></h4>
 
             <div id="detailed-results" class="space-y-6 text-left"></div>
             <p id="shared-result-note" class="hidden text-sm text-gray-600 mt-6"></p>
@@ -147,7 +130,7 @@
                 <p id="review-description" class="text-gray-600 mb-4"></p>
                 <div id="modal-question-list" class="grid grid-cols-5 gap-3 max-h-64 overflow-y-auto p-2"></div>
                 <button id="review-close-button" type="button"
-                    class="mt-6 w-full py-2 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600"></button>
+                    class="utility-button utility-button-neutral mt-6 w-full py-2 font-bold rounded-xl"></button>
             </div>
         </div>
 
@@ -158,9 +141,25 @@
                 <p id="finish-modal-description" class="text-gray-600 mb-5"></p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button id="finish-cancel-button" type="button"
-                        class="py-2 bg-slate-200 text-slate-800 font-bold rounded-xl hover:bg-slate-300"></button>
+                        class="utility-button utility-button-neutral py-2 font-bold rounded-xl"></button>
                     <button id="finish-confirm-button" type="button"
-                        class="py-2 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600"></button>
+                        class="utility-button utility-button-danger py-2 font-bold rounded-xl"></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confidence-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 confidence-modal-overlay"
+            role="dialog" aria-modal="true" aria-labelledby="confidence-title" tabindex="-1">
+            <div class="bg-white card w-full max-w-2xl p-5 confidence-modal-card">
+                <div class="confidence-header">
+                    <p id="confidence-eyebrow" class="confidence-eyebrow"></p>
+                    <h3 id="confidence-title" class="confidence-title"></h3>
+                </div>
+                <div id="confidence-options" class="confidence-options" role="group" aria-labelledby="confidence-title"></div>
+                <p id="confidence-helper" class="confidence-helper"></p>
+                <div class="confidence-actions">
+                    <button id="confidence-back-button" type="button"
+                        class="confidence-back-button"></button>
                 </div>
             </div>
         </div>
@@ -180,4 +179,3 @@
 </body>
 
 </html>
-

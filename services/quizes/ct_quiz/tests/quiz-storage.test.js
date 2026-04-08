@@ -1,4 +1,4 @@
-﻿const test = require("node:test");
+const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const appConfig = require("../app-config.js");
@@ -28,6 +28,9 @@ test("createSnapshot keeps only the persisted quiz fields", () => {
         selectedQuestions: [{ id: "q-1" }],
         currentQuestionIndex: 2,
         userAnswers: [1, null],
+        userConfidence: ["medium", null],
+        responseIntent: [null, "dont_know"],
+        questionTimings: [{ responseTimeMs: 4500 }, null],
         score: 999
     });
 
@@ -37,7 +40,10 @@ test("createSnapshot keeps only the persisted quiz fields", () => {
         currentGrade: "3",
         selectedQuestions: [{ id: "q-1" }],
         currentQuestionIndex: 2,
-        userAnswers: [1, null]
+        userAnswers: [1, null],
+        userConfidence: ["medium", null],
+        questionTimings: [{ responseTimeMs: 4500 }, null],
+        responseIntent: [null, "dont_know"]
     });
     assert.ok(typeof snapshot.savedAt === "string");
 });
@@ -48,11 +54,15 @@ test("saveStateSnapshot writes serialized snapshot into storage", () => {
         currentGrade: "2",
         selectedQuestions: [{ id: "q-1" }],
         currentQuestionIndex: 0,
-        userAnswers: [null]
+        userAnswers: [null],
+        userConfidence: [null],
+        responseIntent: ["dont_know"],
+        questionTimings: [null]
     });
 
     assert.equal(didSave, true);
     assert.match(storage.getItem(appConfig.storageKey), /"currentGrade":"2"/u);
+    assert.match(storage.getItem(appConfig.storageKey), /"responseIntent":\["dont_know"\]/u);
 });
 
 test("loadStateSnapshot returns parsed snapshot when saved state is valid", () => {
@@ -62,7 +72,10 @@ test("loadStateSnapshot returns parsed snapshot when saved state is valid", () =
         currentGrade: "4",
         selectedQuestions: [{ id: "q-2" }],
         currentQuestionIndex: 1,
-        userAnswers: [0, 1]
+        userAnswers: [0, 1],
+        userConfidence: ["low", "high"],
+        responseIntent: [null, "dont_know"],
+        questionTimings: [{ responseTimeMs: 4100 }, { responseTimeMs: 5200 }]
     }));
 
     assert.deepEqual(QuizStorage.loadStateSnapshot(storage), {
@@ -71,7 +84,10 @@ test("loadStateSnapshot returns parsed snapshot when saved state is valid", () =
         currentGrade: "4",
         selectedQuestions: [{ id: "q-2" }],
         currentQuestionIndex: 1,
-        userAnswers: [0, 1]
+        userAnswers: [0, 1],
+        userConfidence: ["low", "high"],
+        responseIntent: [null, "dont_know"],
+        questionTimings: [{ responseTimeMs: 4100 }, { responseTimeMs: 5200 }]
     });
 });
 

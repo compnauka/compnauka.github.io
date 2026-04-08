@@ -2,7 +2,11 @@
     currentGrade: null,
     selectedQuestions: [],
     currentQuestionIndex: 0,
-    userAnswers: []
+    userAnswers: [],
+    userConfidence: [],
+    responseIntent: [],
+    questionTimings: [],
+    currentQuestionShownAt: 0
 };
 
 const dom = {};
@@ -10,12 +14,14 @@ if (typeof appConfig === "undefined") {
     throw new Error("app-config.js is required before script.js. Missing global appConfig.");
 }
 
-const QUESTIONS_PER_QUIZ = (Number.isInteger(appConfig.questionsPerQuiz) && appConfig.questionsPerQuiz > 0)
-    ? appConfig.questionsPerQuiz
-    : 10;
+const MINIMUM_ANSWER_TIME_MS = (Number.isInteger(appConfig.minimumAnswerTimeMs) && appConfig.minimumAnswerTimeMs > 0)
+    ? appConfig.minimumAnswerTimeMs
+    : 4000;
+const CONFIDENCE_MODAL_ANIMATION_MS = 280;
 let lastFocusedElement = null;
 let latestSharePayload = null;
 let isSharedResultView = false;
+let confidenceModalHideTimer = null;
 const GRADE_EMOJI = {
     "2": "🐣",
     "3": "🦁",
@@ -94,20 +100,169 @@ function createLabeledLine(label, value, className = "") {
     return paragraph;
 }
 
-function getResultMessage(score, totalQuestions = QUESTIONS_PER_QUIZ) {
-    if (score === totalQuestions) {
-        return uiStrings.scorePerfect;
+function getMinimumAnswerTimeSeconds() {
+    return (MINIMUM_ANSWER_TIME_MS / 1000).toFixed(MINIMUM_ANSWER_TIME_MS % 1000 === 0 ? 0 : 1);
+}
+
+function getQuestionsPerQuizForGrade(grade) {
+    if (typeof appConfig.getQuestionsPerQuizForGrade === "function") {
+        return appConfig.getQuestionsPerQuizForGrade(grade);
     }
 
-    if (score >= totalQuestions * 0.7) {
-        return uiStrings.scoreGreat;
+    if (appConfig.questionsPerQuizByGrade) {
+        const mappedCount = appConfig.questionsPerQuizByGrade[String(grade)];
+        if (Number.isInteger(mappedCount) && mappedCount > 0) {
+            return mappedCount;
+        }
     }
 
-    if (score >= totalQuestions * 0.5) {
-        return uiStrings.scoreOkay;
+    return (Number.isInteger(appConfig.questionsPerQuiz) && appConfig.questionsPerQuiz > 0)
+        ? appConfig.questionsPerQuiz
+        : 10;
+}
+
+function formatUiString(template, replacements) {
+    return String(template || "").replace(/\{(\w+)\}/g, (match, key) => {
+        return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
+    });
+}
+
+function ensureQuestionTiming(index) {
+    if (!state.questionTimings[index] || typeof state.questionTimings[index] !== "object") {
+        state.questionTimings[index] = {
+            responseTimeMs: null,
+            tooFastAttempts: 0,
+            lastTooFastMs: null
+        };
     }
 
-    return uiStrings.scoreNeedsWork;
+    return state.questionTimings[index];
+}
+
+function configureConfidenceModal({
+    eyebrow,
+    title,
+    helper,
+    backLabel,
+    mode = "confidence",
+    selectedConfidence = null
+}) {
+    const isWarning = mode === "warning";
+
+    dom.confidenceModalCard.classList.toggle("warning-mode", isWarning);
+    dom.confidenceEyebrow.textContent = eyebrow;
+    dom.confidenceTitle.textContent = title;
+    dom.confidenceHelper.textContent = helper;
+    dom.confidenceHelper.classList.toggle("warning", isWarning);
+    dom.confidenceBackButton.textContent = backLabel;
+    dom.confidenceOptions.hidden = isWarning;
+
+    if (isWarning) {
+        dom.confidenceOptions.innerHTML = "";
+        return;
+    }
+
+    QuestionView.renderConfidenceOptions(dom.confidenceOptions, selectedConfidence, {
+        createElement,
+        onSelect: selectConfidence
+    });
+}
+
+function closeConfidenceModal({ restoreFocus = true } = {}) {
+    if (confidenceModalHideTimer) {
+        window.clearTimeout(confidenceModalHideTimer);
+        confidenceModalHideTimer = null;
+    }
+
+    if (dom.confidenceModal.classList.contains("hidden")) {
+        dom.confidenceOptions.innerHTML = "";
+        if (restoreFocus && lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+            lastFocusedElement.focus();
+        }
+        return;
+    }
+
+    dom.confidenceModal.classList.remove("is-visible");
+    confidenceModalHideTimer = window.setTimeout(() => {
+        hideElement(dom.confidenceModal);
+        dom.confidenceOptions.innerHTML = "";
+        confidenceModalHideTimer = null;
+    }, CONFIDENCE_MODAL_ANIMATION_MS);
+
+    if (restoreFocus && lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        lastFocusedElement.focus();
+    }
+}
+
+function openConfidenceModal(selectedConfidence = null) {
+    if (confidenceModalHideTimer) {
+        window.clearTimeout(confidenceModalHideTimer);
+        confidenceModalHideTimer = null;
+    }
+
+    lastFocusedElement = document.activeElement;
+    configureConfidenceModal({
+        eyebrow: uiStrings.confidencePromptEyebrow,
+        title: uiStrings.confidencePromptTitle,
+        helper: uiStrings.confidencePromptHelp,
+        backLabel: uiStrings.confidenceModalBack,
+        mode: "confidence",
+        selectedConfidence
+    });
+    showElement(dom.confidenceModal);
+    window.requestAnimationFrame(() => {
+        dom.confidenceModal.classList.add("is-visible");
+    });
+    dom.confidenceModal.focus();
+}
+
+function openTooFastModal() {
+    if (confidenceModalHideTimer) {
+        window.clearTimeout(confidenceModalHideTimer);
+        confidenceModalHideTimer = null;
+    }
+
+    lastFocusedElement = document.activeElement;
+    configureConfidenceModal({
+        eyebrow: uiStrings.confidenceWarningEyebrow,
+        title: uiStrings.confidenceWarningTitle,
+        helper: formatUiString(uiStrings.timingTooFastNotice, {
+            seconds: getMinimumAnswerTimeSeconds()
+        }),
+        backLabel: uiStrings.confidenceWarningBack,
+        mode: "warning"
+    });
+    showElement(dom.confidenceModal);
+    window.requestAnimationFrame(() => {
+        dom.confidenceModal.classList.add("is-visible");
+    });
+    dom.confidenceModal.focus();
+}
+
+function reopenConfidenceModalIfNeeded() {
+    if (state.userAnswers[state.currentQuestionIndex] !== null && state.userConfidence[state.currentQuestionIndex] === null) {
+        openConfidenceModal(null);
+    }
+}
+
+function updateQuestionActionButtons() {
+    const currentIndex = state.currentQuestionIndex;
+    const hasAnswer = state.userAnswers[currentIndex] !== null && state.userAnswers[currentIndex] !== undefined;
+    const isDontKnow = state.responseIntent[currentIndex] === "dont_know";
+
+    dom.skipButton.textContent = (hasAnswer || isDontKnow) ? uiStrings.clearChoice : uiStrings.skip;
+    dom.dontKnowButton.classList.toggle("is-active", isDontKnow);
+    dom.dontKnowButton.setAttribute("aria-pressed", isDontKnow ? "true" : "false");
+}
+
+function returnToAnswerOptions() {
+    closeConfidenceModal();
+}
+
+function getResultMessage(score, totalQuestions = state.selectedQuestions.length || getQuestionsPerQuizForGrade(state.currentGrade)) {
+    void score;
+    void totalQuestions;
+    return uiStrings.resultHeading;
 }
 
 function clearSharedHash() {
@@ -186,9 +341,13 @@ function renderResultsScreen({
     score,
     totalQuestions,
     conceptSummary,
+    diagnosticProfile,
     isShared,
     detailedQuestions,
-    detailedAnswers
+    detailedAnswers,
+    detailedConfidence,
+    detailedTimings,
+    detailedIntent
 }) {
     setScreenMode("results");
     hideElement(dom.quizContainer);
@@ -197,16 +356,9 @@ function renderResultsScreen({
 
     dom.scoreDisplay.textContent = `${score}/${totalQuestions}`;
     dom.resultMessage.textContent = getResultMessage(score, totalQuestions);
-    ResultsView.renderAdultSummary(dom, conceptSummary);
-    dom.conceptNote.textContent = uiStrings.resultConceptNote;
-    dom.conceptList.textContent = conceptSummary.all.length
-        ? `${uiStrings.conceptEncounteredLabel} ${conceptSummary.all.join(", ")}`
-        : uiStrings.resultConceptEmpty;
-    dom.needsPracticeList.textContent = conceptSummary.needsPractice.length
-        ? conceptSummary.needsPractice.join(", ")
-        : uiStrings.resultAllClear;
-
-    ResultsView.renderConceptAnalytics(dom.conceptAnalyticsList, conceptSummary, {
+    dom.diagnosticSummaryTitle.textContent = uiStrings.resultDiagnosticTitle;
+    dom.perQuestionTitle.textContent = uiStrings.resultPerQuestionTitle;
+    ResultsView.renderDiagnosticSummary(dom.diagnosticSummaryList, diagnosticProfile, {
         createElement,
         createLabeledLine
     });
@@ -215,16 +367,42 @@ function renderResultsScreen({
     if (isShared) {
         dom.sharedResultNote.textContent = uiStrings.sharedResultDetailsNote;
         showElement(dom.sharedResultNote);
+        hideElement(dom.perQuestionTitle);
     } else {
         hideElement(dom.sharedResultNote);
+        showElement(dom.perQuestionTitle);
+        let renderedItems = 0;
         detailedQuestions.forEach((question, index) => {
+            const classification = ResultsLogic.classifyAnswer(
+                question,
+                detailedAnswers[index],
+                detailedConfidence[index],
+                detailedTimings[index],
+                detailedIntent[index]
+            );
+
+            if (classification.key === "strong-knowledge") {
+                return;
+            }
+
             dom.detailedResults.appendChild(
                 ResultsView.createResultItem(question, detailedAnswers[index], index, {
+                    confidence: detailedConfidence[index],
+                    timing: detailedTimings[index],
+                    intent: detailedIntent[index]
+                }, {
                     createElement,
                     createLabeledLine
                 })
             );
+            renderedItems += 1;
         });
+
+        if (renderedItems === 0) {
+            dom.detailedResults.appendChild(
+                createElement("p", "text-sm text-slate-600", uiStrings.resultPerQuestionEmpty)
+            );
+        }
     }
 }
 
@@ -246,19 +424,28 @@ function startQuiz(grade) {
     setScreenMode("quiz");
     state.currentGrade = grade;
     state.currentQuestionIndex = 0;
+    const questionLimit = getQuestionsPerQuizForGrade(grade);
 
     try {
-        state.selectedQuestions = QuizCore.selectQuestionsForGrade(questionBank, grade, QUESTIONS_PER_QUIZ);
+        state.selectedQuestions = QuizCore.selectQuestionsForGrade(questionBank, grade, questionLimit);
     } catch (error) {
-        displayMessage("РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РїСѓСЃС‚РёС‚Рё С‚РµСЃС‚ РґР»СЏ С†СЊРѕРіРѕ СЂС–РІРЅСЏ. РЎРїСЂРѕР±СѓР№ С‰Рµ СЂР°Р· Р°Р±Рѕ РѕР±РµСЂРё С–РЅС€РёР№ СЂС–РІРµРЅСЊ.", "alert");
+        displayMessage("\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u0438 \u0442\u0435\u0441\u0442 \u0434\u043b\u044f \u0446\u044c\u043e\u0433\u043e \u0440\u0456\u0432\u043d\u044f. \u0421\u043f\u0440\u043e\u0431\u0443\u0439 \u0449\u0435 \u0440\u0430\u0437 \u0430\u0431\u043e \u043e\u0431\u0435\u0440\u0438 \u0456\u043d\u0448\u0438\u0439 \u0440\u0456\u0432\u0435\u043d\u044c.", "alert");
         state.currentGrade = null;
         state.selectedQuestions = [];
         state.currentQuestionIndex = 0;
         state.userAnswers = [];
+        state.userConfidence = [];
+        state.responseIntent = [];
+        state.questionTimings = [];
+        state.currentQuestionShownAt = 0;
         return;
     }
 
     state.userAnswers = Array(state.selectedQuestions.length).fill(null);
+    state.userConfidence = Array(state.selectedQuestions.length).fill(null);
+    state.responseIntent = Array(state.selectedQuestions.length).fill(null);
+    state.questionTimings = Array(state.selectedQuestions.length).fill(null);
+    state.currentQuestionShownAt = 0;
 
     hideElement(dom.classSelection);
     hideElement(dom.resultsContainer);
@@ -283,6 +470,10 @@ function restoreSession(snapshot) {
     state.selectedQuestions = restoredState.selectedQuestions;
     state.currentQuestionIndex = restoredState.currentQuestionIndex;
     state.userAnswers = restoredState.userAnswers;
+    state.userConfidence = restoredState.userConfidence;
+    state.responseIntent = restoredState.responseIntent;
+    state.questionTimings = restoredState.questionTimings;
+    state.currentQuestionShownAt = 0;
     setScreenMode("quiz");
 
     hideElement(dom.classSelection);
@@ -298,7 +489,13 @@ function restoreSession(snapshot) {
 }
 
 function setNextButtonState() {
-    const view = QuestionFlow.getNextButtonView(state.userAnswers, state.currentQuestionIndex, uiStrings);
+    const view = QuestionFlow.getNextButtonView(
+        state.userAnswers,
+        state.userConfidence,
+        state.currentQuestionIndex,
+        uiStrings,
+        state.responseIntent
+    );
     dom.nextButton.disabled = view.disabled;
     dom.nextButton.classList.toggle("opacity-50", view.disabled);
     dom.nextButton.classList.toggle("cursor-not-allowed", view.disabled);
@@ -308,7 +505,7 @@ function setNextButtonState() {
 }
 
 function renderQuestion(index = state.currentQuestionIndex) {
-    const target = QuestionFlow.resolveRenderTarget(state.selectedQuestions.length, state.userAnswers, index);
+    const target = QuestionFlow.resolveRenderTarget(state.selectedQuestions.length, state.userAnswers, index, state.responseIntent);
     if (target.type === "results") {
         showResults();
         return;
@@ -319,6 +516,7 @@ function renderQuestion(index = state.currentQuestionIndex) {
     }
 
     state.currentQuestionIndex = target.targetIndex;
+    state.currentQuestionShownAt = Date.now();
     const question = state.selectedQuestions[state.currentQuestionIndex];
 
     dom.currentQuestionIndex.textContent = state.currentQuestionIndex + 1;
@@ -326,31 +524,94 @@ function renderQuestion(index = state.currentQuestionIndex) {
         createElement,
         onSelect: selectAnswer
     });
+    setNextButtonState();
+    updateQuestionActionButtons();
+    updateReviewButton();
+    saveState();
+
+    if (state.userAnswers[state.currentQuestionIndex] !== null && state.userConfidence[state.currentQuestionIndex] === null) {
+        window.setTimeout(() => reopenConfidenceModalIfNeeded(), 0);
+    }
+}
+
+function selectAnswer(selectedIndex) {
+    const currentAnswer = state.userAnswers[state.currentQuestionIndex];
+    const currentConfidence = state.userConfidence[state.currentQuestionIndex];
+    if (currentAnswer === selectedIndex && currentConfidence !== null) {
+        return;
+    }
+
+    if (currentAnswer === selectedIndex && currentConfidence === null) {
+        openConfidenceModal(null);
+        return;
+    }
+
+    const responseTimeMs = Date.now() - state.currentQuestionShownAt;
+    const timing = ensureQuestionTiming(state.currentQuestionIndex);
+
+    if (responseTimeMs < MINIMUM_ANSWER_TIME_MS) {
+        timing.tooFastAttempts += 1;
+        timing.lastTooFastMs = responseTimeMs;
+        state.userAnswers[state.currentQuestionIndex] = null;
+        state.userConfidence[state.currentQuestionIndex] = null;
+        state.responseIntent[state.currentQuestionIndex] = null;
+        QuestionView.syncSelectedAnswer(dom.optionsContainer, null);
+        closeConfidenceModal({ restoreFocus: false });
+        openTooFastModal();
+        setNextButtonState();
+        updateQuestionActionButtons();
+        updateReviewButton();
+        saveState();
+        return;
+    }
+
+    timing.responseTimeMs = responseTimeMs;
+    timing.lastTooFastMs = null;
+    state.userAnswers[state.currentQuestionIndex] = selectedIndex;
+    state.userConfidence[state.currentQuestionIndex] = null;
+    state.responseIntent[state.currentQuestionIndex] = null;
+    QuestionView.syncSelectedAnswer(dom.optionsContainer, selectedIndex);
+    openConfidenceModal(null);
 
     setNextButtonState();
+    updateQuestionActionButtons();
     updateReviewButton();
     saveState();
 }
 
-function selectAnswer(selectedIndex) {
-    if (state.userAnswers[state.currentQuestionIndex] === selectedIndex) {
-        return;
-    }
-
-    state.userAnswers[state.currentQuestionIndex] = selectedIndex;
-    QuestionView.syncSelectedAnswer(dom.optionsContainer, selectedIndex);
-
-    dom.skipButton.textContent = uiStrings.clearChoice;
+function selectConfidence(confidenceValue) {
+    state.userConfidence[state.currentQuestionIndex] = confidenceValue;
+    closeConfidenceModal({ restoreFocus: false });
     setNextButtonState();
+    saveState();
+}
+
+function selectDontKnow() {
+    const timing = ensureQuestionTiming(state.currentQuestionIndex);
+    if (timing.responseTimeMs === null) {
+        timing.responseTimeMs = Date.now() - state.currentQuestionShownAt;
+    }
+    timing.lastTooFastMs = null;
+
+    state.userAnswers[state.currentQuestionIndex] = null;
+    state.userConfidence[state.currentQuestionIndex] = null;
+    state.responseIntent[state.currentQuestionIndex] = "dont_know";
+    QuestionView.syncSelectedAnswer(dom.optionsContainer, null);
+    closeConfidenceModal({ restoreFocus: false });
+    setNextButtonState();
+    updateQuestionActionButtons();
     updateReviewButton();
     saveState();
 }
 
 function skipQuestion() {
-    const action = QuestionFlow.resolveSkipAction(state.userAnswers, state.currentQuestionIndex);
+    const action = QuestionFlow.resolveSkipAction(state.userAnswers, state.currentQuestionIndex, state.responseIntent);
 
     if (action.type === "clear-answer") {
         state.userAnswers[state.currentQuestionIndex] = null;
+        state.userConfidence[state.currentQuestionIndex] = null;
+        state.responseIntent[state.currentQuestionIndex] = null;
+        ensureQuestionTiming(state.currentQuestionIndex).responseTimeMs = null;
         renderQuestion(state.currentQuestionIndex);
         displayMessage(uiStrings[action.noticeKey], "info");
         return;
@@ -372,7 +633,12 @@ function skipQuestion() {
 }
 
 function nextQuestion() {
-    const action = QuestionFlow.resolveNextAction(state.userAnswers, state.currentQuestionIndex);
+    const action = QuestionFlow.resolveNextAction(
+        state.userAnswers,
+        state.userConfidence,
+        state.currentQuestionIndex,
+        state.responseIntent
+    );
 
     if (action.noticeKey) {
         displayMessage(uiStrings[action.noticeKey], action.messageType || "info");
@@ -410,7 +676,9 @@ function confirmFinishEarly() {
 }
 
 function updateReviewButton() {
-    const skippedCount = state.userAnswers.filter(answer => answer === null).length;
+    const skippedCount = state.userAnswers.filter((answer, index) => (
+        answer === null && state.responseIntent[index] !== "dont_know"
+    )).length;
     dom.skippedCount.textContent = skippedCount;
     dom.reviewButtonLabel.textContent = uiStrings.reviewButton;
     dom.reviewButton.style.display = skippedCount > 0 ? "block" : "none";
@@ -437,7 +705,7 @@ function closeReviewModal() {
 function populateReviewModal() {
     dom.modalQuestionList.innerHTML = "";
 
-    QuestionFlow.buildReviewItems(state.userAnswers, state.currentQuestionIndex).forEach(item => {
+    QuestionFlow.buildReviewItems(state.userAnswers, state.currentQuestionIndex, state.responseIntent).forEach(item => {
         const button = createElement(
             "button",
             `review-index-button ${item.stateClassName}`,
@@ -457,19 +725,36 @@ function populateReviewModal() {
 function showResults() {
     const score = QuizCore.scoreQuiz(state.selectedQuestions, state.userAnswers);
     const conceptSummary = QuizCore.buildConceptSummary(state.selectedQuestions, state.userAnswers);
-    latestSharePayload = ResultShare.buildSharePayload(state, conceptSummary, state.selectedQuestions.length, score);
+    const diagnosticProfile = ResultsLogic.buildDiagnosticProfile(
+        state.selectedQuestions,
+        state.userAnswers,
+        state.userConfidence,
+        state.questionTimings,
+        state.responseIntent
+    );
+    latestSharePayload = ResultShare.buildSharePayload(
+        state,
+        conceptSummary,
+        state.selectedQuestions.length,
+        score,
+        diagnosticProfile
+    );
     isSharedResultView = false;
 
     renderResultsScreen({
         score,
         totalQuestions: state.selectedQuestions.length,
         conceptSummary,
+        diagnosticProfile,
         isShared: false,
         detailedQuestions: state.selectedQuestions,
-        detailedAnswers: state.userAnswers
+        detailedAnswers: state.userAnswers,
+        detailedConfidence: state.userConfidence,
+        detailedTimings: state.questionTimings,
+        detailedIntent: state.responseIntent
     });
 
-    playUiSound(score >= Math.ceil(QUESTIONS_PER_QUIZ * 0.5) ? "success" : "alert");
+    playUiSound(score >= Math.ceil(state.selectedQuestions.length * 0.5) ? "success" : "alert");
 
     clearSavedState();
 }
@@ -494,9 +779,16 @@ function restoreSharedResultFromHash() {
         score: payload.score,
         totalQuestions: payload.total,
         conceptSummary: payload.conceptSummary,
+        diagnosticProfile: {
+            ...payload.diagnosticProfile,
+            summaryText: ResultsLogic.summarizeDiagnosticProfile(payload.diagnosticProfile || {})
+        },
         isShared: true,
         detailedQuestions: [],
-        detailedAnswers: []
+        detailedAnswers: [],
+        detailedConfidence: [],
+        detailedTimings: [],
+        detailedIntent: []
     });
 
     displayMessage(uiStrings.sharedResultModeLabel, "info");
@@ -508,6 +800,10 @@ function resetQuiz() {
     state.selectedQuestions = [];
     state.currentQuestionIndex = 0;
     state.userAnswers = [];
+    state.userConfidence = [];
+    state.responseIntent = [];
+    state.questionTimings = [];
+    state.currentQuestionShownAt = 0;
     latestSharePayload = null;
     isSharedResultView = false;
 
@@ -518,12 +814,14 @@ function resetQuiz() {
     hideElement(dom.reviewModal);
     hideElement(dom.finishModal);
     hideElement(dom.sharedResultNote);
+    closeConfidenceModal({ restoreFocus: false });
     showElement(dom.classSelection);
     setScreenMode("home");
     displayMessage(uiStrings.stateResetNotice, "info");
 }
 
 function bindEvents() {
+    dom.dontKnowButton.addEventListener("click", selectDontKnow);
     dom.skipButton.addEventListener("click", skipQuestion);
     dom.nextButton.addEventListener("click", nextQuestion);
     dom.finishEarlyButton.addEventListener("click", finishEarly);
@@ -531,6 +829,7 @@ function bindEvents() {
     dom.reviewCloseButton.addEventListener("click", closeReviewModal);
     dom.finishCancelButton.addEventListener("click", cancelFinishEarly);
     dom.finishConfirmButton.addEventListener("click", confirmFinishEarly);
+    dom.confidenceBackButton.addEventListener("click", returnToAnswerOptions);
     dom.restartButton.addEventListener("click", resetQuiz);
     dom.shareButton.addEventListener("click", () => {
         shareResults();
@@ -544,6 +843,11 @@ function bindEvents() {
 
         if (event.key === "Escape" && !dom.finishModal.classList.contains("hidden")) {
             cancelFinishEarly();
+            return;
+        }
+
+        if (event.key === "Escape" && !dom.confidenceModal.classList.contains("hidden")) {
+            returnToAnswerOptions();
         }
     });
 }
@@ -558,6 +862,14 @@ function initDom() {
     dom.currentGrade = document.getElementById("current-grade");
     dom.questionText = document.getElementById("question-text");
     dom.optionsContainer = document.getElementById("options-container");
+    dom.confidenceModal = document.getElementById("confidence-modal");
+    dom.confidenceModalCard = dom.confidenceModal.querySelector(".confidence-modal-card");
+    dom.confidenceTitle = document.getElementById("confidence-title");
+    dom.confidenceEyebrow = document.getElementById("confidence-eyebrow");
+    dom.confidenceOptions = document.getElementById("confidence-options");
+    dom.confidenceHelper = document.getElementById("confidence-helper");
+    dom.confidenceBackButton = document.getElementById("confidence-back-button");
+    dom.dontKnowButton = document.getElementById("dont-know-button");
     dom.skipButton = document.getElementById("skip-button");
     dom.nextButton = document.getElementById("next-button");
     dom.finishEarlyButton = document.getElementById("finish-early-button");
@@ -574,15 +886,9 @@ function initDom() {
     dom.finishConfirmButton = document.getElementById("finish-confirm-button");
     dom.resultMessage = document.getElementById("result-message");
     dom.scoreDisplay = document.getElementById("score-display");
-    dom.adultSummaryTitle = document.getElementById("adult-summary-title");
-    dom.adultSummaryText = document.getElementById("adult-summary-text");
-    dom.adultSummaryStrength = document.getElementById("adult-summary-strength");
-    dom.adultSummaryFocus = document.getElementById("adult-summary-focus");
-    dom.adultSummaryObserved = document.getElementById("adult-summary-observed");
-    dom.conceptNote = document.getElementById("concept-note");
-    dom.conceptList = document.getElementById("concept-list");
-    dom.conceptAnalyticsList = document.getElementById("concept-analytics-list");
-    dom.needsPracticeList = document.getElementById("needs-practice-list");
+    dom.diagnosticSummaryTitle = document.getElementById("diagnostic-summary-title");
+    dom.diagnosticSummaryList = document.getElementById("diagnostic-summary-list");
+    dom.perQuestionTitle = document.getElementById("per-question-title");
     dom.detailedResults = document.getElementById("detailed-results");
     dom.sharedResultNote = document.getElementById("shared-result-note");
     dom.shareButton = document.getElementById("share-button");
@@ -597,9 +903,6 @@ function initStaticText() {
     document.getElementById("level-label").textContent = uiStrings.levelLabel;
     document.getElementById("result-label").textContent = uiStrings.resultLabel;
     document.getElementById("result-analysis-title").textContent = uiStrings.resultAnalysis;
-    document.getElementById("adult-summary-title").textContent = uiStrings.resultAdultSummary;
-    document.getElementById("concepts-title").textContent = uiStrings.resultConcepts;
-    document.getElementById("needs-practice-title").textContent = uiStrings.resultNeedsPractice;
     document.getElementById("review-title").textContent = uiStrings.reviewTitle;
     document.getElementById("review-description").textContent = uiStrings.reviewDescription;
     dom.reviewCloseButton.textContent = uiStrings.reviewClose;
@@ -609,6 +912,7 @@ function initStaticText() {
     dom.finishConfirmButton.textContent = uiStrings.finishModalConfirm;
     dom.shareButton.textContent = uiStrings.shareResults;
     dom.restartButton.textContent = uiStrings.restart;
+    dom.dontKnowButton.textContent = uiStrings.dontKnow;
     dom.skipButton.textContent = uiStrings.skip;
     dom.nextButton.textContent = uiStrings.next;
     dom.finishEarlyButton.textContent = uiStrings.finishEarly;
@@ -639,4 +943,3 @@ function initializeApp() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);
-

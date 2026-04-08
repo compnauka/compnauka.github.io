@@ -13,6 +13,39 @@
             .trim();
     }
 
+    const conceptSubtypeLabels = {
+        "abstrahuvannia-oznaky": "важливі ознаки",
+        "abstrahuvannia-model": "модель",
+        "alhorytmy-poslidovnist": "послідовність",
+        "alhorytmy-umova": "умова",
+        "alhorytmy-tsykl": "цикл",
+        "alhorytmy-rezultat": "результат",
+        "dekompozytsiia-podilst-zadachi": "поділ задачі",
+        "klasyfikatsiia-hrupy": "групування",
+        "lahodzhennia-pomylka": "пошук помилки",
+        "lohika-i-abo-ne": "зв'язки і/або/не",
+        "moduli-povtorne-vykorystannia": "повторне використання",
+        "otsinka-efektyvnosti-kroky": "кількість кроків",
+        "rozpiznavannia-zakonomirnostei-pravylo": "правило",
+        "tablytsi-filtratsiia": "фільтрація в таблиці"
+    };
+
+    function formatConceptSubtopics(conceptKeys) {
+        if (!Array.isArray(conceptKeys) || !conceptKeys.length) {
+            return "";
+        }
+
+        const labels = conceptKeys
+            .map(key => conceptSubtypeLabels[key] || String(key || "").trim())
+            .filter(Boolean);
+
+        if (!labels.length) {
+            return "";
+        }
+
+        return [...new Set(labels)].join(", ");
+    }
+
     function buildConceptAnalyticsModel(conceptSummary) {
         if (!conceptSummary.stats.length) {
             return {
@@ -33,6 +66,7 @@
                     statusClassName: status.className,
                     cardClassName: status.cardClassName,
                     correctnessText: `${stat.correct}/${stat.total}`,
+                    subtopicsText: formatConceptSubtopics(stat.conceptKeys),
                     evidenceText: stat.hasStrongEvidence
                         ? strings.conceptEvidenceStrong
                         : strings.conceptEvidencePreliminary,
@@ -42,23 +76,96 @@
         };
     }
 
-    function buildResultItemModel(question, userAnswerIndex, index) {
+    function buildDiagnosticSummaryModel(profile) {
+        return {
+            summaryText: profile.summaryText,
+            items: [
+                {
+                    label: strings.diagnosticStrongKnowledge,
+                    value: profile.strongKnowledge,
+                    cardClassName: "border-green-200 bg-green-50",
+                    toneClassName: "text-green-800"
+                },
+                {
+                    label: strings.diagnosticEmergingKnowledge,
+                    value: profile.emergingKnowledge,
+                    cardClassName: "border-amber-200 bg-amber-50",
+                    toneClassName: "text-amber-800"
+                },
+                {
+                    label: strings.diagnosticTentativeKnowledge,
+                    value: profile.tentativeKnowledge,
+                    cardClassName: "border-yellow-200 bg-yellow-50",
+                    toneClassName: "text-yellow-800"
+                },
+                {
+                    label: strings.diagnosticFalseConfidence,
+                    value: profile.falseConfidence,
+                    cardClassName: "border-red-200 bg-red-50",
+                    toneClassName: "text-red-800"
+                },
+                {
+                    label: strings.diagnosticUncertainError,
+                    value: profile.uncertainError,
+                    cardClassName: "border-orange-200 bg-orange-50",
+                    toneClassName: "text-orange-800"
+                },
+                {
+                    label: strings.diagnosticExplicitUnknown,
+                    value: profile.explicitUnknown,
+                    cardClassName: "border-sky-200 bg-sky-50",
+                    toneClassName: "text-sky-800"
+                },
+                {
+                    label: strings.diagnosticSkipped,
+                    value: profile.skipped,
+                    cardClassName: "border-slate-200 bg-slate-50",
+                    toneClassName: "text-slate-800"
+                },
+                {
+                    label: strings.diagnosticTooFast,
+                    value: profile.tooFastAttempts,
+                    cardClassName: "border-blue-200 bg-blue-50",
+                    toneClassName: "text-blue-800",
+                    hint: profile.tooFastAttempts > 0 ? strings.diagnosticTooFastHint : ""
+                }
+            ]
+        };
+    }
+
+    function buildResultItemModel(question, userAnswerIndex, index, responseMeta = {}) {
         const isAnswered = userAnswerIndex !== null && userAnswerIndex !== undefined;
-        const isCorrect = isAnswered && userAnswerIndex === question.correct;
+        const classification = logic.classifyAnswer(
+            question,
+            userAnswerIndex,
+            responseMeta.confidence,
+            responseMeta.timing,
+            responseMeta.intent
+        );
+        const responseTimeMs = responseMeta.timing && Number.isFinite(responseMeta.timing.responseTimeMs)
+            ? responseMeta.timing.responseTimeMs
+            : null;
+        const showConfidence = Boolean(classification.confidence) && responseMeta.intent !== "dont_know";
 
         return {
             title: `${index + 1}. ${question.q}`,
-            cardClassName: isCorrect ? "result-correct" : isAnswered ? "result-incorrect" : "border-gray-300",
-            statusText: isCorrect ? strings.statusCorrect : isAnswered ? strings.statusIncorrect : strings.statusSkipped,
-            statusClassName: isCorrect
-                ? "font-bold text-green-700 mb-2"
-                : isAnswered
-                    ? "font-bold text-red-700 mb-2"
-                    : "font-bold text-gray-600 mb-2",
-            userAnswerText: isAnswered && !isCorrect ? question.options[userAnswerIndex] : "",
+            cardClassName: classification.cardClassName,
+            statusText: classification.label,
+            statusClassName: `font-bold mb-2 ${classification.toneClassName}`,
+            userAnswerText: isAnswered ? question.options[userAnswerIndex] : "",
             correctAnswerText: question.options[question.correct],
-            explanationText: question.explanation,
-            conceptText: getDisplayConcept(question)
+            explanationText: classification.isCorrect ? "" : question.explanation,
+            conceptText: getDisplayConcept(question),
+            confidenceText: showConfidence ? classification.confidence.label : "",
+            responseTimeText: responseTimeMs === null
+                ? ""
+                : `${(responseTimeMs / 1000).toFixed(1)} ${strings.diagnosticSecondsSuffix}`,
+            tooFastHint: responseMeta.timing && responseMeta.timing.tooFastAttempts > 0
+                ? strings.diagnosticTooFastHint
+                : "",
+            showConfidence,
+            showCorrectAnswer: !classification.isCorrect,
+            showConcept: false
         };
     }
 
@@ -100,6 +207,15 @@
             card.appendChild(title);
             card.appendChild(statusLine);
             card.appendChild(correctness);
+            if (item.subtopicsText) {
+                card.appendChild(
+                    helpers.createLabeledLine(
+                        strings.conceptSubtopicsLabel,
+                        item.subtopicsText,
+                        "text-sm text-gray-700 mt-1"
+                    )
+                );
+            }
             card.appendChild(evidence);
 
             if (item.practiceHint) {
@@ -116,8 +232,30 @@
         });
     }
 
-    function createResultItem(question, userAnswerIndex, index, helpers) {
-        const model = buildResultItemModel(question, userAnswerIndex, index);
+    function renderDiagnosticSummary(container, profile, helpers) {
+        const model = buildDiagnosticSummaryModel(profile);
+        container.innerHTML = "";
+
+        const summary = helpers.createElement("p", "text-sm text-slate-700 mb-4", model.summaryText);
+        container.appendChild(summary);
+
+        model.items.forEach(item => {
+            const card = helpers.createElement("article", `rounded-xl border p-3 ${item.cardClassName}`);
+            const value = helpers.createElement("p", `text-2xl font-black ${item.toneClassName}`, String(item.value));
+            const label = helpers.createElement("p", `text-sm font-semibold mt-1 ${item.toneClassName}`, item.label);
+
+            card.append(value, label);
+
+            if (item.hint) {
+                card.appendChild(helpers.createElement("p", "text-xs text-slate-600 mt-2", item.hint));
+            }
+
+            container.appendChild(card);
+        });
+    }
+
+    function createResultItem(question, userAnswerIndex, index, responseMeta, helpers) {
+        const model = buildResultItemModel(question, userAnswerIndex, index, responseMeta);
         const card = helpers.createElement(
             "article",
             `p-4 rounded-xl border-2 transition-all duration-300 ${model.cardClassName}`
@@ -130,21 +268,39 @@
         card.appendChild(status);
 
         if (model.userAnswerText) {
-            card.appendChild(helpers.createLabeledLine(strings.yourAnswer, model.userAnswerText, "text-sm text-red-700 mb-1"));
+            card.appendChild(helpers.createLabeledLine(strings.yourAnswer, model.userAnswerText, "text-sm text-slate-800 mb-1"));
         }
 
-        card.appendChild(helpers.createLabeledLine(strings.correctAnswer, model.correctAnswerText, "text-sm mb-1"));
-        card.appendChild(helpers.createLabeledLine(strings.explanation, model.explanationText, "text-sm text-gray-700 mb-1"));
-        card.appendChild(helpers.createLabeledLine(strings.concept, model.conceptText, "text-xs text-gray-500"));
+        if (model.showConfidence) {
+            card.appendChild(helpers.createLabeledLine(strings.diagnosticConfidenceLabel, model.confidenceText, "text-sm text-slate-700 mb-1"));
+        }
+
+        if (model.responseTimeText) {
+            card.appendChild(helpers.createLabeledLine(strings.diagnosticTimeLabel, model.responseTimeText, "text-sm text-slate-700 mb-1"));
+        }
+
+        if (model.showCorrectAnswer) {
+            card.appendChild(helpers.createLabeledLine(strings.correctAnswer, model.correctAnswerText, "text-sm mb-1"));
+        }
+
+        if (model.explanationText) {
+            card.appendChild(helpers.createLabeledLine(strings.explanation, model.explanationText, "text-sm text-gray-700 mb-1"));
+        }
+
+        if (model.tooFastHint) {
+            card.appendChild(helpers.createElement("p", "text-xs text-slate-600 mt-2", model.tooFastHint));
+        }
 
         return card;
     }
 
     const ResultsView = {
+        buildDiagnosticSummaryModel,
         buildConceptAnalyticsModel,
         buildResultItemModel,
         renderAdultSummary,
         renderConceptAnalytics,
+        renderDiagnosticSummary,
         createResultItem
     };
 

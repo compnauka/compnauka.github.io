@@ -1,18 +1,7 @@
 /**
          * === 1. КОНФІГУРАЦІЯ ТА ДАНІ ===
          */
-        const WORDS_DB = [
-            "ДІМ", "ЧАС", "РІК", "СВІТ", "РУКА", "ОКО", "СИЛА", "ВОДА", "ТАТО", "МАМА",
-            "ДРУГ", "НІЧ", "ДЕНЬ", "КРОВ", "ЗОРЯ", "МОВА", "ДУША", "ЛИЦЕ", "СИН", "ДІД",
-            "САД", "ЛІС", "ПОЛЕ", "КІНЬ", "ХЛІБ", "СІЛЬ", "МЕЧ", "ЩИТ", "НЕБО", "МОРЕ",
-            "РІКА", "ГОРА", "СТЕП", "ШЛЯХ", "КРАЙ", "МІСТ", "СЕЛО", "ЗИМА", "ЛІТО", "ОСІНЬ",
-            "ВЕСНА", "КВІТ", "ПТАХ", "РИБА", "ЗВІР", "ГРІХ", "СМІХ", "ПЛАЧ", "ЗВУК", "КОЛІР",
-            "НАРОД", "ЗЕМЛЯ", "СОНЦЕ", "СЕРЦЕ", "ЖИТТЯ", "СЛОВО", "ПРАЦЯ", "РОЗУМ", "КНИГА", "ШКОЛА",
-            "ВІТЕР", "ГОЛОС", "ДЕРЕВО", "ТРАВА", "ХМАРА", "МІСТО", "ВУЛИЦЯ", "ВІКНО", "ДВЕРІ", "СТІНА",
-            "КІМНАТА", "ЛЮБОВ", "НАДІЯ", "ВІРА", "ПРАВДА", "ДОЛЯ", "МРІЯ", "ДУМКА", "ПІСНЯ", "КАЗКА",
-            "ІСТОРІЯ", "ПАМЯТЬ", "РОДИНА", "БАТЬКО", "МАТИ", "БРАТ", "СЕСТРА", "ДОНЬКА", "ДИТИНА", "ЛЮДИНА",
-            "ХЛОПЕЦЬ", "ДІВЧИНА", "КОЗАК", "ГЕРОЙ", "ВОЇН", "ЗБРОЯ", "ПЕРЕМОГА", "СЛАВА", "ВОЛЯ", "ЧЕСТЬ"
-        ];
+        const { WORDS_DB, getWordPool, pickRandomEntry, pushRecentEntry, resolveEnemyDirection, getSpawnState, compareEnemiesByThreat, hasEnemyReachedWall, getLaserOrigin } = window.GameCore;
 
         const CONFIG = {
             beginner: { baseSpeed: 45, spawnRate: 2500, chars: "АБВГДЕЖЗИІКЛМНОПРСТУФХЦЧШЮЯ", maxHealth: 20 },
@@ -26,6 +15,7 @@
             laneMarginBottom: 50,
             laneReserveFactor: 0.45,
             spawnStartX: -150,
+            spawnEndOffset: 150,
             spawnPaddingX: 200,
             speedVarMin: 0.9,
             speedVarRange: 0.2,
@@ -36,12 +26,15 @@
             difficultyDown: -0.1,
             resizeDebounceMs: 120,
             missFlashMs: 100,
+            wordErrorFlashMs: 220,
             warningMs: 2000,
+            layoutAssistThreshold: 3,
             comboGlowMs: 300,
             laserFadeMs: 150,
             explosionMs: 350,
             debrisMs: 1000
         };
+        const SETTINGS_STORAGE_KEY = 'skyDefenderSessionSettings';
 
         /**
          * === 2. АУДІО СИСТЕМА ===
@@ -138,9 +131,15 @@
             shotsFired: 0,
             shotsHit: 0,
             layoutErrors: 0,
+            consecutiveLayoutErrors: 0,
             combatMisses: 0,
             timeLeft: 60,
             wordTargetId: null,
+            directionSetting: 'ltr',
+            wordSetSetting: 'foundation',
+            wordPool: WORDS_DB,
+            recentWordHistory: [],
+            recentCharHistory: [],
 
             // Системні змінні
             levelConfig: {},
@@ -160,6 +159,7 @@
                 wall: document.getElementById('the-wall'),
                 overlay: document.getElementById('damage-overlay'),
                 warning: document.getElementById('layout-warning'),
+                announcements: document.getElementById('announcements'),
 
                 // Статистика
                 score: document.getElementById('score-val'),
@@ -173,12 +173,19 @@
                 tutorial: document.getElementById('tutorial-screen'),
                 over: document.getElementById('game-over-screen'),
                 pause: document.getElementById('pause-menu'),
+                layoutAssist: document.getElementById('layout-assist-menu'),
+                exitConfirm: document.getElementById('exit-confirm-menu'),
+                levelSelect: document.getElementById('level-select'),
+                soundSelect: document.getElementById('sound-select'),
+                directionSelect: document.getElementById('direction-select'),
+                wordSetSelect: document.getElementById('word-set-select'),
 
                 // Екран результатів
                 endTitle: document.getElementById('game-over-title'),
                 endScore: document.getElementById('final-score'),
                 endAcc: document.getElementById('final-accuracy'),
                 endCombo: document.getElementById('final-combo'),
+                endMisses: document.getElementById('final-misses'),
                 endHigh: document.getElementById('high-score-display')
             },
 
@@ -196,6 +203,36 @@
                 this._realStart();
             },
 
+            announce(message) {
+                if (!this.dom.announcements) return;
+                this.dom.announcements.textContent = message;
+            },
+
+            saveSettings() {
+                const payload = {
+                    level: this.dom.levelSelect?.value || 'beginner',
+                    sound: this.dom.soundSelect?.value || 'on',
+                    direction: this.dom.directionSelect?.value || 'ltr',
+                    wordSet: this.dom.wordSetSelect?.value || 'foundation'
+                };
+                sessionStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+            },
+
+            loadSettings() {
+                const raw = sessionStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (!raw) return;
+
+                try {
+                    const settings = JSON.parse(raw);
+                    if (settings.level && this.dom.levelSelect) this.dom.levelSelect.value = settings.level;
+                    if (settings.sound && this.dom.soundSelect) this.dom.soundSelect.value = settings.sound;
+                    if (settings.direction && this.dom.directionSelect) this.dom.directionSelect.value = settings.direction;
+                    if (settings.wordSet && this.dom.wordSetSelect) this.dom.wordSetSelect.value = settings.wordSet;
+                } catch (_) {
+                    sessionStorage.removeItem(SETTINGS_STORAGE_KEY);
+                }
+            },
+
             confirmTutorial() {
                 this.hasSeenTutorial = true;
                 this.dom.tutorial.classList.add('hidden');
@@ -203,11 +240,15 @@
             },
 
             _realStart() {
-                const level = document.getElementById('level-select').value;
+                this.saveSettings();
+                const level = this.dom.levelSelect.value;
                 this.levelConfig = CONFIG[level];
                 this.maxHealth = this.levelConfig.maxHealth;
                 this.health = this.maxHealth;
                 this.difficultyMultiplier = 1.0;
+                this.directionSetting = this.dom.directionSelect.value;
+                this.wordSetSetting = this.dom.wordSetSelect.value;
+                this.wordPool = getWordPool(this.wordSetSetting);
 
                 // Налаштування ліній (верхній відступ для HUD)
                 this.laneManager = new LaneManager(
@@ -224,10 +265,20 @@
                 this.dom.start.classList.add('hidden');
                 this.dom.over.classList.add('hidden');
                 this.dom.pause.classList.add('hidden');
+                this.dom.layoutAssist.classList.add('hidden');
+                this.dom.exitConfirm.classList.add('hidden');
+                this.setWallDirection();
 
                 this.lastTime = performance.now();
                 this.nextSpawnTime = this.lastTime + 1000;
                 this.rafId = requestAnimationFrame(this.loop.bind(this));
+            },
+
+            setWallDirection() {
+                this.dom.wall.classList.remove('wall-left');
+                if (this.directionSetting === 'rtl') {
+                    this.dom.wall.classList.add('wall-left');
+                }
             },
 
             trackTimeout(fn, ms) {
@@ -278,15 +329,19 @@
                 this.shotsFired = 0;
                 this.shotsHit = 0;
                 this.layoutErrors = 0;
+                this.consecutiveLayoutErrors = 0;
                 this.combatMisses = 0;
                 this.combo = 0;
                 this.maxCombo = 0;
                 this.timeLeft = 60;
+                this.recentWordHistory = [];
+                this.recentCharHistory = [];
 
                 // Очистка
                 this.enemies.forEach(e => e.el.remove());
                 this.enemies = [];
                 this.wordTargetId = null;
+                this.wordPool = getWordPool(this.wordSetSetting);
                 this.clearTransientTimers();
                 document.body.classList.remove('miss-flash', 'screen-shake');
                 this.dom.area.querySelectorAll('.laser, .explosion, .wall-debris').forEach(el => el.remove());
@@ -297,6 +352,7 @@
                 this.dom.overlay.style.background = 'radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0) 100%)';
                 this.dom.comboBox.classList.add('hidden');
                 this.dom.timer.classList.remove('timer-warning');
+                this.setWallDirection();
 
                 if (this.rafId) cancelAnimationFrame(this.rafId);
                 this.updateUI();
@@ -307,6 +363,7 @@
                 this.reset();
                 this.active = true;
                 this.dom.over.classList.add('hidden');
+                this.setWallDirection();
                 this.lastTime = performance.now();
                 this.nextSpawnTime = this.lastTime + 1000;
                 this.difficultyMultiplier = 1.0;
@@ -315,13 +372,17 @@
 
             togglePause() {
                 if (!this.active) return;
+                if (!this.dom.layoutAssist.classList.contains('hidden')) return;
+                if (!this.dom.exitConfirm.classList.contains('hidden')) return;
                 this.paused = !this.paused;
 
                 if (this.paused) {
                     this.dom.pause.classList.remove('hidden');
+                    this.announce('Гру поставлено на паузу.');
                     cancelAnimationFrame(this.rafId);
                 } else {
                     this.dom.pause.classList.add('hidden');
+                    this.announce('Гру продовжено.');
                     this.lastTime = performance.now();
                     this.rafId = requestAnimationFrame(this.loop.bind(this));
                 }
@@ -331,8 +392,34 @@
                 this.active = false;
                 this.paused = false;
                 this.dom.pause.classList.add('hidden');
+                this.dom.layoutAssist.classList.add('hidden');
+                this.dom.exitConfirm.classList.add('hidden');
                 this.dom.start.classList.remove('hidden');
+                this.announce('Повернення до головного меню.');
                 this.reset();
+            },
+
+            openLayoutAssist() {
+                if (!this.active) return;
+                this.paused = true;
+                cancelAnimationFrame(this.rafId);
+                this.dom.layoutAssist.classList.remove('hidden');
+                this.announce('Зміни розкладку на українську і почни спочатку.');
+            },
+
+            openExitConfirm() {
+                if (!this.active || this.paused) return;
+                this.dom.exitConfirm.classList.remove('hidden');
+                this.announce('Підтверди вихід у меню або продовж гру.');
+            },
+
+            closeExitConfirm() {
+                this.dom.exitConfirm.classList.add('hidden');
+                this.announce('Гру продовжено.');
+            },
+
+            getRecentHistoryLimit() {
+                return this.levelConfig.mode === 'words' ? 3 : 2;
             },
 
             // --- ЛОГІКА ГРИ ---
@@ -344,18 +431,25 @@
 
                 let content, type;
                 if (this.levelConfig.mode === 'words') {
-                    content = WORDS_DB[Math.floor(Math.random() * WORDS_DB.length)];
+                    content = pickRandomEntry(this.wordPool, this.recentWordHistory);
                     type = 'rocket';
+                    this.recentWordHistory = pushRecentEntry(this.recentWordHistory, content, this.getRecentHistoryLimit());
                 } else {
                     const chars = this.levelConfig.chars;
-                    content = chars[Math.floor(Math.random() * chars.length)];
+                    content = pickRandomEntry([...chars], this.recentCharHistory);
                     type = 'shahed';
+                    this.recentCharHistory = pushRecentEntry(this.recentCharHistory, content, this.getRecentHistoryLimit());
                 }
+
+                const currentSpeed = this.levelConfig.baseSpeed * this.difficultyMultiplier;
+                const variedSpeed = currentSpeed * (GAME_TUNING.speedVarMin + Math.random() * GAME_TUNING.speedVarRange);
+                const direction = resolveEnemyDirection(this.directionSetting);
+                const spawnState = getSpawnState(direction, window.innerWidth, GAME_TUNING, variedSpeed);
 
                 // Створення DOM
                 const el = document.createElement('div');
-                el.className = 'enemy';
-                el.style.transform = `translate3d(${GAME_TUNING.spawnStartX}px, ${lane.y}px, 0)`;
+                el.className = `enemy enemy-${direction}`;
+                el.style.transform = `translate3d(${spawnState.startX}px, ${lane.y}px, 0)`;
 
                 if (type === 'shahed') {
                     el.innerHTML = `<div class="enemy-shahed-body"><div class="enemy-label">${content}</div></div>`;
@@ -369,19 +463,19 @@
                 this.dom.area.appendChild(el);
 
                 // Бронювання лінії
-                const currentSpeed = this.levelConfig.baseSpeed * this.difficultyMultiplier;
                 const travelTime = (window.innerWidth + GAME_TUNING.spawnPaddingX) / currentSpeed * 1000;
                 this.laneManager.reserveLane(lane, travelTime * GAME_TUNING.laneReserveFactor, now);
 
                 this.enemies.push({
                     id: this.nextEnemyId++,
                     el,
-                    x: GAME_TUNING.spawnStartX,
+                    x: spawnState.startX,
                     y: lane.y,
                     content,
                     typedIndex: 0,
-                    speed: currentSpeed * (GAME_TUNING.speedVarMin + Math.random() * GAME_TUNING.speedVarRange),
-                    type
+                    speed: spawnState.velocityX,
+                    type,
+                    direction
                 });
             },
 
@@ -393,12 +487,19 @@
                 // Валідація розкладки
                 if (/[A-Z]/.test(key) && !/[А-ЯІЇЄҐ]/.test(key)) {
                     this.layoutErrors++;
+                    this.consecutiveLayoutErrors++;
                     this.dom.warning.classList.add('visible');
+                    this.announce(`Перемкни розкладку на українську. Спроба ${this.consecutiveLayoutErrors} з ${GAME_TUNING.layoutAssistThreshold}.`);
                     this.cancelTrackedTimeout(this.warningTimeout);
                     this.warningTimeout = this.trackTimeout(() => this.dom.warning.classList.remove('visible'), GAME_TUNING.warningMs);
+                    this.updateUI();
+                    if (this.consecutiveLayoutErrors >= GAME_TUNING.layoutAssistThreshold) {
+                        this.openLayoutAssist();
+                    }
                     return;
                 }
                 if (!/[А-ЯІЇЄҐ0-9]/.test(key)) return;
+                this.consecutiveLayoutErrors = 0;
                 this.shotsFired++;
 
                 let hit = false;
@@ -423,14 +524,14 @@
                             if (enemy.typedIndex >= enemy.content.length) this.destroyEnemy(enemy);
                             hit = true;
                         } else {
-                            this.resetWordProgress(enemy);
+                            this.markWordError(enemy);
                             this.processMiss();
                         }
                     } else {
                         // Пошук нового слова
                         const candidates = this.enemies
                             .filter(e => e.content.startsWith(key))
-                            .sort((a, b) => b.x - a.x);
+                            .sort((a, b) => compareEnemiesByThreat(a, b, window.innerWidth, GAME_TUNING));
 
                         if (candidates.length > 0) {
                             const enemy = candidates[0];
@@ -453,7 +554,7 @@
                     // Режим символів (Шахеди)
                     const match = this.enemies
                         .filter(e => e.content === key)
-                        .sort((a, b) => b.x - a.x)[0];
+                        .sort((a, b) => compareEnemiesByThreat(a, b, window.innerWidth, GAME_TUNING))[0];
 
                     if (match) {
                         this.processHit(match);
@@ -475,7 +576,7 @@
                 this.combo++;
                 if (this.combo > this.maxCombo) this.maxCombo = this.combo;
                 AudioController.play('shoot');
-                this.spawnLaser(enemy.el);
+                this.spawnLaser(enemy);
                 this.updateUI();
             },
 
@@ -486,6 +587,15 @@
                 document.body.classList.add('miss-flash');
                 this.trackTimeout(() => document.body.classList.remove('miss-flash'), GAME_TUNING.missFlashMs);
                 this.updateUI();
+            },
+
+            markWordError(enemy) {
+                const chars = enemy.el.querySelectorAll('.word-char');
+                const currentChar = chars[enemy.typedIndex];
+                if (!currentChar) return;
+
+                currentChar.classList.add('error');
+                this.trackTimeout(() => currentChar.classList.remove('error'), GAME_TUNING.wordErrorFlashMs);
             },
 
             resetWordProgress(enemy) {
@@ -543,12 +653,13 @@
 
             // --- ЕФЕКТИ ---
 
-            spawnLaser(targetEl) {
-                const rect = targetEl.getBoundingClientRect();
+            spawnLaser(enemy) {
+                const rect = enemy.el.getBoundingClientRect();
                 const tx = rect.left + rect.width / 2;
                 const ty = rect.top + rect.height / 2;
-                const sx = window.innerWidth;
-                const sy = window.innerHeight;
+                const origin = getLaserOrigin(enemy.direction, window.innerWidth, window.innerHeight);
+                const sx = origin.x;
+                const sy = origin.y;
 
                 const dist = Math.hypot(tx - sx, ty - sy);
                 const angle = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
@@ -598,7 +709,8 @@
 
             updateUI() {
                 this.dom.score.textContent = this.shotsHit;
-                this.dom.health.textContent = `${this.health}/${this.maxHealth}`;
+                const healthPercent = Math.round((this.health / this.maxHealth) * 100);
+                this.dom.health.textContent = `${healthPercent}%`;
                 this.dom.timer.textContent = Math.ceil(this.timeLeft);
 
                 if (this.timeLeft <= 10) this.dom.timer.classList.add('timer-warning');
@@ -618,15 +730,15 @@
                 const ratio = this.health / this.maxHealth;
                 if (ratio > 0.5) {
                     this.dom.health.style.color = 'var(--col-success)';
-                    this.dom.wall.className = '';
+                    this.dom.wall.className = this.directionSetting === 'rtl' ? 'wall-left' : '';
                     this.dom.overlay.style.background = 'radial-gradient(circle, transparent 60%, rgba(239, 68, 68, 0) 100%)';
                 } else if (ratio > 0.2) {
                     this.dom.health.style.color = 'var(--col-warning)';
-                    this.dom.wall.className = '';
+                    this.dom.wall.className = this.directionSetting === 'rtl' ? 'wall-left' : '';
                     this.dom.overlay.style.background = 'radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0.3) 100%)';
                 } else {
                     this.dom.health.style.color = 'var(--col-danger)';
-                    this.dom.wall.className = 'critical';
+                    this.dom.wall.className = this.directionSetting === 'rtl' ? 'wall-left critical' : 'critical';
                     this.dom.overlay.style.background = 'radial-gradient(circle, transparent 30%, rgba(239, 68, 68, 0.6) 100%)';
                 }
             },
@@ -653,15 +765,17 @@
                     this.nextSpawnTime = timestamp + Math.max(GAME_TUNING.spawnMinInterval, currentRate);
                 }
 
-                const wallPos = window.innerWidth - GAME_TUNING.wallOffset;
                 for (let i = this.enemies.length - 1; i >= 0; i--) {
                     const e = this.enemies[i];
                     e.x += e.speed * (dt / 1000);
                     e.el.style.transform = `translate3d(${e.x}px, ${e.y}px, 0)`;
 
-                    if (e.x >= wallPos - GAME_TUNING.wallHitOffset) {
+                    if (hasEnemyReachedWall(e, window.innerWidth, GAME_TUNING)) {
                         this.takeDamage(e.y);
-                        this.spawnExplosion(e.x + GAME_TUNING.wallHitOffset, e.y);
+                        const impactX = e.direction === 'rtl'
+                            ? GAME_TUNING.wallOffset
+                            : e.x + GAME_TUNING.wallHitOffset;
+                        this.spawnExplosion(impactX, e.y);
                         e.el.remove();
                         this.enemies.splice(i, 1);
 
@@ -689,6 +803,7 @@
 
                 this.dom.endScore.textContent = this.shotsHit;
                 this.dom.endCombo.textContent = this.maxCombo;
+                this.dom.endMisses.textContent = this.combatMisses;
                 const acc = this.shotsFired > 0 ? Math.round((this.shotsHit / this.shotsFired) * 100) : 0;
                 this.dom.endAcc.textContent = acc + '%';
 
@@ -696,8 +811,8 @@
                 else if (acc >= 70) this.dom.endAcc.style.color = 'var(--col-warning)';
                 else this.dom.endAcc.style.color = 'var(--col-danger)';
 
-                const key = `cityDef_hs_${document.getElementById('level-select').value}`;
-                const saved = localStorage.getItem(key) || 0;
+                const key = `cityDef_hs_${this.dom.levelSelect.value}_${this.directionSetting}_${this.wordSetSetting}`;
+                const saved = Number(localStorage.getItem(key) || 0);
                 if (this.shotsHit > saved) {
                     localStorage.setItem(key, this.shotsHit);
                     this.dom.endHigh.textContent = `НОВИЙ РЕКОРД! (ПОПЕРЕДНІЙ: ${saved})`;
@@ -705,19 +820,42 @@
                     this.dom.endHigh.textContent = `РЕКОРД: ${saved}`;
                 }
 
+                this.announce(`Гру завершено. Влучань: ${this.shotsHit}. Точність: ${acc} відсотків.`);
                 this.dom.over.classList.remove('hidden');
             }
         };
 
         // --- 5. ГЛОБАЛЬНІ ПОДІЇ ---
+        game.loadSettings();
+        document.getElementById('start-btn').addEventListener('click', () => game.start());
+        document.getElementById('tutorial-confirm-btn').addEventListener('click', () => game.confirmTutorial());
+        document.getElementById('resume-btn').addEventListener('click', () => game.togglePause());
+        document.getElementById('quit-btn').addEventListener('click', () => game.quit());
+        document.getElementById('layout-restart-btn').addEventListener('click', () => game.restart());
+        document.getElementById('layout-menu-btn').addEventListener('click', () => game.quit());
+        document.getElementById('cancel-exit-btn').addEventListener('click', () => game.closeExitConfirm());
+        document.getElementById('confirm-exit-btn').addEventListener('click', () => game.quit());
+        document.getElementById('restart-btn').addEventListener('click', () => game.restart());
+        document.getElementById('return-menu-btn').addEventListener('click', () => location.reload());
         document.getElementById('pause-btn').addEventListener('click', () => game.togglePause());
-        document.getElementById('stop-btn').addEventListener('click', () => game.quit());
-        AudioController.bindControl(document.getElementById('sound-select'));
+        document.getElementById('stop-btn').addEventListener('click', () => game.openExitConfirm());
+        AudioController.bindControl(game.dom.soundSelect);
+        game.dom.levelSelect.addEventListener('change', () => game.saveSettings());
+        game.dom.soundSelect.addEventListener('change', () => game.saveSettings());
+        game.dom.directionSelect.addEventListener('change', () => game.saveSettings());
+        game.dom.wordSetSelect.addEventListener('change', () => game.saveSettings());
         window.addEventListener('resize', () => game.handleViewportChange());
         window.addEventListener('orientationchange', () => game.handleViewportChange());
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                if (!game.dom.layoutAssist.classList.contains('hidden')) {
+                    return;
+                }
+                if (!game.dom.exitConfirm.classList.contains('hidden')) {
+                    game.closeExitConfirm();
+                    return;
+                }
                 if (game.active) game.togglePause();
                 return;
             }

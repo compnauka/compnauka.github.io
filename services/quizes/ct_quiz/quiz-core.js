@@ -113,6 +113,29 @@
             : "advanced";
     }
 
+    function getQuestionLimitForGrade(grade, limitOverride) {
+        if (Number.isInteger(limitOverride) && limitOverride > 0) {
+            return limitOverride;
+        }
+
+        if (limitOverride && typeof limitOverride === "object") {
+            const mappedLimit = limitOverride[String(grade)];
+            if (Number.isInteger(mappedLimit) && mappedLimit > 0) {
+                return mappedLimit;
+            }
+        }
+
+        if (config && typeof config.getQuestionsPerQuizForGrade === "function") {
+            return config.getQuestionsPerQuizForGrade(grade);
+        }
+
+        if (config && Number.isInteger(config.questionsPerQuiz) && config.questionsPerQuiz > 0) {
+            return config.questionsPerQuiz;
+        }
+
+        return 10;
+    }
+
     function enrichQuestion(question, grade, index) {
         const conceptKey = getConceptKey(question, index);
         const conceptRoot = getConceptRootFromKey(conceptKey);
@@ -295,21 +318,26 @@
 
         selectedQuestions.forEach((question, index) => {
             const conceptKey = getConceptKey(question, index);
+            const conceptRoot = getConceptRoot(question, index);
             const conceptLabel = getConceptLabel(question);
-            const current = summary.get(conceptKey) || {
+            const current = summary.get(conceptRoot) || {
                 concept: conceptLabel,
-                conceptKey,
-                conceptRoot: getConceptRoot(question, index),
+                conceptKey: conceptRoot,
+                conceptRoot,
+                conceptKeys: [],
                 total: 0,
                 correct: 0
             };
 
+            if (!current.conceptKeys.includes(conceptKey)) {
+                current.conceptKeys.push(conceptKey);
+            }
             current.total += 1;
             if (userAnswers[index] === question.correct) {
                 current.correct += 1;
             }
 
-            summary.set(conceptKey, current);
+            summary.set(conceptRoot, current);
         });
 
         const items = [...summary.values()];
@@ -392,13 +420,15 @@
         const errors = [];
 
         Object.entries(questionBank).forEach(([grade, questions]) => {
+            const limitForGrade = getQuestionLimitForGrade(grade, limitPerQuiz);
+
             if (!Array.isArray(questions) || !questions.length) {
                 errors.push(`grade ${grade}: question list is empty`);
                 return;
             }
 
-            if (questions.length < limitPerQuiz) {
-                errors.push(`grade ${grade}: has only ${questions.length} questions, needs at least ${limitPerQuiz}`);
+            if (questions.length < limitForGrade) {
+                errors.push(`grade ${grade}: has only ${questions.length} questions, needs at least ${limitForGrade}`);
             }
 
             const requiredRoots = config && config.requiredConceptRootsByGrade
@@ -428,6 +458,7 @@
         getConceptRootFromKey,
         getConceptRoot,
         enrichQuestion,
+        getQuestionLimitForGrade,
         selectQuestionsForGrade,
         scoreQuiz,
         buildConceptSummary,

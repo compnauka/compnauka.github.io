@@ -1,11 +1,33 @@
-﻿(function (global) {
-    function findFirstSkippedIndex(userAnswers, excludedIndex = null) {
-        return userAnswers.findIndex((answer, index) => answer === null && index !== excludedIndex);
+(function (global) {
+    function isDontKnow(responseIntent, index) {
+        return Array.isArray(responseIntent) && responseIntent[index] === "dont_know";
     }
 
-    function getNextButtonView(userAnswers, currentIndex, strings) {
-        const hasAnswer = userAnswers[currentIndex] !== null;
-        const allAnswered = userAnswers.every(answer => answer !== null);
+    function isQuestionComplete(userAnswers, userConfidence, responseIntent, index) {
+        if (isDontKnow(responseIntent, index)) {
+            return true;
+        }
+
+        const hasAnswer = userAnswers[index] !== null && userAnswers[index] !== undefined;
+        const hasConfidence = Array.isArray(userConfidence) && userConfidence[index] !== null && userConfidence[index] !== undefined;
+        return hasAnswer && hasConfidence;
+    }
+
+    function findFirstSkippedIndex(userAnswers, responseIntent = [], excludedIndex = null) {
+        return userAnswers.findIndex((answer, index) => (
+            answer === null
+            && !isDontKnow(responseIntent, index)
+            && index !== excludedIndex
+        ));
+    }
+
+    function getNextButtonView(userAnswers, userConfidence, currentIndex, strings, responseIntent = []) {
+        const hasAnswer = userAnswers[currentIndex] !== null && userAnswers[currentIndex] !== undefined;
+        const hasConfidence = Array.isArray(userConfidence) && userConfidence[currentIndex] !== null && userConfidence[currentIndex] !== undefined;
+        const isCurrentDontKnow = isDontKnow(responseIntent, currentIndex);
+        const allAnswered = userAnswers.every((answer, index) => (
+            (answer !== null && answer !== undefined) || isDontKnow(responseIntent, index)
+        ));
 
         let label = strings.next;
         if (allAnswered) {
@@ -15,9 +37,11 @@
         }
 
         return {
-            disabled: !hasAnswer,
+            disabled: !isQuestionComplete(userAnswers, userConfidence, responseIntent, currentIndex),
             label,
             hasAnswer,
+            hasConfidence,
+            isDontKnow: isCurrentDontKnow,
             allAnswered
         };
     }
@@ -42,15 +66,40 @@
             userAnswers.push(null);
         }
 
+        const userConfidence = Array.isArray(snapshot.userConfidence)
+            ? snapshot.userConfidence.slice(0, safeLength)
+            : Array(safeLength).fill(null);
+        const questionTimings = Array.isArray(snapshot.questionTimings)
+            ? snapshot.questionTimings.slice(0, safeLength)
+            : Array(safeLength).fill(null);
+        const responseIntent = Array.isArray(snapshot.responseIntent)
+            ? snapshot.responseIntent.slice(0, safeLength)
+            : Array(safeLength).fill(null);
+
+        while (userConfidence.length < safeLength) {
+            userConfidence.push(null);
+        }
+
+        while (questionTimings.length < safeLength) {
+            questionTimings.push(null);
+        }
+
+        while (responseIntent.length < safeLength) {
+            responseIntent.push(null);
+        }
+
         return {
             currentGrade: snapshot.currentGrade,
             selectedQuestions,
             currentQuestionIndex,
-            userAnswers
+            userAnswers,
+            userConfidence,
+            questionTimings,
+            responseIntent
         };
     }
 
-    function resolveRenderTarget(selectedQuestionsLength, userAnswers, requestedIndex) {
+    function resolveRenderTarget(selectedQuestionsLength, userAnswers, requestedIndex, responseIntent = []) {
         if (requestedIndex < selectedQuestionsLength) {
             return {
                 type: "question",
@@ -59,7 +108,7 @@
             };
         }
 
-        const firstSkippedIndex = findFirstSkippedIndex(userAnswers);
+        const firstSkippedIndex = findFirstSkippedIndex(userAnswers, responseIntent);
         if (firstSkippedIndex !== -1) {
             return {
                 type: "question",
@@ -75,8 +124,8 @@
         };
     }
 
-    function resolveSkipAction(userAnswers, currentIndex) {
-        if (userAnswers[currentIndex] !== null) {
+    function resolveSkipAction(userAnswers, currentIndex, responseIntent = []) {
+        if (userAnswers[currentIndex] !== null || isDontKnow(responseIntent, currentIndex)) {
             return {
                 type: "clear-answer",
                 targetIndex: currentIndex,
@@ -93,7 +142,7 @@
             };
         }
 
-        const firstSkippedIndex = findFirstSkippedIndex(userAnswers, currentIndex);
+        const firstSkippedIndex = findFirstSkippedIndex(userAnswers, responseIntent, currentIndex);
         if (firstSkippedIndex !== -1) {
             return {
                 type: "question",
@@ -109,7 +158,48 @@
         };
     }
 
-    function resolveNextAction(userAnswers, currentIndex) {
+    function resolveNextAction(userAnswers, userConfidence, currentIndex, responseIntent = []) {
+        if (isDontKnow(responseIntent, currentIndex)) {
+            const allAnswered = userAnswers.every((answer, index) => (
+                (answer !== null && answer !== undefined) || isDontKnow(responseIntent, index)
+            ));
+
+            if (allAnswered) {
+                return {
+                    type: "results",
+                    targetIndex: null,
+                    noticeKey: null,
+                    messageType: "info"
+                };
+            }
+
+            if (currentIndex < userAnswers.length - 1) {
+                return {
+                    type: "question",
+                    targetIndex: currentIndex + 1,
+                    noticeKey: null,
+                    messageType: "info"
+                };
+            }
+
+            const firstSkippedIndex = findFirstSkippedIndex(userAnswers, responseIntent);
+            if (firstSkippedIndex !== -1) {
+                return {
+                    type: "question",
+                    targetIndex: firstSkippedIndex,
+                    noticeKey: "completedLoopNotice",
+                    messageType: "info"
+                };
+            }
+
+            return {
+                type: "results",
+                targetIndex: null,
+                noticeKey: null,
+                messageType: "info"
+            };
+        }
+
         const currentAnswer = userAnswers[currentIndex];
         if (currentAnswer === null || currentAnswer === undefined) {
             return {
@@ -120,7 +210,19 @@
             };
         }
 
-        const allAnswered = userAnswers.every(answer => answer !== null);
+        const currentConfidence = Array.isArray(userConfidence) ? userConfidence[currentIndex] : null;
+        if (currentConfidence === null || currentConfidence === undefined) {
+            return {
+                type: "blocked",
+                targetIndex: currentIndex,
+                noticeKey: "confidenceRequiredNotice",
+                messageType: "alert"
+            };
+        }
+
+        const allAnswered = userAnswers.every((answer, index) => (
+            (answer !== null && answer !== undefined) || isDontKnow(responseIntent, index)
+        ));
         if (allAnswered) {
             return {
                 type: "results",
@@ -139,7 +241,7 @@
             };
         }
 
-        const firstSkippedIndex = findFirstSkippedIndex(userAnswers);
+        const firstSkippedIndex = findFirstSkippedIndex(userAnswers, responseIntent);
         if (firstSkippedIndex !== -1) {
             return {
                 type: "question",
@@ -157,19 +259,20 @@
         };
     }
 
-    function buildReviewItems(userAnswers, currentIndex) {
+    function buildReviewItems(userAnswers, currentIndex, responseIntent = []) {
         return userAnswers.map((answer, index) => ({
             index,
             label: String(index + 1),
             stateClassName: index === currentIndex
                 ? "review-index-current"
-                : answer === null
+                : answer === null && !isDontKnow(responseIntent, index)
                     ? "review-index-skipped"
                     : "review-index-answered"
         }));
     }
 
     const QuestionFlow = {
+        isQuestionComplete,
         findFirstSkippedIndex,
         getNextButtonView,
         normalizeRestoredSession,
