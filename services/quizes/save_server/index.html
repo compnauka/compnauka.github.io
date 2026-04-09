@@ -3,9 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Навчальна гра: Місія Порятунок Сервера">
-    <title>Місія: Порятунок Сервера | Інтерактивний тест з інформатики</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Навчальна гра: Місія Порятунок Сервера" data-i18n-attr="content" data-i18n-key="app.metaDescription">
+    <meta name="theme-color" content="#0d1117">
+    <title data-i18n-key="app.documentTitle">Місія: Порятунок Сервера | Інтерактивний тест з інформатики</title>
+    <link rel="manifest" href="manifest.json">
 
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,51 +38,56 @@
         rel="stylesheet">
 
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="tokens.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body
     class="bg-terminal-bg text-slate-200 min-h-[100dvh] flex flex-col items-center justify-center p-2 md:p-4 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-blend-overlay">
 
+    <a href="#main-content" class="skip-link" data-i18n-key="app.skipLink">Перейти до основного вмісту</a>
+    <div id="sr-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div id="sr-alert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
     <div id="game-container"
-        class="w-full max-w-5xl bg-slate-900/95 border-2 border-slate-600 rounded-xl shadow-2xl overflow-hidden backdrop-blur-sm relative transition-colors duration-200 flex flex-col h-[90dvh] min-h-[500px]">
+        class="game-shell panel-card w-full max-w-5xl bg-slate-900/95 border-2 border-slate-600 overflow-hidden backdrop-blur-sm relative transition-colors duration-200 flex flex-col h-[90dvh] min-h-[500px]">
 
         <!-- Header -->
-        <div class="bg-slate-800 p-3 md:p-4 flex justify-between items-center border-b border-slate-700 shrink-0">
+        <header class="bg-slate-800 p-3 md:p-4 flex justify-between items-center border-b border-slate-700 shrink-0">
             <div class="flex items-center gap-4 w-1/2">
                 <div class="flex flex-col w-full">
                     <div class="flex justify-between items-end mb-1">
-                        <span class="font-bold text-slate-400 text-[10px] md:text-xs uppercase">Стан системи</span>
+                        <span class="font-bold text-slate-400 text-[10px] md:text-xs uppercase" data-i18n-key="app.systemStatus">Стан системи</span>
                         <span id="timer-display" class="hidden text-yellow-400 font-pixel text-xs"
                             role="timer">45s</span>
                     </div>
                     <div class="w-full h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
-                        <div id="health-bar" role="progressbar" aria-valuenow="100"
+                        <div id="health-bar" role="progressbar" aria-label="Здоров'я сервера" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"
                             class="h-full bg-green-500 transition-all duration-500" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="reset-btn-top" class="text-xs text-slate-500 hover:text-red-400 mr-2 p-3 touch-manipulation"
-                    title="Скинути гру" aria-label="Скинути прогрес"><i class="fas fa-trash"></i></button>
-                <span class="text-xs md:text-sm text-slate-400">Рівень:</span>
-                <span id="level-indicator"
+                <button id="reset-btn-top" class="toolbar-button text-xs text-slate-500 mr-2 p-3 touch-manipulation"
+                    title="Скинути гру" aria-label="Скинути прогрес" data-i18n-attr="title" data-i18n-key="app.resetGameTitle" data-i18n-attr-secondary="aria-label" data-i18n-key-secondary="app.resetGameAria"><i class="fas fa-trash"></i></button>
+                <span class="text-xs md:text-sm text-slate-400" data-i18n-key="app.levelLabel">Рівень:</span>
+                <span id="level-indicator" aria-live="polite" aria-atomic="true"
                     class="font-bold text-white bg-blue-600 px-3 py-1 rounded shadow-lg shadow-blue-500/30 text-xs md:text-sm">1/13</span>
             </div>
-        </div>
+        </header>
 
         <!-- Main Content -->
-        <div class="p-4 md:p-8 flex-1 overflow-y-auto flex flex-col relative no-scrollbar">
+        <main id="main-content" tabindex="-1" class="p-4 md:p-8 flex-1 overflow-y-auto flex flex-col relative no-scrollbar">
 
             <!-- Character Area -->
             <div id="character-area" class="flex gap-4 mb-4 items-start animate-fade-in shrink-0">
                 <div class="relative group">
                     <div id="robot-avatar"
-                        class="w-14 h-14 md:w-16 md:h-16 bg-blue-900 rounded-full flex items-center justify-center border-2 border-blue-400 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.5)] z-10 relative transition-all duration-300">
+                        class="robot-avatar-shell w-14 h-14 md:w-16 md:h-16 bg-blue-900 rounded-full flex items-center justify-center border-2 border-blue-400 shrink-0 z-10 relative transition-all duration-300">
                         <i id="robot-icon" class="fas fa-robot text-2xl md:text-3xl text-white"></i>
                     </div>
                     <div id="robot-glow"
-                        class="absolute inset-0 bg-blue-500 rounded-full blur-lg opacity-30 animate-pulse transition-colors duration-300">
+                        class="robot-glow--neutral absolute inset-0 rounded-full blur-lg animate-pulse transition-colors duration-300">
                     </div>
                 </div>
 
@@ -88,123 +95,125 @@
                     class="bg-slate-700/50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500 flex-1 shadow-inner relative">
                     <h3
                         class="text-blue-400 font-bold text-xs md:text-sm mb-1 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-terminal text-xs"></i> ШІ Біп-Боп:
+                        <i class="fas fa-terminal text-xs"></i> <span data-i18n-key="app.robotLabel">ШІ Біп-Боп:</span>
                     </h3>
-                    <p id="dialogue-text"
+                    <p id="dialogue-text" tabindex="-1"
                         class="text-base md:text-lg leading-relaxed typing-effect font-medium text-slate-100 min-h-[3rem] whitespace-pre-wrap">
                     </p>
-                    <button id="skip-dialogue-btn"
-                        class="hidden text-[10px] md:text-xs text-slate-400 hover:text-white mt-2 p-2 flex items-center gap-1 touch-manipulation">
-                        <i class="fas fa-forward text-[9px]"></i> Пропустити текст
-                    </button>
                 </div>
             </div>
 
             <!-- Interaction Area -->
             <div id="interaction-area"
-                class="flex-1 flex flex-col justify-center items-center gap-3 transition-all duration-300 w-full pb-4">
+                class="flex-1 flex flex-col justify-start items-stretch gap-3 transition-all duration-300 w-full pb-4">
             </div>
 
-        </div>
+        </main>
 
         <!-- Game Footer (Fixed Bottom) -->
         <div id="game-footer"
-            class="absolute bottom-0 left-0 w-full translate-y-full transition-transform duration-300 z-20">
-            <div id="footer-content" class="p-4 md:p-6 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] border-t-2">
+            class="feedback-layer is-hidden absolute bottom-0 left-0 w-full z-20">
+            <div id="footer-content" class="footer-panel p-4 md:p-6 border-t-2" aria-live="polite" aria-atomic="true">
                 <!-- Content will be injected by JS -->
             </div>
         </div>
 
         <!-- Progress Bar -->
         <div class="h-2 md:h-3 bg-slate-800 w-full relative shrink-0">
-            <div id="progress-bar"
-                class="h-full bg-gradient-to-r from-green-600 to-green-400 w-[0%] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(74,222,128,0.5)]">
+            <div id="progress-bar" role="progressbar" aria-label="Прогрес проходження" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                class="progress-shell h-full bg-gradient-to-r from-green-600 to-green-400 w-[0%] transition-all duration-700 ease-out">
             </div>
         </div>
     </div>
 
     <!-- Start Screen -->
-    <div id="start-screen" class="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
+    <section id="start-screen" aria-labelledby="start-screen-title" class="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
         <div class="text-center max-w-2xl relative w-full">
             <div class="absolute -inset-10 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
             <i
-                class="fas fa-school text-5xl md:text-6xl text-blue-500 mb-6 animate-bounce drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]"></i>
-            <h1 class="text-2xl md:text-4xl font-pixel text-yellow-400 mb-4 leading-tight drop-shadow-md">
-                МІСІЯ:<br>Порятунок Сервера</h1>
-            <p class="text-lg md:text-xl text-slate-300 mb-6 font-light leading-relaxed">
+                class="hero-badge hero-float fas fa-school text-5xl md:text-6xl text-blue-500 mb-6"></i>
+            <h1 id="start-screen-title" class="text-2xl md:text-4xl font-pixel text-yellow-400 mb-4 leading-tight drop-shadow-md">
+                <span data-i18n-html="app.missionTitle">МІСІЯ:<br>Порятунок Сервера</span></h1>
+            <p class="text-lg md:text-xl text-slate-300 mb-6 font-light leading-relaxed" data-i18n-html="app.introParagraphOne">
                 <span class="text-red-400 font-bold">УВАГА!</span> У школі раптово вимкнули світло — шкільний сервер з
                 електронним журналом <strong>перестав працювати</strong>.<br><br>
                 Шкільний ШІ-помічник <strong>Біп-Боп</strong> також втратив частину даних і забув, як повернути
                 сервер до робочого стану.
                 Робота з оцінками та домашніми завданнями опинилась під загрозою.
             </p>
-            <p class="text-lg md:text-xl text-slate-300 mb-6 font-light leading-relaxed">
+            <p class="text-lg md:text-xl text-slate-300 mb-6 font-light leading-relaxed" data-i18n-html="app.introParagraphTwo">
                 Системний адміністратор у відпустці (у його кішки народилися кошенята 🐱), тому <strong>лише ти можеш
                     допомогти</strong> відновити сервер.
             </p>
 
             <div
-                class="bg-slate-800/80 p-4 rounded-xl mb-8 border border-slate-600 inline-block text-left w-full max-w-sm">
+                class="timer-settings-card panel-card bg-slate-800/80 p-3 md:p-4 mb-7 text-left mx-auto">
                 <label class="flex items-center gap-3 cursor-pointer group p-2">
                     <div class="relative">
-                        <input type="checkbox" id="timer-toggle" class="sr-only peer">
+                        <input type="checkbox" id="timer-toggle" class="sr-only peer" aria-describedby="timer-help">
                         <div
                             class="w-10 h-6 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                         </div>
                     </div>
-                    <span class="text-slate-200 group-hover:text-white transition-colors">Увімкнути таймер (45 секунд на
+                    <span class="timer-copy text-slate-200 group-hover:text-white transition-colors" data-i18n-key="app.timerToggle">Увімкнути таймер (45 секунд на
                         запитання)</span>
                 </label>
+                <p id="timer-help" class="text-sm text-slate-400 mt-2" data-i18n-key="app.timerHelp">
+                    За 20 секунд до кінця з'явиться можливість додати ще 20 секунд.
+                </p>
             </div>
 
             <button id="start-btn"
-                class="w-full md:w-auto bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-10 rounded-full text-lg md:text-xl shadow-lg transform hover:scale-105 transition-all border-b-4 border-green-800 active:border-0 active:translate-y-1 touch-manipulation">
+                class="action-button action-button--success action-button--hero md:w-auto touch-manipulation" data-i18n-html="app.startButton">
                 <i class="fas fa-power-off mr-2"></i> ВІДНОВИТИ СИСТЕМУ
             </button>
         </div>
-    </div>
+    </section>
 
     <!-- Victory/Game Over Screen -->
-    <div id="victory-screen"
+    <section id="victory-screen" aria-labelledby="end-title"
         class="hidden fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4 text-center overflow-y-auto no-scrollbar">
         <div class="max-w-2xl w-full py-8">
             <i id="end-icon"
-                class="fas fa-trophy text-yellow-300 text-5xl md:text-6xl mb-4 drop-shadow-lg animate-bounce-short"></i>
-            <h2 id="end-title" class="text-2xl md:text-3xl font-pixel text-white mb-2">МІСІЮ ВИКОНАНО!</h2>
+                class="celebration-float fas fa-trophy text-yellow-300 text-5xl md:text-6xl mb-4 drop-shadow-lg"></i>
+            <h2 id="end-title" class="text-2xl md:text-3xl font-pixel text-white mb-2" data-i18n-key="app.endTitleVictory">МІСІЮ ВИКОНАНО!</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6 text-left">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold">Результат</h3>
+                <div class="panel-card bg-slate-800 p-4 border border-slate-700">
+                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold" data-i18n-key="app.resultLabel">Результат</h3>
                     <div class="flex justify-between mb-2 pb-2 border-b border-slate-700">
-                        <span>Здоров’я сервера:</span>
+                        <span data-i18n-key="app.finalHealthLabel">Здоров’я сервера:</span>
                         <span id="final-health" class="font-bold text-blue-400">100%</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>Помилок:</span>
+                        <span data-i18n-key="app.errorCountLabel">Помилок:</span>
                         <span id="stats-errors" class="font-bold text-red-400">0</span>
                     </div>
                 </div>
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold">Зони для покращення</h3>
+                <div class="panel-card bg-slate-800 p-4 border border-slate-700">
+                    <h3 class="text-slate-400 text-xs uppercase mb-2 font-bold" data-i18n-key="app.improvementLabel">Зони для покращення</h3>
                     <div id="failed-topics-list"
                         class="text-sm space-y-2 text-slate-300 max-h-40 overflow-y-auto pr-2 no-scrollbar"></div>
-                    <div id="perfect-score-msg" class="hidden text-green-400 text-sm font-bold flex items-center gap-2">
+                    <div id="perfect-score-msg" class="hidden text-green-400 text-sm font-bold flex items-center gap-2" data-i18n-html="app.perfectScore">
                         <i class="fas fa-check-circle"></i> Жодних помилок!
                     </div>
                 </div>
             </div>
 
             <button id="restart-btn"
-                class="bg-white text-green-900 font-bold py-3 px-8 rounded-full hover:bg-gray-100 shadow-xl transition-transform hover:-translate-y-1 touch-manipulation">
+                class="action-button action-button--light touch-manipulation" data-i18n-html="app.restartButton">
                 <i class="fas fa-redo mr-2"></i> Нова гра
             </button>
 
             <p id="victory-summary" class="mt-6 text-sm md:text-base text-slate-300"></p>
         </div>
-    </div>
+    </section>
 
     <!-- Scripts -->
-    <script src="questions.js"></script>
+    <script src="ui-strings.js"></script>
+    <script src="quiz-content.uk.js"></script>
+    <script src="game-services.js"></script>
+    <script src="game-renderers.js"></script>
     <script src="main.js" defer></script>
 </body>
 

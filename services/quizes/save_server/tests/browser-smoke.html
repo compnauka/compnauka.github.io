@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Smoke Test</title>
+</head>
+<body>
+    <div id="sr-status"></div>
+    <div id="sr-alert"></div>
+
+    <div id="game-container">
+        <header>
+            <button id="reset-btn-top" type="button">reset</button>
+            <span id="timer-display" class="hidden">45s</span>
+            <div id="health-bar"></div>
+            <span id="level-indicator">1/13</span>
+        </header>
+
+        <main id="main-content" tabindex="-1">
+            <div id="character-area">
+                <div id="robot-avatar"><i id="robot-icon"></i></div>
+                <div id="robot-glow"></div>
+                <div>
+                    <p id="dialogue-text"></p>
+                </div>
+            </div>
+            <div id="interaction-area"></div>
+        </main>
+
+        <div id="game-footer" class="is-hidden">
+            <div id="footer-content"></div>
+        </div>
+
+        <div id="progress-bar"></div>
+    </div>
+
+    <section id="start-screen">
+        <label>
+            <input type="checkbox" id="timer-toggle">
+        </label>
+        <button id="start-btn" type="button">start</button>
+    </section>
+
+    <section id="victory-screen" class="hidden">
+        <h2 id="end-title"></h2>
+        <div id="final-health"></div>
+        <div id="stats-errors"></div>
+        <div id="failed-topics-list"></div>
+        <div id="perfect-score-msg" class="hidden"></div>
+        <p id="victory-summary"></p>
+        <button id="restart-btn" type="button">restart</button>
+    </section>
+
+    <pre id="test-output">RUNNING</pre>
+
+    <script>
+        Math.random = () => 0;
+        window.confirm = () => true;
+        window.__reloadCalls = 0;
+        Location.prototype.reload = function reloadStub() {
+            window.__reloadCalls += 1;
+        };
+
+        const realSetTimeout = window.setTimeout.bind(window);
+        const realSetInterval = window.setInterval.bind(window);
+        const TIME_SCALE = 50;
+
+        window.setTimeout = (callback, delay, ...args) => {
+            const scaledDelay = Math.max(1, Math.floor((delay || 0) / TIME_SCALE));
+            return realSetTimeout(callback, scaledDelay, ...args);
+        };
+
+        window.setInterval = (callback, delay, ...args) => {
+            const scaledDelay = Math.max(5, Math.floor((delay || 0) / TIME_SCALE));
+            return realSetInterval(callback, scaledDelay, ...args);
+        };
+    </script>
+    <script src="../ui-strings.js"></script>
+    <script src="../quiz-content.uk.js"></script>
+    <script src="../game-services.js"></script>
+    <script src="../game-renderers.js"></script>
+    <script src="../main.js" defer></script>
+    <script defer>
+        function waitFor(condition, timeoutMs = 7000, stepMs = 50) {
+            return new Promise((resolve, reject) => {
+                const started = Date.now();
+
+                function tick() {
+                    try {
+                        if (condition()) {
+                            resolve();
+                            return;
+                        }
+                    } catch (error) {
+                        reject(error);
+                        return;
+                    }
+
+                    if (Date.now() - started > timeoutMs) {
+                        reject(new Error('Timed out while waiting for condition.'));
+                        return;
+                    }
+
+                    setTimeout(tick, stepMs);
+                }
+
+                tick();
+            });
+        }
+
+        function getNextButton() {
+            return document.querySelector('#footer-content button[data-nav-action="next"]');
+        }
+
+        function getCurrentLevelIndex() {
+            const levelText = document.getElementById('level-indicator').textContent.trim();
+            return Math.max(0, Number(levelText.split('/')[0]) - 1);
+        }
+
+        function getContinueMissionButton() {
+            return Array.from(document.querySelectorAll('#interaction-area button'))
+                .find((button) => !button.dataset.optionIndex);
+        }
+
+        function getString(path, fallback = '') {
+            const segments = path.split('.');
+            let current = window.UI_STRINGS || {};
+
+            for (const segment of segments) {
+                current = current?.[segment];
+            }
+
+            return typeof current === 'string' ? current : fallback;
+        }
+
+        function shufflePreview(items) {
+            const cloned = items.slice();
+            for (let index = cloned.length - 1; index > 0; index -= 1) {
+                const randomIndex = Math.floor(Math.random() * (index + 1));
+                [cloned[index], cloned[randomIndex]] = [cloned[randomIndex], cloned[index]];
+            }
+            return cloned;
+        }
+
+        function buildExpectedSession() {
+            const missionDatabase = window.QUIZ_CONTENT.missionDatabase || [];
+            const storyCheckpoints = window.QUIZ_CONTENT.storyCheckpoints || {};
+            const checkpointIndices = Object.keys(storyCheckpoints).map(Number).sort((a, b) => a - b);
+            const ranges = [];
+            let lastIndex = 0;
+
+            checkpointIndices.forEach((index) => {
+                ranges.push([lastIndex, index]);
+                lastIndex = index;
+            });
+            ranges.push([lastIndex, missionDatabase.length]);
+
+            let shuffledTopics = [];
+            ranges.forEach(([start, end]) => {
+                const moduleTopics = missionDatabase.slice(start, end);
+                shuffledTopics = shuffledTopics.concat(shufflePreview(moduleTopics));
+            });
+
+            return shuffledTopics.map((topicData) => {
+                const variation = topicData.variations[0];
+                return {
+                    title: topicData.topic,
+                    dialogue: variation.dialogue,
+                    options: shufflePreview(variation.options)
+                };
+            });
+        }
+
+        const expectedSession = buildExpectedSession();
+
+        async function answerCurrentQuestion(preferCorrect = true) {
+            await waitFor(() => document.querySelector('#interaction-area button[data-option-index]'));
+
+            const levelIndex = getCurrentLevelIndex();
+            const expectedQuestion = expectedSession[levelIndex];
+            const expectedOption = expectedQuestion.options.find((option) => option.correct === preferCorrect);
+            if (!expectedOption) {
+                throw new Error(`Expected option for level ${levelIndex + 1} was not found.`);
+            }
+
+            const optionButton = Array.from(document.querySelectorAll('#interaction-area button[data-option-index]'))
+                .find((button) => (button.textContent || '').includes(expectedOption.text));
+
+            if (!optionButton) {
+                throw new Error(`Answer button "${expectedOption.text}" was not rendered.`);
+            }
+
+            optionButton.click();
+            await waitFor(() => getNextButton());
+            getNextButton().click();
+        }
+
+        async function reachCheckpoint(maxSteps = 6) {
+            for (let step = 0; step < maxSteps; step += 1) {
+                const continueButton = getContinueMissionButton();
+                if (continueButton) {
+                    return continueButton;
+                }
+
+                await answerCurrentQuestion();
+                await waitFor(() => {
+                    return Boolean(getContinueMissionButton())
+                        || Boolean(document.querySelector('#interaction-area button[data-option-index]'));
+                });
+            }
+
+            throw new Error('Checkpoint button did not appear.');
+        }
+
+        async function runSmoke() {
+            const output = document.getElementById('test-output');
+
+            try {
+                const scenarioMarks = [];
+                document.getElementById('timer-toggle').checked = true;
+                const startButton = document.getElementById('start-btn');
+                startButton.click();
+
+                await waitFor(() => document.getElementById('start-screen').classList.contains('hidden'));
+                await waitFor(() => document.getElementById('dialogue-text').textContent.trim().length > 20);
+                await waitFor(() => document.querySelector('#interaction-area button[data-option-index]'));
+
+                await waitFor(() => {
+                    const footerText = document.getElementById('footer-content').textContent || '';
+                    return footerText.includes('Додати 20');
+                }, 5000);
+                scenarioMarks.push('timer-warning');
+
+                const timerExtendButton = Array.from(document.querySelectorAll('#footer-content button'))
+                    .find((button) => (button.textContent || '').includes('Додати 20'));
+                if (!timerExtendButton) {
+                    throw new Error('Timer extend button was not rendered.');
+                }
+                timerExtendButton.click();
+
+                await answerCurrentQuestion(true);
+
+                await waitFor(() => document.getElementById('level-indicator').textContent.trim() !== '1/13');
+                scenarioMarks.push('answer-flow');
+
+                const continueButton = await reachCheckpoint();
+                scenarioMarks.push('checkpoint-screen');
+
+                continueButton.click();
+                await waitFor(() => document.querySelector('#interaction-area button[data-option-index]'));
+                scenarioMarks.push('checkpoint-continue');
+
+                document.getElementById('reset-btn-top').click();
+                if (window.__reloadCalls < 1) {
+                    throw new Error('Top reset button did not trigger reload flow.');
+                }
+                scenarioMarks.push('reset-top');
+
+                const syntheticRenderer = window.ServerRescueModules.createGameRenderers({
+                    elements: {
+                        victoryScreen: document.getElementById('victory-screen'),
+                        restartBtn: document.getElementById('restart-btn')
+                    },
+                    appString: (key, fallback = '') => getString(`app.${key}`, fallback),
+                    runtimeString: (key, fallback = '') => getString(`runtime.${key}`, fallback),
+                    soundFX: { playClick() {} },
+                    createSparks: () => {},
+                    robotBaseClass: '',
+                    robotIconBaseClass: ''
+                });
+
+                syntheticRenderer.showEndScreen({
+                    isVictory: false,
+                    reason: 'study_needed',
+                    currentHealth: 0,
+                    totalErrors: 3,
+                    failedTopics: [{ topic: 'Тестова тема' }],
+                    announceStatus: () => {},
+                    announceAlert: () => {}
+                });
+
+                await waitFor(() => !document.getElementById('victory-screen').classList.contains('hidden'));
+                scenarioMarks.push('end-screen');
+
+                document.getElementById('restart-btn').click();
+                if (window.__reloadCalls < 2) {
+                    throw new Error('Restart button did not trigger reload flow.');
+                }
+                scenarioMarks.push('restart-end-screen');
+
+                output.textContent = `PASS: ${scenarioMarks.join(', ')}`;
+                output.dataset.result = 'pass';
+            } catch (error) {
+                output.textContent = `FAIL: ${error.message}`;
+                output.dataset.result = 'fail';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            runSmoke();
+        });
+    </script>
+</body>
+</html>
