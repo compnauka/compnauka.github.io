@@ -3,25 +3,24 @@ export const MODE_KEY = "lesson-mode-v4";
 export const SOUND_KEY = "lesson-sound-v4";
 
 export function loadPersistedState() {
-  localStorage.removeItem(STORAGE_KEY);
   return {};
 }
 
-export function createInitialState(persistedState) {
+export function createInitialState(persistedState, lessonData) {
+  const activityCompletion = Object.fromEntries(
+    lessonData.activities.map((activity) => [activity.id, false])
+  );
+
   return {
-    mode: localStorage.getItem(MODE_KEY) || "student",
-    soundOn: localStorage.getItem(SOUND_KEY) !== "off",
+    lessonId: lessonData.id || document.body?.dataset?.lessonId || "default",
+    mode: persistedState.mode === "teacher" ? "teacher" : "student",
+    soundOn: typeof persistedState.soundOn === "boolean" ? persistedState.soundOn : true,
     chooseSelections: persistedState.chooseSelections || {},
     activityState: persistedState.activityState || {},
     quizAnswers: persistedState.quizAnswers || {},
     reflectionChoice: persistedState.reflectionChoice ?? null,
     completed: {
-      draw: false,
-      classify: false,
-      truefalse: false,
-      pick: false,
-      fill: false,
-      scenarios: false,
+      ...activityCompletion,
       quiz: false,
       reflection: false,
       ...persistedState.completed

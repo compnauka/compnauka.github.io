@@ -41,12 +41,14 @@ function Count-Matches {
 
 $textFiles = @(
   "index.html",
+  "info-types-1-2.html",
+  "message-actions-1-2.html",
   "styles.css",
   "tokens.css",
   "offline.html",
   "manifest.json",
   "sw.js"
-) + (Get-ChildItem -Path "js" -Filter "*.js" | ForEach-Object { $_.FullName })
+) + (Get-ChildItem -Path "js" -Recurse -Filter "*.js" | ForEach-Object { $_.FullName })
 
 $suspiciousTokens = @(
   [string][char]0x00D0,
@@ -78,18 +80,31 @@ foreach ($entry in $decoded.GetEnumerator()) {
 $indexPath = Join-Path $root "index.html"
 $stylesPath = Join-Path $root "styles.css"
 $sharedPath = Join-Path $root "js\shared.js"
-$lessonDataPath = Join-Path $root "js\lesson-data.js"
+$lessonDataPath = Join-Path $root "js\lessons\info-types-1-2.js"
+$messageLessonPath = Join-Path $root "js\lessons\message-actions-1-2.js"
+$lessonFactoryPath = Join-Path $root "js\lesson-data.js"
+$appPath = Join-Path $root "js\app.js"
+$registryPath = Join-Path $root "js\activity-registry.js"
+$statePath = Join-Path $root "js\state.js"
+$swPath = Join-Path $root "sw.js"
 
 $indexText = $decoded[$indexPath]
 $stylesText = $decoded[$stylesPath]
 $sharedText = $decoded[$sharedPath]
 $lessonDataText = $decoded[$lessonDataPath]
+$messageLessonText = $decoded[$messageLessonPath]
+$lessonFactoryText = $decoded[$lessonFactoryPath]
+$appText = $decoded[$appPath]
+$registryText = $decoded[$registryPath]
+$stateText = $decoded[$statePath]
+$swText = $decoded[$swPath]
 
 Assert-True ($indexText -match "[\u0400-\u04FF]{5,}") "index.html should contain readable Cyrillic text."
 Assert-True ($lessonDataText -match "[\u0400-\u04FF]{5,}") "lesson-data.js should contain readable Cyrillic text."
 Assert-True (-not ($indexText -match '\u0423\u043d\u0456\u0432\u0435\u0440\u0441\u0430\u043b\u044c\u043d\u0438\u0439\s+\u0448\u0430\u0431\u043b\u043e\u043d')) "index.html should not contain the removed template badge text."
-Assert-True ($indexText -match '\u0413\u043e\u043b\u043e\u0432\u043d\u0435\s+\u043f\u0440\u043e\s+\u0442\u0435\u043c\u0443') "index.html is missing the updated main topic title."
-Assert-True ($indexText -match '\u041f\u043e\u044f\u0441\u043d\u0435\u043d\u043d\u044f\s+\u0442\u0430\s+\u043f\u0440\u0438\u043a\u043b\u0430\u0434\u0438') "index.html is missing the updated section label."
+Assert-True ($indexText -match '\u041a\u0430\u0442\u0430\u043b\u043e\u0433\s+\u0456\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u0438\u0445\s+\u0443\u0440\u043e\u043a\u0456\u0432') "index.html should contain the lessons catalog heading."
+Assert-True ($indexText.Contains('id="lesson-links"')) "index.html should contain lessons list container."
+Assert-True ($indexText.Contains('js/landing.js')) "index.html should load landing script."
 
 $assetRefs = [regex]::Matches($indexText, '(?:href|src)="([^"]+)"')
 foreach ($match in $assetRefs) {
@@ -109,6 +124,32 @@ Assert-True ($stylesText.Contains(".truth-button.is-selected")) "styles.css shou
 Assert-True ($stylesText.Contains(".emotion-button.is-selected")) "styles.css should define a strong selected state for reflection buttons."
 Assert-True ($stylesText.Contains("box-shadow: 0 0 0 5px")) "styles.css should use a stronger highlight ring for selected states."
 Assert-True ($stylesText.Contains(".section-label--light")) "styles.css should contain reflection label styling."
+Assert-True ($stylesText.Contains(".canvas-wrap.is-empty-warning")) "styles.css should highlight an empty drawing task."
+Assert-True ($stylesText.Contains("flex: 0 0 132px")) "styles.css should keep the sound toggle width stable."
+Assert-True ($stylesText.Contains(".hero-card__meta .meta-chip:last-child")) "styles.css should keep the last hero chip on its own row."
+Assert-True ($stylesText.Contains("grid-template-columns: repeat(2, minmax(0, 1fr));")) "styles.css should compact classify areas on mobile."
+Assert-True ($stylesText.Contains("min-height: 92px;")) "styles.css should reduce classify dropzone height on mobile."
+Assert-True ($stylesText.Contains(".emotion-button:last-child")) "styles.css should let the last reflection card span the mobile row."
+
+Assert-True ($appText.Contains('createActivityRegistry')) "app.js should consume a dedicated activity registry module."
+Assert-True ($appText.Contains('resolveLessonConfig')) "app.js should resolve lesson config from catalog."
+Assert-True ($appText.Contains('document.body.dataset.lessonId')) "app.js should support per-page lesson id."
+Assert-True ($registryText.Contains("export function createActivityRegistry")) "activity-registry.js should define the activity registry."
+Assert-True ($appText.Contains("function renderActivity(activityId")) "app.js should re-render one activity at a time."
+Assert-True ($appText.Contains('data-activity-slot')) "app.js should render dedicated slots for single-task updates."
+Assert-True (-not $appText.Contains('refs.goalNote.textContent')) "app.js should no longer render goalNote with textContent."
+Assert-True ($sharedText.Contains("renderRichText")) "shared.js should expose a helper for safe rich text rendering."
+Assert-True ($stateText.Contains("Object.fromEntries")) "state.js should build completion state dynamically from lesson activities."
+Assert-True (-not (Test-Path (Join-Path $root "js\task-choose.js"))) "task-choose.js should be removed as dead code."
+Assert-True ($swText.Contains("async function networkFirst")) "sw.js should use network-first for navigations."
+Assert-True ($swText.Contains("async function staleWhileRevalidate")) "sw.js should use stale-while-revalidate for lesson assets."
+Assert-True ($swText.Contains('CACHE_NAME = "interactive-lesson-v11"')) "sw.js cache version should be bumped after the update."
+Assert-True ($appText.Contains("studentHook")) "app.js should render a dedicated student hero hook."
+Assert-True ($appText.Contains("teacherOverview")) "app.js should render a dedicated teacher overview."
+Assert-True ($lessonFactoryText.Contains("const studentHook")) "lesson-data.js should build student hook defaults."
+Assert-True ($lessonFactoryText.Contains("const teacherOverview")) "lesson-data.js should build teacher overview defaults."
+Assert-True ($messageLessonText -match '\u0414\u0436\u0435\u0440\u0435\u043b\u043e') "message-actions lesson should include source/channel/receiver theory."
+Assert-True ($messageLessonText.Contains('type: "sequence"')) "message-actions lesson should include sequence activity."
 
 Assert-True ((Count-Matches -Text $lessonDataText -Pattern 'teacherTip:') -ge 9) "lesson-data.js should contain rich teacher tips across sections and tasks."
 Assert-True ((Count-Matches -Text $lessonDataText -Pattern 'answer: true') -ge 5) "lesson-data.js should contain enough true/false statements for variability."

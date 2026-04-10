@@ -1,4 +1,4 @@
-const CACHE_NAME = "interactive-lesson-v10";
+const CACHE_NAME = "interactive-lesson-v11";
 const OFFLINE_URL = "./offline.html";
 const ASSETS = [
   "./",
@@ -40,21 +40,67 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => {
-          if (event.request.mode === "navigate") return caches.match(OFFLINE_URL);
-          return caches.match("./index.html");
-        });
-    })
-  );
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  event.respondWith(staleWhileRevalidate(event.request, event));
 });
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return (await cache.match(request)) || (await cache.match(OFFLINE_URL));
+  }
+}
+
+async function staleWhileRevalidate(request, event) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  event.waitUntil(networkPromise);
+
+  if (cached) {
+    return cached;
+  }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  if (request.mode === "navigate") {
+    return cache.match(OFFLINE_URL);
+  }
+
+  return cache.match("./index.html");
+}

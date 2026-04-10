@@ -1,19 +1,18 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, setStatus, renderRichText } from "./shared.js";
 
-const CATEGORY_EMOJI = {
-  "Зорова": "👀",
-  "Слухова": "👂",
-  "Нюхова": "👃",
-  "Смакова": "👅",
-  "Дотикова": "✋"
-};
+const DEFAULT_CATEGORY_ICON = "🏷️";
 
 export function renderClassifyTask(activity, state) {
-  if (!state.activityState[activity.id]) state.activityState[activity.id] = {};
+  state.activityState[activity.id] = state.activityState[activity.id] || {};
 
-  const score = activity.items.filter((item, index) => state.activityState[activity.id][index] === item.correct).length;
-  const availableItems = activity.items.filter((_, index) => state.activityState[activity.id][index] === undefined);
+  const score = activity.items.filter(
+    (item, index) => state.activityState[activity.id][index] === item.correct
+  ).length;
+
+  const availableItems = activity.items
+    .map((item, index) => ({ item, index }))
+    .filter(({ index }) => state.activityState[activity.id][index] === undefined);
 
   return `
     <article class="task-card" data-activity-id="${activity.id}">
@@ -29,8 +28,7 @@ export function renderClassifyTask(activity, state) {
         <div class="board__column">
           <h4>Крок 1. Обери картку</h4>
           <div class="draggable-list">
-            ${availableItems.map((item) => {
-              const index = activity.items.indexOf(item);
+            ${availableItems.map(({ item, index }) => {
               const selected = state.activityState.selectedClassifyItem === index;
               return `
                 <button
@@ -56,9 +54,12 @@ export function renderClassifyTask(activity, state) {
                 type="button"
                 class="dropzone dropzone--dashed"
                 data-assign-category="${activity.id}"
-                data-category="${escapeHtml(category)}">
-                <strong><span aria-hidden="true">${CATEGORY_EMOJI[category] || ""}</span> ${escapeHtml(category)}</strong>
-                <div class="assigned-list" data-assigned-list="${activity.id}-${escapeHtml(category)}"></div>
+                data-category="${escapeHtml(category)}"
+                aria-label="Категорія ${escapeHtml(category)}">
+                <strong><span aria-hidden="true">${resolveCategoryIcon(activity, category)}</span> ${escapeHtml(category)}</strong>
+                <div class="assigned-list">
+                  ${renderAssigned(activity, state, category)}
+                </div>
               </button>
             `).join("")}
           </div>
@@ -70,17 +71,35 @@ export function renderClassifyTask(activity, state) {
         <button type="button" class="secondary-button" data-reset-classify="${activity.id}">Скинути</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite"></p>
-      <div class="teacher-only method-box">${escapeHtml(activity.teacherTip)}</div>
+      <div class="teacher-only method-box">${renderRichText(activity.teacherTip)}</div>
     </article>
   `;
 }
 
-export function setupClassifyTask(activity, state, refs, showFeedback, rerenderActivities) {
+function resolveCategoryIcon(activity, category) {
+  const customIcons = activity.categoryIcons || {};
+  return customIcons[category] || DEFAULT_CATEGORY_ICON;
+}
+
+function renderAssigned(activity, state, category) {
+  return activity.items
+    .filter((item, index) => state.activityState[activity.id][index] === category)
+    .map((item) => `
+      <span class="assigned-chip" aria-label="${escapeHtml(item.label)}">
+        <span aria-hidden="true">${escapeHtml(item.emoji)}</span>
+        <span>${escapeHtml(item.label)}</span>
+      </span>
+    `)
+    .join("");
+}
+
+export function setupClassifyTask(activity, state, refs, showFeedback, rerenderTask) {
   document.querySelectorAll(`[data-select-item="${activity.id}"]`).forEach((button) => {
     button.addEventListener("click", () => {
-      state.activityState.selectedClassifyItem = Number(button.dataset.index);
+      const index = Number(button.dataset.index);
+      state.activityState.selectedClassifyItem = index;
       persistState(state);
-      rerenderActivities();
+      rerenderTask(`[data-select-item="${activity.id}"][data-index="${index}"]`);
     });
 
     button.addEventListener("dragstart", () => {
@@ -114,57 +133,67 @@ export function setupClassifyTask(activity, state, refs, showFeedback, rerenderA
     const selected = state.activityState.selectedClassifyItem;
     if (selected === undefined || selected === null) {
       showFeedback("Спочатку обери картку зліва.", "is-warning", "!");
+      const firstAvailable = document.querySelector(`[data-select-item="${activity.id}"]`);
+      if (firstAvailable instanceof HTMLElement) {
+        firstAvailable.focus();
+      }
       return;
     }
 
     state.activityState[activity.id][selected] = category;
     state.activityState.selectedClassifyItem = null;
     persistState(state);
-    rerenderActivities();
+    const nextAvailableIndex = activity.items.findIndex(
+      (_, index) => state.activityState[activity.id][index] === undefined
+    );
+    rerenderTask(
+      nextAvailableIndex >= 0
+        ? `[data-select-item="${activity.id}"][data-index="${nextAvailableIndex}"]`
+        : `[data-check-classify="${activity.id}"]`
+    );
   }
 
   document.querySelector(`[data-check-classify="${activity.id}"]`).addEventListener("click", () => {
-    const allAssigned = activity.items.every((_, index) => state.activityState[activity.id][index] !== undefined);
+    const allAssigned = activity.items.every(
+      (_, index) => state.activityState[activity.id][index] !== undefined
+    );
+
     if (!allAssigned) {
-      setStatus(refs.activities.querySelector(`[data-feedback="${activity.id}"]`), "Ще не всі картки розкладено по категоріях.", "is-warning");
+      setStatus(
+        refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
+        "Ще не всі картки розкладено по категоріях.",
+        "is-warning"
+      );
       showFeedback("Спочатку розклади всі картки по категоріях.", "is-warning", "!");
       return;
     }
 
-    const score = activity.items.filter((item, index) => state.activityState[activity.id][index] === item.correct).length;
+    const score = activity.items.filter(
+      (item, index) => state.activityState[activity.id][index] === item.correct
+    ).length;
     const ok = score === activity.items.length;
 
     if (ok) completeTask(activity.id, state, refs);
 
     setStatus(
       refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-      ok ? "Усі відповідності знайдено правильно." : "Є неточності. Перевір, чи кожна картка в правильній категорії.",
+      ok
+        ? "Усі відповідності знайдено правильно."
+        : "Є неточності. Перевір, чи кожна картка в правильній категорії.",
       ok ? "is-success" : "is-warning"
     );
-    showFeedback(ok ? "Усі картки розкладено правильно." : "У деяких категоріях є помилки.", ok ? "is-success" : "is-warning", ok ? "✓" : "!");
+
+    showFeedback(
+      ok ? "Усі картки розкладено правильно." : "У деяких категоріях є помилки.",
+      ok ? "is-success" : "is-warning",
+      ok ? "✓" : "!"
+    );
   });
 
   document.querySelector(`[data-reset-classify="${activity.id}"]`).addEventListener("click", () => {
     state.activityState[activity.id] = {};
     state.activityState.selectedClassifyItem = null;
     persistState(state);
-    rerenderActivities();
-  });
-
-  updateAssignedLists(activity, state);
-}
-
-function updateAssignedLists(activity, state) {
-  activity.categories.forEach((category) => {
-    const list = document.querySelector(`[data-assigned-list="${activity.id}-${category}"]`);
-    if (!list) return;
-
-    const assigned = activity.items.filter((item, index) => state.activityState[activity.id][index] === category);
-    list.innerHTML = assigned.map((item) => `
-      <span class="assigned-chip" aria-label="${escapeHtml(item.label)}">
-        <span aria-hidden="true">${escapeHtml(item.emoji)}</span>
-        <span>${escapeHtml(item.label)}</span>
-      </span>
-    `).join("");
+    rerenderTask(`[data-select-item="${activity.id}"][data-index="0"]`);
   });
 }

@@ -1,4 +1,4 @@
-import { MODE_KEY, SOUND_KEY, persistState } from "./state.js";
+import { persistState } from "./state.js";
 
 export function escapeHtml(value) {
   return String(value)
@@ -9,8 +9,13 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+export function renderRichText(value) {
+  return escapeHtml(value).replace(/\n/g, "<br>");
+}
+
 export function applyMode(state, refs) {
-  refs.body.className = state.mode === "teacher" ? "teacher-mode" : "student-mode";
+  refs.body.classList.remove("student-mode", "teacher-mode");
+  refs.body.classList.add(state.mode === "teacher" ? "teacher-mode" : "student-mode");
   refs.modeStudent.setAttribute("aria-pressed", String(state.mode === "student"));
   refs.modeTeacher.setAttribute("aria-pressed", String(state.mode === "teacher"));
   refs.modeStudent.classList.toggle("is-active", state.mode === "student");
@@ -27,13 +32,13 @@ export function syncSoundToggle(state, refs) {
 
 export function toggleMode(mode, state, refs) {
   state.mode = mode;
-  localStorage.setItem(MODE_KEY, state.mode);
+  persistState(state);
   applyMode(state, refs);
 }
 
 export function toggleSound(state, refs) {
   state.soundOn = !state.soundOn;
-  localStorage.setItem(SOUND_KEY, state.soundOn ? "on" : "off");
+  persistState(state);
   syncSoundToggle(state, refs);
   if (state.soundOn) {
     playTone(520, 0.08);

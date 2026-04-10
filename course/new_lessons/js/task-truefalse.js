@@ -1,5 +1,5 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
 export function renderTrueFalseTask(activity, state) {
   state.activityState[activity.id] = state.activityState[activity.id] || {};
@@ -35,7 +35,7 @@ export function renderTrueFalseTask(activity, state) {
         <button type="button" class="secondary-button" data-reset-truefalse="${activity.id}">Скинути</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite"></p>
-      <div class="teacher-only method-box">${escapeHtml(activity.teacherTip)}</div>
+      <div class="teacher-only method-box">${renderRichText(activity.teacherTip)}</div>
     </article>
   `;
 }
@@ -64,7 +64,9 @@ export function setupTrueFalseTask(activity, state, refs, showFeedback, rerender
       const index = Number(button.dataset.index);
       state.activityState[activity.id][index] = button.dataset.value === "true";
       persistState(state);
-      rerenderActivities();
+      rerenderActivities(
+        `[data-truefalse-id="${activity.id}"][data-index="${index}"][data-value="${button.dataset.value}"]`
+      );
     });
   });
 
@@ -90,6 +92,6 @@ export function setupTrueFalseTask(activity, state, refs, showFeedback, rerender
   document.querySelector(`[data-reset-truefalse="${activity.id}"]`).addEventListener("click", () => {
     state.activityState[activity.id] = {};
     persistState(state);
-    rerenderActivities();
+    rerenderActivities(`[data-truefalse-id="${activity.id}"]`);
   });
 }

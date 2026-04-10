@@ -1,5 +1,5 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
 export function renderPickTask(activity, state) {
   state.activityState[activity.id] = state.activityState[activity.id] || {};
@@ -30,7 +30,7 @@ export function renderPickTask(activity, state) {
         <button type="button" class="secondary-button" data-reset-pick="${activity.id}">Скинути</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite"></p>
-      <div class="teacher-only method-box">${escapeHtml(activity.teacherTip)}</div>
+      <div class="teacher-only method-box">${renderRichText(activity.teacherTip)}</div>
     </article>
   `;
 }
@@ -42,7 +42,9 @@ export function setupPickTask(activity, state, refs, showFeedback, rerenderActiv
       const optionIndex = Number(button.dataset.pickOption);
       state.activityState[activity.id][groupIndex] = optionIndex;
       persistState(state);
-      rerenderActivities();
+      rerenderActivities(
+        `[data-pick-group="${groupIndex}"][data-pick-option="${optionIndex}"]`
+      );
     });
   });
 
@@ -67,6 +69,6 @@ export function setupPickTask(activity, state, refs, showFeedback, rerenderActiv
   document.querySelector(`[data-reset-pick="${activity.id}"]`).addEventListener("click", () => {
     state.activityState[activity.id] = {};
     persistState(state);
-    rerenderActivities();
+    rerenderActivities(`[data-pick-group="0"]`);
   });
 }

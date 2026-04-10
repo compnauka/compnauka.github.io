@@ -1,5 +1,5 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
 export function renderFillTask(activity, state) {
   return `
@@ -26,7 +26,7 @@ export function renderFillTask(activity, state) {
         <button type="button" class="primary-button" data-check-fill="${activity.id}">Перевірити</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite"></p>
-      <div class="teacher-only method-box">${escapeHtml(activity.teacherTip)}</div>
+      <div class="teacher-only method-box">${renderRichText(activity.teacherTip)}</div>
     </article>
   `;
 }
