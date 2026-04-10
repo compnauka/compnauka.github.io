@@ -29,8 +29,10 @@ export function renderScenariosTask(activity, state) {
 
 function renderSituation(activity, situation, situationIndex, state) {
   const selected = state.chooseSelections[activity.id]?.[situationIndex] || [];
+  const result = state.activityState[`${activity.id}-result-${situationIndex}`];
+  const checked = typeof result === "boolean";
   return `
-    <section class="scenario-card">
+    <section class="scenario-card ${checked ? (result ? "is-correct" : "is-wrong") : ""}">
       <div class="scenario-card__header">
         <span class="scenario-card__emoji" aria-hidden="true">${escapeHtml(situation.emoji)}</span>
         <h4>${escapeHtml(situation.text)}</h4>
@@ -38,10 +40,13 @@ function renderSituation(activity, situation, situationIndex, state) {
       <div class="choices-grid">
         ${situation.options.map((option, optionIndex) => {
           const isSelected = selected.includes(optionIndex);
+          const isCorrect = checked && isSelected && option.correct === true;
+          const isWrong = checked && isSelected && option.correct !== true;
+          const isCorrectAnswer = checked && !isSelected && option.correct === true;
           return `
             <button
               type="button"
-              class="choice-button ${isSelected ? "is-selected" : ""}"
+              class="choice-button ${isSelected ? "is-selected" : ""} ${isCorrect ? "is-correct" : ""} ${isWrong ? "is-wrong" : ""} ${isCorrectAnswer ? "is-correct-answer" : ""}"
               data-scenario-option="${activity.id}"
               data-situation-index="${situationIndex}"
               data-option-index="${optionIndex}"
@@ -94,6 +99,7 @@ export function setupScenariosTask(activity, state, refs, showFeedback, rerender
 
       const ok = JSON.stringify(selected) === JSON.stringify(expected);
       state.activityState[`${activity.id}-checked-${situationIndex}`] = ok;
+      state.activityState[`${activity.id}-result-${situationIndex}`] = ok;
       persistState(state);
 
       if (ok) {
@@ -128,6 +134,7 @@ export function setupScenariosTask(activity, state, refs, showFeedback, rerender
         [situationIndex]: []
       };
       state.activityState[`${activity.id}-checked-${situationIndex}`] = false;
+      delete state.activityState[`${activity.id}-result-${situationIndex}`];
       persistState(state);
       rerenderTask(`[data-scenario-option="${activity.id}"][data-situation-index="${situationIndex}"]`);
     });

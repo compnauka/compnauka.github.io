@@ -1,4 +1,4 @@
-import { persistState } from "./state.js";
+﻿import { persistState } from "./state.js";
 
 export function escapeHtml(value) {
   return String(value)
@@ -26,7 +26,7 @@ export function syncSoundToggle(state, refs) {
   refs.soundToggle.setAttribute("aria-pressed", String(state.soundOn));
   refs.soundToggle.textContent = state.soundOn ? "🔈 Звук" : "🔇 Звук";
   refs.soundToggle.title = state.soundOn
-    ? "Звук увімкнено. Після перевірки завдань звучить короткий сигнал."
+    ? "Звук увімкнено. Після перевірки завдання пролунає короткий сигнал."
     : "Звук вимкнено.";
 }
 
@@ -48,8 +48,10 @@ export function toggleSound(state, refs) {
 export function setStatus(element, message, statusClass) {
   if (!element) return;
   const base = element.id === "quiz-result" ? "status-message" : "task-feedback";
-  element.textContent = message;
-  element.className = `${base} ${statusClass}`.trim();
+  const normalizedMessage = typeof message === "string" ? message.trim() : "";
+  element.textContent = normalizedMessage;
+  element.className = `${base} ${normalizedMessage ? statusClass : ""}`.trim();
+  element.hidden = !normalizedMessage;
 }
 
 export function updateProgress(state, refs) {
@@ -57,7 +59,7 @@ export function updateProgress(state, refs) {
   const done = Object.values(state.completed).filter(Boolean).length;
   const percent = Math.round((done / total) * 100);
   refs.progressBar.style.width = `${percent}%`;
-  refs.progressLabel.textContent = `Пройдено ${percent}%`;
+  refs.progressLabel.textContent = `Готово ${percent}%`;
 }
 
 export function completeTask(taskId, state, refs) {

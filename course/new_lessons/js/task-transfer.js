@@ -1,11 +1,13 @@
-import { persistState } from "./state.js";
+﻿import { persistState } from "./state.js";
 import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
 function renderCase(activity, item, caseIndex, state) {
   const selectedIndex = state.activityState[activity.id]?.[caseIndex];
+  const result = state.activityState[`${activity.id}-result-${caseIndex}`];
+  const checked = typeof result === "boolean";
 
   return `
-    <section class="scenario-card">
+    <section class="scenario-card ${checked ? (result ? "is-correct" : "is-wrong") : ""}">
       <div class="scenario-card__header">
         <span class="scenario-card__emoji" aria-hidden="true">${escapeHtml(item.emoji)}</span>
         <h4>${escapeHtml(item.text)}</h4>
@@ -13,10 +15,13 @@ function renderCase(activity, item, caseIndex, state) {
       <div class="choices-grid">
         ${item.options.map((option, optionIndex) => {
           const selected = selectedIndex === optionIndex;
+          const isCorrectAnswer = checked && option.correct === true;
+          const isCorrect = checked && selected && option.correct === true;
+          const isWrong = checked && selected && option.correct !== true;
           return `
             <button
               type="button"
-              class="choice-button ${selected ? "is-selected" : ""}"
+              class="choice-button ${selected ? "is-selected" : ""} ${isCorrect ? "is-correct" : ""} ${isWrong ? "is-wrong" : ""} ${isCorrectAnswer && !selected ? "is-correct-answer" : ""}"
               data-transfer-option="${activity.id}"
               data-case-index="${caseIndex}"
               data-option-index="${optionIndex}"
@@ -27,8 +32,8 @@ function renderCase(activity, item, caseIndex, state) {
         }).join("")}
       </div>
       <div class="actions-row">
-        <button type="button" class="primary-button" data-check-transfer="${activity.id}" data-case-index="${caseIndex}">Перевірити</button>
-        <button type="button" class="secondary-button" data-reset-transfer="${activity.id}" data-case-index="${caseIndex}">Скинути</button>
+        <button type="button" class="primary-button" data-check-transfer="${activity.id}" data-case-index="${caseIndex}">Перевір</button>
+        <button type="button" class="secondary-button" data-reset-transfer="${activity.id}" data-case-index="${caseIndex}">Почати знову</button>
       </div>
       <p class="task-feedback" data-transfer-feedback="${activity.id}-${caseIndex}" aria-live="polite"></p>
     </section>
@@ -86,6 +91,7 @@ export function setupTransferTask(activity, state, refs, showFeedback, rerenderT
       const ok = option?.correct === true;
 
       state.activityState[`${activity.id}-checked-${caseIndex}`] = ok;
+      state.activityState[`${activity.id}-result-${caseIndex}`] = ok;
       persistState(state);
 
       if (ok) {
@@ -96,11 +102,11 @@ export function setupTransferTask(activity, state, refs, showFeedback, rerenderT
       rerenderTask(`[data-check-transfer="${activity.id}"][data-case-index="${caseIndex}"]`);
       setStatus(
         feedback,
-        option.feedback || (ok ? "Правильно! Ти добре переніс знання в нову ситуацію." : "Спробуй ще раз і подумай, яке правило підходить найкраще."),
+        option.feedback || (ok ? "Так, це добре підходить до цієї ситуації." : "Подумай ще раз, який варіант тут найкращий."),
         ok ? "is-success" : "is-warning"
       );
       showFeedback(
-        ok ? "Ситуацію розв'язано правильно." : "У цій ситуації варто подумати ще раз.",
+        ok ? "Ситуацію розв’язано правильно." : "У цій ситуації варто подумати ще раз.",
         ok ? "is-success" : "is-warning",
         ok ? "✓" : "!"
       );
@@ -112,6 +118,7 @@ export function setupTransferTask(activity, state, refs, showFeedback, rerenderT
       const caseIndex = Number(button.dataset.caseIndex);
       delete state.activityState[activity.id][caseIndex];
       state.activityState[`${activity.id}-checked-${caseIndex}`] = false;
+      delete state.activityState[`${activity.id}-result-${caseIndex}`];
       persistState(state);
       rerenderTask(`[data-transfer-option="${activity.id}"][data-case-index="${caseIndex}"]`);
     });

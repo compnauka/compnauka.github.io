@@ -28,7 +28,7 @@ export function createActivityRegistry(state, refs, showFeedback) {
     },
     fill: {
       render: renderFillTask,
-      setup: (activity) => setupFillTask(activity, state, refs, showFeedback)
+      setup: (activity, rerenderTask) => setupFillTask(activity, state, refs, showFeedback, rerenderTask)
     },
     sequence: {
       render: renderSequenceTask,

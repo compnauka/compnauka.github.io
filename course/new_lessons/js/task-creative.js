@@ -1,4 +1,4 @@
-import { persistState } from "./state.js";
+﻿import { persistState } from "./state.js";
 import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
 function getSelections(activity, state) {
@@ -14,7 +14,7 @@ function buildPreview(activity, selections) {
   });
 
   if (values.some((value) => value === null)) {
-    return activity.placeholder || "Обери картки, щоб скласти власний приклад.";
+    return activity.placeholder || "Обери картки, щоб скласти свій приклад.";
   }
 
   if (activity.previewTemplate) {
@@ -66,7 +66,7 @@ export function renderCreativeTask(activity, state) {
       </div>
       <div class="actions-row">
         <button type="button" class="primary-button" data-complete-creative="${activity.id}">Готово</button>
-        <button type="button" class="secondary-button" data-reset-creative="${activity.id}">Скинути</button>
+        <button type="button" class="secondary-button" data-reset-creative="${activity.id}">Почати знову</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite"></p>
       <div class="teacher-only method-box">${renderRichText(activity.teacherTip)}</div>
@@ -92,7 +92,7 @@ export function setupCreativeTask(activity, state, refs, showFeedback, rerenderT
     if (!allSelected) {
       setStatus(
         refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-        "Спочатку обери по одному варіанту в кожному блоці.",
+        "Спочатку обери по одній картці в кожному рядку.",
         "is-warning"
       );
       showFeedback("Ще не всі картки обрано.", "is-warning", "!");
@@ -102,7 +102,7 @@ export function setupCreativeTask(activity, state, refs, showFeedback, rerenderT
     completeTask(activity.id, state, refs);
     setStatus(
       refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-      activity.successMessage || "Чудово! Твій власний приклад складено.",
+      activity.successMessage || "Супер! Твій приклад уже готовий.",
       "is-success"
     );
     showFeedback(activity.toastMessage || "Творче завдання виконано.", "is-success", "✓");

@@ -6,9 +6,8 @@ const DEFAULT_CATEGORY_ICON = "🏷️";
 export function renderClassifyTask(activity, state) {
   state.activityState[activity.id] = state.activityState[activity.id] || {};
 
-  const score = activity.items.filter(
-    (item, index) => state.activityState[activity.id][index] === item.correct
-  ).length;
+  const score = activity.items.filter((item, index) => state.activityState[activity.id][index] === item.correct).length;
+  const checked = state.activityState[`${activity.id}-checked`] === true;
 
   const availableItems = activity.items
     .map((item, index) => ({ item, index }))
@@ -52,13 +51,13 @@ export function renderClassifyTask(activity, state) {
             ${activity.categories.map((category) => `
               <button
                 type="button"
-                class="dropzone dropzone--dashed"
+                class="dropzone dropzone--dashed ${checked ? resolveCategoryState(activity, state, category) : ""}"
                 data-assign-category="${activity.id}"
                 data-category="${escapeHtml(category)}"
                 aria-label="Категорія ${escapeHtml(category)}">
                 <strong><span aria-hidden="true">${resolveCategoryIcon(activity, category)}</span> ${escapeHtml(category)}</strong>
                 <div class="assigned-list">
-                  ${renderAssigned(activity, state, category)}
+                  ${renderAssigned(activity, state, category, checked)}
                 </div>
               </button>
             `).join("")}
@@ -81,15 +80,26 @@ function resolveCategoryIcon(activity, category) {
   return customIcons[category] || DEFAULT_CATEGORY_ICON;
 }
 
-function renderAssigned(activity, state, category) {
+function resolveCategoryState(activity, state, category) {
+  const assignedItems = activity.items.filter((item, index) => state.activityState[activity.id][index] === category);
+  if (assignedItems.length === 0) return "";
+  const allCorrect = assignedItems.every((item) => item.correct === category);
+  return allCorrect ? "is-correct" : "is-wrong";
+}
+
+function renderAssigned(activity, state, category, checked) {
   return activity.items
-    .filter((item, index) => state.activityState[activity.id][index] === category)
-    .map((item) => `
-      <span class="assigned-chip" aria-label="${escapeHtml(item.label)}">
-        <span aria-hidden="true">${escapeHtml(item.emoji)}</span>
-        <span>${escapeHtml(item.label)}</span>
-      </span>
-    `)
+    .map((item, index) => ({ item, index }))
+    .filter(({ index }) => state.activityState[activity.id][index] === category)
+    .map(({ item }) => {
+      const chipState = checked ? (item.correct === category ? "is-correct" : "is-wrong") : "";
+      return `
+        <span class="assigned-chip ${chipState}" aria-label="${escapeHtml(item.label)}">
+          <span aria-hidden="true">${escapeHtml(item.emoji)}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </span>
+      `;
+    })
     .join("");
 }
 
@@ -142,57 +152,44 @@ export function setupClassifyTask(activity, state, refs, showFeedback, rerenderT
 
     state.activityState[activity.id][selected] = category;
     state.activityState.selectedClassifyItem = null;
+    delete state.activityState[`${activity.id}-checked`];
     persistState(state);
-    const nextAvailableIndex = activity.items.findIndex(
-      (_, index) => state.activityState[activity.id][index] === undefined
-    );
-    rerenderTask(
-      nextAvailableIndex >= 0
-        ? `[data-select-item="${activity.id}"][data-index="${nextAvailableIndex}"]`
-        : `[data-check-classify="${activity.id}"]`
-    );
+    const nextAvailableIndex = activity.items.findIndex((_, index) => state.activityState[activity.id][index] === undefined);
+    rerenderTask(nextAvailableIndex >= 0 ? `[data-select-item="${activity.id}"][data-index="${nextAvailableIndex}"]` : `[data-check-classify="${activity.id}"]`);
   }
 
   document.querySelector(`[data-check-classify="${activity.id}"]`).addEventListener("click", () => {
-    const allAssigned = activity.items.every(
-      (_, index) => state.activityState[activity.id][index] !== undefined
-    );
+    const allAssigned = activity.items.every((_, index) => state.activityState[activity.id][index] !== undefined);
 
     if (!allAssigned) {
-      setStatus(
-        refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-        "Ще не всі картки розкладено по категоріях.",
-        "is-warning"
-      );
+      setStatus(refs.activities.querySelector(`[data-feedback="${activity.id}"]`), "Ще не всі картки розкладено по категоріях.", "is-warning");
       showFeedback("Спочатку розклади всі картки по категоріях.", "is-warning", "!");
       return;
     }
 
-    const score = activity.items.filter(
-      (item, index) => state.activityState[activity.id][index] === item.correct
-    ).length;
+    const score = activity.items.filter((item, index) => state.activityState[activity.id][index] === item.correct).length;
     const ok = score === activity.items.length;
+
+    state.activityState[`${activity.id}-checked`] = true;
+    persistState(state);
 
     if (ok) completeTask(activity.id, state, refs);
 
+    rerenderTask(`[data-check-classify="${activity.id}"]`);
+
     setStatus(
       refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-      ok
-        ? "Усі відповідності знайдено правильно."
-        : "Є неточності. Перевір, чи кожна картка в правильній категорії.",
+      ok ? "Усі відповідності знайдено правильно." : "Є неточності. Перевір картки з підсвічуванням.",
       ok ? "is-success" : "is-warning"
     );
 
-    showFeedback(
-      ok ? "Усі картки розкладено правильно." : "У деяких категоріях є помилки.",
-      ok ? "is-success" : "is-warning",
-      ok ? "✓" : "!"
-    );
+    showFeedback(ok ? "Усі картки розкладено правильно." : "У деяких категоріях є помилки.", ok ? "is-success" : "is-warning", ok ? "✓" : "!");
   });
 
   document.querySelector(`[data-reset-classify="${activity.id}"]`).addEventListener("click", () => {
     state.activityState[activity.id] = {};
     state.activityState.selectedClassifyItem = null;
+    delete state.activityState[`${activity.id}-checked`];
     persistState(state);
     rerenderTask(`[data-select-item="${activity.id}"][data-index="0"]`);
   });

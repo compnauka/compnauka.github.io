@@ -18,6 +18,7 @@ export function createInitialState(persistedState, lessonData) {
     chooseSelections: persistedState.chooseSelections || {},
     activityState: persistedState.activityState || {},
     quizAnswers: persistedState.quizAnswers || {},
+    quizResults: persistedState.quizResults || {},
     reflectionChoice: persistedState.reflectionChoice ?? null,
     completed: {
       ...activityCompletion,
