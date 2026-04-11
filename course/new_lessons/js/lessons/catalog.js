@@ -16,6 +16,7 @@ import { commandsExecutorsLessonTemplate } from "./commands-executors-1-2.js";
 import { actionSequenceLessonTemplate } from "./action-sequence-1-2.js";
 import { everydayAlgorithmLessonTemplate } from "./everyday-algorithm-1-2.js";
 import { findFixOrderLessonTemplate } from "./find-fix-order-1-2.js";
+import { algorithmRepresentationLessonTemplate } from "./algorithm-representation-1-2.js";
 
 export const lessonCatalog = [
   {
@@ -125,6 +126,12 @@ export const lessonCatalog = [
     label: "Знайди і виправ помилку в порядку дій (1-2 клас)",
     url: "./find-fix-order-1-2.html",
     template: findFixOrderLessonTemplate
+  },
+  {
+    id: "algorithm-representation-1-2",
+    label: "Як записати алгоритм (1-2 клас)",
+    url: "./algorithm-representation-1-2.html",
+    template: algorithmRepresentationLessonTemplate
   }
 ];
 

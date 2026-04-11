@@ -23,14 +23,36 @@ function randomizeOptions(question) {
 const assetManifest = cycle2AssetManifest;
 
 function buildClassifyActivity(template) {
+  const categoryKeyToLabel = Object.fromEntries(
+    template.categories
+      .filter((category) => category && typeof category === "object" && category.key && category.label)
+      .map((category) => [category.key, category.label])
+  );
+  const categories = template.categories.map((category) =>
+    typeof category === "string" ? category : category.label
+  );
+  const categoryIcons = template.categoryIcons
+    || Object.fromEntries(
+      template.categories
+        .filter((category) => category && typeof category === "object" && category.label && category.icon)
+        .map((category) => [category.label, category.icon])
+    );
+  const normalizedItems = template.items.map((item) => ({
+    ...item,
+    label: item.label || item.text || "",
+    correct: categoryKeyToLabel[item.correct || item.category] || item.correct || item.category
+  }));
+
   const items = shuffle(
-    template.categories.flatMap((category) =>
-      sample(template.items.filter((item) => item.correct === category), template.perCategory)
+    categories.flatMap((category) =>
+      sample(normalizedItems.filter((item) => item.correct === category), template.perCategory ?? normalizedItems.length)
     )
   );
 
   return {
     ...template,
+    categories,
+    categoryIcons,
     items
   };
 }
@@ -63,23 +85,35 @@ function buildFillActivity(template) {
 }
 
 function buildScenariosActivity(template) {
+  const sourceSituations = template.situations || template.cases || [];
+
   return {
     ...template,
-    situations: sample(template.situations, template.count).map((situation) => ({
+    situations: sample(sourceSituations, template.count).map((situation) => ({
       ...situation,
+      text: situation.text || situation.situation || situation.title || "",
       options: shuffle(situation.options)
     }))
   };
 }
 
 function buildSequenceActivity(template) {
-  const steps = template.steps.map((step, index) => ({
+  const chosenSequence = Array.isArray(template.items) && template.items.length > 0
+    ? sample(template.items, 1)[0]
+    : template;
+  const rawSteps = chosenSequence.steps || template.steps || [];
+  const steps = rawSteps.map((step, index) => ({
     id: `step-${index + 1}`,
     label: step
   }));
 
   return {
     ...template,
+    prompt: chosenSequence.title
+      ? `${template.prompt} ${chosenSequence.title}`
+      : template.prompt,
+    steps: rawSteps,
+    selectedCaseTitle: chosenSequence.title || "",
     options: shuffle(steps),
     correctOrder: steps.map((step) => step.id)
   };

@@ -45,6 +45,7 @@ $textFiles = @(
   "action-sequence-1-2.html",
   "everyday-algorithm-1-2.html",
   "find-fix-order-1-2.html",
+  "algorithm-representation-1-2.html",
   "lesson-page.template.html",
   "styles.css",
   "tokens.css",
@@ -110,7 +111,8 @@ $expectedLessons = @(
   "commands-executors-1-2",
   "action-sequence-1-2",
   "everyday-algorithm-1-2",
-  "find-fix-order-1-2"
+  "find-fix-order-1-2",
+  "algorithm-representation-1-2"
 )
 
 foreach ($lessonId in $expectedLessons) {
@@ -127,9 +129,11 @@ Assert-True ($catalogText.Contains("Що таке комп’ютер і де м
 Assert-True ($catalogText.Contains("Як працювати безпечно і дбайливо")) "catalog.js should include the safety lesson label."
 Assert-True ($catalogText.Contains("Команди і виконавці")) "catalog.js should include the first algorithms lesson label."
 Assert-True ($catalogText.Contains("Знайди і виправ помилку в порядку дій")) "catalog.js should include the final algorithms lesson label."
+Assert-True ($catalogText.Contains("Як записати алгоритм")) "catalog.js should include the algorithm representation lesson label."
 Assert-True ($landingText.Contains("Як ми отримуємо інформацію очима")) "landing.js should include readable lesson descriptions."
 Assert-True ($landingText.Contains("Що таке комп’ютер")) "landing.js should include descriptions for the computer cycle."
 Assert-True ($landingText.Contains("Хто такий виконавець")) "landing.js should include descriptions for the algorithms cycle."
+Assert-True ($landingText.Contains("подати словами, числами, стрілками")) "landing.js should include the algorithm representation description."
 Assert-True ($landingText.Contains("Відкрити урок")) "landing.js should include the primary lesson action label."
 
 $lessonFiles = Get-ChildItem -Path (Join-Path $root "js\lessons") -Filter "*.js" |
@@ -171,6 +175,7 @@ Assert-True ($guideText.Contains("Комп’ютери та цифровий с
 Assert-True ($guideText.Contains("Алгоритми довкола нас")) "LESSON_TEMPLATE_GUIDE.md should document the implemented algorithms cycle."
 Assert-True ($guideText.Contains("Прості схеми та таблиці")) "LESSON_TEMPLATE_GUIDE.md should mention the tables lesson."
 Assert-True ($guideText.Contains("Команди і виконавці")) "LESSON_TEMPLATE_GUIDE.md should mention the algorithms cycle lessons."
+Assert-True ($guideText.Contains("Як записати алгоритм")) "LESSON_TEMPLATE_GUIDE.md should mention the algorithm representation lesson."
 
 Assert-True ($workflowText.Contains("Основна лінійка для 1-2 класу")) "AI_LESSON_WORKFLOW.md should document the recommended lesson sequence."
 Assert-True ($workflowText.Contains("Планувати від карти результатів")) "AI_LESSON_WORKFLOW.md should require planning from outcomes coverage."
@@ -180,6 +185,7 @@ Assert-True ($workflowText.Contains("Основні частини комп’ю
 Assert-True ($workflowText.Contains("Множини. Групуємо та впорядковуємо")) "AI_LESSON_WORKFLOW.md should mention the sets lesson."
 Assert-True ($workflowText.Contains("table-read")) "AI_LESSON_WORKFLOW.md should document the table-read activity type."
 Assert-True ($workflowText.Contains("Команди і виконавці")) "AI_LESSON_WORKFLOW.md should include the algorithms planning template."
+Assert-True ($workflowText.Contains("Як записати алгоритм")) "AI_LESSON_WORKFLOW.md should include the algorithm representation lesson."
 
 foreach ($htmlFile in @(
   "info-types-1-2.html",
@@ -199,12 +205,16 @@ foreach ($htmlFile in @(
   "commands-executors-1-2.html",
   "action-sequence-1-2.html",
   "everyday-algorithm-1-2.html",
-  "find-fix-order-1-2.html"
+  "find-fix-order-1-2.html",
+  "algorithm-representation-1-2.html"
 )) {
   $fullPath = Join-Path $root $htmlFile
   $text = $decoded[$fullPath]
-  Assert-True ($text.Contains("data-lesson-id")) "$htmlFile should include data-lesson-id in the body."
-  Assert-True ($text.Contains('id="lesson-select"')) "$htmlFile should include the lesson selector."
+  Assert-True ($null -ne $text) "$htmlFile should be decoded and available for inspection."
+  if ($null -ne $text) {
+    Assert-True ($text.Contains("data-lesson-id")) "$htmlFile should include data-lesson-id in the body."
+    Assert-True ($text.Contains('id="lesson-select"')) "$htmlFile should include the lesson selector."
+  }
 }
 
 if ($failures.Count -gt 0) {
