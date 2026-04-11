@@ -12,6 +12,10 @@ import { computerPartsLessonTemplate } from "./computer-parts-1-2.js";
 import { devicePurposeLessonTemplate } from "./device-purpose-1-2.js";
 import { computerProblemsHelpLessonTemplate } from "./computer-problems-help-1-2.js";
 import { computerSafetyLessonTemplate } from "./computer-safety-1-2.js";
+import { commandsExecutorsLessonTemplate } from "./commands-executors-1-2.js";
+import { actionSequenceLessonTemplate } from "./action-sequence-1-2.js";
+import { everydayAlgorithmLessonTemplate } from "./everyday-algorithm-1-2.js";
+import { findFixOrderLessonTemplate } from "./find-fix-order-1-2.js";
 
 export const lessonCatalog = [
   {
@@ -97,6 +101,30 @@ export const lessonCatalog = [
     label: "Як працювати безпечно і дбайливо (1-2 клас)",
     url: "./computer-safety-1-2.html",
     template: computerSafetyLessonTemplate
+  },
+  {
+    id: "commands-executors-1-2",
+    label: "Команди і виконавці (1-2 клас)",
+    url: "./commands-executors-1-2.html",
+    template: commandsExecutorsLessonTemplate
+  },
+  {
+    id: "action-sequence-1-2",
+    label: "Послідовність дій (1-2 клас)",
+    url: "./action-sequence-1-2.html",
+    template: actionSequenceLessonTemplate
+  },
+  {
+    id: "everyday-algorithm-1-2",
+    label: "Алгоритм у повсякденній справі (1-2 клас)",
+    url: "./everyday-algorithm-1-2.html",
+    template: everydayAlgorithmLessonTemplate
+  },
+  {
+    id: "find-fix-order-1-2",
+    label: "Знайди і виправ помилку в порядку дій (1-2 клас)",
+    url: "./find-fix-order-1-2.html",
+    template: findFixOrderLessonTemplate
   }
 ];
 
