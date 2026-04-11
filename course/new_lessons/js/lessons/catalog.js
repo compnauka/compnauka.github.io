@@ -17,6 +17,15 @@ import { actionSequenceLessonTemplate } from "./action-sequence-1-2.js";
 import { everydayAlgorithmLessonTemplate } from "./everyday-algorithm-1-2.js";
 import { findFixOrderLessonTemplate } from "./find-fix-order-1-2.js";
 import { algorithmRepresentationLessonTemplate } from "./algorithm-representation-1-2.js";
+import { drawInProgramLessonTemplate } from "./draw-in-program-1-2.js";
+import { simpleInfoProductLessonTemplate } from "./simple-info-product-1-2.js";
+import { signYourWorkLessonTemplate } from "./sign-your-work-1-2.js";
+import { workAloneTogetherLessonTemplate } from "./work-alone-together-1-2.js";
+import { internetWhatForLessonTemplate } from "./internet-what-for-1-2.js";
+import { searchOnlineLessonTemplate } from "./search-online-1-2.js";
+import { privateInfoLessonTemplate } from "./private-info-1-2.js";
+import { kindOnlineLessonTemplate } from "./kind-online-1-2.js";
+import { checkBeforeShareLessonTemplate } from "./check-before-share-1-2.js";
 
 export const lessonCatalog = [
   {
@@ -132,6 +141,60 @@ export const lessonCatalog = [
     label: "Як записати алгоритм (1-2 клас)",
     url: "./algorithm-representation-1-2.html",
     template: algorithmRepresentationLessonTemplate
+  },
+  {
+    id: "draw-in-program-1-2",
+    label: "Малюємо у програмі (1-2 клас)",
+    url: "./draw-in-program-1-2.html",
+    template: drawInProgramLessonTemplate
+  },
+  {
+    id: "simple-info-product-1-2",
+    label: "Створюємо простий інформаційний продукт (1-2 клас)",
+    url: "./simple-info-product-1-2.html",
+    template: simpleInfoProductLessonTemplate
+  },
+  {
+    id: "sign-your-work-1-2",
+    label: "Підписуємо свою роботу і поважаємо авторство (1-2 клас)",
+    url: "./sign-your-work-1-2.html",
+    template: signYourWorkLessonTemplate
+  },
+  {
+    id: "work-alone-together-1-2",
+    label: "Працюємо самостійно і разом (1-2 клас)",
+    url: "./work-alone-together-1-2.html",
+    template: workAloneTogetherLessonTemplate
+  },
+  {
+    id: "internet-what-for-1-2",
+    label: "Для чого нам інтернет (1-2 клас)",
+    url: "./internet-what-for-1-2.html",
+    template: internetWhatForLessonTemplate
+  },
+  {
+    id: "search-online-1-2",
+    label: "Шукаємо інформацію онлайн (1-2 клас)",
+    url: "./search-online-1-2.html",
+    template: searchOnlineLessonTemplate
+  },
+  {
+    id: "private-info-1-2",
+    label: "Що можна і що не можна повідомляти (1-2 клас)",
+    url: "./private-info-1-2.html",
+    template: privateInfoLessonTemplate
+  },
+  {
+    id: "kind-online-1-2",
+    label: "Спілкуємося чемно онлайн (1-2 клас)",
+    url: "./kind-online-1-2.html",
+    template: kindOnlineLessonTemplate
+  },
+  {
+    id: "check-before-share-1-2",
+    label: "Перевіряємо повідомлення перед тим, як вірити (1-2 клас)",
+    url: "./check-before-share-1-2.html",
+    template: checkBeforeShareLessonTemplate
   }
 ];
 

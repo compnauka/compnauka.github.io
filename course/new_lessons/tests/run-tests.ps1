@@ -46,6 +46,15 @@ $textFiles = @(
   "everyday-algorithm-1-2.html",
   "find-fix-order-1-2.html",
   "algorithm-representation-1-2.html",
+  "draw-in-program-1-2.html",
+  "simple-info-product-1-2.html",
+  "sign-your-work-1-2.html",
+  "work-alone-together-1-2.html",
+  "internet-what-for-1-2.html",
+  "search-online-1-2.html",
+  "private-info-1-2.html",
+  "kind-online-1-2.html",
+  "check-before-share-1-2.html",
   "lesson-page.template.html",
   "styles.css",
   "tokens.css",
@@ -85,11 +94,12 @@ $landingText = $decoded[$landingPath]
 
 Assert-True ($indexText -match "Інтерактивний підручник з інформатики для 1 та 2 класу") "index.html should contain the textbook heading."
 Assert-True ($indexText -match "Поточний цикл") "index.html should describe the current lesson cycle."
-Assert-True ($indexText -match "Алгоритми довкола нас") "index.html should mention the current algorithms cycle."
-Assert-True ($indexText -match "Наступний цикл: творимо та ділимося") "index.html should mention the next cycle about creating and sharing."
+Assert-True ($indexText -match "Безпека та спілкування онлайн") "index.html should mention the current online safety and communication cycle."
+Assert-True ($indexText -match "Наступний етап: розширення курсу") "index.html should mention the next course expansion stage."
 Assert-True ($indexText -match "Покриття циклу") "index.html should describe expected outcomes coverage for the current cycle."
 Assert-True ($indexText -match "Цикл 3. Алгоритми довкола нас") "index.html should include the roadmap for the next cycles."
 Assert-True ($indexText -match "Цикл 4. Творимо та ділимося") "index.html should include the roadmap entry for cycle 4."
+Assert-True ($indexText -match "Цикл 5. Безпека та спілкування онлайн") "index.html should include the roadmap entry for cycle 5."
 Assert-True ($indexText.Contains('id="lesson-links"')) "index.html should contain lessons list container."
 Assert-True ($indexText.Contains('js/landing.js')) "index.html should load landing script."
 
@@ -112,7 +122,16 @@ $expectedLessons = @(
   "action-sequence-1-2",
   "everyday-algorithm-1-2",
   "find-fix-order-1-2",
-  "algorithm-representation-1-2"
+  "algorithm-representation-1-2",
+  "draw-in-program-1-2",
+  "simple-info-product-1-2",
+  "sign-your-work-1-2",
+  "work-alone-together-1-2",
+  "internet-what-for-1-2",
+  "search-online-1-2",
+  "private-info-1-2",
+  "kind-online-1-2",
+  "check-before-share-1-2"
 )
 
 foreach ($lessonId in $expectedLessons) {
@@ -130,10 +149,26 @@ Assert-True ($catalogText.Contains("Як працювати безпечно і 
 Assert-True ($catalogText.Contains("Команди і виконавці")) "catalog.js should include the first algorithms lesson label."
 Assert-True ($catalogText.Contains("Знайди і виправ помилку в порядку дій")) "catalog.js should include the final algorithms lesson label."
 Assert-True ($catalogText.Contains("Як записати алгоритм")) "catalog.js should include the algorithm representation lesson label."
+Assert-True ($catalogText.Contains("Малюємо у програмі")) "catalog.js should include the first creativity cycle lesson label."
+Assert-True ($catalogText.Contains("Створюємо простий інформаційний продукт")) "catalog.js should include the simple info product lesson label."
+Assert-True ($catalogText.Contains("Підписуємо свою роботу і поважаємо авторство")) "catalog.js should include the authorship lesson label."
+Assert-True ($catalogText.Contains("Працюємо самостійно і разом")) "catalog.js should include the teamwork lesson label."
+Assert-True ($catalogText.Contains("Для чого нам інтернет")) "catalog.js should include the first online cycle lesson label."
+Assert-True ($catalogText.Contains("Шукаємо інформацію онлайн")) "catalog.js should include the search lesson label."
+Assert-True ($catalogText.Contains("Що можна і що не можна повідомляти")) "catalog.js should include the privacy lesson label."
+Assert-True ($catalogText.Contains("Спілкуємося чемно онлайн")) "catalog.js should include the kind communication lesson label."
+Assert-True ($catalogText.Contains("Перевіряємо повідомлення перед тим, як вірити")) "catalog.js should include the verification lesson label."
 Assert-True ($landingText.Contains("Як ми отримуємо інформацію очима")) "landing.js should include readable lesson descriptions."
 Assert-True ($landingText.Contains("Що таке комп’ютер")) "landing.js should include descriptions for the computer cycle."
 Assert-True ($landingText.Contains("Хто такий виконавець")) "landing.js should include descriptions for the algorithms cycle."
 Assert-True ($landingText.Contains("подати словами, числами, стрілками")) "landing.js should include the algorithm representation description."
+Assert-True ($landingText.Contains("простий цифровий малюнок")) "landing.js should include descriptions for the creativity cycle."
+Assert-True ($landingText.Contains("поважати авторство")) "landing.js should include the authorship description."
+Assert-True ($landingText.Contains("самостійно, у парі та в групі")) "landing.js should include the teamwork description."
+Assert-True ($landingText.Contains("Для чого інтернет допомагає людям")) "landing.js should include descriptions for the online cycle."
+Assert-True ($landingText.Contains("берегти особисту інформацію")) "landing.js should include the privacy description."
+Assert-True ($landingText.Contains("чемно спілкуватися онлайн")) "landing.js should include the kind communication description."
+Assert-True ($landingText.Contains("перевіряти повідомлення")) "landing.js should include the verification description."
 Assert-True ($landingText.Contains("Відкрити урок")) "landing.js should include the primary lesson action label."
 
 $lessonFiles = Get-ChildItem -Path (Join-Path $root "js\lessons") -Filter "*.js" |
@@ -173,9 +208,15 @@ Assert-True ($guideText.Contains("після оновлення сторінки
 Assert-True ($guideText.Contains("мотиваційний гачок")) "LESSON_TEMPLATE_GUIDE.md should document the student-first hero block."
 Assert-True ($guideText.Contains("Комп’ютери та цифровий світ")) "LESSON_TEMPLATE_GUIDE.md should document the implemented computer cycle."
 Assert-True ($guideText.Contains("Алгоритми довкола нас")) "LESSON_TEMPLATE_GUIDE.md should document the implemented algorithms cycle."
+Assert-True ($guideText.Contains("Творимо та ділимося")) "LESSON_TEMPLATE_GUIDE.md should document the implemented creativity cycle."
+Assert-True ($guideText.Contains("Безпека та спілкування онлайн")) "LESSON_TEMPLATE_GUIDE.md should document the implemented online cycle."
 Assert-True ($guideText.Contains("Прості схеми та таблиці")) "LESSON_TEMPLATE_GUIDE.md should mention the tables lesson."
 Assert-True ($guideText.Contains("Команди і виконавці")) "LESSON_TEMPLATE_GUIDE.md should mention the algorithms cycle lessons."
 Assert-True ($guideText.Contains("Як записати алгоритм")) "LESSON_TEMPLATE_GUIDE.md should mention the algorithm representation lesson."
+Assert-True ($guideText.Contains("Малюємо у програмі")) "LESSON_TEMPLATE_GUIDE.md should mention the drawing lesson."
+Assert-True ($guideText.Contains("Підписуємо свою роботу")) "LESSON_TEMPLATE_GUIDE.md should mention the authorship lesson."
+Assert-True ($guideText.Contains("Для чого нам інтернет")) "LESSON_TEMPLATE_GUIDE.md should mention the internet lesson."
+Assert-True ($guideText.Contains("Спілкуємося чемно онлайн")) "LESSON_TEMPLATE_GUIDE.md should mention the kind communication lesson."
 
 Assert-True ($workflowText.Contains("Основна лінійка для 1-2 класу")) "AI_LESSON_WORKFLOW.md should document the recommended lesson sequence."
 Assert-True ($workflowText.Contains("Планувати від карти результатів")) "AI_LESSON_WORKFLOW.md should require planning from outcomes coverage."
@@ -186,6 +227,11 @@ Assert-True ($workflowText.Contains("Множини. Групуємо та вп�
 Assert-True ($workflowText.Contains("table-read")) "AI_LESSON_WORKFLOW.md should document the table-read activity type."
 Assert-True ($workflowText.Contains("Команди і виконавці")) "AI_LESSON_WORKFLOW.md should include the algorithms planning template."
 Assert-True ($workflowText.Contains("Як записати алгоритм")) "AI_LESSON_WORKFLOW.md should include the algorithm representation lesson."
+Assert-True ($workflowText.Contains("Творимо та ділимося")) "AI_LESSON_WORKFLOW.md should include the creativity cycle roadmap."
+Assert-True ($workflowText.Contains("Працюємо самостійно і разом")) "AI_LESSON_WORKFLOW.md should include the teamwork lesson."
+Assert-True ($workflowText.Contains("Безпека та спілкування онлайн")) "AI_LESSON_WORKFLOW.md should include the online cycle roadmap."
+Assert-True ($workflowText.Contains("Шукаємо інформацію онлайн")) "AI_LESSON_WORKFLOW.md should include the search lesson."
+Assert-True ($workflowText.Contains("Перевіряємо повідомлення перед тим, як вірити")) "AI_LESSON_WORKFLOW.md should include the verification lesson."
 
 foreach ($htmlFile in @(
   "info-types-1-2.html",
@@ -206,7 +252,16 @@ foreach ($htmlFile in @(
   "action-sequence-1-2.html",
   "everyday-algorithm-1-2.html",
   "find-fix-order-1-2.html",
-  "algorithm-representation-1-2.html"
+  "algorithm-representation-1-2.html",
+  "draw-in-program-1-2.html",
+  "simple-info-product-1-2.html",
+  "sign-your-work-1-2.html",
+  "work-alone-together-1-2.html",
+  "internet-what-for-1-2.html",
+  "search-online-1-2.html",
+  "private-info-1-2.html",
+  "kind-online-1-2.html",
+  "check-before-share-1-2.html"
 )) {
   $fullPath = Join-Path $root $htmlFile
   $text = $decoded[$fullPath]
