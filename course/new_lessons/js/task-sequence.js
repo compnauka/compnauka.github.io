@@ -1,21 +1,23 @@
 import { persistState } from "./state.js";
 import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
-function getGroupStateClass(activityId, groupIndex, state) {
-  const result = state.activityState[`${activityId}-result-${groupIndex}`];
+function getSequenceStateClass(activityId, state) {
+  const result = state.activityState[`${activityId}-result`];
   return typeof result === "boolean" ? (result ? "is-correct" : "is-wrong") : "";
 }
 
-function getStepResultClass(activityId, groupIndex, stepValue, stepIndex, state, itemInfo) {
-  const result = state.activityState[`${activityId}-result-${groupIndex}`];
-  if (typeof result !== "boolean" || !stepValue) return "";
-  return itemInfo.steps[stepIndex] === stepValue ? "is-correct" : "is-wrong";
+function getStepResultClass(activity, stepId, index, state) {
+  const result = state.activityState[`${activity.id}-result`];
+  if (typeof result !== "boolean" || !stepId) return "";
+  return activity.correctOrder[index] === stepId ? "is-correct" : "is-wrong";
 }
 
 export function renderSequenceTask(activity, state) {
-  state.activityState[activity.id] = state.activityState[activity.id] || {};
-  
-  const itemsToRender = activity.items || [];
+  state.activityState[activity.id] = state.activityState[activity.id] || { order: [] };
+  const selectedOrder = state.activityState[activity.id].order || [];
+  const selectedSet = new Set(selectedOrder);
+  const labelById = new Map(activity.options.map((option) => [option.id, option.label]));
+  const available = activity.options.filter((option) => !selectedSet.has(option.id));
 
   return `
     <article class="task-card" data-activity-id="${activity.id}">
@@ -27,76 +29,57 @@ export function renderSequenceTask(activity, state) {
         </div>
       </div>
 
-      <div class="sequence-groups stack">
-        ${itemsToRender.map((item, groupIndex) => {
-          state.activityState[activity.id][groupIndex] = state.activityState[activity.id][groupIndex] || { order: [] };
-          const selectedOrder = state.activityState[activity.id][groupIndex].order;
-          const selectedSet = new Set(selectedOrder);
-          
-          const shuffledOptions = [...item.steps].sort((a, b) => a.localeCompare(b));
-          const available = shuffledOptions.filter(step => !selectedSet.has(step));
+      <div class="sequence-board">
+        <section class="sequence-panel">
+          <h4>Кроки для впорядкування</h4>
+          <div class="sequence-options choices-grid choices-grid--compact">
+            ${available.map((option) => `
+              <button
+                type="button"
+                class="choice-button"
+                data-sequence-pick="${activity.id}"
+                data-step-id="${escapeHtml(option.id)}">
+                ${escapeHtml(option.label)}
+              </button>
+            `).join("") || `<p class="task-note">Усі кроки вже перенесені праворуч.</p>`}
+          </div>
+        </section>
 
-          return `
-            <section class="sequence-group ${getGroupStateClass(activity.id, groupIndex, state)}" style="margin-bottom: 2rem;">
-              <h4 style="margin-bottom: 1rem;">${groupIndex + 1}. ${escapeHtml(item.title)}</h4>
-              <div class="sequence-board">
-                <section class="sequence-panel">
-                  <h5>Кроки для впорядкування</h5>
-                  <div class="sequence-options choices-grid choices-grid--compact">
-                    ${available.map((stepStr) => `
-                      <button
-                        type="button"
-                        class="choice-button"
-                        data-sequence-pick="${activity.id}"
-                        data-group-index="${groupIndex}"
-                        data-step-value="${escapeHtml(stepStr)}">
-                        ${escapeHtml(stepStr)}
-                      </button>
-                    `).join("") || `<p class="task-note">Усі кроки вже перенесені праворуч.</p>`}
-                  </div>
-                </section>
+        <section class="sequence-panel">
+          <h4>Склади правильний порядок</h4>
+          <div class="sequence-slot-list ${getSequenceStateClass(activity.id, state)}" aria-label="Порядок кроків">
+            ${activity.correctOrder.map((_, index) => {
+    const stepId = selectedOrder[index];
+    const label = stepId ? escapeHtml(labelById.get(stepId) || "") : "";
+    const slotClass = stepId
+      ? `sequence-slot is-filled ${getStepResultClass(activity, stepId, index, state)}`.trim()
+      : "sequence-slot";
 
-                <section class="sequence-panel">
-                  <h5>Склади правильний порядок</h5>
-                  <div class="sequence-slot-list" aria-label="Порядок кроків">
-                    ${item.steps.map((_, index) => {
-                      const stepValue = selectedOrder[index];
-                      const slotClass = stepValue
-                        ? `sequence-slot is-filled ${getStepResultClass(activity.id, groupIndex, stepValue, index, state, item)}`.trim()
-                        : "sequence-slot";
-
-                      return `
-                        <div class="${slotClass}">
-                          <span class="sequence-slot__number">${index + 1}.</span>
-                          ${
-                            stepValue
-                              ? `
-                                <span class="sequence-slot__text">${escapeHtml(stepValue)}</span>
-                                <button
-                                  type="button"
-                                  class="secondary-button"
-                                  data-sequence-remove="${activity.id}"
-                                  data-group-index="${groupIndex}"
-                                  data-step-value="${escapeHtml(stepValue)}">
-                                  Прибрати
-                                </button>
-                              `
-                              : `<span class="sequence-slot__placeholder">Перенеси сюди крок ${index + 1}</span>`
-                          }
-                        </div>
-                      `;
-                    }).join("")}
-                  </div>
-                </section>
-              </div>
-              <p class="task-feedback" data-sequence-feedback="${activity.id}-${groupIndex}" aria-live="polite" hidden></p>
-            </section>
-          `;
-        }).join("")}
+    return `
+                <div class="${slotClass}">
+                  <span class="sequence-slot__number">${index + 1}.</span>
+                  ${stepId
+        ? `
+                        <span class="sequence-slot__text">${label}</span>
+                        <button
+                          type="button"
+                          class="secondary-button"
+                          data-sequence-remove="${activity.id}"
+                          data-step-id="${escapeHtml(stepId)}">
+                          Прибрати
+                        </button>
+                      `
+        : `<span class="sequence-slot__placeholder">Перенеси сюди крок ${index + 1}</span>`
+      }
+                </div>
+              `;
+  }).join("")}
+          </div>
+        </section>
       </div>
 
       <div class="actions-row">
-        <button type="button" class="primary-button" data-check-sequence="${activity.id}">Перевірити відповіді</button>
+        <button type="button" class="primary-button" data-check-sequence="${activity.id}">Перевірити</button>
         <button type="button" class="secondary-button" data-reset-sequence="${activity.id}">Скинути</button>
       </div>
       <p class="task-feedback" data-feedback="${activity.id}" aria-live="polite" hidden></p>
@@ -108,18 +91,14 @@ export function renderSequenceTask(activity, state) {
 export function setupSequenceTask(activity, state, refs, showFeedback, rerenderTask) {
   document.querySelectorAll(`[data-sequence-pick="${activity.id}"]`).forEach((button) => {
     button.addEventListener("click", () => {
-      const groupIndex = Number(button.dataset.groupIndex);
-      const stepValue = button.dataset.stepValue;
-      const groupState = state.activityState[activity.id][groupIndex] || { order: [] };
-      const selected = [...(groupState.order || [])];
-      
-      const maxLen = activity.items[groupIndex].steps.length;
-      if (selected.includes(stepValue)) return;
-      if (selected.length >= maxLen) return;
+      const stepId = button.dataset.stepId;
+      const selected = [...(state.activityState[activity.id].order || [])];
+      if (selected.includes(stepId)) return;
+      if (selected.length >= activity.correctOrder.length) return;
 
-      selected.push(stepValue);
-      state.activityState[activity.id][groupIndex].order = selected;
-      delete state.activityState[`${activity.id}-result-${groupIndex}`];
+      selected.push(stepId);
+      state.activityState[activity.id].order = selected;
+      delete state.activityState[`${activity.id}-result`];
       persistState(state);
       rerenderTask(`[data-check-sequence="${activity.id}"]`);
     });
@@ -127,75 +106,52 @@ export function setupSequenceTask(activity, state, refs, showFeedback, rerenderT
 
   document.querySelectorAll(`[data-sequence-remove="${activity.id}"]`).forEach((button) => {
     button.addEventListener("click", () => {
-      const groupIndex = Number(button.dataset.groupIndex);
-      const stepValue = button.dataset.stepValue;
-      const groupState = state.activityState[activity.id][groupIndex] || { order: [] };
-      state.activityState[activity.id][groupIndex].order = groupState.order.filter((val) => val !== stepValue);
-      delete state.activityState[`${activity.id}-result-${groupIndex}`];
+      const stepId = button.dataset.stepId;
+      state.activityState[activity.id].order = (state.activityState[activity.id].order || []).filter((value) => value !== stepId);
+      delete state.activityState[`${activity.id}-result`];
       persistState(state);
       rerenderTask(`[data-check-sequence="${activity.id}"]`);
     });
   });
 
   document.querySelector(`[data-check-sequence="${activity.id}"]`).addEventListener("click", () => {
-    let allGroupsComplete = true;
-    let allGroupsCorrect = true;
+    const selected = state.activityState[activity.id].order || [];
+    const complete = selected.length === activity.correctOrder.length;
 
-    activity.items.forEach((item, groupIndex) => {
-      const selected = state.activityState[activity.id][groupIndex]?.order || [];
-      const complete = selected.length === item.steps.length;
-      if (!complete) allGroupsComplete = false;
-    });
-
-    if (!allGroupsComplete) {
+    if (!complete) {
       setStatus(
         refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-        "Спочатку заповни всі місця в усіх завданнях.",
+        "Заповни всі місця праворуч перед перевіркою.",
         "is-warning"
       );
-      showFeedback("Ще не всі кроки розставлені.", "is-warning", "!");
+      showFeedback("Спочатку заповни всі місця в порядку.", "is-warning", "!");
       return;
     }
 
-    activity.items.forEach((item, groupIndex) => {
-      const selected = state.activityState[activity.id][groupIndex].order;
-      const ok = JSON.stringify(selected) === JSON.stringify(item.steps);
-      state.activityState[`${activity.id}-result-${groupIndex}`] = ok;
-      if (!ok) allGroupsCorrect = false;
-
-      const groupFeedback = refs.activities.querySelector(`[data-sequence-feedback="${activity.id}-${groupIndex}"]`);
-      setStatus(
-        groupFeedback,
-        ok ? "Правильно!" : "Є помилка в порядку кроків.",
-        ok ? "is-success" : "is-warning"
-      );
-    });
-
+    const ok = JSON.stringify(selected) === JSON.stringify(activity.correctOrder);
+    state.activityState[`${activity.id}-result`] = ok;
     persistState(state);
 
-    if (allGroupsCorrect) completeTask(activity.id, state, refs);
+    if (ok) completeTask(activity.id, state, refs);
 
     rerenderTask(`[data-check-sequence="${activity.id}"]`);
 
     setStatus(
       refs.activities.querySelector(`[data-feedback="${activity.id}"]`),
-      allGroupsCorrect ? "Чудово! Усі послідовності складено правильно." : "Є помилки. Перевір уважніше та спробуй ще раз.",
-      allGroupsCorrect ? "is-success" : "is-warning"
+      ok ? "Чудово! Порядок складено правильно." : "Є неточність у порядку. Перевір ще раз.",
+      ok ? "is-success" : "is-warning"
     );
     showFeedback(
-      allGroupsCorrect ? "Усі послідовності визначено правильно." : "У порядку є помилки.",
-      allGroupsCorrect ? "is-success" : "is-warning",
-      allGroupsCorrect ? "✓" : "!"
+      ok ? "Порядок складено правильно." : "У порядку є помилка.",
+      ok ? "is-success" : "is-warning",
+      ok ? "✓" : "!"
     );
   });
 
   document.querySelector(`[data-reset-sequence="${activity.id}"]`).addEventListener("click", () => {
-    state.activityState[activity.id] = {};
-    activity.items.forEach((_, groupIndex) => {
-       delete state.activityState[`${activity.id}-result-${groupIndex}`];
-    });
+    state.activityState[activity.id] = { order: [] };
+    delete state.activityState[`${activity.id}-result`];
     persistState(state);
     rerenderTask(`[data-sequence-pick="${activity.id}"]`);
   });
 }
-
