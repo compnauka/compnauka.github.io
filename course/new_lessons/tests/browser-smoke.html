@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Smoke</title>
+  <style>
+    body { font-family: sans-serif; padding: 16px; }
+    .pass { color: #166534; }
+    .fail { color: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>Browser smoke</h1>
+  <pre id="output">Running...</pre>
+  <script type="module">
+    const output = document.getElementById("output");
+
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message);
+      }
+    }
+
+    function isHidden(element, win) {
+      if (!element) return true;
+      const style = win.getComputedStyle(element);
+      return style.display === "none" || style.visibility === "hidden";
+    }
+
+    try {
+      const lessonWindow = window.open("../simple-tables-1-2.html", "lesson-smoke");
+      assert(lessonWindow, "Не вдалося відкрити сторінку уроку.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку.")), 10000);
+        lessonWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const doc = lessonWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      assert(doc.querySelector("[data-activity-id='table-read']"), "Не знайдено activity table-read.");
+      assert(doc.querySelector("#lesson-coverage"), "Не знайдено teacher coverage block.");
+
+      const coverage = doc.querySelector("#lesson-coverage");
+      assert(isHidden(coverage, lessonWindow), "У student mode coverage має бути прихований.");
+
+      const teacherButton = doc.getElementById("mode-teacher");
+      assert(teacherButton, "Не знайдено кнопку режиму вчителя.");
+      teacherButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 200));
+      assert(!isHidden(coverage, lessonWindow), "У teacher mode coverage має бути видимий.");
+      assert(coverage.textContent.includes("2 ІФО 1.2"), "У coverage не видно очікуваного коду результату.");
+
+      const studentButton = doc.getElementById("mode-student");
+      assert(studentButton, "Не знайдено кнопку режиму учня.");
+      studentButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 200));
+      assert(isHidden(coverage, lessonWindow), "Після повернення в student mode coverage має знову сховатися.");
+
+      output.className = "pass";
+      output.textContent = "PASS";
+      lessonWindow.close();
+    } catch (error) {
+      output.className = "fail";
+      output.textContent = `FAIL\n${error.message}`;
+    }
+  </script>
+</body>
+</html>

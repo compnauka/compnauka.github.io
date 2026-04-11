@@ -7,6 +7,7 @@ import { renderScenariosTask, setupScenariosTask } from "./task-scenarios.js";
 import { renderSequenceTask, setupSequenceTask } from "./task-sequence.js";
 import { renderCreativeTask, setupCreativeTask } from "./task-creative.js";
 import { renderTransferTask, setupTransferTask } from "./task-transfer.js";
+import { renderTableReadTask, setupTableReadTask } from "./task-table-read.js";
 
 export function createActivityRegistry(state, refs, showFeedback) {
   return {
@@ -45,6 +46,10 @@ export function createActivityRegistry(state, refs, showFeedback) {
     transfer: {
       render: renderTransferTask,
       setup: (activity, rerenderTask) => setupTransferTask(activity, state, refs, showFeedback, rerenderTask)
+    },
+    "table-read": {
+      render: renderTableReadTask,
+      setup: (activity, rerenderTask) => setupTableReadTask(activity, state, refs, showFeedback, rerenderTask)
     }
   };
 }

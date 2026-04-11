@@ -33,6 +33,7 @@ const refs = {
   teacherMeta: document.getElementById("lesson-teacher-meta"),
   goal: document.getElementById("lesson-goal"),
   goalNote: document.getElementById("goal-note"),
+  coverage: document.getElementById("lesson-coverage"),
   objectives: document.getElementById("learning-objectives"),
   overviewSection: document.getElementById("overview-section"),
   overviewLabel: document.getElementById("overview-label"),
@@ -98,6 +99,7 @@ function renderStaticContent() {
   refs.goal.textContent = lessonData.goal;
   refs.goalNote.innerHTML = lessonData.goalNote ? renderRichText(lessonData.goalNote) : "";
   refs.goalNote.hidden = !lessonData.goalNote;
+  renderCoverage();
   refs.studentMeta.innerHTML = lessonData.studentMeta.map((item) => `<span class="meta-chip">${escapeHtml(item)}</span>`).join("");
   refs.teacherMeta.innerHTML = lessonData.teacherMeta.map((item) => `<span class="meta-chip">${escapeHtml(item)}</span>`).join("");
   refs.objectives.innerHTML = lessonData.objectives.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
@@ -107,6 +109,39 @@ function renderStaticContent() {
   refs.lessonSelect.value = selectedLesson.id;
   applyMode(state, refs);
   syncSoundToggle(state, refs);
+}
+
+function renderCoverage() {
+  if (!refs.coverage) return;
+
+  if (!lessonData.coverage || !Array.isArray(lessonData.coverage.results) || lessonData.coverage.results.length === 0) {
+    refs.coverage.innerHTML = "";
+    refs.coverage.hidden = true;
+    return;
+  }
+
+  const cycleLabel = lessonData.coverage.cycle
+    ? `<p class="coverage-box__cycle">${escapeHtml(lessonData.coverage.cycle)}</p>`
+    : "";
+  const noteMarkup = lessonData.coverage.note
+    ? `<p class="coverage-box__note">${escapeHtml(lessonData.coverage.note)}</p>`
+    : "";
+  const itemsMarkup = lessonData.coverage.results.map((item) => `
+    <li class="coverage-box__item">
+      <strong>${escapeHtml(item.code)}</strong>
+      <span class="coverage-pill coverage-pill--${escapeHtml(item.status)}">${item.status === "full" ? "Покрито" : "Частково"}</span>
+      <p>${escapeHtml(item.focus)}</p>
+      ${item.next ? `<p class="coverage-box__next">Далі: ${escapeHtml(item.next)}</p>` : ""}
+    </li>
+  `).join("");
+
+  refs.coverage.innerHTML = `
+    <h4>Покриття результатів</h4>
+    ${cycleLabel}
+    ${noteMarkup}
+    <ul class="coverage-box__list">${itemsMarkup}</ul>
+  `;
+  refs.coverage.hidden = false;
 }
 
 function switchLesson(nextLessonId) {

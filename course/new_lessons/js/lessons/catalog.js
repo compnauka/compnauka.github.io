@@ -4,6 +4,8 @@ import { messageActionsLessonTemplate } from "./message-actions-1-2.js";
 import { objectsModelsLessonTemplate } from "./objects-models-1-2.js";
 import { infoHistoryCodingLessonTemplate } from "./info-history-coding-1-2.js";
 import { sourcesTruthLessonTemplate } from "./sources-truth-1-2.js";
+import { setsOrderLessonTemplate } from "./sets-order-1-2.js";
+import { simpleTablesLessonTemplate } from "./simple-tables-1-2.js";
 
 export const lessonCatalog = [
   {
@@ -20,7 +22,7 @@ export const lessonCatalog = [
   },
   {
     id: "message-actions-1-2",
-    label: "Дії з інформацією. Інформаційний процес (1-2 клас)",
+    label: "Дії з інформацією. Що ми робимо з повідомленнями (1-2 клас)",
     url: "./message-actions-1-2.html",
     template: messageActionsLessonTemplate
   },
@@ -41,6 +43,18 @@ export const lessonCatalog = [
     label: "Джерела інформації. Правдиве і неправдиве (1-2 клас)",
     url: "./sources-truth-1-2.html",
     template: sourcesTruthLessonTemplate
+  },
+  {
+    id: "sets-order-1-2",
+    label: "Множини. Групуємо та впорядковуємо (1-2 клас)",
+    url: "./sets-order-1-2.html",
+    template: setsOrderLessonTemplate
+  },
+  {
+    id: "simple-tables-1-2",
+    label: "Прості схеми та таблиці (1-2 клас)",
+    url: "./simple-tables-1-2.html",
+    template: simpleTablesLessonTemplate
   }
 ];
 

@@ -101,6 +101,21 @@ function buildTransferActivity(template) {
   };
 }
 
+function buildTableReadActivity(template) {
+  return {
+    ...template,
+    cases: sample(template.cases, template.count).map((item) => ({
+      ...item,
+      columns: [...item.columns],
+      rows: item.rows.map((row) => ({
+        ...row,
+        cells: [...row.cells]
+      })),
+      answer: { ...item.answer }
+    }))
+  };
+}
+
 function buildQuiz(quizTemplate) {
   return sample(quizTemplate.questions, quizTemplate.count).map((question) => randomizeOptions(question));
 }
@@ -130,20 +145,45 @@ function cloneOverview(overview) {
   };
 }
 
-function cloneActivities(activities) {
-  const built = [
-    { ...activities.draw, fallbackOptions: [...activities.draw.fallbackOptions] },
-    buildClassifyActivity(activities.classify),
-    ...(activities.sequence ? [buildSequenceActivity(activities.sequence)] : []),
-    buildTrueFalseActivity(activities.truefalse),
-    buildPickActivity(activities.pick),
-    buildFillActivity(activities.fill),
-    buildScenariosActivity(activities.scenarios),
-    ...(activities.creative ? [buildCreativeActivity(activities.creative)] : []),
-    ...(activities.transfer ? [buildTransferActivity(activities.transfer)] : [])
-  ];
+function cloneCoverage(coverage) {
+  if (!coverage || typeof coverage !== "object") {
+    return null;
+  }
 
-  return built;
+  return {
+    cycle: coverage.cycle || "",
+    note: coverage.note || "",
+    results: Array.isArray(coverage.results)
+      ? coverage.results.map((item) => ({
+        code: item.code || "",
+        status: item.status || "partial",
+        focus: item.focus || "",
+        next: item.next || ""
+      }))
+      : []
+  };
+}
+
+function cloneActivities(activities, activityOrder = null) {
+  const builders = {
+    draw: () => (activities.draw ? { ...activities.draw, fallbackOptions: [...activities.draw.fallbackOptions] } : null),
+    classify: () => (activities.classify ? buildClassifyActivity(activities.classify) : null),
+    sequence: () => (activities.sequence ? buildSequenceActivity(activities.sequence) : null),
+    truefalse: () => (activities.truefalse ? buildTrueFalseActivity(activities.truefalse) : null),
+    pick: () => (activities.pick ? buildPickActivity(activities.pick) : null),
+    fill: () => (activities.fill ? buildFillActivity(activities.fill) : null),
+    scenarios: () => (activities.scenarios ? buildScenariosActivity(activities.scenarios) : null),
+    creative: () => (activities.creative ? buildCreativeActivity(activities.creative) : null),
+    transfer: () => (activities.transfer ? buildTransferActivity(activities.transfer) : null),
+    "table-read": () => (activities["table-read"] ? buildTableReadActivity(activities["table-read"]) : null)
+  };
+
+  const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read"];
+  const order = Array.isArray(activityOrder) && activityOrder.length > 0 ? activityOrder : defaultOrder;
+
+  return order
+    .map((key) => builders[key]?.())
+    .filter(Boolean);
 }
 
 function assertTemplate(template) {
@@ -174,12 +214,13 @@ export function createLessonData(template) {
     teacherOverview,
     studentMeta: [...studentMeta],
     teacherMeta: [...teacherMeta],
+    coverage: cloneCoverage(template.coverage),
     overview: cloneOverview(template.overview),
     goal: template.goal,
     goalNote: template.goalNote,
     objectives: [...template.objectives],
     sections: cloneSections(template.sections),
-    activities: cloneActivities(template.activities),
+    activities: cloneActivities(template.activities, template.activityOrder),
     quiz: buildQuiz(template.quiz),
     reflection: {
       ...template.reflection,

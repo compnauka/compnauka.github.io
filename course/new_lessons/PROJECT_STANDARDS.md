@@ -1,5 +1,18 @@
 # PROJECT STANDARDS — Educational Tool Development
 
+## Project-Specific Override For `course/new_lessons`
+
+This document is broad and reusable across educational projects, but this specific project has mandatory local overrides.
+
+For `course/new_lessons`, these project rules take precedence:
+- Lesson progress must not persist between page refreshes, browser restarts, or different pupils on the same school computer.
+- Do not introduce auto-save of lesson completion state across sessions, even if a generic standard elsewhere recommends saving progress.
+- In student mode, the first visible block must be a motivational hook, not a technical lesson passport.
+- Wording must stay simple, concrete, and age-appropriate for grades 1-2.
+- Sequence/order tasks for young children should prefer clear visual placement zones over abstract list manipulation.
+
+If an AI agent sees a conflict between this file and `AI_LESSON_WORKFLOW.md` or `LESSON_TEMPLATE_GUIDE.md`, the local files for `course/new_lessons` win.
+
 > **Mandatory reading for every AI agent, developer, or contributor working on this project.**
 > These standards are non-negotiable and apply to every file, component, and feature.
 > When in doubt — check this document first.

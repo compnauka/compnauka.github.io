@@ -33,6 +33,8 @@ $textFiles = @(
   "objects-models-1-2.html",
   "info-history-coding-1-2.html",
   "sources-truth-1-2.html",
+  "sets-order-1-2.html",
+  "simple-tables-1-2.html",
   "lesson-page.template.html",
   "styles.css",
   "tokens.css",
@@ -73,6 +75,8 @@ $landingText = $decoded[$landingPath]
 Assert-True ($indexText -match "Інтерактивний підручник з інформатики для 1 та 2 класу") "index.html should contain the textbook heading."
 Assert-True ($indexText -match "Поточний цикл") "index.html should describe the current lesson cycle."
 Assert-True ($indexText -match "Наступний цикл: комп’ютери") "index.html should mention the next cycle about computers."
+Assert-True ($indexText -match "Покриття циклу") "index.html should describe expected outcomes coverage for the current cycle."
+Assert-True ($indexText -match "Цикл 3. Алгоритми довкола нас") "index.html should include the roadmap for the next cycles."
 Assert-True ($indexText.Contains('id="lesson-links"')) "index.html should contain lessons list container."
 Assert-True ($indexText.Contains('js/landing.js')) "index.html should load landing script."
 
@@ -82,7 +86,9 @@ $expectedLessons = @(
   "message-actions-1-2",
   "objects-models-1-2",
   "info-history-coding-1-2",
-  "sources-truth-1-2"
+  "sources-truth-1-2",
+  "sets-order-1-2",
+  "simple-tables-1-2"
 )
 
 foreach ($lessonId in $expectedLessons) {
@@ -93,42 +99,56 @@ foreach ($lessonId in $expectedLessons) {
 Assert-True ($catalogText.Contains("Види інформації та способи подання")) "catalog.js should include the presentation lesson label."
 Assert-True ($catalogText.Contains("Об’єкти, властивості, моделі")) "catalog.js should include the objects/models lesson label."
 Assert-True ($catalogText.Contains("Джерела інформації. Правдиве і неправдиве")) "catalog.js should include the sources/truth lesson label."
+Assert-True ($catalogText.Contains("Множини. Групуємо та впорядковуємо")) "catalog.js should include the sets lesson label."
+Assert-True ($catalogText.Contains("Прості схеми та таблиці")) "catalog.js should include the simple tables lesson label."
 Assert-True ($landingText.Contains("Як ми отримуємо інформацію очима")) "landing.js should include readable lesson descriptions."
 Assert-True ($landingText.Contains("Відкрити урок")) "landing.js should include the primary lesson action label."
 
-$lessonFiles = @(
-  "js\lessons\info-types-1-2.js",
-  "js\lessons\info-presentation-1-2.js",
-  "js\lessons\message-actions-1-2.js",
-  "js\lessons\objects-models-1-2.js",
-  "js\lessons\info-history-coding-1-2.js",
-  "js\lessons\sources-truth-1-2.js"
-)
+$lessonFiles = Get-ChildItem -Path (Join-Path $root "js\lessons") -Filter "*.js" |
+  Where-Object { $_.Name -ne "catalog.js" } |
+  Sort-Object Name |
+  ForEach-Object { $_.FullName }
 
 foreach ($lessonFile in $lessonFiles) {
-  $fullPath = Join-Path $root $lessonFile
-  $text = $decoded[$fullPath]
-  Assert-True ($text -match "studentHook") "$lessonFile should define studentHook."
-  Assert-True ($text -match "teacherOverview") "$lessonFile should define teacherOverview."
-  Assert-True ($text -match 'type: "creative"') "$lessonFile should include a creative activity."
-  Assert-True ($text -match 'type: "transfer"') "$lessonFile should include a transfer activity."
-  Assert-True ($text -match 'teacherTip:') "$lessonFile should include teacher tips."
-  Assert-True ($text -match '[А-Яа-яІіЇїЄєҐґ]{5,}') "$lessonFile should contain readable Cyrillic content."
+  $text = $decoded[$lessonFile]
+  $lessonName = Split-Path -Leaf $lessonFile
+  Assert-True ($text -match "studentHook") "$lessonName should define studentHook."
+  Assert-True ($text -match "teacherOverview") "$lessonName should define teacherOverview."
+  Assert-True ($text -match "coverage:") "$lessonName should define coverage metadata."
+  Assert-True ($text -match 'teacherTip:') "$lessonName should include teacher tips."
+  Assert-True ($text -match '[А-Яа-яІіЇїЄєҐґ]{5,}') "$lessonName should contain readable Cyrillic content."
+
+  $activityOrderMatch = [regex]::Match($text, 'activityOrder:\s*\[(?<body>[\s\S]*?)\]')
+  if ($activityOrderMatch.Success) {
+    $activityTypes = [regex]::Matches($activityOrderMatch.Groups["body"].Value, '"([^"]+)"') |
+      ForEach-Object { $_.Groups[1].Value }
+
+    Assert-True ($activityTypes.Count -gt 0) "$lessonName should include at least one activity in activityOrder."
+
+    foreach ($activityType in $activityTypes) {
+      Assert-True ($text -match ('type:\s*"' + [regex]::Escape($activityType) + '"')) "$lessonName should define activity data for type $activityType."
+    }
+  }
 }
 
 Assert-True ($stateText.Contains("return {};")) "state.js should reset persisted state to an empty object."
 Assert-True ($stateText.Contains("void state;")) "state.js should ignore persisted state writes."
 Assert-True (-not $stateText.Contains("localStorage")) "state.js should not persist lesson progress in localStorage."
 
-Assert-True ($guideText.Contains("Рекомендована 6-урочна лінійка")) "LESSON_TEMPLATE_GUIDE.md should document the six-lesson structure."
+Assert-True ($guideText.Contains("Рекомендована 8-урочна лінійка")) "LESSON_TEMPLATE_GUIDE.md should document the eight-lesson structure."
+Assert-True ($guideText.Contains("Карта покриття результатів")) "LESSON_TEMPLATE_GUIDE.md should describe how lesson cycles map to outcomes."
 Assert-True ($guideText.Contains("після оновлення сторінки або повторного відкриття браузера урок стартує з початку")) "LESSON_TEMPLATE_GUIDE.md should document state reset behavior."
 Assert-True ($guideText.Contains("мотиваційний гачок")) "LESSON_TEMPLATE_GUIDE.md should document the student-first hero block."
 Assert-True ($guideText.Contains("новий тематичний блок про комп’ютери")) "LESSON_TEMPLATE_GUIDE.md should document the next computer cycle."
+Assert-True ($guideText.Contains("Прості схеми та таблиці")) "LESSON_TEMPLATE_GUIDE.md should mention the tables lesson."
 
 Assert-True ($workflowText.Contains("Основна лінійка для 1-2 класу")) "AI_LESSON_WORKFLOW.md should document the recommended lesson sequence."
+Assert-True ($workflowText.Contains("Планувати від карти результатів")) "AI_LESSON_WORKFLOW.md should require planning from outcomes coverage."
 Assert-True ($workflowText.Contains("урок не повинен зберігати прогрес")) "AI_LESSON_WORKFLOW.md should document the no-persistence rule."
 Assert-True ($workflowText.Contains("перший блок у режимі учня має бути мотиваційним гачком")) "AI_LESSON_WORKFLOW.md should document the student hero rule."
 Assert-True ($workflowText.Contains("складові комп’ютера")) "AI_LESSON_WORKFLOW.md should document the next computer cycle."
+Assert-True ($workflowText.Contains("Множини. Групуємо та впорядковуємо")) "AI_LESSON_WORKFLOW.md should mention the sets lesson."
+Assert-True ($workflowText.Contains("table-read")) "AI_LESSON_WORKFLOW.md should document the table-read activity type."
 
 foreach ($htmlFile in @(
   "info-types-1-2.html",
@@ -136,7 +156,9 @@ foreach ($htmlFile in @(
   "message-actions-1-2.html",
   "objects-models-1-2.html",
   "info-history-coding-1-2.html",
-  "sources-truth-1-2.html"
+  "sources-truth-1-2.html",
+  "sets-order-1-2.html",
+  "simple-tables-1-2.html"
 )) {
   $fullPath = Join-Path $root $htmlFile
   $text = $decoded[$fullPath]
