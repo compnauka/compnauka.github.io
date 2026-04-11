@@ -1,5 +1,5 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus, renderActivityMedia } from "./shared.js";
 
 export function renderScenariosTask(activity, state) {
   state.chooseSelections[activity.id] = state.chooseSelections[activity.id] || {};
@@ -34,7 +34,7 @@ function renderSituation(activity, situation, situationIndex, state) {
   return `
     <section class="scenario-card ${checked ? (result ? "is-correct" : "is-wrong") : ""}">
       <div class="scenario-card__header">
-        <span class="scenario-card__emoji" aria-hidden="true">${escapeHtml(situation.emoji)}</span>
+        ${renderActivityMedia(situation, { className: "scenario-card__media", emojiClassName: "scenario-card__emoji", imageClassName: "scenario-card__image", altFallback: situation.text })}
         <h4>${escapeHtml(situation.text)}</h4>
       </div>
       <div class="choices-grid">
@@ -51,7 +51,8 @@ function renderSituation(activity, situation, situationIndex, state) {
               data-situation-index="${situationIndex}"
               data-option-index="${optionIndex}"
               aria-pressed="${isSelected}">
-              ${escapeHtml(option.label)}
+              ${renderActivityMedia(option, { className: "choice-button__media", emojiClassName: "choice-button__emoji", imageClassName: "choice-button__image", altFallback: option.label })}
+              <span>${escapeHtml(option.label)}</span>
             </button>
           `;
         }).join("")}

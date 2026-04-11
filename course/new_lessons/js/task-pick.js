@@ -1,5 +1,5 @@
 ﻿import { persistState } from "./state.js";
-import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus, renderActivityMedia } from "./shared.js";
 
 function getGroupResult(activityId, groupIndex, state) {
   return state.activityState[`${activityId}-result-${groupIndex}`];
@@ -38,7 +38,7 @@ export function renderPickTask(activity, state) {
                 const isCorrect = checked && selected && option.correct === true;
                 const isWrong = checked && selected && option.correct !== true;
                 const isCorrectAnswer = checked && !selected && option.correct === true;
-                return `<button type="button" class="choice-button ${selected ? "is-selected" : ""} ${isCorrect ? "is-correct" : ""} ${isWrong ? "is-wrong" : ""} ${isCorrectAnswer ? "is-correct-answer" : ""}" data-pick-group="${groupIndex}" data-pick-option="${optionIndex}" aria-pressed="${selected}">${escapeHtml(option.label)}</button>`;
+                return `<button type="button" class="choice-button ${selected ? "is-selected" : ""} ${isCorrect ? "is-correct" : ""} ${isWrong ? "is-wrong" : ""} ${isCorrectAnswer ? "is-correct-answer" : ""}" data-pick-group="${groupIndex}" data-pick-option="${optionIndex}" aria-pressed="${selected}">${renderActivityMedia(option, { className: "choice-button__media", emojiClassName: "choice-button__emoji", imageClassName: "choice-button__image", altFallback: option.label })}<span>${escapeHtml(option.label)}</span></button>`;
               }).join("")}
             </div>
             <p class="inline-feedback ${getGroupStateClass(activity.id, groupIndex, state)}" data-pick-feedback="${activity.id}-${groupIndex}" aria-live="polite">${escapeHtml(getGroupFeedback(activity.id, groupIndex, state))}</p>

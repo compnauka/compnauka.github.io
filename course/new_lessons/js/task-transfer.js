@@ -1,5 +1,5 @@
 ﻿import { persistState } from "./state.js";
-import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderRichText, setStatus, renderActivityMedia } from "./shared.js";
 
 function renderCase(activity, item, caseIndex, state) {
   const selectedIndex = state.activityState[activity.id]?.[caseIndex];
@@ -9,7 +9,7 @@ function renderCase(activity, item, caseIndex, state) {
   return `
     <section class="scenario-card ${checked ? (result ? "is-correct" : "is-wrong") : ""}">
       <div class="scenario-card__header">
-        <span class="scenario-card__emoji" aria-hidden="true">${escapeHtml(item.emoji)}</span>
+        ${renderActivityMedia(item, { className: "scenario-card__media", emojiClassName: "scenario-card__emoji", imageClassName: "scenario-card__image", altFallback: item.text })}
         <h4>${escapeHtml(item.text)}</h4>
       </div>
       <div class="choices-grid">
@@ -26,7 +26,8 @@ function renderCase(activity, item, caseIndex, state) {
               data-case-index="${caseIndex}"
               data-option-index="${optionIndex}"
               aria-pressed="${selected}">
-              ${escapeHtml(option.label)}
+              ${renderActivityMedia(option, { className: "choice-button__media", emojiClassName: "choice-button__emoji", imageClassName: "choice-button__image", altFallback: option.label })}
+              <span>${escapeHtml(option.label)}</span>
             </button>
           `;
         }).join("")}

@@ -13,6 +13,28 @@ export function renderRichText(value) {
   return escapeHtml(value).replace(/\n/g, "<br>");
 }
 
+export function renderActivityMedia(item, options = {}) {
+  const {
+    className = "activity-media",
+    emojiClassName = "activity-media__emoji",
+    imageClassName = "activity-media__image",
+    altFallback = ""
+  } = options;
+
+  if (item?.image) {
+    const alt = item.imageAlt || item.label || item.text || altFallback || "";
+    const assetKeyAttr = item.assetKey ? ` data-asset-key="${escapeHtml(item.assetKey)}"` : "";
+    return `<span class="${escapeHtml(className)}">${item.emoji ? `<span class="${escapeHtml(emojiClassName)} activity-media__emoji--fallback" aria-hidden="true">${escapeHtml(item.emoji)}</span>` : ""}<img class="${escapeHtml(imageClassName)}" src="${escapeHtml(item.image)}" alt="${escapeHtml(alt)}"${assetKeyAttr}></span>`;
+  }
+
+  if (item?.emoji) {
+    const assetKeyAttr = item.assetKey ? ` data-asset-key="${escapeHtml(item.assetKey)}"` : "";
+    return `<span class="${escapeHtml(className)}"><span class="${escapeHtml(emojiClassName)}" aria-hidden="true"${assetKeyAttr}>${escapeHtml(item.emoji)}</span></span>`;
+  }
+
+  return "";
+}
+
 export function applyMode(state, refs) {
   refs.body.classList.remove("student-mode", "teacher-mode");
   refs.body.classList.add(state.mode === "teacher" ? "teacher-mode" : "student-mode");

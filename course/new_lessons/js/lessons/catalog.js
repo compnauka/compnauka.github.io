@@ -6,6 +6,12 @@ import { infoHistoryCodingLessonTemplate } from "./info-history-coding-1-2.js";
 import { sourcesTruthLessonTemplate } from "./sources-truth-1-2.js";
 import { setsOrderLessonTemplate } from "./sets-order-1-2.js";
 import { simpleTablesLessonTemplate } from "./simple-tables-1-2.js";
+import { computerWhatIsLessonTemplate } from "./computer-what-is-1-2.js";
+import { computerTypesLessonTemplate } from "./computer-types-1-2.js";
+import { computerPartsLessonTemplate } from "./computer-parts-1-2.js";
+import { devicePurposeLessonTemplate } from "./device-purpose-1-2.js";
+import { computerProblemsHelpLessonTemplate } from "./computer-problems-help-1-2.js";
+import { computerSafetyLessonTemplate } from "./computer-safety-1-2.js";
 
 export const lessonCatalog = [
   {
@@ -55,6 +61,42 @@ export const lessonCatalog = [
     label: "Прості схеми та таблиці (1-2 клас)",
     url: "./simple-tables-1-2.html",
     template: simpleTablesLessonTemplate
+  },
+  {
+    id: "computer-what-is-1-2",
+    label: "Що таке комп’ютер і де ми його зустрічаємо (1-2 клас)",
+    url: "./computer-what-is-1-2.html",
+    template: computerWhatIsLessonTemplate
+  },
+  {
+    id: "computer-types-1-2",
+    label: "Які бувають комп’ютери (1-2 клас)",
+    url: "./computer-types-1-2.html",
+    template: computerTypesLessonTemplate
+  },
+  {
+    id: "computer-parts-1-2",
+    label: "Основні частини комп’ютера (1-2 клас)",
+    url: "./computer-parts-1-2.html",
+    template: computerPartsLessonTemplate
+  },
+  {
+    id: "device-purpose-1-2",
+    label: "Для чого потрібні різні пристрої (1-2 клас)",
+    url: "./device-purpose-1-2.html",
+    template: devicePurposeLessonTemplate
+  },
+  {
+    id: "computer-problems-help-1-2",
+    label: "Коли щось не виходить: помічаю проблему і звертаюся по допомогу (1-2 клас)",
+    url: "./computer-problems-help-1-2.html",
+    template: computerProblemsHelpLessonTemplate
+  },
+  {
+    id: "computer-safety-1-2",
+    label: "Як працювати безпечно і дбайливо (1-2 клас)",
+    url: "./computer-safety-1-2.html",
+    template: computerSafetyLessonTemplate
   }
 ];
 

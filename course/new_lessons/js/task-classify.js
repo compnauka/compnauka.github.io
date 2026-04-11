@@ -1,5 +1,5 @@
 import { persistState } from "./state.js";
-import { escapeHtml, completeTask, setStatus, renderRichText } from "./shared.js";
+import { escapeHtml, completeTask, setStatus, renderRichText, renderActivityMedia } from "./shared.js";
 
 const DEFAULT_CATEGORY_ICON = "🏷️";
 
@@ -37,7 +37,7 @@ export function renderClassifyTask(activity, state) {
                   draggable="true"
                   data-select-item="${activity.id}"
                   data-index="${index}">
-                  <span class="drag-item__emoji" aria-hidden="true">${escapeHtml(item.emoji)}</span>
+                  ${renderActivityMedia(item, { className: "drag-item__media", emojiClassName: "drag-item__emoji", imageClassName: "drag-item__image", altFallback: item.label })}
                   <span>${escapeHtml(item.label)}</span>
                 </button>
               `;
@@ -95,7 +95,7 @@ function renderAssigned(activity, state, category, checked) {
       const chipState = checked ? (item.correct === category ? "is-correct" : "is-wrong") : "";
       return `
         <span class="assigned-chip ${chipState}" aria-label="${escapeHtml(item.label)}">
-          <span aria-hidden="true">${escapeHtml(item.emoji)}</span>
+          ${renderActivityMedia(item, { className: "assigned-chip__media", emojiClassName: "assigned-chip__emoji", imageClassName: "assigned-chip__image", altFallback: item.label })}
           <span>${escapeHtml(item.label)}</span>
         </span>
       `;

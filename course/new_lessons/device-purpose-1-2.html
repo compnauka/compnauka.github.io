@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Інтерактивний урок для 1-2 класу: які пристрої допомагають бачити, слухати, друкувати і говорити.">
+  <meta name="theme-color" content="#1a56db">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Інтерактивний урок | Для чого потрібні різні пристрої">
+  <meta property="og:description" content="Інтерактивний урок для 1-2 класу: які пристрої допомагають бачити, слухати, друкувати і говорити.">
+  <title>Інтерактивний урок | Для чого потрібні різні пристрої</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-lesson-id="device-purpose-1-2">
+  <a class="skip-link" href="#main-content">Перейти до основного вмісту</a>
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <div class="topbar__title">
+        <a class="eyebrow eyebrow-link" href="./index.html" aria-label="Повернутися до каталогу уроків">Інформатика 1-2 клас</a>
+        <h1 id="lesson-title">Для чого потрібні різні пристрої</h1>
+        <div class="progress" aria-label="Загальний прогрес уроку">
+          <div class="progress__track">
+            <div class="progress__bar" id="progress-bar"></div>
+          </div>
+          <p class="progress__label" id="progress-label">Пройдено 0%</p>
+        </div>
+      </div>
+
+      <div class="mode-box" aria-label="Перемикач режиму">
+        <div class="lesson-picker">
+          <label for="lesson-select" class="lesson-picker__label">Тема уроку</label>
+          <select id="lesson-select" class="lesson-picker__select" aria-label="Вибір теми уроку"></select>
+        </div>
+        <div class="mode-segmented" role="group" aria-label="Режим перегляду">
+          <button type="button" class="mode-option" id="mode-student" data-mode="student" aria-pressed="true">Учень</button>
+          <button type="button" class="mode-option" id="mode-teacher" data-mode="teacher" aria-pressed="false">Вчитель</button>
+        </div>
+        <button
+          type="button"
+          class="sound-toggle"
+          id="sound-toggle"
+          aria-pressed="true"
+          aria-label="Увімкнути або вимкнути звукові сигнали"
+          title="Звук подає короткий сигнал після перевірки або при ввімкненні">
+          🔈 Звук
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="container layout">
+    <section class="hero-card">
+      <div class="hero-card__content">
+        <div class="hero-card__text">
+          <div class="student-only">
+            <p class="hero-card__lead" id="lesson-student-hook"></p>
+          </div>
+          <div class="teacher-only">
+            <p class="hero-card__lead" id="lesson-teacher-overview"></p>
+          </div>
+        </div>
+        <div class="hero-card__meta student-only" id="lesson-student-meta" aria-label="Коротка інформація для учня"></div>
+        <div class="hero-card__meta teacher-only" id="lesson-teacher-meta" aria-label="Коротка інформація для вчителя"></div>
+      </div>
+    </section>
+
+    <section class="section-card" id="overview-section" hidden>
+      <div class="section-card__header">
+        <div>
+          <p class="section-label" id="overview-label">План уроку</p>
+          <h2 id="overview-title">Що підготувати і як провести урок</h2>
+        </div>
+      </div>
+      <div id="overview-container" class="info-grid"></div>
+    </section>
+
+    <section class="section-card section-card--accent">
+      <div class="section-card__header">
+        <div>
+          <p class="section-label">Мета уроку</p>
+          <h2>Навіщо ми це вивчаємо</h2>
+        </div>
+      </div>
+      <div class="two-col">
+        <article class="content-card">
+          <h3>Мета</h3>
+          <p id="lesson-goal"></p>
+          <div class="teacher-only method-box" id="goal-note"></div>
+          <div class="teacher-only method-box" id="lesson-coverage" hidden></div>
+        </article>
+        <article class="content-card">
+          <h3>Очікувані результати</h3>
+          <ul class="check-list" id="learning-objectives"></ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-card__header">
+        <div>
+          <p class="section-label">Пояснення та приклади</p>
+          <h2>Головне про тему</h2>
+        </div>
+      </div>
+      <div id="sections-container" class="stack"></div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-card__header">
+        <div>
+          <p class="section-label">Практика</p>
+          <h2>Інтерактивні завдання</h2>
+        </div>
+      </div>
+      <div id="activities-container" class="stack"></div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-card__header">
+        <div>
+          <p class="section-label">Перевір себе</p>
+          <h2>Підсумкові питання</h2>
+        </div>
+      </div>
+      <form id="quiz-form" class="stack" novalidate></form>
+      <div class="actions-row">
+        <button type="button" class="primary-button" id="check-quiz">Перевірити відповіді</button>
+        <button type="button" class="secondary-button" id="reset-quiz">Скинути</button>
+      </div>
+      <p id="quiz-result" class="status-message" aria-live="polite"></p>
+    </section>
+
+    <section class="reflection-card">
+      <div class="reflection-card__content">
+        <p class="section-label section-label--light">Рефлексія</p>
+        <h2>Оціни свою роботу на уроці</h2>
+        <div id="reflection-container" class="stack"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="feedback-toast" id="feedback-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <span class="feedback-toast__icon" id="feedback-icon" aria-hidden="true">i</span>
+    <span id="feedback-message">Стан уроку оновлено.</span>
+  </div>
+  <div class="sr-only" id="live-region" aria-live="polite" aria-atomic="true"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,4 +1,6 @@
-﻿function shuffle(array) {
+﻿import { cycle2AssetManifest } from "./assets/cycle-2-manifest.js";
+
+function shuffle(array) {
   const result = [...array];
   for (let index = result.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
@@ -17,6 +19,8 @@ function randomizeOptions(question) {
     options: shuffle(question.options)
   };
 }
+
+const assetManifest = cycle2AssetManifest;
 
 function buildClassifyActivity(template) {
   const items = shuffle(
@@ -164,6 +168,38 @@ function cloneCoverage(coverage) {
   };
 }
 
+function guessImageAlt(item) {
+  if (!item || typeof item !== "object") {
+    return "";
+  }
+
+  return item.imageAlt || item.label || item.text || item.title || item.value || "";
+}
+
+function enrichAssetRefs(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => enrichAssetRefs(item));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const nextValue = Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, enrichAssetRefs(entry)])
+  );
+
+  if (nextValue.assetKey && !nextValue.image && assetManifest[nextValue.assetKey]) {
+    nextValue.image = assetManifest[nextValue.assetKey];
+  }
+
+  if (nextValue.image && !nextValue.imageAlt) {
+    nextValue.imageAlt = guessImageAlt(nextValue);
+  }
+
+  return nextValue;
+}
+
 function cloneActivities(activities, activityOrder = null) {
   const builders = {
     draw: () => (activities.draw ? { ...activities.draw, fallbackOptions: [...activities.draw.fallbackOptions] } : null),
@@ -183,7 +219,8 @@ function cloneActivities(activities, activityOrder = null) {
 
   return order
     .map((key) => builders[key]?.())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((activity) => enrichAssetRefs(activity));
 }
 
 function assertTemplate(template) {

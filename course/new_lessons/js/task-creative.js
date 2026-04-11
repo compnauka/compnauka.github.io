@@ -1,5 +1,5 @@
 ﻿import { persistState } from "./state.js";
-import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
+import { escapeHtml, completeTask, renderActivityMedia, renderRichText, setStatus } from "./shared.js";
 
 function getSelections(activity, state) {
   return state.activityState[activity.id] || {};
@@ -52,6 +52,7 @@ export function renderCreativeTask(activity, state) {
                     data-group-index="${groupIndex}"
                     data-option-index="${optionIndex}"
                     aria-pressed="${selected}">
+                    ${renderActivityMedia(option, { altFallback: option.label })}
                     ${escapeHtml(option.label)}
                   </button>
                 `;
