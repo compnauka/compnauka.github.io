@@ -27,34 +27,34 @@ function Read-Utf8Strict {
 
 $textFiles = @(
   "index.html",
-  "info-types-1-2.html",
-  "info-presentation-1-2.html",
-  "message-actions-1-2.html",
-  "objects-models-1-2.html",
-  "info-history-coding-1-2.html",
-  "sources-truth-1-2.html",
-  "sets-order-1-2.html",
-  "simple-tables-1-2.html",
-  "computer-what-is-1-2.html",
-  "computer-types-1-2.html",
-  "computer-parts-1-2.html",
-  "device-purpose-1-2.html",
-  "computer-problems-help-1-2.html",
-  "computer-safety-1-2.html",
-  "commands-executors-1-2.html",
-  "action-sequence-1-2.html",
-  "everyday-algorithm-1-2.html",
-  "find-fix-order-1-2.html",
-  "algorithm-representation-1-2.html",
-  "draw-in-program-1-2.html",
-  "simple-info-product-1-2.html",
-  "sign-your-work-1-2.html",
-  "work-alone-together-1-2.html",
-  "internet-what-for-1-2.html",
-  "search-online-1-2.html",
-  "private-info-1-2.html",
-  "kind-online-1-2.html",
-  "check-before-share-1-2.html",
+  "m1-01-info-types.html",
+  "m1-02-info-presentation.html",
+  "m1-03-message-actions.html",
+  "m1-04-objects-models.html",
+  "m1-05-info-history-coding.html",
+  "m1-06-sources-truth.html",
+  "m1-07-sets-order.html",
+  "m1-08-simple-tables.html",
+  "m2-01-computer-what-is.html",
+  "m2-02-computer-types.html",
+  "m2-03-computer-parts.html",
+  "m2-04-device-purpose.html",
+  "m2-05-computer-problems-help.html",
+  "m2-06-computer-safety.html",
+  "m3-01-commands-executors.html",
+  "m3-02-action-sequence.html",
+  "m3-03-everyday-algorithm.html",
+  "m3-04-find-fix-order.html",
+  "m3-05-algorithm-representation.html",
+  "m4-01-draw-in-program.html",
+  "m4-02-simple-info-product.html",
+  "m4-03-sign-your-work.html",
+  "m4-04-work-alone-together.html",
+  "m5-01-internet-what-for.html",
+  "m5-02-search-online.html",
+  "m5-03-private-info.html",
+  "m5-04-kind-online.html",
+  "m5-05-check-before-share.html",
   "lesson-page.template.html",
   "styles.css",
   "tokens.css",
@@ -93,15 +93,21 @@ $workflowText = $decoded[$workflowPath]
 $landingText = $decoded[$landingPath]
 
 Assert-True ($indexText -match "Інтерактивний підручник з інформатики для 1 та 2 класу") "index.html should contain the textbook heading."
-Assert-True ($indexText -match "Поточний цикл") "index.html should describe the current lesson cycle."
-Assert-True ($indexText -match "Безпека та спілкування онлайн") "index.html should mention the current online safety and communication cycle."
-Assert-True ($indexText -match "Наступний етап: розширення курсу") "index.html should mention the next course expansion stage."
-Assert-True ($indexText -match "Покриття циклу") "index.html should describe expected outcomes coverage for the current cycle."
-Assert-True ($indexText -match "Цикл 3. Алгоритми довкола нас") "index.html should include the roadmap for the next cycles."
-Assert-True ($indexText -match "Цикл 4. Творимо та ділимося") "index.html should include the roadmap entry for cycle 4."
-Assert-True ($indexText -match "Цикл 5. Безпека та спілкування онлайн") "index.html should include the roadmap entry for cycle 5."
-Assert-True ($indexText.Contains('id="lesson-links"')) "index.html should contain lessons list container."
+Assert-True ($indexText.Contains('id="landing-student-modules"')) "index.html should contain the student modules container."
+Assert-True ($indexText.Contains('id="landing-teacher-modules"')) "index.html should contain the teacher modules container."
+Assert-True ($indexText.Contains('id="mode-student"')) "index.html should expose the student mode toggle."
+Assert-True ($indexText.Contains('id="mode-teacher"')) "index.html should expose the teacher mode toggle."
+Assert-True ($indexText -match "Режим перегляду") "index.html should label the landing mode control group."
+Assert-True ($indexText -match "Обирай модуль") "index.html should include the student-facing wayfinding copy."
+Assert-True ($indexText -match "покриття ІФО") "index.html should mention IFC outcome coverage for teachers."
 Assert-True ($indexText.Contains('js/landing.js')) "index.html should load landing script."
+
+$landingModulesPath = Join-Path $root "js\landing-modules.js"
+$landingModulesText = $decoded[$landingModulesPath]
+Assert-True ($landingModulesText.Contains("export const textbookModules")) "landing-modules.js should export the textbook module map."
+Assert-True ($landingModulesText.Contains("Алгоритми довкола нас")) "landing-modules.js should document the algorithms module."
+Assert-True ($landingModulesText.Contains("Творимо та ділимося")) "landing-modules.js should document the creativity module."
+Assert-True ($landingModulesText.Contains("Безпека та спілкування онлайн")) "landing-modules.js should document the online safety module."
 
 $expectedLessons = @(
   "info-types-1-2",
@@ -234,34 +240,34 @@ Assert-True ($workflowText.Contains("Шукаємо інформацію онл�
 Assert-True ($workflowText.Contains("Перевіряємо повідомлення перед тим, як вірити")) "AI_LESSON_WORKFLOW.md should include the verification lesson."
 
 foreach ($htmlFile in @(
-  "info-types-1-2.html",
-  "info-presentation-1-2.html",
-  "message-actions-1-2.html",
-  "objects-models-1-2.html",
-  "info-history-coding-1-2.html",
-  "sources-truth-1-2.html",
-  "sets-order-1-2.html",
-  "simple-tables-1-2.html",
-  "computer-what-is-1-2.html",
-  "computer-types-1-2.html",
-  "computer-parts-1-2.html",
-  "device-purpose-1-2.html",
-  "computer-problems-help-1-2.html",
-  "computer-safety-1-2.html",
-  "commands-executors-1-2.html",
-  "action-sequence-1-2.html",
-  "everyday-algorithm-1-2.html",
-  "find-fix-order-1-2.html",
-  "algorithm-representation-1-2.html",
-  "draw-in-program-1-2.html",
-  "simple-info-product-1-2.html",
-  "sign-your-work-1-2.html",
-  "work-alone-together-1-2.html",
-  "internet-what-for-1-2.html",
-  "search-online-1-2.html",
-  "private-info-1-2.html",
-  "kind-online-1-2.html",
-  "check-before-share-1-2.html"
+  "m1-01-info-types.html",
+  "m1-02-info-presentation.html",
+  "m1-03-message-actions.html",
+  "m1-04-objects-models.html",
+  "m1-05-info-history-coding.html",
+  "m1-06-sources-truth.html",
+  "m1-07-sets-order.html",
+  "m1-08-simple-tables.html",
+  "m2-01-computer-what-is.html",
+  "m2-02-computer-types.html",
+  "m2-03-computer-parts.html",
+  "m2-04-device-purpose.html",
+  "m2-05-computer-problems-help.html",
+  "m2-06-computer-safety.html",
+  "m3-01-commands-executors.html",
+  "m3-02-action-sequence.html",
+  "m3-03-everyday-algorithm.html",
+  "m3-04-find-fix-order.html",
+  "m3-05-algorithm-representation.html",
+  "m4-01-draw-in-program.html",
+  "m4-02-simple-info-product.html",
+  "m4-03-sign-your-work.html",
+  "m4-04-work-alone-together.html",
+  "m5-01-internet-what-for.html",
+  "m5-02-search-online.html",
+  "m5-03-private-info.html",
+  "m5-04-kind-online.html",
+  "m5-05-check-before-share.html"
 )) {
   $fullPath = Join-Path $root $htmlFile
   $text = $decoded[$fullPath]

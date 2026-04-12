@@ -29,7 +29,7 @@
 Важлива примітка для планування:
 - цей цикл не слід описувати як повне покриття всього стандарту 1-2 класу;
 - зараз це саме `Цикл 1. Інформація та робота з нею`;
-- у landing та вчительському режимі варто явно показувати, які результати вже покрито повністю, а які лише частково.
+- на **головній сторінці** в режимі вчителя зведення ІФО по модулю будується з полів `coverage.results` уроків; у кожному шаблоні уроку варто чесно позначати `full` / `partial`, щоб картина на головній збігалася з змістом уроків.
 
 ## Наступні цикли
 
@@ -53,7 +53,28 @@
 Агент, який продовжує курс, не повинен вигадувати нову структуру з нуля. Потрібно:
 - зберігати єдиний підхід до шаблону;
 - додавати нові тематичні цикли послідовно;
-- підтримувати спільну навігацію індексу як «інтерактивного підручника», а не набору розрізнених сторінок.
+- підтримувати спільну навігацію індексу як «інтерактивного підручника», а не набору розрізнених сторінок;
+- при зміні складу курсу оновлювати `js/landing-modules.js` так, щоб модулі та `lessonIds` відповідали `js/lessons/catalog.js`.
+
+## Головна сторінка (`index.html`) та модулі
+
+Головна побудована за тим самим принципом, що й урок: **два режими перегляду** (`student-mode` / `teacher-mode` на `body`), перемикачі `Учень` / `Вчитель` підключені через `applyMode` / `toggleMode` з `js/shared.js` у `js/landing.js`.
+
+**Файли та ролі**
+
+| Файл | Призначення |
+|------|-------------|
+| `index.html` | Каркас: шапка, перемикач режиму, секції-підказки для учня/вчителя, порожні контейнери `#landing-student-modules` та `#landing-teacher-modules`. |
+| `js/landing-modules.js` | Експорт `textbookModules`: для кожного з п’яти модулів — `id`, `title`, `studentLead`, `teacherLead`, масив `lessonIds` (технічні id, як у каталозі, з суфіксом `-1-2`). |
+| `js/landing.js` | Імпортує `lessonCatalog` і `textbookModules`, заповнює контейнери: учневий список уроків із посиланнями та короткими описами; вчительський блок — агреговані коди ІФО по модулю та картки з `goal`, `coverage`, `objectives` кожного шаблону уроку. |
+| `styles.css` | Класи на кшталт `landing-module`, `landing-lesson-list`, `landing-outcome-grid`, `landing-teacher-lesson` тощо. |
+
+**Що зробити при новому уроці або новому модулі**
+
+1. Як і раніше: шаблон у `js/lessons/`, запис у `catalog.js`, рядок у `generate-lesson-pages.ps1`, генерація HTML.
+2. Додати `lessonId` у відповідний масив `lessonIds` у `landing-modules.js` (або завести новий модуль, якщо це новий великий блок курсу).
+3. Переконатися, що в шаблоні уроку заповнені `coverage` і `objectives` — від них залежить повнота вчительського вигляду на головній.
+4. За потреби оновити `tests/run-tests.ps1`, якщо змінювалися обов’язкові фрази або `id` елементів на `index.html`.
 
 ## Дорожня карта тем 1-2 класу
 
@@ -194,23 +215,11 @@
 
 ## Окремі сторінки уроків
 
+Імена HTML-файлів: `m{модуль}-{порядковий номер у модулі}-{короткий-slug}.html` (модулі 1–5 відповідають лінійці курсу в каталозі: інформація → комп’ютери → алгоритми → творчість і співпраця → онлайн). У `data-lesson-id` і в `js/lessons/*.js` лишається стабільний технічний id з суфіксом `-1-2`.
+
 Зараз проєкт містить такі SEO-сторінки:
-- `info-types-1-2.html`
-- `info-presentation-1-2.html`
-- `message-actions-1-2.html`
-- `objects-models-1-2.html`
-- `info-history-coding-1-2.html`
-- `sources-truth-1-2.html`
-- `sets-order-1-2.html`
-- `simple-tables-1-2.html`
-- `computer-what-is-1-2.html`
-- `computer-types-1-2.html`
-- `computer-parts-1-2.html`
-- `device-purpose-1-2.html`
-- `computer-problems-help-1-2.html`
-- `computer-safety-1-2.html`
-- `commands-executors-1-2.html`
-- `action-sequence-1-2.html`
-- `everyday-algorithm-1-2.html`
-- `find-fix-order-1-2.html`
-- `algorithm-representation-1-2.html`
+- `m1-01-info-types.html` … `m1-08-simple-tables.html`
+- `m2-01-computer-what-is.html` … `m2-06-computer-safety.html`
+- `m3-01-commands-executors.html` … `m3-05-algorithm-representation.html`
+- `m4-01-draw-in-program.html` … `m4-04-work-alone-together.html`
+- `m5-01-internet-what-for.html` … `m5-05-check-before-share.html`

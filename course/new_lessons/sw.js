@@ -1,4 +1,4 @@
-const CACHE_NAME = "interactive-lesson-v11";
+const CACHE_NAME = "interactive-lesson-v12";
 const OFFLINE_URL = "./offline.html";
 const ASSETS = [
   "./",

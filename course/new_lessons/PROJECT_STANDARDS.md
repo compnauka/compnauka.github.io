@@ -8,6 +8,7 @@ For `course/new_lessons`, these project rules take precedence:
 - Lesson progress must not persist between page refreshes, browser restarts, or different pupils on the same school computer.
 - Do not introduce auto-save of lesson completion state across sessions, even if a generic standard elsewhere recommends saving progress.
 - In student mode, the first visible block must be a motivational hook, not a technical lesson passport.
+- The textbook **home page** (`course/new_lessons/index.html`) uses the same **student / teacher** view split as lessons: in student mode keep navigation friendly and avoid curriculum codes on the surface; curriculum alignment (ІФО, outcomes) belongs in teacher mode. Implementation details: `js/landing.js`, `js/landing-modules.js` — see `AI_LESSON_WORKFLOW.md` and `LESSON_TEMPLATE_GUIDE.md`.
 - Wording must stay simple, concrete, and age-appropriate for grades 1-2.
 - Sequence/order tasks for young children should prefer clear visual placement zones over abstract list manipulation.
 
