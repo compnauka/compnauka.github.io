@@ -64,17 +64,19 @@
 
 | Файл | Призначення |
 |------|-------------|
-| `index.html` | Каркас: шапка, перемикач режиму, секції-підказки для учня/вчителя, порожні контейнери `#landing-student-modules` та `#landing-teacher-modules`. |
-| `js/landing-modules.js` | Експорт `textbookModules`: для кожного з п’яти модулів — `id`, `title`, `studentLead`, `teacherLead`, масив `lessonIds` (технічні id, як у каталозі, з суфіксом `-1-2`). |
-| `js/landing.js` | Імпортує `lessonCatalog` і `textbookModules`, заповнює контейнери: учневий список уроків із посиланнями та короткими описами; вчительський блок — агреговані коди ІФО по модулю та картки з `goal`, `coverage`, `objectives` кожного шаблону уроку. |
-| `styles.css` | Класи на кшталт `landing-module`, `landing-lesson-list`, `landing-outcome-grid`, `landing-teacher-lesson` тощо. |
+| `index.html` | Каркас: шапка, перемикач режиму, короткий методичний вступ для вчителя, контейнери `#landing-student-modules` та `#landing-teacher-modules`. |
+| `js/landing-modules.js` | Експорт `textbookModules`: для кожного модуля — `id`, `emoji`, `title`, `studentLead`, `teacherLead`, масив `lessonIds`. |
+| `js/ifo-catalog.js` | Довідник `ifoByLessonCode`: офіційні формулювання компетентностей і очікуваних результатів для кожного коду виду `2 ІФО …`, який зустрічається в `coverage.results` уроків (текст на головній у режимі вчителя). |
+| `js/landing.js` | Рендер: учень — рядки уроків на всю ширину, кнопка «Відкрити урок» у правій колонці; вчитель — сітка «мета та орієнтири з шаблону» + праворуч панель ІФО з `ifo-catalog.js`. |
+| `styles.css` | Класи `landing-lesson-row`, `landing-teacher-lesson__grid`, `landing-ifo-panel__*` тощо. |
 
 **Що зробити при новому уроці або новому модулі**
 
 1. Як і раніше: шаблон у `js/lessons/`, запис у `catalog.js`, рядок у `generate-lesson-pages.ps1`, генерація HTML.
 2. Додати `lessonId` у відповідний масив `lessonIds` у `landing-modules.js` (або завести новий модуль, якщо це новий великий блок курсу).
-3. Переконатися, що в шаблоні уроку заповнені `coverage` і `objectives` — від них залежить повнота вчительського вигляду на головній.
-4. За потреби оновити `tests/run-tests.ps1`, якщо змінювалися обов’язкові фрази або `id` елементів на `index.html`.
+3. Для кожного нового коду в `coverage.results` додати відповідний запис у `js/ifo-catalog.js` (цитата з чинного стандарту, без вигаданих формулювань).
+4. Переконатися, що в шаблоні уроку заповнені `coverage` і `objectives` — мета й орієнтири показуються вчителю з шаблону.
+5. За потреби оновити `tests/run-tests.ps1`, якщо змінювалися обов’язкові фрази або `id` елементів на `index.html`.
 
 ## Дорожня карта тем 1-2 класу
 

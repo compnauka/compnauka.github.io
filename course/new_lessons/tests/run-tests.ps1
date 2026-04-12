@@ -98,13 +98,18 @@ Assert-True ($indexText.Contains('id="landing-teacher-modules"')) "index.html sh
 Assert-True ($indexText.Contains('id="mode-student"')) "index.html should expose the student mode toggle."
 Assert-True ($indexText.Contains('id="mode-teacher"')) "index.html should expose the teacher mode toggle."
 Assert-True ($indexText -match "Режим перегляду") "index.html should label the landing mode control group."
-Assert-True ($indexText -match "Обирай модуль") "index.html should include the student-facing wayfinding copy."
-Assert-True ($indexText -match "покриття ІФО") "index.html should mention IFC outcome coverage for teachers."
+Assert-True ($indexText -match "офіційні формулювання ІФО") "index.html should mention official IFO wording for teachers."
 Assert-True ($indexText.Contains('js/landing.js')) "index.html should load landing script."
+
+$ifoCatalogPath = Join-Path $root "js\ifo-catalog.js"
+$ifoCatalogText = $decoded[$ifoCatalogPath]
+Assert-True ($ifoCatalogText.Contains("export const ifoByLessonCode")) "ifo-catalog.js should export the official IFO map."
+Assert-True ($ifoCatalogText.Contains("Досліджує і оцінює вплив інформаційних технологій")) "ifo-catalog.js should include standard competency text."
 
 $landingModulesPath = Join-Path $root "js\landing-modules.js"
 $landingModulesText = $decoded[$landingModulesPath]
 Assert-True ($landingModulesText.Contains("export const textbookModules")) "landing-modules.js should export the textbook module map."
+Assert-True ($landingModulesText.Contains("emoji:")) "landing-modules.js should tag each module with a display emoji."
 Assert-True ($landingModulesText.Contains("Алгоритми довкола нас")) "landing-modules.js should document the algorithms module."
 Assert-True ($landingModulesText.Contains("Творимо та ділимося")) "landing-modules.js should document the creativity module."
 Assert-True ($landingModulesText.Contains("Безпека та спілкування онлайн")) "landing-modules.js should document the online safety module."
@@ -176,6 +181,7 @@ Assert-True ($landingText.Contains("берегти особисту інформ
 Assert-True ($landingText.Contains("чемно спілкуватися онлайн")) "landing.js should include the kind communication description."
 Assert-True ($landingText.Contains("перевіряти повідомлення")) "landing.js should include the verification description."
 Assert-True ($landingText.Contains("Відкрити урок")) "landing.js should include the primary lesson action label."
+Assert-True ($landingText.Contains("ifo-catalog.js")) "landing.js should load official IFO reference data."
 
 $lessonFiles = Get-ChildItem -Path (Join-Path $root "js\lessons") -Filter "*.js" |
   Where-Object { $_.Name -ne "catalog.js" } |

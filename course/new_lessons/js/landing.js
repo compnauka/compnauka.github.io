@@ -1,5 +1,6 @@
 ﻿import { lessonCatalog } from "./lessons/catalog.js";
 import { textbookModules } from "./landing-modules.js";
+import { ifoByLessonCode } from "./ifo-catalog.js";
 import { applyMode, escapeHtml, toggleMode } from "./shared.js";
 
 const lessonDescriptions = {
@@ -44,27 +45,51 @@ function globalLessonNumber(lessonId) {
   return index >= 0 ? index + 1 : 0;
 }
 
-function aggregateModuleOutcomes(lessonConfigs) {
-  const byCode = new Map();
-  for (const lesson of lessonConfigs) {
-    const results = lesson.template?.coverage?.results;
-    if (!Array.isArray(results)) continue;
-    for (const r of results) {
-      if (!r?.code) continue;
-      if (!byCode.has(r.code)) {
-        byCode.set(r.code, { code: r.code, status: r.status || "partial", focuses: [] });
-      }
-      const entry = byCode.get(r.code);
-      if (r.status === "full") entry.status = "full";
-      if (r.focus && !entry.focuses.includes(r.focus)) entry.focuses.push(r.focus);
-    }
+function statusLabel(status) {
+  if (status === "full") return "Повне покриття в уроці";
+  return "Часткове / підсилення в уроці";
+}
+
+function renderOfficialIfoPanel(results) {
+  if (!Array.isArray(results) || results.length === 0) {
+    return `<p class="landing-muted">У шаблоні уроку не зазначено коди ІФО.</p>`;
   }
-  return [...byCode.values()].sort((a, b) => a.code.localeCompare(b.code, "uk"));
+
+  return results
+    .map((r) => {
+      const code = String(r.code || "").trim();
+      if (!code) return "";
+      const entry = ifoByLessonCode[code];
+      const chipClass = r.status === "full" ? "full" : "partial";
+      const chip = `<span class="lesson-card__chip lesson-card__chip--${chipClass}" title="${escapeHtml(statusLabel(r.status))}">${escapeHtml(code)}</span>`;
+
+      if (!entry) {
+        return `<div class="landing-ifo-panel__block">
+          <div class="landing-ifo-panel__chips">${chip}</div>
+          <p class="landing-muted">Для цього коду ще немає сторінки в офіційному довіднику на сайті.</p>
+        </div>`;
+      }
+
+      const lines = entry.lines
+        .map(
+          (line) =>
+            `<li><span class="landing-ifo-line__code">[${escapeHtml(line.code)}]</span> ${escapeHtml(line.text)}</li>`
+        )
+        .join("");
+
+      return `<div class="landing-ifo-panel__block">
+        <div class="landing-ifo-panel__chips">${chip}</div>
+        <p class="landing-ifo-panel__competency">${escapeHtml(entry.competency)}</p>
+        <ul class="landing-ifo-panel__list simple-list">${lines}</ul>
+      </div>`;
+    })
+    .join("");
 }
 
 function renderStudentModules() {
   return textbookModules
     .map((mod) => {
+      const emoji = mod.emoji ? `<span class="landing-module__emoji" aria-hidden="true">${mod.emoji}</span>` : "";
       const lessons = mod.lessonIds.map((id) => lessonById[id]).filter(Boolean);
       const items = lessons
         .map((lesson) => {
@@ -72,112 +97,83 @@ function renderStudentModules() {
           const title = displayLessonTitle(lesson.label);
           const hint = lessonDescriptions[lesson.id] || "Інтерактивний урок.";
           return `
-        <li class="landing-lesson-list__item">
-          <div class="landing-lesson-list__row">
-            <span class="landing-lesson-list__badge" aria-hidden="true">Урок ${n}</span>
-            <a class="landing-lesson-list__link primary-button" href="${escapeHtml(lesson.url)}">Відкрити урок</a>
+        <li class="landing-lesson-row">
+          <div class="landing-lesson-row__main">
+            <span class="landing-lesson-row__badge">Урок ${n}</span>
+            <h3 class="landing-lesson-row__title">${escapeHtml(title)}</h3>
+            <p class="landing-lesson-row__hint">${escapeHtml(hint)}</p>
           </div>
-          <p class="landing-lesson-list__title">${escapeHtml(title)}</p>
-          <p class="landing-lesson-list__hint">${escapeHtml(hint)}</p>
+          <div class="landing-lesson-row__action">
+            <a class="primary-button landing-lesson-row__button" href="${escapeHtml(lesson.url)}">Відкрити урок</a>
+          </div>
         </li>`;
         })
         .join("");
 
       return `
     <section class="landing-module section-card" aria-labelledby="landing-mod-${mod.id}-title">
-      <header class="landing-module__header">
+      <header class="landing-module__header landing-module__header--with-emoji">
         <p class="section-label">Модуль ${mod.id}</p>
-        <h2 id="landing-mod-${mod.id}-title">${escapeHtml(mod.title)}</h2>
+        <h2 id="landing-mod-${mod.id}-title" class="landing-module__title-row">${emoji}<span>${escapeHtml(mod.title)}</span></h2>
         <p class="landing-module__lead">${escapeHtml(mod.studentLead)}</p>
       </header>
-      <ol class="landing-lesson-list" aria-label="Уроки модуля ${mod.id}">
+      <ul class="landing-lesson-rows" aria-label="Уроки модуля ${mod.id}">
         ${items}
-      </ol>
+      </ul>
     </section>`;
     })
     .join("");
-}
-
-function statusLabel(status) {
-  if (status === "full") return "Повне покриття";
-  return "Часткове / підсилення";
 }
 
 function renderTeacherModules() {
   return textbookModules
     .map((mod) => {
       const lessons = mod.lessonIds.map((id) => lessonById[id]).filter(Boolean);
-      const outcomes = aggregateModuleOutcomes(lessons);
-      const outcomeBlocks = outcomes
-        .map((o) => {
-          const focusBlock =
-            o.focuses.length > 0
-              ? `<ul class="landing-outcome__list simple-list">
-            ${o.focuses.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}
-          </ul>`
-              : `<p class="landing-muted landing-outcome__fallback">Детальні формулювання — у картках уроків нижче.</p>`;
-          return `
-        <article class="info-box landing-outcome">
-          <h3 class="landing-outcome__code">[${escapeHtml(o.code)}]</h3>
-          <p class="landing-outcome__status landing-coverage__status landing-coverage__status--${o.status === "full" ? "full" : "partial"}">${escapeHtml(statusLabel(o.status))}</p>
-          ${focusBlock}
-        </article>`;
-        })
-        .join("");
-
       const lessonBlocks = lessons
         .map((lesson) => {
           const n = globalLessonNumber(lesson.id);
           const title = displayLessonTitle(lesson.label);
           const tmpl = lesson.template || {};
           const coverage = tmpl.coverage;
-          const chips = (coverage?.results || [])
-            .map(
-              (item) =>
-                `<span class="lesson-card__chip lesson-card__chip--${item.status === "full" ? "full" : "partial"}">${escapeHtml(item.code)}</span>`
-            )
-            .join("");
+          const results = coverage?.results || [];
           const objectives = Array.isArray(tmpl.objectives)
             ? tmpl.objectives.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
             : "";
-          const cycleNote = coverage?.note ? `<p class="landing-teacher-lesson__note">${escapeHtml(coverage.note)}</p>` : "";
 
           return `
         <article class="landing-teacher-lesson content-card">
-          <div class="landing-teacher-lesson__top">
-            <h3 class="landing-teacher-lesson__title"><a href="${escapeHtml(lesson.url)}">${escapeHtml(title)}</a></h3>
-            <p class="landing-teacher-lesson__meta">Урок ${n} у загальній лінійці · Модуль ${mod.id}</p>
-            <div class="lesson-card__meta" aria-label="Коди результатів за уроком">${chips}</div>
+          <div class="landing-teacher-lesson__grid">
+            <div class="landing-teacher-lesson__main">
+              <h3 class="landing-teacher-lesson__title"><a href="${escapeHtml(lesson.url)}">${escapeHtml(title)}</a></h3>
+              <p class="landing-teacher-lesson__meta">Урок ${n} · Модуль ${mod.id}</p>
+              <div class="landing-teacher-lesson__goal">
+                <strong>Мета уроку</strong>
+                <p>${escapeHtml(tmpl.goal || "—")}</p>
+              </div>
+              <div class="landing-teacher-lesson__objectives">
+                <strong>Орієнтири з шаблону уроку</strong>
+                <ul class="simple-list">${objectives || "<li>—</li>"}</ul>
+              </div>
+              <a class="primary-button landing-teacher-lesson__cta" href="${escapeHtml(lesson.url)}">Відкрити урок</a>
+            </div>
+            <aside class="landing-teacher-lesson__ifo" aria-label="Очікувані результати за стандартом">
+              <h4 class="landing-ifo-panel__heading">ІФО (офіційні формулювання)</h4>
+              ${renderOfficialIfoPanel(results)}
+            </aside>
           </div>
-          ${cycleNote}
-          <div class="landing-teacher-lesson__goal">
-            <strong>Мета уроку</strong>
-            <p>${escapeHtml(tmpl.goal || "—")}</p>
-          </div>
-          <div class="landing-teacher-lesson__objectives">
-            <strong>Очікувані результати навчання (формулювання для вчителя)</strong>
-            <ul class="simple-list">${objectives || "<li>—</li>"}</ul>
-          </div>
-          <a class="primary-button" href="${escapeHtml(lesson.url)}">Відкрити урок</a>
         </article>`;
         })
         .join("");
 
+      const emoji = mod.emoji ? `<span class="landing-module__emoji" aria-hidden="true">${mod.emoji}</span>` : "";
+
       return `
     <section class="landing-module section-card section-card--soft" aria-labelledby="landing-teach-${mod.id}-title">
-      <header class="landing-module__header">
+      <header class="landing-module__header landing-module__header--with-emoji">
         <p class="section-label">Модуль ${mod.id}</p>
-        <h2 id="landing-teach-${mod.id}-title">${escapeHtml(mod.title)}</h2>
+        <h2 id="landing-teach-${mod.id}-title" class="landing-module__title-row">${emoji}<span>${escapeHtml(mod.title)}</span></h2>
         <p class="landing-module__lead">${escapeHtml(mod.teacherLead)}</p>
       </header>
-      <div class="landing-module__teacher-block">
-        <h3 class="landing-subheading">ІФО та фокус модуля</h3>
-        <p class="landing-muted">Нижче зведено коди очікуваних результатів (ІФО), які зустрічаються в уроках модуля, з акцентами з шаблонів уроків.</p>
-        <div class="landing-outcome-grid">
-          ${outcomeBlocks}
-        </div>
-      </div>
-      <h3 class="landing-subheading">Уроки та покриття</h3>
       <div class="landing-teacher-lesson-stack">
         ${lessonBlocks}
       </div>

@@ -4,6 +4,7 @@
 export const textbookModules = [
   {
     id: 1,
+    emoji: "🌈",
     title: "Інформація та робота з нею",
     studentLead: "Дізнаємося, як ми сприймаємо світ, що таке повідомлення й прості таблиці.",
     teacherLead:
@@ -21,6 +22,7 @@ export const textbookModules = [
   },
   {
     id: 2,
+    emoji: "💻",
     title: "Комп’ютери та цифровий світ",
     studentLead: "Познайомимося з комп’ютером: де він буває, з чого складається і як ним користуватися безпечно.",
     teacherLead:
@@ -36,6 +38,7 @@ export const textbookModules = [
   },
   {
     id: 3,
+    emoji: "🧩",
     title: "Алгоритми довкола нас",
     studentLead: "Вчимося давати чіткі вказівки, будувати порядок дій і записувати простий план.",
     teacherLead:
@@ -50,6 +53,7 @@ export const textbookModules = [
   },
   {
     id: 4,
+    emoji: "🎨",
     title: "Творимо та ділимося",
     studentLead: "Малюємо в програмі, робимо простий плакат чи запрошення й вчимося поважати чужу роботу.",
     teacherLead:
@@ -63,6 +67,7 @@ export const textbookModules = [
   },
   {
     id: 5,
+    emoji: "🛡️",
     title: "Безпека та спілкування онлайн",
     studentLead: "З’ясуємо, для чого інтернет, як шукати відповіді, берегти себе і бути чемними в мережі.",
     teacherLead:
