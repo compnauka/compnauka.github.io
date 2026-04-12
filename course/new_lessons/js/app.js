@@ -22,7 +22,13 @@ const selectedLessonId = document.body.dataset.lessonId
   || lessonCatalog[0].id;
 const selectedLesson = resolveLessonConfig(selectedLessonId);
 const lessonData = createLessonData(selectedLesson.template);
-const state = createInitialState(loadPersistedState(), lessonData);
+const persistedState = loadPersistedState();
+// Allow landing page to pass the current mode via ?mode=teacher
+const urlMode = new URLSearchParams(window.location.search).get("mode");
+if (urlMode === "teacher" || urlMode === "student") {
+  persistedState.mode = urlMode;
+}
+const state = createInitialState(persistedState, lessonData);
 
 const refs = {
   body: document.body,
@@ -146,15 +152,22 @@ function renderCoverage() {
 
 function switchLesson(nextLessonId) {
   const nextLesson = resolveLessonConfig(nextLessonId);
-  if (nextLesson.url) {
-    const target = new URL(nextLesson.url, window.location.href);
-    window.location.assign(target.toString());
-    return;
+  const base = nextLesson.url
+    ? new URL(nextLesson.url, window.location.href)
+    : (() => {
+        const u = new URL(window.location.href);
+        u.searchParams.set("lesson", nextLesson.id);
+        return u;
+      })();
+
+  // Preserve teacher/student mode across navigation
+  if (state.mode === "teacher") {
+    base.searchParams.set("mode", "teacher");
+  } else {
+    base.searchParams.delete("mode");
   }
 
-  const fallbackUrl = new URL(window.location.href);
-  fallbackUrl.searchParams.set("lesson", nextLesson.id);
-  window.location.assign(fallbackUrl.toString());
+  window.location.assign(base.toString());
 }
 
 function renderActivities() {

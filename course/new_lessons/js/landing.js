@@ -1,4 +1,4 @@
-﻿import { lessonCatalog } from "./lessons/catalog.js";
+import { lessonCatalog } from "./lessons/catalog.js";
 import { textbookModules } from "./landing-modules.js";
 import { ifoByLessonCode } from "./ifo-catalog.js";
 import { applyMode, escapeHtml, toggleMode } from "./shared.js";
@@ -205,4 +205,20 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleMode("teacher", state, refs);
   });
   applyMode(state, refs);
+
+  // Propagate current mode to lesson links when clicked
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[href]");
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("http") || href.startsWith("#")) return;
+    // Only intercept links to lesson HTML files
+    if (!href.endsWith(".html") && !href.includes(".html?")) return;
+    if (state.mode === "teacher") {
+      event.preventDefault();
+      const target = new URL(link.href, window.location.href);
+      target.searchParams.set("mode", "teacher");
+      window.location.assign(target.toString());
+    }
+  });
 });
