@@ -23,10 +23,12 @@ const selectedLessonId = document.body.dataset.lessonId
 const selectedLesson = resolveLessonConfig(selectedLessonId);
 const lessonData = createLessonData(selectedLesson.template);
 const persistedState = loadPersistedState();
-// Allow landing page to pass the current mode via ?mode=teacher
+// Read mode from sessionStorage (set by landing page) or URL param
 const urlMode = new URLSearchParams(window.location.search).get("mode");
-if (urlMode === "teacher" || urlMode === "student") {
-  persistedState.mode = urlMode;
+const sessionMode = sessionStorage.getItem("lesson-mode");
+const resolvedMode = urlMode || sessionMode;
+if (resolvedMode === "teacher" || resolvedMode === "student") {
+  persistedState.mode = resolvedMode;
 }
 const state = createInitialState(persistedState, lessonData);
 
