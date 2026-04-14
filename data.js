@@ -593,24 +593,10 @@ const CATEGORIES = [
     color: "#A3E635",
     services: [
       {
-        name: "Сортування 1",
-        description: "Відсортуй об'єкти за ознаками.",
-        link: "services/quizes/abc_sort.html",
-        image: "images/55.jpg",
-        tags: ["1-2 класи"]
-      },
-      {
-        name: "Сортування 2",
-        description: "Відсортуй об'єкти за ознаками.",
-        link: "services/quizes/sort.html",
-        image: "images/55.jpg",
-        tags: ["1-2 класи"]
-      },
-      {
-        name: "Сортування 3",
-        description: "Відсортуй об'єкти за ознаками.",
-        link: "services/quizes/infosort.html",
-        image: "images/55.jpg",
+        name: "Колекція завдань із сортування",
+        description: "Добірка завдань на сортування об'єктів за ознаками.",
+        link: "services/quizes/sorting_hub.html",
+        image: "images/77.jpg",
         tags: ["1-2 класи"]
       },
       {
