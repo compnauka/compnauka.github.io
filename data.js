@@ -124,6 +124,20 @@ const CATEGORIES = [
         link: "services/security_and_safety/search_engine/index.html",
         image: "images/39.jpg",
         tags: ["3-4 класи"]
+      },
+      {
+        name: "Симулятор збірки ПК",
+        description: "Інтерактивний симулятор збірки комп'ютера.",
+        link: "services/assembly/hardware.html",
+        image: "images/78.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
+      },
+      {
+        name: "Симулятор налаштування ПК",
+        description: "Інтерактивний симулятор налаштування операційної системи та іншого ПЗ.",
+        link: "services/assembly/software.html",
+        image: "images/79.jpg",
+        tags: ["3-4 класи", "5-7 класи",]
       }
     ]
   },
