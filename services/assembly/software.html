@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор налаштування ПК | Комп'ютерна наука з паном Артемом</title>
+    <meta name="description" content="Інтерактивний симулятор налаштування операційної системи та програмного забезпечення. Дізнайтеся, як встановити ОС, драйвери та ПЗ.">
+    <link rel="canonical" href="https://itnauka.org/services/assembly/software.html">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="../../favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <link rel="shortcut icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itnauka.org/services/assembly/software.html">
+    <meta property="og:title" content="Симулятор налаштування ПК | Комп'ютерна наука">
+    <meta property="og:description" content="Навчися налаштовувати комп'ютер як професіонал! Інтерактивний симулятор встановлення ОС та драйверів.">
+    <meta property="og:image" content="https://itnauka.org/images/4.jpg">
+    <meta property="og:locale" content="uk_UA">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Симулятор налаштування ПК | Комп'ютерна наука">
+    <meta name="twitter:description" content="Інтерактивний симулятор налаштування ОС та програм для дітей.">
+    <meta name="twitter:image" content="https://itnauka.org/images/4.jpg">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            background-color: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            max-width: 650px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin: 0 0 15px 0;
+            font-size: 1.8rem;
+        }
+
+        #status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .status-item {
+            background-color: var(--bg-main);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-item.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .status-item.active::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+        }
+
+        .status-item.danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        #story-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #icon-container {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: var(--bg-main);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        #icon-container svg {
+            width: 64px;
+            height: 64px;
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #story {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+            color: #cbd5e1;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+
+        .info-box {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-btn {
+            padding: 14px 20px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .choice-btn:hover {
+            background-color: var(--border);
+            border-color: var(--accent);
+        }
+
+        .choice-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main id="game-container">
+        <header>
+            <h1>Налаштування ОС та ПЗ</h1>
+            <div id="status-bar">
+                <div id="status-power" class="status-item">Живлення</div>
+                <div id="status-os" class="status-item">ОС</div>
+                <div id="status-network" class="status-item">Мережа</div>
+                <div id="status-drivers" class="status-item">Драйвери</div>
+                <div id="status-software" class="status-item">Програми</div>
+            </div>
+        </header>
+
+        <div id="story-section">
+            <div id="icon-container"></div>
+            <div id="story-content">
+                <div id="story">Завантаження...</div>
+                <div id="educational-info" class="info-box" style="display: none;"></div>
+            </div>
+            <div id="choices"></div>
+        </div>
+    </main>
+
+    <script>
+        const icons = {
+            display: `<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+            usb: `<svg viewBox="0 0 24 24"><path d="M10 2h4v8h-4zM8 10h8v10a2 2 0 01-2 2h-4a2 2 0 01-2-2V10z"/><line x1="12" y1="14" x2="12" y2="18"/></svg>`,
+            os: `<svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/></svg>`,
+            wifi: `<svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>`,
+            gear: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+            apps: `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>`,
+            warning: `<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>`,
+            win: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>`
+        };
+
+        const state = {
+            power_on: false,
+            usb_inserted: false,
+            os_installed: false,
+            network_connected: false,
+            drivers_installed: false,
+            software_installed: false
+        };
+
+        const storyNodes = {
+            start: {
+                icon: "display",
+                text: "Перед тобою щойно зібраний комп'ютер. Апаратна частина готова, але накопичувач абсолютно порожній. Щоб ПК почав працювати, потрібна операційна система.",
+                info: "Без програмного забезпечення апаратні компоненти не здатні виконувати корисні функції. Операційна система (ОС) є базовим середовищем для керування ресурсами ПК.",
+                choices: () => {
+                    let options = [];
+                    options.push({
+                        text: state.power_on ? "Вимкнути комп'ютер" : "Увімкнути комп'ютер",
+                        action: () => state.power_on = !state.power_on,
+                        next: state.power_on ? "start" : "boot_sequence"
+                    });
+
+                    if (!state.os_installed) {
+                        options.push({
+                            text: state.usb_inserted ? "Витягти USB-флешку" : "Вставити завантажувальну USB-флешку з ОС",
+                            action: () => state.usb_inserted = !state.usb_inserted,
+                            next: "start"
+                        });
+                    }
+
+                    if (state.os_installed && state.power_on) {
+                        options = [{ text: "Перейти до Робочого столу", next: "desktop" }];
+                    }
+                    return options;
+                }
+            },
+            boot_sequence: {
+                icon: "display",
+                text: () => {
+                    if (state.os_installed) return "Завантаження ОС...";
+                    if (state.usb_inserted) return "Виявлено завантажувальний носій. Запуск інсталятора...";
+                    return "Помилка BIOS: Завантажувальний пристрій не знайдено. Вставте завантажувальний носій і натисніть будь-яку клавішу.";
+                },
+                choices: () => {
+                    if (state.os_installed) return [{ text: "Продовжити", next: "desktop" }];
+                    if (state.usb_inserted) return [{ text: "Почати встановлення ОС", next: "os_install" }];
+                    return [{ text: "Вимкнути ПК", action: () => state.power_on = false, next: "start" }];
+                }
+            },
+            os_install: {
+                icon: "os",
+                text: "Процес встановлення ОС розпочато. Копіювання файлів, розпакування компонентів, встановлення оновлень. Після перезавантаження система буде готова до роботи.",
+                info: "Завантажувальна флешка містить образ ОС. Програма встановлення форматує розділи накопичувача та розгортає системні файли.",
+                choices: [
+                    {
+                        text: "Завершити встановлення та перезавантажити",
+                        action: () => {
+                            state.os_installed = true;
+                            state.usb_inserted = false;
+                        },
+                        next: "rebooting"
+                    }
+                ]
+            },
+            rebooting: {
+                icon: "display",
+                text: "Система перезавантажується...\nВідображається логотип материнської плати...\nЗапуск служб...",
+                choices: [
+                    { text: "Продовжити", next: "desktop" }
+                ]
+            },
+            desktop: {
+                icon: "os",
+                text: () => {
+                    if (state.software_installed) return "Робочий стіл завантажено. Всі системи працюють у штатному режимі.";
+                    if (state.drivers_installed) return "Система розпізнала всі компоненти. Базова роздільна здатність екрана змінена на оптимальну. Час встановити робочі програми.";
+                    if (state.network_connected) return "Є підключення до інтернету. Зображення на екрані розтягнуте, а деякі пристрої не розпізнано. Потрібні драйвери.";
+                    return "Робочий стіл ОС. Система встановлена, але немає доступу до інтернету, зображення нечітке, відсутній звук та базові програми.";
+                },
+                choices: () => {
+                    let options = [];
+
+                    if (!state.network_connected) {
+                        options.push({ text: "Підключитися до мережі (Wi-Fi/Ethernet)", next: "network" });
+                    }
+
+                    if (!state.drivers_installed) {
+                        options.push({ text: "Завантажити та встановити драйвери", next: "drivers" });
+                    }
+
+                    if (!state.software_installed) {
+                        options.push({ text: "Встановити базове ПЗ та утиліти", next: "software" });
+                    }
+
+                    if (state.network_connected && state.drivers_installed && state.software_installed) {
+                        options = [{ text: "Завершити налаштування", next: "win" }];
+                    } else {
+                        options.push({ text: "Вимкнути комп'ютер", action: () => state.power_on = false, next: "start" });
+                    }
+                    return options;
+                }
+            },
+            network: {
+                icon: "wifi",
+                text: "Ви підключили мережевий кабель (або ввели пароль Wi-Fi). Операційна система отримала IP-адресу. З'явився доступ до глобальної мережі.",
+                info: "Мережеве підключення необхідне для завантаження актуальних драйверів, оновлень безпеки та програмного забезпечення.",
+                choices: [
+                    { text: "Повернутися на Робочий стіл", action: () => state.network_connected = true, next: "desktop" }
+                ]
+            },
+            drivers: {
+                icon: "gear",
+                text: () => {
+                    if (!state.network_connected) return "Неможливо завантажити актуальні драйвери без підключення до мережі.";
+                    return "Завантаження драйверів чіпсету, відеокарти, аудіо та мережевого адаптера. Екран кілька разів блимає під час застосування налаштувань графіки.";
+                },
+                info: "Драйвер — це програма, яка пояснює операційній системі, як правильно взаємодіяти з конкретним апаратним забезпеченням.",
+                choices: () => {
+                    if (!state.network_connected) {
+                        return [{ text: "Повернутися", next: "desktop" }];
+                    }
+                    return [{ text: "Перезавантажити після встановлення драйверів", action: () => state.drivers_installed = true, next: "desktop" }];
+                }
+            },
+            software: {
+                icon: "apps",
+                text: () => {
+                    if (!state.network_connected) return "Неможливо завантажити програми: відсутнє підключення до мережі.";
+                    if (!state.drivers_installed) return "Спроба запуску встановлення. Процес іде дуже повільно, графічний інтерфейс гальмує через відсутність драйверів відеокарти.";
+                    return "Встановлення браузера, офісного пакету, архіватора, медіаплеєра та антивірусного захисту. Система повністю укомплектована.";
+                },
+                choices: () => {
+                    if (!state.network_connected || !state.drivers_installed) {
+                        return [{ text: "Повернутися та виправити помилки", next: "desktop" }];
+                    }
+                    return [{ text: "Завершити встановлення програм", action: () => state.software_installed = true, next: "desktop" }];
+                }
+            },
+            win: {
+                icon: "win",
+                text: "ПК повністю налаштований та готовий до експлуатації.\n\nЛогіка процесу:\n1. Завантаження інсталятора з USB.\n2. Встановлення базової ОС.\n3. Підключення до мережі.\n4. Інсталяція драйверів апаратних компонентів.\n5. Встановлення користувацького ПЗ.",
+                choices: [
+                    { text: "Почати заново (Форматувати накопичувач)", action: () => resetGame(), next: "start" }
+                ]
+            }
+        };
+
+        function updateUI() {
+            const pwr = document.getElementById('status-power');
+            if (state.power_on) {
+                pwr.className = 'status-item active';
+                pwr.innerText = "Живлення: УВІМКНЕНО";
+            } else {
+                pwr.className = 'status-item';
+                pwr.innerText = "Живлення: Вимкнено";
+            }
+
+            document.getElementById('status-os').className = state.os_installed ? 'status-item active' : 'status-item';
+            document.getElementById('status-network').className = state.network_connected ? 'status-item active' : 'status-item';
+            document.getElementById('status-drivers').className = state.drivers_installed ? 'status-item active' : 'status-item';
+            document.getElementById('status-software').className = state.software_installed ? 'status-item active' : 'status-item';
+        }
+
+        function resetGame() {
+            state.power_on = false;
+            state.usb_inserted = false;
+            state.os_installed = false;
+            state.network_connected = false;
+            state.drivers_installed = false;
+            state.software_installed = false;
+        }
+
+        function renderNode(nodeId) {
+            const node = storyNodes[nodeId];
+            updateUI();
+
+            document.getElementById('icon-container').innerHTML = icons[node.icon] || icons.display;
+            document.getElementById('story').textContent = typeof node.text === 'function' ? node.text() : node.text;
+
+            const infoBox = document.getElementById('educational-info');
+            if (node.info) {
+                infoBox.textContent = node.info;
+                infoBox.style.display = 'block';
+            } else {
+                infoBox.style.display = 'none';
+            }
+
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+
+            const choices = typeof node.choices === 'function' ? node.choices() : node.choices;
+
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `<span>${choice.text}</span> <span style="color: var(--text-muted);">→</span>`;
+                btn.onclick = () => {
+                    if (choice.action) choice.action();
+                    renderNode(choice.next);
+                };
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => renderNode('start'));
+    </script>
+</body>
+
+</html>

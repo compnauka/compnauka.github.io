@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор збірки ПК | Комп'ютерна наука з паном Артемом</title>
+    <meta name="description" content="Інтерактивний симулятор збірки комп'ютера. Вивчайте компоненти ПК: процесор, пам'ять, відеокарта та блок живлення у ігровій формі.">
+    <link rel="canonical" href="https://itnauka.org/services/assembly/hardware.html">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="../../favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <link rel="shortcut icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itnauka.org/services/assembly/hardware.html">
+    <meta property="og:title" content="Симулятор збірки ПК | Комп'ютерна наука">
+    <meta property="og:description" content="Збери свій перший віртуальний комп'ютер! Інтерактивне навчання будові ПК для дітей.">
+    <meta property="og:image" content="https://itnauka.org/images/4.jpg">
+    <meta property="og:locale" content="uk_UA">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Симулятор збірки ПК | Комп'ютерна наука">
+    <meta name="twitter:description" content="Інтерактивний симулятор збірки комп'ютера для дітей.">
+    <meta name="twitter:image" content="https://itnauka.org/images/4.jpg">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-N8T05K3NGT');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            background-color: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            max-width: 650px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin: 0 0 15px 0;
+            font-size: 1.8rem;
+        }
+
+        #status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .status-item {
+            background-color: var(--bg-main);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-item.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .status-item.active::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+        }
+
+        .status-item.danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        #story-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #icon-container {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: var(--bg-main);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        #icon-container svg {
+            width: 64px;
+            height: 64px;
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #story {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+            color: #cbd5e1;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+
+        .info-box {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-btn {
+            padding: 14px 20px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .choice-btn:hover {
+            background-color: var(--border);
+            border-color: var(--accent);
+        }
+
+        .choice-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main id="game-container">
+        <header>
+            <h1>Збірка ПК: Майстерня</h1>
+            <div id="status-bar">
+                <div id="status-cpu" class="status-item">Процесор</div>
+                <div id="status-ram" class="status-item">Пам’ять</div>
+                <div id="status-storage" class="status-item">Накопичувач</div>
+                <div id="status-gpu" class="status-item">Відеокарта</div>
+                <div id="status-power" class="status-item">Живлення</div>
+            </div>
+        </header>
+
+        <div id="story-section">
+            <div id="icon-container"></div>
+            <div id="story-content">
+                <div id="story">Завантаження...</div>
+                <div id="educational-info" class="info-box" style="display: none;"></div>
+            </div>
+            <div id="choices"></div>
+        </div>
+    </main>
+
+    <script>
+        const icons = {
+            desk: `<svg viewBox="0 0 24 24"><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5M2 14l3.36-7.83A2 2 0 0 1 7.2 5h9.6a2 2 0 0 1 1.84 1.17L22 14M2 14h20"/></svg>`,
+            motherboard: `<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><path d="M6 6h4v4H6zM14 6h4v4h-4zM6 14h4v4H6zM14 14h4v4h-4zM2 10h4M2 14h4M18 10h4M18 14h4"/></svg>`,
+            cpu: `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>`,
+            ram: `<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="1" ry="1"/><path d="M4 17v2M8 17v2M12 17v2M16 17v2M20 17v2"/><line x1="14" y1="7" x2="14" y2="17"/></svg>`,
+            storage: `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><line x1="4" y1="12" x2="20" y2="12"/><path d="M8 16h8"/></svg>`,
+            gpu: `<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="12" rx="1" ry="1"/><path d="M6 16v4h4v-4M14 16v4h4v-4M7 10h2M15 10h2"/></svg>`,
+            psu: `<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><circle cx="12" cy="12" r="4"/><path d="M18 8h2M18 12h2M18 16h2"/></svg>`,
+            warning: `<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>`,
+            win: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>`
+        };
+
+        const state = {
+            power_on: false,
+            cpu_installed: false,
+            cooler_installed: false,
+            ram_installed: false,
+            storage_installed: false,
+            storage_screwed: false,
+            gpu_installed: false
+        };
+
+        function isPowerOn() {
+            return state.power_on;
+        }
+
+        const storyNodes = {
+            start: {
+                icon: "desk",
+                text: "Перед тобою порожній корпус комп’ютера з головною платою. Поруч лежать інші деталі. Твоє завдання — правильно зібрати комп’ютер. Головне правило: не підключай деталі, коли подано живлення!",
+                info: "Материнська плата — це ніби велике місто з дорогами. Вона з’єднує між собою всі інші деталі, щоб вони могли 'спілкуватися' одна з одною.",
+                choices: [
+                    { text: "Подивитися на материнську плату", next: "motherboard" }
+                ]
+            },
+            motherboard: {
+                icon: "motherboard",
+                text: () => {
+                    let installed = [state.cpu_installed && state.cooler_installed, state.ram_installed, state.storage_installed && state.storage_screwed, state.gpu_installed].filter(Boolean).length;
+                    if (installed === 4 && state.power_on) return "Усі головні деталі на своїх місцях, живлення увімкнено. Можна запускати!";
+
+                    let text = `Ти дивишся на материнську плату. Тут є багато різних гнізд для деталей.\nВстановлено деталей: ${installed} із 4.`;
+                    if (installed === 0) text += "\n\nПідказка: майстри зазвичай починають з процесора.";
+                    if (installed === 4 && !state.power_on) text += "\n\nДеталі встановлено. Час увімкнути блок живлення.";
+                    return text;
+                },
+                choices: () => {
+                    let options = [
+                        { text: "Місце для Процесора (Мозок)", next: "cpu" },
+                        { text: "Місце для Пам’яті (Робочий стіл)", next: "ram" },
+                        { text: "Роз’єм для Накопичувача (Шафа)", next: "storage" },
+                        { text: "Довгий роз’єм для Відеокарти (Художник)", next: "gpu" },
+                        { text: "Блок живлення (Серце)", next: "power" }
+                    ];
+
+                    if (state.cpu_installed && state.cooler_installed && state.ram_installed && state.storage_installed && state.storage_screwed && state.gpu_installed && state.power_on) {
+                        options = [{ text: "Натиснути кнопку «Увімкнення»!", next: "win" }];
+                    }
+                    return options;
+                }
+            },
+            power: {
+                icon: "psu",
+                text: () => state.power_on ?
+                    "Блок живлення увімкнено (кнопка на 'I'). Електрика подається по проводах." :
+                    "Блок живлення вимкнено (кнопка на 'O'). Комп’ютер безпечний для збірки.",
+                info: "Блок живлення — це серце комп’ютера. Він бере електрику з розетки і безпечно роздає її всім іншим деталям.",
+                choices: () => [
+                    {
+                        text: state.power_on ? "Вимкнути живлення (Положення 'O')" : "Увімкнути живлення (Положення 'I')",
+                        action: () => state.power_on = !state.power_on,
+                        next: "power"
+                    },
+                    { text: "Повернутися назад", next: "motherboard" }
+                ]
+            },
+            cpu: {
+                icon: "cpu",
+                text: () => {
+                    if (state.cooler_installed) return "Відмінна робота! Процесор на місці, а зверху стоїть вентилятор. Йому не буде гаряче.";
+                    if (state.cpu_installed) return "Чудово, процесор у гнізді. Але якщо на нього зараз подати живлення, він перегріється. Зверху потрібно поставити вентилятор (кулер).";
+                    return "Гніздо для процесора порожнє. Його потрібно встановлювати дуже обережно, щоб не погнути маленькі ніжки.";
+                },
+                info: "Процесор — це мозок комп’ютера. Він дуже швидко думає, вирішує задачі та керує всіма іншими деталями. Від думок він сильно гріється.",
+                choices: () => {
+                    let options = [];
+                    let safetyError = isPowerOn();
+
+                    if (!state.cpu_installed) {
+                        options.push({
+                            text: "Обережно встановити процесор у гніздо",
+                            next: safetyError ? "fail_safety" : "cpu",
+                            action: safetyError ? null : () => state.cpu_installed = true
+                        });
+                    } else if (!state.cooler_installed) {
+                        options.push({
+                            text: "Поставити вентилятор охолодження",
+                            next: safetyError ? "fail_safety" : "cpu",
+                            action: safetyError ? null : () => state.cooler_installed = true
+                        });
+                    }
+                    options.push({ text: "Повернутися назад", next: "motherboard" });
+                    return options;
+                }
+            },
+            ram: {
+                icon: "ram",
+                text: () => state.ram_installed ?
+                    "Супер! Планки пам’яті клацнули — усе стало на місце! Процесору буде зручно працювати." :
+                    "Слоти для пам’яті порожні. Планку треба вставляти рівно, щоб спеціальний виріз збігся з перегородкою.",
+                info: "Оперативна пам’ять — це як робочий стіл для процесора. Чим більший стіл, тим більше зошитів (програм) можна відкрити одночасно.",
+                choices: () => {
+                    let options = [];
+                    let safetyError = isPowerOn();
+
+                    if (!state.ram_installed) {
+                        options.push({ text: "Вставити силою, не звертаючи уваги на виріз", next: "fail_ram" });
+                        options.push({
+                            text: "Зіставити виріз та вставити до клацання",
+                            next: safetyError ? "fail_safety" : "ram",
+                            action: safetyError ? null : () => state.ram_installed = true
+                        });
+                    }
+                    options.push({ text: "Повернутися назад", next: "motherboard" });
+                    return options;
+                }
+            },
+            fail_ram: {
+                icon: "warning",
+                text: "Стій! Планка не лізе, бо виріз не збігається. Якщо тиснути силою, можна зламати і пам’ять, і плату.",
+                choices: [
+                    { text: "Спробувати обережніше", next: "ram" }
+                ]
+            },
+            storage: {
+                icon: "storage",
+                text: () => {
+                    if (state.storage_screwed) return "Супер! Накопичувач встановлено та зафіксовано. Тепер комп’ютер зможе зберігати файли.";
+                    if (state.storage_installed) return "SSD-накопичувач у роз’ємі, але він стирчить під кутом. Його треба зафіксувати, щоб не випав.";
+                    return "На материнській платі є спеціальний роз’єм для сучасного SSD-накопичувача. Він виглядає як маленька прямокутна пластинка.";
+                },
+                info: "Накопичувач (SSD) — це велика шафа. Тут назавжди зберігаються всі твої фотографії, ігри та Windows.",
+                choices: () => {
+                    let options = [];
+                    let safetyError = isPowerOn();
+
+                    if (!state.storage_installed) {
+                        options.push({
+                            text: "Вставити SSD-накопичувач у роз’єм",
+                            next: safetyError ? "fail_safety" : "storage",
+                            action: safetyError ? null : () => state.storage_installed = true
+                        });
+                    } else if (!state.storage_screwed) {
+                        options.push({
+                            text: "Зафіксувати маленьким гвинтиком",
+                            next: safetyError ? "fail_safety" : "storage",
+                            action: safetyError ? null : () => state.storage_screwed = true
+                        });
+                    }
+                    options.push({ text: "Повернутися назад", next: "motherboard" });
+                    return options;
+                }
+            },
+            gpu: {
+                icon: "gpu",
+                text: () => state.gpu_installed ?
+                    "Клас! Велика відеокарта надійно стоїть на своєму місці." :
+                    "Тут є найдовший роз’єм на платі. Сюди встановлюється відеокарта.",
+                info: "Відеокарта — це швидкий художник. Вона малює все, що ти бачиш на екрані монітора: красиву графіку в іграх та відео.",
+                choices: () => {
+                    let options = [];
+                    let safetyError = isPowerOn();
+
+                    if (!state.gpu_installed) {
+                        options.push({
+                            text: "Вставити відеокарту",
+                            next: safetyError ? "fail_safety" : "gpu",
+                            action: safetyError ? null : () => state.gpu_installed = true
+                        });
+                    }
+                    options.push({ text: "Повернутися назад", next: "motherboard" });
+                    return options;
+                }
+            },
+            fail_safety: {
+                icon: "warning",
+                text: "Ой! Деталь можна зіпсувати, якщо ставити її під напругою. Вимикай живлення перед збіркою — це головне правило майстра.",
+                choices: [
+                    { text: "Вимкнути живлення і бути обережнішим", action: () => state.power_on = false, next: "motherboard" }
+                ]
+            },
+            win: {
+                icon: "win",
+                text: `Вентилятори тихо закрутилися. На екрані з’явився логотип Windows. Ти правильно зібрав комп’ютер і нічого не зламав!\n\nПідсумок знань:\n• Процесор — мозок\n• Оперативна пам’ять — робочий стіл\n• Накопичувач — велика шафа\n• Відеокарта — швидкий художник\n• Блок живлення — серце\n\nМісія виконана.`,
+                choices: [
+                    { text: "Зібрати комп’ютер ще раз", action: () => resetGame(), next: "start" }
+                ]
+            }
+        };
+
+        function updateUI() {
+            document.getElementById('status-cpu').className = (state.cpu_installed && state.cooler_installed) ? 'status-item active' : 'status-item';
+            document.getElementById('status-ram').className = state.ram_installed ? 'status-item active' : 'status-item';
+            document.getElementById('status-storage').className = (state.storage_installed && state.storage_screwed) ? 'status-item active' : 'status-item';
+            document.getElementById('status-gpu').className = state.gpu_installed ? 'status-item active' : 'status-item';
+
+            const pwr = document.getElementById('status-power');
+            if (state.power_on) {
+                pwr.className = 'status-item danger';
+                pwr.innerText = "Живлення: УВІМКНЕНО";
+            } else {
+                pwr.className = 'status-item';
+                pwr.innerText = "Живлення: Вимкнено";
+            }
+        }
+
+        function resetGame() {
+            state.power_on = false;
+            state.cpu_installed = false;
+            state.cooler_installed = false;
+            state.ram_installed = false;
+            state.storage_installed = false;
+            state.storage_screwed = false;
+            state.gpu_installed = false;
+        }
+
+        function renderNode(nodeId) {
+            const node = storyNodes[nodeId];
+            updateUI();
+
+            document.getElementById('icon-container').innerHTML = icons[node.icon] || icons.desk;
+            document.getElementById('story').textContent = typeof node.text === 'function' ? node.text() : node.text;
+
+            const infoBox = document.getElementById('educational-info');
+            if (node.info) {
+                infoBox.textContent = node.info;
+                infoBox.style.display = 'block';
+            } else {
+                infoBox.style.display = 'none';
+            }
+
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+
+            const choices = typeof node.choices === 'function' ? node.choices() : node.choices;
+
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `<span>${choice.text}</span> <span style="color: var(--text-muted);">→</span>`;
+                btn.onclick = () => {
+                    if (choice.action) choice.action();
+                    renderNode(choice.next);
+                };
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => renderNode('start'));
+    </script>
+</body>
+
+</html>
