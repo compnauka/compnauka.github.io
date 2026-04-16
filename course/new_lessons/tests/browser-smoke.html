@@ -28,6 +28,23 @@
       return style.display === "none" || style.visibility === "hidden";
     }
 
+    function assertLessonHydrated(doc, expectedTitle, expectedGoalSnippet, activitySelector) {
+      const title = doc.getElementById("lesson-title")?.textContent?.trim() || "";
+      const hook = doc.getElementById("lesson-student-hook")?.textContent?.trim() || "";
+      const goal = doc.getElementById("lesson-goal")?.textContent?.trim() || "";
+      const objectives = Array.from(doc.querySelectorAll("#learning-objectives li"))
+        .map((item) => item.textContent.trim())
+        .filter(Boolean);
+      const sectionsCount = doc.querySelectorAll("#sections-container > *").length;
+
+      assert(title.includes(expectedTitle), `Неочікуваний заголовок уроку: ${expectedTitle}.`);
+      assert(hook.length > 20, `Student hook не промалювався для уроку "${expectedTitle}".`);
+      assert(goal.includes(expectedGoalSnippet), `Мета уроку не промалювалася для "${expectedTitle}".`);
+      assert(objectives.length >= 3, `Очікувані результати не промалювалися для "${expectedTitle}".`);
+      assert(sectionsCount >= 2, `Змістові секції не промалювалися для "${expectedTitle}".`);
+      assert(doc.querySelector(activitySelector), `Не знайдено очікувану активність для "${expectedTitle}".`);
+    }
+
     try {
       const lessonWindow = window.open("../m1-08-simple-tables.html", "lesson-smoke");
       assert(lessonWindow, "Не вдалося відкрити сторінку уроку.");
@@ -133,6 +150,12 @@
 
       const keyDoc = keyTrainerWindow.document;
       await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        keyDoc,
+        "Підписуємо свою роботу",
+        "Навчити дітей підписувати",
+        "[data-activity-id='key-trainer']"
+      );
 
       const keyActivity = keyDoc.querySelector("[data-activity-id='key-trainer']");
       assert(keyActivity, "Не знайдено activity key-trainer.");
@@ -187,12 +210,58 @@
 
       const productDoc = productWindow.document;
       await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        productDoc,
+        "Створюємо простий інформаційний продукт",
+        "Навчити дітей створювати",
+        "[data-activity-id='key-trainer']"
+      );
 
       const productKeyTrainer = productDoc.querySelector("[data-activity-id='key-trainer']");
       assert(productKeyTrainer, "У уроці про простий продукт має бути ще одне використання key-trainer.");
 
       const productScore = productKeyTrainer.querySelector(".task-score")?.textContent || "";
       assert(productScore.includes("0/4"), "У уроці про простий продукт key-trainer має починатися з рахунку 0/4.");
+
+      const searchWindow = window.open("../m5-02-search-online.html", "search-online-smoke");
+      assert(searchWindow, "Не вдалося відкрити урок про онлайн-пошук.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про онлайн-пошук.")), 10000);
+        searchWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const searchDoc = searchWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        searchDoc,
+        "Шукаємо інформацію онлайн",
+        "Навчити дітей робити простий онлайн-пошук",
+        "[data-activity-id='fill']"
+      );
+
+      const kindWindow = window.open("../m5-04-kind-online.html", "kind-online-smoke");
+      assert(kindWindow, "Не вдалося відкрити урок про чемне онлайн-спілкування.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про чемне онлайн-спілкування.")), 10000);
+        kindWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const kindDoc = kindWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        kindDoc,
+        "Спілкуємося чемно онлайн",
+        "Навчити дітей чемно спілкуватися",
+        "[data-activity-id='classify']"
+      );
 
       output.className = "pass";
       output.textContent = "PASS";
@@ -202,6 +271,8 @@
       keyTrainerWindow.close();
       codingWindow.close();
       productWindow.close();
+      searchWindow.close();
+      kindWindow.close();
     } catch (error) {
       output.className = "fail";
       output.textContent = `FAIL\n${error.message}`;

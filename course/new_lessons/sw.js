@@ -1,4 +1,4 @@
-const CACHE_NAME = "interactive-lesson-v12";
+const CACHE_NAME = "interactive-lesson-v13";
 const OFFLINE_URL = "./offline.html";
 const ASSETS = [
   "./",
@@ -57,8 +57,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (shouldPreferFreshAppShell(requestUrl.pathname)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
   event.respondWith(staleWhileRevalidate(event.request, event));
 });
+
+function shouldPreferFreshAppShell(pathname) {
+  return /\.(html|js|css|json)$/i.test(pathname);
+}
 
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
