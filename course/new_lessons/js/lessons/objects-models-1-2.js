@@ -63,7 +63,7 @@ export const objectsModelsLessonTemplate = {
     "розрізняти модель і реальний відповідник на простих прикладах",
     "створювати просту модель з готових елементів або за зразком"
   ],
-  activityOrder: ["classify", "fill", "creative"],
+  activityOrder: ["trace-contour", "classify", "fill", "creative"],
   sections: [
     {
       title: "Що Може Бути Об’єктом",
@@ -107,11 +107,38 @@ export const objectsModelsLessonTemplate = {
     }
   ],
   activities: {
+    "trace-contour": {
+      id: "trace-contour",
+      type: "trace-contour",
+      title: "Об’єкти, властивості, моделі",
+      badge: "Завдання 1",
+      prompt: "Обведи шлях від справжнього предмета до його простої моделі.",
+      lead: "Почни від м’яча і проведи лінію до його спрощеного зображення.",
+      helperText: "Тут важливо помітити: модель допомагає зрозуміти предмет, але не є самим предметом.",
+      startLabel: "⚽ справжній м’яч",
+      endLabel: "🖼️ малюнок м’яча",
+      canvasLabel: "Поле для обведення шляху від предмета до моделі",
+      width: 900,
+      height: 260,
+      guideWidth: 18,
+      traceWidth: 10,
+      hitRadius: 24,
+      checkpoints: [
+        { x: 120, y: 150 },
+        { x: 210, y: 135 },
+        { x: 300, y: 125 },
+        { x: 410, y: 115 },
+        { x: 520, y: 125 },
+        { x: 640, y: 140 },
+        { x: 780, y: 150 }
+      ],
+      teacherTip: "Перед обведенням попросіть дитину сказати вголос: «малюнок м’яча — це модель, а не сам м’яч». Це знімає головну плутанину теми."
+    },
     draw: {
       id: "draw",
       type: "draw",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Намалюй знайомий об’єкт або обери готовий варіант.",
       fallbackOptions: ["⚽ м’яч", "📘 книжка", "✏️ олівець", "🐱 кіт", "🌧️ дощ", "🪑 стілець"],
       teacherTip: "Після вибору попросіть назвати хоча б одну властивість цього об’єкта."
@@ -120,7 +147,7 @@ export const objectsModelsLessonTemplate = {
       id: "classify",
       type: "classify",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Розклади картки: де об’єкт, де властивість, а де значення властивості.",
       categories: ["Об’єкт", "Властивість", "Значення властивості"],
       categoryIcons: { "Об’єкт": "🧸", "Властивість": "🏷️", "Значення властивості": "✅" },
@@ -145,7 +172,7 @@ export const objectsModelsLessonTemplate = {
       id: "sequence",
       type: "sequence",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Склади правильний порядок, як ми описуємо об’єкт.",
       steps: [
         "👀 Розглядаю об’єкт",
@@ -158,7 +185,7 @@ export const objectsModelsLessonTemplate = {
       id: "truefalse",
       type: "truefalse",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 4",
+      badge: "Завдання 5",
       prompt: "Прочитай твердження й виріши, чи воно правильне.",
       count: 4,
       statements: [
@@ -174,7 +201,7 @@ export const objectsModelsLessonTemplate = {
       id: "pick",
       type: "pick",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 5",
+      badge: "Завдання 6",
       prompt: "У кожному рядку обери зайве.",
       count: 3,
       groups: [
@@ -221,7 +248,7 @@ export const objectsModelsLessonTemplate = {
       id: "fill",
       type: "fill",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 6",
+      badge: "Завдання 7",
       prompt: "Вибери слово, яке підходить у пропуск.",
       count: 4,
       sentences: [
@@ -237,7 +264,7 @@ export const objectsModelsLessonTemplate = {
       id: "scenarios",
       type: "scenarios",
       title: "Об’єкти, властивості, моделі",
-      badge: "Завдання 7",
+      badge: "Завдання 8",
       prompt: "Подумай про ситуацію й обери всі правильні твердження.",
       count: 3,
       situations: [

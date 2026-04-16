@@ -69,7 +69,7 @@ export const signYourWorkLessonTemplate = {
     "розпізнавати ситуації, коли чужу роботу не можна називати своєю",
     "завершувати простий продукт підписом автора"
   ],
-  activityOrder: ["classify", "fill", "transfer"],
+  activityOrder: ["key-trainer", "classify", "fill", "transfer"],
   sections: [
     {
       title: "Хто Такий Автор",
@@ -103,11 +103,46 @@ export const signYourWorkLessonTemplate = {
     }
   ],
   activities: {
+    "key-trainer": {
+      id: "key-trainer",
+      type: "key-trainer",
+      title: "Підписуємо свою роботу і поважаємо авторство",
+      badge: "Завдання 1",
+      prompt: "Натискай показані літери, щоб зібрати короткий підпис автора.",
+      completionMessage: "Ти зібрав(ла) короткий підпис і потренував(ла) клавіатуру.",
+      teacherTip: "Після вправи попросіть дитину назвати, який короткий підпис вона могла б додати до власної роботи.",
+      rounds: [
+        {
+          targetKey: "О",
+          acceptedKeys: ["О", "о"],
+          lead: "Починаємо короткий підпис.",
+          prompt: "Натисни першу букву імені в підписі «Оля».",
+          helperText: "Підпис автора часто починається з імені.",
+          successMessage: "Так, підпис починається з літери імені."
+        },
+        {
+          targetKey: "Л",
+          acceptedKeys: ["Л", "л"],
+          lead: "Додаємо наступну літеру.",
+          prompt: "Натисни другу букву, щоб продовжити підпис.",
+          helperText: "Рухаймося по літерах уважно, без поспіху.",
+          successMessage: "Чудово, підпис росте далі."
+        },
+        {
+          targetKey: "Я",
+          acceptedKeys: ["Я", "я"],
+          lead: "Завершуємо короткий підпис.",
+          prompt: "Натисни останню букву, щоб підпис був готовий.",
+          helperText: "Остання літера теж важлива, бо без неї ім’я неповне.",
+          successMessage: "Так, короткий підпис уже готовий."
+        }
+      ]
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Підписуємо свою роботу і поважаємо авторство",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки за двома групами.",
       categories: ["Показує автора", "Не показує автора"],
       categoryIcons: {
@@ -131,7 +166,7 @@ export const signYourWorkLessonTemplate = {
       id: "fill",
       type: "fill",
       title: "Підписуємо свою роботу і поважаємо авторство",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Добери підпис до роботи.",
       items: [
         {
@@ -156,7 +191,7 @@ export const signYourWorkLessonTemplate = {
       id: "transfer",
       type: "transfer",
       title: "Підписуємо свою роботу і поважаємо авторство",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Обери найкраще пояснення для ситуації.",
       count: 3,
       cases: [

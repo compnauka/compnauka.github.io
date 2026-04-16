@@ -63,7 +63,7 @@ export const privateInfoLessonTemplate = {
     "звертатися до дорослого в сумнівній ситуації",
     "пояснювати, чому деякі дані не варто повідомляти"
   ],
-  activityOrder: ["classify", "truefalse", "transfer"],
+  activityOrder: ["click-trainer", "classify", "truefalse", "transfer"],
   sections: [
     {
       title: "Що Таке Особиста Інформація",
@@ -98,11 +98,66 @@ export const privateInfoLessonTemplate = {
     }
   ],
   activities: {
+    "click-trainer": {
+      id: "click-trainer",
+      type: "click-trainer",
+      title: "Що можна і що не можна повідомляти",
+      badge: "Завдання 1",
+      prompt: "Клацни на те, що в цій ситуації треба берегти або що можна сказати безпечно.",
+      count: 4,
+      rounds: [
+        {
+          lead: "Знайди дані, які точно треба берегти.",
+          target: { label: "Покажи пароль", emoji: "🔒" },
+          options: [
+            { label: "улюблений колір", emoji: "🎨", correct: false, feedback: "Улюблений колір не такий чутливий, як пароль." },
+            { label: "пароль", emoji: "🔒", correct: true, feedback: "Так, пароль треба берегти." },
+            { label: "улюблена тварина", emoji: "🐶", correct: false, feedback: "Улюблену тварину можна назвати в безпечному навчальному завданні." },
+            { label: "назва казки", emoji: "📘", correct: false, feedback: "Назва казки не є приватною, як пароль." }
+          ],
+          successMessage: "Пароль знайдено правильно."
+        },
+        {
+          lead: "Знайди дані, які теж краще не надсилати без дорослого.",
+          target: { label: "Покажи адресу дому", emoji: "🏠" },
+          options: [
+            { label: "адреса дому", emoji: "🏠", correct: true, feedback: "Так, адресу дому треба берегти." },
+            { label: "улюблений колір", emoji: "🎨", correct: false, feedback: "Це не настільки чутлива інформація, як адреса." },
+            { label: "назва мультфільму", emoji: "🎬", correct: false, feedback: "Назва мультфільму не належить до приватних даних." },
+            { label: "улюблений фрукт", emoji: "🍎", correct: false, feedback: "Улюблений фрукт не треба ховати як адресу." }
+          ],
+          successMessage: "Адресу знайдено правильно."
+        },
+        {
+          lead: "Знайди приклад безпечної інформації для навчального завдання.",
+          target: { label: "Покажи улюблений колір", emoji: "🎨" },
+          options: [
+            { label: "номер телефону", emoji: "📞", correct: false, feedback: "Номер телефону треба берегти." },
+            { label: "адреса дому", emoji: "🏠", correct: false, feedback: "Адресу дому не варто повідомляти без дорослого." },
+            { label: "пароль", emoji: "🔒", correct: false, feedback: "Пароль нікому не надсилають." },
+            { label: "улюблений колір", emoji: "🎨", correct: true, feedback: "Так, у безпечному навчальному завданні це можна сказати." }
+          ],
+          successMessage: "Безпечну інформацію знайдено."
+        },
+        {
+          lead: "Знайди дію, яка допомагає в сумнівній ситуації.",
+          target: { label: "Покажи звернення до дорослого", emoji: "🙋" },
+          options: [
+            { label: "надіслати все одразу", emoji: "📨", correct: false, feedback: "Поспішати з особистими даними не можна." },
+            { label: "сказати дорослому", emoji: "🙋", correct: true, feedback: "Так, якщо сумніваєшся, треба звернутися до дорослого." },
+            { label: "вигадати пароль", emoji: "🔑", correct: false, feedback: "Краще не вступати в таку взаємодію без дорослого." },
+            { label: "написати адресу", emoji: "🏠", correct: false, feedback: "Адресу теж треба берегти." }
+          ],
+          successMessage: "Правильну безпечну дію знайдено."
+        }
+      ],
+      teacherTip: "Тут клік має працювати як маленьке рішення: «це безпечно» або «це треба берегти». Після кожного раунду просіть коротко пояснити вибір."
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Що можна і що не можна повідомляти",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки за двома групами.",
       categories: ["Можна сказати або написати", "Треба берегти"],
       categoryIcons: {
@@ -126,7 +181,7 @@ export const privateInfoLessonTemplate = {
       id: "truefalse",
       type: "truefalse",
       title: "Що можна і що не можна повідомляти",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Виріши, чи правильне твердження.",
       count: 4,
       statements: [
@@ -141,7 +196,7 @@ export const privateInfoLessonTemplate = {
       id: "transfer",
       type: "transfer",
       title: "Що можна і що не можна повідомляти",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Обери найкращу дію для ситуації.",
       count: 3,
       cases: [

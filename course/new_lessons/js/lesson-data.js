@@ -154,6 +154,36 @@ function buildTableReadActivity(template) {
   };
 }
 
+function buildClickTrainerActivity(template) {
+  return {
+    ...template,
+    rounds: sample(template.rounds, template.count).map((round) => ({
+      ...round,
+      target: { ...round.target },
+      options: shuffle(round.options).map((option) => ({ ...option }))
+    }))
+  };
+}
+
+function buildTraceContourActivity(template) {
+  return {
+    ...template,
+    checkpoints: template.checkpoints.map((point) => ({ ...point }))
+  };
+}
+
+function buildKeyTrainerActivity(template) {
+  return {
+    ...template,
+    rounds: template.rounds
+      .slice(0, template.count ?? template.rounds.length)
+      .map((round) => ({
+        ...round,
+        acceptedKeys: [...(round.acceptedKeys || [round.targetKey])]
+      }))
+  };
+}
+
 function buildQuiz(quizTemplate) {
   return sample(quizTemplate.questions, quizTemplate.count).map((question) => randomizeOptions(question));
 }
@@ -245,10 +275,13 @@ function cloneActivities(activities, activityOrder = null) {
     scenarios: () => (activities.scenarios ? buildScenariosActivity(activities.scenarios) : null),
     creative: () => (activities.creative ? buildCreativeActivity(activities.creative) : null),
     transfer: () => (activities.transfer ? buildTransferActivity(activities.transfer) : null),
-    "table-read": () => (activities["table-read"] ? buildTableReadActivity(activities["table-read"]) : null)
+    "table-read": () => (activities["table-read"] ? buildTableReadActivity(activities["table-read"]) : null),
+    "click-trainer": () => (activities["click-trainer"] ? buildClickTrainerActivity(activities["click-trainer"]) : null),
+    "trace-contour": () => (activities["trace-contour"] ? buildTraceContourActivity(activities["trace-contour"]) : null),
+    "key-trainer": () => (activities["key-trainer"] ? buildKeyTrainerActivity(activities["key-trainer"]) : null)
   };
 
-  const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read"];
+  const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read", "click-trainer", "trace-contour", "key-trainer"];
   const order = Array.isArray(activityOrder) && activityOrder.length > 0 ? activityOrder : defaultOrder;
 
   return order

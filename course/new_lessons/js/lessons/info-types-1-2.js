@@ -76,7 +76,7 @@ export const infoTypesLessonTemplate = {
     "добирати прості приклади зі школи, дому та прогулянки",
     "коротко пояснювати свою відповідь словами «я бачу», «я чую», «я відчуваю»"
   ],
-  activityOrder: ["draw", "classify", "scenarios"],
+  activityOrder: ["trace-contour", "draw", "classify", "scenarios"],
   sections: [
     {
       title: "Що Ми Дізнаємося Про Світ",
@@ -120,11 +120,36 @@ export const infoTypesLessonTemplate = {
     }
   ],
   activities: {
+    "trace-contour": {
+      id: "trace-contour",
+      type: "trace-contour",
+      title: "Інформація. Як ми сприймаємо інформацію",
+      badge: "Завдання 1",
+      prompt: "Обведи лінію від ока до того, що ми найкраще сприймаємо зором.",
+      lead: "Почни від ока і проведи лінію по пунктиру до веселки.",
+      helperText: "Веди лінію уважно від першої точки до останньої.",
+      canvasLabel: "Поле для обведення лінії від ока до веселки",
+      width: 900,
+      height: 260,
+      guideWidth: 18,
+      traceWidth: 10,
+      hitRadius: 24,
+      checkpoints: [
+        { x: 120, y: 150 },
+        { x: 220, y: 120 },
+        { x: 330, y: 130 },
+        { x: 450, y: 110 },
+        { x: 580, y: 120 },
+        { x: 690, y: 100 },
+        { x: 790, y: 120 }
+      ],
+      teacherTip: "Це перший пілот обведення за контуром. Попросіть дитину спершу назвати, чому саме веселка поєднується з оком: ми її бачимо, а не чуємо чи куштуємо."
+    },
     draw: {
       id: "draw",
       type: "draw",
       title: "Інформація. Як ми сприймаємо інформацію",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Намалюй або назви те, що ти сьогодні сам(сама) помітив(ла) очима, вухами, носом, язиком чи на дотик.",
       fallbackOptions: ["🌈 веселка", "🚦 світлофор", "📘 книжка", "🌸 квітка", "🔔 дзвоник", "🧤 рукавичка"],
       teacherTip: "Спочатку запропонуйте власний приклад без готових карток: «Що ти сьогодні сам(сама) побачив(ла) або почув(ла)?». Лише якщо дитині важко, переходьте до готових варіантів."
@@ -133,7 +158,7 @@ export const infoTypesLessonTemplate = {
       id: "classify",
       type: "classify",
       title: "Інформація. Як ми сприймаємо інформацію",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Віднеси картку до найголовнішого способу сприймання.",
       categories: ["Зорова", "Слухова", "Нюхова", "Смакова", "Дотикова"],
       categoryIcons: {
@@ -172,7 +197,7 @@ export const infoTypesLessonTemplate = {
       id: "truefalse",
       type: "truefalse",
       title: "Інформація. Як ми сприймаємо інформацію",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Прочитай твердження й виріши, чи воно правильне.",
       count: 4,
       statements: [
@@ -191,7 +216,7 @@ export const infoTypesLessonTemplate = {
       id: "pick",
       type: "pick",
       title: "Інформація. Як ми сприймаємо інформацію",
-      badge: "Завдання 4",
+      badge: "Завдання 5",
       prompt: "У кожному рядку вибери те, що не підходить.",
       count: 3,
       groups: [
@@ -238,7 +263,7 @@ export const infoTypesLessonTemplate = {
       id: "fill",
       type: "fill",
       title: "Інформація. Як ми сприймаємо інформацію",
-      badge: "Завдання 5",
+      badge: "Завдання 6",
       prompt: "Вибери слово, яке правильно закінчує речення.",
       count: 4,
       sentences: [

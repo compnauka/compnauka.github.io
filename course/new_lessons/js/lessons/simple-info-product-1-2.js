@@ -63,7 +63,7 @@ export const simpleInfoProductLessonTemplate = {
     "поєднувати малюнок і слова для повідомлення",
     "пояснювати, для кого створено продукт"
   ],
-  activityOrder: ["classify", "creative", "transfer"],
+  activityOrder: ["key-trainer", "classify", "creative", "transfer"],
   sections: [
     {
       title: "Що Називаємо Інформаційним Продуктом",
@@ -97,11 +97,54 @@ export const simpleInfoProductLessonTemplate = {
     }
   ],
   activities: {
+    "key-trainer": {
+      id: "key-trainer",
+      type: "key-trainer",
+      title: "Створюємо простий інформаційний продукт",
+      badge: "Завдання 1",
+      prompt: "Натискай літери, щоб скласти коротке слово з уроку про продукт.",
+      completionMessage: "Ти зібрав(ла) слово й потренував(ла) набір короткого тексту для продукту.",
+      teacherTip: "Після вправи попросіть дітей назвати, у якому продукті це слово могло б з’явитися: у листівці, оголошенні чи запрошенні.",
+      rounds: [
+        {
+          targetKey: "Л",
+          acceptedKeys: ["Л", "л"],
+          lead: "Починаємо з короткого слова.",
+          prompt: "Натисни першу літеру слова «лист».",
+          helperText: "Короткі слова часто стають частиною простого інформаційного продукту.",
+          successMessage: "Так, першу літеру знайдено правильно."
+        },
+        {
+          targetKey: "И",
+          acceptedKeys: ["И", "и"],
+          lead: "Додаємо наступну літеру.",
+          prompt: "Продовж слово ще однією літерою.",
+          helperText: "Рухайся по літерах уважно, без поспіху.",
+          successMessage: "Чудово, слово росте далі."
+        },
+        {
+          targetKey: "С",
+          acceptedKeys: ["С", "с"],
+          lead: "Ще один крок.",
+          prompt: "Натисни третю літеру, щоб слово було майже готове.",
+          helperText: "У короткому тексті кожна літера важлива для змісту.",
+          successMessage: "Так, третю літеру знайдено."
+        },
+        {
+          targetKey: "Т",
+          acceptedKeys: ["Т", "т"],
+          lead: "Завершуємо слово.",
+          prompt: "Натисни останню літеру слова «лист».",
+          helperText: "Остання літера завершує коротке текстове повідомлення.",
+          successMessage: "Готово, коротке слово вже зібране."
+        }
+      ]
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Створюємо простий інформаційний продукт",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки за групами.",
       categories: ["Запрошує", "Вітає", "Повідомляє"],
       categoryIcons: { "Запрошує": "🎉", "Вітає": "💌", "Повідомляє": "📢" },
@@ -123,7 +166,7 @@ export const simpleInfoProductLessonTemplate = {
       id: "creative",
       type: "creative",
       title: "Створюємо простий інформаційний продукт",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Склади свій простий продукт із готових частин.",
       previewLabel: "Мій продукт",
       placeholder: "Обери вид продукту, тему і короткий текст.",
@@ -161,7 +204,7 @@ export const simpleInfoProductLessonTemplate = {
       id: "transfer",
       type: "transfer",
       title: "Створюємо простий інформаційний продукт",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Обери найкраще пояснення для ситуації.",
       count: 3,
       cases: [

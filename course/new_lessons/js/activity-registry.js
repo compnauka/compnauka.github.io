@@ -8,6 +8,9 @@ import { renderSequenceTask, setupSequenceTask } from "./task-sequence.js";
 import { renderCreativeTask, setupCreativeTask } from "./task-creative.js";
 import { renderTransferTask, setupTransferTask } from "./task-transfer.js";
 import { renderTableReadTask, setupTableReadTask } from "./task-table-read.js";
+import { renderClickTrainerTask, setupClickTrainerTask } from "./task-click-trainer.js";
+import { renderTraceContourTask, setupTraceContourTask } from "./task-trace-contour.js";
+import { renderKeyTrainerTask, setupKeyTrainerTask } from "./task-key-trainer.js";
 
 export function createActivityRegistry(state, refs, showFeedback) {
   return {
@@ -50,6 +53,18 @@ export function createActivityRegistry(state, refs, showFeedback) {
     "table-read": {
       render: renderTableReadTask,
       setup: (activity, rerenderTask) => setupTableReadTask(activity, state, refs, showFeedback, rerenderTask)
+    },
+    "click-trainer": {
+      render: renderClickTrainerTask,
+      setup: (activity, rerenderTask) => setupClickTrainerTask(activity, state, refs, showFeedback, rerenderTask)
+    },
+    "trace-contour": {
+      render: renderTraceContourTask,
+      setup: (activity) => setupTraceContourTask(activity, state, refs, showFeedback)
+    },
+    "key-trainer": {
+      render: renderKeyTrainerTask,
+      setup: (activity, rerenderTask) => setupKeyTrainerTask(activity, state, refs, showFeedback, rerenderTask)
     }
   };
 }

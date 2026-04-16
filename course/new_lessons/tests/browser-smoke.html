@@ -64,9 +64,144 @@
       await new Promise((resolve) => window.setTimeout(resolve, 200));
       assert(isHidden(coverage, lessonWindow), "Після повернення в student mode coverage має знову сховатися.");
 
+      const clickTrainerWindow = window.open("../m2-03-computer-parts.html", "click-trainer-smoke");
+      assert(clickTrainerWindow, "Не вдалося відкрити урок із click-trainer.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку з click-trainer.")), 10000);
+        clickTrainerWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const clickDoc = clickTrainerWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      const clickTrainer = clickDoc.querySelector("[data-activity-id='click-trainer']");
+      assert(clickTrainer, "Не знайдено activity click-trainer.");
+
+      const scoreBefore = clickTrainer.querySelector(".task-score")?.textContent || "";
+      assert(scoreBefore.includes("0/4"), "Click trainer має починатися з рахунку 0/4.");
+
+      const correctButton = clickDoc.querySelector("[data-click-trainer-option='click-trainer'][data-option-index='0']");
+      assert(correctButton, "Не знайдено кнопку варіанта у click-trainer.");
+      correctButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+
+      const clickTrainerAfter = clickDoc.querySelector("[data-activity-id='click-trainer']");
+      const scoreAfter = clickTrainerAfter.querySelector(".task-score")?.textContent || "";
+      const roundLabel = clickTrainerAfter.querySelector(".click-trainer__round")?.textContent || "";
+
+      assert(scoreAfter.includes("1/4"), "Після правильної відповіді рахунок click-trainer має стати 1/4.");
+      assert(roundLabel.includes("Раунд 2"), "Після правильної відповіді click-trainer має перейти до другого раунду.");
+
+      const traceWindow = window.open("../m1-01-info-types.html", "trace-smoke");
+      assert(traceWindow, "Не вдалося відкрити урок із trace-contour.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку з trace-contour.")), 10000);
+        traceWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const traceDoc = traceWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      const traceActivity = traceDoc.querySelector("[data-activity-id='trace-contour']");
+      assert(traceActivity, "Не знайдено activity trace-contour.");
+
+      const traceCanvas = traceDoc.querySelector(".trace-canvas");
+      assert(traceCanvas, "У trace-contour має бути canvas для обведення.");
+
+      const traceBadge = traceActivity.querySelector(".task-badge")?.textContent || "";
+      assert(traceBadge.includes("Завдання 1"), "Trace-contour має бути першим завданням у пілотному уроці.");
+
+      const keyTrainerWindow = window.open("../m4-03-sign-your-work.html", "key-trainer-smoke");
+      assert(keyTrainerWindow, "Не вдалося відкрити урок із key-trainer.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку з key-trainer.")), 10000);
+        keyTrainerWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const keyDoc = keyTrainerWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      const keyActivity = keyDoc.querySelector("[data-activity-id='key-trainer']");
+      assert(keyActivity, "Не знайдено activity key-trainer.");
+
+      const keyScoreBefore = keyActivity.querySelector(".task-score")?.textContent || "";
+      assert(keyScoreBefore.includes("0/3"), "Key trainer має починатися з рахунку 0/3.");
+
+      const keySurface = keyActivity.querySelector("[data-key-trainer-surface='key-trainer']");
+      assert(keySurface, "У key-trainer має бути активна область для натискання клавіш.");
+      keySurface.focus();
+      keySurface.dispatchEvent(new KeyboardEvent("keydown", { key: "О", bubbles: true }));
+
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+
+      const keyActivityAfter = keyDoc.querySelector("[data-activity-id='key-trainer']");
+      const keyScoreAfter = keyActivityAfter.querySelector(".task-score")?.textContent || "";
+      const keyRoundLabel = keyActivityAfter.querySelector(".key-trainer__round")?.textContent || "";
+
+      assert(keyScoreAfter.includes("1/3"), "Після правильної клавіші рахунок key-trainer має стати 1/3.");
+      assert(keyRoundLabel.includes("Раунд 2"), "Після правильної клавіші key-trainer має перейти до другого раунду.");
+
+      const codingWindow = window.open("../m1-05-info-history-coding.html", "coding-key-trainer-smoke");
+      assert(codingWindow, "Не вдалося відкрити урок кодування.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку кодування.")), 10000);
+        codingWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const codingDoc = codingWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      const codingKeyTrainer = codingDoc.querySelector("[data-activity-id='key-trainer']");
+      assert(codingKeyTrainer, "У уроці кодування має бути вторинне використання key-trainer.");
+
+      const codingBadge = codingKeyTrainer.querySelector(".task-badge")?.textContent || "";
+      assert(codingBadge.includes("Завдання 1"), "У уроці кодування key-trainer має бути першою активністю.");
+
+      const productWindow = window.open("../m4-02-simple-info-product.html", "product-key-trainer-smoke");
+      assert(productWindow, "Не вдалося відкрити урок про простий інформаційний продукт.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про простий продукт.")), 10000);
+        productWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const productDoc = productWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+
+      const productKeyTrainer = productDoc.querySelector("[data-activity-id='key-trainer']");
+      assert(productKeyTrainer, "У уроці про простий продукт має бути ще одне використання key-trainer.");
+
+      const productScore = productKeyTrainer.querySelector(".task-score")?.textContent || "";
+      assert(productScore.includes("0/4"), "У уроці про простий продукт key-trainer має починатися з рахунку 0/4.");
+
       output.className = "pass";
       output.textContent = "PASS";
       lessonWindow.close();
+      clickTrainerWindow.close();
+      traceWindow.close();
+      keyTrainerWindow.close();
+      codingWindow.close();
+      productWindow.close();
     } catch (error) {
       output.className = "fail";
       output.textContent = `FAIL\n${error.message}`;

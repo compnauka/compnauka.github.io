@@ -63,7 +63,7 @@ export const infoHistoryCodingLessonTemplate = {
     "добирати простий код до життєвої ситуації, наприклад знак, цифру або смайлик",
     "створювати власний дуже простий приклад кодування без перевантаження складними правилами"
   ],
-  activityOrder: ["pick", "transfer", "creative"],
+  activityOrder: ["key-trainer", "pick", "creative", "transfer"],
   sections: [
     {
       title: "Навіщо Людям Потрібні Коди",
@@ -109,6 +109,49 @@ export const infoHistoryCodingLessonTemplate = {
     }
   ],
   activities: {
+    "key-trainer": {
+      id: "key-trainer",
+      type: "key-trainer",
+      title: "Кодування інформації",
+      badge: "Завдання 1",
+      prompt: "Натискай показані клавіші й тренуйся читати букви та цифри як коди.",
+      completionMessage: "Ти впорався(лася) з буквами й цифрами як із простими кодами.",
+      teacherTip: "Після вправи попросіть дітей назвати, де в класі або вдома вони бачать букви й цифри як коди.",
+      rounds: [
+        {
+          targetKey: "3",
+          acceptedKeys: ["3"],
+          lead: "Починаємо з цифри.",
+          prompt: "Натисни цифру, яка може показувати номер або кількість.",
+          helperText: "Цифри теж є кодами, коли позначають число або номер.",
+          successMessage: "Так, цифру знайдено правильно."
+        },
+        {
+          targetKey: "А",
+          acceptedKeys: ["А", "а", "A", "a"],
+          lead: "Тепер працюємо з буквою.",
+          prompt: "Натисни букву, якою можна почати слово або ім’я.",
+          helperText: "Букви допомагають записувати слова, імена й повідомлення.",
+          successMessage: "Правильно, букви теж кодують зміст."
+        },
+        {
+          targetKey: "7",
+          acceptedKeys: ["7"],
+          lead: "Знову шукаємо цифру.",
+          prompt: "Натисни ще одну цифру, яка могла б бути номером класу.",
+          helperText: "Подумай про число на дверях або в розкладі.",
+          successMessage: "Чудово, ця цифра теж прочитана як код."
+        },
+        {
+          targetKey: "5",
+          acceptedKeys: ["5"],
+          lead: "Завершуємо короткий код-тренажер.",
+          prompt: "Натисни останню цифру, щоб завершити серію кодів.",
+          helperText: "Коли ми однаково читаємо знак, цифру або букву, код працює.",
+          successMessage: "Так, серію кодів завершено правильно."
+        }
+      ]
+    },
     draw: {
       id: "draw",
       type: "draw",
@@ -185,7 +228,7 @@ export const infoHistoryCodingLessonTemplate = {
       id: "pick",
       type: "pick",
       title: "Кодування інформації",
-      badge: "Завдання 5",
+      badge: "Завдання 2",
       prompt: "У кожному рядку обери те, що не підходить.",
       count: 3,
       groups: [
@@ -319,7 +362,7 @@ export const infoHistoryCodingLessonTemplate = {
       id: "creative",
       type: "creative",
       title: "Кодування інформації",
-      badge: "Завдання 8",
+      badge: "Завдання 3",
       prompt: "Склади приклад: що ти хочеш передати і яким кодом це можна зробити.",
       previewLabel: "Мій приклад кодування",
       placeholder: "Обери картки, щоб скласти свій приклад.",
@@ -360,7 +403,7 @@ export const infoHistoryCodingLessonTemplate = {
       id: "transfer",
       type: "transfer",
       title: "Кодування інформації",
-      badge: "Завдання 9",
+      badge: "Завдання 4",
       prompt: "Подумай, який код або знак тут найкраще підходить.",
       count: 3,
       cases: [

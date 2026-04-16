@@ -63,7 +63,7 @@ export const devicePurposeLessonTemplate = {
     "переносити знання на життєві ситуації",
     "коротко пояснювати власний вибір"
   ],
-  activityOrder: ["classify", "transfer", "scenarios"],
+  activityOrder: ["click-trainer", "classify", "transfer", "scenarios"],
   sections: [
     {
       title: "Що Допомагає Бачити",
@@ -97,11 +97,66 @@ export const devicePurposeLessonTemplate = {
     }
   ],
   activities: {
+    "click-trainer": {
+      id: "click-trainer",
+      type: "click-trainer",
+      title: "Для чого потрібні різні пристрої",
+      badge: "Завдання 1",
+      prompt: "Клацни на пристрій, який найкраще підходить до дії.",
+      count: 4,
+      rounds: [
+        {
+          lead: "Знайди пристрій, який допомагає побачити текст або малюнок.",
+          target: { label: "Покажи пристрій для бачення", emoji: "👀" },
+          options: [
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: true, feedback: "Так, монітор допомагає побачити інформацію." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: false, feedback: "Навушники допомагають слухати, а не бачити." },
+            { label: "мікрофон", emoji: "🎤", assetKey: "components/microphone", correct: false, feedback: "Мікрофон передає голос." },
+            { label: "принтер", emoji: "🖨️", assetKey: "components/printer", correct: false, feedback: "Принтер друкує на папері." }
+          ],
+          successMessage: "Пристрій для бачення знайдено."
+        },
+        {
+          lead: "Знайди пристрій, який допомагає тихо послухати звук.",
+          target: { label: "Покажи пристрій для слухання", emoji: "🎧", assetKey: "components/headphones" },
+          options: [
+            { label: "клавіатура", emoji: "⌨️", assetKey: "components/keyboard", correct: false, feedback: "Клавіатура допомагає вводити букви." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: true, feedback: "Так, навушники допомагають слухати звук тихо і близько." },
+            { label: "миша", emoji: "🖱️", assetKey: "components/mouse", correct: false, feedback: "Миша допомагає обирати і натискати." },
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: false, feedback: "Монітор показує, а не відтворює звук." }
+          ],
+          successMessage: "Пристрій для слухання знайдено."
+        },
+        {
+          lead: "Знайди пристрій, який допомагає передати голос у комп’ютер.",
+          target: { label: "Покажи мікрофон", emoji: "🎤", assetKey: "components/microphone" },
+          options: [
+            { label: "колонки", emoji: "🔊", assetKey: "components/speakers", correct: false, feedback: "Колонки відтворюють звук, але не записують голос." },
+            { label: "мікрофон", emoji: "🎤", assetKey: "components/microphone", correct: true, feedback: "Так, мікрофон допомагає передати голос." },
+            { label: "принтер", emoji: "🖨️", assetKey: "components/printer", correct: false, feedback: "Принтер не працює з голосом." },
+            { label: "тачпад", emoji: "👆", assetKey: "components/touchpad", correct: false, feedback: "Тачпад потрібен для керування." }
+          ],
+          successMessage: "Мікрофон знайдено."
+        },
+        {
+          lead: "Знайди пристрій, який переносить результат на папір.",
+          target: { label: "Покажи принтер", emoji: "🖨️", assetKey: "components/printer" },
+          options: [
+            { label: "принтер", emoji: "🖨️", assetKey: "components/printer", correct: true, feedback: "Так, принтер друкує на папері." },
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: false, feedback: "Монітор показує результат на екрані." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: false, feedback: "Навушники не друкують." },
+            { label: "клавіатура", emoji: "⌨️", assetKey: "components/keyboard", correct: false, feedback: "Клавіатура допомагає вводити букви." }
+          ],
+          successMessage: "Принтер знайдено."
+        }
+      ],
+      teacherTip: "Перед кліком просіть дітей назвати дію: «мені треба побачити», «мені треба послухати», «мені треба надрукувати». Так тренажер підсилює не лише клік, а й розуміння функції."
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Для чого потрібні різні пристрої",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки: що допомагає бачити, що — слухати або говорити, а що — натискати чи друкувати.",
       categories: ["Бачу", "Слухаю або говорю", "Натискаю або друкую"],
       categoryIcons: { "Бачу": "👀", "Слухаю або говорю": "🎧", "Натискаю або друкую": "⌨️" },
@@ -123,7 +178,7 @@ export const devicePurposeLessonTemplate = {
       id: "transfer",
       type: "transfer",
       title: "Для чого потрібні різні пристрої",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Обери найкраще пояснення для ситуації.",
       count: 3,
       cases: [
@@ -161,7 +216,7 @@ export const devicePurposeLessonTemplate = {
       id: "scenarios",
       type: "scenarios",
       title: "Для чого потрібні різні пристрої",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Подумай про ситуацію і обери всі правильні твердження.",
       count: 3,
       situations: [

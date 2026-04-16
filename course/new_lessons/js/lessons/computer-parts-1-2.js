@@ -63,7 +63,7 @@ export const computerPartsLessonTemplate = {
     "не плутати комп’ютер загалом і його окремі частини",
     "складати просту модель комп’ютера з готових елементів"
   ],
-  activityOrder: ["classify", "fill", "creative"],
+  activityOrder: ["click-trainer", "classify", "fill", "creative"],
   sections: [
     {
       title: "Що Ми Бачимо Перед Собою",
@@ -97,11 +97,66 @@ export const computerPartsLessonTemplate = {
     }
   ],
   activities: {
+    "click-trainer": {
+      id: "click-trainer",
+      type: "click-trainer",
+      title: "Основні частини комп’ютера",
+      badge: "Завдання 1",
+      prompt: "Клацни на правильну частину комп’ютера за підказкою.",
+      count: 4,
+      rounds: [
+        {
+          lead: "Знайди частину, на якій ми бачимо зображення.",
+          target: { label: "Покажи монітор", emoji: "🖥️", assetKey: "components/monitor" },
+          options: [
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: true, feedback: "Так, саме монітор показує зображення." },
+            { label: "клавіатура", emoji: "⌨️", assetKey: "components/keyboard", correct: false, feedback: "Клавіатура не показує зображення, а допомагає вводити." },
+            { label: "миша", emoji: "🖱️", assetKey: "components/mouse", correct: false, feedback: "Миша допомагає обирати, але не показує." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: false, feedback: "Навушники допомагають слухати." }
+          ],
+          successMessage: "Монітор знайдено правильно."
+        },
+        {
+          lead: "Знайди частину, якою натискають букви.",
+          target: { label: "Покажи клавіатуру", emoji: "⌨️", assetKey: "components/keyboard" },
+          options: [
+            { label: "принтер", emoji: "🖨️", assetKey: "components/printer", correct: false, feedback: "Принтер друкує на папері." },
+            { label: "клавіатура", emoji: "⌨️", assetKey: "components/keyboard", correct: true, feedback: "Правильно, клавіатура допомагає вводити букви." },
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: false, feedback: "Монітор показує, а не вводить." },
+            { label: "колонки", emoji: "🔊", assetKey: "components/speakers", correct: false, feedback: "Колонки відтворюють звук." }
+          ],
+          successMessage: "Клавіатуру знайдено правильно."
+        },
+        {
+          lead: "Знайди частину, яка допомагає слухати звук тихо і близько.",
+          target: { label: "Покажи навушники", emoji: "🎧", assetKey: "components/headphones" },
+          options: [
+            { label: "миша", emoji: "🖱️", assetKey: "components/mouse", correct: false, feedback: "Миша не передає звук." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: true, feedback: "Так, навушники допомагають слухати звук." },
+            { label: "мікрофон", emoji: "🎤", assetKey: "components/microphone", correct: false, feedback: "Мікрофон допомагає говорити в пристрій." },
+            { label: "тачпад", emoji: "👆", assetKey: "components/touchpad", correct: false, feedback: "Тачпад допомагає керувати, а не слухати." }
+          ],
+          successMessage: "Навушники знайдено правильно."
+        },
+        {
+          lead: "Знайди частину, яка друкує на папері.",
+          target: { label: "Покажи принтер", emoji: "🖨️", assetKey: "components/printer" },
+          options: [
+            { label: "принтер", emoji: "🖨️", assetKey: "components/printer", correct: true, feedback: "Так, принтер переносить результат на папір." },
+            { label: "монітор", emoji: "🖥️", assetKey: "components/monitor", correct: false, feedback: "Монітор лише показує зображення." },
+            { label: "клавіатура", emoji: "⌨️", assetKey: "components/keyboard", correct: false, feedback: "Клавіатура допомагає вводити." },
+            { label: "навушники", emoji: "🎧", assetKey: "components/headphones", correct: false, feedback: "Навушники допомагають слухати." }
+          ],
+          successMessage: "Принтер знайдено правильно."
+        }
+      ],
+      teacherTip: "Це перший крок до окремого тренажера точного кліку. Просіть дітей перед натисканням назвати, яку саме частину вони шукають."
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Основні частини комп’ютера",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки: що показує, що допомагає вводити, а що допомагає слухати або друкувати.",
       categories: ["Показує", "Допомагає вводити", "Допомагає слухати або друкувати"],
       categoryIcons: { "Показує": "🖥️", "Допомагає вводити": "⌨️", "Допомагає слухати або друкувати": "🎧" },
@@ -123,7 +178,7 @@ export const computerPartsLessonTemplate = {
       id: "fill",
       type: "fill",
       title: "Основні частини комп’ютера",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Вибери слово, яке правильно підходить у пропуск.",
       count: 4,
       sentences: [
@@ -139,7 +194,7 @@ export const computerPartsLessonTemplate = {
       id: "creative",
       type: "creative",
       title: "Основні частини комп’ютера",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Збери свій простий комп’ютер із готових частин.",
       previewLabel: "Мій комп’ютер",
       placeholder: "Обери картки, щоб скласти просту модель.",

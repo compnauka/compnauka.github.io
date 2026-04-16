@@ -63,7 +63,7 @@ export const infoPresentationLessonTemplate = {
     "помічати приклади різних форм подання у школі, вдома та на вулиці",
     "пояснювати свій вибір на конкретному прикладі простими словами"
   ],
-  activityOrder: ["classify", "fill", "creative"],
+  activityOrder: ["key-trainer", "classify", "fill", "creative"],
   sections: [
     {
       title: "Одну Думку Можна Подати По-Різному",
@@ -97,6 +97,49 @@ export const infoPresentationLessonTemplate = {
     }
   ],
   activities: {
+    "key-trainer": {
+      id: "key-trainer",
+      type: "key-trainer",
+      title: "Види інформації та способи подання",
+      badge: "Завдання 1",
+      prompt: "Натискай літери, щоб зібрати слово, яке можна подати і текстом, і знаком.",
+      completionMessage: "Ти зібрав(ла) коротке слово й побачив(ла), що його можна подати по-різному.",
+      teacherTip: "Після вправи попросіть дітей сказати, як ще можна подати це саме повідомлення: словом, знаком або жестом.",
+      rounds: [
+        {
+          targetKey: "С",
+          acceptedKeys: ["С", "с"],
+          lead: "Починаємо зі знайомого слова.",
+          prompt: "Натисни першу літеру слова «стоп».",
+          helperText: "Це слово можна не лише написати, а й показати знаком.",
+          successMessage: "Так, першу літеру знайдено."
+        },
+        {
+          targetKey: "Т",
+          acceptedKeys: ["Т", "т"],
+          lead: "Продовжуємо слово.",
+          prompt: "Натисни другу літеру слова.",
+          helperText: "Подумай про написане слово й дорожній знак.",
+          successMessage: "Чудово, слово продовжується правильно."
+        },
+        {
+          targetKey: "О",
+          acceptedKeys: ["О", "о"],
+          lead: "Ще одна літера.",
+          prompt: "Натисни третю літеру слова «стоп».",
+          helperText: "Слово вже майже готове, залишилось уважно добрати літеру.",
+          successMessage: "Так, третю літеру знайдено правильно."
+        },
+        {
+          targetKey: "П",
+          acceptedKeys: ["П", "п"],
+          lead: "Завершуємо слово.",
+          prompt: "Натисни останню літеру, щоб завершити слово.",
+          helperText: "Одна й та сама думка може жити як слово, знак або сигнал.",
+          successMessage: "Готово, слово зібране повністю."
+        }
+      ]
+    },
     draw: {
       id: "draw",
       type: "draw",
@@ -202,7 +245,7 @@ export const infoPresentationLessonTemplate = {
       id: "fill",
       type: "fill",
       title: "Види інформації та способи подання",
-      badge: "Завдання 5",
+      badge: "Завдання 3",
       prompt: "Вибери потрібне слово для пропуску.",
       count: 4,
       sentences: [
@@ -269,7 +312,7 @@ export const infoPresentationLessonTemplate = {
       id: "creative",
       type: "creative",
       title: "Види інформації та способи подання",
-      badge: "Завдання 7",
+      badge: "Завдання 4",
       prompt: "Склади приклад: що хочеш повідомити і якою формою це зробиш.",
       previewLabel: "Мій спосіб подання",
       placeholder: "Обери картки, щоб скласти приклад.",

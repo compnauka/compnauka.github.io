@@ -69,7 +69,7 @@ export const setsOrderLessonTemplate = {
     "коротко пояснювати свій вибір",
     "переносити навички групування на знайомі життєві приклади"
   ],
-  activityOrder: ["classify", "sequence", "scenarios"],
+  activityOrder: ["trace-contour", "classify", "sequence", "scenarios"],
   sections: [
     {
       title: "Що Таке Група Предметів",
@@ -103,11 +103,38 @@ export const setsOrderLessonTemplate = {
     }
   ],
   activities: {
+    "trace-contour": {
+      id: "trace-contour",
+      type: "trace-contour",
+      title: "Множини. Групуємо та впорядковуємо",
+      badge: "Завдання 1",
+      prompt: "Обведи шлях від найменшого до найбільшого.",
+      lead: "Проведи лінію по порядку: від маленького яблука до великого.",
+      helperText: "Це вправа на порядок. Веди лінію зліва направо, від меншого до більшого.",
+      startLabel: "🍏 маленьке яблуко",
+      endLabel: "🍎 велике яблуко",
+      canvasLabel: "Поле для обведення порядку від малого до великого",
+      width: 900,
+      height: 260,
+      guideWidth: 18,
+      traceWidth: 10,
+      hitRadius: 24,
+      checkpoints: [
+        { x: 110, y: 170 },
+        { x: 220, y: 155 },
+        { x: 330, y: 145 },
+        { x: 450, y: 135 },
+        { x: 580, y: 125 },
+        { x: 700, y: 110 },
+        { x: 800, y: 95 }
+      ],
+      teacherTip: "Перед обведенням проговоріть вголос слова «менший», «більший», «останній». Так моторна дія одразу підсилює поняття порядку."
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Множини. Групуємо та впорядковуємо",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки у правильні групи.",
       categories: ["Фрукти", "Тварини", "Транспорт"],
       categoryIcons: { "Фрукти": "🍎", "Тварини": "🐱", "Транспорт": "🚌" },
@@ -132,7 +159,7 @@ export const setsOrderLessonTemplate = {
       id: "sequence",
       type: "sequence",
       title: "Множини. Групуємо та впорядковуємо",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Постав кроки у правильному порядку.",
       steps: [
         "👀 Роздивився(лась) предмети",
@@ -146,7 +173,7 @@ export const setsOrderLessonTemplate = {
       id: "scenarios",
       type: "scenarios",
       title: "Множини. Групуємо та впорядковуємо",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Подумай про ситуацію і обери всі правильні твердження.",
       count: 3,
       situations: [

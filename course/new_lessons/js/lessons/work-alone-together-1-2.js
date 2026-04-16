@@ -63,7 +63,7 @@ export const workAloneTogetherLessonTemplate = {
     "пояснювати, що означає виконати свою частину відповідально",
     "бачити, що спільна робота потребує домовленості"
   ],
-  activityOrder: ["classify", "scenarios", "creative"],
+  activityOrder: ["key-trainer", "classify", "scenarios", "creative"],
   sections: [
     {
       title: "Коли Працюю Сам",
@@ -98,11 +98,38 @@ export const workAloneTogetherLessonTemplate = {
     }
   ],
   activities: {
+    "key-trainer": {
+      id: "key-trainer",
+      type: "key-trainer",
+      title: "Працюємо самостійно і разом",
+      badge: "Завдання 1",
+      prompt: "Натискай літери, щоб зібрати коротке слово про спільну роботу.",
+      completionMessage: "Ти зібрав(ла) слово про роботу разом і закріпив(ла) патерн на клавіатурі.",
+      teacherTip: "Після вправи попросіть дітей сказати, що вони можуть зробити самі, а що краще робити разом з «ми».",
+      rounds: [
+        {
+          targetKey: "М",
+          acceptedKeys: ["М", "м"],
+          lead: "Починаємо слово про спільну роботу.",
+          prompt: "Натисни першу літеру слова «ми».",
+          helperText: "Коли працюємо разом, ми думаємо не лише про себе, а й про команду.",
+          successMessage: "Так, першу літеру знайдено правильно."
+        },
+        {
+          targetKey: "И",
+          acceptedKeys: ["И", "и"],
+          lead: "Завершуємо коротке слово.",
+          prompt: "Натисни другу літеру, щоб слово «ми» було готове.",
+          helperText: "Коротке слово теж може передавати важливу ідею уроку.",
+          successMessage: "Готово, слово про спільну роботу зібране."
+        }
+      ]
+    },
     classify: {
       id: "classify",
       type: "classify",
       title: "Працюємо самостійно і разом",
-      badge: "Завдання 1",
+      badge: "Завдання 2",
       prompt: "Розклади картки за групами.",
       categories: ["Можна зробити самостійно", "Краще робити разом"],
       categoryIcons: {
@@ -126,7 +153,7 @@ export const workAloneTogetherLessonTemplate = {
       id: "scenarios",
       type: "scenarios",
       title: "Працюємо самостійно і разом",
-      badge: "Завдання 2",
+      badge: "Завдання 3",
       prompt: "Обери найкращу дію для кожної ситуації.",
       cases: [
         {
@@ -163,7 +190,7 @@ export const workAloneTogetherLessonTemplate = {
       id: "creative",
       type: "creative",
       title: "Працюємо самостійно і разом",
-      badge: "Завдання 3",
+      badge: "Завдання 4",
       prompt: "Склади маленький план спільної справи.",
       previewLabel: "Наш план",
       placeholder: "Обери спільну справу, свою роль і правило роботи разом.",
