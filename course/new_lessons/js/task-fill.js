@@ -1,8 +1,8 @@
 import { persistState } from "./state.js";
 import { escapeHtml, completeTask, renderRichText, setStatus } from "./shared.js";
 
-function isTextFillActivity(activity) {
-  return activity.inputMode === "text";
+function isTextFillItem(item) {
+  return item.inputType === "text";
 }
 
 function normalizeFillAnswer(value) {
@@ -12,35 +12,41 @@ function normalizeFillAnswer(value) {
     .toLocaleLowerCase();
 }
 
-function isCorrectTextAnswer(sentence, value) {
-  const acceptedAnswers = Array.isArray(sentence.acceptedAnswers) && sentence.acceptedAnswers.length > 0
-    ? sentence.acceptedAnswers
-    : [sentence.answer];
+function isCorrectTextAnswer(item, value) {
+  const acceptedAnswers = Array.isArray(item.acceptedAnswers) && item.acceptedAnswers.length > 0
+    ? item.acceptedAnswers
+    : [item.answer];
 
   const normalizedValue = normalizeFillAnswer(value);
   return acceptedAnswers.some((answer) => normalizeFillAnswer(answer) === normalizedValue);
 }
 
-function getSentenceResult(activityId, index, state) {
+function isCorrectFillAnswer(item, value) {
+  return isTextFillItem(item)
+    ? isCorrectTextAnswer(item, value)
+    : value === item.answer;
+}
+
+function getItemResult(activityId, index, state) {
   return state.activityState[`${activityId}-result-${index}`];
 }
 
-function getSentenceStateClass(activityId, index, state) {
-  const result = getSentenceResult(activityId, index, state);
+function getItemStateClass(activityId, index, state) {
+  const result = getItemResult(activityId, index, state);
   return typeof result === "boolean" ? (result ? "is-correct" : "is-wrong") : "";
 }
 
-function getSentenceFeedback(activityId, index, state) {
-  const result = getSentenceResult(activityId, index, state);
+function getItemFeedback(activityId, index, state) {
+  const result = getItemResult(activityId, index, state);
   if (typeof result !== "boolean") return "";
-  return result ? "Так, слово на місці." : "Спробуй інше слово.";
+  return result ? "Так, відповідь підходить." : "Спробуй іншу відповідь.";
 }
 
-function renderFillControl(activity, sentence, index, state) {
-  const stateClass = getSentenceStateClass(activity.id, index, state);
+function renderFillControl(activity, item, index, state) {
+  const stateClass = getItemStateClass(activity.id, index, state);
   const value = state.activityState[`${activity.id}-${index}`] || "";
 
-  if (isTextFillActivity(activity)) {
+  if (isTextFillItem(item)) {
     return `
       <input
         type="text"
@@ -48,16 +54,16 @@ function renderFillControl(activity, sentence, index, state) {
         data-fill-text-id="${activity.id}"
         data-index="${index}"
         value="${escapeHtml(value)}"
-        placeholder="${escapeHtml(sentence.sample || "Впиши слово")}"
+        placeholder="${escapeHtml(item.placeholder || item.sample || "Впиши слово")}"
         autocomplete="off"
         spellcheck="false">
     `;
   }
 
   return `
-    <select class="${stateClass}" data-fill-id="${activity.id}" data-index="${index}">
+    <select class="${stateClass}" data-fill-select-id="${activity.id}" data-index="${index}">
       <option value="">Обери слово</option>
-      ${sentence.options.map((option) => `<option value="${escapeHtml(option)}" ${value === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
+      ${item.options.map((option) => `<option value="${escapeHtml(option)}" ${value === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
     </select>
   `;
 }
@@ -73,13 +79,13 @@ export function renderFillTask(activity, state) {
         </div>
       </div>
       <div class="fill-grid">
-        ${activity.sentences.map((sentence, index) => `
-          <div class="fill-item ${getSentenceStateClass(activity.id, index, state)}">
+        ${activity.items.map((item, index) => `
+          <div class="fill-item ${getItemStateClass(activity.id, index, state)}">
             <label>
-              <span>${escapeHtml(sentence.text)}</span>
-              ${renderFillControl(activity, sentence, index, state)}
+              <span>${escapeHtml(item.text)}</span>
+              ${renderFillControl(activity, item, index, state)}
             </label>
-            <p class="fill-item__feedback ${getSentenceStateClass(activity.id, index, state)}" data-fill-feedback="${activity.id}-${index}" aria-live="polite">${escapeHtml(getSentenceFeedback(activity.id, index, state))}</p>
+            <p class="fill-item__feedback ${getItemStateClass(activity.id, index, state)}" data-fill-feedback="${activity.id}-${index}" aria-live="polite">${escapeHtml(getItemFeedback(activity.id, index, state))}</p>
           </div>
         `).join("")}
       </div>
@@ -109,50 +115,48 @@ function clearLiveFeedback(activity, index, refs, control) {
 }
 
 export function setupFillTask(activity, state, refs, showFeedback, rerenderTask) {
-  if (isTextFillActivity(activity)) {
-    document.querySelectorAll(`[data-fill-text-id="${activity.id}"]`).forEach((input) => {
-      input.addEventListener("input", () => {
-        const index = Number(input.dataset.index);
-        state.activityState[`${activity.id}-${index}`] = input.value;
-        delete state.activityState[`${activity.id}-result-${index}`];
-        persistState(state);
-        clearLiveFeedback(activity, index, refs, input);
-      });
+  document.querySelectorAll(`[data-fill-text-id="${activity.id}"]`).forEach((input) => {
+    input.addEventListener("input", () => {
+      const index = Number(input.dataset.index);
+      state.activityState[`${activity.id}-${index}`] = input.value;
+      delete state.activityState[`${activity.id}-result-${index}`];
+      persistState(state);
+      clearLiveFeedback(activity, index, refs, input);
     });
-  } else {
-    document.querySelectorAll(`[data-fill-id="${activity.id}"]`).forEach((select) => {
-      select.addEventListener("change", () => {
-        const index = Number(select.dataset.index);
-        state.activityState[`${activity.id}-${index}`] = select.value;
-        delete state.activityState[`${activity.id}-result-${index}`];
-        persistState(state);
-        if (typeof rerenderTask === "function") {
-          rerenderTask(`[data-fill-id="${activity.id}"][data-index="${index}"]`);
-        }
-      });
+  });
+
+  document.querySelectorAll(`[data-fill-select-id="${activity.id}"]`).forEach((select) => {
+    select.addEventListener("change", () => {
+      const index = Number(select.dataset.index);
+      state.activityState[`${activity.id}-${index}`] = select.value;
+      delete state.activityState[`${activity.id}-result-${index}`];
+      persistState(state);
+      if (typeof rerenderTask === "function") {
+        rerenderTask(`[data-fill-select-id="${activity.id}"][data-index="${index}"]`);
+      }
     });
-  }
+  });
 
   document.querySelector(`[data-check-fill="${activity.id}"]`).addEventListener("click", () => {
-    const controls = isTextFillActivity(activity)
-      ? document.querySelectorAll(`[data-fill-text-id="${activity.id}"]`)
-      : document.querySelectorAll(`[data-fill-id="${activity.id}"]`);
+    const controls = activity.items.map((item, index) => (
+      isTextFillItem(item)
+        ? document.querySelector(`[data-fill-text-id="${activity.id}"][data-index="${index}"]`)
+        : document.querySelector(`[data-fill-select-id="${activity.id}"][data-index="${index}"]`)
+    ));
 
-    const allAnswered = activity.sentences.every((_, index) => String(controls[index].value || "").trim());
+    const allAnswered = activity.items.every((_, index) => String(controls[index]?.value || "").trim());
     if (!allAnswered) {
-      const message = isTextFillActivity(activity)
-        ? "Спочатку впиши відповідь у кожному рядку."
+      const message = activity.items.some(isTextFillItem)
+        ? "Спочатку заповни всі рядки."
         : "Спочатку обери слово в кожному рядку.";
       setStatus(refs.activities.querySelector(`[data-feedback="${activity.id}"]`), message, "is-warning");
       showFeedback("Ще не всі рядки заповнені.", "is-warning", "!");
       return;
     }
 
-    const ok = activity.sentences.every((sentence, index) => {
+    const ok = activity.items.every((item, index) => {
       const value = controls[index].value;
-      const correct = isTextFillActivity(activity)
-        ? isCorrectTextAnswer(sentence, value)
-        : value === sentence.answer;
+      const correct = isCorrectFillAnswer(item, value);
       state.activityState[`${activity.id}-result-${index}`] = correct;
       return correct;
     });
@@ -162,19 +166,19 @@ export function setupFillTask(activity, state, refs, showFeedback, rerenderTask)
     if (ok) completeTask(activity.id, state, refs);
 
     if (typeof rerenderTask === "function") {
-      rerenderTask(isTextFillActivity(activity) ? `[data-fill-text-id="${activity.id}"][data-index="0"]` : `[data-check-fill="${activity.id}"]`);
+      rerenderTask(`[data-check-fill="${activity.id}"]`);
     }
 
-    const successMessage = isTextFillActivity(activity)
+    const successMessage = activity.items.some(isTextFillItem)
       ? "Чудово! Усі відповіді підходять."
       : "Чудово! Усі слова на місці.";
-    const retryMessage = isTextFillActivity(activity)
+    const retryMessage = activity.items.some(isTextFillItem)
       ? "Є неточності. Спробуй ще раз."
       : "Є помилки. Спробуй ще раз.";
-    const toastSuccess = isTextFillActivity(activity)
+    const toastSuccess = activity.items.some(isTextFillItem)
       ? "Усі відповіді введено правильно."
       : "Усі слова вибрано правильно.";
-    const toastRetry = isTextFillActivity(activity)
+    const toastRetry = activity.items.some(isTextFillItem)
       ? "У відповідях є неточності."
       : "У виборі слів є помилки.";
 

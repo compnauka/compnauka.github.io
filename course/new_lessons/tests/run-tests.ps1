@@ -63,6 +63,8 @@ $textFiles = @(
   "sw.js",
   "LESSON_TEMPLATE_GUIDE.md",
   "AI_LESSON_WORKFLOW.md",
+  "INTERACTIVE_ACTIVITY_ROADMAP.md",
+  "PROJECT_STANDARDS.md",
   "scripts\generate-lesson-pages.ps1"
 ) + (Get-ChildItem -Path "js" -Recurse -Filter "*.js" | ForEach-Object { $_.FullName })
 
@@ -214,12 +216,23 @@ foreach ($lessonFile in $lessonFiles) {
       Assert-True ($text -match ('type:\s*"' + [regex]::Escape($activityType) + '"')) "$lessonName should define activity data for type $activityType."
     }
   }
+
+  if ($text -match 'type:\s*"fill"') {
+    Assert-True ($text -notmatch 'sentences:\s*\[') "$lessonName should not use legacy fill sentences."
+    Assert-True ($text -notmatch 'sample:') "$lessonName should not use legacy fill sample placeholders."
+    Assert-True ($text -match 'items:\s*\[') "$lessonName should define fill through canonical items."
+    Assert-True ($text -match 'inputType:\s*"select"|inputType:\s*"text"') "$lessonName should define fill item input types."
+  }
 }
 
-Assert-True ($lessonDataText.Contains('const itemSource = Array.isArray(template.items) ? template.items : [];')) "lesson-data.js should normalize legacy fill activities that still use items."
-Assert-True ($lessonDataText.Contains('inputMode: "text"')) "lesson-data.js should mark item-based fill activities as text input."
+Assert-True ($lessonDataText.Contains('const itemSource = Array.isArray(template.items) ? template.items : [];')) "lesson-data.js should read canonical fill items directly."
+Assert-True ($lessonDataText.Contains('sample(itemSource, template.count ?? itemSource.length)')) "lesson-data.js should sample canonical fill items."
+Assert-True ($lessonDataText.Contains('item.inputType === "text" ? (item.placeholder || item.answer || "") : item.placeholder')) "lesson-data.js should only normalize placeholder defaults for canonical text fill items."
+Assert-True (-not $lessonDataText.Contains('template.sentences')) "lesson-data.js should no longer support legacy fill sentences."
+Assert-True (-not $lessonDataText.Contains('item.sample')) "lesson-data.js should no longer support legacy fill sample fields."
 Assert-True ($taskFillText.Contains('data-fill-text-id')) "task-fill.js should support text-based fill controls."
-Assert-True ($taskFillText.Contains('isCorrectTextAnswer')) "task-fill.js should validate text-based fill answers."
+Assert-True ($taskFillText.Contains('data-fill-select-id')) "task-fill.js should support select-based fill controls via the canonical items schema."
+Assert-True ($taskFillText.Contains('isCorrectFillAnswer')) "task-fill.js should validate canonical fill items through one shared path."
 Assert-True ($serviceWorkerText.Contains('./js/activity-registry.js')) "sw.js should pre-cache activity-registry.js."
 Assert-True ($serviceWorkerText.Contains('./js/lessons/catalog.js')) "sw.js should pre-cache lesson catalog."
 Assert-True ($serviceWorkerText.Contains('./js/lessons/kind-online-1-2.js')) "sw.js should pre-cache lesson templates used by lesson pages."
@@ -244,6 +257,10 @@ Assert-True ($guideText.Contains("Малюємо у програмі")) "LESSON_
 Assert-True ($guideText.Contains("Підписуємо свою роботу")) "LESSON_TEMPLATE_GUIDE.md should mention the authorship lesson."
 Assert-True ($guideText.Contains("Для чого нам інтернет")) "LESSON_TEMPLATE_GUIDE.md should mention the internet lesson."
 Assert-True ($guideText.Contains("Спілкуємося чемно онлайн")) "LESSON_TEMPLATE_GUIDE.md should mention the kind communication lesson."
+Assert-True ($guideText.Contains('Формат `fill`')) "LESSON_TEMPLATE_GUIDE.md should document fill formats explicitly."
+Assert-True ($guideText.Contains('inputType: "select"')) "LESSON_TEMPLATE_GUIDE.md should describe option-based fill."
+Assert-True ($guideText.Contains('inputType: "text"')) "LESSON_TEMPLATE_GUIDE.md should describe text-based fill."
+Assert-True ($guideText.Contains("placeholder")) "LESSON_TEMPLATE_GUIDE.md should describe text fill placeholders."
 
 Assert-True ($workflowText.Contains("Основна лінійка для 1-2 класу")) "AI_LESSON_WORKFLOW.md should document the recommended lesson sequence."
 Assert-True ($workflowText.Contains("Планувати від карти результатів")) "AI_LESSON_WORKFLOW.md should require planning from outcomes coverage."
@@ -259,6 +276,22 @@ Assert-True ($workflowText.Contains("Працюємо самостійно і р
 Assert-True ($workflowText.Contains("Безпека та спілкування онлайн")) "AI_LESSON_WORKFLOW.md should include the online cycle roadmap."
 Assert-True ($workflowText.Contains("Шукаємо інформацію онлайн")) "AI_LESSON_WORKFLOW.md should include the search lesson."
 Assert-True ($workflowText.Contains("Перевіряємо повідомлення перед тим, як вірити")) "AI_LESSON_WORKFLOW.md should include the verification lesson."
+Assert-True ($workflowText.Contains('Специфіка `fill`')) "AI_LESSON_WORKFLOW.md should document fill specifics."
+Assert-True ($workflowText.Contains('inputType: "select"')) "AI_LESSON_WORKFLOW.md should document select fill mode."
+Assert-True ($workflowText.Contains('inputType: "text"')) "AI_LESSON_WORKFLOW.md should document text fill mode."
+Assert-True ($workflowText.Contains('для `fill` окремо перевіряти щонайменше один кейс `inputType: "select"` і один кейс `inputType: "text"`')) "AI_LESSON_WORKFLOW.md should require browser smoke for both fill modes when relevant."
+
+$roadmapPath = Join-Path $root "INTERACTIVE_ACTIVITY_ROADMAP.md"
+$roadmapText = $decoded[$roadmapPath]
+Assert-True ($roadmapText.Contains('### `fill`')) "INTERACTIVE_ACTIVITY_ROADMAP.md should track fill as a stable activity."
+Assert-True ($roadmapText.Contains('`items[]`, де кожен елемент має `inputType: "select"` або `inputType: "text"`')) "INTERACTIVE_ACTIVITY_ROADMAP.md should describe the canonical fill schema."
+Assert-True ($roadmapText.Contains('`text`, `answer`, `placeholder`')) "INTERACTIVE_ACTIVITY_ROADMAP.md should describe text fill compatibility."
+Assert-True ($roadmapText.Contains("повноту app shell кешу")) "INTERACTIVE_ACTIVITY_ROADMAP.md should mention cache completeness checks."
+
+$standardsPath = Join-Path $root "PROJECT_STANDARDS.md"
+$standardsText = $decoded[$standardsPath]
+Assert-True ($standardsText.Contains("App shell cache includes every JS module required to render already-published routes")) "PROJECT_STANDARDS.md should require a complete app shell cache."
+Assert-True ($standardsText.Contains('`sw.js` is updated in the same change')) "PROJECT_STANDARDS.md should require updating sw.js alongside new modules."
 
 foreach ($htmlFile in @(
   "m1-01-info-types.html",

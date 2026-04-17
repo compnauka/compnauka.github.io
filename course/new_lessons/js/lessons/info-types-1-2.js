@@ -266,23 +266,27 @@ export const infoTypesLessonTemplate = {
       badge: "Завдання 6",
       prompt: "Вибери слово, яке правильно закінчує речення.",
       count: 4,
-      sentences: [
+      items: [
         {
+          inputType: "select",
           text: "Очима ми отримуємо ___ інформацію.",
           answer: "зорову",
           options: ["зорову", "нюхову", "смакову"]
         },
         {
+          inputType: "select",
           text: "Вухами ми отримуємо ___ інформацію.",
           answer: "слухову",
           options: ["слухову", "дотикову", "нюхову"]
         },
         {
+          inputType: "select",
           text: "Запах квітки — це ___ інформація.",
           answer: "нюхова",
           options: ["нюхова", "зорова", "слухова"]
         },
         {
+          inputType: "select",
           text: "Смак лимона — це ___ інформація.",
           answer: "смакова",
           options: ["дотикова", "смакова", "зорова"]

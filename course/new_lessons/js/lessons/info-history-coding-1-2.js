@@ -278,23 +278,27 @@ export const infoHistoryCodingLessonTemplate = {
       badge: "Завдання 6",
       prompt: "Вибери слово для пропуску.",
       count: 4,
-      sentences: [
+      items: [
         {
+          inputType: "select",
           text: "Світлофор передає правило за допомогою ___.",
           answer: "кольору",
           options: ["кольору", "смаку", "запаху"]
         },
         {
+          inputType: "select",
           text: "Цифри найчастіше показують ___ або номер.",
           answer: "кількість",
           options: ["кількість", "мелодію", "погоду"]
         },
         {
+          inputType: "select",
           text: "Букви допомагають записати ___.",
           answer: "слово",
           options: ["слово", "запах", "дотик"]
         },
         {
+          inputType: "select",
           text: "Значок виходу — це проста ___.",
           answer: "підказка",
           options: ["підказка", "ложка", "іграшка"]

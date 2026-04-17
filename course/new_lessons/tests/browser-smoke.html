@@ -45,6 +45,28 @@
       assert(doc.querySelector(activitySelector), `Не знайдено очікувану активність для "${expectedTitle}".`);
     }
 
+    function assertTextFillActivity(doc, activityId, expectedCount, expectedPlaceholderSnippet) {
+      const activity = doc.querySelector(`[data-activity-id='${activityId}']`);
+      assert(activity, `Не знайдено activity ${activityId}.`);
+
+      const inputs = Array.from(activity.querySelectorAll(`[data-fill-text-id='${activityId}']`));
+      assert(inputs.length === expectedCount, `Очікувалося ${expectedCount} text fill inputs для ${activityId}, але знайдено ${inputs.length}.`);
+      assert(inputs.every((input) => input.tagName === "INPUT"), `${activityId} має рендеритися через text input.`);
+
+      const firstPlaceholder = inputs[0]?.getAttribute("placeholder") || "";
+      assert(firstPlaceholder.includes(expectedPlaceholderSnippet), `У ${activityId} перший placeholder має містити "${expectedPlaceholderSnippet}".`);
+    }
+
+    function assertSelectFillActivity(doc, activityId, expectedCount) {
+      const activity = doc.querySelector(`[data-activity-id='${activityId}']`);
+      assert(activity, `Не знайдено activity ${activityId}.`);
+
+      const selects = Array.from(activity.querySelectorAll(`[data-fill-select-id='${activityId}']`));
+      assert(selects.length === expectedCount, `Очікувалося ${expectedCount} select fill controls для ${activityId}, але знайдено ${selects.length}.`);
+      assert(selects.every((select) => select.tagName === "SELECT"), `${activityId} має рендеритися через select для вправи з вибором.`);
+      assert(selects[0]?.querySelectorAll("option").length >= 3, `${activityId} має містити варіанти відповіді у select.`);
+    }
+
     try {
       const lessonWindow = window.open("../m1-08-simple-tables.html", "lesson-smoke");
       assert(lessonWindow, "Не вдалося відкрити сторінку уроку.");
@@ -242,6 +264,28 @@
         "Навчити дітей робити простий онлайн-пошук",
         "[data-activity-id='fill']"
       );
+      assertTextFillActivity(searchDoc, "fill", 3, "кіт");
+
+      const algorithmWindow = window.open("../m3-05-algorithm-representation.html", "algorithm-fill-smoke");
+      assert(algorithmWindow, "Не вдалося відкрити урок про запис алгоритму.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про запис алгоритму.")), 10000);
+        algorithmWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const algorithmDoc = algorithmWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        algorithmDoc,
+        "Як записати алгоритм",
+        "Навчити дітей бачити різні прості способи подання алгоритму",
+        "[data-activity-id='fill']"
+      );
+      assertSelectFillActivity(algorithmDoc, "fill", 4);
 
       const kindWindow = window.open("../m5-04-kind-online.html", "kind-online-smoke");
       assert(kindWindow, "Не вдалося відкрити урок про чемне онлайн-спілкування.");
@@ -262,6 +306,28 @@
         "Навчити дітей чемно спілкуватися",
         "[data-activity-id='classify']"
       );
+      assertTextFillActivity(kindDoc, "fill", 3, "Будь ласка");
+
+      const signWindow = window.open("../m4-03-sign-your-work.html", "sign-fill-smoke");
+      assert(signWindow, "Не вдалося відкрити урок про підпис робіт.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про підпис робіт.")), 10000);
+        signWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const signDoc = signWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertLessonHydrated(
+        signDoc,
+        "Підписуємо свою роботу",
+        "Навчити дітей підписувати",
+        "[data-activity-id='fill']"
+      );
+      assertTextFillActivity(signDoc, "fill", 3, "Малюнок Олі");
 
       output.className = "pass";
       output.textContent = "PASS";
@@ -272,7 +338,9 @@
       codingWindow.close();
       productWindow.close();
       searchWindow.close();
+      algorithmWindow.close();
       kindWindow.close();
+      signWindow.close();
     } catch (error) {
       output.className = "fail";
       output.textContent = `FAIL\n${error.message}`;

@@ -243,23 +243,27 @@ export const messageActionsLessonTemplate = {
       badge: "Завдання 6",
       prompt: "Вибери слово для пропуску.",
       count: 4,
-        sentences: [
+        items: [
           {
+            inputType: "select",
             text: "Коли я читаю оголошення, я ___ інформацію.",
             answer: "отримую",
             options: ["отримую", "зберігаю", "малюю"]
         },
         {
+          inputType: "select",
           text: "Коли я записав(ла) правило в зошит, я його ___.",
           answer: "зберіг(ла)",
           options: ["зберіг(ла)", "загубив(ла)", "з’їв(ла)"]
         },
           {
+            inputType: "select",
             text: "Коли я пояснюю правило другові, я його ___.",
             answer: "передаю",
             options: ["передаю", "ховаю", "ламаю"]
           },
           {
+            inputType: "select",
             text: "Правильний порядок кроків — це проста ___.",
             answer: "послідовність",
             options: ["послідовність", "фарба", "іграшка"]

@@ -728,6 +728,8 @@ self.addEventListener('fetch', event => {
 ```
 
 - [ ] `/offline.html` exists — a friendly page shown when user is offline, with list of cached content available
+- [ ] App shell cache includes every JS module required to render already-published routes, not just `app.js`
+- [ ] When new `js/task-*.js`, `js/lessons/*.js`, `activity-registry.js`, or catalog modules are introduced, `sw.js` is updated in the same change
 - [ ] Progress and user answers are **saved to localStorage / IndexedDB** immediately on input — not only on submit
 - [ ] On reconnect, pending data is synced automatically (Background Sync API where supported)
 
