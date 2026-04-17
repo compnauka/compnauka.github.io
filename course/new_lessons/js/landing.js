@@ -66,7 +66,7 @@ function renderOfficialIfoPanel(results) {
       if (!entry) {
         return `<div class="landing-ifo-panel__block">
           <div class="landing-ifo-panel__chips">${chip}</div>
-          <p class="landing-muted">Для цього коду ще немає сторінки в офіційному довіднику на сайті.</p>
+          <p class="landing-muted">Для цього коду ще немає розшифровки на сайті.</p>
         </div>`;
       }
 
@@ -156,8 +156,8 @@ function renderTeacherModules() {
               </div>
               <a class="primary-button landing-teacher-lesson__cta" href="${escapeHtml(lesson.url)}">Відкрити урок</a>
             </div>
-            <aside class="landing-teacher-lesson__ifo" aria-label="Очікувані результати за стандартом">
-              <h4 class="landing-ifo-panel__heading">ІФО (офіційні формулювання)</h4>
+            <aside class="landing-teacher-lesson__ifo" aria-label="Прив’язка уроку до ІФО">
+              <h4 class="landing-ifo-panel__heading">ІФО (коди та орієнтири)</h4>
               ${renderOfficialIfoPanel(results)}
             </aside>
           </div>
