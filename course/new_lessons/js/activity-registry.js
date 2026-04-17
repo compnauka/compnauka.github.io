@@ -11,6 +11,7 @@ import { renderTableReadTask, setupTableReadTask } from "./task-table-read.js";
 import { renderClickTrainerTask, setupClickTrainerTask } from "./task-click-trainer.js";
 import { renderTraceContourTask, setupTraceContourTask } from "./task-trace-contour.js";
 import { renderKeyTrainerTask, setupKeyTrainerTask } from "./task-key-trainer.js";
+import { renderEmbeddedToolTask, setupEmbeddedToolTask } from "./task-embedded-tool.js";
 
 export function createActivityRegistry(state, refs, showFeedback) {
   return {
@@ -65,6 +66,10 @@ export function createActivityRegistry(state, refs, showFeedback) {
     "key-trainer": {
       render: renderKeyTrainerTask,
       setup: (activity, rerenderTask) => setupKeyTrainerTask(activity, state, refs, showFeedback, rerenderTask)
+    },
+    "embedded-tool": {
+      render: renderEmbeddedToolTask,
+      setup: (activity, rerenderTask) => setupEmbeddedToolTask(activity, state, refs, showFeedback, rerenderTask)
     }
   };
 }

@@ -63,7 +63,7 @@ export const workAloneTogetherLessonTemplate = {
     "пояснювати, що означає виконати свою частину відповідально",
     "бачити, що спільна робота потребує домовленості"
   ],
-  activityOrder: ["key-trainer", "classify", "scenarios", "creative"],
+  activityOrder: ["key-trainer", "classify", "scenarios", "creative", "embedded-tool"],
   sections: [
     {
       title: "Коли Працюю Сам",
@@ -223,6 +223,31 @@ export const workAloneTogetherLessonTemplate = {
       ],
       successMessage: "Чудово! Ти склав(ла) простий план своєї ролі у спільній справі.",
       teacherTip: "Після вправи попросіть дітей усно сказати, що саме вони можуть зробити самі, а де потрібна допомога пари або групи."
+    },
+    "embedded-tool": {
+      id: "embedded-tool",
+      type: "embedded-tool",
+      title: "Працюємо самостійно і разом",
+      badge: "Завдання 5",
+      prompt: "Спробуй скласти короткий план спільної справи в міні-майстерні.",
+      lead: "Тут можна зібрати домовленість для пари або групи: яка справа, моя роль і яке правило допомагає працювати разом.",
+      note: "Ця майстерня не про складний проєкт, а про просту домовленість, яку дитина реально може проговорити в 1-2 класі.",
+      launchLabel: "Відкрити майстерню співпраці",
+      embedLabel: "Показати майстерню тут",
+      hideLabel: "Сховати майстерню",
+      completeLabel: "Готово, план складено",
+      resetLabel: "Почати ще раз",
+      doneMessage: "План спільної роботи зібрано. Можна переходити далі.",
+      frameTitle: "Майстерня співпраці",
+      autoOpenEmbed: true,
+      launchUrl: "./tools/teamwork-studio/index.html",
+      embedUrl: "./tools/teamwork-studio/index.html?embedded=1",
+      steps: [
+        "обери спільну справу",
+        "назви свою роль",
+        "додай одне правило, яке допомагає працювати разом"
+      ],
+      teacherTip: "Це фінальна практика уроку: після класифікації, сценаріїв і творчого плану дитина збирає коротку домовленість у більш цілісний спільний сценарій."
     }
   },
   quiz: {

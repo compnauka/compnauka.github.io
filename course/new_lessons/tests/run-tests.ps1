@@ -237,6 +237,13 @@ Assert-True ($serviceWorkerText.Contains('./js/activity-registry.js')) "sw.js sh
 Assert-True ($serviceWorkerText.Contains('./js/lessons/catalog.js')) "sw.js should pre-cache lesson catalog."
 Assert-True ($serviceWorkerText.Contains('./js/lessons/kind-online-1-2.js')) "sw.js should pre-cache lesson templates used by lesson pages."
 Assert-True ($serviceWorkerText.Contains('./js/task-key-trainer.js')) "sw.js should pre-cache newer task modules."
+Assert-True ($serviceWorkerText.Contains('./js/task-embedded-tool.js')) "sw.js should pre-cache embedded-tool module."
+Assert-True ($serviceWorkerText.Contains('./tools/draw-studio/index.html')) "sw.js should pre-cache the local drawing tool shell."
+Assert-True ($serviceWorkerText.Contains('./tools/shared/tool-bridge.js')) "sw.js should pre-cache the shared embedded tool bridge."
+Assert-True ($serviceWorkerText.Contains('./tools/product-studio/index.html')) "sw.js should pre-cache the local product tool shell."
+Assert-True ($serviceWorkerText.Contains('./tools/signature-studio/index.html')) "sw.js should pre-cache the local signature tool shell."
+Assert-True ($serviceWorkerText.Contains('./tools/teamwork-studio/index.html')) "sw.js should pre-cache the local teamwork tool shell."
+Assert-True ($serviceWorkerText.Contains('./tools/search-studio/index.html')) "sw.js should pre-cache the local search tool shell."
 
 Assert-True ($stateText.Contains("return {};")) "state.js should reset persisted state to an empty object."
 Assert-True ($stateText.Contains("void state;")) "state.js should ignore persisted state writes."
@@ -280,6 +287,7 @@ Assert-True ($workflowText.Contains('Специфіка `fill`')) "AI_LESSON_WOR
 Assert-True ($workflowText.Contains('inputType: "select"')) "AI_LESSON_WORKFLOW.md should document select fill mode."
 Assert-True ($workflowText.Contains('inputType: "text"')) "AI_LESSON_WORKFLOW.md should document text fill mode."
 Assert-True ($workflowText.Contains('для `fill` окремо перевіряти щонайменше один кейс `inputType: "select"` і один кейс `inputType: "text"`')) "AI_LESSON_WORKFLOW.md should require browser smoke for both fill modes when relevant."
+Assert-True ($workflowText.Contains('embedded-tool')) "AI_LESSON_WORKFLOW.md should document the embedded-tool activity type."
 
 $roadmapPath = Join-Path $root "INTERACTIVE_ACTIVITY_ROADMAP.md"
 $roadmapText = $decoded[$roadmapPath]
@@ -287,6 +295,8 @@ Assert-True ($roadmapText.Contains('### `fill`')) "INTERACTIVE_ACTIVITY_ROADMAP.
 Assert-True ($roadmapText.Contains('`items[]`, де кожен елемент має `inputType: "select"` або `inputType: "text"`')) "INTERACTIVE_ACTIVITY_ROADMAP.md should describe the canonical fill schema."
 Assert-True ($roadmapText.Contains('`text`, `answer`, `placeholder`')) "INTERACTIVE_ACTIVITY_ROADMAP.md should describe text fill compatibility."
 Assert-True ($roadmapText.Contains("повноту app shell кешу")) "INTERACTIVE_ACTIVITY_ROADMAP.md should mention cache completeness checks."
+Assert-True ($roadmapText.Contains("локальна творча майстерня")) "INTERACTIVE_ACTIVITY_ROADMAP.md should document the first embedded-tool implementation."
+Assert-True ($roadmapText.Contains("майстерня безпечного пошуку")) "INTERACTIVE_ACTIVITY_ROADMAP.md should mention the search embedded-tool implementation."
 
 $standardsPath = Join-Path $root "PROJECT_STANDARDS.md"
 $standardsText = $decoded[$standardsPath]

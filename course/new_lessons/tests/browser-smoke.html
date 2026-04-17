@@ -22,6 +22,19 @@
       }
     }
 
+    async function setViewport(win, width, height) {
+      if (typeof win.resizeTo === "function") {
+        win.resizeTo(width, height);
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+    }
+
+    function assertNoHorizontalOverflow(doc, message) {
+      const root = doc.documentElement;
+      const overflow = root.scrollWidth - root.clientWidth;
+      assert(overflow <= 2, `${message} Overflow: ${overflow}px.`);
+    }
+
     function isHidden(element, win) {
       if (!element) return true;
       const style = win.getComputedStyle(element);
@@ -68,6 +81,20 @@
     }
 
     try {
+      const landingWindow = window.open("../index.html", "landing-smoke");
+      assert(landingWindow, "Не вдалося відкрити головну сторінку підручника.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження головної сторінки.")), 10000);
+        landingWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      await setViewport(landingWindow, 390, 844);
+      assertNoHorizontalOverflow(landingWindow.document, "Головна сторінка не має створювати горизонтальний скрол на мобільному.");
+
       const lessonWindow = window.open("../m1-08-simple-tables.html", "lesson-smoke");
       assert(lessonWindow, "Не вдалося відкрити сторінку уроку.");
 
@@ -80,7 +107,9 @@
       });
 
       const doc = lessonWindow.document;
+      await setViewport(lessonWindow, 390, 844);
       await new Promise((resolve) => window.setTimeout(resolve, 300));
+      assertNoHorizontalOverflow(doc, "Сторінка уроку не має створювати горизонтальний скрол на мобільному.");
 
       assert(doc.querySelector("[data-activity-id='table-read']"), "Не знайдено activity table-read.");
       assert(doc.querySelector("#lesson-coverage"), "Не знайдено teacher coverage block.");
@@ -245,6 +274,97 @@
       const productScore = productKeyTrainer.querySelector(".task-score")?.textContent || "";
       assert(productScore.includes("0/4"), "У уроці про простий продукт key-trainer має починатися з рахунку 0/4.");
 
+      const productEmbeddedTool = productDoc.querySelector("[data-activity-id='embedded-tool']");
+      assert(productEmbeddedTool, "У уроці про простий продукт має бути embedded-tool.");
+
+      const productEmbeddedFrame = productDoc.querySelector("[data-embedded-frame='embedded-tool']");
+      assert(productEmbeddedFrame, "У уроці про простий продукт має одразу відкриватися майстерня продукту.");
+
+      await new Promise((resolve) => {
+        const waitForFrame = () => {
+          if (productEmbeddedFrame.contentWindow?.document?.readyState === "complete") {
+            resolve();
+            return;
+          }
+          window.setTimeout(waitForFrame, 150);
+        };
+        waitForFrame();
+      });
+
+      const productToolDoc = productEmbeddedFrame.contentWindow.document;
+      const productTextInput = productToolDoc.getElementById("product-text");
+      const productFinishButton = productToolDoc.getElementById("finish-product");
+      assert(productTextInput, "У майстерні продукту має бути поле короткого тексту.");
+      assert(productFinishButton, "У майстерні продукту має бути кнопка завершення.");
+
+      productTextInput.value = "Чекаємо на свято";
+      productTextInput.dispatchEvent(new Event("input", { bubbles: true }));
+      productFinishButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
+      const productEmbeddedToolAfter = productDoc.querySelector("[data-activity-id='embedded-tool']");
+      const productEmbeddedScoreAfter = productEmbeddedToolAfter.querySelector(".task-score")?.textContent || "";
+      assert(productEmbeddedScoreAfter.includes("1/1"), "Після завершення майстерні продукту embedded-tool має стати 1/1.");
+
+      const drawWindow = window.open("../m4-01-draw-in-program.html", "embedded-tool-smoke");
+      assert(drawWindow, "Не вдалося відкрити урок малювання.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку малювання.")), 10000);
+        drawWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const drawDoc = drawWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      assertLessonHydrated(
+        drawDoc,
+        "Малюємо у програмі",
+        "Навчити дітей розуміти",
+        "[data-activity-id='embedded-tool']"
+      );
+
+      const embeddedTool = drawDoc.querySelector("[data-activity-id='embedded-tool']");
+      assert(embeddedTool, "У уроці малювання має бути activity embedded-tool.");
+
+      const embeddedScoreBefore = embeddedTool.querySelector(".task-score")?.textContent || "";
+      assert(embeddedScoreBefore.includes("0/1"), "Embedded-tool має починатися з рахунку 0/1.");
+
+      const embeddedFrame = drawDoc.querySelector("[data-embedded-frame='embedded-tool']");
+      assert(embeddedFrame, "Embedded-tool має одразу відкривати вбудовану майстерню.");
+
+      await new Promise((resolve) => {
+        const waitForFrame = () => {
+          if (embeddedFrame.contentWindow?.document?.readyState === "complete") {
+            resolve();
+            return;
+          }
+          window.setTimeout(waitForFrame, 150);
+        };
+        waitForFrame();
+      });
+
+      const toolDoc = embeddedFrame.contentWindow.document;
+      const finishDrawing = toolDoc.getElementById("finish-drawing");
+      assert(finishDrawing, "У локальній майстерні має бути кнопка завершення.");
+
+      const toolCanvas = toolDoc.getElementById("draw-surface");
+      assert(toolCanvas, "У локальній майстерні має бути canvas.");
+
+      toolCanvas.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 80, clientY: 80 }));
+      toolCanvas.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 140, clientY: 120 }));
+      toolCanvas.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientX: 140, clientY: 120 }));
+      finishDrawing.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
+      const embeddedToolAfter = drawDoc.querySelector("[data-activity-id='embedded-tool']");
+      const embeddedScoreAfter = embeddedToolAfter.querySelector(".task-score")?.textContent || "";
+      assert(embeddedScoreAfter.includes("1/1"), "Після завершення майстерні embedded-tool має стати 1/1.");
+
       const searchWindow = window.open("../m5-02-search-online.html", "search-online-smoke");
       assert(searchWindow, "Не вдалося відкрити урок про онлайн-пошук.");
 
@@ -265,6 +385,47 @@
         "[data-activity-id='fill']"
       );
       assertTextFillActivity(searchDoc, "fill", 3, "кіт");
+
+      const searchEmbeddedTool = searchDoc.querySelector("[data-activity-id='embedded-tool']");
+      assert(searchEmbeddedTool, "У уроці про онлайн-пошук має бути embedded-tool.");
+
+      const searchFrame = searchDoc.querySelector("[data-embedded-frame='embedded-tool']");
+      assert(searchFrame, "У уроці про онлайн-пошук має одразу відкриватися майстерня пошуку.");
+
+      await new Promise((resolve) => {
+        const waitForFrame = () => {
+          if (searchFrame.contentWindow?.document?.readyState === "complete") {
+            resolve();
+            return;
+          }
+          window.setTimeout(waitForFrame, 150);
+        };
+        waitForFrame();
+      });
+
+      const searchToolDoc = searchFrame.contentWindow.document;
+      const searchGoal = searchToolDoc.getElementById("search-goal");
+      const searchQuery = searchToolDoc.getElementById("search-query");
+      const searchFinishButton = searchToolDoc.getElementById("finish-search");
+      assert(searchGoal, "У майстерні пошуку має бути вибір мети.");
+      assert(searchQuery, "У майстерні пошуку має бути вибір запиту.");
+      assert(searchFinishButton, "У майстерні пошуку має бути кнопка завершення.");
+
+      searchGoal.value = "weather";
+      searchGoal.dispatchEvent(new Event("change", { bubbles: true }));
+      searchQuery.value = "погода";
+      searchQuery.dispatchEvent(new Event("change", { bubbles: true }));
+
+      const weatherCard = searchToolDoc.querySelector("[data-result-id='weather-today']");
+      assert(weatherCard, "У майстерні пошуку має бути правильний результат для погоди.");
+      weatherCard.click();
+      searchFinishButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
+      const searchEmbeddedToolAfter = searchDoc.querySelector("[data-activity-id='embedded-tool']");
+      const searchEmbeddedScoreAfter = searchEmbeddedToolAfter.querySelector(".task-score")?.textContent || "";
+      assert(searchEmbeddedScoreAfter.includes("1/1"), "Після завершення майстерні пошуку embedded-tool має стати 1/1.");
 
       const algorithmWindow = window.open("../m3-05-algorithm-representation.html", "algorithm-fill-smoke");
       assert(algorithmWindow, "Не вдалося відкрити урок про запис алгоритму.");
@@ -329,18 +490,107 @@
       );
       assertTextFillActivity(signDoc, "fill", 3, "Малюнок Олі");
 
+      const signatureEmbeddedTool = signDoc.querySelector("[data-activity-id='embedded-tool']");
+      assert(signatureEmbeddedTool, "У уроці про підпис робіт має бути embedded-tool.");
+
+      const signatureFrame = signDoc.querySelector("[data-embedded-frame='embedded-tool']");
+      assert(signatureFrame, "У уроці про підпис робіт має одразу відкриватися майстерня підпису.");
+
+      await new Promise((resolve) => {
+        const waitForFrame = () => {
+          if (signatureFrame.contentWindow?.document?.readyState === "complete") {
+            resolve();
+            return;
+          }
+          window.setTimeout(waitForFrame, 150);
+        };
+        waitForFrame();
+      });
+
+      const signatureToolDoc = signatureFrame.contentWindow.document;
+      const authorInput = signatureToolDoc.getElementById("author-name");
+      const signatureFinishButton = signatureToolDoc.getElementById("finish-signature");
+      assert(authorInput, "У майстерні підпису має бути поле імені автора.");
+      assert(signatureFinishButton, "У майстерні підпису має бути кнопка завершення.");
+
+      authorInput.value = "Марійка";
+      authorInput.dispatchEvent(new Event("input", { bubbles: true }));
+      signatureFinishButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
+      const signatureEmbeddedToolAfter = signDoc.querySelector("[data-activity-id='embedded-tool']");
+      const signatureEmbeddedScoreAfter = signatureEmbeddedToolAfter.querySelector(".task-score")?.textContent || "";
+      assert(signatureEmbeddedScoreAfter.includes("1/1"), "Після завершення майстерні підпису embedded-tool має стати 1/1.");
+
+      const teamworkWindow = window.open("../m4-04-work-alone-together.html", "teamwork-embedded-smoke");
+      assert(teamworkWindow, "Не вдалося відкрити урок про спільну роботу.");
+
+      await new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => reject(new Error("Таймаут завантаження уроку про спільну роботу.")), 10000);
+        teamworkWindow.addEventListener("load", () => {
+          window.clearTimeout(timer);
+          resolve();
+        }, { once: true });
+      });
+
+      const teamworkDoc = teamworkWindow.document;
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+      assertLessonHydrated(
+        teamworkDoc,
+        "Працюємо самостійно і разом",
+        "Навчити дітей розрізняти самостійну і спільну роботу",
+        "[data-activity-id='embedded-tool']"
+      );
+
+      const teamworkEmbeddedTool = teamworkDoc.querySelector("[data-activity-id='embedded-tool']");
+      assert(teamworkEmbeddedTool, "У уроці про спільну роботу має бути embedded-tool.");
+
+      const teamworkFrame = teamworkDoc.querySelector("[data-embedded-frame='embedded-tool']");
+      assert(teamworkFrame, "У уроці про спільну роботу має одразу відкриватися майстерня співпраці.");
+
+      await new Promise((resolve) => {
+        const waitForFrame = () => {
+          if (teamworkFrame.contentWindow?.document?.readyState === "complete") {
+            resolve();
+            return;
+          }
+          window.setTimeout(waitForFrame, 150);
+        };
+        waitForFrame();
+      });
+
+      const teamworkToolDoc = teamworkFrame.contentWindow.document;
+      const teamworkRole = teamworkToolDoc.getElementById("team-role");
+      const teamworkFinishButton = teamworkToolDoc.getElementById("finish-team");
+      assert(teamworkRole, "У майстерні співпраці має бути вибір ролі.");
+      assert(teamworkFinishButton, "У майстерні співпраці має бути кнопка завершення.");
+
+      teamworkRole.value = "пишу слова";
+      teamworkRole.dispatchEvent(new Event("change", { bubbles: true }));
+      teamworkFinishButton.click();
+
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
+      const teamworkEmbeddedToolAfter = teamworkDoc.querySelector("[data-activity-id='embedded-tool']");
+      const teamworkEmbeddedScoreAfter = teamworkEmbeddedToolAfter.querySelector(".task-score")?.textContent || "";
+      assert(teamworkEmbeddedScoreAfter.includes("1/1"), "Після завершення майстерні співпраці embedded-tool має стати 1/1.");
+
       output.className = "pass";
       output.textContent = "PASS";
+      landingWindow.close();
       lessonWindow.close();
       clickTrainerWindow.close();
       traceWindow.close();
       keyTrainerWindow.close();
       codingWindow.close();
       productWindow.close();
+      drawWindow.close();
       searchWindow.close();
       algorithmWindow.close();
       kindWindow.close();
       signWindow.close();
+      teamworkWindow.close();
     } catch (error) {
       output.className = "fail";
       output.textContent = `FAIL\n${error.message}`;

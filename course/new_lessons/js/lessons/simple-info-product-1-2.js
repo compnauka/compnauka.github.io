@@ -63,7 +63,7 @@ export const simpleInfoProductLessonTemplate = {
     "поєднувати малюнок і слова для повідомлення",
     "пояснювати, для кого створено продукт"
   ],
-  activityOrder: ["key-trainer", "classify", "creative", "transfer"],
+  activityOrder: ["key-trainer", "classify", "creative", "embedded-tool", "transfer"],
   sections: [
     {
       title: "Що Називаємо Інформаційним Продуктом",
@@ -200,11 +200,36 @@ export const simpleInfoProductLessonTemplate = {
       successMessage: "Чудово! Ти склав(ла) свій простий інформаційний продукт.",
       teacherTip: "Просіть дітей сказати, хто саме мав би прочитати їхній продукт."
     },
+    "embedded-tool": {
+      id: "embedded-tool",
+      type: "embedded-tool",
+      title: "Створюємо простий інформаційний продукт",
+      badge: "Завдання 4",
+      prompt: "Спробуй зібрати свій продукт у невеликій творчій майстерні.",
+      lead: "Тут можна одразу поєднати вид продукту, короткий текст і того, для кого він створений.",
+      note: "Мета не в довгому дизайні, а в короткому й зрозумілому повідомленні для конкретної людини або групи.",
+      launchLabel: "Відкрити майстерню продукту",
+      embedLabel: "Показати майстерню тут",
+      hideLabel: "Сховати майстерню",
+      completeLabel: "Готово, продукт складено",
+      resetLabel: "Почати ще раз",
+      doneMessage: "Практичний продукт зібрано. Можна перейти до наступної вправи.",
+      frameTitle: "Майстерня продукту",
+      autoOpenEmbed: true,
+      launchUrl: "./tools/product-studio/index.html",
+      embedUrl: "./tools/product-studio/index.html?embedded=1",
+      steps: [
+        "обери вид продукту",
+        "додай короткий текст і для кого він потрібний",
+        "перевір, чи повідомлення зрозуміле з першого погляду"
+      ],
+      teacherTip: "Ця майстерня підсилює центральну ідею уроку: продукт має мати форму, зміст і адресата. Якщо дітям легше працювати в окремій вкладці, відкрийте її поза уроком."
+    },
     transfer: {
       id: "transfer",
       type: "transfer",
       title: "Створюємо простий інформаційний продукт",
-      badge: "Завдання 4",
+      badge: "Завдання 5",
       prompt: "Обери найкраще пояснення для ситуації.",
       count: 3,
       cases: [

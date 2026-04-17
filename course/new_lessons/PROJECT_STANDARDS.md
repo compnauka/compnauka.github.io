@@ -11,6 +11,8 @@ For `course/new_lessons`, these project rules take precedence:
 - The textbook **home page** (`course/new_lessons/index.html`) uses the same **student / teacher** view split as lessons: in student mode keep navigation friendly and avoid curriculum codes on the surface; curriculum alignment (ІФО, outcomes) belongs in teacher mode. Implementation details: `js/landing.js`, `js/landing-modules.js` — see `AI_LESSON_WORKFLOW.md` and `LESSON_TEMPLATE_GUIDE.md`.
 - Wording must stay simple, concrete, and age-appropriate for grades 1-2.
 - Sequence/order tasks for young children should prefer clear visual placement zones over abstract list manipulation.
+- For `course/new_lessons`, responsive layout is a release blocker: no horizontal scrolling on mobile for the home page, lesson pages, or embedded local tools.
+- When layout or style changes are made in this project, update automated smoke coverage for the affected mobile scenario.
 
 If an AI agent sees a conflict between this file and `AI_LESSON_WORKFLOW.md` or `LESSON_TEMPLATE_GUIDE.md`, the local files for `course/new_lessons` win.
 

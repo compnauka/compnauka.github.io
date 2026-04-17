@@ -189,6 +189,14 @@ function buildKeyTrainerActivity(template) {
   };
 }
 
+function buildEmbeddedToolActivity(template) {
+  return {
+    ...template,
+    steps: Array.isArray(template.steps) ? [...template.steps] : [],
+    checklist: Array.isArray(template.checklist) ? [...template.checklist] : []
+  };
+}
+
 function buildQuiz(quizTemplate) {
   return sample(quizTemplate.questions, quizTemplate.count).map((question) => randomizeOptions(question));
 }
@@ -283,10 +291,11 @@ function cloneActivities(activities, activityOrder = null) {
     "table-read": () => (activities["table-read"] ? buildTableReadActivity(activities["table-read"]) : null),
     "click-trainer": () => (activities["click-trainer"] ? buildClickTrainerActivity(activities["click-trainer"]) : null),
     "trace-contour": () => (activities["trace-contour"] ? buildTraceContourActivity(activities["trace-contour"]) : null),
-    "key-trainer": () => (activities["key-trainer"] ? buildKeyTrainerActivity(activities["key-trainer"]) : null)
+    "key-trainer": () => (activities["key-trainer"] ? buildKeyTrainerActivity(activities["key-trainer"]) : null),
+    "embedded-tool": () => (activities["embedded-tool"] ? buildEmbeddedToolActivity(activities["embedded-tool"]) : null)
   };
 
-  const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read", "click-trainer", "trace-contour", "key-trainer"];
+  const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read", "click-trainer", "trace-contour", "key-trainer", "embedded-tool"];
   const order = Array.isArray(activityOrder) && activityOrder.length > 0 ? activityOrder : defaultOrder;
 
   return order

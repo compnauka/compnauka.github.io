@@ -69,7 +69,7 @@ export const signYourWorkLessonTemplate = {
     "розпізнавати ситуації, коли чужу роботу не можна називати своєю",
     "завершувати простий продукт підписом автора"
   ],
-  activityOrder: ["key-trainer", "classify", "fill", "transfer"],
+  activityOrder: ["key-trainer", "classify", "fill", "embedded-tool", "transfer"],
   sections: [
     {
       title: "Хто Такий Автор",
@@ -190,11 +190,36 @@ export const signYourWorkLessonTemplate = {
       ],
       teacherTip: "Приймайте різні короткі коректні відповіді, якщо вони показують автора зрозуміло."
     },
+    "embedded-tool": {
+      id: "embedded-tool",
+      type: "embedded-tool",
+      title: "Підписуємо свою роботу і поважаємо авторство",
+      badge: "Завдання 4",
+      prompt: "Спробуй завершити роботу простим підписом автора.",
+      lead: "У цій майстерні можна обрати вид роботи, ім’я автора і форму короткого підпису.",
+      note: "Тут важливо не довго друкувати, а побачити, як підпис показує автора готової роботи.",
+      launchLabel: "Відкрити майстерню підпису",
+      embedLabel: "Показати майстерню тут",
+      hideLabel: "Сховати майстерню",
+      completeLabel: "Готово, підпис додано",
+      resetLabel: "Почати ще раз",
+      doneMessage: "Підпис додано. Тепер робота має зрозумілого автора.",
+      frameTitle: "Майстерня підпису",
+      autoOpenEmbed: true,
+      launchUrl: "./tools/signature-studio/index.html",
+      embedUrl: "./tools/signature-studio/index.html?embedded=1",
+      steps: [
+        "обери, яку роботу завершуєш",
+        "додай ім’я автора",
+        "перевір, чи з підпису одразу зрозуміло, хто створив роботу"
+      ],
+      teacherTip: "Ця майстерня не замінює коротку клавіатурну вправу, а переносить знання в завершений продукт. Добре підходить після fill, коли діти вже бачили кілька форм короткого підпису."
+    },
     transfer: {
       id: "transfer",
       type: "transfer",
       title: "Підписуємо свою роботу і поважаємо авторство",
-      badge: "Завдання 4",
+      badge: "Завдання 5",
       prompt: "Обери найкраще пояснення для ситуації.",
       count: 3,
       cases: [

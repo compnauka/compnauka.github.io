@@ -6,6 +6,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -15,6 +16,13 @@ body {
   line-height: 1.6;
   color: var(--text);
   background: var(--bg);
+}
+
+img,
+svg,
+canvas,
+iframe {
+  max-width: 100%;
 }
 
 body.student-mode .teacher-only {
@@ -70,6 +78,18 @@ button {
 .container {
   width: min(1120px, calc(100% - var(--space-5)));
   margin: 0 auto;
+}
+
+.topbar__inner > *,
+.hero-card__content > *,
+.section-card__header > *,
+.landing-hero__grid > *,
+.landing-intro__grid > *,
+.landing-lesson-row > *,
+.landing-teacher-lesson__grid > *,
+.two-col > *,
+.actions-row > * {
+  min-width: 0;
 }
 
 .layout {
@@ -140,6 +160,8 @@ h4 {
   line-height: 1.2;
   font-family: "Trebuchet MS", "Atkinson Hyperlegible", sans-serif;
   font-weight: 900;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 h1 {
@@ -157,6 +179,7 @@ li,
 .task-prompt,
 .hero-card__lead {
   max-width: var(--measure-text);
+  overflow-wrap: anywhere;
 }
 
 .progress__track {
@@ -255,6 +278,24 @@ li,
 .emotion-button,
 .canvas-fallback select {
   min-height: 56px;
+}
+
+.mode-option,
+.sound-toggle,
+.primary-button,
+.secondary-button,
+.choice-button,
+.truth-button,
+.emotion-button,
+.lesson-card__button,
+.landing-lesson-row__button,
+.task-badge,
+.task-score,
+.meta-chip,
+.lesson-card__chip {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .mode-segmented {
@@ -2115,6 +2156,64 @@ textarea {
   margin-top: var(--space-4);
 }
 
+.embedded-tool {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  padding: 18px;
+  border: 2px solid color-mix(in srgb, var(--line) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--surface)), var(--surface-soft));
+}
+
+.embedded-tool.is-done {
+  border-color: color-mix(in srgb, var(--success) 48%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--success-soft) 78%, var(--surface)), var(--surface));
+}
+
+.embedded-tool__intro,
+.embedded-tool__steps,
+.embedded-tool__done {
+  margin: 0;
+}
+
+.embedded-tool__lead {
+  margin: 0;
+  font-weight: 900;
+}
+
+.embedded-tool__note,
+.embedded-tool__done {
+  color: var(--muted);
+}
+
+.embedded-tool__steps {
+  padding-left: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.embedded-tool__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.embedded-tool__frame-wrap {
+  padding: 10px;
+  border: 2px solid color-mix(in srgb, var(--line) 18%, transparent);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.embedded-tool__frame {
+  width: 100%;
+  height: clamp(420px, 72vh, 720px);
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+}
+
 .feedback-toast {
   position: fixed;
   right: var(--space-4);
@@ -2157,7 +2256,7 @@ canvas:focus-visible {
   outline-offset: 3px;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 960px) {
   .topbar__inner,
   .topbar__inner--landing,
   .hero-card__content,
@@ -2291,12 +2390,13 @@ canvas:focus-visible {
 
   .task-card__header {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     gap: var(--space-3);
     align-items: start;
   }
 
   .task-score {
+    justify-self: start;
     padding: 10px 12px;
     min-width: 78px;
     text-align: center;
@@ -2381,6 +2481,15 @@ canvas:focus-visible {
   .choices-grid--compact {
     grid-template-columns: 1fr;
     gap: var(--space-3);
+  }
+
+  .embedded-tool__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .embedded-tool__frame {
+    height: clamp(360px, 68vh, 560px);
   }
 
   .choice-button,
@@ -2502,5 +2611,29 @@ canvas:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: min(100% - 12px, 1120px);
+  }
+
+  .draggable-list,
+  .dropzone-grid,
+  .reflection-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+    padding: 12px 14px;
+  }
+
+  .embedded-tool__frame {
+    height: clamp(320px, 62vh, 460px);
   }
 }

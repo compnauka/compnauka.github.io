@@ -1,4 +1,4 @@
-const CACHE_NAME = "interactive-lesson-v14";
+const CACHE_NAME = "interactive-lesson-v16";
 const OFFLINE_URL = "./offline.html";
 const ASSETS = [
   "./",
@@ -48,6 +48,7 @@ const ASSETS = [
   "./js/task-click-trainer.js",
   "./js/task-creative.js",
   "./js/task-draw.js",
+  "./js/task-embedded-tool.js",
   "./js/task-classify.js",
   "./js/task-fill.js",
   "./js/task-key-trainer.js",
@@ -62,7 +63,23 @@ const ASSETS = [
   "./js/reflection.js",
   "./manifest.json",
   "./icon-192.svg",
-  "./icon-512.svg"
+  "./icon-512.svg",
+  "./tools/draw-studio/index.html",
+  "./tools/draw-studio/tool.css",
+  "./tools/draw-studio/tool.js",
+  "./tools/shared/tool-bridge.js",
+  "./tools/product-studio/index.html",
+  "./tools/product-studio/tool.css",
+  "./tools/product-studio/tool.js",
+  "./tools/signature-studio/index.html",
+  "./tools/signature-studio/tool.css",
+  "./tools/signature-studio/tool.js",
+  "./tools/teamwork-studio/index.html",
+  "./tools/teamwork-studio/tool.css",
+  "./tools/teamwork-studio/tool.js",
+  "./tools/search-studio/index.html",
+  "./tools/search-studio/tool.css",
+  "./tools/search-studio/tool.js"
 ];
 
 self.addEventListener("install", (event) => {
