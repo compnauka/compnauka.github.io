@@ -75,11 +75,27 @@ function buildPickActivity(template) {
 }
 
 function buildFillActivity(template) {
+  const sentenceSource = Array.isArray(template.sentences) ? template.sentences : null;
+  if (sentenceSource && sentenceSource.length > 0) {
+    return {
+      ...template,
+      inputMode: "select",
+      sentences: sample(sentenceSource, template.count ?? sentenceSource.length).map((sentence) => ({
+        ...sentence,
+        options: shuffle(sentence.options)
+      }))
+    };
+  }
+
+  const itemSource = Array.isArray(template.items) ? template.items : [];
   return {
     ...template,
-    sentences: sample(template.sentences, template.count).map((sentence) => ({
-      ...sentence,
-      options: shuffle(sentence.options)
+    inputMode: "text",
+    sentences: itemSource.map((item) => ({
+      text: item.text || "",
+      answer: item.answer || "",
+      sample: item.sample || item.answer || "",
+      acceptedAnswers: Array.isArray(item.acceptedAnswers) ? [...item.acceptedAnswers] : undefined
     }))
   };
 }

@@ -79,6 +79,9 @@ foreach ($path in $textFiles) {
 $indexPath = Join-Path $root "index.html"
 $catalogPath = Join-Path $root "js\lessons\catalog.js"
 $statePath = Join-Path $root "js\state.js"
+$lessonDataPath = Join-Path $root "js\lesson-data.js"
+$taskFillPath = Join-Path $root "js\task-fill.js"
+$serviceWorkerPath = Join-Path $root "sw.js"
 $generatorPath = Join-Path $root "scripts\generate-lesson-pages.ps1"
 $guidePath = Join-Path $root "LESSON_TEMPLATE_GUIDE.md"
 $workflowPath = Join-Path $root "AI_LESSON_WORKFLOW.md"
@@ -87,6 +90,9 @@ $landingPath = Join-Path $root "js\landing.js"
 $indexText = $decoded[$indexPath]
 $catalogText = $decoded[$catalogPath]
 $stateText = $decoded[$statePath]
+$lessonDataText = $decoded[$lessonDataPath]
+$taskFillText = $decoded[$taskFillPath]
+$serviceWorkerText = $decoded[$serviceWorkerPath]
 $generatorText = $decoded[$generatorPath]
 $guideText = $decoded[$guidePath]
 $workflowText = $decoded[$workflowPath]
@@ -209,6 +215,15 @@ foreach ($lessonFile in $lessonFiles) {
     }
   }
 }
+
+Assert-True ($lessonDataText.Contains('const itemSource = Array.isArray(template.items) ? template.items : [];')) "lesson-data.js should normalize legacy fill activities that still use items."
+Assert-True ($lessonDataText.Contains('inputMode: "text"')) "lesson-data.js should mark item-based fill activities as text input."
+Assert-True ($taskFillText.Contains('data-fill-text-id')) "task-fill.js should support text-based fill controls."
+Assert-True ($taskFillText.Contains('isCorrectTextAnswer')) "task-fill.js should validate text-based fill answers."
+Assert-True ($serviceWorkerText.Contains('./js/activity-registry.js')) "sw.js should pre-cache activity-registry.js."
+Assert-True ($serviceWorkerText.Contains('./js/lessons/catalog.js')) "sw.js should pre-cache lesson catalog."
+Assert-True ($serviceWorkerText.Contains('./js/lessons/kind-online-1-2.js')) "sw.js should pre-cache lesson templates used by lesson pages."
+Assert-True ($serviceWorkerText.Contains('./js/task-key-trainer.js')) "sw.js should pre-cache newer task modules."
 
 Assert-True ($stateText.Contains("return {};")) "state.js should reset persisted state to an empty object."
 Assert-True ($stateText.Contains("void state;")) "state.js should ignore persisted state writes."
