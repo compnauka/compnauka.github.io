@@ -405,6 +405,23 @@
     const hGap = Math.max(gapRight, gapLeft);
     const vGap = Math.max(gapBottom, gapTop);
 
+    // НОВЕ ПРАВИЛО:
+    // якщо звичайний блок повертається ВГОРУ саме в Умову,
+    // то заходимо в ромб знизу, а виходимо зліва/справа залежно від положення блока
+    if (
+      routeMode === 'auto' &&
+      toShape.type === 'decision' &&
+      dy < -20
+    ) {
+      if (dx > 20) {
+        return { exit: 'right', entry: 'bottom' };
+      }
+      if (dx < -20) {
+        return { exit: 'left', entry: 'bottom' };
+      }
+      return { exit: 'top', entry: 'bottom' };
+    }
+
     if (vGap >= hGap) {
       return dy >= 0 ? { exit: 'bottom', entry: 'top' } : { exit: 'top', entry: 'bottom' };
     }
@@ -575,34 +592,111 @@
     const fromEdges = getEdgePoints(fromShape, outset);
     const toEdges = getEdgePoints(toShape);
     const fromPt = safeSide === 'right' ? fromEdges.right : fromEdges.left;
+
     const cx = fromShape.left + fromShape.width / 2;
     const cy = fromShape.top + fromShape.height / 2;
     const toCx = toShape.left + toShape.width / 2;
     const toCy = toShape.top + toShape.height / 2;
-    const hDist = safeSide === 'right' ? toCx - cx : cx - toCx;
+
+    const dx = toCx - cx;
     const vDist = toCy - cy;
     const targetSpansCenter = toShape.left <= cx && (toShape.left + toShape.width) >= cx;
 
-    let entry = 'top';
+    const sideOffset = 86;   // коротке плече від ромба
+    const margin = 72;
+
+    // 1. Якщо йдемо ВГОРУ — вхід збоку лишається
     if (vDist < -30) {
-      // Looping back upward looks cleaner when the branch enters the side corridor.
-      entry = safeSide;
-    } else if (vDist > 30 && targetSpansCenter) {
-      // Kid editor: when a shared action block sits below the decision, entering from the
-      // branch side keeps the yes/no route from cutting through the central flow stack.
-      entry = safeSide;
-    } else if (Math.abs(vDist) < 30 && hDist > 20) {
+      const entry = safeSide;
+      const toPt = toEdges[entry];
+      const shoulderX = safeSide === 'right'
+        ? fromPt.x + sideOffset
+        : fromPt.x - sideOffset;
+
+      const corridorX = safeSide === 'right'
+        ? Math.max(shoulderX, toPt.x + margin)
+        : Math.min(shoulderX, toPt.x - margin);
+
+      const pts = [
+        fromPt,
+        { x: shoulderX, y: fromPt.y },
+        { x: corridorX, y: fromPt.y },
+        { x: corridorX, y: toPt.y },
+        toPt,
+      ];
+
+      return { pts, exit: safeSide, entry };
+    }
+
+    // 2. Якщо це спільний нижній блок майже під ромбом — заходимо зверху
+    const centeredBelow =
+      vDist > 30 &&
+      targetSpansCenter &&
+      Math.abs(dx) <= Math.max(60, toShape.width * 0.35);
+
+    // 3. Якщо це звичайна гілка на своїй стороні — теж заходимо зверху,
+    // але простим красивим маршрутом
+    const sameSideBelow =
+      vDist > 30 &&
+      (
+        (safeSide === 'left' && toCx < cx) ||
+        (safeSide === 'right' && toCx > cx)
+      ) &&
+      !targetSpansCenter;
+
+    let entry = 'top';
+
+    if (!centeredBelow && !sameSideBelow) {
+      // Якщо блок майже на тій самій висоті або зміщений нетипово
       entry = safeSide === 'right' ? 'left' : 'right';
     }
 
     const toPt = toEdges[entry];
-    const margin = 72;
     let pts;
 
-    if (entry === safeSide) {
+    // 4. Спільний нижній блок — акуратне сходження через зовнішній коридор
+    if (centeredBelow) {
+      const shoulderX = safeSide === 'right'
+        ? fromPt.x + sideOffset
+        : fromPt.x - sideOffset;
+
+      const corridorX = safeSide === 'right'
+        ? Math.max(shoulderX, toPt.x + 28)
+        : Math.min(shoulderX, toPt.x - 28);
+
+      const midY = toPt.y - 34;
+
+      pts = [
+        fromPt,
+        { x: shoulderX, y: fromPt.y },
+        { x: corridorX, y: fromPt.y },
+        { x: corridorX, y: midY },
+        { x: toPt.x, y: midY },
+        toPt,
+      ];
+    }
+    // 5. Звичайна гілка вниз — простий шаблон "вбік → вниз → у блок"
+    else if (sameSideBelow) {
+      const shoulderX = safeSide === 'right'
+        ? fromPt.x + sideOffset
+        : fromPt.x - sideOffset;
+
+      const midY = toPt.y - 34;
+
+      pts = [
+        fromPt,
+        { x: shoulderX, y: fromPt.y },
+        { x: shoulderX, y: midY },
+        { x: toPt.x, y: midY },
+        toPt,
+      ];
+    }
+    // 6. Боковий вхід
+    else if (entry === safeSide) {
       const corridor = safeSide === 'right'
         ? Math.max(fromPt.x, toPt.x) + margin
         : Math.min(fromPt.x, toPt.x) - margin;
+
       pts = [
         fromPt,
         { x: corridor, y: fromPt.y },
@@ -611,14 +705,17 @@
       ];
     } else if (Math.abs(toPt.y - fromPt.y) < 4) {
       pts = [fromPt, toPt];
-    } else if (
-      (safeSide === 'right' && toPt.x > fromPt.x + 4) ||
-      (safeSide === 'left' && toPt.x < fromPt.x - 4)
-    ) {
-      pts = [fromPt, { x: toPt.x, y: fromPt.y }, toPt];
     } else {
-      const xOut = safeSide === 'right' ? fromPt.x + margin : fromPt.x - margin;
-      pts = [fromPt, { x: xOut, y: fromPt.y }, { x: xOut, y: toPt.y }, toPt];
+      const shoulderX = safeSide === 'right'
+        ? fromPt.x + sideOffset
+        : fromPt.x - sideOffset;
+
+      pts = [
+        fromPt,
+        { x: shoulderX, y: fromPt.y },
+        { x: shoulderX, y: toPt.y },
+        toPt,
+      ];
     }
 
     return { pts, exit: safeSide, entry };

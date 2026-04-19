@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     diagramTitle: '',
 
     shapeCounter: 0,
+    layoutLock: false,
 
     // Zoom
     scale: 1,
@@ -245,7 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function restoreSnapshot(snap, options = {}) {
     const focusMode = options.focusMode || null;
+    const preserveLayout = !!options.preserveLayout;
+
     closeBuilderWizard();
+
+    state.layoutLock = preserveLayout;
+
     // remove shapes
     state.shapes.forEach(s => {
       document.getElementById(s.id)?.remove();
@@ -279,8 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Number.isNaN(num)) state.shapeCounter = Math.max(state.shapeCounter, num);
     });
 
-    alignSimpleFlowCenters(snap.connections || []);
-    ensureDecisionClearance(snap.connections || []);
+    if (!preserveLayout) {
+      alignSimpleFlowCenters(snap.connections || []);
+      ensureDecisionClearance(snap.connections || []);
+    }
+
     ensureTitleClearance();
 
     requestAnimationFrame(() => {
@@ -294,8 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (restoredConn) restoredConn.label = c.label ?? null;
           }
         });
+
         scheduleRefresh();
         updateConnectionBar();
+
+        state.layoutLock = false;
+
         if (focusMode === 'content') {
           requestAnimationFrame(() => centerViewportOnBounds(computeShapesBounds(false), LAYOUT.viewportTopOffset));
         }
@@ -501,9 +514,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function ensureDecisionClearance(connections = state.connections) {
+    if (state.layoutLock) return;
     const safeConnections = Array.isArray(connections) ? connections : [];
+
     safeConnections.forEach((conn) => {
       if (conn?.type) return;
+
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
@@ -511,14 +527,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const fromShape = getShapeData(conn.from);
       const toShape = getShapeData(conn.to);
       if (!fromShape || !toShape) return;
+
+      // працюємо лише для входу в ромб
       if (toShape.type !== 'decision' || fromShape.type === 'decision') return;
 
+      const fromCenterY = fromEl.offsetTop + fromEl.offsetHeight / 2;
+      const toCenterY = toEl.offsetTop + toEl.offsetHeight / 2;
+
+      // НОВЕ ПРАВИЛО:
+      // якщо блок already нижче ромба і повертається назад в умову,
+      // це loop-back, і ромб вниз НЕ зсуваємо
+      if (fromCenterY > toCenterY + 20) return;
+
       const lift = core?.getDecisionVisualLift
-        ? core.getDecisionVisualLift({ type: 'decision', width: toEl.offsetWidth, height: toEl.offsetHeight })
+        ? core.getDecisionVisualLift({
+          type: 'decision',
+          width: toEl.offsetWidth,
+          height: toEl.offsetHeight
+        })
         : Math.max(0, decisionVertexDistance(toEl) - (toEl.offsetHeight / 2));
+
       const visualTop = toEl.offsetTop - lift;
       const desiredTop = fromEl.offsetTop + fromEl.offsetHeight + 18;
       const shiftY = Math.ceil(desiredTop - visualTop);
+
       if (shiftY <= 0) return;
 
       toEl.style.top = `${toEl.offsetTop + shiftY}px`;
@@ -526,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function alignSimpleFlowCenters(connections = state.connections) {
+    if (state.layoutLock) return;
     const safeConnections = Array.isArray(connections) ? connections : [];
     if (!safeConnections.length) return;
 
@@ -641,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showRestoreDraftModal(
       `Знайдено незбережену чернетку від ${when}. Хочеш продовжити роботу з нею або почати нову схему?`,
       () => {
-        restoreSnapshot(draft.project);
+        restoreSnapshot(draft.project, { preserveLayout: true });
         showMessageModal('Чернетку відкрито.');
       },
       () => {
@@ -756,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return getShapeInfo(type)?.exampleText || '';
   }
 
-  function updateShapeHelper() {}
+  function updateShapeHelper() { }
 
   function hydrateWizardCards() {
     document.querySelectorAll('.wizard-type-card').forEach((btn) => {
@@ -1110,7 +1143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (newEl) {
-      ensureDecisionClearance();
       selectShape(newEl);
       closeBuilderWizard();
       scheduleRefresh();
@@ -1315,24 +1347,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = Math.min(el.offsetWidth, el.offsetHeight) / 2 + 10;
         if ((dx * dx + dy * dy) <= (r * r)) return el;
       } else
-      if (s.type === 'decision') {
-        const d = decisionVertexDistance(el);
-        // Diamond hit test: |dx| + |dy| <= d (with small margin)
-        if ((dx + dy) <= (d + 14)) return el;
-      } else {
-        if (dx <= el.offsetWidth / 2 + 10 && dy <= el.offsetHeight / 2 + 10) return el;
-      }
+        if (s.type === 'decision') {
+          const d = decisionVertexDistance(el);
+          // Diamond hit test: |dx| + |dy| <= d (with small margin)
+          if ((dx + dy) <= (d + 14)) return el;
+        } else {
+          if (dx <= el.offsetWidth / 2 + 10 && dy <= el.offsetHeight / 2 + 10) return el;
+        }
     }
     return null;
   }
 
   function createHandleGroup() { return null; }
 
-  function updateHandleGroup() {}
+  function updateHandleGroup() { }
 
-  function showHandlesForShape() {}
+  function showHandlesForShape() { }
 
-  function hideAllHandles() {}
+  function hideAllHandles() { }
 
   function removeHandleGroup(shapeId) {
     const g = shapeHandleGroups[shapeId];
@@ -1340,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ================= TEMP LINE (during connect drag) =================
-  function attachHandleListeners() {}
+  function attachHandleListeners() { }
 
   // ================= CONNECTIONS (orthogonal) =================
   function polylineLength(points) {
@@ -2396,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function importProjectData(rawProject) {
     const parsed = core?.parseProject ? core.parseProject(rawProject) : (typeof rawProject === 'string' ? JSON.parse(rawProject) : rawProject);
     saveSnapshot();
-    restoreSnapshot(parsed);
+    restoreSnapshot(parsed, { preserveLayout: true });
     showMessageModal('Проєкт завантажено.');
   }
 
@@ -2576,7 +2608,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.querySelector('.example-open-btn')?.addEventListener('click', () => {
         try {
           saveSnapshot();
-          restoreSnapshot(example.project, { focusMode: 'content' });
+          restoreSnapshot(example.project, { focusMode: 'content', preserveLayout: true });
           toggleExamplesPanel(false);
         } catch (error) {
           console.error(error);
