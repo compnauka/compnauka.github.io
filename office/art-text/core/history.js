@@ -1,87 +1,86 @@
 'use strict';
-/* core/history.js — undo/redo стек для contenteditable. */
+/* core/history.js — undo/redo з відновленням виділення */
 
 const ArtHistory = (() => {
-  const MAX = 200;
+  const MAX = 150;
   let _stack = [];
   let _index = -1;
-  let _editorEl = null;
-  let _paused = false;
+  let _editor = null;
   let _lastSaved = '';
+  let _suspended = false;
+  let _cb = null;
 
-  function init(editorEl) {
-    _editorEl = editorEl;
-    _stack = [{ html: editorEl.innerHTML, sel: null }];
-    _index = 0;
-    _lastSaved = editorEl.innerHTML;
+  function init(editor) {
+    _editor = editor;
+    _stack = [];
+    _index = -1;
+    pushNow();
+    _lastSaved = editor.innerHTML;
+    ArtState.setDirty(false);
   }
 
-  function _getSelection() {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
-    const range = sel.getRangeAt(0);
-    // Зберігаємо як текстові зсуви відносно editor
+  function snapshot() {
     return {
-      startOffset: range.startOffset,
-      endOffset:   range.endOffset,
+      html: _editor.innerHTML,
+      selection: ArtSelection.serializeSelection(_editor)
     };
   }
 
-  function push(html) {
-    if (_paused) return;
-    // Не дублюємо однаковий стан
-    if (_stack[_index]?.html === html) return;
-
-    // Відрізаємо "майбутнє" якщо робили undo
+  function pushNow() {
+    if (!_editor || _suspended) return;
+    const snap = snapshot();
+    if (_stack[_index] && _stack[_index].html === snap.html) {
+      _stack[_index].selection = snap.selection;
+      _notify();
+      return;
+    }
     _stack = _stack.slice(0, _index + 1);
-
-    _stack.push({ html, sel: _getSelection() });
+    _stack.push(snap);
     if (_stack.length > MAX) _stack.shift();
     _index = _stack.length - 1;
-
-    ArtState.setDirty(html !== _lastSaved);
-    _notifyButtons();
+    ArtState.setDirty(_editor.innerHTML !== _lastSaved);
+    _notify();
   }
 
   function undo() {
     if (_index <= 0) return;
-    _index--;
+    _index -= 1;
     _restore(_stack[_index]);
-    _notifyButtons();
   }
 
   function redo() {
     if (_index >= _stack.length - 1) return;
-    _index++;
+    _index += 1;
     _restore(_stack[_index]);
-    _notifyButtons();
   }
 
   function _restore(entry) {
-    if (!_editorEl) return;
-    _paused = true;
-    _editorEl.innerHTML = entry.html;
-    _paused = false;
-    ArtState.setDirty(_editorEl.innerHTML !== _lastSaved);
-    _editorEl.dispatchEvent(new Event('art:restored'));
-  }
-
-  function markSaved() {
-    _lastSaved = _editorEl?.innerHTML ?? '';
-    ArtState.setDirty(false);
+    if (!_editor || !entry) return;
+    _suspended = true;
+    _editor.innerHTML = entry.html;
+    ArtSelection.restoreSerializedSelection(_editor, entry.selection);
+    _suspended = false;
+    ArtState.setDirty(_editor.innerHTML !== _lastSaved);
+    _editor.dispatchEvent(new Event('art:restored'));
+    _notify();
   }
 
   function canUndo() { return _index > 0; }
   function canRedo() { return _index < _stack.length - 1; }
 
-  // Виклик після кожного збереження/undo/redo щоб UI оновив кнопки
-  let _buttonCallback = null;
-  function onButtonsUpdate(fn) { _buttonCallback = fn; }
-  function _notifyButtons() { _buttonCallback?.(); }
+  function markSaved() {
+    _lastSaved = _editor?.innerHTML ?? '';
+    ArtState.setDirty(false);
+    _notify();
+  }
 
-  function pause()  { _paused = true; }
-  function resume() { _paused = false; }
+  function suspend(fn) {
+    _suspended = true;
+    try { fn?.(); } finally { _suspended = false; }
+  }
 
-  return { init, push, undo, redo, canUndo, canRedo,
-           markSaved, onButtonsUpdate, pause, resume };
+  function onButtonsUpdate(fn) { _cb = fn; }
+  function _notify() { _cb?.(); }
+
+  return { init, pushNow, undo, redo, canUndo, canRedo, markSaved, suspend, onButtonsUpdate };
 })();

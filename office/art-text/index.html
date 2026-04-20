@@ -11,6 +11,7 @@
   <!-- Формати -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -137,6 +138,9 @@
       <button class="menu-item" data-action="insert-table" role="menuitem">
         <span><i class="fa-solid fa-table fa-fw"></i> Таблиця…</span>
       </button>
+      <button class="menu-item" data-action="insert-image" role="menuitem">
+        <span><i class="fa-solid fa-image fa-fw"></i> Зображення…</span>
+      </button>
       <button class="menu-item" data-action="insert-hr" role="menuitem">
         <span><i class="fa-solid fa-minus fa-fw"></i> Горизонтальна лінія</span>
       </button>
@@ -235,19 +239,19 @@
 
   <!-- Вирівнювання -->
   <div class="tb-group">
-    <button class="tb-btn" onclick="art.toolbar.applyAlign('left')"
+    <button class="tb-btn" onclick="art.toolbar.applyAlign('left')" onmousedown="event.preventDefault()"
             title="По лівому краю" aria-label="По лівому краю">
       <i class="fa-solid fa-align-left" aria-hidden="true"></i>
     </button>
-    <button class="tb-btn" onclick="art.toolbar.applyAlign('center')"
+    <button class="tb-btn" onclick="art.toolbar.applyAlign('center')" onmousedown="event.preventDefault()"
             title="По центру" aria-label="По центру">
       <i class="fa-solid fa-align-center" aria-hidden="true"></i>
     </button>
-    <button class="tb-btn" onclick="art.toolbar.applyAlign('right')"
+    <button class="tb-btn" onclick="art.toolbar.applyAlign('right')" onmousedown="event.preventDefault()"
             title="По правому краю" aria-label="По правому краю">
       <i class="fa-solid fa-align-right" aria-hidden="true"></i>
     </button>
-    <button class="tb-btn" onclick="art.toolbar.applyAlign('justify')"
+    <button class="tb-btn" onclick="art.toolbar.applyAlign('justify')" onmousedown="event.preventDefault()"
             title="По ширині" aria-label="По ширині">
       <i class="fa-solid fa-align-justify" aria-hidden="true"></i>
     </button>
@@ -278,29 +282,37 @@
   <div class="tb-sep" aria-hidden="true"></div>
 
   <!-- Кольори -->
-  <div class="tb-group color-tools">
-    <div class="color-tool">
-      <button class="tb-btn" id="tbTextColorBtn"
+  <div class="tb-group palette-group">
+    <div class="palette-wrap">
+      <button class="tb-btn palette-toggle"
               type="button"
+              data-palette="text"
               title="Колір тексту" aria-label="Колір тексту" aria-expanded="false">
         <i class="fa-solid fa-font" aria-hidden="true"></i>
       </button>
-      <div class="color-menu" id="tbTextColorMenu" role="menu" aria-label="Палітра кольору тексту">
-        <div class="color-grid" id="tbTextColorGrid"></div>
-        <button class="color-more-btn" type="button" id="tbTextColorMore">Ще…</button>
-        <input class="visually-hidden color-native-input" type="color" value="#1e293b" id="tbTextColorNative" aria-label="Інший колір тексту">
+      <div class="palette-popover" id="textPalette" hidden>
+        <div class="palette-title">Колір тексту</div>
+        <button type="button" class="palette-clear" id="textNoColor">Без кольору</button>
+        <div class="palette-swatches" id="textSwatches"></div>
+        <label class="palette-custom">Свій колір
+          <input type="color" id="textCustomColor" value="#1e293b" aria-label="Свій колір тексту">
+        </label>
       </div>
     </div>
-    <div class="color-tool">
-      <button class="tb-btn" id="tbHighlightBtn"
+    <div class="palette-wrap">
+      <button class="tb-btn palette-toggle"
               type="button"
+              data-palette="highlight"
               title="Колір виділення" aria-label="Колір виділення" aria-expanded="false">
         <i class="fa-solid fa-highlighter" style="color:#fbbf24" aria-hidden="true"></i>
       </button>
-      <div class="color-menu" id="tbHighlightMenu" role="menu" aria-label="Палітра кольору виділення">
-        <div class="color-grid" id="tbHighlightGrid"></div>
-        <button class="color-more-btn" type="button" id="tbHighlightMore">Ще…</button>
-        <input class="visually-hidden color-native-input" type="color" value="#fef08a" id="tbHighlightNative" aria-label="Інший колір виділення">
+      <div class="palette-popover" id="highlightPalette" hidden>
+        <div class="palette-title">Колір виділення</div>
+        <button type="button" class="palette-clear" id="highlightNoColor">Без кольору</button>
+        <div class="palette-swatches" id="highlightSwatches"></div>
+        <label class="palette-custom">Свій колір
+          <input type="color" id="highlightCustomColor" value="#fef08a" aria-label="Свій колір виділення">
+        </label>
       </div>
     </div>
   </div>
@@ -311,11 +323,13 @@
   <div class="tb-group">
     <button class="tb-btn" id="tbUndo" disabled
             onclick="art.history.undo();art.toolbar.updateState()"
+            onmousedown="event.preventDefault()"
             title="Скасувати (Ctrl+Z)" aria-label="Скасувати">
       <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
     </button>
     <button class="tb-btn" id="tbRedo" disabled
             onclick="art.history.redo();art.toolbar.updateState()"
+            onmousedown="event.preventDefault()"
             title="Повернути (Ctrl+Y)" aria-label="Повернути">
       <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
     </button>
@@ -328,7 +342,8 @@
 ════════════════════════════════════════ -->
 <div class="editor-scroll" role="main" aria-label="Документ">
   <div class="pages-wrap" data-orientation="portrait">
-    <div class="page" role="document">
+    <div class="page-stack" aria-hidden="true"></div>
+    <div class="page page-editor" role="document">
       <div id="editor"
            contenteditable="true"
            spellcheck="true"
@@ -577,6 +592,10 @@
                application/vnd.openxmlformats-officedocument.wordprocessingml.document"
        class="sr-only" aria-hidden="true">
 
+<input id="imageInput" type="file"
+       accept="image/*"
+       class="sr-only" aria-hidden="true">
+
 <div id="ariaAnnouncer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
 <!-- ════════════════════════════════════════
@@ -585,6 +604,7 @@
 <script src="core/state.js"></script>
 <script src="core/history.js"></script>
 <script src="core/selection.js"></script>
+<script src="core/sanitize.js"></script>
 <script src="formats/txt.js"></script>
 <script src="formats/rtf.js"></script>
 <script src="formats/docx.js"></script>

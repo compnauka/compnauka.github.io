@@ -1,32 +1,35 @@
 'use strict';
-/* ui/modals.js — всі модальні вікна */
+/* ui/modals.js — модалки з focus trap */
 
 const ArtModals = (() => {
   let _confirmCb = null;
+  let _lastFocused = null;
 
   function open(id) {
     const el = document.getElementById(id);
     if (!el) return;
+    _lastFocused = document.activeElement;
     el.classList.add('active');
-    // Фокус на першому інтерактивному елементі
     requestAnimationFrame(() => {
-      (el.querySelector('[data-autofocus]') || el.querySelector('button'))?.focus();
+      (el.querySelector('[data-autofocus]') || el.querySelector('button,input,select,textarea'))?.focus();
     });
   }
 
   function close(id) {
-    document.getElementById(id)?.classList.remove('active');
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('active');
+    _lastFocused?.focus?.();
   }
 
   function closeAll() {
-    document.querySelectorAll('.modal-overlay.active').forEach(el => {
-      el.classList.remove('active');
-    });
+    document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active'));
+    _lastFocused?.focus?.();
   }
 
   function info(title, text) {
     document.getElementById('modalInfoTitle').textContent = title;
-    document.getElementById('modalInfoText').textContent  = text;
+    document.getElementById('modalInfoText').textContent = text;
     open('modalInfo');
   }
 
@@ -36,24 +39,23 @@ const ArtModals = (() => {
     open('modalConfirm');
   }
 
-  function confirmYes() {
-    close('modalConfirm');
-    _confirmCb?.yes?.();
-    _confirmCb = null;
-  }
+  function confirmYes() { close('modalConfirm'); _confirmCb?.yes?.(); _confirmCb = null; }
+  function confirmNo() { close('modalConfirm'); _confirmCb?.no?.(); _confirmCb = null; }
 
-  function confirmNo() {
-    close('modalConfirm');
-    _confirmCb?.no?.();
-    _confirmCb = null;
-  }
-
-  // Закривати модалки по Escape
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeAll();
+    const active = document.querySelector('.modal-overlay.active');
+    if (!active) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeAll(); }
+    if (e.key === 'Tab') {
+      const focusables = [...active.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')]
+        .filter(el => !el.disabled && el.offsetParent !== null);
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   });
 
-  // Закривати по кліку на overlay
   document.addEventListener('click', e => {
     if (e.target.classList.contains('modal-overlay')) closeAll();
   });

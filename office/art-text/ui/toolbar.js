@@ -3,233 +3,195 @@
 
 const ArtToolbar = (() => {
   let _editor = null;
-
-  const FONTS = [
-    'Arial', 'Times New Roman', 'Calibri', 'Verdana',
-    'Georgia', 'Courier New', 'Trebuchet MS',
-  ];
-
+  const FONTS = ['Arial', 'Times New Roman', 'Calibri', 'Verdana', 'Georgia', 'Courier New', 'Trebuchet MS'];
   const SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
+  const TEXT_COLORS = ['#1e293b','#111827','#dc2626','#ea580c','#ca8a04','#16a34a','#0891b2','#2563eb','#7c3aed','#db2777','#ffffff','#64748b'];
+  const HIGHLIGHT_COLORS = ['#fef08a','#fde68a','#fdba74','#fecaca','#bfdbfe','#c7d2fe','#ddd6fe','#bbf7d0','#a7f3d0','#fbcfe8','#e5e7eb','#ffffff'];
 
   function init(editorEl) {
     _editor = editorEl;
     _buildFontSelect();
     _buildSizeSelect();
+    _buildPalettes();
     _bindEvents();
   }
 
-  // ── Побудова <select> шрифтів ──────────────
   function _buildFontSelect() {
     const sel = document.getElementById('tbFontFamily');
-    if (!sel) return;
     sel.innerHTML = '';
-    FONTS.forEach(f => {
+    FONTS.forEach(font => {
       const opt = document.createElement('option');
-      opt.value = f;
-      opt.textContent = f;
-      opt.style.fontFamily = f;
-      if (f === ArtState.get('fontFamily')) opt.selected = true;
+      opt.value = font;
+      opt.textContent = font;
+      opt.style.fontFamily = font;
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', () => {
-      applyFont(sel.value);
-    });
+    sel.value = ArtState.get('fontFamily');
+    sel.addEventListener('change', () => run(() => {
+      ArtSelection.applyInlineStyle(_editor, { fontFamily: sel.value });
+      ArtState.set('fontFamily', sel.value);
+    }));
   }
 
-  // ── Побудова <select> розмірів ─────────────
   function _buildSizeSelect() {
     const sel = document.getElementById('tbFontSize');
-    if (!sel) return;
     sel.innerHTML = '';
-    SIZES.forEach(s => {
+    SIZES.forEach(size => {
       const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s;
-      if (s === ArtState.get('fontSize')) opt.selected = true;
+      opt.value = size;
+      opt.textContent = size;
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', () => {
-      applySize(Number(sel.value));
+    sel.value = String(ArtState.get('fontSize'));
+    sel.addEventListener('change', () => run(() => {
+      ArtSelection.applyInlineStyle(_editor, { fontSize: `${sel.value}pt` });
+      ArtState.set('fontSize', Number(sel.value));
+    }));
+  }
+
+  function _buildPalettes() {
+    _mountSwatches('textSwatches', TEXT_COLORS, color => applyColor(color));
+    _mountSwatches('highlightSwatches', HIGHLIGHT_COLORS, color => applyHighlight(color));
+
+    document.getElementById('textNoColor')?.addEventListener('mousedown', e => e.preventDefault());
+    document.getElementById('highlightNoColor')?.addEventListener('mousedown', e => e.preventDefault());
+    document.getElementById('textNoColor')?.addEventListener('click', () => applyColor('inherit'));
+    document.getElementById('highlightNoColor')?.addEventListener('click', () => applyHighlight('transparent'));
+
+    document.getElementById('textCustomColor')?.addEventListener('mousedown', e => e.preventDefault());
+    document.getElementById('highlightCustomColor')?.addEventListener('mousedown', e => e.preventDefault());
+    document.getElementById('textCustomColor')?.addEventListener('input', e => applyColor(e.target.value));
+    document.getElementById('highlightCustomColor')?.addEventListener('input', e => applyHighlight(e.target.value));
+  }
+
+  function _mountSwatches(id, colors, handler) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.innerHTML = '';
+    colors.forEach(color => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'palette-swatch';
+      btn.style.setProperty('--swatch', color);
+      btn.setAttribute('aria-label', `Вибрати колір ${color}`);
+      btn.addEventListener('mousedown', e => e.preventDefault());
+      btn.addEventListener('click', () => handler(color));
+      host.appendChild(btn);
     });
   }
 
-  // ── Прив'язка кнопок ───────────────────────
   function _bindEvents() {
     document.querySelectorAll('[data-cmd]').forEach(btn => {
-      btn.addEventListener('mousedown', e => {
-        e.preventDefault();
-        const cmd = btn.dataset.cmd;
-        _editor.focus();
-        ArtSelection.exec(cmd);
-        updateState();
-        ArtHistory.push(_editor.innerHTML);
-      });
+      btn.addEventListener('mousedown', e => e.preventDefault());
+      btn.addEventListener('click', () => applyCommand(btn.dataset.cmd));
     });
 
-    _bindColorMenus();
-
-    _editor.addEventListener('keyup',   updateState);
-    _editor.addEventListener('mouseup', updateState);
-    _editor.addEventListener('focus',   updateState);
-  }
-
-  function _bindColorMenus() {
-    const setups = [
-      {
-        button: document.getElementById('tbTextColorBtn'),
-        menu: document.getElementById('tbTextColorMenu'),
-        grid: document.getElementById('tbTextColorGrid'),
-        more: document.getElementById('tbTextColorMore'),
-        nativeInput: document.getElementById('tbTextColorNative'),
-        palette: ['#1e293b','#000000','#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899'],
-        apply: applyColor,
-      },
-      {
-        button: document.getElementById('tbHighlightBtn'),
-        menu: document.getElementById('tbHighlightMenu'),
-        grid: document.getElementById('tbHighlightGrid'),
-        more: document.getElementById('tbHighlightMore'),
-        nativeInput: document.getElementById('tbHighlightNative'),
-        palette: ['#fef08a','#fde68a','#fdba74','#fecaca','#bfdbfe','#c7d2fe','#ddd6fe','#bbf7d0','#a5f3fc','#e5e7eb'],
-        apply: applyHighlight,
-      }
-    ];
-
-    setups.forEach(setup => {
-      if (!setup.button || !setup.menu || !setup.grid) return;
-      setup.grid.innerHTML = '';
-      setup.palette.forEach(color => {
-        const swatch = document.createElement('button');
-        swatch.type = 'button';
-        swatch.className = 'color-swatch';
-        swatch.style.background = color;
-        swatch.setAttribute('aria-label', `Колір ${color}`);
-        swatch.addEventListener('click', e => {
-          e.preventDefault();
-          setup.apply(color);
-          _closeColorMenus();
-        });
-        setup.grid.appendChild(swatch);
-      });
-
-      setup.button.addEventListener('click', e => {
-        e.preventDefault();
-        const willOpen = !setup.menu.classList.contains('open');
-        _closeColorMenus();
-        setup.menu.classList.toggle('open', willOpen);
-        setup.button.setAttribute('aria-expanded', String(willOpen));
-      });
-
-      setup.more?.addEventListener('click', e => {
-        e.preventDefault();
-        setup.nativeInput?.click();
-      });
-
-      setup.nativeInput?.addEventListener('input', () => {
-        setup.apply(setup.nativeInput.value);
-        _closeColorMenus();
+    document.querySelectorAll('.palette-toggle').forEach(btn => {
+      btn.addEventListener('mousedown', e => e.preventDefault());
+      btn.addEventListener('click', e => {
+        ArtSelection.remember(_editor);
+        e.stopPropagation();
+        togglePalette(btn.dataset.palette);
       });
     });
-
     document.addEventListener('click', e => {
-      if (!e.target.closest('.color-tool')) _closeColorMenus();
+      if (!e.target.closest('.palette-wrap')) closePalettes();
+    });
+
+    ['keyup','mouseup','focus','selectionchange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        if (document.activeElement === _editor || _editor.contains(document.activeElement)) {
+          updateState();
+          ArtSelection.remember(_editor);
+        }
+      });
     });
   }
 
-  function _closeColorMenus() {
-    document.querySelectorAll('.color-menu.open').forEach(menu => menu.classList.remove('open'));
-    document.querySelectorAll('#tbTextColorBtn, #tbHighlightBtn').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+  function togglePalette(name) {
+    document.querySelectorAll('.palette-popover').forEach(pop => {
+      const isTarget = pop.id === `${name}Palette`;
+      if (isTarget) {
+        if (pop.hasAttribute('hidden')) pop.removeAttribute('hidden');
+        else pop.setAttribute('hidden', '');
+      } else {
+        pop.setAttribute('hidden', '');
+      }
+    });
+    document.querySelectorAll('.palette-toggle').forEach(btn => {
+      btn.setAttribute('aria-expanded', String(btn.dataset.palette === name && document.getElementById(`${name}Palette`) && !document.getElementById(`${name}Palette`).hidden));
+    });
   }
 
-  // ── Форматування ───────────────────────────
-  function applyFont(family) {
+  function closePalettes() {
+    document.querySelectorAll('.palette-popover').forEach(pop => pop.setAttribute('hidden', ''));
+    document.querySelectorAll('.palette-toggle').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+  }
+
+  function applyCommand(cmd) {
+    run(() => {
+      switch (cmd) {
+        case 'bold': ArtSelection.toggleInlineTag(_editor, 'strong'); break;
+        case 'italic': ArtSelection.toggleInlineTag(_editor, 'em'); break;
+        case 'underline': ArtSelection.toggleInlineTag(_editor, 'u'); break;
+        case 'strikeThrough': ArtSelection.toggleInlineTag(_editor, 's'); break;
+        case 'insertUnorderedList': ArtSelection.toggleList(_editor, 'ul'); break;
+        case 'insertOrderedList': ArtSelection.toggleList(_editor, 'ol'); break;
+        case 'indent': ArtSelection.indent(_editor); break;
+        case 'outdent': ArtSelection.outdent(_editor); break;
+      }
+    });
+  }
+
+  function run(fn) {
+    ArtSelection.restoreLast(_editor);
     _editor.focus();
-    ArtSelection.exec('fontName', family);
-    ArtState.set('fontFamily', family);
-    ArtHistory.push(_editor.innerHTML);
+    fn();
+    ArtSelection.normalizeEditor(_editor);
+    ArtHistory.pushNow();
     updateState();
+    _editor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function applyFont(family) {
+    document.getElementById('tbFontFamily').value = family;
+    run(() => {
+      ArtSelection.applyInlineStyle(_editor, { fontFamily: family });
+      ArtState.set('fontFamily', family);
+    });
   }
 
   function applySize(pt) {
-    _editor.focus();
-    const listItems = ArtSelection.getSelectedListItems();
-    if (listItems.length) {
-      listItems.forEach(li => { li.style.fontSize = pt + 'pt'; });
-    } else {
-      ArtSelection.applyInlineStyle({ 'font-size': pt + 'pt' });
-    }
-    ArtState.set('fontSize', pt);
-    ArtHistory.push(_editor.innerHTML);
-    updateState();
+    document.getElementById('tbFontSize').value = String(pt);
+    run(() => {
+      ArtSelection.applyInlineStyle(_editor, { fontSize: `${pt}pt` });
+      ArtState.set('fontSize', pt);
+    });
   }
 
-  function applyAlign(side) {
-    const map = {
-      left:    'justifyLeft',
-      center:  'justifyCenter',
-      right:   'justifyRight',
-      justify: 'justifyFull',
-    };
-    _editor.focus();
-    ArtSelection.exec(map[side] || 'justifyLeft');
-    ArtHistory.push(_editor.innerHTML);
-    updateState();
-  }
+  function applyAlign(side) { run(() => ArtSelection.setAlignment(_editor, side)); }
 
   function applyHeading(tag) {
-    _editor.focus();
-    ArtSelection.exec('formatBlock', tag);
-    ArtHistory.push(_editor.innerHTML);
-    updateState();
-  }
-
-  function applyColor(color) {
-    _editor.focus();
-    const listItems = ArtSelection.getSelectedListItems();
-    if (listItems.length) {
-      listItems.forEach(li => {
-        li.style.color = color;
-        li.style.textDecorationColor = color;
-      });
-    } else {
-      ArtSelection.applyInlineStyle({ color, 'text-decoration-color': color });
-    }
-    ArtHistory.push(_editor.innerHTML);
-  }
-
-  function applyHighlight(color) {
-    _editor.focus();
-    const listItems = ArtSelection.getSelectedListItems();
-    if (listItems.length) {
-      listItems.forEach(li => { li.style.backgroundColor = color; });
-    } else {
-      ArtSelection.applyInlineStyle({ 'background-color': color });
-    }
-    ArtHistory.push(_editor.innerHTML);
-  }
-
-  // ── Оновлення активних кнопок ──────────────
-  function updateState() {
-    const cmds = ['bold','italic','underline','strikeThrough',
-                  'insertUnorderedList','insertOrderedList'];
-    cmds.forEach(cmd => {
-      const btn = document.querySelector(`[data-cmd="${cmd}"]`);
-      if (btn) btn.classList.toggle('active', ArtSelection.queryState(cmd));
+    run(() => {
+      if (tag === 'p') ArtSelection.setBlockTag(_editor, 'p');
+      else if (tag === 'blockquote') ArtSelection.setBlockTag(_editor, 'blockquote');
+      else ArtSelection.setBlockTag(_editor, tag);
     });
-
-    // Оновити undo/redo
-    const undoBtn = document.getElementById('tbUndo');
-    const redoBtn = document.getElementById('tbRedo');
-    if (undoBtn) undoBtn.disabled = !ArtHistory.canUndo();
-    if (redoBtn) redoBtn.disabled = !ArtHistory.canRedo();
   }
 
-  return {
-    init,
-    applyFont, applySize,
-    applyAlign, applyHeading,
-    applyColor, applyHighlight,
-    updateState,
-    FONTS, SIZES,
-  };
+  function applyColor(color) { closePalettes(); run(() => ArtSelection.applyInlineStyle(_editor, { color }, { syncDecorations: true })); }
+  function applyHighlight(color) { closePalettes(); run(() => ArtSelection.applyInlineStyle(_editor, { backgroundColor: color })); }
+
+  function updateState() {
+    ['bold','italic','underline','strikeThrough','insertUnorderedList','insertOrderedList'].forEach(cmd => {
+      const btn = document.querySelector(`[data-cmd="${cmd}"]`);
+      if (btn) btn.classList.toggle('active', ArtSelection.queryState(_editor, cmd));
+    });
+    const undo = document.getElementById('tbUndo');
+    const redo = document.getElementById('tbRedo');
+    if (undo) undo.disabled = !ArtHistory.canUndo();
+    if (redo) redo.disabled = !ArtHistory.canRedo();
+  }
+
+  return { init, applyCommand, applyFont, applySize, applyAlign, applyHeading, applyColor, applyHighlight, updateState, run, FONTS, SIZES, closePalettes };
 })();

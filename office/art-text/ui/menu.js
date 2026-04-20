@@ -5,119 +5,73 @@ const ArtMenu = (() => {
   let _openMenu = null;
 
   function init() {
-    // Клік по заголовку меню
     document.querySelectorAll('.menu-title').forEach(title => {
-      title.addEventListener('click', e => {
-        e.stopPropagation();
-        const name = title.dataset.menu;
-        _toggle(name, title);
-      });
+      title.addEventListener('click', e => { e.stopPropagation(); toggle(title.dataset.menu, title); });
       title.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          title.click();
-        }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); title.click(); }
       });
     });
 
-    // Закрити при кліку поза меню
-    document.addEventListener('click', _closeAll);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') _closeAll();
-    });
+    document.addEventListener('click', closeAll);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
 
-    // Пункти меню
     document.querySelectorAll('.menu-item[data-action]').forEach(item => {
       item.addEventListener('click', e => {
         e.stopPropagation();
-        const action = item.dataset.action;
-        _closeAll();
-        _dispatch(action, item);
+        closeAll();
+        dispatch(item.dataset.action);
       });
     });
   }
 
-  function _toggle(name, titleEl) {
-    if (_openMenu === name) { _closeAll(); return; }
-    _closeAll();
-    const dropdown = document.querySelector(`.menu-dropdown[data-menu="${name}"]`);
-    if (!dropdown) return;
-    dropdown.classList.add('open');
+  function toggle(name, titleEl) {
+    if (_openMenu === name) return closeAll();
+    closeAll();
+    document.querySelector(`.menu-dropdown[data-menu="${name}"]`)?.classList.add('open');
     titleEl.setAttribute('aria-expanded', 'true');
     _openMenu = name;
   }
 
-  function _closeAll() {
-    document.querySelectorAll('.menu-dropdown.open').forEach(d => {
-      d.classList.remove('open');
-    });
-    document.querySelectorAll('.menu-title').forEach(t => {
-      t.setAttribute('aria-expanded', 'false');
-    });
+  function closeAll() {
+    document.querySelectorAll('.menu-dropdown.open').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.menu-title').forEach(el => el.setAttribute('aria-expanded', 'false'));
     _openMenu = null;
   }
 
-  // ── Дії меню ─────────────────────────────────
-  function _dispatch(action, item) {
+  async function dispatch(action) {
     switch (action) {
-
-      // Файл
       case 'new':
-        if (ArtState.isDirty()) {
-          ArtModals.confirm(
-            'Є незбережені зміни. Створити новий документ і втратити їх?',
-            ArtEditor.newDoc
-          );
-        } else {
-          ArtEditor.newDoc();
-        }
+        if (ArtState.isDirty()) ArtModals.confirm('Є незбережені зміни. Створити новий документ?', ArtEditor.newDoc);
+        else ArtEditor.newDoc();
         break;
-
       case 'open':
-        if (ArtState.isDirty()) {
-          ArtModals.confirm(
-            'Є незбережені зміни. Відкрити інший файл і втратити їх?',
-            () => document.getElementById('fileInput').click()
-          );
-        } else {
-          document.getElementById('fileInput').click();
-        }
+        if (ArtState.isDirty()) ArtModals.confirm('Є незбережені зміни. Відкрити інший файл?', () => document.getElementById('fileInput').click());
+        else document.getElementById('fileInput').click();
         break;
-
-      case 'save-txt':  ArtEditor.saveAs('txt');  break;
-      case 'save-rtf':  ArtEditor.saveAs('rtf');  break;
-      case 'save-docx': ArtEditor.saveAs('docx'); break;
-      case 'print':     window.print();            break;
-
-      // Редагування
-      case 'undo':  ArtHistory.undo(); ArtToolbar.updateState(); break;
-      case 'redo':  ArtHistory.redo(); ArtToolbar.updateState(); break;
-      case 'cut':   ArtSelection.exec('cut');   break;
-      case 'copy':  ArtSelection.exec('copy');  break;
-      case 'paste': ArtSelection.exec('paste'); break;
-      case 'select-all': ArtSelection.exec('selectAll'); break;
-      case 'find':  ArtModals.open('modalFind'); break;
-
-      // Перегляд
-      case 'orient-portrait':  ArtEditor.setOrientation('portrait');  break;
+      case 'save-txt': return ArtEditor.saveAs('txt');
+      case 'save-rtf': return ArtEditor.saveAs('rtf');
+      case 'save-docx': return ArtEditor.saveAs('docx');
+      case 'print': window.print(); break;
+      case 'undo': ArtHistory.undo(); ArtToolbar.updateState(); break;
+      case 'redo': ArtHistory.redo(); ArtToolbar.updateState(); break;
+      case 'cut': await ArtSelection.cut(document.getElementById('editor')); ArtHistory.pushNow(); break;
+      case 'copy': await ArtSelection.copy(document.getElementById('editor')); break;
+      case 'paste': await ArtSelection.pastePlainText(document.getElementById('editor')); ArtHistory.pushNow(); break;
+      case 'select-all': ArtSelection.selectAll(document.getElementById('editor')); break;
+      case 'find': ArtModals.open('modalFind'); break;
+      case 'orient-portrait': ArtEditor.setOrientation('portrait'); break;
       case 'orient-landscape': ArtEditor.setOrientation('landscape'); break;
-      case 'zoom-75':   ArtEditor.setZoom(75);  break;
-      case 'zoom-100':  ArtEditor.setZoom(100); break;
-      case 'zoom-125':  ArtEditor.setZoom(125); break;
-      case 'zoom-150':  ArtEditor.setZoom(150); break;
-
-      // Вставка
-      case 'insert-hr': ArtSelection.exec('insertHorizontalRule'); break;
+      case 'zoom-75': ArtEditor.setZoom(75); break;
+      case 'zoom-100': ArtEditor.setZoom(100); break;
+      case 'zoom-125': ArtEditor.setZoom(125); break;
+      case 'zoom-150': ArtEditor.setZoom(150); break;
+      case 'insert-hr': ArtToolbar.run(() => ArtSelection.insertHorizontalRule(document.getElementById('editor'))); break;
       case 'insert-table': ArtModals.open('modalTable'); break;
-
-      // Допомога
+      case 'insert-image': ArtEditor.openImageDialog(); break;
       case 'shortcuts': ArtModals.open('modalShortcuts'); break;
-      case 'about':     ArtModals.open('modalAbout');     break;
+      case 'about': ArtModals.open('modalAbout'); break;
     }
   }
 
-  // Програмний виклик дії (з клавіатурних скорочень тощо)
-  function dispatch(action) { _dispatch(action, null); }
-
-  return { init, dispatch };
+  return { init, dispatch, closeAll };
 })();
