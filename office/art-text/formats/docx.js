@@ -30,7 +30,7 @@ const ArtDocx = (() => {
 
   async function exportDocx(html, meta = {}) {
     if (typeof docx === 'undefined') throw new Error('Бібліотека docx.js не завантажена');
-    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType, PageOrientation, Table, TableRow, TableCell, WidthType } = docx;
+    const { Document, Packer, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, UnderlineType, PageOrientation, Table, TableRow, TableCell, WidthType } = docx;
     const div = document.createElement('div');
     div.innerHTML = html;
     const children = [];
@@ -56,6 +56,10 @@ const ArtDocx = (() => {
       }
       if (node.nodeType !== Node.ELEMENT_NODE) return [];
       const tag = node.tagName.toLowerCase();
+      if (tag === 'img') {
+        const imgRun = _imageRunFromNode(node, ImageRun);
+        return imgRun ? [imgRun] : [];
+      }
       const next = {
         bold: fmt.bold || ['b','strong'].includes(tag),
         italics: fmt.italics || ['i','em'].includes(tag),
@@ -103,6 +107,7 @@ const ArtDocx = (() => {
           numbering: tag === 'ol' ? { reference: 'numbered-list', level: 0 } : undefined
         })));
       } else if (tag === 'table') children.push(tableFromNode(node));
+      else if (tag === 'img') { const imgRun = _imageRunFromNode(node, ImageRun); if (imgRun) children.push(new Paragraph({ children: [imgRun] })); }
       else if (tag === 'hr') children.push(new Paragraph({ children: [new TextRun('────────────────────────')] }));
     });
 
@@ -118,6 +123,20 @@ const ArtDocx = (() => {
       }]
     });
     return Packer.toBlob(doc);
+  }
+
+
+  function _imageRunFromNode(node, ImageRunCtor) {
+    const src = node.getAttribute('src') || '';
+    const match = /^data:(image\/(png|jpeg|jpg|gif|webp));base64,(.+)$/i.exec(src);
+    if (!match) return null;
+    const data = Uint8Array.from(atob(match[3]), ch => ch.charCodeAt(0));
+    const cssWidth = parseFloat(node.style.width || node.getAttribute('width') || '0') || Math.min(480, node.naturalWidth || 480);
+    const naturalW = node.naturalWidth || cssWidth || 1;
+    const naturalH = node.naturalHeight || Math.max(1, Math.round(cssWidth * 0.75));
+    const width = Math.max(48, Math.round(cssWidth));
+    const height = Math.max(48, Math.round(width * (naturalH / naturalW)));
+    return new ImageRunCtor({ data, transformation: { width, height } });
   }
 
   function _ptToHalfPt(pt) { const m = /([\d.]+)pt/.exec(pt || ''); return m ? Math.round(parseFloat(m[1]) * 2) : undefined; }

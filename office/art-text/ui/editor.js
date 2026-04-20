@@ -1,44 +1,41 @@
 'use strict';
-/* ui/editor.js — редактор, файли, пошук, статус */
+/* ui/editor.js — full refactor: pages, image resize, safe tables */
 
 const ArtEditor = (() => {
   let _editor = null;
   let _announcer = null;
   let _findState = { query: '', index: -1, matches: [] };
+  let _layoutQueued = 0;
+  let _layoutLock = false;
+  let _selectedImage = null;
+  let _resizeState = null;
 
   function init(editorEl, announcerEl) {
     _editor = editorEl;
     _announcer = announcerEl;
-    _editor.innerHTML = '<p><br></p>';
 
-    _editor.addEventListener('input', () => {
-      ArtState.setDirty(true);
-      _updateStatusBar();
-      _updateVirtualPages();
-    });
-
-    _editor.addEventListener('keydown', e => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        ArtSelection.insertText(_editor, '    ');
-        ArtHistory.pushNow();
-      }
-      if (e.key === 'Enter' && e.shiftKey) {
-        e.preventDefault();
-        ArtSelection.insertHTML(_editor, '<br>');
-        ArtHistory.pushNow();
-      }
-      if (e.key === 'Enter' && _handleListEnter(e)) {
-        ArtHistory.pushNow();
-      }
-    });
-
-    _editor.addEventListener('blur', () => ArtHistory.pushNow(), true);
-    _editor.addEventListener('mouseup', () => ArtToolbar.updateState());
-    _editor.addEventListener('keyup', () => ArtToolbar.updateState());
-    _editor.addEventListener('art:restored', () => {
-      _updateStatusBar();
+    _editor.addEventListener('input', _handleInput);
+    _editor.addEventListener('keydown', _handleKeydown);
+    _editor.addEventListener('click', _handleClick);
+    _editor.addEventListener('pointerdown', _handlePointerDown);
+    _editor.addEventListener('mouseup', () => {
       ArtToolbar.updateState();
+      ArtSelection.remember(_editor);
+    });
+    _editor.addEventListener('keyup', () => {
+      ArtToolbar.updateState();
+      ArtSelection.remember(_editor);
+    });
+    _editor.addEventListener('art:restored', () => {
+      _normalizePages();
+      _syncView();
+      ArtToolbar.updateState();
+    });
+
+    document.addEventListener('pointermove', _handlePointerMove);
+    document.addEventListener('pointerup', _handlePointerUp);
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.art-image-block')) clearSelectedImage();
     });
 
     ArtState.on('change:dirty', dirty => {
@@ -50,30 +47,30 @@ const ArtEditor = (() => {
 
     document.getElementById('fileInput')?.addEventListener('change', _handleFileOpen);
     document.getElementById('imageInput')?.addEventListener('change', _handleImageInsert);
-    window.addEventListener('resize', _updateVirtualPages);
+    window.addEventListener('resize', () => _queueRepaginate(false));
     window.addEventListener('beforeunload', e => {
       if (ArtState.isDirty()) { e.preventDefault(); e.returnValue = ''; }
     });
 
+    _buildEmptyDocument();
     _applyOrientation(ArtState.get('orientation'));
     _applyZoom(ArtState.get('zoom'));
     _updateFileName();
-    _updateStatusBar();
-    _updateVirtualPages();
-    _editor.focus();
+    _syncView();
+    ArtSelection.focusEditor(_editor);
   }
 
   function newDoc() {
     clearFindHighlights();
-    _editor.innerHTML = '<p><br></p>';
+    clearSelectedImage();
+    _buildEmptyDocument();
     ArtState.set('fileName', 'документ');
     ArtState.set('fileFormat', 'docx');
     ArtHistory.init(_editor);
     ArtHistory.markSaved();
     _updateFileName();
-    _updateStatusBar();
-    _updateVirtualPages();
-    _editor.focus();
+    _syncView();
+    ArtSelection.focusEditor(_editor);
     _announce('Новий документ');
   }
 
@@ -90,15 +87,14 @@ const ArtEditor = (() => {
       else return ArtModals.info('Непідтримуваний формат', `Файл .${ext} не підтримується.`);
 
       clearFindHighlights();
-      _editor.innerHTML = ArtSanitize.clean(result.html);
-      ArtSelection.normalizeEditor(_editor);
+      clearSelectedImage();
+      _setDocumentHTML(result.html);
       ArtState.set('fileName', _stripExt(file.name));
       ArtState.set('fileFormat', result.meta.format);
       ArtHistory.init(_editor);
       ArtHistory.markSaved();
       _updateFileName();
-      _updateStatusBar();
-      _updateVirtualPages();
+      _syncView();
       if (result.meta.warnings?.length) {
         ArtModals.info('Файл відкрито з застереженнями', 'Деяке форматування могло бути спрощено.');
       }
@@ -110,7 +106,7 @@ const ArtEditor = (() => {
 
   async function saveAs(format) {
     ArtModals.close('modalSave');
-    const html = _editor.innerHTML;
+    const html = _getExportHTML();
     try {
       let blob, ext;
       if (format === 'txt') {
@@ -139,7 +135,7 @@ const ArtEditor = (() => {
   function _applyOrientation(value) {
     const pages = document.querySelector('.pages-wrap');
     if (pages) pages.dataset.orientation = value;
-    _updateVirtualPages();
+    _queueRepaginate(false);
     document.querySelectorAll('[data-action^="orient-"]').forEach(item => {
       item.classList.toggle('checked', item.dataset.action === `orient-${value}`);
     });
@@ -170,18 +166,20 @@ const ArtEditor = (() => {
         tbody.appendChild(tr);
       }
       table.appendChild(tbody);
-      ArtSelection.insertNode(_editor, table);
+      ArtSelection.insertBlockNode(_editor, table, { insertParagraphAfter: false });
       const p = document.createElement('p');
       p.innerHTML = '<br>';
       table.insertAdjacentElement('afterend', p);
-      ArtSelection.normalizeEditor(_editor);
-      const range = document.createRange();
-      range.selectNodeContents(table.querySelector('th,td'));
-      range.collapse(true);
-      ArtSelection.restore(range);
+      const firstCell = table.querySelector('th,td');
+      if (firstCell) {
+        const range = document.createRange();
+        range.selectNodeContents(firstCell);
+        range.collapse(true);
+        ArtSelection.restore(range);
+      }
+      _queueRepaginate(true);
     });
   }
-
 
   function openImageDialog() {
     ArtSelection.remember(_editor);
@@ -196,10 +194,42 @@ const ArtEditor = (() => {
     reader.onload = () => {
       ArtSelection.restoreLast(_editor);
       ArtToolbar.run(() => ArtSelection.insertImage(_editor, String(reader.result), file.name.replace(/\.[^.]+$/, '')));
-      _updateVirtualPages();
+      _queueRepaginate(false);
       _announce(`Зображення ${file.name} вставлено`);
     };
     reader.readAsDataURL(file);
+  }
+
+  function _handleInput() {
+    if (_layoutLock) return;
+    ArtState.setDirty(true);
+    _queueRepaginate(true);
+  }
+
+  function _handleKeydown(e) {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && _selectedImage) {
+      e.preventDefault();
+      _removeSelectedImage();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      ArtSelection.insertText(_editor, '    ');
+      ArtHistory.pushNow();
+      return;
+    }
+
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      ArtSelection.insertHTML(_editor, '<br>');
+      ArtHistory.pushNow();
+      return;
+    }
+
+    if (e.key === 'Enter' && _handleListEnter(e)) {
+      ArtHistory.pushNow();
+    }
   }
 
   function _handleListEnter(e) {
@@ -207,8 +237,7 @@ const ArtEditor = (() => {
     if (!range) return false;
     let node = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
     const li = node?.closest?.('li');
-    if (!li || !(_editor.contains(li))) return false;
-    if (!range.collapsed) return false;
+    if (!li || !_editor.contains(li) || !range.collapsed) return false;
     const plain = (li.textContent || '').replace(/​/g, '').trim();
     e.preventDefault();
     if (!plain) {
@@ -224,6 +253,7 @@ const ArtEditor = (() => {
       range2.selectNodeContents(p);
       range2.collapse(true);
       ArtSelection.restore(range2);
+      _queueRepaginate(true);
       return true;
     }
     const newLi = document.createElement('li');
@@ -233,29 +263,458 @@ const ArtEditor = (() => {
     range2.selectNodeContents(newLi);
     range2.collapse(true);
     ArtSelection.restore(range2);
+    _queueRepaginate(true);
     return true;
   }
 
-  function _updateVirtualPages() {
-    const wrap = document.querySelector('.pages-wrap');
-    const stack = wrap?.querySelector('.page-stack');
-    const pageEl = wrap?.querySelector('.page-editor');
-    if (!wrap || !stack || !pageEl || !_editor) return;
-    const pageHeight = wrap.dataset.orientation === 'landscape' ? 794 : 1123;
-    const pageGap = 24;
-    const styles = getComputedStyle(pageEl);
-    const padTop = parseFloat(styles.paddingTop) || 0;
-    const padBottom = parseFloat(styles.paddingBottom) || 0;
-    const contentHeight = Math.ceil(_editor.scrollHeight + padTop + padBottom);
-    const count = Math.max(1, Math.ceil(contentHeight / pageHeight));
-    stack.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-      const ghost = document.createElement('div');
-      ghost.className = 'page';
-      ghost.setAttribute('aria-hidden', 'true');
-      stack.appendChild(ghost);
+  function _handleClick(e) {
+    const figure = e.target.closest('.art-image-block');
+    if (figure) {
+      e.preventDefault();
+      selectImage(figure);
+      return;
     }
-    pageEl.style.minHeight = `${count * pageHeight + ((count - 1) * pageGap)}px`;
+    clearSelectedImage();
+  }
+
+  function _handlePointerDown(e) {
+    const handle = e.target.closest('.art-image-handle');
+    if (!handle) return;
+    const figure = handle.closest('.art-image-block');
+    const frame = figure?.querySelector('.art-image-frame');
+    const img = figure?.querySelector('img');
+    const pageContent = figure?.closest('.page-content');
+    if (!figure || !frame || !img || !pageContent) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    selectImage(figure);
+
+    const rect = frame.getBoundingClientRect();
+    _resizeState = {
+      figure,
+      frame,
+      img,
+      dir: handle.dataset.dir || 'se',
+      startX: e.clientX,
+      startWidth: rect.width,
+      ratio: (img.naturalWidth && img.naturalHeight) ? (img.naturalWidth / img.naturalHeight) : Math.max(rect.width / Math.max(rect.height, 1), 1),
+      maxWidth: Math.max(pageContent.clientWidth, 120)
+    };
+  }
+
+  function _handlePointerMove(e) {
+    if (!_resizeState) return;
+    const { frame, dir, startX, startWidth, ratio, maxWidth } = _resizeState;
+    const horizontal = dir.includes('w') ? (startX - e.clientX) : (e.clientX - startX);
+    const width = Math.max(80, Math.min(maxWidth, startWidth + horizontal));
+    frame.style.width = `${Math.round(width)}px`;
+    _resizeState.figure.style.width = `${Math.round(width)}px`;
+    if (ratio > 0) frame.style.height = `${Math.round(width / ratio)}px`;
+  }
+
+  function _handlePointerUp() {
+    if (!_resizeState) return;
+    _resizeState.frame.style.height = '';
+    _resizeState = null;
+    _queueRepaginate(false);
+    ArtState.setDirty(true);
+    ArtHistory.pushNow();
+  }
+
+  function selectImage(figure) {
+    if (!figure) return;
+    clearSelectedImage();
+    _selectedImage = figure;
+    figure.classList.add('is-selected');
+  }
+
+  function clearSelectedImage() {
+    if (_selectedImage) _selectedImage.classList.remove('is-selected');
+    _selectedImage = null;
+  }
+
+  function _removeSelectedImage() {
+    const figure = _selectedImage;
+    if (!figure) return;
+    const page = figure.closest('.page-content');
+    const fallback = figure.nextElementSibling || figure.previousElementSibling || page;
+    figure.remove();
+    clearSelectedImage();
+    _normalizePages();
+    if (fallback && fallback !== page) {
+      const range = document.createRange();
+      range.selectNodeContents(fallback);
+      range.collapse(false);
+      ArtSelection.restore(range);
+    } else {
+      ArtSelection.focusEditor(_editor);
+    }
+    _editor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function _buildEmptyDocument() {
+    _editor.innerHTML = '';
+    _editor.appendChild(_createPage());
+    _normalizePages();
+    _updatePageNumbers();
+    _updateEmptyState();
+  }
+
+  function _createPage() {
+    const page = document.createElement('div');
+    page.className = 'page';
+    const content = document.createElement('div');
+    content.className = 'page-content';
+    content.contentEditable = 'true';
+    content.spellcheck = true;
+    content.dataset.placeholder = 'Почни вводити текст…';
+    content.setAttribute('aria-label', 'Сторінка документа');
+    page.appendChild(content);
+    return page;
+  }
+
+  function _getPages() { return [..._editor.querySelectorAll('.page')]; }
+  function _getPageContent(page) { return page?.querySelector('.page-content') || null; }
+
+  function _getOrCreatePage(index) {
+    const pages = _getPages();
+    if (pages[index]) return pages[index];
+    const page = _createPage();
+    _editor.appendChild(page);
+    return page;
+  }
+
+  function _setDocumentHTML(html) {
+    _editor.innerHTML = '';
+    const page = _createPage();
+    _editor.appendChild(page);
+    const content = _getPageContent(page);
+    content.innerHTML = ArtSanitize.clean(html || '<p><br></p>');
+    _upgradeImageBlocks();
+    _normalizePages();
+    _repaginate(false);
+    ArtSelection.focusEditor(_editor);
+  }
+
+  function _getExportHTML() {
+    const temp = document.createElement('div');
+    ArtSelection.getPageContents(_editor).forEach(content => {
+      [...content.childNodes].forEach(node => temp.appendChild(node.cloneNode(true)));
+    });
+
+    temp.querySelectorAll('mark.search-hit').forEach(mark => {
+      const parent = mark.parentNode;
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      mark.remove();
+    });
+
+    temp.querySelectorAll('figure.art-image-block').forEach(figure => {
+      const img = figure.querySelector('img');
+      const frame = figure.querySelector('.art-image-frame');
+      if (!img) return figure.remove();
+      const cleanImg = img.cloneNode(true);
+      const width = parseFloat(frame?.style.width || figure.style.width || 0);
+      if (width) cleanImg.style.width = `${Math.round(width)}px`;
+      cleanImg.removeAttribute('class');
+      figure.replaceWith(cleanImg);
+    });
+
+    return temp.innerHTML.trim() || '<p><br></p>';
+  }
+
+  function _queueRepaginate(preserveSelection = true) {
+    cancelAnimationFrame(_layoutQueued);
+    _layoutQueued = requestAnimationFrame(() => _repaginate(preserveSelection));
+  }
+
+  function _repaginate(preserveSelection = true) {
+    if (_layoutLock) return;
+    _layoutLock = true;
+
+    const selection = preserveSelection ? ArtSelection.serializeSelection(_editor) : null;
+    _normalizePages();
+
+    let pages = _getPages();
+    for (let i = 0; i < pages.length; i++) {
+      const current = _getPageContent(pages[i]);
+      while (_isOverflowing(current)) {
+        const next = _getPageContent(_getOrCreatePage(i + 1));
+        if (!_moveOverflowToNext(current, next)) break;
+        pages = _getPages();
+      }
+    }
+
+    pages = _getPages();
+    for (let i = 0; i < pages.length - 1; i++) {
+      const current = _getPageContent(pages[i]);
+      const next = _getPageContent(pages[i + 1]);
+      while (_pullFromNextIfFits(current, next)) {
+        if (!_getPages()[i + 1]) break;
+      }
+    }
+
+    _removeTrailingEmptyPages();
+    _updatePageNumbers();
+    _updateEmptyState();
+    _updateStatusBar();
+
+    if (selection) ArtSelection.restoreSerializedSelection(_editor, selection);
+    _layoutLock = false;
+  }
+
+  function _moveOverflowToNext(current, next) {
+    if (!current || !next) return false;
+    const blocks = [...current.children];
+    if (!blocks.length) return false;
+    const last = blocks[blocks.length - 1];
+
+    if (blocks.length === 1) {
+      if (_splitListBlock(current, last, next)) return true;
+      if (_splitTextBlock(current, last, next)) return true;
+      return false;
+    }
+
+    next.prepend(last);
+    _cleanupPage(current);
+    _cleanupPage(next);
+    return true;
+  }
+
+  function _pullFromNextIfFits(current, next) {
+    if (!current || !next) return false;
+    const first = next.firstElementChild;
+    if (!first) return false;
+    current.appendChild(first);
+    if (_isOverflowing(current)) {
+      current.removeChild(first);
+      next.prepend(first);
+      return false;
+    }
+    _mergeAdjacentLists(current);
+    _cleanupPage(current);
+    _cleanupPage(next);
+    return true;
+  }
+
+  function _splitListBlock(current, block, next) {
+    if (!block || !['UL', 'OL'].includes(block.tagName) || block.children.length < 2) return false;
+    const clone = block.cloneNode(false);
+    while (_isOverflowing(current) && block.children.length > 1) {
+      clone.prepend(block.lastElementChild);
+    }
+    if (!clone.children.length) return false;
+    next.prepend(clone);
+    _cleanupPage(current);
+    _cleanupPage(next);
+    return true;
+  }
+
+  function _splitTextBlock(current, block, next) {
+    if (!block || !['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE'].includes(block.tagName)) return false;
+    const totalChars = _countTextChars(block);
+    if (totalChars < 2) return false;
+
+    const originalHTML = block.innerHTML;
+    let low = 1;
+    let high = totalChars - 1;
+    let best = null;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      block.innerHTML = originalHTML;
+      const frag = _extractFromChar(block, mid);
+      if (!frag || !_hasMeaningfulContent(block)) {
+        block.innerHTML = originalHTML;
+        high = mid - 1;
+        continue;
+      }
+      if (_isOverflowing(current)) high = mid - 1;
+      else {
+        best = mid;
+        low = mid + 1;
+      }
+      block.innerHTML = originalHTML;
+    }
+
+    if (best === null) {
+      block.innerHTML = originalHTML;
+      return false;
+    }
+
+    block.innerHTML = originalHTML;
+    const splitAt = _snapSplitIndex(block, best);
+    const fragment = _extractFromChar(block, splitAt);
+    if (!fragment || !_fragmentHasMeaningfulContent(fragment)) {
+      block.innerHTML = originalHTML;
+      return false;
+    }
+
+    const clone = block.cloneNode(false);
+    clone.appendChild(fragment);
+    if (!_hasMeaningfulContent(block)) block.innerHTML = '<br>';
+    next.prepend(clone);
+    _cleanupPage(current);
+    _cleanupPage(next);
+    return true;
+  }
+
+  function _extractFromChar(block, charIndex) {
+    const point = _pointFromCharOffset(block, charIndex);
+    if (!point) return null;
+    const range = document.createRange();
+    range.selectNodeContents(block);
+    range.setStart(point.node, point.offset);
+    return range.extractContents();
+  }
+
+  function _pointFromCharOffset(root, offset) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let seen = 0;
+    let node;
+    let lastNode = null;
+    while ((node = walker.nextNode())) {
+      lastNode = node;
+      const len = node.textContent.length;
+      if (offset <= seen + len) return { node, offset: Math.max(0, offset - seen) };
+      seen += len;
+    }
+    return lastNode ? { node: lastNode, offset: lastNode.textContent.length } : null;
+  }
+
+  function _snapSplitIndex(block, index) {
+    const text = block.textContent || '';
+    let i = Math.max(1, Math.min(index, text.length - 1));
+    while (i > 1 && !/\s|[.,!?;:)]/.test(text[i - 1])) i -= 1;
+    return Math.max(1, i);
+  }
+
+  function _countTextChars(node) {
+    return (node.textContent || '').replace(/\u200B/g, '').length;
+  }
+
+  function _fragmentHasMeaningfulContent(fragment) {
+    return !!(fragment.textContent || '').trim() || !!fragment.querySelector?.('img,table,hr,li');
+  }
+
+  function _hasMeaningfulContent(node) {
+    return !!(node.textContent || '').trim() || !!node.querySelector?.('img,table,hr,li');
+  }
+
+  function _cleanupPage(pageContent) {
+    if (!pageContent) return;
+    [...pageContent.childNodes].forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE && !(node.textContent || '').trim()) node.remove();
+    });
+    _mergeAdjacentLists(pageContent);
+    if (![...pageContent.children].length) {
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      pageContent.appendChild(p);
+    }
+  }
+
+  function _mergeAdjacentLists(container) {
+    let node = container.firstElementChild;
+    while (node && node.nextElementSibling) {
+      const next = node.nextElementSibling;
+      if (['UL', 'OL'].includes(node.tagName) && node.tagName === next.tagName) {
+        while (next.firstElementChild) node.appendChild(next.firstElementChild);
+        next.remove();
+      } else {
+        node = next;
+      }
+    }
+  }
+
+  function _removeTrailingEmptyPages() {
+    const pages = _getPages();
+    for (let i = pages.length - 1; i > 0; i--) {
+      const content = _getPageContent(pages[i]);
+      if (_isPageEmpty(content)) pages[i].remove();
+      else break;
+    }
+    if (!_getPages().length) _editor.appendChild(_createPage());
+  }
+
+  function _isPageEmpty(pageContent) {
+    if (!pageContent) return true;
+    if (pageContent.children.length !== 1) return false;
+    const only = pageContent.firstElementChild;
+    if (!only) return true;
+    return ['P', 'DIV'].includes(only.tagName) && !((only.textContent || '').trim()) && !only.querySelector('img,table,hr');
+  }
+
+  function _upgradeImageBlocks() {
+    _editor.querySelectorAll('.page-content img').forEach(img => {
+      if (img.closest('.art-image-block')) return;
+      const figure = document.createElement('figure');
+      figure.className = 'art-image-block';
+      figure.setAttribute('contenteditable', 'false');
+      figure.tabIndex = -1;
+
+      const frame = document.createElement('div');
+      frame.className = 'art-image-frame';
+      const desiredWidth = parseFloat(img.style.width || img.getAttribute('width') || '0') || Math.min(420, img.naturalWidth || 420);
+      frame.style.width = `${Math.round(desiredWidth)}px`;
+      frame.style.maxWidth = '100%';
+
+      const cleanImg = img.cloneNode(true);
+      cleanImg.style.width = '100%';
+      cleanImg.removeAttribute('width');
+      cleanImg.removeAttribute('height');
+      frame.appendChild(cleanImg);
+
+      ['nw','ne','sw','se'].forEach(dir => {
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'art-image-handle';
+        handle.dataset.dir = dir;
+        handle.setAttribute('aria-label', 'Змінити розмір зображення');
+        frame.appendChild(handle);
+      });
+
+      figure.appendChild(frame);
+      const parent = img.parentElement;
+      img.replaceWith(figure);
+      if (parent && ['P', 'DIV'].includes(parent.tagName) && !(parent.textContent || '').trim() && parent.children.length === 1 && parent.firstElementChild === figure) {
+        parent.replaceWith(figure);
+      }
+    });
+  }
+
+  function _normalizePages() {
+    if (!_getPages().length) _editor.appendChild(_createPage());
+    _upgradeImageBlocks();
+    ArtSelection.normalizeEditor(_editor);
+    _getPages().forEach(page => {
+      const content = _getPageContent(page);
+      if (!content) page.appendChild(_createPage().firstElementChild);
+    });
+  }
+
+  function _isOverflowing(pageContent) {
+    return pageContent && pageContent.scrollHeight > pageContent.clientHeight + 1;
+  }
+
+  function _updatePageNumbers() {
+    _getPages().forEach((page, index) => page.dataset.pageNumber = `${index + 1}`);
+  }
+
+  function _updateEmptyState() {
+    const pages = _getPages();
+    pages.forEach((page, index) => {
+      const content = _getPageContent(page);
+      content.dataset.empty = String(index === 0 && pages.length === 1 && _isPageEmpty(content));
+    });
+  }
+
+  function _syncView() {
+    _repaginate(false);
+    _updateFileName();
+    _updateStatusBar();
+    _updatePageNumbers();
+    _updateEmptyState();
   }
 
   function findNext(query) {
@@ -290,7 +749,7 @@ const ArtEditor = (() => {
       }
     });
     let n;
-    while ((n = walker.nextNode())) if (n.textContent.trim()) textNodes.push(n);
+    while ((n = walker.nextNode())) if ((n.textContent || '').trim()) textNodes.push(n);
     const matches = [];
     const q = query.toLowerCase();
     textNodes.forEach(node => {
@@ -318,6 +777,7 @@ const ArtEditor = (() => {
   }
 
   function clearFindHighlights() {
+    if (!_editor) return;
     _editor.querySelectorAll('mark.search-hit').forEach(mark => {
       const parent = mark.parentNode;
       while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
@@ -380,11 +840,15 @@ const ArtEditor = (() => {
   }
 
   function _stripExt(name) { return name.replace(/\.[^.]+$/, '') || name; }
+
   function _announce(msg) {
     if (!_announcer) return;
     _announcer.textContent = '';
     requestAnimationFrame(() => _announcer.textContent = msg);
   }
 
-  return { init, newDoc, saveAs, setOrientation, setZoom, insertTable, openImageDialog, findNext, clearFindHighlights, editFileName };
+  return {
+    init, newDoc, saveAs, setOrientation, setZoom,
+    insertTable, openImageDialog, findNext, clearFindHighlights, editFileName
+  };
 })();

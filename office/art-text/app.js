@@ -5,12 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const announcer = document.getElementById('ariaAnnouncer');
   if (!editor) return;
 
-  ArtHistory.init(editor);
-  ArtHistory.markSaved();
-  ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
   ArtToolbar.init(editor);
   ArtMenu.init();
   ArtEditor.init(editor, announcer);
+  ArtHistory.init(editor);
+  ArtHistory.markSaved();
+  ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
+  ArtToolbar.updateState();
 
   document.addEventListener('keydown', async e => {
     const ctrl = e.ctrlKey || e.metaKey;
@@ -28,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
       f: () => ArtModals.open('modalFind'),
       a: () => ArtSelection.selectAll(editor),
       c: () => ArtSelection.copy(editor),
-      x: () => ArtSelection.cut(editor).then(() => ArtHistory.pushNow()),
-      v: () => ArtSelection.pastePlainText(editor).then(() => ArtHistory.pushNow())
+      x: async () => { await ArtSelection.cut(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); },
+      v: async () => { await ArtSelection.pastePlainText(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); }
     };
     if (!map[key]) return;
     e.preventDefault();

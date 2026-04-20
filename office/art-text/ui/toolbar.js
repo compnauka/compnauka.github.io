@@ -144,13 +144,14 @@ const ArtToolbar = (() => {
   }
 
   function run(fn) {
-    ArtSelection.restoreLast(_editor);
-    _editor.focus();
+    ArtSelection.focusEditor(_editor);
     fn();
     ArtSelection.normalizeEditor(_editor);
-    ArtHistory.pushNow();
-    updateState();
     _editor.dispatchEvent(new Event('input', { bubbles: true }));
+    requestAnimationFrame(() => {
+      ArtHistory.pushNow();
+      updateState();
+    });
   }
 
   function applyFont(family) {

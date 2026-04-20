@@ -1,8 +1,9 @@
 'use strict';
-/* core/selection.js — стабільні Range API без execCommand */
+/* core/selection.js — page-aware selection and DOM helpers */
 
 const ArtSelection = (() => {
   const ZWSP = '\u200B';
+  const BLOCK_SELECTOR = 'p,div,h1,h2,h3,h4,blockquote,ul,ol,table,figure,hr';
 
   function getSelection() { return window.getSelection(); }
 
@@ -26,23 +27,21 @@ const ArtSelection = (() => {
     sel.addRange(range);
   }
 
-  function cloneRangeSafe(range) {
-    return range ? range.cloneRange() : null;
-  }
+  function cloneRangeSafe(range) { return range ? range.cloneRange() : null; }
 
   function serializeSelection(editor) {
     const range = getRange(editor);
     if (!range) return null;
     return {
       start: { path: _nodePath(editor, range.startContainer), offset: range.startOffset },
-      end:   { path: _nodePath(editor, range.endContainer), offset: range.endOffset }
+      end: { path: _nodePath(editor, range.endContainer), offset: range.endOffset }
     };
   }
 
   function restoreSerializedSelection(editor, data) {
     if (!data) return;
     const startNode = _nodeFromPath(editor, data.start.path);
-    const endNode   = _nodeFromPath(editor, data.end.path);
+    const endNode = _nodeFromPath(editor, data.end.path);
     if (!startNode || !endNode) return;
     const range = document.createRange();
     try {
@@ -52,14 +51,29 @@ const ArtSelection = (() => {
     } catch {}
   }
 
+  function remember(editor) {
+    const range = getRange(editor);
+    editor._artSavedRange = range ? range.cloneRange() : editor._artSavedRange || null;
+  }
+
   function restoreLast(editor) {
     const saved = editor?._artSavedRange;
     if (saved) restore(saved.cloneRange ? saved.cloneRange() : saved);
   }
 
-  function remember(editor) {
+  function focusEditor(editor) {
+    restoreLast(editor);
+    const active = getActivePageContent(editor) || getPageContents(editor)[0];
+    if (!active) return false;
+    active.focus();
     const range = getRange(editor);
-    editor._artSavedRange = range ? range.cloneRange() : editor._artSavedRange || null;
+    if (range) return true;
+    const block = active.querySelector(BLOCK_SELECTOR) || active;
+    const caret = document.createRange();
+    caret.selectNodeContents(block);
+    caret.collapse(true);
+    restore(caret);
+    return true;
   }
 
   function hasSelection(editor) {
@@ -67,14 +81,24 @@ const ArtSelection = (() => {
     return !!range && !range.collapsed;
   }
 
-  function getText(editor) {
-    return getRange(editor)?.toString() || '';
-  }
+  function getText(editor) { return getRange(editor)?.toString() || ''; }
 
   function selectAll(editor) {
     const range = document.createRange();
     range.selectNodeContents(editor);
     restore(range);
+  }
+
+  function getPageContents(editor) {
+    return [...editor.querySelectorAll('.page-content')];
+  }
+
+  function getActivePageContent(editor) {
+    const range = getRange(editor);
+    let node = range?.startContainer || document.activeElement;
+    if (!node) return getPageContents(editor)[0] || null;
+    if (node.nodeType !== 1) node = node.parentElement;
+    return node?.closest?.('.page-content') || getPageContents(editor)[0] || null;
   }
 
   function insertNode(editor, node) {
@@ -83,6 +107,27 @@ const ArtSelection = (() => {
     range.deleteContents();
     range.insertNode(node);
     _placeCaretAfter(node);
+    normalizeEditor(editor);
+    return true;
+  }
+
+  function insertBlockNode(editor, node, options = {}) {
+    const { insertParagraphAfter = false } = options;
+    const currentBlock = getCurrentBlock(editor);
+    const page = getActivePageContent(editor) || getPageContents(editor)[0];
+    if (!page) return false;
+
+    if (!currentBlock || currentBlock === page) page.appendChild(node);
+    else currentBlock.insertAdjacentElement('afterend', node);
+
+    let target = node;
+    if (insertParagraphAfter) {
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      node.insertAdjacentElement('afterend', p);
+      target = p;
+    }
+    _placeCaretInsideStart(target);
     normalizeEditor(editor);
     return true;
   }
@@ -100,10 +145,11 @@ const ArtSelection = (() => {
   }
 
   function insertParagraphAfter(editor) {
-    const block = getCurrentBlock(editor) || editor.lastElementChild || editor;
+    const page = getActivePageContent(editor) || getPageContents(editor)[0];
+    const block = getCurrentBlock(editor) || page;
     const p = document.createElement('p');
     p.innerHTML = '<br>';
-    if (block === editor) editor.appendChild(p);
+    if (!block || block === page) page.appendChild(p);
     else block.insertAdjacentElement('afterend', p);
     _placeCaretInsideStart(p);
     normalizeEditor(editor);
@@ -158,7 +204,9 @@ const ArtSelection = (() => {
 
   function setBlockTag(editor, tagName) {
     const block = getCurrentBlock(editor);
-    if (!block || block === editor) return false;
+    if (!block) return false;
+    const page = getActivePageContent(editor);
+    if (!page || block === page) return false;
     if (block.tagName.toLowerCase() === tagName) return true;
     const replacement = document.createElement(tagName);
     [...block.attributes].forEach(attr => replacement.setAttribute(attr.name, attr.value));
@@ -171,7 +219,8 @@ const ArtSelection = (() => {
 
   function setAlignment(editor, align) {
     const block = getCurrentBlock(editor);
-    if (!block || block === editor) return false;
+    const page = getActivePageContent(editor);
+    if (!block || !page || block === page) return false;
     block.style.textAlign = align === 'left' ? '' : align;
     normalizeEditor(editor);
     return true;
@@ -179,7 +228,8 @@ const ArtSelection = (() => {
 
   function toggleList(editor, listTag) {
     const block = getCurrentBlock(editor);
-    if (!block || block === editor) return false;
+    const page = getActivePageContent(editor);
+    if (!block || !page || block === page) return false;
     const item = block.closest('li');
     const list = block.closest('ul,ol');
 
@@ -210,7 +260,8 @@ const ArtSelection = (() => {
 
   function indent(editor, delta = 24) {
     const block = getCurrentBlock(editor);
-    if (!block || block === editor) return false;
+    const page = getActivePageContent(editor);
+    if (!block || !page || block === page) return false;
     const current = parseInt(block.style.marginLeft || '0', 10) || 0;
     block.style.marginLeft = `${Math.max(0, current + delta)}px`;
     return true;
@@ -218,7 +269,8 @@ const ArtSelection = (() => {
 
   function outdent(editor, delta = 24) {
     const block = getCurrentBlock(editor);
-    if (!block || block === editor) return false;
+    const page = getActivePageContent(editor);
+    if (!block || !page || block === page) return false;
     const current = parseInt(block.style.marginLeft || '0', 10) || 0;
     block.style.marginLeft = `${Math.max(0, current - delta)}px`;
     if (block.style.marginLeft === '0px') block.style.marginLeft = '';
@@ -227,7 +279,7 @@ const ArtSelection = (() => {
 
   function insertHorizontalRule(editor) {
     const hr = document.createElement('hr');
-    return insertNode(editor, hr);
+    return insertBlockNode(editor, hr, { insertParagraphAfter: true });
   }
 
   async function copy(editor) {
@@ -298,30 +350,74 @@ const ArtSelection = (() => {
   function getCurrentBlock(editor) {
     const range = getRange(editor);
     if (!range) return null;
+    const page = getActivePageContent(editor);
     let node = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentNode;
-    while (node && node !== editor) {
+    while (node && node !== editor && node !== page) {
       if (_isBlock(node)) return node;
       node = node.parentNode;
     }
-    return editor.firstElementChild || editor;
+    return page?.querySelector(BLOCK_SELECTOR) || page || null;
   }
 
   function normalizeEditor(editor) {
-    editor.querySelectorAll('span, strong, b, em, i, u, s, strike').forEach(el => {
-      if (el.textContent === ZWSP && !el.querySelector('*')) return;
-      if (!el.textContent && !el.querySelector('br, img, table, hr')) {
-        if (el.parentNode) el.remove();
+    const pages = getPageContents(editor);
+    if (!pages.length) return;
+
+    pages.forEach(page => {
+      // move non-block loose nodes into paragraph wrappers
+      const loose = [...page.childNodes].filter(node => !_isAllowedRootNode(node));
+      if (loose.length) {
+        const p = document.createElement('p');
+        loose.forEach(node => p.appendChild(node));
+        page.insertBefore(p, page.firstChild);
+      }
+
+      page.querySelectorAll('span,strong,b,em,i,u,s,strike').forEach(el => {
+        if (el.textContent === ZWSP && !el.querySelector('*')) return;
+        if (!el.textContent && !el.querySelector('br,img,table,hr')) el.remove();
+      });
+
+      [...page.children].forEach(child => {
+        if (_isTextBlock(child) && !child.innerHTML.trim()) child.innerHTML = '<br>';
+      });
+
+      if (![...page.children].some(ch => _isBlock(ch))) {
+        const p = document.createElement('p');
+        p.innerHTML = '<br>';
+        page.innerHTML = '';
+        page.appendChild(p);
       }
     });
-    if (!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
-    if (![...editor.children].some(ch => _isBlock(ch))) {
-      const p = document.createElement('p');
-      p.innerHTML = editor.innerHTML || '<br>';
-      editor.innerHTML = '';
-      editor.appendChild(p);
-    }
   }
 
+  function insertImage(editor, src, alt = '') {
+    const figure = document.createElement('figure');
+    figure.className = 'art-image-block';
+    figure.setAttribute('contenteditable', 'false');
+    figure.tabIndex = -1;
+
+    const frame = document.createElement('div');
+    frame.className = 'art-image-frame';
+    frame.style.width = '360px';
+    frame.style.maxWidth = '100%';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt;
+
+    ['nw','ne','sw','se'].forEach(dir => {
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'art-image-handle';
+      handle.dataset.dir = dir;
+      handle.setAttribute('aria-label', 'Змінити розмір зображення');
+      frame.appendChild(handle);
+    });
+
+    frame.prepend(img);
+    figure.appendChild(frame);
+    return insertBlockNode(editor, figure, { insertParagraphAfter: true });
+  }
 
   function _syncDecorationColor(node, styles, options = {}) {
     if (!options.syncDecorations || !styles?.color) return;
@@ -338,14 +434,6 @@ const ArtSelection = (() => {
       dec.style.color = styles.color;
       dec.style.textDecorationColor = styles.color;
     });
-  }
-
-  function insertImage(editor, src, alt = '') {
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = alt;
-    img.className = 'art-image';
-    return insertNode(editor, img);
   }
 
   function _nodePath(root, node) {
@@ -368,9 +456,8 @@ const ArtSelection = (() => {
   }
 
   function _surroundRange(range, wrapper) {
-    try {
-      range.surroundContents(wrapper);
-    } catch {
+    try { range.surroundContents(wrapper); }
+    catch {
       const frag = range.extractContents();
       wrapper.appendChild(frag);
       range.insertNode(wrapper);
@@ -423,14 +510,24 @@ const ArtSelection = (() => {
     return t.content;
   }
 
+  function _isTextBlock(node) {
+    return node && node.nodeType === 1 && ['P','DIV','H1','H2','H3','H4','BLOCKQUOTE','LI'].includes(node.tagName);
+  }
+
   function _isBlock(node) {
-    return node && node.nodeType === 1 && ['P','DIV','H1','H2','H3','H4','BLOCKQUOTE','UL','OL','TABLE'].includes(node.tagName);
+    return node && node.nodeType === 1 && ['P','DIV','H1','H2','H3','H4','BLOCKQUOTE','UL','OL','TABLE','FIGURE','HR'].includes(node.tagName);
+  }
+
+  function _isAllowedRootNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return !(node.textContent || '').trim();
+    return _isBlock(node);
   }
 
   return {
     save, restore, cloneRangeSafe, restoreLast, remember, serializeSelection, restoreSerializedSelection,
-    hasSelection, getText, selectAll,
-    insertNode, insertHTML, insertText, insertParagraphAfter,
+    hasSelection, getText, selectAll, focusEditor,
+    getPageContents, getActivePageContent,
+    insertNode, insertBlockNode, insertHTML, insertText, insertParagraphAfter,
     toggleInlineTag, applyInlineStyle, insertImage,
     setBlockTag, setAlignment, toggleList, indent, outdent, insertHorizontalRule,
     copy, cut, pastePlainText, queryState, getCurrentBlock, normalizeEditor, getRange

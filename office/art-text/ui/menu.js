@@ -54,9 +54,9 @@ const ArtMenu = (() => {
       case 'print': window.print(); break;
       case 'undo': ArtHistory.undo(); ArtToolbar.updateState(); break;
       case 'redo': ArtHistory.redo(); ArtToolbar.updateState(); break;
-      case 'cut': await ArtSelection.cut(document.getElementById('editor')); ArtHistory.pushNow(); break;
+      case 'cut': { const editor = document.getElementById('editor'); await ArtSelection.cut(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); break; }
       case 'copy': await ArtSelection.copy(document.getElementById('editor')); break;
-      case 'paste': await ArtSelection.pastePlainText(document.getElementById('editor')); ArtHistory.pushNow(); break;
+      case 'paste': { const editor = document.getElementById('editor'); await ArtSelection.pastePlainText(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); break; }
       case 'select-all': ArtSelection.selectAll(document.getElementById('editor')); break;
       case 'find': ArtModals.open('modalFind'); break;
       case 'orient-portrait': ArtEditor.setOrientation('portrait'); break;
