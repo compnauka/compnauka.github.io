@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АРТ Офіс — Онлайн-редактори для школи</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --blue:    #2563eb;
+    --blue-l:  #dbeafe;
+    --blue-d:  #1d4ed8;
+    --green:   #16a34a;
+    --green-l: #dcfce7;
+    --red:     #dc2626;
+    --red-l:   #fee2e2;
+    --amber:   #d97706;
+    --amber-l: #fef3c7;
+    --violet:  #7c3aed;
+    --violet-l:#ede9fe;
+    --slate:   #1e293b;
+    --slate-m: #64748b;
+    --slate-l: #f8fafc;
+    --white:   #ffffff;
+    --radius:  1.25rem;
+    --shadow:  0 4px 24px rgba(30,41,59,.08);
+    --shadow-h:0 12px 40px rgba(30,41,59,.16);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--slate-l);
+    color: var(--slate);
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--white);
+    border-bottom: 2px solid #e2e8f0;
+    padding: .7rem 1.5rem;
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem;
+  }
+  .topbar-brand {
+    display: flex; align-items: center; gap: .6rem;
+    text-decoration: none; color: var(--slate);
+  }
+  .logo-box {
+    width: 38px; height: 38px;
+    background: var(--blue); border-radius: .55rem;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: .75rem; font-weight: 900;
+    font-family: 'Nunito', sans-serif; letter-spacing: -.02em;
+  }
+  .brand-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: 1.2rem; letter-spacing: -.01em;
+  }
+  .brand-name em { font-style: normal; color: var(--blue); }
+  .topbar-url {
+    font-size: .78rem; color: var(--slate-m);
+    background: var(--slate-l); border: 1px solid #e2e8f0;
+    border-radius: .45rem; padding: .25rem .7rem;
+    font-family: monospace;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 2.75rem 1.5rem 1.5rem;
+    max-width: 640px; margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: var(--blue-l); color: var(--blue-d);
+    font-weight: 800; font-size: .75rem;
+    border-radius: 999px; padding: .28rem .85rem;
+    margin-bottom: 1rem;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Nunito', sans-serif; font-weight: 900;
+    font-size: clamp(2rem, 6vw, 3rem); line-height: 1.12;
+    margin-bottom: .7rem;
+  }
+  .hero h1 .art { color: var(--blue); }
+  .hero p {
+    color: var(--slate-m); font-size: 1rem; line-height: 1.6;
+    max-width: 500px; margin: 0 auto;
+  }
+
+  /* ── Chips ── */
+  .chips {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: .55rem; padding: .75rem 1.5rem 2rem;
+    max-width: 760px; margin: 0 auto;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--white); border: 1.5px solid #e2e8f0;
+    border-radius: 999px; padding: .32rem .85rem;
+    font-size: .8rem; font-weight: 700; color: var(--slate-m);
+  }
+  .chip i { color: var(--blue); }
+
+  /* ── Cards ── */
+  .cards {
+    max-width: 1060px; margin: 0 auto;
+    padding: 0 1.25rem 3.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .card-wide { grid-column: span 2; }
+  @media (max-width: 640px) { .card-wide { grid-column: span 1; } }
+
+  .card {
+    background: var(--white); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.75rem 1.6rem 1.5rem;
+    display: flex; flex-direction: column; gap: .85rem;
+    border: 2px solid transparent;
+    text-decoration: none; color: inherit;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: var(--accent);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card:hover, .card:focus-within {
+    box-shadow: var(--shadow-h);
+    transform: translateY(-3px);
+    border-color: var(--accent);
+  }
+
+  .c-text   { --accent: var(--blue);   --accent-l: var(--blue-l); }
+  .c-sheet  { --accent: var(--green);  --accent-l: var(--green-l); }
+  .c-slides { --accent: var(--red);    --accent-l: var(--red-l); }
+  .c-paint  { --accent: var(--amber);  --accent-l: var(--amber-l); }
+  .c-scheme { --accent: var(--violet); --accent-l: var(--violet-l); }
+
+  .card-head { display: flex; align-items: center; gap: .85rem; }
+  .card-icon {
+    width: 50px; height: 50px; border-radius: .85rem;
+    background: var(--accent-l); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; flex-shrink: 0;
+  }
+  .card-sub {
+    font-size: .7rem; font-weight: 800;
+    letter-spacing: .07em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: .12rem;
+  }
+  .card-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: 1.2rem; line-height: 1.2;
+  }
+
+  .card-desc {
+    font-size: .88rem; color: var(--slate-m);
+    line-height: 1.55; flex: 1;
+  }
+
+  /* Wide card inner layout */
+  .card-wide .card-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; align-items: start;
+  }
+  @media (max-width: 640px) {
+    .card-wide .card-body { grid-template-columns: 1fr; }
+  }
+  .card-features { display: flex; flex-direction: column; gap: .4rem; }
+  .feat {
+    display: flex; align-items: flex-start; gap: .45rem;
+    font-size: .83rem; color: var(--slate-m); line-height: 1.4;
+  }
+  .feat i { color: var(--accent); margin-top: .15rem; flex-shrink: 0; font-size: .78rem; }
+
+  .card-footer {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: .6rem;
+    margin-top: auto;
+  }
+  .card-meta { display: flex; flex-direction: column; gap: .3rem; }
+  .card-grades {
+    font-size: .76rem; color: var(--slate-m);
+    display: flex; align-items: center; gap: .3rem; font-weight: 700;
+  }
+  .card-grades i { color: var(--accent); }
+  .card-formats { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .fmt {
+    font-size: .68rem; font-weight: 800; letter-spacing: .04em;
+    background: var(--accent-l); color: var(--accent);
+    border-radius: 999px; padding: .16rem .52rem;
+  }
+
+  /* Badge */
+  .badge {
+    position: absolute; top: .9rem; right: .9rem;
+    font-size: .67rem; font-weight: 800;
+    letter-spacing: .05em; text-transform: uppercase;
+    border-radius: 999px; padding: .17rem .58rem;
+  }
+  .b-ready { background: #dcfce7; color: #15803d; }
+  .b-soon  { background: #fef9c3; color: #92400e; }
+
+  /* Button */
+  .btn-open {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--accent); color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: .88rem;
+    border-radius: .7rem; padding: .52rem 1.05rem;
+    border: none; cursor: pointer; text-decoration: none;
+    transition: filter .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn-open:hover { filter: brightness(1.08); transform: scale(1.02); }
+  .btn-open:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .btn-open.disabled { opacity: .5; pointer-events: none; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; padding: 1.25rem 1rem 2.5rem;
+    font-size: .8rem; color: var(--slate-m);
+    border-top: 1px solid #e2e8f0;
+  }
+  footer a { color: var(--blue); text-decoration: none; font-weight: 700; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .btn-open { transition: none; }
+    .card:hover { transform: none; }
+  }
+  @media (max-width: 480px) {
+    .hero { padding: 1.75rem 1rem 1.25rem; }
+    .cards { gap: .85rem; }
+    .card { padding: 1.4rem 1.15rem 1.2rem; }
+    .topbar-url { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar" role="banner">
+  <a href="https://itnauka.org" class="topbar-brand" aria-label="Перейти на головну itnauka.org">
+    <div class="logo-box" aria-hidden="true">АРТ</div>
+    <span class="brand-name">IT<em>Наука</em></span>
+  </a>
+  <span class="topbar-url" aria-label="Адреса сторінки">itnauka.org/office</span>
+</header>
+
+<section class="hero" aria-labelledby="hero-h1">
+  <div class="hero-badge">
+    <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
+    1–11 клас · Без реєстрації
+  </div>
+  <h1 id="hero-h1"><span class="art">АРТ</span> Офіс</h1>
+  <p>Онлайн-редактори для навчання в школі. Відкрий і працюй — без встановлення, без акаунту, без хмари.</p>
+</section>
+
+<div class="chips" role="list" aria-label="Особливості">
+  <span class="chip" role="listitem"><i class="fa-solid fa-wifi-slash" aria-hidden="true"></i>Без інтернету</span>
+  <span class="chip" role="listitem"><i class="fa-solid fa-user-slash" aria-hidden="true"></i>Без реєстрації</span>
+  <span class="chip" role="listitem"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>Телефон і планшет</span>
+  <span class="chip" role="listitem"><i class="fa-solid fa-file-export" aria-hidden="true"></i>Зберігання на диск</span>
+  <span class="chip" role="listitem"><i class="fa-solid fa-lock-open" aria-hidden="true"></i>Відкритий код</span>
+</div>
+
+<main class="cards" aria-label="Редактори АРТ Офісу">
+
+  <!-- АРТ Текст -->
+  <article class="card c-text" aria-labelledby="t-text">
+    <span class="badge b-ready">Готовий</span>
+    <div class="card-head">
+      <div class="card-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></div>
+      <div>
+        <div class="card-sub">Текстовий редактор</div>
+        <h2 class="card-title" id="t-text">АРТ Текст</h2>
+      </div>
+    </div>
+    <p class="card-desc">Набирай та форматуй тексти, листи, твори, звіти. Заголовки, списки, жирний, курсив — і збереження у Word.</p>
+    <div class="card-footer">
+      <div class="card-meta">
+        <div class="card-grades"><i class="fa-solid fa-school" aria-hidden="true"></i> 1–11 клас</div>
+        <div class="card-formats" aria-label="Формати">
+          <span class="fmt">.txt</span>
+          <span class="fmt">.rtf</span>
+          <span class="fmt">.docx</span>
+        </div>
+      </div>
+      <a href="/office/text" class="btn-open" aria-label="Відкрити АРТ Текст">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Відкрити
+      </a>
+    </div>
+  </article>
+
+  <!-- АРТ Таблиці -->
+  <article class="card c-sheet" aria-labelledby="t-sheet">
+    <span class="badge b-ready">Готовий</span>
+    <div class="card-head">
+      <div class="card-icon" aria-hidden="true"><i class="fa-solid fa-table-cells"></i></div>
+      <div>
+        <div class="card-sub">Табличний редактор</div>
+        <h2 class="card-title" id="t-sheet">АРТ Таблиці</h2>
+      </div>
+    </div>
+    <p class="card-desc">Таблиці, формули СУМА/СЕР/МАКС/МІН, діаграми. Власні вирази на кшталт&nbsp;Excel.</p>
+    <div class="card-footer">
+      <div class="card-meta">
+        <div class="card-grades"><i class="fa-solid fa-school" aria-hidden="true"></i> 5–11 клас</div>
+        <div class="card-formats" aria-label="Формати">
+          <span class="fmt">.csv</span>
+        </div>
+      </div>
+      <a href="/office/sheet" class="btn-open" aria-label="Відкрити АРТ Таблиці">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Відкрити
+      </a>
+    </div>
+  </article>
+
+  <!-- АРТ Слайди -->
+  <article class="card c-slides" aria-labelledby="t-slides">
+    <span class="badge b-soon">Скоро</span>
+    <div class="card-head">
+      <div class="card-icon" aria-hidden="true"><i class="fa-solid fa-film"></i></div>
+      <div>
+        <div class="card-sub">Редактор презентацій</div>
+        <h2 class="card-title" id="t-slides">АРТ Слайди</h2>
+      </div>
+    </div>
+    <p class="card-desc">Слайди з текстом, зображеннями, фігурами. Готові теми та переходи між слайдами.</p>
+    <div class="card-footer">
+      <div class="card-meta">
+        <div class="card-grades"><i class="fa-solid fa-school" aria-hidden="true"></i> 3–11 клас</div>
+        <div class="card-formats" aria-label="Формати">
+          <span class="fmt">.pptx</span>
+          <span class="fmt">.pdf</span>
+        </div>
+      </div>
+      <a href="/office/slides" class="btn-open disabled"
+         aria-label="АРТ Слайди — незабаром" aria-disabled="true" tabindex="-1">
+        <i class="fa-solid fa-clock" aria-hidden="true"></i> Незабаром
+      </a>
+    </div>
+  </article>
+
+  <!-- АРТ Малюнки -->
+  <article class="card c-paint" aria-labelledby="t-paint">
+    <span class="badge b-ready">Готовий</span>
+    <div class="card-head">
+      <div class="card-icon" aria-hidden="true"><i class="fa-solid fa-paintbrush"></i></div>
+      <div>
+        <div class="card-sub">Графічний редактор</div>
+        <h2 class="card-title" id="t-paint">АРТ Малюнки</h2>
+      </div>
+    </div>
+    <p class="card-desc">Малюй пензлем, олівцем, геометричними фігурами. Відкривай і зберігай зображення.</p>
+    <div class="card-footer">
+      <div class="card-meta">
+        <div class="card-grades"><i class="fa-solid fa-school" aria-hidden="true"></i> 1–6 клас</div>
+        <div class="card-formats" aria-label="Формати">
+          <span class="fmt">.png</span>
+          <span class="fmt">.jpg</span>
+          <span class="fmt">.bmp</span>
+        </div>
+      </div>
+      <a href="/office/paint" class="btn-open" aria-label="Відкрити АРТ Малюнки">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Відкрити
+      </a>
+    </div>
+  </article>
+
+  <!-- АРТ Схеми — wide -->
+  <article class="card c-scheme card-wide" aria-labelledby="t-scheme">
+    <span class="badge b-ready">Готовий</span>
+    <div class="card-head">
+      <div class="card-icon" aria-hidden="true"><i class="fa-solid fa-diagram-project"></i></div>
+      <div>
+        <div class="card-sub">Редактор блок-схем та алгоритмів</div>
+        <h2 class="card-title" id="t-scheme">АРТ Схеми</h2>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Малюй блок-схеми, алгоритми, діаграми потоків. Два режими в одному інструменті — для початківців і для старшокласників.</p>
+      <div class="card-features">
+        <div class="feat">
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+          <span><strong>Початковий режим</strong> — базові блоки, прив'язка до сітки, 3–5 клас</span>
+        </div>
+        <div class="feat">
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+          <span><strong>Розширений режим</strong> — повний набір фігур ДСТУ, 5–11 клас</span>
+        </div>
+        <div class="feat">
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+          <span>Збереження у PNG, SVG та власний формат <code>.схема</code></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="card-meta">
+        <div class="card-grades"><i class="fa-solid fa-school" aria-hidden="true"></i> 3–11 клас</div>
+        <div class="card-formats" aria-label="Формати">
+          <span class="fmt">.png</span>
+          <span class="fmt">.svg</span>
+          <span class="fmt">.схема</span>
+        </div>
+      </div>
+      <a href="/office/scheme" class="btn-open" aria-label="Відкрити АРТ Схеми">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Відкрити
+      </a>
+    </div>
+  </article>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://itnauka.org">itnauka.org</a> —
+    відповідає програмі ІТ-студій МОН України &nbsp;·&nbsp;
+    Всі інструменти безкоштовні
+  </p>
+</footer>
+
+</body>
+</html>
