@@ -5,8 +5,8 @@ const ArtToolbar = (() => {
   let _editor = null;
   const FONTS = ['Arial', 'Times New Roman', 'Calibri', 'Verdana', 'Georgia', 'Courier New', 'Trebuchet MS'];
   const SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
-  const TEXT_COLORS = ['#1e293b','#111827','#dc2626','#ea580c','#ca8a04','#16a34a','#0891b2','#2563eb','#7c3aed','#db2777','#ffffff','#64748b'];
-  const HIGHLIGHT_COLORS = ['#fef08a','#fde68a','#fdba74','#fecaca','#bfdbfe','#c7d2fe','#ddd6fe','#bbf7d0','#a7f3d0','#fbcfe8','#e5e7eb','#ffffff'];
+  const TEXT_COLORS = ['#1e293b', '#111827', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#ffffff', '#64748b'];
+  const HIGHLIGHT_COLORS = ['#fef08a', '#fde68a', '#fdba74', '#fecaca', '#bfdbfe', '#c7d2fe', '#ddd6fe', '#bbf7d0', '#a7f3d0', '#fbcfe8', '#e5e7eb', '#ffffff'];
 
   function init(editorEl) {
     _editor = editorEl;
@@ -53,8 +53,8 @@ const ArtToolbar = (() => {
     _mountSwatches('textSwatches', TEXT_COLORS, color => applyColor(color));
     _mountSwatches('highlightSwatches', HIGHLIGHT_COLORS, color => applyHighlight(color));
 
-    document.getElementById('textNoColor')?.addEventListener('mousedown', e => e.preventDefault());
-    document.getElementById('highlightNoColor')?.addEventListener('mousedown', e => e.preventDefault());
+    document.getElementById('textNoColor')?.addEventListener('click', clearColor);
+    document.getElementById('highlightNoColor')?.addEventListener('click', clearHighlight);
     document.getElementById('textNoColor')?.addEventListener('click', () => applyColor('inherit'));
     document.getElementById('highlightNoColor')?.addEventListener('click', () => applyHighlight('transparent'));
 
@@ -98,7 +98,7 @@ const ArtToolbar = (() => {
       if (!e.target.closest('.palette-wrap')) closePalettes();
     });
 
-    ['keyup','mouseup','focus','selectionchange'].forEach(evt => {
+    ['keyup', 'mouseup', 'focus', 'selectionchange'].forEach(evt => {
       document.addEventListener(evt, () => {
         if (document.activeElement === _editor || _editor.contains(document.activeElement)) {
           updateState();
@@ -170,7 +170,15 @@ const ArtToolbar = (() => {
     });
   }
 
-  function applyAlign(side) { run(() => ArtSelection.setAlignment(_editor, side)); }
+  function applyAlign(side) {
+    run(() => {
+      if (window.art?.editor?.hasSelectedImage?.()) {
+        ArtEditor.setSelectedImageLayout(side);
+        return;
+      }
+      ArtSelection.setAlignment(_editor, side);
+    });
+  }
 
   function applyHeading(tag) {
     run(() => {
@@ -180,11 +188,28 @@ const ArtToolbar = (() => {
     });
   }
 
-  function applyColor(color) { closePalettes(); run(() => ArtSelection.applyInlineStyle(_editor, { color }, { syncDecorations: true })); }
-  function applyHighlight(color) { closePalettes(); run(() => ArtSelection.applyInlineStyle(_editor, { backgroundColor: color })); }
+  function applyColor(color) {
+    closePalettes();
+    run(() => ArtSelection.applyInlineStyle(_editor, { color }, { syncDecorations: true }));
+  }
+
+  function applyHighlight(color) {
+    closePalettes();
+    run(() => ArtSelection.applyInlineStyle(_editor, { backgroundColor: color }));
+  }
+
+  function clearColor() {
+    closePalettes();
+    run(() => ArtSelection.clearInlineStyle(_editor, ['color', 'textDecorationColor']));
+  }
+
+  function clearHighlight() {
+    closePalettes();
+    run(() => ArtSelection.clearInlineStyle(_editor, ['backgroundColor']));
+  }
 
   function updateState() {
-    ['bold','italic','underline','strikeThrough','insertUnorderedList','insertOrderedList'].forEach(cmd => {
+    ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList'].forEach(cmd => {
       const btn = document.querySelector(`[data-cmd="${cmd}"]`);
       if (btn) btn.classList.toggle('active', ArtSelection.queryState(_editor, cmd));
     });

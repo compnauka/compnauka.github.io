@@ -9,11 +9,13 @@ const ArtEditor = (() => {
   let _layoutLock = false;
   let _selectedImage = null;
   let _resizeState = null;
+  let _historyTimer = 0;
 
   function init(editorEl, announcerEl) {
     _editor = editorEl;
     _announcer = announcerEl;
 
+    _editor.addEventListener('beforeinput', _handleBeforeInput);
     _editor.addEventListener('input', _handleInput);
     _editor.addEventListener('keydown', _handleKeydown);
     _editor.addEventListener('click', _handleClick);
@@ -200,10 +202,21 @@ const ArtEditor = (() => {
     reader.readAsDataURL(file);
   }
 
-  function _handleInput() {
+  function _handleBeforeInput() {
+    ArtSelection.remember(_editor);
+  }
+
+  function _handleInput(e) {
     if (_layoutLock) return;
+
     ArtState.setDirty(true);
+    ArtSelection.remember(_editor);
     _queueRepaginate(true);
+
+    clearTimeout(_historyTimer);
+    const inputType = e?.inputType || '';
+    const delay = /^delete|^history|insertParagraph/.test(inputType) ? 0 : 180;
+    _historyTimer = setTimeout(() => ArtHistory.pushNow(), delay);
   }
 
   function _handleKeydown(e) {
@@ -352,6 +365,30 @@ const ArtEditor = (() => {
     }
     _editor.dispatchEvent(new Event('input', { bubbles: true }));
   }
+  function hasSelectedImage() {
+    return !!_selectedImage;
+  }
+
+  function setSelectedImageLayout(mode) {
+    if (!_selectedImage) return false;
+
+    _selectedImage.classList.remove(
+      'img-align-left',
+      'img-align-center',
+      'img-align-right',
+      'img-wrap-left',
+      'img-wrap-right'
+    );
+
+    if (mode === 'left') _selectedImage.classList.add('img-align-left');
+    else if (mode === 'center') _selectedImage.classList.add('img-align-center');
+    else if (mode === 'right') _selectedImage.classList.add('img-align-right');
+    else if (mode === 'wrap-left') _selectedImage.classList.add('img-wrap-left');
+    else if (mode === 'wrap-right') _selectedImage.classList.add('img-wrap-right');
+
+    _editor.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  }
 
   function _buildEmptyDocument() {
     _editor.innerHTML = '';
@@ -413,9 +450,27 @@ const ArtEditor = (() => {
       const img = figure.querySelector('img');
       const frame = figure.querySelector('.art-image-frame');
       if (!img) return figure.remove();
+
       const cleanImg = img.cloneNode(true);
       const width = parseFloat(frame?.style.width || figure.style.width || 0);
       if (width) cleanImg.style.width = `${Math.round(width)}px`;
+
+      if (figure.classList.contains('img-align-left')) {
+        cleanImg.style.cssText += ';display:block;margin:.85rem 0 .85rem 0;';
+      }
+      if (figure.classList.contains('img-align-center')) {
+        cleanImg.style.cssText += ';display:block;margin:.85rem auto;';
+      }
+      if (figure.classList.contains('img-align-right')) {
+        cleanImg.style.cssText += ';display:block;margin:.85rem 0 .85rem auto;';
+      }
+      if (figure.classList.contains('img-wrap-left')) {
+        cleanImg.style.cssText += ';float:left;margin:.2rem 1rem .6rem 0;';
+      }
+      if (figure.classList.contains('img-wrap-right')) {
+        cleanImg.style.cssText += ';float:right;margin:.2rem 0 .6rem 1rem;';
+      }
+
       cleanImg.removeAttribute('class');
       figure.replaceWith(cleanImg);
     });
@@ -427,12 +482,61 @@ const ArtEditor = (() => {
     cancelAnimationFrame(_layoutQueued);
     _layoutQueued = requestAnimationFrame(() => _repaginate(preserveSelection));
   }
+  function _saveSelectionMarkers() {
+    const range = ArtSelection.getRange(_editor);
+    if (!range) return null;
+
+    const start = document.createElement('span');
+    start.dataset.artSel = 'start';
+    start.className = 'art-sel-marker';
+
+    if (range.collapsed) {
+      const caret = range.cloneRange();
+      caret.collapse(true);
+      caret.insertNode(start);
+      return { collapsed: true };
+    }
+
+    const end = document.createElement('span');
+    end.dataset.artSel = 'end';
+    end.className = 'art-sel-marker';
+
+    const endRange = range.cloneRange();
+    endRange.collapse(false);
+    endRange.insertNode(end);
+
+    const startRange = range.cloneRange();
+    startRange.collapse(true);
+    startRange.insertNode(start);
+
+    return { collapsed: false };
+  }
+
+  function _restoreSelectionMarkers() {
+    const start = _editor.querySelector('.art-sel-marker[data-art-sel="start"]');
+    const end = _editor.querySelector('.art-sel-marker[data-art-sel="end"]');
+    if (!start) return;
+
+    const range = document.createRange();
+    if (end) {
+      range.setStartAfter(start);
+      range.setEndBefore(end);
+    } else {
+      range.setStartAfter(start);
+      range.collapse(true);
+    }
+
+    start.remove();
+    end?.remove();
+    ArtSelection.restore(range);
+    ArtSelection.remember(_editor);
+  }
 
   function _repaginate(preserveSelection = true) {
     if (_layoutLock) return;
     _layoutLock = true;
 
-    const selection = preserveSelection ? ArtSelection.serializeSelection(_editor) : null;
+    const markers = preserveSelection ? _saveSelectionMarkers() : null;
     _normalizePages();
 
     let pages = _getPages();
@@ -459,7 +563,7 @@ const ArtEditor = (() => {
     _updateEmptyState();
     _updateStatusBar();
 
-    if (selection) ArtSelection.restoreSerializedSelection(_editor, selection);
+    if (markers) _restoreSelectionMarkers();
     _layoutLock = false;
   }
 
@@ -665,7 +769,7 @@ const ArtEditor = (() => {
       cleanImg.removeAttribute('height');
       frame.appendChild(cleanImg);
 
-      ['nw','ne','sw','se'].forEach(dir => {
+      ['nw', 'ne', 'sw', 'se'].forEach(dir => {
         const handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'art-image-handle';
@@ -772,7 +876,7 @@ const ArtEditor = (() => {
       range.setEnd(match.node, match.end);
       const mark = document.createElement('mark');
       mark.className = 'search-hit';
-      try { range.surroundContents(mark); } catch {}
+      try { range.surroundContents(mark); } catch { }
     });
   }
 
@@ -848,7 +952,7 @@ const ArtEditor = (() => {
   }
 
   return {
-    init, newDoc, saveAs, setOrientation, setZoom,
+    init, newDoc, saveAs, setOrientation, setZoom, hasSelectedImage, setSelectedImageLayout,
     insertTable, openImageDialog, findNext, clearFindHighlights, editFileName
   };
 })();

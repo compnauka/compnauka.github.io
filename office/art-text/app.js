@@ -16,8 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', async e => {
     const ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) return;
+
+    const target = e.target;
+    const isEditorTarget = !!target?.closest?.('.page-content');
+    const isFormField = !!target?.closest?.('input, textarea, select');
+    if (isFormField && !isEditorTarget) return;
+
     const key = e.key.toLowerCase();
     const map = {
+      n: () => ArtMenu.dispatch('new'),
       b: () => ArtToolbar.applyCommand('bold'),
       i: () => ArtToolbar.applyCommand('italic'),
       u: () => ArtToolbar.applyCommand('underline'),
@@ -29,9 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
       f: () => ArtModals.open('modalFind'),
       a: () => ArtSelection.selectAll(editor),
       c: () => ArtSelection.copy(editor),
-      x: async () => { await ArtSelection.cut(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); },
-      v: async () => { await ArtSelection.pastePlainText(editor); editor.dispatchEvent(new Event('input', { bubbles: true })); requestAnimationFrame(() => ArtHistory.pushNow()); }
+      x: async () => {
+        await ArtSelection.cut(editor);
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+        requestAnimationFrame(() => ArtHistory.pushNow());
+      },
+      v: async () => {
+        await ArtSelection.pastePlainText(editor);
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+        requestAnimationFrame(() => ArtHistory.pushNow());
+      }
     };
+
     if (!map[key]) return;
     e.preventDefault();
     await map[key]();

@@ -48,7 +48,7 @@ const ArtSelection = (() => {
       range.setStart(startNode, Math.min(data.start.offset, _maxOffset(startNode)));
       range.setEnd(endNode, Math.min(data.end.offset, _maxOffset(endNode)));
       restore(range);
-    } catch {}
+    } catch { }
   }
 
   function remember(editor) {
@@ -158,7 +158,13 @@ const ArtSelection = (() => {
   function toggleInlineTag(editor, tagName) {
     const range = getRange(editor);
     if (!range) return false;
-    const existing = _closestFormattingAncestor(editor, range.startContainer, el => el.tagName?.toLowerCase() === tagName);
+
+    const existing = _closestFormattingAncestor(
+      editor,
+      range.startContainer,
+      el => el.tagName?.toLowerCase() === tagName
+    );
+
     if (existing && (range.collapsed || existing.contains(range.commonAncestorContainer))) {
       _unwrap(existing);
       normalizeEditor(editor);
@@ -166,19 +172,37 @@ const ArtSelection = (() => {
     }
 
     const el = document.createElement(tagName);
-    const colorHost = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+    const colorHost = range.startContainer.nodeType === 1
+      ? range.startContainer
+      : range.startContainer.parentElement;
+
     if (colorHost) {
       const computed = getComputedStyle(colorHost).color;
-      if (computed && ['u','s','strike'].includes(tagName)) el.style.color = computed;
+      if (computed && ['u', 's', 'strike'].includes(tagName)) {
+        el.style.color = computed;
+        el.style.textDecorationColor = computed;
+      }
     }
+
     if (range.collapsed) {
       el.textContent = ZWSP;
       range.insertNode(el);
       _placeCaretInsideStart(el, 1);
-    } else {
-      _surroundRange(range, el);
-      _selectNodeContents(el);
+      normalizeEditor(editor);
+      return true;
     }
+
+    const startBlock = _closestBlockWithin(editor, range.startContainer);
+    const endBlock = _closestBlockWithin(editor, range.endContainer);
+
+    if (startBlock && endBlock && startBlock !== endBlock) {
+      _wrapSelectedTextNodes(range, tagName);
+      normalizeEditor(editor);
+      return true;
+    }
+
+    _surroundRange(range, el);
+    _selectNodeContents(el);
     normalizeEditor(editor);
     return true;
   }
@@ -198,6 +222,37 @@ const ArtSelection = (() => {
       _syncDecorationColor(span, styles, options);
       _selectNodeContents(span);
     }
+    normalizeEditor(editor);
+    return true;
+  }
+  function clearInlineStyle(editor, props = []) {
+    const range = getRange(editor);
+    if (!range || !props.length) return false;
+
+    if (range.collapsed) {
+      const span = document.createElement('span');
+      props.forEach(prop => {
+        span.style[prop] = prop === 'backgroundColor' ? 'transparent' : 'initial';
+      });
+      span.textContent = ZWSP;
+      range.insertNode(span);
+      _placeCaretInsideStart(span, 1);
+      normalizeEditor(editor);
+      return true;
+    }
+
+    const fragment = range.extractContents();
+    _clearStylesInTree(fragment, props);
+    const last = fragment.lastChild;
+    range.insertNode(fragment);
+
+    if (last) {
+      const after = document.createRange();
+      after.setStartAfter(last);
+      after.collapse(true);
+      restore(after);
+    }
+
     normalizeEditor(editor);
     return true;
   }
@@ -405,7 +460,7 @@ const ArtSelection = (() => {
     img.src = src;
     img.alt = alt;
 
-    ['nw','ne','sw','se'].forEach(dir => {
+    ['nw', 'ne', 'sw', 'se'].forEach(dir => {
       const handle = document.createElement('button');
       handle.type = 'button';
       handle.className = 'art-image-handle';
@@ -480,6 +535,87 @@ const ArtSelection = (() => {
     return null;
   }
 
+  function _clearStylesInTree(root, props) {
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+
+    nodes.forEach(el => {
+      props.forEach(prop => {
+        const cssProp = prop.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`);
+        el.style?.removeProperty(cssProp);
+      });
+      if (props.includes('color')) el.style?.removeProperty('text-decoration-color');
+    });
+
+    [...(root.querySelectorAll ? root.querySelectorAll('span') : [])].forEach(span => {
+      if (!span.getAttribute('style')) _unwrap(span);
+    });
+  }
+
+  function _closestBlockWithin(editor, node) {
+    let el = node?.nodeType === 1 ? node : node?.parentElement;
+    while (el && el !== editor) {
+      if (_isBlock(el) || el.classList?.contains('page-content')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function _wrapSelectedTextNodes(range, tagName) {
+    const root = range.commonAncestorContainer.nodeType === 1
+      ? range.commonAncestorContainer
+      : range.commonAncestorContainer.parentElement;
+
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!(node.textContent || '').replace(/\u200B/g, '').trim()) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return range.intersectsNode(node)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_REJECT;
+      }
+    });
+
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+
+    nodes.forEach(node => {
+      let start = 0;
+      let end = node.textContent.length;
+
+      if (node === range.startContainer) start = range.startOffset;
+      if (node === range.endContainer) end = range.endOffset;
+      if (node === range.startContainer && node === range.endContainer) {
+        start = range.startOffset;
+        end = range.endOffset;
+      }
+
+      if (end <= start) return;
+
+      let target = node;
+      if (start > 0) target = target.splitText(start);
+      if ((end - start) < target.textContent.length) target.splitText(end - start);
+      if (target.parentElement?.tagName?.toLowerCase() === tagName) return;
+
+      const wrapper = document.createElement(tagName);
+
+      if (['u', 's', 'strike'].includes(tagName)) {
+        const computed = getComputedStyle(target.parentElement).color;
+        if (computed) {
+          wrapper.style.color = computed;
+          wrapper.style.textDecorationColor = computed;
+        }
+      }
+
+      target.parentNode.insertBefore(wrapper, target);
+      wrapper.appendChild(target);
+    });
+  }
+
   function _placeCaretAfter(node) {
     const range = document.createRange();
     range.setStartAfter(node);
@@ -511,11 +647,11 @@ const ArtSelection = (() => {
   }
 
   function _isTextBlock(node) {
-    return node && node.nodeType === 1 && ['P','DIV','H1','H2','H3','H4','BLOCKQUOTE','LI'].includes(node.tagName);
+    return node && node.nodeType === 1 && ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'LI'].includes(node.tagName);
   }
 
   function _isBlock(node) {
-    return node && node.nodeType === 1 && ['P','DIV','H1','H2','H3','H4','BLOCKQUOTE','UL','OL','TABLE','FIGURE','HR'].includes(node.tagName);
+    return node && node.nodeType === 1 && ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'TABLE', 'FIGURE', 'HR'].includes(node.tagName);
   }
 
   function _isAllowedRootNode(node) {
@@ -528,7 +664,7 @@ const ArtSelection = (() => {
     hasSelection, getText, selectAll, focusEditor,
     getPageContents, getActivePageContent,
     insertNode, insertBlockNode, insertHTML, insertText, insertParagraphAfter,
-    toggleInlineTag, applyInlineStyle, insertImage,
+    toggleInlineTag, applyInlineStyle, clearInlineStyle, insertImage,
     setBlockTag, setAlignment, toggleList, indent, outdent, insertHorizontalRule,
     copy, cut, pastePlainText, queryState, getCurrentBlock, normalizeEditor, getRange
   };
