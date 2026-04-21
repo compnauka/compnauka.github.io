@@ -225,6 +225,48 @@ function safeMathEval(expr) {
   return result;
 }
 
+function splitFormulaArgs(argsStr) {
+  const src = String(argsStr || '');
+  const parts = [];
+  let current = '';
+  let depth = 0;
+
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '(') depth++;
+    if (ch === ')') depth = Math.max(0, depth - 1);
+
+    if ((ch === ',' || ch === ';') && depth === 0) {
+      parts.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+
+  if (current.trim() || src.includes(',') || src.includes(';')) parts.push(current.trim());
+  return parts.filter((part, idx, arr) => part !== '' || (arr.length === 1 && idx === 0));
+}
+
+function isCellReference(value) {
+  return /^[A-Z]+\d+$/.test(String(value || '').trim().toUpperCase());
+}
+
+function resolveRawCellValue(ref) {
+  const key = String(ref || '').trim().toUpperCase();
+  return cellData[key];
+}
+
+function countNonEmptyArgs(args) {
+  return args.filter(arg => {
+    if (isCellReference(arg)) {
+      const raw = resolveRawCellValue(arg);
+      return raw !== undefined && raw !== null && String(raw).trim() !== '';
+    }
+    return String(arg || '').trim() !== '';
+  }).length;
+}
+
 function evaluateFormula(expr) {
   calcDepth++;
   if (calcDepth > MAX_CALC_DEPTH) {
@@ -237,37 +279,60 @@ function evaluateFormula(expr) {
     if (clean.length === 0) { calcDepth--; return 0; }
     if (clean.length > MAX_CELL_LEN) throw new Error('⚠️ Формула задовга');
 
-    // 1) Expand ranges A1:B3 → A1,A2,...
     clean = clean.replace(/\b([A-Z]+)(\d+)\s*:\s*([A-Z]+)(\d+)\b/g,
       (m, c1, r1, c2, r2) => expandRange(c1, parseInt(r1, 10), c2, parseInt(r2, 10)).join(','));
 
-    // 2) Functions SUM/AVG/MAX/MIN — підтримка вкладених дужок
     let changed = true;
     let guard = 0;
-    while (changed && guard++ < 20) {
+    while (changed && guard++ < 30) {
       changed = false;
-      clean = clean.replace(/\b(SUM|AVG|MAX|MIN)\(([^()]*)\)/g, (m, func, args) => {
+
+      clean = clean.replace(/\b(SUM|AVG|MAX|MIN|COUNT|COUNTA|MEDIAN)\(([^()]*)\)/g, (m, func, args) => {
         changed = true;
-        const vals = args.split(',')
-          .map(a => resolveValue(a.trim()))
-          .filter(v => isFinite(v));
+        const rawArgs = splitFormulaArgs(args);
+        const vals = rawArgs.map(a => resolveValue(a.trim())).filter(v => isFinite(v));
+        if (func === 'COUNT') return String(vals.length);
+        if (func === 'COUNTA') return String(countNonEmptyArgs(rawArgs));
         if (vals.length === 0) return '0';
-        let res;
-        if (func === 'SUM') res = vals.reduce((a, b) => a + b, 0);
-        else if (func === 'AVG') res = vals.reduce((a, b) => a + b, 0) / vals.length;
-        else if (func === 'MAX') res = Math.max(...vals);
-        else if (func === 'MIN') res = Math.min(...vals);
-        return String(res);
+        if (func === 'SUM') return String(vals.reduce((a, b) => a + b, 0));
+        if (func === 'AVG') return String(vals.reduce((a, b) => a + b, 0) / vals.length);
+        if (func === 'MAX') return String(Math.max(...vals));
+        if (func === 'MIN') return String(Math.min(...vals));
+        if (func === 'MEDIAN') {
+          const sorted = [...vals].sort((a, b) => a - b);
+          const mid = Math.floor(sorted.length / 2);
+          return String(sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2);
+        }
+        return '0';
+      });
+
+      clean = clean.replace(/\b(ABS|SQRT)\(([^()]*)\)/g, (m, func, args) => {
+        changed = true;
+        const val = resolveValue(splitFormulaArgs(args)[0]);
+        if (func === 'ABS') return String(Math.abs(val));
+        if (func === 'SQRT') {
+          if (val < 0) throw new Error('⚠️ Корінь із від’ємного числа не підтримується');
+          return String(Math.sqrt(val));
+        }
+        return '0';
+      });
+
+      clean = clean.replace(/\b(ROUND|POW|POWER)\(([^()]*)\)/g, (m, func, args) => {
+        changed = true;
+        const parts = splitFormulaArgs(args);
+        const a = resolveValue(parts[0]);
+        const b = resolveValue(parts[1]);
+        if (func === 'ROUND') {
+          const digits = Number.isFinite(b) ? b : 0;
+          const factor = Math.pow(10, digits);
+          return String(Math.round(a * factor) / factor);
+        }
+        return String(Math.pow(a, b));
       });
     }
 
-    // 3) Replace remaining cell refs (тільки ті, що не всередині функцій)
-    clean = clean.replace(/\b([A-Z]+)(\d+)\b/g, (m, c, r) => {
-      const v = resolveValue(c + r);
-      return String(v);
-    });
+    clean = clean.replace(/\b([A-Z]+)(\d+)\b/g, (m, c, r) => String(resolveValue(c + r)));
 
-    // 4) Безпечний парсер замість Function()
     const res = safeMathEval(clean);
     if (!isFinite(res)) throw new Error('♾️ Результат занадто великий');
 
@@ -275,7 +340,7 @@ function evaluateFormula(expr) {
     return Number.isInteger(res) ? res : parseFloat(Number(res).toFixed(10).replace(/\.?0+$/, ''));
   } catch (e) {
     calcDepth = 0;
-    throw new Error(e?.message || '❌ Помилка у формулі. Перевір: чи правильно написані назви клітинок (A1, B2) та знаки (+, -, *, /)');
+    throw new Error(e?.message || '❌ Помилка у формулі. Перевір назви клітинок, дужки та функції.');
   }
 }
 
@@ -300,7 +365,8 @@ function resolveValue(ref) {
     return evaluateFormula(String(raw).substring(1));
   }
 
-  const num = parseFloat(raw);
+  const normalized = String(raw).replace(',', '.');
+  const num = parseFloat(normalized);
   return isNaN(num) ? 0 : num;
 }
 
@@ -341,17 +407,17 @@ function shiftFormulaRefs(formula, opts) {
     let rNum = parseInt(rowStr, 10);
     if (rowAt !== null && rNum >= rowAt) rNum += rowDelta;
     if (colAt !== null && cIdx >= colAt) cIdx += colDelta;
+    cIdx = Math.max(0, cIdx);
+    rNum = Math.max(1, rNum);
     return indexToCol(cIdx) + rNum;
   };
 
-  // Shift ranges first
   let out = raw.replace(/\b([A-Z]+)(\d+)\s*:\s*([A-Z]+)(\d+)\b/g, (m, c1, r1, c2, r2) => {
     const a = shiftRef(c1, r1);
     const b = shiftRef(c2, r2);
     return a + ':' + b;
   });
 
-  // Then individual refs
   out = out.replace(/\b([A-Z]+)(\d+)\b/g, (m, c, r) => shiftRef(c, r));
   return out;
 }
