@@ -544,14 +544,57 @@ button {
   pointer-events: auto;
 }
 
-.resize-handle.nw { left: -6px; top: -6px; cursor: nwse-resize; }
-.resize-handle.n  { left: 50%; top: -6px; transform: translateX(-50%); cursor: ns-resize; }
-.resize-handle.ne { right: -6px; top: -6px; cursor: nesw-resize; }
-.resize-handle.e  { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-.resize-handle.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
-.resize-handle.s  { left: 50%; bottom: -6px; transform: translateX(-50%); cursor: ns-resize; }
-.resize-handle.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
-.resize-handle.w  { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.resize-handle.nw {
+  left: -6px;
+  top: -6px;
+  cursor: nwse-resize;
+}
+
+.resize-handle.n {
+  left: 50%;
+  top: -6px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle.ne {
+  right: -6px;
+  top: -6px;
+  cursor: nesw-resize;
+}
+
+.resize-handle.e {
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-handle.se {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
+}
+
+.resize-handle.s {
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle.sw {
+  left: -6px;
+  bottom: -6px;
+  cursor: nesw-resize;
+}
+
+.resize-handle.w {
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
 
 .color-popover {
   position: absolute;
@@ -782,9 +825,22 @@ button {
   backdrop-filter: blur(6px);
 }
 
-.present-nav.left { left: 18px; top: 50%; transform: translateY(-50%); }
-.present-nav.right { right: 18px; top: 50%; transform: translateY(-50%); }
-.present-close { top: 18px; right: 18px; }
+.present-nav.left {
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.present-nav.right {
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.present-close {
+  top: 18px;
+  right: 18px;
+}
 
 .present-hint {
   position: fixed;
@@ -855,6 +911,7 @@ button {
 }
 
 @media (max-width: 760px) {
+
   html,
   body {
     overflow: auto;
@@ -1136,7 +1193,9 @@ button {
   }
 }
 
-.slide-card-actions { justify-content: flex-end; }
+.slide-card-actions {
+  justify-content: flex-end;
+}
 
 
 /* --- fixes: placeholders, compact slide rail, fixed color popover --- */
@@ -1263,4 +1322,116 @@ button {
 
 .shape-element {
   overflow: visible;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   АРТ Слайди — патч виправлень (додати в кінець style.css)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── FIX #5: Компактний список слайдів (~5 шт. видно) ─── */
+:root {
+  --sidebar-w: 224px;
+}
+
+.slide-list {
+  gap: .38rem;
+  padding: .42rem .5rem;
+}
+
+.slide-card {
+  padding: .32rem .42rem;
+  border-radius: .72rem;
+}
+
+.slide-card-head {
+  margin-bottom: .3rem;
+  min-height: 22px;
+}
+
+.slide-card-title-wrap {
+  gap: .22rem;
+}
+
+.slide-card-title {
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .03em;
+  color: var(--slate-3);
+  text-transform: uppercase;
+}
+
+.slide-card-actions {
+  gap: .04rem;
+}
+
+/* Thumbnail: fixed height, fills full width of card */
+.slide-thumb {
+  height: 56px;
+  aspect-ratio: unset;
+  /* override 16/9 — height is now fixed */
+  border-radius: .5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+/*
+  The mini snapshot is 960×540 px.
+  Card inner width ≈ 224 - 20px (padding+border) = 204px
+  Scale to fill width: 204/960 ≈ 0.213
+  Resulting height:    540 × 0.213 ≈ 115px  (clipped to 56px by parent)
+*/
+.slide-thumb-mini {
+  width: 960px;
+  height: 540px;
+  transform: scale(0.213);
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.slide-drag-handle {
+  width: 16px;
+  height: 16px;
+  font-size: .6rem;
+}
+
+.mini-btn {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: .28rem;
+}
+
+.mini-btn i {
+  font-size: .62rem;
+}
+
+/* ── FIX #7: Color popover позиція — відносно viewport ── */
+.color-popover {
+  position: fixed;
+  width: 286px;
+  max-width: calc(100vw - 16px);
+  z-index: 300;
+  /* скасовуємо раніше задані left/top — задаються JS */
+  left: auto;
+  right: auto;
+  top: auto;
+}
+
+/* ── FIX #1: placeholder стиль (текст-підказка) ─────── */
+.text-element.is-placeholder {
+  opacity: .75;
+  font-style: italic;
+}
+
+/* ── Drag-over підсвічення ──────────────────────────── */
+.slide-card.drag-over {
+  border-color: #f87171;
+  box-shadow: 0 0 0 2.5px #fee2e2;
+}
+
+.slide-card.dragging-card {
+  opacity: .4;
 }
