@@ -1,3 +1,5 @@
+Окремо звіряти contextual UI з `CONTEXTUAL_UI_STANDARD.md`.
+
 # Технічний гайд з інтеграції UI-стандарту АРТ Офіс
 
 Цей файл описує, як впроваджувати глобальний UI-стандарт у код кожного сервісу.
@@ -29,7 +31,7 @@
   <header class="art-header">...</header>
   <nav class="art-menubar">...</nav>
   <section class="art-toolbar">...</section>
-  <section class="art-contextbar" hidden>...</section>
+  <section class="art-contextual UI" hidden>...</section>
   <main class="art-workspace art-workspace-focusable" tabindex="0">...</main>
   <footer class="art-statusbar">...</footer>
 </body>
@@ -108,7 +110,7 @@ Contextbar показується лише коли це справді доре
 - `.art-menu-button`
 - `.art-toolbar`
 - `.art-toolbar-group`
-- `.art-contextbar`
+- `.art-contextual UI`
 - `.art-context-group`
 - `.art-button`
 - `.art-icon-button`
@@ -160,7 +162,7 @@ Contextbar показується лише коли це справді доре
 4. робити toolbar нижчим або вищим без узгодження зі стандартом;
 5. змінювати кольори shell-рівня не через токени;
 6. створювати другий або третій повноцінний ряд toolbar без обґрунтування;
-7. дублювати одні й ті самі команди одночасно в меню, toolbar, бічній панелі та contextbar без явної причини;
+7. дублювати одні й ті самі команди одночасно в меню, toolbar, бічній панелі та contextual UI без явної причини;
 8. ламати `Ctrl+S`, `Ctrl+Z`, `Esc`, `Tab` і повернення фокуса.
 
 ## 7. Політика адаптивності
@@ -209,5 +211,5 @@ Contextbar показується лише коли це справді доре
 - відмінності від локального стандарту явно зафіксовані;
 - використані глобальні токени з `UI_TOKENS.css` або `design-tokens.json`;
 - нові елементи мають стани `default / hover / active / focus-visible / disabled`;
-- toolbar не збільшує когнітивне навантаження і не дублює contextbar;
+- toolbar не збільшує когнітивне навантаження і не дублює contextual UI;
 - shortcuts, modal, dropdown і workspace focus перевірені за окремими стандартами.

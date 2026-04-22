@@ -10,11 +10,12 @@
 - `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структур меню
 - `UI_INTEGRATION_GUIDE.md` — технічний гайд з інтеграції стандарту в код
 - `APP_SHELL.html` — базовий HTML-шаблон shell інтерфейсу
-- `SHELL_COMPONENTS.md` — правила для titlebar, menu bar, toolbar, contextbar, workspace, statusbar
+- `SHELL_COMPONENTS.md` — правила для titlebar, menu bar, toolbar, contextual UI, workspace, statusbar
 - `SERVICE_SHELL_BLUEPRINTS.md` — короткі shell-схеми для кожного сервісу
 - `COMPONENT_CHECKLIST.md` — чекліст для рев'ю, QA і приймання
 - `UI_REVIEW_TEMPLATE.md` — єдиний шаблон формалізованого UI-рев'ю
 - `CHANGELOG_STANDARD.md` — єдиний стандарт ведення changelog для UI-змін
+- `CONTEXTUAL_UI_STANDARD.md` — єдиний стандарт контекстного UI
 - `PROMPT_FOR_AGENT.md` — системний промпт/регламент для агента або розробника
 
 ## Нові поведінкові стандарти у версії 1.1
@@ -57,7 +58,7 @@
    - dropdown/menu,
    - modal,
    - workspace focus-visible.
-5. Потім доробляти локальні контекстні панелі сервісів.
+5. Потім доробляти локальний contextual UI сервісів.
 
 ## Технічне впровадження
 
@@ -65,7 +66,7 @@
 2. Використовувати `design-tokens.json` для генерації тем, якщо згодом з'явиться build-step або дизайн-тулінг.
 3. Звіряти shell-структуру з `UI_INTEGRATION_GUIDE.md`.
 4. Використовувати `SERVICE_THEME_MAP.json` як джерело правди для назви сервісу, акцентного кольору й структури меню.
-5. Для keyboard, modal, dropdown і workspace-поведінки використовувати окремі стандарти як джерело правди.
+5. Для keyboard, modal, dropdown, workspace і contextual UI використовувати окремі стандарти як джерело правди.
 
 ## Рекомендований порядок читання для агента / розробника
 
@@ -76,18 +77,20 @@
 5. `WORKSPACE_ACCESSIBILITY.md`
 6. `MODAL_STANDARD.md`
 7. `DROPDOWN_STANDARD.md`
-8. `UI_TOKENS.css`
-9. `SHELL_COMPONENTS.md`
-10. `SERVICE_SHELL_BLUEPRINTS.md`
-11. `COMPONENT_CHECKLIST.md`
-12. `UI_REVIEW_TEMPLATE.md`
-13. `CHANGELOG_STANDARD.md`
+8. `CONTEXTUAL_UI_STANDARD.md`
+9. `UI_TOKENS.css`
+10. `SHELL_COMPONENTS.md`
+11. `SERVICE_SHELL_BLUEPRINTS.md`
+12. `COMPONENT_CHECKLIST.md`
+13. `UI_REVIEW_TEMPLATE.md`
+14. `CHANGELOG_STANDARD.md`
 
 ## Стан пакета
 
-Версія пакета: **1.2**  
-У цій версії додано повний governance-шар для рев'ю та документування UI-змін:
-- шаблон формалізованого UI-рев'ю;
-- стандарт ведення changelog для UI-змін;
-- оновлений README з новим порядком читання і впровадження;
-- збережено всі виправлення версії 1.1 щодо shortcuts, workspace, modal, dropdown і вікових правил.
+Версія пакета: **1.3**  
+У цій версії додано повний стандарт контекстного UI:
+- окремий нормативний документ `CONTEXTUAL_UI_STANDARD.md`;
+- заборону на дублюючий постійний другий ряд під toolbar за замовчуванням;
+- правила для `inline mini-toolbar`, `context menu`, `inspector` і `sticky strip`;
+- розширення цих правил на всі сервіси АРТ Офіс;
+- збережено всі виправлення версій 1.1 і 1.2 щодо shortcuts, workspace, modal, dropdown, рев’ю та changelog.

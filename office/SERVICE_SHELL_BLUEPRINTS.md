@@ -13,7 +13,7 @@
 - Titlebar
 - Menu bar
 - Toolbar
-- Contextbar для тексту / таблиці / зображення
+- Inline mini-toolbar для тексту; context menu або small popover для таблиці; inspector для зображення
 - Document workspace
 - Statusbar
 
@@ -97,7 +97,7 @@
 - Titlebar
 - Menu bar
 - Toolbar
-- Sticky context panel або простий inspector для пензля / фігури / тексту
+- Sticky strip або простий inspector для пензля / фігури / тексту
 - Canvas workspace
 - Statusbar
 
@@ -141,7 +141,7 @@
 - Titlebar
 - Menu bar
 - Toolbar
-- Contextbar для тексту / фігури / зображення
+- Inline mini-toolbar для тексту; inspector або popover для фігури / зображення
 - Workspace з лівою панеллю слайдів
 - Statusbar
 
@@ -182,7 +182,7 @@
 - Titlebar
 - Menu bar
 - Toolbar
-- Sticky context panel або inspector для вибраного блока або зв'язку
+- Sticky strip або inspector для вибраного блока або зв'язку
 - Workspace з лівою бібліотекою блоків
 - Statusbar
 
@@ -222,8 +222,8 @@
 - Titlebar
 - Menu bar
 - Toolbar
-- Contextbar для вибраного об'єкта
-- Workspace
+- Inspector для вибраного об'єкта; floating mini-toolbar лише для коротких дій
+- Vector workspace
 - Statusbar
 
 ## Menu bar
@@ -234,24 +234,20 @@
 
 1. Новий · Відкрити · Зберегти
 2. Скасувати · Повернути
-3. Вибір
-4. Лінія · Стрілка · Фігури · Текст
-5. Дублювати · Видалити
-6. Шари
-7. Прив'язка · Підкладка
-8. Zoom
+3. Вибір · Фігури · Лінія · Текст
+4. Дублювати · Видалити · Порядок шарів
+5. Прив'язка
+6. Zoom
 
 ## Workspace
 
-- центральне полотно;
-- опційна ліва панель інструментів;
-- опційна права панель властивостей;
-- не більше однієї постійної бокової панелі за замовчуванням;
-- svg/workspace container має бути focusable.
+- широке полотно;
+- складні властивості — через inspector;
+- другий постійний дублюючий ряд під toolbar не використовується.
 
 ## Statusbar
 
-- інструмент;
-- координати;
-- кількість вибраних об'єктів;
+- вибраний об'єкт;
+- активний інструмент;
+- прив'язка;
 - масштаб.
