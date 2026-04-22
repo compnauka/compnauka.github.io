@@ -1,6 +1,6 @@
 # DROPDOWN_STANDARD.md
 
-# Стандарт dropdown, menu та popover-патернів для АРТ Офіс
+# Стандарт dropdown, menu та popover-патернів для Офіс ПЛЮС
 
 Версія: 1.0  
 Статус: обов'язковий нормативний документ

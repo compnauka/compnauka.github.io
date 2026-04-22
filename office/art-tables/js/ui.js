@@ -47,9 +47,9 @@ function closeHeaderContextMenu() {
 
 // ---- Themes ----
 const themes = {
-  blue:  { headerCls: 'bg-blue-600',  th: '#e2e8f0', text: '#334155' },
+  blue: { headerCls: 'bg-blue-600', th: '#e2e8f0', text: '#334155' },
   green: { headerCls: 'bg-green-600', th: '#dcfce7', text: '#14532d' },
-  pink:  { headerCls: 'bg-pink-500',  th: '#fce7f3', text: '#831843' }
+  pink: { headerCls: 'bg-pink-500', th: '#fce7f3', text: '#831843' }
 };
 let currentTheme = 'blue';
 
@@ -516,7 +516,7 @@ Ctrl+Z / Ctrl+Y — скасувати / повернути
 Delete — очистити виділені клітинки
 Enter / Tab — перехід між клітинками
 F2 — редагувати формулу в клітинці`); break;
-    case 'about': alertModal('Про АРТ Таблиці', `АРТ Таблиці — шкільний табличний редактор у стилі АРТ Текст.
+    case 'about': alertModal('Про ПЛЮС Таблиці', `ПЛЮС Таблиці — шкільний табличний редактор у стилі Офіс ПЛЮС.
 
 У цій версії додано:
 • уніфікований інтерфейс

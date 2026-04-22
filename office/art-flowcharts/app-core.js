@@ -763,13 +763,13 @@ window.initArtSchemesApp = function initArtSchemesApp() {
         const r = Math.min(el.offsetWidth, el.offsetHeight) / 2 + 10;
         if ((dx * dx + dy * dy) <= (r * r)) return el;
       } else
-      if (s.type === 'decision') {
-        const d = decisionVertexDistance(el);
-        // Diamond hit test: |dx| + |dy| <= d (with small margin)
-        if ((dx + dy) <= (d + 14)) return el;
-      } else {
-        if (dx <= el.offsetWidth / 2 + 10 && dy <= el.offsetHeight / 2 + 10) return el;
-      }
+        if (s.type === 'decision') {
+          const d = decisionVertexDistance(el);
+          // Diamond hit test: |dx| + |dy| <= d (with small margin)
+          if ((dx + dy) <= (d + 14)) return el;
+        } else {
+          if (dx <= el.offsetWidth / 2 + 10 && dy <= el.offsetHeight / 2 + 10) return el;
+        }
     }
     return null;
   }
@@ -2467,7 +2467,7 @@ window.initArtSchemesApp = function initArtSchemesApp() {
         window.open('manual.html', '_blank', 'noopener');
         break;
       case 'about':
-        showMessageModal('АРТ Схеми — редактор блок-схем для шкільного офісного пакета АРТ. Він зберігає проєкти у JSON, експортує схеми у PNG та допомагає учням вивчати алгоритми на практиці.');
+        showMessageModal('ПЛЮС Схеми — редактор блок-схем для шкільного офісного пакета ПЛЮС. Він зберігає проєкти у JSON, експортує схеми у PNG та допомагає учням вивчати алгоритми на практиці.');
         break;
     }
   }
