@@ -362,7 +362,7 @@ window.initArtSchemesApp = function initArtSchemesApp() {
     const ok = document.createElement('button');
     ok.textContent = 'OK';
     ok.className = 'modal-btn ok-btn';
-    ok.onclick = () => closeModal(modal);
+    ok.addEventListener('click', () => closeModal(modal));
     btns.appendChild(ok);
     openModal(modal);
     setTimeout(() => ok.focus(), 30);
@@ -380,12 +380,12 @@ window.initArtSchemesApp = function initArtSchemesApp() {
     const cancel = document.createElement('button');
     cancel.textContent = 'Скасувати';
     cancel.className = 'modal-btn cancel-btn';
-    cancel.onclick = () => closeModal(modal);
+    cancel.addEventListener('click', () => closeModal(modal));
 
     const ok = document.createElement('button');
     ok.textContent = 'Очистити';
     ok.className = 'modal-btn no-btn';
-    ok.onclick = () => { closeModal(modal); onOk?.(); };
+    ok.addEventListener('click', () => { closeModal(modal); onOk?.(); });
 
     btns.appendChild(cancel);
     btns.appendChild(ok);
@@ -405,18 +405,18 @@ window.initArtSchemesApp = function initArtSchemesApp() {
     const discard = document.createElement('button');
     discard.textContent = 'Нова схема';
     discard.className = 'modal-btn cancel-btn';
-    discard.onclick = () => {
+    discard.addEventListener('click', () => {
       closeModal(modal);
       onDiscard?.();
-    };
+    });
 
     const restore = document.createElement('button');
     restore.textContent = 'Відкрити чернетку';
     restore.className = 'modal-btn ok-btn';
-    restore.onclick = () => {
+    restore.addEventListener('click', () => {
       closeModal(modal);
       onRestore?.();
-    };
+    });
 
     btns.appendChild(discard);
     btns.appendChild(restore);

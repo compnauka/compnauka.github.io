@@ -112,6 +112,11 @@ window.ArtVector = window.ArtVector || {};
         if (!event.target.closest('.menu-item-wrap')) this.closeMenus();
         if (!event.target.closest('.tool-picker')) this.closeToolPickers();
       });
+
+      document.addEventListener('office:overlayclose', (event) => {
+        if (event.detail?.type === 'menu') this.openMenuName = null;
+        if (event.detail?.type === 'picker') this.openPickerName = null;
+      });
     },
 
     openMenu(name) {
@@ -329,13 +334,11 @@ window.ArtVector = window.ArtVector || {};
         const cleanup = (result) => {
           this.elements.modalOverlay.classList.add('hidden');
           this.elements.modalOverlay.setAttribute('aria-hidden', 'true');
-          this.elements.modalConfirm.onclick = null;
-          this.elements.modalCancel.onclick = null;
           resolve(result);
         };
 
-        this.elements.modalConfirm.onclick = () => cleanup(hasInput ? this.elements.modalInput.value : true);
-        this.elements.modalCancel.onclick = () => cleanup(false);
+        this.elements.modalConfirm.addEventListener('click', () => cleanup(hasInput ? this.elements.modalInput.value : true), { once: true });
+        this.elements.modalCancel.addEventListener('click', () => cleanup(false), { once: true });
       });
     },
 

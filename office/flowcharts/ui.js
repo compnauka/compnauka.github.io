@@ -2,11 +2,17 @@
   'use strict';
 
   function openModal(modal) {
+    if (window.OfficeUI?.openModal?.(modal)) return;
+    modal?.classList.remove('hidden');
     modal?.classList.add('active');
+    modal?.setAttribute('aria-hidden', 'false');
   }
 
   function closeModal(modal) {
+    if (window.OfficeUI?.closeModal?.(modal)) return;
     modal?.classList.remove('active');
+    modal?.classList.remove('hidden');
+    modal?.setAttribute('aria-hidden', 'true');
   }
 
   function initMenus(onAction) {
@@ -45,6 +51,10 @@
 
     document.addEventListener('click', (event) => {
       if (!event.target.closest('.menu-item-wrap')) closeMenus();
+    });
+
+    document.addEventListener('office:overlayclose', (event) => {
+      if (event.detail?.type === 'menu') openMenuName = null;
     });
 
     return { closeMenus, openMenu };

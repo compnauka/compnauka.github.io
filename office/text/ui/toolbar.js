@@ -55,8 +55,6 @@ const ArtToolbar = (() => {
 
     document.getElementById('textNoColor')?.addEventListener('click', clearColor);
     document.getElementById('highlightNoColor')?.addEventListener('click', clearHighlight);
-    document.getElementById('textNoColor')?.addEventListener('click', () => applyColor('inherit'));
-    document.getElementById('highlightNoColor')?.addEventListener('click', () => applyHighlight('transparent'));
 
     document.getElementById('textCustomColor')?.addEventListener('mousedown', e => e.preventDefault());
     document.getElementById('highlightCustomColor')?.addEventListener('mousedown', e => e.preventDefault());
@@ -211,7 +209,14 @@ const ArtToolbar = (() => {
   function updateState() {
     ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList'].forEach(cmd => {
       const btn = document.querySelector(`[data-cmd="${cmd}"]`);
-      if (btn) btn.classList.toggle('active', ArtSelection.queryState(_editor, cmd));
+      if (!btn) return;
+      const active = ArtSelection.queryState(_editor, cmd);
+      if (window.OfficeUI?.setPressed) {
+        window.OfficeUI.setPressed(btn, active);
+      } else {
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      }
     });
     const undo = document.getElementById('tbUndo');
     const redo = document.getElementById('tbRedo');

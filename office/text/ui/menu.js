@@ -14,6 +14,9 @@ const ArtMenu = (() => {
 
     document.addEventListener('click', closeAll);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+    document.addEventListener('office:overlayclose', e => {
+      if (e.detail?.type === 'menu') _openMenu = null;
+    });
 
     document.querySelectorAll('.menu-item[data-action]').forEach(item => {
       item.addEventListener('click', e => {

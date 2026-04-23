@@ -218,10 +218,10 @@ function init() {
   // Confirm modal YES
   const yesBtn = document.getElementById('confirmBtnYes');
   if (yesBtn) {
-    yesBtn.onclick = () => {
+    yesBtn.addEventListener('click', () => {
       if (typeof confirmFn === 'function') confirmFn();
       closeModal('confirmModal');
-    };
+    });
   }
 
   // Initial selection

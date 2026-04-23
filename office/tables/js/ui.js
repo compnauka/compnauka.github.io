@@ -23,12 +23,20 @@ function askConfirm(txt, cb, confirmText = 'Продовжити') {
 
 function openModal(id) {
   const el = document.getElementById(id);
-  if (el) el.classList.add('active');
+  if (!el) return;
+  if (window.OfficeUI?.openModal?.(el)) return;
+  el.classList.remove('hidden');
+  el.classList.add('active');
+  el.setAttribute('aria-hidden', 'false');
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if (el) el.classList.remove('active');
+  if (!el) return;
+  if (window.OfficeUI?.closeModal?.(el)) return;
+  el.classList.remove('active');
+  el.classList.remove('hidden');
+  el.setAttribute('aria-hidden', 'true');
 }
 
 function openHeaderContextMenu(type, index, clientX, clientY) {
@@ -150,6 +158,12 @@ function initMenusAndToolbar() {
     document.getElementById('textNoColor')?.addEventListener('click', clearTextColorStyles);
     document.getElementById('fillNoColor')?.addEventListener('click', clearFillStyles);
     document.getElementById('numberFormatSelect')?.addEventListener('change', (e) => applyNumberFormat(String(e.target.value || '')));
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
+    });
+    document.querySelectorAll('[data-chart-type]').forEach(btn => {
+      btn.addEventListener('click', () => setChartType(btn.dataset.chartType));
+    });
 
     menusInitialized = true;
   }
@@ -312,13 +326,24 @@ function updateSelectionStats() {
 function updateToolbarState() {
   const td = cellTd[active.r]?.[active.c];
   if (!td) return;
-  document.querySelectorAll('[data-action="style-bold"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-text-bold')));
-  document.querySelectorAll('[data-action="style-italic"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-text-italic')));
-  document.querySelectorAll('[data-action="style-underline"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-text-underline')));
-  document.querySelectorAll('[data-action="style-strike"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-text-strike')));
-  document.querySelectorAll('[data-action="align-left"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-align-left')));
-  document.querySelectorAll('[data-action="align-center"]').forEach(btn => btn.classList.toggle('active', !td.classList.contains('style-align-left') && !td.classList.contains('style-align-right') || td.classList.contains('style-align-center')));
-  document.querySelectorAll('[data-action="align-right"]').forEach(btn => btn.classList.toggle('active', td.classList.contains('style-align-right')));
+  const setPressed = (action, pressed) => {
+    const selector = `[data-action="${action}"]`;
+    if (window.OfficeUI?.setPressed) {
+      window.OfficeUI.setPressed(selector, pressed);
+      return;
+    }
+    document.querySelectorAll(selector).forEach(btn => {
+      btn.classList.toggle('active', pressed);
+      btn.setAttribute('aria-pressed', String(pressed));
+    });
+  };
+  setPressed('style-bold', td.classList.contains('style-text-bold'));
+  setPressed('style-italic', td.classList.contains('style-text-italic'));
+  setPressed('style-underline', td.classList.contains('style-text-underline'));
+  setPressed('style-strike', td.classList.contains('style-text-strike'));
+  setPressed('align-left', td.classList.contains('style-align-left'));
+  setPressed('align-center', !td.classList.contains('style-align-left') && !td.classList.contains('style-align-right') || td.classList.contains('style-align-center'));
+  setPressed('align-right', td.classList.contains('style-align-right'));
   const fmt = document.getElementById('numberFormatSelect');
   if (fmt) {
     const found = NUMBER_FORMAT_CLASSES.find(cls => td.classList.contains(cls)) || '';

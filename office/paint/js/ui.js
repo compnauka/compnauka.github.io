@@ -119,6 +119,10 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         if (!event.target.closest('.menu-item-wrap')) this.closeMenus();
       });
 
+      document.addEventListener('office:overlayclose', (event) => {
+        if (event.detail?.type === 'menu') this.openMenuName = null;
+      });
+
       window.addEventListener('resize', () => {
         this.closeMenus();
         this.closePickers();
@@ -142,6 +146,10 @@ window.ArtMalyunky = window.ArtMalyunky || {};
 
       document.addEventListener('click', (event) => {
         if (!event.target.closest('.picker-wrap')) this.closePickers();
+      });
+
+      document.addEventListener('office:overlayclose', (event) => {
+        if (event.detail?.type === 'picker') this.openPickerName = null;
       });
     },
 
@@ -391,10 +399,9 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         this.elements.modalOverlay.classList.remove('hidden');
         const close = () => {
           this.elements.modalOverlay.classList.add('hidden');
-          this.elements.modalConfirm.onclick = null;
           resolve(true);
         };
-        this.elements.modalConfirm.onclick = close;
+        this.elements.modalConfirm.addEventListener('click', close, { once: true });
       });
     },
 
@@ -408,12 +415,10 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         this.elements.modalOverlay.classList.remove('hidden');
         const cleanup = (result) => {
           this.elements.modalOverlay.classList.add('hidden');
-          this.elements.modalConfirm.onclick = null;
-          this.elements.modalCancel.onclick = null;
           resolve(result);
         };
-        this.elements.modalConfirm.onclick = () => cleanup(true);
-        this.elements.modalCancel.onclick = () => cleanup(false);
+        this.elements.modalConfirm.addEventListener('click', () => cleanup(true), { once: true });
+        this.elements.modalCancel.addEventListener('click', () => cleanup(false), { once: true });
       });
     },
 

@@ -45,6 +45,11 @@
       .at(-1) || null;
   }
 
+  function resolveModal(modalOrId) {
+    if (typeof modalOrId === 'string') return document.getElementById(modalOrId);
+    return modalOrId || null;
+  }
+
   function getModalPanel(modal) {
     return qs('.modal-box, .modal-content, .choffice-modal-content, [role="dialog"], [role="alertdialog"]', modal) || modal;
   }
@@ -53,22 +58,34 @@
     return qsa(focusableSelector, root).filter(element => !element.closest('[hidden], .hidden'));
   }
 
+  function dispatchOverlayClose(type, detail = {}) {
+    document.dispatchEvent(new CustomEvent('office:overlayclose', {
+      detail: { type, ...detail }
+    }));
+  }
+
   function closeMenus({ restoreFocus = false } = {}) {
     const trigger = qs('.menu-title[aria-expanded="true"]');
-    qsa('.menu-dropdown.open').forEach(menu => menu.classList.remove('open'));
+    const openMenus = qsa('.menu-dropdown.open');
+    const hadOpen = !!trigger || openMenus.length > 0;
+    openMenus.forEach(menu => menu.classList.remove('open'));
     qsa('.menu-title').forEach(title => title.setAttribute('aria-expanded', 'false'));
     if (restoreFocus && trigger) trigger.focus();
-    return !!trigger;
+    if (hadOpen) dispatchOverlayClose('menu');
+    return hadOpen;
   }
 
   function closePickers({ restoreFocus = false } = {}) {
     let trigger = null;
+    let hadOpen = false;
 
     qsa('.picker-wrap.open').forEach(wrap => {
+      hadOpen = true;
       trigger = trigger || qs('.picker-trigger', wrap);
       wrap.classList.remove('open');
     });
     qsa('.tool-picker.open').forEach(wrap => {
+      hadOpen = true;
       trigger = trigger || qs('.tool-group-trigger', wrap);
       wrap.classList.remove('open');
     });
@@ -80,21 +97,45 @@
     });
 
     if (restoreFocus && trigger) trigger.focus();
-    return !!trigger;
+    if (hadOpen || !!trigger) dispatchOverlayClose('picker');
+    return hadOpen || !!trigger;
   }
 
   function closePalettes({ restoreFocus = false } = {}) {
     let trigger = null;
+    let hadOpen = false;
     qsa('.palette-toggle[aria-expanded="true"]').forEach(button => {
       trigger = trigger || button;
       button.setAttribute('aria-expanded', 'false');
     });
-    qsa('.palette-popover').forEach(popover => popover.setAttribute('hidden', ''));
+    qsa('.palette-popover').forEach(popover => {
+      if (!popover.hasAttribute('hidden')) hadOpen = true;
+      popover.setAttribute('hidden', '');
+    });
     if (restoreFocus && trigger) trigger.focus();
-    return !!trigger;
+    if (hadOpen || !!trigger) dispatchOverlayClose('palette');
+    return hadOpen || !!trigger;
+  }
+
+  function openModal(modalOrId, { focus = true, returnFocus = document.activeElement } = {}) {
+    const modal = resolveModal(modalOrId);
+    if (!modal) return false;
+
+    if (returnFocus && returnFocus instanceof HTMLElement && !modal.contains(returnFocus)) {
+      modal.dataset.officeReturnFocus = ensureId(returnFocus, 'office-return-focus');
+    }
+
+    modal.hidden = false;
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    enhanceModal(modal);
+    if (focus) syncModalState(modal);
+    return true;
   }
 
   function closeModal(modal, { restoreFocus = true } = {}) {
+    modal = resolveModal(modal);
     if (!modal) return false;
     modal.classList.remove('active');
     modal.classList.add('hidden');
@@ -104,6 +145,7 @@
       const trigger = triggerId ? document.getElementById(triggerId) : null;
       if (trigger) trigger.focus();
     }
+    dispatchOverlayClose('modal', { modal });
     return true;
   }
 
@@ -116,6 +158,16 @@
       closeMenus({ restoreFocus }) ||
       closePickers({ restoreFocus }) ||
       closePalettes({ restoreFocus });
+  }
+
+  function setPressed(target, pressed, activeClass = 'active') {
+    const elements = typeof target === 'string'
+      ? qsa(target)
+      : (target instanceof Element ? [target] : Array.from(target || []));
+    elements.forEach(element => {
+      element.classList.toggle(activeClass, pressed);
+      element.setAttribute('aria-pressed', String(pressed));
+    });
   }
 
   function openMenuFromTitle(title, focusFirstItem = false) {
@@ -194,6 +246,7 @@
     }, true);
 
     document.addEventListener('pointerdown', event => {
+      if (getActiveModal()?.contains(event.target)) return;
       if (event.target.closest('.menu-item-wrap, .picker-wrap, .tool-picker, .palette-wrap')) return;
       closeTopOverlay();
     }, true);
@@ -206,7 +259,9 @@
     if (!modal.id) modal.id = `office-modal-${Math.random().toString(36).slice(2)}`;
 
     const panel = getModalPanel(modal);
-    panel.classList.add('office-modal');
+    if (!panel.classList.contains('modal-box')) {
+      panel.classList.add('office-modal');
+    }
     if (!panel.getAttribute('role')) {
       panel.setAttribute('role', modal.getAttribute('role') || 'dialog');
     }
@@ -242,7 +297,11 @@
     const panel = getModalPanel(modal);
     const target = qs('[data-autofocus]', panel) || getFocusable(panel)[0] || panel;
     if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
-    setTimeout(() => target?.focus?.(), 0);
+    setTimeout(() => {
+      if (!panel.contains(document.activeElement)) {
+        target?.focus?.();
+      }
+    }, 0);
   }
 
   function bindModalBehavior() {
@@ -413,8 +472,11 @@
     closeMenus,
     closePickers,
     closePalettes,
+    openModal,
     closeModal,
     closeActiveModal,
+    setPressed,
+    dispatchOverlayClose,
     announce,
     updateStatus
   };

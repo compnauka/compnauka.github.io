@@ -11,6 +11,7 @@ const elementDomMap = new Map();
 
 let colorAnchorButton = null;
 let draggedSlideId = null;
+let modalHandlerAbort = null;
 
 const pointer = {
   mode: 'none',
@@ -1393,16 +1394,18 @@ function showModal({ title, text = '', body = '', confirmText = 'Гаразд', 
   };
   const cancelHandler = () => closeModal();
 
-  dom.modalConfirm.onclick = confirmHandler;
-  dom.modalCancel.onclick = cancelHandler;
+  modalHandlerAbort?.abort();
+  modalHandlerAbort = new AbortController();
+  dom.modalConfirm.addEventListener('click', confirmHandler, { signal: modalHandlerAbort.signal });
+  dom.modalCancel.addEventListener('click', cancelHandler, { signal: modalHandlerAbort.signal });
   onMount?.();
 }
 
 function closeModal() {
+  modalHandlerAbort?.abort();
+  modalHandlerAbort = null;
   dom.modalOverlay.classList.add('hidden');
   dom.modalBody.innerHTML = '';
-  dom.modalConfirm.onclick = null;
-  dom.modalCancel.onclick = null;
 }
 
 function showInfoModal(title, text) {

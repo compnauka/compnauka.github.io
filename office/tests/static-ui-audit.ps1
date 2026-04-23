@@ -164,11 +164,19 @@ foreach ($service in $services) {
   foreach ($menuKey in $service.Menu) {
     Assert-True ($html -match "data-menu=""$menuKey""") "$($service.Path): expected menu key is missing: $menuKey"
   }
+  Assert-True ($html -notmatch '\son(?:click|keydown|mousedown|change)=') "$($service.Path): inline event handlers should stay migrated to data attributes and JS bindings"
 
   $externalMatches = [regex]::Matches($html, '<(?:script|link|img|source)\b[^>]*(?:src|href)="https?://')
   if ($externalMatches.Count -gt 0) {
     Add-Warning "$($service.Path): external resources are still present ($($externalMatches.Count)); offline hardening is a later migration step."
   }
+}
+
+$serviceScriptFiles = Get-ChildItem -Path ($services | ForEach-Object { Join-Path $Root $_.Path }) -Recurse -File -Include '*.js'
+foreach ($scriptFile in $serviceScriptFiles) {
+  $relativePath = $scriptFile.FullName.Substring($Root.Length).TrimStart('\', '/').Replace('\', '/')
+  $content = Get-Content -Raw -Encoding UTF8 $scriptFile.FullName
+  Assert-True ($content -notmatch '\.onclick\s*=') "${relativePath}: use addEventListener instead of assigning .onclick"
 }
 
 $runtimeFiles = @(
@@ -207,6 +215,105 @@ foreach ($modalMarkupFile in $modalMarkupFiles) {
   $content = Get-Content -Raw -Encoding UTF8 $fullPath
   Assert-True ($content -notmatch '>Так</button>') "${modalMarkupFile}: modal buttons should use specific action labels, not Так"
   Assert-True ($content -notmatch '>Ні</button>') "${modalMarkupFile}: modal buttons should use Скасувати instead of Ні"
+}
+
+$textIndexPath = Join-Path $Root 'text/index.html'
+if (Test-Path $textIndexPath) {
+  $textHtml = Get-Content -Raw -Encoding UTF8 $textIndexPath
+  $textModalStart = $textHtml.IndexOf('<!-- Зберегти як -->')
+  $textModalEnd = $textHtml.IndexOf('<!-- ════════════════════════════════════════', [Math]::Max(0, $textModalStart + 1))
+  if ($textModalStart -ge 0 -and $textModalEnd -gt $textModalStart) {
+    $textModalHtml = $textHtml.Substring($textModalStart, $textModalEnd - $textModalStart)
+    Assert-True ($textModalHtml -notmatch '\son(?:click|keydown)=') "text/index.html: modal inline handlers should stay migrated to data attributes and JS bindings"
+  }
+}
+
+$flowchartsIndexPath = Join-Path $Root 'flowcharts/index.html'
+if (Test-Path $flowchartsIndexPath) {
+  $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
+  Assert-True ($flowchartsHtml -notmatch '\sstyle=') "flowcharts/index.html: inline styles should stay migrated to CSS classes"
+}
+
+$officeUiPath = Join-Path $Root 'office-ui.js'
+if (Test-Path $officeUiPath) {
+  $officeUi = Get-Content -Raw -Encoding UTF8 $officeUiPath
+  Assert-True ($officeUi -match 'function openModal\(') "office-ui.js: expected shared openModal helper for modal state contract"
+  Assert-True ($officeUi -match '\bopenModal,') "office-ui.js: openModal must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match 'function setPressed\(') "office-ui.js: expected shared setPressed helper for active/aria-pressed state"
+  Assert-True ($officeUi -match '\bsetPressed,') "office-ui.js: setPressed must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match 'function dispatchOverlayClose\(') "office-ui.js: expected overlay close event helper for local state cleanup"
+  Assert-True ($officeUi -match '\bdispatchOverlayClose,') "office-ui.js: dispatchOverlayClose must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match "CustomEvent\('office:overlayclose'") "office-ui.js: overlay close helper must emit office:overlayclose"
+  Assert-True ($officeUi -match 'getActiveModal\(\)\?\.contains\(event\.target\)') "office-ui.js: global pointerdown close must ignore clicks inside the active modal"
+  Assert-True ($officeUi -match '!panel\.classList\.contains\(''modal-box''\)') "office-ui.js: enhanceModal must not add office-modal sizing to existing modal-box panels"
+  Assert-True ($officeUi -match '!panel\.contains\(document\.activeElement\)') "office-ui.js: modal focus sync must avoid refocusing when focus is already inside the modal"
+}
+
+$modalContractFiles = @(
+  'text/ui/modals.js',
+  'tables/js/ui.js',
+  'paint/js/ui.js',
+  'vector/js/ui.js',
+  'slides/js/runtime.js',
+  'flowcharts/ui.js'
+)
+
+foreach ($modalContractFile in $modalContractFiles) {
+  $fullPath = Join-Path $Root $modalContractFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -match "classList\.remove\('hidden'\)|classList\.remove\(""hidden""\)") "${modalContractFile}: modal open path must remove hidden because office-ui.js can add it when closing"
+}
+
+$sharedModalApiFiles = @(
+  'text/ui/modals.js',
+  'tables/js/ui.js',
+  'flowcharts/ui.js'
+)
+
+foreach ($sharedModalApiFile in $sharedModalApiFiles) {
+  $fullPath = Join-Path $Root $sharedModalApiFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -match 'OfficeUI\?\.openModal') "${sharedModalApiFile}: simple modal helpers should delegate to OfficeUI.openModal with a local fallback"
+  Assert-True ($content -match 'OfficeUI\?\.closeModal') "${sharedModalApiFile}: simple modal helpers should delegate to OfficeUI.closeModal with a local fallback"
+}
+
+$menuStateContractFiles = @(
+  @{ File = 'text/ui/menu.js'; State = '_openMenu' },
+  @{ File = 'paint/js/ui.js'; State = 'openMenuName' },
+  @{ File = 'paint/js/ui.js'; State = 'openPickerName' },
+  @{ File = 'vector/js/ui.js'; State = 'openMenuName' },
+  @{ File = 'vector/js/ui.js'; State = 'openPickerName' },
+  @{ File = 'flowcharts/ui.js'; State = 'openMenuName' }
+)
+
+foreach ($contract in $menuStateContractFiles) {
+  $fullPath = Join-Path $Root $contract.File
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  $state = [regex]::Escape($contract.State)
+  Assert-True ($content -match "addEventListener\('office:overlayclose'[\s\S]*?$state\s*=\s*null") "$($contract.File): local $($contract.State) must listen for office:overlayclose so office-ui.js cannot leave stale overlay state"
+}
+
+$pressedStateFiles = @(
+  'text/ui/toolbar.js',
+  'tables/js/ui.js'
+)
+
+foreach ($pressedStateFile in $pressedStateFiles) {
+  $fullPath = Join-Path $Root $pressedStateFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -match "setAttribute\('aria-pressed',\s*String\(") "${pressedStateFile}: active formatting controls must sync aria-pressed"
+  Assert-True ($content -match 'OfficeUI\?\.setPressed') "${pressedStateFile}: active formatting controls should delegate to OfficeUI.setPressed with a local fallback"
+}
+
+$toolbarPath = Join-Path $Root 'text/ui/toolbar.js'
+if (Test-Path $toolbarPath) {
+  $toolbar = Get-Content -Raw -Encoding UTF8 $toolbarPath
+  Assert-True ($toolbar -notmatch "textNoColor[\s\S]{0,120}applyColor\('inherit'\)") "text/ui/toolbar.js: textNoColor must not also apply color: inherit after clearing color"
+  Assert-True ($toolbar -notmatch "highlightNoColor[\s\S]{0,120}applyHighlight\('transparent'\)") "text/ui/toolbar.js: highlightNoColor must not also apply transparent highlight after clearing highlight"
 }
 
 if ($warnings.Count -gt 0) {

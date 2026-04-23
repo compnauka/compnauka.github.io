@@ -77,6 +77,8 @@
     presentationIndex: 0
   };
 
+  let modalHandlerAbort = null;
+
   function applyPresentationData(data) {
     state.fileName = data.fileName || 'моя презентація';
     state.slides = Array.isArray(data.slides) ? data.slides : [];
@@ -1437,15 +1439,18 @@
     dom.modalCancel.textContent = cancelText;
     dom.modalCancel.classList.toggle('hidden', !showCancel);
     dom.modalOverlay.classList.remove('hidden');
-    dom.modalConfirm.onclick = () => { onConfirm?.(); closeModal(); };
-    dom.modalCancel.onclick = () => closeModal();
+    modalHandlerAbort?.abort();
+    modalHandlerAbort = new AbortController();
+    dom.modalConfirm.addEventListener('click', () => { onConfirm?.(); closeModal(); }, { signal: modalHandlerAbort.signal });
+    dom.modalCancel.addEventListener('click', () => closeModal(), { signal: modalHandlerAbort.signal });
     onMount?.();
   }
 
   function closeModal() {
+    modalHandlerAbort?.abort();
+    modalHandlerAbort = null;
     dom.modalOverlay.classList.add('hidden');
     dom.modalBody.innerHTML = '';
-    dom.modalConfirm.onclick = null; dom.modalCancel.onclick = null;
   }
 
   function showAlert(title, text) { showModal({ title, text, confirmText: 'Гаразд', showCancel: false }); }

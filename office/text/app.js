@@ -13,6 +13,89 @@ document.addEventListener('DOMContentLoaded', () => {
   ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
   ArtToolbar.updateState();
 
+  document.querySelectorAll('.tb-btn').forEach(button => {
+    button.addEventListener('mousedown', event => event.preventDefault());
+  });
+
+  document.querySelector('[data-edit-file-name]')?.addEventListener('click', () => ArtEditor.editFileName());
+  document.querySelector('[data-edit-file-name]')?.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      ArtEditor.editFileName();
+    }
+  });
+
+  document.querySelectorAll('[data-menu-action]').forEach(button => {
+    button.addEventListener('click', () => ArtMenu.dispatch(button.dataset.menuAction));
+  });
+
+  document.querySelectorAll('[data-history-action]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.dataset.historyAction === 'undo') ArtHistory.undo();
+      else ArtHistory.redo();
+      ArtToolbar.updateState();
+    });
+  });
+
+  document.querySelector('[data-heading-select]')?.addEventListener('change', event => {
+    ArtToolbar.applyHeading(event.target.value);
+    event.target.value = 'p';
+  });
+
+  document.querySelectorAll('[data-align]').forEach(button => {
+    button.addEventListener('click', () => ArtToolbar.applyAlign(button.dataset.align));
+  });
+
+  document.querySelectorAll('[data-image-layout]').forEach(button => {
+    button.addEventListener('click', () => ArtEditor.setSelectedImageLayout(button.dataset.imageLayout));
+  });
+
+  document.querySelectorAll('[data-open-modal]').forEach(el => {
+    el.addEventListener('click', () => ArtModals.open(el.dataset.openModal));
+    el.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        ArtModals.open(el.dataset.openModal);
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-close-modal]').forEach(button => {
+    button.addEventListener('click', () => ArtModals.close(button.dataset.closeModal));
+  });
+
+  document.querySelectorAll('[data-save-as]').forEach(button => {
+    button.addEventListener('click', () => ArtEditor.saveAs(button.dataset.saveAs));
+  });
+
+  document.querySelector('[data-insert-table]')?.addEventListener('click', () => {
+    ArtEditor.insertTable(
+      Number(document.getElementById('tableRows')?.value),
+      Number(document.getElementById('tableCols')?.value)
+    );
+  });
+
+  const findInput = document.querySelector('[data-find-input]');
+  const findNext = () => ArtEditor.findNext(document.getElementById('findInput')?.value || '');
+  findInput?.addEventListener('keydown', event => {
+    if (event.key === 'Enter') findNext();
+  });
+  document.querySelector('[data-find-next]')?.addEventListener('click', findNext);
+
+  document.querySelectorAll('[data-set-zoom]').forEach(button => {
+    button.addEventListener('click', () => {
+      ArtEditor.setZoom(Number(button.dataset.setZoom));
+      ArtModals.close('modalZoom');
+    });
+  });
+
+  document.querySelectorAll('[data-confirm-choice]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.dataset.confirmChoice === 'yes') ArtModals.confirmYes();
+      else ArtModals.confirmNo();
+    });
+  });
+
   document.addEventListener('keydown', async e => {
     const ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) return;

@@ -34,7 +34,7 @@
       <div class="file-name-wrap">
         <span id="dirtyDot" aria-hidden="true" title="Незбережені зміни"></span>
         <span id="fileName" role="button" tabindex="0" title="Клікни для перейменування" aria-label="Назва файлу"
-          onclick="art.editor.editFileName()" onkeydown="if(event.key==='Enter')art.editor.editFileName()">
+          data-edit-file-name>
           документ
         </span>
       </div>
@@ -184,16 +184,16 @@
 
     <!-- Файл -->
     <div class="tb-group office-toolbar-group">
-      <button class="tb-btn" type="button" data-office-command="new" onclick="art.menu.dispatch('new')"
-        onmousedown="event.preventDefault()" title="Новий (Ctrl+N)" aria-label="Новий">
+      <button class="tb-btn" type="button" data-office-command="new" data-menu-action="new"
+        title="Новий (Ctrl+N)" aria-label="Новий">
         <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" type="button" data-office-command="open" onclick="art.menu.dispatch('open')"
-        onmousedown="event.preventDefault()" title="Відкрити (Ctrl+O)" aria-label="Відкрити">
+      <button class="tb-btn" type="button" data-office-command="open" data-menu-action="open"
+        title="Відкрити (Ctrl+O)" aria-label="Відкрити">
         <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" type="button" data-office-command="save" onclick="art.menu.dispatch('save-docx')"
-        onmousedown="event.preventDefault()" title="Зберегти (Ctrl+S)" aria-label="Зберегти">
+      <button class="tb-btn" type="button" data-office-command="save" data-menu-action="save-docx"
+        title="Зберегти (Ctrl+S)" aria-label="Зберегти">
         <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
       </button>
     </div>
@@ -202,12 +202,12 @@
 
     <!-- Історія -->
     <div class="tb-group office-toolbar-group">
-      <button class="tb-btn" id="tbUndo" data-office-command="undo" disabled onclick="art.history.undo();art.toolbar.updateState()"
-        onmousedown="event.preventDefault()" title="Скасувати (Ctrl+Z)" aria-label="Скасувати">
+      <button class="tb-btn" id="tbUndo" data-office-command="undo" data-history-action="undo" disabled
+        title="Скасувати (Ctrl+Z)" aria-label="Скасувати">
         <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" id="tbRedo" data-office-command="redo" disabled onclick="art.history.redo();art.toolbar.updateState()"
-        onmousedown="event.preventDefault()" title="Повернути (Ctrl+Y)" aria-label="Повернути">
+      <button class="tb-btn" id="tbRedo" data-office-command="redo" data-history-action="redo" disabled
+        title="Повернути (Ctrl+Y)" aria-label="Повернути">
         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
       </button>
     </div>
@@ -216,8 +216,7 @@
 
     <!-- Стиль -->
     <div class="tb-group">
-      <select class="tb-select" id="tbHeading" aria-label="Стиль абзацу"
-        onchange="art.toolbar.applyHeading(this.value);this.value='p'">
+      <select class="tb-select" id="tbHeading" aria-label="Стиль абзацу" data-heading-select>
         <option value="p">Звичайний</option>
         <option value="h1">Заголовок 1</option>
         <option value="h2">Заголовок 2</option>
@@ -258,30 +257,30 @@
 
     <!-- Вирівнювання -->
     <div class="tb-group">
-      <button class="tb-btn" onclick="art.toolbar.applyAlign('left')" onmousedown="event.preventDefault()"
+      <button class="tb-btn" data-align="left"
         title="По лівому краю" aria-label="По лівому краю">
         <i class="fa-solid fa-align-left" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" onclick="art.toolbar.applyAlign('center')" onmousedown="event.preventDefault()"
+      <button class="tb-btn" data-align="center"
         title="По центру" aria-label="По центру">
         <i class="fa-solid fa-align-center" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" onclick="art.toolbar.applyAlign('right')" onmousedown="event.preventDefault()"
+      <button class="tb-btn" data-align="right"
         title="По правому краю" aria-label="По правому краю">
         <i class="fa-solid fa-align-right" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" onclick="art.toolbar.applyAlign('justify')" onmousedown="event.preventDefault()"
+      <button class="tb-btn" data-align="justify"
         title="По ширині" aria-label="По ширині">
         <i class="fa-solid fa-align-justify" aria-hidden="true"></i>
       </button>
-      <button class="tb-btn" onclick="art.editor.setSelectedImageLayout('wrap-left')"
-        onmousedown="event.preventDefault()" title="Обтікання: ліворуч" aria-label="Обтікання: ліворуч">
+      <button class="tb-btn" data-image-layout="wrap-left"
+        title="Обтікання: ліворуч" aria-label="Обтікання: ліворуч">
         <i class="fa-solid fa-image" aria-hidden="true"></i>
         <i class="fa-solid fa-arrow-left" aria-hidden="true" style="font-size:.8em"></i>
       </button>
 
-      <button class="tb-btn" onclick="art.editor.setSelectedImageLayout('wrap-right')"
-        onmousedown="event.preventDefault()" title="Обтікання: праворуч" aria-label="Обтікання: праворуч">
+      <button class="tb-btn" data-image-layout="wrap-right"
+        title="Обтікання: праворуч" aria-label="Обтікання: праворуч">
         <i class="fa-solid fa-image" aria-hidden="true"></i>
         <i class="fa-solid fa-arrow-right" aria-hidden="true" style="font-size:.8em"></i>
       </button>
@@ -363,7 +362,7 @@
     <span class="status-item" data-office-status-slot="secondary">
       Символів:&nbsp;<strong id="statusChars">0</strong>
     </span>
-    <span id="zoomBadge" onclick="art.modals.open('modalZoom')" title="Змінити масштаб" role="button" tabindex="0"
+    <span id="zoomBadge" data-open-modal="modalZoom" title="Змінити масштаб" role="button" tabindex="0"
       aria-label="Масштаб" data-office-status-slot="meta">
       100%
     </span>
@@ -381,21 +380,21 @@
         Зберегти як…
       </div>
       <div class="save-format-list">
-        <button class="save-format-btn fmt-txt" onclick="art.editor.saveAs('txt')" aria-label="Зберегти як .txt">
+        <button class="save-format-btn fmt-txt" data-save-as="txt" aria-label="Зберегти як .txt">
           <div class="fmt-icon"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
           <div>
             <div>Простий текст (.txt)</div>
             <div class="fmt-desc">Тільки текст, без форматування</div>
           </div>
         </button>
-        <button class="save-format-btn fmt-rtf" onclick="art.editor.saveAs('rtf')" aria-label="Зберегти як .rtf">
+        <button class="save-format-btn fmt-rtf" data-save-as="rtf" aria-label="Зберегти як .rtf">
           <div class="fmt-icon"><i class="fa-solid fa-file-code" aria-hidden="true"></i></div>
           <div>
             <div>Форматований текст (.rtf)</div>
             <div class="fmt-desc">Жирний, курсив, заголовки. Відкриється у Word і LibreOffice</div>
           </div>
         </button>
-        <button class="save-format-btn fmt-docx" onclick="art.editor.saveAs('docx')" aria-label="Зберегти як .docx">
+        <button class="save-format-btn fmt-docx" data-save-as="docx" aria-label="Зберегти як .docx">
           <div class="fmt-icon"><i class="fa-solid fa-file-word" aria-hidden="true"></i></div>
           <div>
             <div>Документ Word (.docx)</div>
@@ -403,7 +402,7 @@
           </div>
         </button>
       </div>
-      <button class="modal-cancel" onclick="art.modals.close('modalSave')">Скасувати</button>
+      <button class="modal-cancel" data-close-modal="modalSave">Скасувати</button>
     </div>
   </div>
 
@@ -425,11 +424,8 @@
         </label>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="art.modals.close('modalTable')">Скасувати</button>
-        <button class="btn-primary" onclick="art.editor.insertTable(
-                +document.getElementById('tableRows').value,
-                +document.getElementById('tableCols').value
-              )">
+        <button class="btn-secondary" data-close-modal="modalTable">Скасувати</button>
+        <button class="btn-primary" data-insert-table>
           Вставити
         </button>
       </div>
@@ -445,13 +441,13 @@
       </div>
       <div class="find-row">
         <input type="search" id="findInput" placeholder="Введи слово для пошуку…" data-autofocus aria-label="Пошук"
-          onkeydown="if(event.key==='Enter')art.editor.findNext(this.value)">
-        <button class="btn-primary" onclick="art.editor.findNext(document.getElementById('findInput').value)">
+          data-find-input>
+        <button class="btn-primary" data-find-next>
           Знайти
         </button>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="art.modals.close('modalFind')">Закрити</button>
+        <button class="btn-secondary" data-close-modal="modalFind">Закрити</button>
       </div>
     </div>
   </div>
@@ -464,12 +460,12 @@
         Масштаб
       </div>
       <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;">
-        <button class="save-format-btn" onclick="art.editor.setZoom(75);art.modals.close('modalZoom')">75%</button>
-        <button class="save-format-btn" onclick="art.editor.setZoom(100);art.modals.close('modalZoom')">100%</button>
-        <button class="save-format-btn" onclick="art.editor.setZoom(125);art.modals.close('modalZoom')">125%</button>
-        <button class="save-format-btn" onclick="art.editor.setZoom(150);art.modals.close('modalZoom')">150%</button>
+        <button class="save-format-btn" data-set-zoom="75">75%</button>
+        <button class="save-format-btn" data-set-zoom="100">100%</button>
+        <button class="save-format-btn" data-set-zoom="125">125%</button>
+        <button class="save-format-btn" data-set-zoom="150">150%</button>
       </div>
-      <button class="modal-cancel" onclick="art.modals.close('modalZoom')">Скасувати</button>
+      <button class="modal-cancel" data-close-modal="modalZoom">Скасувати</button>
     </div>
   </div>
 
@@ -496,7 +492,7 @@
         <kbd>Ctrl+V</kbd><span>Вставити</span>
       </div>
       <div class="modal-actions" style="margin-top:1rem">
-        <button class="btn-primary" data-autofocus onclick="art.modals.close('modalShortcuts')">
+        <button class="btn-primary" data-autofocus data-close-modal="modalShortcuts">
           Зрозуміло
         </button>
       </div>
@@ -522,7 +518,7 @@
         itnauka.org/office
       </a>
       <div class="modal-actions" style="margin-top:1rem;justify-content:center">
-        <button class="btn-primary" data-autofocus onclick="art.modals.close('modalAbout')">
+        <button class="btn-primary" data-autofocus data-close-modal="modalAbout">
           Закрити
         </button>
       </div>
@@ -538,8 +534,8 @@
       </div>
       <p class="modal-text" id="modalConfirmText"></p>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="art.modals.confirmNo()">Скасувати</button>
-        <button class="btn-primary" data-autofocus onclick="art.modals.confirmYes()">Продовжити</button>
+        <button class="btn-secondary" data-confirm-choice="no">Скасувати</button>
+        <button class="btn-primary" data-autofocus data-confirm-choice="yes">Продовжити</button>
       </div>
     </div>
   </div>
@@ -553,7 +549,7 @@
       <div class="modal-title" id="modalInfoTitle" style="justify-content:center">Інфо</div>
       <p class="modal-text" id="modalInfoText"></p>
       <div class="modal-actions" style="justify-content:center">
-        <button class="btn-primary" data-autofocus onclick="art.modals.close('modalInfo')">
+        <button class="btn-primary" data-autofocus data-close-modal="modalInfo">
           Гаразд
         </button>
       </div>

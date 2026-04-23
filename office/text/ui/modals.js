@@ -9,7 +9,11 @@ const ArtModals = (() => {
     const el = document.getElementById(id);
     if (!el) return;
     _lastFocused = document.activeElement;
-    el.classList.add('active');
+    if (!window.OfficeUI?.openModal?.(el, { focus: false, returnFocus: _lastFocused })) {
+      el.classList.remove('hidden');
+      el.classList.add('active');
+      el.setAttribute('aria-hidden', 'false');
+    }
     requestAnimationFrame(() => {
       (el.querySelector('[data-autofocus]') || el.querySelector('button,input,select,textarea'))?.focus();
     });
@@ -18,12 +22,22 @@ const ArtModals = (() => {
   function close(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.classList.remove('active');
+    if (!window.OfficeUI?.closeModal?.(el, { restoreFocus: false })) {
+      el.classList.remove('active');
+      el.classList.remove('hidden');
+      el.setAttribute('aria-hidden', 'true');
+    }
     _lastFocused?.focus?.();
   }
 
   function closeAll() {
-    document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.modal-overlay.active').forEach(el => {
+      if (!window.OfficeUI?.closeModal?.(el, { restoreFocus: false })) {
+        el.classList.remove('active');
+        el.classList.remove('hidden');
+        el.setAttribute('aria-hidden', 'true');
+      }
+    });
     _lastFocused?.focus?.();
   }
 
