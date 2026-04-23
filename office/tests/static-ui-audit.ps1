@@ -66,6 +66,16 @@ foreach ($file in $requiredRootFiles) {
   Assert-True (Test-Path (Join-Path $Root $file)) "Missing required root standard file: $file"
 }
 
+$rootIndexPath = Join-Path $Root 'index.html'
+if (Test-Path $rootIndexPath) {
+  $rootHtml = Get-Content -Raw -Encoding UTF8 $rootIndexPath
+  Assert-True ($rootHtml -notmatch '/office/art-') "Root index still contains old /office/art-* links"
+  Assert-True ($rootHtml -notmatch '/office/office-') "Root index contains invalid /office/office-* links"
+  foreach ($service in $services) {
+    Assert-True ($rootHtml -match "href=""$($service.Path)/""") "Root index is missing relative link to $($service.Path)/"
+  }
+}
+
 $themeMapPath = Join-Path $Root 'SERVICE_THEME_MAP.json'
 if (Test-Path $themeMapPath) {
   $themeMap = Get-Content -Raw -Encoding UTF8 $themeMapPath | ConvertFrom-Json

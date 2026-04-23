@@ -1,4 +1,4 @@
-﻿const CACHE_VERSION = 'office-plus-v1';
+﻿const CACHE_VERSION = 'office-plus-v2';
 const CORE_ASSETS = [
   './design-tokens.json',
   './flowcharts/app-core.js',
@@ -110,3 +110,4 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
