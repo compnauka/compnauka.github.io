@@ -1,96 +1,79 @@
-# Пакет UI-стандартів для Офіс ПЛЮС
+﻿# Пакет UI-стандартів для Офіс ПЛЮС
 
-У цьому пакеті містяться:
+Ця папка містить MVP шкільного офісного пакета і нормативну базу для приведення всіх редакторів до єдиного стилю, поведінки та тестованої структури.
 
-- `ART_OFFICE_UI_STANDARD.md` — єдиний стандарт усієї лінійки
-- окремі `UI_STANDARD.md` для кожного сервісу
-- окремі `UI_MIGRATION_TO_STANDARD.md` для кожного сервісу
-- `UI_TOKENS.css` — спільні CSS-токени та shell-компоненти
+## Редактори
+
+- `text/` — ПЛЮС Текст
+- `tables/` — ПЛЮС Таблиці
+- `paint/` — ПЛЮС Малюнки
+- `slides/` — ПЛЮС Слайди
+- `flowcharts/` — ПЛЮС Схеми
+- `vector/` — ПЛЮС Вектор
+
+## Нормативні документи
+
+- `ART_OFFICE_UI_STANDARD.md` — головний UI-стандарт усієї лінійки
+- `UI_TOKENS.css` — спільні CSS-токени та базові shell-компоненти
 - `design-tokens.json` — машинозчитуваний набір дизайн-токенів
-- `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структур меню
+- `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структури меню
 - `UI_INTEGRATION_GUIDE.md` — технічний гайд з інтеграції стандарту в код
-- `APP_SHELL.html` — базовий HTML-шаблон shell інтерфейсу
+- `APP_SHELL.html` — базовий HTML-шаблон shell-інтерфейсу
 - `SHELL_COMPONENTS.md` — правила для titlebar, menu bar, toolbar, contextual UI, workspace, statusbar
-- `SERVICE_SHELL_BLUEPRINTS.md` — короткі shell-схеми для кожного сервісу
+- `SERVICE_SHELL_BLUEPRINTS.md` — shell-схеми для кожного редактора
 - `COMPONENT_CHECKLIST.md` — чекліст для рев'ю, QA і приймання
-- `UI_REVIEW_TEMPLATE.md` — єдиний шаблон формалізованого UI-рев'ю
-- `CHANGELOG_STANDARD.md` — єдиний стандарт ведення changelog для UI-змін
-- `CONTEXTUAL_UI_STANDARD.md` — єдиний стандарт контекстного UI
-- `PROMPT_FOR_AGENT.md` — системний промпт/регламент для агента або розробника
-
-## Нові поведінкові стандарти у версії 1.1
-
 - `KEYBOARD_SHORTCUTS.md` — єдиний стандарт гарячих клавіш
-- `WORKSPACE_ACCESSIBILITY.md` — focus-visible, tabindex, повернення фокуса та keyboard interaction у workspace
+- `WORKSPACE_ACCESSIBILITY.md` — focus-visible, tabindex, повернення фокуса і keyboard interaction у workspace
 - `MODAL_STANDARD.md` — єдиний стандарт модальних вікон
-- `DROPDOWN_STANDARD.md` — єдиний стандарт dropdown, menu, picker та popover-поведінки
+- `DROPDOWN_STANDARD.md` — єдиний стандарт dropdown, menu, picker і popover-поведінки
+- `CONTEXTUAL_UI_STANDARD.md` — єдиний стандарт контекстного UI
+- `CHANGELOG_STANDARD.md` — стандарт ведення changelog для UI-змін
+- `UI_REVIEW_TEMPLATE.md` — шаблон формалізованого UI-рев'ю
+- `PROMPT_FOR_AGENT.md` — регламент для агента або розробника
 
-## Структура
+У корені кожного редактора повинні бути:
 
-- `art-text/`
-- `art-tables/`
-- `art-paint/`
-- `art-slides/`
-- `art-flowcharts/`
-- `art-vector/`
+- `UI_STANDARD.md`
+- `UI_MIGRATION_TO_STANDARD.md`
 
-## Як використовувати
+## Поточна стратегія міграції
 
-1. Файл `ART_OFFICE_UI_STANDARD.md` використовується як головний нормативний документ.
-2. У корінь кожного сервісу потрібно покласти:
-   - `UI_STANDARD.md`
-   - `UI_MIGRATION_TO_STANDARD.md`
-3. Будь-які зміни UI у сервісі потрібно звіряти спочатку з глобальним стандартом, потім із локальним.
-4. Будь-які поведінкові зміни menu, modal, dropdown, workspace і shortcuts потрібно звіряти з окремими поведінковими стандартами.
+1. Зафіксувати baseline і тестовий стенд.
+2. Підключити `UI_TOKENS.css` і `art-*` shell-класи у всі редактори.
+3. Винести зовнішні CDN-ресурси в локальний `vendor/`, щоб редактори працювали офлайн.
+4. Уніфікувати меню, toolbar, statusbar, zoom, undo/redo.
+5. Уніфікувати поведінку keyboard shortcuts, dropdown, modal і workspace focus.
+6. Після цього полірувати редактори по одному за локальними `UI_MIGRATION_TO_STANDARD.md`.
 
-## Рекомендований порядок впровадження
+## Тести
 
-1. Додати документи в репозиторій.
-2. Зафіксувати, що будь-яка зміна UI проходить через ці стандарти.
-3. Привести спочатку shell-рівень:
-   - меню,
-   - toolbar,
-   - статус-бар,
-   - масштаб,
-   - undo/redo.
-4. Потім вирівняти поведінковий шар:
-   - keyboard shortcuts,
-   - dropdown/menu,
-   - modal,
-   - workspace focus-visible.
-5. Потім доробляти локальний contextual UI сервісів.
+Запуск базового статичного аудиту:
 
-## Технічне впровадження
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
+```
 
-1. Підключити `UI_TOKENS.css` у всі сервіси.
-2. Використовувати `design-tokens.json` для генерації тем, якщо згодом з'явиться build-step або дизайн-тулінг.
-3. Звіряти shell-структуру з `UI_INTEGRATION_GUIDE.md`.
-4. Використовувати `SERVICE_THEME_MAP.json` як джерело правди для назви сервісу, акцентного кольору й структури меню.
-5. Для keyboard, modal, dropdown, workspace і contextual UI використовувати окремі стандарти як джерело правди.
+Тест перевіряє:
 
-## Рекомендований порядок читання для агента / розробника
+- наявність обов'язкових стандартів;
+- наявність усіх 6 редакторів;
+- локальні `UI_STANDARD.md` і `UI_MIGRATION_TO_STANDARD.md`;
+- підключення `../UI_TOKENS.css`;
+- `body.office-app` і правильний `data-office-service`;
+- базові `office-header`, `office-menubar`, `office-toolbar`, `office-workspace`, `office-statusbar`;
+- focusable workspace;
+- очікувані пункти меню.
 
-1. `ART_OFFICE_UI_STANDARD.md`
-2. `UI_STANDARD.md` конкретного сервісу
-3. `UI_MIGRATION_TO_STANDARD.md` конкретного сервісу
-4. `KEYBOARD_SHORTCUTS.md`
-5. `WORKSPACE_ACCESSIBILITY.md`
-6. `MODAL_STANDARD.md`
-7. `DROPDOWN_STANDARD.md`
-8. `CONTEXTUAL_UI_STANDARD.md`
-9. `UI_TOKENS.css`
-10. `SHELL_COMPONENTS.md`
-11. `SERVICE_SHELL_BLUEPRINTS.md`
-12. `COMPONENT_CHECKLIST.md`
-13. `UI_REVIEW_TEMPLATE.md`
-14. `CHANGELOG_STANDARD.md`
+`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком.
 
-## Стан пакета
+Локальний сервер для першої браузерної перевірки:
 
-Версія пакета: **1.3**  
-У цій версії додано повний стандарт контекстного UI:
-- окремий нормативний документ `CONTEXTUAL_UI_STANDARD.md`;
-- заборону на дублюючий постійний другий ряд під toolbar за замовчуванням;
-- правила для `inline mini-toolbar`, `context menu`, `inspector` і `sticky strip`;
-- розширення цих правил на всі сервіси Офіс ПЛЮС;
-- збережено всі виправлення версій 1.1 і 1.2 щодо shortcuts, workspace, modal, dropdown, рев’ю та changelog.
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
+```
+
+Після запуску відкрий:
+
+- `http://127.0.0.1:4173/`
+- `http://127.0.0.1:4173/tests/browser-smoke.html`
+
