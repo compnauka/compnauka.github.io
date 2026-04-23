@@ -1,215 +1,177 @@
-Окремо звіряти contextual UI з `CONTEXTUAL_UI_STANDARD.md`.
+# Технічний гайд інтеграції UI-стандарту Офіс ПЛЮС
 
-# Технічний гайд з інтеграції UI-стандарту Офіс ПЛЮС
+Цей документ є коротким технічним джерелом правди для інтеграції редакторів із shared shell-шаром. Детальні дизайн-правила можуть жити в окремих документах, але кодові контракти нижче мають вищий пріоритет для реалізації та статичного аудиту.
 
-Цей файл описує, як впроваджувати глобальний UI-стандарт у код кожного сервісу.
+## 1. Обов'язкові shared-файли
 
-## 1. Мінімальний обов'язковий набір файлів
+У корені пакета мають існувати:
 
-У корені монорепи або спільного шару UI повинні існувати:
-
-- `OFFICE_UI_STANDARD.md`
+- `office-ui.js`
 - `UI_TOKENS.css`
+- `shell-overrides.css`
 - `design-tokens.json`
 - `SERVICE_THEME_MAP.json`
-- `KEYBOARD_SHORTCUTS.md`
-- `WORKSPACE_ACCESSIBILITY.md`
-- `MODAL_STANDARD.md`
-- `DROPDOWN_STANDARD.md`
+- `offline.js`
+- `sw.js`
 
-У корені кожного сервісу повинні існувати:
+Кожен редактор має підключати:
 
-- `UI_STANDARD.md`
-- `UI_MIGRATION_TO_STANDARD.md`
+```html
+<link rel="stylesheet" href="../UI_TOKENS.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../shell-overrides.css">
+<script src="../office-ui.js" defer></script>
+<script src="../offline.js" defer></script>
+```
 
-## 2. Базова DOM-структура
+Порядок важливий: shared tokens -> локальні стилі -> shell overrides.
 
-Кожен сервіс повинен прагнути до такого shell-каркаса:
+## 2. DOM-контракт shell
+
+Кожен редактор має мати стабільний shell:
 
 ```html
 <body class="office-app" data-office-service="text">
   <header class="office-header">...</header>
   <nav class="office-menubar">...</nav>
   <section class="office-toolbar">...</section>
-  <section class="office-contextual-ui" hidden>...</section>
   <main class="office-workspace office-workspace-focusable" tabindex="0">...</main>
-  <footer class="office-statusbar">...</footer>
+  <footer class="office-statusbar" aria-label="...">
+    <span data-office-status-slot="primary"></span>
+    <span data-office-status-slot="secondary"></span>
+  </footer>
 </body>
 ```
 
-`data-office-service` має значення:
+Допустимі `data-office-service`: `text`, `tables`, `paint`, `slides`, `flowcharts`, `vector`.
 
-- `text`
-- `tables`
-- `paint`
-- `slides`
-- `flowcharts`
-- `vector`
+## 3. Standard Commands
 
-Саме цей атрибут підключає акцентний колір сервісу через `UI_TOKENS.css`.
+Стандартні команди:
 
-## 3. Обов'язкові ролі блоків
+- `new`
+- `open`
+- `save`
+- `undo`
+- `redo`
 
-### 3.1. Header
+Кожен редактор має:
 
-Header містить тільки:
+1. Позначити кнопки тулбара через `data-office-command`.
+2. Мати відповідний пункт головного меню з тим самим локальним action.
+3. Зареєструвати локальну реалізацію через `OfficeUI.registerCommands`.
+4. Маршрутизувати тулбар, меню і hotkeys через `OfficeUI.runCommand`.
 
-- іконку сервісу;
-- назву сервісу;
-- назву документа / проєкту;
-- стан збереження.
+Приклад:
 
-Header не використовується як ще один toolbar.
+```js
+window.OfficeUI?.registerCommands?.({
+  new: createProject,
+  open: openProject,
+  save: saveProject,
+  undo: undo,
+  redo: redo
+}, { source: 'vector' });
+```
 
-### 3.2. Menubar
+```js
+window.OfficeUI?.runCommand?.('save') || saveProject();
+```
 
-У меню не повинно бути іконкових кнопок. Меню — це текстові пункти першого рівня.
+Це гарантує, що меню, тулбар і клавіатура не роз'їдуться.
 
-Базовий порядок:
+## 4. File Picker
 
-- `Файл`
-- `Редагування`
-- `Вставка`
-- `Інструменти` лише якщо це дозволено сервісом
-- предметні меню сервісу
-- `Перегляд`
-- `Допомога`
+Відкриття локальних файлів має йти через:
 
-### 3.3. Toolbar
+```js
+OfficeUI.openFilePicker(inputOrId)
+```
 
-У toolbar обов'язковий порядок груп:
+Helper:
 
-1. файлова група;
-2. історія;
-3. базові дії сервісу;
-4. швидкі предметні дії;
-5. вигляд / масштаб праворуч.
+- приймає DOM-елемент або `id`;
+- перевіряє, що це `input[type="file"]`;
+- скидає `input.value`;
+- викликає `input.click()`;
+- повертає `true`, якщо picker відкрито.
 
-### 3.4. Contextbar
+Приклад:
 
-Contextbar показується лише коли це справді доречно.
+```js
+window.OfficeUI?.openFilePicker?.('projectFileInput') ||
+  document.getElementById('projectFileInput')?.click();
+```
 
-Приклади:
+Читання файлу, валідація формату і імпорт залишаються локальною відповідальністю редактора.
 
-- у Тексті — коли виділено текст або обране зображення / таблицю;
-- у Слайдах — коли виділено текстовий блок, фігуру або зображення;
-- у Векторі — коли вибрано один або кілька об'єктів;
-- у Таблицях — коли є активне виділення, де релевантне форматування;
-- у Малюнках — для молодших учнів бажано sticky inspector або стабільна панель параметрів;
-- у Схемах — коли вибрано блок або стрілку, але краще у стабільному місці.
+## 5. Modal, Overlay, Status
 
-Контекстна панель не повинна дублювати весь toolbar.
+Shared API:
 
-## 4. Обов'язкові CSS-класи
+- `OfficeUI.openModal(modalOrId, options)`
+- `OfficeUI.closeModal(modalOrId, options)`
+- `OfficeUI.closeActiveModal()`
+- `OfficeUI.closeTopOverlay()`
+- `OfficeUI.dispatchOverlayClose(type, detail)`
+- `OfficeUI.setPressed(target, pressed)`
+- `OfficeUI.updateStatus(message, slot)`
+- `OfficeUI.announce(message)`
 
-Стандартний UI-шар повинен прагнути використовувати такі класи:
+Локальні modal helpers мають делегувати в `OfficeUI.openModal/closeModal` і мати fallback.
 
-- `.office-app`
-- `.office-header`
-- `.office-menubar`
-- `.office-menu-button`
-- `.office-toolbar`
-- `.office-toolbar-group`
-- `.office-contextual-ui`
-- `.office-context-group`
-- `.office-button`
-- `.office-icon-button`
-- `.office-select`
-- `.office-input`
-- `.office-chip`
-- `.office-divider`
-- `.office-statusbar`
-- `.office-status-group`
-- `.office-workspace`
-- `.office-workspace-focusable`
-- `.office-dropdown`
-- `.office-popover`
-- `.office-modal`
-- `.office-modal-backdrop`
+Overlay state у локальних меню/picker має слухати подію:
 
-Допускаються локальні префіксовані класи сервісу, але shell-рівень має бути сумісний з цими базовими класами.
+```js
+document.addEventListener('office:overlayclose', () => {
+  openMenuName = null;
+});
+```
 
-## 5. Що треба винести в спільний шар
+## 6. Статичний аудит
 
-У shared UI повинні жити:
+Базова перевірка:
 
-- токени кольорів, розмірів, відступів, радіусів;
-- стани кнопок;
-- меню та dropdown;
-- кнопки zoom;
-- статус-бар;
-- focus-visible;
-- hover/active/disabled поведінка;
-- розділювачі груп;
-- базова типографіка shell-рівня;
-- базова поведінка modal, dropdown і workspace focus.
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
+```
 
-У локальному сервісі повинні жити:
+Аудит перевіряє:
 
-- контент редактора;
-- специфічні віджети;
-- специфічні панелі інструментів;
-- логіка редактора;
-- специфічні контекстні інспектори.
+- наявність shared-файлів;
+- підключення стилів і скриптів;
+- shell-класи;
+- порядок `new/open/save/undo/redo`;
+- parity між тулбаром і головним меню;
+- реєстрацію `OfficeUI.registerCommands`;
+- маршрутизацію стандартних команд через `OfficeUI.runCommand`;
+- використання `OfficeUI.openFilePicker`;
+- modal/dropdown/statusbar контракти;
+- відсутність inline handlers/styles у HTML.
 
-## 6. Інваріанти, які не можна ламати
+Браузерні тести мають бути точковими й використовуватись лише для поведінки, яку неможливо надійно відтворити статично.
 
-Розробник або агент не має права:
+## 7. Документаційна політика
 
-1. переносити `Undo / Redo` вправо, якщо в інших сервісах вони лишаються зліва;
-2. міняти місцями `Файл` і `Редагування`;
-3. ховати масштаб у довільне місце без причини;
-4. робити toolbar нижчим або вищим без узгодження зі стандартом;
-5. змінювати кольори shell-рівня не через токени;
-6. створювати другий або третій повноцінний ряд toolbar без обґрунтування;
-7. дублювати одні й ті самі команди одночасно в меню, toolbar, бічній панелі та contextual UI без явної причини;
-8. ламати `Ctrl+S`, `Ctrl+Z`, `Esc`, `Tab` і повернення фокуса.
+Активними джерелами правди для коду є:
 
-## 7. Політика адаптивності
+- `README.md`
+- `UI_INTEGRATION_GUIDE.md`
+- `OFFICE_UI_STANDARD.md`
+- `KEYBOARD_SHORTCUTS.md`
+- `MODAL_STANDARD.md`
+- `DROPDOWN_STANDARD.md`
+- `WORKSPACE_ACCESSIBILITY.md`
+- `CONTEXTUAL_UI_STANDARD.md`
+- `COMPONENT_CHECKLIST.md`
 
-На вузьких екранах дозволено:
+Довідкові або шаблонні файли:
 
-- переносити toolbar на два рядки;
-- згортати другорядні групи у кнопку `Ще`;
-- зменшувати кількість одночасно видимих підписів;
-- стискати dropdown до іконки + chevron, якщо значення видно окремо.
+- `APP_SHELL.html`
+- `SHELL_COMPONENTS.md`
+- `SERVICE_SHELL_BLUEPRINTS.md`
+- `UI_REVIEW_TEMPLATE.md`
+- `PROMPT_FOR_AGENT.md`
+- `CHANGELOG_STANDARD.md`
 
-На вузьких екранах заборонено:
-
-- міняти порядок базових груп;
-- прибирати `Новий / Відкрити / Зберегти` без альтернативи першого рівня;
-- ховати `Undo / Redo` глибше, ніж на один клік;
-- робити меню недоступним з клавіатури.
-
-## 8. Behavior-first інтеграція
-
-### 8.1. Keyboard shortcuts
-- звіряти з `KEYBOARD_SHORTCUTS.md`;
-- скорочення, показані в меню, мають реально працювати.
-
-### 8.2. Workspace focus
-- додавати `tabindex="0"` там, де відсутній native focus;
-- використовувати `.office-workspace-focusable:focus-visible` або еквівалент;
-- після закриття overlay фокус повертати на trigger або workspace.
-
-### 8.3. Modal
-- використовувати єдину структуру `header → body → footer`;
-- тримати focus trap;
-- не пробивати modal глобальними гарячими клавішами документа.
-
-### 8.4. Dropdown / picker
-- підтримувати `Esc`;
-- підтримувати click-outside close;
-- повертати фокус на trigger після закриття.
-
-## 9. Definition of Done для UI-рефакторингу
-
-Зміна вважається завершеною лише якщо:
-
-- shell-рівень відповідає `OFFICE_UI_STANDARD.md`;
-- локальний сервіс відповідає своєму `UI_STANDARD.md`;
-- відмінності від локального стандарту явно зафіксовані;
-- використані глобальні токени з `UI_TOKENS.css` або `design-tokens.json`;
-- нові елементи мають стани `default / hover / active / focus-visible / disabled`;
-- toolbar не збільшує когнітивне навантаження і не дублює contextual UI;
-- shortcuts, modal, dropdown і workspace focus перевірені за окремими стандартами.
+Їх не треба вважати рівноцінними нормативними джерелами для щоденної розробки. Якщо правило дублюється, оновлювати треба активне джерело правди, а довідковий документ або синхронізувати, або переносити в архів на окремому кроці.

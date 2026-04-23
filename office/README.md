@@ -11,26 +11,43 @@
 - `flowcharts/` — ПЛЮС Схеми
 - `vector/` — ПЛЮС Вектор
 
-## Нормативні документи
+## Документація
 
+### Активні джерела правди
+
+- `README.md` — карта пакета, поточний стан і політика документації
+- `UI_INTEGRATION_GUIDE.md` — технічний контракт інтеграції редакторів із shared shell
 - `OFFICE_UI_STANDARD.md` — головний UI-стандарт усієї лінійки
 - `UI_TOKENS.css` — спільні CSS-токени та базові shell-компоненти
 - `design-tokens.json` — машинозчитуваний набір дизайн-токенів
 - `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структури меню
-- `UI_INTEGRATION_GUIDE.md` — технічний гайд з інтеграції стандарту в код
-- `APP_SHELL.html` — базовий HTML-шаблон shell-інтерфейсу
-- `SHELL_COMPONENTS.md` — правила для titlebar, menu bar, toolbar, contextual UI, workspace, statusbar
-- `SERVICE_SHELL_BLUEPRINTS.md` — shell-схеми для кожного редактора
-- `COMPONENT_CHECKLIST.md` — чекліст для рев'ю, QA і приймання
 - `KEYBOARD_SHORTCUTS.md` — єдиний стандарт гарячих клавіш
-- `WORKSPACE_ACCESSIBILITY.md` — focus-visible, tabindex, повернення фокуса і keyboard interaction у workspace
 - `MODAL_STANDARD.md` — єдиний стандарт модальних вікон
 - `DROPDOWN_STANDARD.md` — єдиний стандарт dropdown, menu, picker і popover-поведінки
+- `WORKSPACE_ACCESSIBILITY.md` — focus-visible, tabindex, повернення фокуса і keyboard interaction у workspace
 - `CONTEXTUAL_UI_STANDARD.md` — єдиний стандарт контекстного UI
-- `CHANGELOG_STANDARD.md` — стандарт ведення changelog для UI-змін
+- `COMPONENT_CHECKLIST.md` — чекліст для рев'ю, QA і приймання
 - `CHANGELOG.md` — фактичний журнал системних змін пакета
+
+### Довідкові та шаблонні файли
+
+- `APP_SHELL.html` — базовий HTML-шаблон shell-інтерфейсу
+- `SHELL_COMPONENTS.md` — деталізація shell-компонентів
+- `SERVICE_SHELL_BLUEPRINTS.md` — shell-схеми для кожного редактора
 - `UI_REVIEW_TEMPLATE.md` — шаблон формалізованого UI-рев'ю
 - `PROMPT_FOR_AGENT.md` — регламент для агента або розробника
+- `CHANGELOG_STANDARD.md` — стандарт ведення changelog для UI-змін
+
+Ці файли поки залишаються в репозиторії як довідка, але не мають дублювати або перекривати `UI_INTEGRATION_GUIDE.md`. Якщо правило повторюється, актуалізувати треба активне джерело правди.
+
+### Висновок щодо кількості файлів
+
+Поточна кількість документів завелика для щоденної розробки, якщо всі вважати нормативними. Оптимальна модель:
+
+- тримати 8-10 активних документів як джерела правди;
+- довідкові шаблони залишити до окремого архівного кроку;
+- не додавати нові Markdown-файли без явної ролі;
+- поступово переносити дублікати правил у `UI_INTEGRATION_GUIDE.md` або спеціалізований стандарт.
 
 У корені кожного редактора повинні бути:
 
@@ -63,7 +80,11 @@ powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
 - `body.office-app` і правильний `data-office-service`;
 - базові `office-header`, `office-menubar`, `office-toolbar`, `office-workspace`, `office-statusbar`;
 - focusable workspace;
-- очікувані пункти меню.
+- очікувані пункти меню;
+- parity між стандартними командами тулбара і головного меню;
+- `OfficeUI.registerCommands` / `OfficeUI.runCommand` для `new/open/save/undo/redo`;
+- `OfficeUI.openFilePicker` для file-open entry points;
+- modal/dropdown/statusbar контракти.
 
 `tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком.
 
@@ -96,6 +117,13 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
   - `save`
   - `undo`
   - `redo`
+- додано command-adapter контракт:
+  - `OfficeUI.registerCommands(...)`
+  - `OfficeUI.runCommand(...)`
+  - parity між тулбаром, головним меню і hotkeys
+- додано shared file-picker helper:
+  - `OfficeUI.openFilePicker(inputOrId)`
+  - централізоване скидання `input.value`
 - додано спільну поведінку dropdown/menu:
   - відкриття з клавіатури
   - `Escape`
@@ -129,6 +157,8 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
 
 До завершення базового етапу уніфікації залишилось:
 
+- вирішити, які довідкові Markdown-файли переносити в архів після стабілізації;
+- привести нечитабельні або дубльовані довідкові документи до UTF-8 або замінити посиланням на активне джерело правди;
 - візуально відполірувати реальні тексти statusbar у всіх редакторах;
 - завершити візуальне вирівнювання коротких системних повідомлень і confirm/info/prompt-сценаріїв;
 - пройти ручний візуальний QA по всіх редакторах у браузері;
