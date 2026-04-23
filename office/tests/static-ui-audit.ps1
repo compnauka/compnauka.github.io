@@ -18,6 +18,7 @@ $requiredRootFiles = @(
   'OFFICE_UI_STANDARD.md',
   'UI_INTEGRATION_GUIDE.md',
   'UI_TOKENS.css',
+  'shell-overrides.css',
   'design-tokens.json',
   'SERVICE_THEME_MAP.json',
   'KEYBOARD_SHORTCUTS.md',
@@ -142,6 +143,7 @@ foreach ($service in $services) {
 
   $html = Get-Content -Raw -Encoding UTF8 $indexPath
   Assert-True ($html -match 'href="\.\./UI_TOKENS\.css"') "$($service.Path): UI_TOKENS.css is not linked before local styling"
+  Assert-True ($html -match 'href="\.\./shell-overrides\.css"') "$($service.Path): shell-overrides.css is not linked after local styling"
   Assert-True ($html -match 'src="\.\./office-ui\.js"') "$($service.Path): office-ui.js is not linked"
   Assert-True ($html -match 'src="\.\./offline\.js"') "$($service.Path): offline.js is not registered"
   Assert-True ($html -match '<body[^>]*class="[^"]*\boffice-app\b[^"]*"') "$($service.Path): body is missing office-app class"

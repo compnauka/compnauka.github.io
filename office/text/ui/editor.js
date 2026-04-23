@@ -155,31 +155,36 @@ const ArtEditor = (() => {
 
   function insertTable(rows, cols) {
     ArtModals.close('modalTable');
-    ArtToolbar.run(() => {
-      const table = document.createElement('table');
-      const tbody = document.createElement('tbody');
-      for (let r = 0; r < rows; r++) {
-        const tr = document.createElement('tr');
-        for (let c = 0; c < cols; c++) {
-          const cell = document.createElement(r === 0 ? 'th' : 'td');
-          cell.innerHTML = '<br>';
-          tr.appendChild(cell);
-        }
-        tbody.appendChild(tr);
+    const safeRows = Math.max(1, Math.min(50, Number(rows) || 1));
+    const safeCols = Math.max(1, Math.min(20, Number(cols) || 1));
+
+    ArtSelection.focusEditor(_editor);
+    const table = document.createElement('table');
+    const tbody = document.createElement('tbody');
+    for (let r = 0; r < safeRows; r++) {
+      const tr = document.createElement('tr');
+      for (let c = 0; c < safeCols; c++) {
+        const cell = document.createElement(r === 0 ? 'th' : 'td');
+        cell.innerHTML = '<br>';
+        tr.appendChild(cell);
       }
-      table.appendChild(tbody);
-      ArtSelection.insertBlockNode(_editor, table, { insertParagraphAfter: false });
-      const p = document.createElement('p');
-      p.innerHTML = '<br>';
-      table.insertAdjacentElement('afterend', p);
-      const firstCell = table.querySelector('th,td');
-      if (firstCell) {
-        const range = document.createRange();
-        range.selectNodeContents(firstCell);
-        range.collapse(true);
-        ArtSelection.restore(range);
-      }
-      _queueRepaginate(true);
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    ArtSelection.insertBlockNode(_editor, table, { insertParagraphAfter: true });
+
+    const firstCell = table.querySelector('th,td');
+    if (firstCell) {
+      const range = document.createRange();
+      range.selectNodeContents(firstCell);
+      range.collapse(true);
+      ArtSelection.restore(range);
+    }
+
+    _editor.dispatchEvent(new Event('input', { bubbles: true }));
+    requestAnimationFrame(() => {
+      ArtHistory.pushNow();
+      ArtToolbar.updateState();
     });
   }
 
@@ -540,9 +545,11 @@ const ArtEditor = (() => {
     _normalizePages();
 
     let pages = _getPages();
+    let layoutGuard = 0;
     for (let i = 0; i < pages.length; i++) {
       const current = _getPageContent(pages[i]);
       while (_isOverflowing(current)) {
+        if (++layoutGuard > 250) break;
         const next = _getPageContent(_getOrCreatePage(i + 1));
         if (!_moveOverflowToNext(current, next)) break;
         pages = _getPages();
@@ -553,7 +560,9 @@ const ArtEditor = (() => {
     for (let i = 0; i < pages.length - 1; i++) {
       const current = _getPageContent(pages[i]);
       const next = _getPageContent(pages[i + 1]);
+      let pullGuard = 0;
       while (_pullFromNextIfFits(current, next)) {
+        if (++pullGuard > 250) break;
         if (!_getPages()[i + 1]) break;
       }
     }
@@ -587,6 +596,7 @@ const ArtEditor = (() => {
 
   function _pullFromNextIfFits(current, next) {
     if (!current || !next) return false;
+    if (_isPageEmpty(next)) return false;
     const first = next.firstElementChild;
     if (!first) return false;
     current.appendChild(first);
@@ -597,7 +607,6 @@ const ArtEditor = (() => {
     }
     _mergeAdjacentLists(current);
     _cleanupPage(current);
-    _cleanupPage(next);
     return true;
   }
 

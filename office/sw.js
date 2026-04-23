@@ -1,4 +1,4 @@
-﻿const CACHE_VERSION = 'office-plus-v2';
+﻿const CACHE_VERSION = 'office-plus-v3';
 const CORE_ASSETS = [
   './design-tokens.json',
   './flowcharts/app-core.js',
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   './index.html',
   './office-ui.js',
   './offline.js',
+  './shell-overrides.css',
   './paint/index.html',
   './paint/js/app.js',
   './paint/js/canvas.js',
@@ -110,4 +111,5 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
 
