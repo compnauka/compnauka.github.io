@@ -1387,6 +1387,8 @@ function showModal({ title, text = '', body = '', confirmText = 'Гаразд', 
   dom.modalCancel.textContent = cancelText;
   dom.modalCancel.classList.toggle('hidden', !showCancel);
   dom.modalOverlay.classList.remove('hidden');
+  dom.modalOverlay.classList.add('active');
+  dom.modalOverlay.setAttribute('aria-hidden', 'false');
 
   const confirmHandler = () => {
     onConfirm?.();
@@ -1405,6 +1407,8 @@ function closeModal() {
   modalHandlerAbort?.abort();
   modalHandlerAbort = null;
   dom.modalOverlay.classList.add('hidden');
+  dom.modalOverlay.classList.remove('active');
+  dom.modalOverlay.setAttribute('aria-hidden', 'true');
   dom.modalBody.innerHTML = '';
 }
 

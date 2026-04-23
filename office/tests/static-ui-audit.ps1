@@ -165,6 +165,7 @@ foreach ($service in $services) {
     Assert-True ($html -match "data-menu=""$menuKey""") "$($service.Path): expected menu key is missing: $menuKey"
   }
   Assert-True ($html -notmatch '\son(?:click|keydown|mousedown|change)=') "$($service.Path): inline event handlers should stay migrated to data attributes and JS bindings"
+  Assert-True ($html -notmatch '\sstyle=') "$($service.Path): inline styles should stay migrated to CSS classes"
 
   $externalMatches = [regex]::Matches($html, '<(?:script|link|img|source)\b[^>]*(?:src|href)="https?://')
   if ($externalMatches.Count -gt 0) {
@@ -188,7 +189,8 @@ $runtimeFiles = @(
   'tables/js/grid.js',
   'tables/js/main.js',
   'tables/js/workbook.js',
-  'slides/js/app.js'
+  'slides/js/app.js',
+  'slides/js/runtime.js'
 )
 
 foreach ($runtimeFile in $runtimeFiles) {
@@ -217,6 +219,13 @@ foreach ($modalMarkupFile in $modalMarkupFiles) {
   Assert-True ($content -notmatch '>Ні</button>') "${modalMarkupFile}: modal buttons should use Скасувати instead of Ні"
 }
 
+$slidesIndexPath = Join-Path $Root 'slides/index.html'
+if (Test-Path $slidesIndexPath) {
+  $slidesHtml = Get-Content -Raw -Encoding UTF8 $slidesIndexPath
+  Assert-True ($slidesHtml -match 'src="js/runtime\.js"') "slides/index.html: should load the checked runtime bundle"
+  Assert-True ($slidesHtml -notmatch 'src="js/app\.js"') "slides/index.html: should not load source app.js directly while runtime.js is the deployed bundle"
+}
+
 $textIndexPath = Join-Path $Root 'text/index.html'
 if (Test-Path $textIndexPath) {
   $textHtml = Get-Content -Raw -Encoding UTF8 $textIndexPath
@@ -226,12 +235,6 @@ if (Test-Path $textIndexPath) {
     $textModalHtml = $textHtml.Substring($textModalStart, $textModalEnd - $textModalStart)
     Assert-True ($textModalHtml -notmatch '\son(?:click|keydown)=') "text/index.html: modal inline handlers should stay migrated to data attributes and JS bindings"
   }
-}
-
-$flowchartsIndexPath = Join-Path $Root 'flowcharts/index.html'
-if (Test-Path $flowchartsIndexPath) {
-  $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
-  Assert-True ($flowchartsHtml -notmatch '\sstyle=') "flowcharts/index.html: inline styles should stay migrated to CSS classes"
 }
 
 $officeUiPath = Join-Path $Root 'office-ui.js'
@@ -245,6 +248,7 @@ if (Test-Path $officeUiPath) {
   Assert-True ($officeUi -match '\bdispatchOverlayClose,') "office-ui.js: dispatchOverlayClose must be exported on window.OfficeUI"
   Assert-True ($officeUi -match "CustomEvent\('office:overlayclose'") "office-ui.js: overlay close helper must emit office:overlayclose"
   Assert-True ($officeUi -match 'getActiveModal\(\)\?\.contains\(event\.target\)') "office-ui.js: global pointerdown close must ignore clicks inside the active modal"
+  Assert-True ($officeUi -match '\.menu-dropdown') "office-ui.js: global pointerdown close must ignore interactions inside actual menu dropdowns"
   Assert-True ($officeUi -match '!panel\.classList\.contains\(''modal-box''\)') "office-ui.js: enhanceModal must not add office-modal sizing to existing modal-box panels"
   Assert-True ($officeUi -match '!panel\.contains\(document\.activeElement\)') "office-ui.js: modal focus sync must avoid refocusing when focus is already inside the modal"
 }
@@ -263,6 +267,10 @@ foreach ($modalContractFile in $modalContractFiles) {
   if (-not (Test-Path $fullPath)) { continue }
   $content = Get-Content -Raw -Encoding UTF8 $fullPath
   Assert-True ($content -match "classList\.remove\('hidden'\)|classList\.remove\(""hidden""\)") "${modalContractFile}: modal open path must remove hidden because office-ui.js can add it when closing"
+  Assert-True ($content -match "classList\.add\('active'\)|classList\.add\(""active""\)") "${modalContractFile}: modal open path must add active so office-ui.js can detect the modal"
+  Assert-True ($content -match "classList\.remove\('active'\)|classList\.remove\(""active""\)") "${modalContractFile}: modal close path must remove active"
+  Assert-True ($content -match "setAttribute\('aria-hidden',\s*'false'\)|setAttribute\(""aria-hidden"",\s*""false""\)") "${modalContractFile}: modal open path must expose aria-hidden=false"
+  Assert-True ($content -match "setAttribute\('aria-hidden',\s*'true'\)|setAttribute\(""aria-hidden"",\s*""true""\)") "${modalContractFile}: modal close path must restore aria-hidden=true"
 }
 
 $sharedModalApiFiles = @(

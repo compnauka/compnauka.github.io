@@ -327,12 +327,14 @@ window.ArtVector = window.ArtVector || {};
       this.elements.modalInput.value = hasInput ? inputValue : '';
       this.elements.modalInput.rows = multiline ? 5 : 1;
       this.elements.modalOverlay.classList.remove('hidden');
+      this.elements.modalOverlay.classList.add('active');
       this.elements.modalOverlay.setAttribute('aria-hidden', 'false');
       if (hasInput) setTimeout(() => this.elements.modalInput.focus(), 10);
 
       return new Promise((resolve) => {
         const cleanup = (result) => {
           this.elements.modalOverlay.classList.add('hidden');
+          this.elements.modalOverlay.classList.remove('active');
           this.elements.modalOverlay.setAttribute('aria-hidden', 'true');
           resolve(result);
         };

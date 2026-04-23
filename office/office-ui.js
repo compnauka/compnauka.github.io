@@ -247,7 +247,7 @@
 
     document.addEventListener('pointerdown', event => {
       if (getActiveModal()?.contains(event.target)) return;
-      if (event.target.closest('.menu-item-wrap, .picker-wrap, .tool-picker, .palette-wrap')) return;
+      if (event.target.closest('.menu-item-wrap, .menu-title, .menu-dropdown, .picker-wrap, .tool-picker, .palette-wrap, .palette-popover')) return;
       closeTopOverlay();
     }, true);
   }

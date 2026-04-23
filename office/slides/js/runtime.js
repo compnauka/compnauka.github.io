@@ -1128,7 +1128,7 @@
   function handleRedo() { if (!redo()) return; state.unsavedChanges = false; updateDirtyUi(); renderAll(); setStatusRight('Повернуто'); }
 
   function confirmNewProject() {
-    showConfirm({
+    showConfirmModal({
       title: 'Нова презентація', text: 'Поточну презентацію буде очищено. Продовжити?', confirmText: 'Створити',
       onConfirm: () => {
         clearDraft(); applyPresentationData(createDefaultPresentation()); resetHistory();
@@ -1154,7 +1154,7 @@
       if (!parsed) throw new Error('invalid');
       applyPresentationData(parsed); resetHistory();
       state.unsavedChanges = false; updateDirtyUi(); renderAll(); setStatusRight('Файл відкрито');
-    } catch { showAlert('Не вдалося відкрити файл', 'Перевірте, чи це файл ПЛЮС Слайди (JSON).'); }
+    } catch { showInfoModal('Не вдалося відкрити файл', 'Перевірте, чи це файл ПЛЮС Слайди (JSON).'); }
   }
 
   // FIX #2: addSlide now adds a slide with placeholder title + body elements
@@ -1185,8 +1185,8 @@
   }
 
   function confirmDeleteSlide(slideId = state.currentSlideId) {
-    if (state.slides.length === 1) { showAlert('Не можна видалити', 'У презентації має бути хоча б один слайд.'); return; }
-    showConfirm({ title: 'Видалити слайд', text: 'Слайд буде видалено.', confirmText: 'Видалити', onConfirm: () => deleteSlide(slideId) });
+    if (state.slides.length === 1) { showInfoModal('Не можна видалити', 'У презентації має бути хоча б один слайд.'); return; }
+    showConfirmModal({ title: 'Видалити слайд', text: 'Слайд буде видалено.', confirmText: 'Видалити', onConfirm: () => deleteSlide(slideId) });
   }
 
   function deleteSlide(slideId) {
@@ -1236,7 +1236,7 @@
     const file = dom.imageFileInput.files?.[0]; dom.imageFileInput.value = '';
     if (!file) return;
     try { insertImage(await readFileAsDataURL(file)); closeModal(); }
-    catch { showAlert('Не вдалося прочитати файл', 'Спробуйте інше зображення.'); }
+    catch { showInfoModal('Не вдалося прочитати файл', 'Спробуйте інше зображення.'); }
   }
 
   function insertImage(src) {
@@ -1357,12 +1357,12 @@
 
   function handleExportPdf() {
     exportPresentationPdf(state.fileName, state.slides)
-      .catch(() => showAlert('Експорт не вдався', 'Не вдалося створити PDF. Спробуйте ще раз.'));
+      .catch(() => showInfoModal('Експорт не вдався', 'Не вдалося створити PDF. Спробуйте ще раз.'));
   }
 
   function handlePrint() {
     if (!printPresentation(state.fileName, state.slides))
-      showAlert('Друк заблоковано', 'Дозвольте спливаючі вікна для цієї сторінки.');
+      showInfoModal('Друк заблоковано', 'Дозвольте спливаючі вікна для цієї сторінки.');
   }
 
   /* ── Presentation mode ───────────────────────────────────── */
@@ -1418,11 +1418,11 @@
   }
 
   function showAbout() {
-    showAlert('Про ПЛЮС Слайди', 'ПЛЮС Слайди — редактор презентацій для шкільного офісного пакета. Текст, зображення, фігури (прямокутник, коло, трикутник), PDF та режим показу.');
+    showInfoModal('Про ПЛЮС Слайди', 'ПЛЮС Слайди — редактор презентацій для шкільного офісного пакета. Текст, зображення, фігури (прямокутник, коло, трикутник), PDF та режим показу.');
   }
 
   function showShortcuts() {
-    showAlert('Клавіатурні скорочення',
+    showInfoModal('Клавіатурні скорочення',
       'Ctrl+N — нова презентація\nCtrl+O — відкрити\nCtrl+S — зберегти файл\n' +
       'Ctrl+Z / Ctrl+Y — скасувати / повернути\nCtrl+C / Ctrl+V — копіювати / вставити\n' +
       'Ctrl+D — дублювати\nDelete — видалити\nСтрілки — рух об\'єкта\nF5 — показ');
@@ -1439,6 +1439,8 @@
     dom.modalCancel.textContent = cancelText;
     dom.modalCancel.classList.toggle('hidden', !showCancel);
     dom.modalOverlay.classList.remove('hidden');
+    dom.modalOverlay.classList.add('active');
+    dom.modalOverlay.setAttribute('aria-hidden', 'false');
     modalHandlerAbort?.abort();
     modalHandlerAbort = new AbortController();
     dom.modalConfirm.addEventListener('click', () => { onConfirm?.(); closeModal(); }, { signal: modalHandlerAbort.signal });
@@ -1450,11 +1452,13 @@
     modalHandlerAbort?.abort();
     modalHandlerAbort = null;
     dom.modalOverlay.classList.add('hidden');
+    dom.modalOverlay.classList.remove('active');
+    dom.modalOverlay.setAttribute('aria-hidden', 'true');
     dom.modalBody.innerHTML = '';
   }
 
-  function showAlert(title, text) { showModal({ title, text, confirmText: 'Гаразд', showCancel: false }); }
-  function showConfirm({ title, text, confirmText = 'Так', onConfirm }) {
+  function showInfoModal(title, text) { showModal({ title, text, confirmText: 'Гаразд', showCancel: false }); }
+  function showConfirmModal({ title, text, confirmText = 'Продовжити', onConfirm }) {
     showModal({ title, text, confirmText, cancelText: 'Скасувати', onConfirm });
   }
 

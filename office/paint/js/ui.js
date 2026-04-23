@@ -397,8 +397,12 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         this.elements.modalCancel.classList.add('hidden');
         this.elements.modalConfirm.textContent = 'Гаразд';
         this.elements.modalOverlay.classList.remove('hidden');
+        this.elements.modalOverlay.classList.add('active');
+        this.elements.modalOverlay.setAttribute('aria-hidden', 'false');
         const close = () => {
           this.elements.modalOverlay.classList.add('hidden');
+          this.elements.modalOverlay.classList.remove('active');
+          this.elements.modalOverlay.setAttribute('aria-hidden', 'true');
           resolve(true);
         };
         this.elements.modalConfirm.addEventListener('click', close, { once: true });
@@ -413,8 +417,12 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         this.elements.modalCancel.classList.remove('hidden');
         this.elements.modalConfirm.textContent = confirmText;
         this.elements.modalOverlay.classList.remove('hidden');
+        this.elements.modalOverlay.classList.add('active');
+        this.elements.modalOverlay.setAttribute('aria-hidden', 'false');
         const cleanup = (result) => {
           this.elements.modalOverlay.classList.add('hidden');
+          this.elements.modalOverlay.classList.remove('active');
+          this.elements.modalOverlay.setAttribute('aria-hidden', 'true');
           resolve(result);
         };
         this.elements.modalConfirm.addEventListener('click', () => cleanup(true), { once: true });
