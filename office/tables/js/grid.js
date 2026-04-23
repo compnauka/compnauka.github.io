@@ -633,7 +633,7 @@ function applyFunc(name) {
 
   const b = getBounds();
   if (b.cMin === b.cMax && b.rMin === b.rMax) {
-    alertModal('Виділіть більше однієї клітинки!');
+    showInfoModal('Виділіть більше однієї клітинки!');
     return;
   }
 
@@ -648,7 +648,7 @@ function applyFunc(name) {
   ensureGridSize(Math.max(ROWS, tR), Math.max(COL_COUNT, tC + 1));
 
   if (tC >= COL_COUNT || tR > ROWS) {
-    alertModal('Немає місця для результату.');
+    showInfoModal('Немає місця для результату.');
     return;
   }
 
@@ -745,4 +745,3 @@ function autoFitColumns() {
   setSaveBadge();
   saveToHistory();
 }
-

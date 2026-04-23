@@ -239,14 +239,14 @@ function insertRow(atRow, count = 1) {
 
 function deleteRow(atRow, count = 1) {
   if (ROWS <= 1) {
-    alertModal('Не можна видалити останній рядок.');
+    showInfoModal('Не можна видалити останній рядок.');
     return;
   }
 
   const rowAt = clamp(atRow, 1, ROWS);
   const amount = Math.max(1, Math.min(Number(count) || 1, ROWS - rowAt + 1));
   if (amount >= ROWS) {
-    alertModal('Не можна видалити всі рядки.');
+    showInfoModal('Не можна видалити всі рядки.');
     return;
   }
 
@@ -334,14 +334,14 @@ function insertColumn(atCol, count = 1) {
 
 function deleteColumn(atCol, count = 1) {
   if (COL_COUNT <= 1) {
-    alertModal('Не можна видалити останню колонку.');
+    showInfoModal('Не можна видалити останню колонку.');
     return;
   }
 
   const colAt = clamp(atCol, 0, COL_COUNT - 1);
   const amount = Math.max(1, Math.min(Number(count) || 1, COL_COUNT - colAt));
   if (amount >= COL_COUNT) {
-    alertModal('Не можна видалити всі колонки.');
+    showInfoModal('Не можна видалити всі колонки.');
     return;
   }
 
@@ -524,7 +524,7 @@ function makeChart() {
       if (dsData.length > 0) datasets.push({ label: colLabel, data: dsData, labels: dsLabels });
     }
 
-    if (datasets.length === 0) { alertModal('Виділіть клітинки з числами!'); return; }
+    if (datasets.length === 0) { showInfoModal('Виділіть клітинки з числами!'); return; }
     openModal('chartModal');
     renderChartMulti(datasets);
     return;
@@ -549,7 +549,7 @@ function makeChart() {
   }
 
   if (data.length === 0) {
-    alertModal('Виділіть клітинки з числами!');
+    showInfoModal('Виділіть клітинки з числами!');
     return;
   }
 
@@ -663,7 +663,7 @@ function loadExample() {
   restoreUiState();
   setSaveBadge();
   saveToHistory();
-  alertModal('Приклад завантажено! Спробуйте змінити кількість або додати нові товари.');
+  showInfoModal('Приклад завантажено! Спробуйте змінити кількість або додати нові товари.');
 }
 
 function clearAll() {
@@ -676,4 +676,3 @@ function clearAll() {
   setSaveBadge();
   saveToHistory();
 }
-

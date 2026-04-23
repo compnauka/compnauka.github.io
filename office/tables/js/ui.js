@@ -1,5 +1,5 @@
 // ---- Modals ----
-function alertModal(titleOrText, maybeText) {
+function showInfoModal(titleOrText, maybeText) {
   const titleEl = document.getElementById('msgTitle');
   const msgEl = document.getElementById('msgText');
   if (typeof maybeText === 'string') {
@@ -12,9 +12,11 @@ function alertModal(titleOrText, maybeText) {
   openModal('msgModal');
 }
 
-function askConfirm(txt, cb) {
+function askConfirm(txt, cb, confirmText = 'Продовжити') {
   const el = document.getElementById('confirmText');
+  const yesBtn = document.getElementById('confirmBtnYes');
   if (el) el.innerText = txt;
+  if (yesBtn) yesBtn.innerText = confirmText;
   confirmFn = cb;
   openModal('confirmModal');
 }
@@ -337,7 +339,7 @@ function compareSortValues(a, b, desc = false) {
 function sortSelection(desc = false) {
   const b = getBounds();
   if (b.rMin === b.rMax) {
-    alertModal('Для сортування виділи кілька рядків.');
+    showInfoModal('Для сортування виділи кілька рядків.');
     return;
   }
 
@@ -429,13 +431,13 @@ function importWorkbookText(text) {
     setSaveBadge();
     saveToHistory();
   } catch (e) {
-    alertModal(`Не вдалося відкрити файл: ${e?.message || 'помилка читання'}`);
+    showInfoModal(`Не вдалося відкрити файл: ${e?.message || 'помилка читання'}`);
   }
 }
 
 function dispatchUiAction(action) {
   switch (action) {
-    case 'new': askConfirm('Створити нову таблицю? Поточні дані буде очищено.', clearAll); break;
+    case 'new': askConfirm('Створити нову таблицю? Поточні дані буде очищено.', clearAll, 'Створити'); break;
     case 'open-workbook': triggerWorkbookImport(); break;
     case 'save-workbook': exportWorkbook(); break;
     case 'import-csv': triggerCSVImport(); break;
@@ -444,7 +446,7 @@ function dispatchUiAction(action) {
     case 'undo': undo(); break;
     case 'redo': redo(); break;
     case 'copy': copySelectionToClipboard(); break;
-    case 'paste': navigator.clipboard?.readText().then(text => { if (text) pasteToGrid(text, active.c, active.r); }).catch(() => alertModal('Браузер не дозволив вставлення з буфера обміну.')); break;
+    case 'paste': navigator.clipboard?.readText().then(text => { if (text) pasteToGrid(text, active.c, active.r); }).catch(() => showInfoModal('Браузер не дозволив вставлення з буфера обміну.')); break;
     case 'clear-selection': deleteSelection(); break;
     case 'insert-row-above': {
       const target = headerMenuState?.type === 'row' ? headerMenuState.index : (getWholeRowSelectionRange()?.start || active.r);
@@ -507,8 +509,8 @@ function dispatchUiAction(action) {
     case 'zoom-100': setZoom(100); break;
     case 'zoom-115': setZoom(115); break;
     case 'zoom-130': setZoom(130); break;
-    case 'example': askConfirm('Завантажити навчальний приклад? Поточні дані буде перезаписано.', loadExample); break;
-    case 'shortcuts': alertModal('Клавіатурні скорочення', `Ctrl+S — зберегти .arttab
+    case 'example': askConfirm('Завантажити навчальний приклад? Поточні дані буде перезаписано.', loadExample, 'Завантажити'); break;
+    case 'shortcuts': showInfoModal('Клавіатурні скорочення', `Ctrl+S — зберегти .arttab
 Ctrl+O — відкрити .arttab
 Ctrl+N — нова таблиця
 Ctrl+P — друк
@@ -516,7 +518,7 @@ Ctrl+Z / Ctrl+Y — скасувати / повернути
 Delete — очистити виділені клітинки
 Enter / Tab — перехід між клітинками
 F2 — редагувати формулу в клітинці`); break;
-    case 'about': alertModal('Про ПЛЮС Таблиці', `ПЛЮС Таблиці — шкільний табличний редактор у стилі Офіс ПЛЮС.
+    case 'about': showInfoModal('Про ПЛЮС Таблиці', `ПЛЮС Таблиці — шкільний табличний редактор у стилі Офіс ПЛЮС.
 
 У цій версії додано:
 • уніфікований інтерфейс
@@ -556,4 +558,3 @@ function changeTheme(name) {
   document.documentElement.style.setProperty('--th-bg', t.th);
   document.documentElement.style.setProperty('--th-text', t.text);
 }
-

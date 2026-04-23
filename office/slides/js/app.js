@@ -1,4 +1,4 @@
-import { COLOR_PALETTE, DEFAULT_SHAPE_STYLE, DEFAULT_TEXT_STYLE, FONT_SIZES, STAGE_HEIGHT, STAGE_WIDTH } from './constants.js';
+﻿import { COLOR_PALETTE, DEFAULT_SHAPE_STYLE, DEFAULT_TEXT_STYLE, FONT_SIZES, STAGE_HEIGHT, STAGE_WIDTH } from './constants.js';
 import { exportPresentationPdf, printPresentation, createSlideSnapshot, createThumbSnapshot } from './export.js';
 import { pushHistory, redo, resetHistory, undo } from './history.js';
 import { state, applyPresentationData, getCurrentSlide, getCurrentSlideIndex, getSelectedElement, serializePresentation } from './state.js';
@@ -964,7 +964,7 @@ function handleRedo() {
 }
 
 function confirmNewProject() {
-  showConfirm({
+  showConfirmModal({
     title: 'Нова презентація',
     text: 'Поточна презентація буде очищена. Продовжити?',
     confirmText: 'Створити',
@@ -1010,7 +1010,7 @@ async function onProjectFileSelected() {
     renderAll();
     setStatusRight('Файл відкрито');
   } catch {
-    showAlert('Не вдалося відкрити файл', 'Перевірте, чи це файл презентації ПЛЮС Слайди у форматі JSON.');
+    showInfoModal('Не вдалося відкрити файл', 'Перевірте, чи це файл презентації ПЛЮС Слайди у форматі JSON.');
   }
 }
 
@@ -1045,10 +1045,10 @@ function duplicateSlide(slideId = state.currentSlideId) {
 
 function confirmDeleteSlide(slideId = state.currentSlideId) {
   if (state.slides.length === 1) {
-    showAlert('Не можна видалити', 'У презентації має залишатися хоча б один слайд.');
+    showInfoModal('Не можна видалити', 'У презентації має залишатися хоча б один слайд.');
     return;
   }
-  showConfirm({
+  showConfirmModal({
     title: 'Видалити слайд',
     text: 'Слайд буде видалено без можливості швидкого повернення, якщо ви закриєте сторінку.',
     confirmText: 'Видалити',
@@ -1126,7 +1126,7 @@ async function onImageFileSelected() {
     insertImage(dataUrl);
     closeModal();
   } catch {
-    showAlert('Не вдалося прочитати файл', 'Спробуйте інше зображення.');
+    showInfoModal('Не вдалося прочитати файл', 'Спробуйте інше зображення.');
   }
 }
 
@@ -1290,13 +1290,13 @@ function deleteSelectedElement() {
 
 function handleExportPdf() {
   exportPresentationPdf(state.fileName, state.slides).catch(() => {
-    showAlert('Експорт не вдався', 'Не вдалося створити PDF. Спробуйте ще раз.');
+    showInfoModal('Експорт не вдався', 'Не вдалося створити PDF. Спробуйте ще раз.');
   });
 }
 
 function handlePrint() {
   const ok = printPresentation(state.fileName, state.slides);
-  if (!ok) showAlert('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.');
+  if (!ok) showInfoModal('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.');
 }
 
 function startPresentation() {
@@ -1370,11 +1370,11 @@ function showTemplatesPicker() {
 }
 
 function showAbout() {
-  showAlert('Про ПЛЮС Слайди', 'ПЛЮС Слайди — простий редактор презентацій для шкільного офісного пакета. Є базові макети, текст, зображення, фігури, PDF і режим показу.');
+  showInfoModal('Про ПЛЮС Слайди', 'ПЛЮС Слайди — простий редактор презентацій для шкільного офісного пакета. Є базові макети, текст, зображення, фігури, PDF і режим показу.');
 }
 
 function showShortcuts() {
-  showAlert('Клавіатурні скорочення', 'Ctrl+N — нова презентація\nCtrl+O — відкрити\nCtrl+S — зберегти файл\nCtrl+Z / Ctrl+Y — скасувати / повернути\nCtrl+C / Ctrl+V — копіювати / вставити об’єкт\nCtrl+D — дублювати\nDelete — видалити\nСтрілки — рух об’єкта\nF5 — показ');
+  showInfoModal('Клавіатурні скорочення', 'Ctrl+N — нова презентація\nCtrl+O — відкрити\nCtrl+S — зберегти файл\nCtrl+Z / Ctrl+Y — скасувати / повернути\nCtrl+C / Ctrl+V — копіювати / вставити об’єкт\nCtrl+D — дублювати\nDelete — видалити\nСтрілки — рух об’єкта\nF5 — показ');
 }
 
 function showModal({ title, text = '', body = '', confirmText = 'Гаразд', cancelText = 'Скасувати', icon = 'fa-solid fa-circle-info', onConfirm = null, onMount = null, showCancel = true }) {
@@ -1405,7 +1405,7 @@ function closeModal() {
   dom.modalCancel.onclick = null;
 }
 
-function showAlert(title, text) {
+function showInfoModal(title, text) {
   showModal({
     title,
     text,
@@ -1414,7 +1414,7 @@ function showAlert(title, text) {
   });
 }
 
-function showConfirm({ title, text, confirmText = 'Так', onConfirm }) {
+function showConfirmModal({ title, text, confirmText = 'Продовжити', onConfirm }) {
   showModal({
     title,
     text,
@@ -1425,3 +1425,4 @@ function showConfirm({ title, text, confirmText = 'Так', onConfirm }) {
 }
 
 document.addEventListener('DOMContentLoaded', boot);
+

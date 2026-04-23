@@ -339,15 +339,15 @@ window.ArtVector = window.ArtVector || {};
       });
     },
 
-    showAlert(title, text, icon = 'ℹ️') {
+    showInfoModal(title, text, icon = 'ℹ️') {
       return this.showDialog({ title, text, icon, withCancel: false, confirmText: 'Гаразд', inputValue: null });
     },
 
-    showConfirm(title, text, icon = '❓', confirmText = 'Гаразд') {
+    showConfirmModal(title, text, icon = '❓', confirmText = 'Продовжити') {
       return this.showDialog({ title, text, icon, withCancel: true, confirmText, inputValue: null });
     },
 
-    showTextPrompt(title, text, initialValue = '') {
+    showPromptModal(title, text, initialValue = '') {
       return this.showDialog({ title, text, icon: '✏️', withCancel: true, confirmText: 'Застосувати', inputValue: initialValue, multiline: true });
     },
 

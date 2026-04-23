@@ -381,7 +381,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
       this.elements.blueValue.textContent = String(b);
     },
 
-    showAlert(title, text, icon = 'ℹ️') {
+    showInfoModal(title, text, icon = 'ℹ️') {
       return new Promise((resolve) => {
         this.elements.modalIcon.textContent = icon;
         this.elements.modalTitle.textContent = title;
@@ -398,7 +398,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
       });
     },
 
-    showConfirm(title, text, icon = '❓', confirmText = 'Так') {
+    showConfirmModal(title, text, icon = '❓', confirmText = 'Продовжити') {
       return new Promise((resolve) => {
         this.elements.modalIcon.textContent = icon;
         this.elements.modalTitle.textContent = title;

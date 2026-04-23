@@ -39,7 +39,7 @@
 ## Поточна стратегія міграції
 
 1. Зафіксувати baseline і тестовий стенд.
-2. Підключити `UI_TOKENS.css` і `art-*` shell-класи у всі редактори.
+2. Підключити `UI_TOKENS.css` і `office-*` shell-класи у всі редактори.
 3. Винести зовнішні CDN-ресурси в локальний `vendor/`, щоб редактори працювали офлайн.
 4. Уніфікувати меню, toolbar, statusbar, zoom, undo/redo.
 5. Уніфікувати поведінку keyboard shortcuts, dropdown, modal і workspace focus.
@@ -77,3 +77,58 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
 - `http://127.0.0.1:4173/`
 - `http://127.0.0.1:4173/tests/browser-smoke.html`
 
+## Поточний стан базової уніфікації
+
+Станом на зараз у пакеті вже зроблено такі базові кроки:
+
+- прибрано жорстку прив'язку runtime-маршрутів до старого брендового префікса;
+- усі 6 редакторів підключені до спільного shell-шару через `UI_TOKENS.css`, `office-ui.js` та `offline.js`;
+- уніфіковано базовий app shell:
+  - header
+  - menubar
+  - toolbar
+  - workspace
+  - statusbar
+- уніфіковано порядок стандартних toolbar-команд:
+  - `new`
+  - `open`
+  - `save`
+  - `undo`
+  - `redo`
+- додано спільну поведінку dropdown/menu:
+  - відкриття з клавіатури
+  - `Escape`
+  - click-outside
+  - повернення фокуса
+- додано спільний enhancer для modal-патернів:
+  - ARIA/role
+  - `Escape`
+  - focus return
+  - focus loop всередині модалки
+- додано спільний статусний шар:
+  - `OfficeUI.announce(message)`
+  - `OfficeUI.updateStatus(message, slot)`
+  - подія `office:status`
+- statusbar-и всіх редакторів отримали спільну семантику слотів:
+  - `primary`
+  - `secondary`
+  - додаткові `meta` / service-specific слоти за потреби
+- alert-семантику runtime-коду замінено на modal-семантику:
+  - `showInfoModal`
+  - `showConfirmModal`
+  - `showPromptModal`
+  - без `alertModal`, `showAlert`, `showTextPrompt`
+- confirm-кнопки вирівняно до моделі `Скасувати` + конкретна дія;
+- підготовлено offline-базу:
+  - локальні vendor-ресурси
+  - `offline.js`
+  - `sw.js`
+
+## Що ще залишилось
+
+До завершення базового етапу уніфікації залишилось:
+
+- візуально відполірувати реальні тексти statusbar у всіх редакторах;
+- завершити візуальне вирівнювання коротких системних повідомлень і confirm/info/prompt-сценаріїв;
+- пройти ручний візуальний QA по всіх редакторах у браузері;
+- після цього переходити до шліфування кожного редактора окремо.

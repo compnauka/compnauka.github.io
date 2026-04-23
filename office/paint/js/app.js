@@ -142,7 +142,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
   }
 
   async function clearCanvasWithConfirm() {
-    const okay = await ui.showConfirm('Очистити полотно?', 'Усі мазки, фігури та штампи буде видалено.', '🧹', 'Очистити');
+    const okay = await ui.showConfirmModal('Очистити полотно?', 'Усі мазки, фігури та штампи буде видалено.', '🧹', 'Очистити');
     if (!okay) return;
     pushUndo();
     canvasApi.clearAll();
@@ -152,7 +152,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
 
   async function newDrawing() {
     if (state.unsavedChanges) {
-      const proceed = await ui.showConfirm('Створити новий малюнок?', 'Незбережені зміни буде втрачено.', '🖼️', 'Створити');
+      const proceed = await ui.showConfirmModal('Створити новий малюнок?', 'Незбережені зміни буде втрачено.', '🖼️', 'Створити');
       if (!proceed) return;
     }
     state.undoStack.length = 0;
@@ -178,7 +178,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
     const dataUrl = canvasApi.exportImage('image/png');
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) {
-      ui.showAlert('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
+      ui.showInfoModal('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
       return;
     }
     printWindow.document.write(`<!DOCTYPE html><html lang="uk"><head><title>${state.fileName}</title><style>body{margin:0;padding:24px;display:grid;place-items:center;background:#f5f7fb}img{max-width:100%;height:auto;box-shadow:0 8px 28px rgba(0,0,0,.12)}</style></head><body><img src="${dataUrl}" alt="${state.fileName}"></body></html>`);
@@ -201,7 +201,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         markDirty();
       } catch (error) {
         console.error(error);
-        ui.showAlert('Помилка імпорту', 'Не вдалося відкрити зображення.', '⚠️');
+        ui.showInfoModal('Помилка імпорту', 'Не вдалося відкрити зображення.', '⚠️');
       }
     };
     reader.readAsDataURL(file);
@@ -261,10 +261,10 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         autosaveDraft();
         break;
       case 'show-shortcuts':
-        ui.showAlert('Клавіатурні скорочення', 'B — пензлик\nE — гумка\nF — заливка\nG — фігури\nT — штампи\nDelete / Backspace — видалити вибраний об\'єкт\n[ / ] — менша або більша товщина\nCtrl+Z — скасувати\nCtrl+Y — повернути\nCtrl+S — зберегти PNG\nCtrl+N — новий малюнок\nEsc — закрити меню або зняти виділення', '⌨️');
+        ui.showInfoModal('Клавіатурні скорочення', 'B — пензлик\nE — гумка\nF — заливка\nG — фігури\nT — штампи\nDelete / Backspace — видалити вибраний об\'єкт\n[ / ] — менша або більша товщина\nCtrl+Z — скасувати\nCtrl+Y — повернути\nCtrl+S — зберегти PNG\nCtrl+N — новий малюнок\nEsc — закрити меню або зняти виділення', '⌨️');
         break;
       case 'show-about':
-        ui.showAlert('Про ПЛЮС Малюнки', 'ПЛЮС Малюнки — графічний редактор у стилі вашого офісного набору. Основна палітра завжди видима, пензлик має кілька режимів, а фігури й штампи можна пересувати та змінювати за розміром.', '🎨');
+        ui.showInfoModal('Про ПЛЮС Малюнки', 'ПЛЮС Малюнки — графічний редактор у стилі вашого офісного набору. Основна палітра завжди видима, пензлик має кілька режимів, а фігури й штампи можна пересувати та змінювати за розміром.', '🎨');
         break;
       default:
         break;

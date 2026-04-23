@@ -173,7 +173,7 @@ function init() {
 
       // Обмеження розміру файлу: 2 МБ
       if (file.size > 2 * 1024 * 1024) {
-        alertModal('❌ Файл CSV завеликий (максимум 2 МБ). Будь ласка, оберіть менший файл.');
+        showInfoModal('❌ Файл CSV завеликий (максимум 2 МБ). Будь ласка, оберіть менший файл.');
         csvInput.value = '';
         return;
       }
@@ -185,13 +185,13 @@ function init() {
 
         // Обмеження рядків/колонок
         if (rows.length > 500) {
-          alertModal(`❌ Файл CSV має ${rows.length} рядків — це забагато (максимум 500).`);
+          showInfoModal(`❌ Файл CSV має ${rows.length} рядків — це забагато (максимум 500).`);
           csvInput.value = '';
           return;
         }
         const cCount = rows.reduce((m, r) => Math.max(m, r.length), 0);
         if (cCount > 200) {
-          alertModal(`❌ Файл CSV має ${cCount} колонок — це забагато (максимум 200).`);
+          showInfoModal(`❌ Файл CSV має ${cCount} колонок — це забагато (максимум 200).`);
           csvInput.value = '';
           return;
         }
@@ -236,7 +236,7 @@ function init() {
   // ---- Storage overflow/warning events ----
   window.addEventListener('storage-overflow', (e) => {
     const mb = (e.detail.bytes / 1024 / 1024).toFixed(1);
-    alertModal(`⚠️ Таблиця завелика (${mb} МБ) — автозбереження заблоковано!
+    showInfoModal(`⚠️ Таблиця завелика (${mb} МБ) — автозбереження заблоковано!
 Збережи дані вручну через кнопку "Зберегти CSV".`);
   });
 

@@ -66,6 +66,43 @@ foreach ($file in $requiredRootFiles) {
   Assert-True (Test-Path (Join-Path $Root $file)) "Missing required root standard file: $file"
 }
 
+$normativeDocFiles = @(
+  'README.md',
+  'UI_INTEGRATION_GUIDE.md',
+  'COMPONENT_CHECKLIST.md',
+  'APP_SHELL.html',
+  'SHELL_COMPONENTS.md',
+  'SERVICE_SHELL_BLUEPRINTS.md',
+  'WORKSPACE_ACCESSIBILITY.md',
+  'MODAL_STANDARD.md',
+  'DROPDOWN_STANDARD.md',
+  'CONTEXTUAL_UI_STANDARD.md',
+  'UI_REVIEW_TEMPLATE.md',
+  'CHANGELOG_STANDARD.md'
+)
+
+$legacyBrandPatterns = @(
+  'data-art-service',
+  '\.art-',
+  '\bart-app\b',
+  '\bart-header\b',
+  '\bart-menubar\b',
+  '\bart-toolbar\b',
+  '\bart-statusbar\b',
+  '\bart-workspace\b',
+  '/office/art-',
+  'UI_REVIEW_art-'
+)
+
+foreach ($docFile in $normativeDocFiles) {
+  $fullPath = Join-Path $Root $docFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  foreach ($pattern in $legacyBrandPatterns) {
+    Assert-True ($content -notmatch $pattern) "${docFile}: contains legacy branded shell term matching ${pattern}"
+  }
+}
+
 $rootIndexPath = Join-Path $Root 'index.html'
 if (Test-Path $rootIndexPath) {
   $rootHtml = Get-Content -Raw -Encoding UTF8 $rootIndexPath
@@ -107,8 +144,12 @@ foreach ($service in $services) {
   Assert-True ($html -match 'class="[^"]*\boffice-toolbar\b[^"]*"') "$($service.Path): toolbar is missing office-toolbar class"
   Assert-True ($html -match 'class="[^"]*\boffice-workspace\b[^"]*"') "$($service.Path): workspace is missing office-workspace class"
   Assert-True ($html -match 'class="[^"]*\boffice-statusbar\b[^"]*"') "$($service.Path): statusbar is missing office-statusbar class"
+  Assert-True ($html -match '<footer[^>]*class="[^"]*\boffice-statusbar\b[^"]*"[^>]*aria-label=') "$($service.Path): statusbar should have an aria-label"
+  Assert-True ($html -match 'data-office-status-slot="primary"') "$($service.Path): statusbar is missing primary status slot"
+  Assert-True ($html -match 'data-office-status-slot="secondary"') "$($service.Path): statusbar is missing secondary status slot"
   Assert-True ($html -match 'class="[^"]*\boffice-workspace-focusable\b[^"]*"') "$($service.Path): workspace is missing office-workspace-focusable class"
   Assert-True ($html -match 'office-workspace-focusable[^>]*tabindex="0"|tabindex="0"[^>]*office-workspace-focusable') "$($service.Path): focusable workspace should have tabindex=0"
+  Assert-True ($html -match 'class="[^"]*\bmodal(?:-overlay)?\b[^"]*"') "$($service.Path): expected at least one modal surface for standard behavior checks"
   Assert-CommandOrder $html $service.Path
 
   foreach ($menuKey in $service.Menu) {
@@ -119,6 +160,44 @@ foreach ($service in $services) {
   if ($externalMatches.Count -gt 0) {
     Add-Warning "$($service.Path): external resources are still present ($($externalMatches.Count)); offline hardening is a later migration step."
   }
+}
+
+$runtimeFiles = @(
+  'paint/js/ui.js',
+  'paint/js/app.js',
+  'vector/js/ui.js',
+  'vector/js/app.js',
+  'tables/js/ui.js',
+  'tables/js/grid.js',
+  'tables/js/main.js',
+  'tables/js/workbook.js',
+  'slides/js/app.js'
+)
+
+foreach ($runtimeFile in $runtimeFiles) {
+  $fullPath = Join-Path $Root $runtimeFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -notmatch '\bshowAlert\b') "${runtimeFile}: legacy showAlert API should be renamed to modal semantics"
+  Assert-True ($content -notmatch '\balertModal\b') "${runtimeFile}: legacy alertModal API should be renamed to modal semantics"
+  Assert-True ($content -notmatch '\bshowTextPrompt\b') "${runtimeFile}: legacy showTextPrompt API should be renamed to modal semantics"
+  Assert-True ($content -notmatch "confirmText\s*=\s*'Так'") "${runtimeFile}: confirm modal defaults should use specific actions, not Так"
+}
+
+$modalMarkupFiles = @(
+  'tables/index.html',
+  'paint/index.html',
+  'vector/index.html',
+  'slides/index.html',
+  'text/index.html'
+)
+
+foreach ($modalMarkupFile in $modalMarkupFiles) {
+  $fullPath = Join-Path $Root $modalMarkupFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -notmatch '>Так</button>') "${modalMarkupFile}: modal buttons should use specific action labels, not Так"
+  Assert-True ($content -notmatch '>Ні</button>') "${modalMarkupFile}: modal buttons should use Скасувати instead of Ні"
 }
 
 if ($warnings.Count -gt 0) {

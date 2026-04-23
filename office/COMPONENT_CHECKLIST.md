@@ -163,3 +163,21 @@
 - [ ] сервіс став ближчим до єдиної лінійки;
 - [ ] новий UI-патерн не створив виняток без документації;
 - [ ] молодший учень не загубиться в контекстних панелях, якщо сервіс орієнтований на молодшу школу.
+## Стан впровадження бази (2026-04-23)
+
+Вже можна вважати базово впровадженими:
+
+- shell-каркас;
+- menu/dropdown baseline;
+- modal accessibility baseline;
+- modal API naming baseline (`showInfoModal`, `showConfirmModal`, `showPromptModal`);
+- confirm button labels baseline (`Скасувати` + конкретна дія);
+- status announce baseline;
+- statusbar slot baseline (`primary`, `secondary`, optional service slots);
+- offline/local vendor baseline.
+
+Ще не можна вважати завершеними:
+
+- повне візуальне вирівнювання всіх modal/info/confirm/prompt сценаріїв;
+- повне візуальне і текстове вирівнювання статусбарів між редакторами;
+- ручний cross-editor visual QA після базових змін.

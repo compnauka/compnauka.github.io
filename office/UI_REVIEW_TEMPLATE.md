@@ -40,8 +40,8 @@ UI-рев'ю обов'язкове, якщо:
 
 Приклади:
 
-- `UI_REVIEW_art-text_2026-04-22.md`
-- `UI_REVIEW_art-paint_2026-05-03.md`
+- `UI_REVIEW_text_2026-04-22.md`
+- `UI_REVIEW_paint_2026-05-03.md`
 
 ---
 

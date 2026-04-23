@@ -231,7 +231,7 @@ window.ArtVector = window.ArtVector || {};
 
   async function newProject() {
     if (state.unsavedChanges) {
-      const okay = await ui.showConfirm('Створити новий проєкт?', 'Незбережені зміни буде втрачено.', '🆕', 'Створити');
+      const okay = await ui.showConfirmModal('Створити новий проєкт?', 'Незбережені зміни буде втрачено.', '🆕', 'Створити');
       if (!okay) return;
     }
     state.fileName = constants.DEFAULT_FILE_NAME;
@@ -271,7 +271,7 @@ window.ArtVector = window.ArtVector || {};
       markSaved();
     } catch (error) {
       console.error(error);
-      ui.showAlert('Помилка відкриття', 'Не вдалося прочитати файл проєкту. Перевірте, чи це коректний JSON-файл редактора.', '⚠️');
+      ui.showInfoModal('Помилка відкриття', 'Не вдалося прочитати файл проєкту. Перевірте, чи це коректний JSON-файл редактора.', '⚠️');
     }
   }
 
@@ -289,7 +289,7 @@ window.ArtVector = window.ArtVector || {};
       markSaved();
     } catch (error) {
       console.error(error);
-      ui.showAlert('Помилка експорту', 'Не вдалося сформувати PNG. Спробуйте ще раз.', '⚠️');
+      ui.showInfoModal('Помилка експорту', 'Не вдалося сформувати PNG. Спробуйте ще раз.', '⚠️');
     }
   }
 
@@ -306,7 +306,7 @@ window.ArtVector = window.ArtVector || {};
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     } catch (error) {
       console.error(error);
-      ui.showAlert('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
+      ui.showInfoModal('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
     }
   }
 
@@ -345,7 +345,7 @@ window.ArtVector = window.ArtVector || {};
   async function editSelectedText() {
     const selected = getSelectedObject();
     if (!selected || selected.type !== 'text') return;
-    const value = await ui.showTextPrompt('Редагувати текст', 'Змініть напис або вставте кілька рядків.', selected.text || '');
+    const value = await ui.showPromptModal('Редагувати текст', 'Змініть напис або вставте кілька рядків.', selected.text || '');
     if (value === false) return;
     pushUndo();
     selected.text = value.trim() || 'Текст';
@@ -423,7 +423,7 @@ window.ArtVector = window.ArtVector || {};
 
   async function createTextAt(point) {
     const initial = 'Текст';
-    const value = await ui.showTextPrompt('Додати текст', 'Введіть напис для полотна.', initial);
+    const value = await ui.showPromptModal('Додати текст', 'Введіть напис для полотна.', initial);
     if (value === false) return;
     pushUndo();
     const snapped = applySnapPoint(point);
@@ -685,7 +685,7 @@ window.ArtVector = window.ArtVector || {};
       case 'zoom-reset': zoomReset(); break;
       case 'zoom-in': zoomIn(); break;
       case 'show-help':
-        ui.showAlert('Довідка та поради', `Що вміє редактор
+        ui.showInfoModal('Довідка та поради', `Що вміє редактор
 • Редаговані векторні фігури, лінії та стрілки
 • Текстові підписи для схем, діаграм і плакатів
 • Прив'язка до сітки для акуратної побудови
@@ -698,10 +698,10 @@ window.ArtVector = window.ArtVector || {};
 • Експорт SVG підходить для подальшого редагування, PNG — для вставки в презентації та документи`, '💡');
         break;
       case 'show-shortcuts':
-        ui.showAlert('Клавіатурні скорочення', 'V — вибір\nP — олівець\nL — лінія\nA — стрілка\nR — прямокутник\nO — еліпс\nD — ромб\nS — зірка\nT — текст\nDelete / Backspace — видалити\nCtrl+Z / Ctrl+Y — скасувати / повернути\nCtrl+D — дублювати\nCtrl+C / Ctrl+V — копіювати / вставити\nCtrl+S — зберегти проєкт\nCtrl+Shift+S — PNG\nEsc — зняти виділення', '⌨️');
+        ui.showInfoModal('Клавіатурні скорочення', 'V — вибір\nP — олівець\nL — лінія\nA — стрілка\nR — прямокутник\nO — еліпс\nD — ромб\nS — зірка\nT — текст\nDelete / Backspace — видалити\nCtrl+Z / Ctrl+Y — скасувати / повернути\nCtrl+D — дублювати\nCtrl+C / Ctrl+V — копіювати / вставити\nCtrl+S — зберегти проєкт\nCtrl+Shift+S — PNG\nEsc — зняти виділення', '⌨️');
         break;
       case 'show-about':
-        ui.showAlert('Про ПЛЮС Вектор', 'ПЛЮС Вектор — браузерний векторний редактор для шкільного офісного набору. Інтерфейс узгоджений з іншими програмами Офіс ПЛЮС: кольоровий хедер, верхнє меню, компактна панель інструментів і чисте робоче поле без зайвих бокових підказок. Редактор працює без реєстрації, зберігає проєкти локально та дозволяє експортувати роботи у SVG і PNG.', '🧩');
+        ui.showInfoModal('Про ПЛЮС Вектор', 'ПЛЮС Вектор — браузерний векторний редактор для шкільного офісного набору. Інтерфейс узгоджений з іншими програмами Офіс ПЛЮС: кольоровий хедер, верхнє меню, компактна панель інструментів і чисте робоче поле без зайвих бокових підказок. Редактор працює без реєстрації, зберігає проєкти локально та дозволяє експортувати роботи у SVG і PNG.', '🧩');
         break;
       default:
         break;
