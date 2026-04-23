@@ -42,14 +42,15 @@ const ArtMenu = (() => {
   }
 
   async function dispatch(action) {
+    const openFile = () => window.OfficeUI?.openFilePicker?.('fileInput') || document.getElementById('fileInput')?.click();
     switch (action) {
       case 'new':
         if (ArtState.isDirty()) ArtModals.confirm('Є незбережені зміни. Створити новий документ?', ArtEditor.newDoc);
         else ArtEditor.newDoc();
         break;
       case 'open':
-        if (ArtState.isDirty()) ArtModals.confirm('Є незбережені зміни. Відкрити інший файл?', () => document.getElementById('fileInput').click());
-        else document.getElementById('fileInput').click();
+        if (ArtState.isDirty()) ArtModals.confirm('Є незбережені зміни. Відкрити інший файл?', openFile);
+        else openFile();
         break;
       case 'save-txt': return ArtEditor.saveAs('txt');
       case 'save-rtf': return ArtEditor.saveAs('rtf');

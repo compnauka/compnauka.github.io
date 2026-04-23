@@ -4,6 +4,7 @@
   let globalsBound = false;
   let modalBehaviorBound = false;
   let statusbarBound = false;
+  const commands = new Map();
 
   const focusableSelector = [
     'button:not([disabled])',
@@ -67,6 +68,52 @@
     document.dispatchEvent(new CustomEvent('office:overlayclose', {
       detail: { type, ...detail }
     }));
+  }
+
+  function normalizeCommandName(name) {
+    return String(name || '').trim().toLowerCase();
+  }
+
+  function registerCommand(name, handler, options = {}) {
+    const command = normalizeCommandName(name);
+    if (!command || typeof handler !== 'function') return () => {};
+
+    commands.set(command, {
+      handler,
+      label: options.label || command,
+      source: options.source || document.body?.dataset?.officeService || 'local'
+    });
+
+    document.dispatchEvent(new CustomEvent('office:commandregistered', {
+      detail: { command, label: commands.get(command).label, source: commands.get(command).source }
+    }));
+
+    return () => {
+      if (commands.get(command)?.handler === handler) commands.delete(command);
+    };
+  }
+
+  function registerCommands(commandMap, options = {}) {
+    return Object.entries(commandMap || {}).map(([name, handler]) =>
+      registerCommand(name, handler, options)
+    );
+  }
+
+  function hasCommand(name) {
+    return commands.has(normalizeCommandName(name));
+  }
+
+  function runCommand(name, detail = {}) {
+    const command = normalizeCommandName(name);
+    const entry = commands.get(command);
+    if (!entry) return false;
+    entry.handler({
+      command,
+      source: entry.source,
+      label: entry.label,
+      ...detail
+    });
+    return true;
   }
 
   function closeMenus({ restoreFocus = false } = {}) {
@@ -173,6 +220,14 @@
       element.classList.toggle(activeClass, pressed);
       setAttributeIfChanged(element, 'aria-pressed', String(pressed));
     });
+  }
+
+  function openFilePicker(inputOrId) {
+    const input = typeof inputOrId === 'string' ? document.getElementById(inputOrId) : inputOrId;
+    if (!(input instanceof HTMLInputElement) || input.type !== 'file') return false;
+    input.value = '';
+    input.click();
+    return true;
   }
 
   function openMenuFromTitle(title, focusFirstItem = false) {
@@ -481,6 +536,11 @@
     closeModal,
     closeActiveModal,
     setPressed,
+    openFilePicker,
+    registerCommand,
+    registerCommands,
+    hasCommand,
+    runCommand,
     dispatchOverlayClose,
     announce,
     updateStatus

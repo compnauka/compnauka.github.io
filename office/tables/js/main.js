@@ -18,6 +18,13 @@ function init() {
   initFileNameUi();
   initMenusAndToolbar();
   restoreUiState();
+  window.OfficeUI?.registerCommands?.({
+    new: () => askConfirm('Створити нову таблицю? Поточні дані буде очищено.', clearAll, 'Створити'),
+    open: triggerWorkbookImport,
+    save: exportWorkbook,
+    undo: undo,
+    redo: redo
+  }, { source: 'tables' });
 
   // formula bar
   const fb = document.getElementById('formulaBar');
@@ -105,27 +112,28 @@ function init() {
     if (e.ctrlKey || e.metaKey) {
       if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
-        undo();
+        window.OfficeUI?.runCommand?.('undo') || undo();
         return;
       }
       if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) {
         e.preventDefault();
-        redo();
+        window.OfficeUI?.runCommand?.('redo') || redo();
         return;
       }
       if (e.key.toLowerCase() === 's') {
         e.preventDefault();
-        exportWorkbook();
+        window.OfficeUI?.runCommand?.('save') || exportWorkbook();
         return;
       }
       if (e.key.toLowerCase() === 'n') {
         e.preventDefault();
+        if (window.OfficeUI?.runCommand?.('new')) return;
         askConfirm('Створити нову таблицю? Поточні дані буде очищено.', clearAll);
         return;
       }
       if (e.key.toLowerCase() === 'o') {
         e.preventDefault();
-        triggerWorkbookImport();
+        window.OfficeUI?.runCommand?.('open') || triggerWorkbookImport();
         return;
       }
       if (e.key.toLowerCase() === 'p') {

@@ -12,6 +12,21 @@ document.addEventListener('DOMContentLoaded', () => {
   ArtHistory.markSaved();
   ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
   ArtToolbar.updateState();
+  window.OfficeUI?.registerCommands?.({
+    new: () => ArtMenu.dispatch('new'),
+    open: () => ArtMenu.dispatch('open'),
+    save: () => ArtEditor.saveAs('docx'),
+    undo: () => {
+      ArtHistory.undo();
+      ArtToolbar.updateState();
+    },
+    redo: () => {
+      ArtHistory.redo();
+      ArtToolbar.updateState();
+    }
+  }, { source: 'text' });
+
+  const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
 
   document.querySelectorAll('.tb-btn').forEach(button => {
     button.addEventListener('mousedown', event => event.preventDefault());
@@ -26,11 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('[data-menu-action]').forEach(button => {
-    button.addEventListener('click', () => ArtMenu.dispatch(button.dataset.menuAction));
+    button.addEventListener('click', () => {
+      if (button.dataset.officeCommand && runOfficeCommand(button.dataset.officeCommand)) return;
+      ArtMenu.dispatch(button.dataset.menuAction);
+    });
   });
 
   document.querySelectorAll('[data-history-action]').forEach(button => {
     button.addEventListener('click', () => {
+      if (runOfficeCommand(button.dataset.historyAction)) return;
       if (button.dataset.historyAction === 'undo') ArtHistory.undo();
       else ArtHistory.redo();
       ArtToolbar.updateState();
@@ -107,14 +126,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const key = e.key.toLowerCase();
     const map = {
-      n: () => ArtMenu.dispatch('new'),
+      n: () => runOfficeCommand('new'),
       b: () => ArtToolbar.applyCommand('bold'),
       i: () => ArtToolbar.applyCommand('italic'),
       u: () => ArtToolbar.applyCommand('underline'),
-      z: () => e.shiftKey ? ArtHistory.redo() : ArtHistory.undo(),
-      y: () => ArtHistory.redo(),
-      s: () => ArtModals.open('modalSave'),
-      o: () => ArtMenu.dispatch('open'),
+      z: () => runOfficeCommand(e.shiftKey ? 'redo' : 'undo'),
+      y: () => runOfficeCommand('redo'),
+      s: () => runOfficeCommand('save'),
+      o: () => runOfficeCommand('open'),
       p: () => window.print(),
       f: () => ArtModals.open('modalFind'),
       a: () => ArtSelection.selectAll(editor),

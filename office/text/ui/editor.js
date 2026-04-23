@@ -190,7 +190,8 @@ const ArtEditor = (() => {
 
   function openImageDialog() {
     ArtSelection.remember(_editor);
-    document.getElementById('imageInput')?.click();
+    const input = document.getElementById('imageInput');
+    window.OfficeUI?.openFilePicker?.(input) || input?.click();
   }
 
   async function _handleImageInsert(e) {

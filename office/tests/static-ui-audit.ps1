@@ -6,12 +6,12 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 $services = @(
-  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); OptionalIds = @() },
-  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
-  @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); OptionalIds = @() },
-  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/runtime.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
-  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/app-core.js'); OptionalIds = @('delete-button', 'help-button') },
-  @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help'); ActionFiles = @('vector/js/app.js'); OptionalIds = @() }
+  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); CommandFiles = @('text/app.js'); FilePickerFiles = @('text/ui/menu.js', 'text/ui/editor.js'); OptionalIds = @() },
+  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/main.js'); FilePickerFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
+  @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); CommandFiles = @('paint/js/app.js'); FilePickerFiles = @('paint/js/app.js'); OptionalIds = @() },
+  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/runtime.js'); CommandFiles = @('slides/js/runtime.js'); FilePickerFiles = @('slides/js/runtime.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
+  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/app-core.js'); CommandFiles = @('flowcharts/app-core.js'); FilePickerFiles = @('flowcharts/app-core.js'); OptionalIds = @('delete-button', 'help-button') },
+  @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help'); ActionFiles = @('vector/js/app.js'); CommandFiles = @('vector/js/app.js'); FilePickerFiles = @('vector/js/app.js'); OptionalIds = @() }
 )
 
 $requiredRootFiles = @(
@@ -63,6 +63,131 @@ function Assert-CommandOrder {
       $lastIndex = $match.Index
     }
   }
+}
+
+function Get-HtmlAttribute {
+  param(
+    [string]$Tag,
+    [string]$Name
+  )
+
+  $match = [regex]::Match($Tag, "\s$([regex]::Escape($Name))=""([^""]+)""")
+  if ($match.Success) { return $match.Groups[1].Value }
+  return $null
+}
+
+function Get-ServiceActionSource {
+  param([hashtable]$Service)
+
+  $source = ''
+  foreach ($actionFile in $Service.ActionFiles) {
+    $actionPath = Join-Path $Root $actionFile
+    Assert-True (Test-Path $actionPath) "$($Service.Path): action dispatcher file is missing: $actionFile"
+    if (Test-Path $actionPath) {
+      $source += "`n" + (Get-Content -Raw -Encoding UTF8 $actionPath)
+    }
+  }
+  return $source
+}
+
+function Assert-SaveCommandContract {
+  param(
+    [hashtable]$Service,
+    [string]$Html,
+    [string]$ActionSource
+  )
+
+  $saveButtons = [regex]::Matches($Html, '<button\b(?=[^>]*data-office-command="save")[^>]*>')
+  Assert-True ($saveButtons.Count -eq 1) "$($Service.Path): expected exactly one toolbar button with data-office-command=""save"""
+  if ($saveButtons.Count -ne 1) { return }
+
+  $saveTag = $saveButtons[0].Value
+  $action = Get-HtmlAttribute $saveTag 'data-action'
+  $menuAction = Get-HtmlAttribute $saveTag 'data-menu-action'
+  $buttonId = Get-HtmlAttribute $saveTag 'id'
+  $handledActions = Get-RegexGroupValues $ActionSource 'case\s+[''"]([^''"]+)[''"]'
+
+  if ($action) {
+    Assert-True ($handledActions -contains $action) "$($Service.Path): Save toolbar data-action has no dispatcher case: $action"
+    return
+  }
+
+  if ($menuAction) {
+    Assert-True ($handledActions -contains $menuAction) "$($Service.Path): Save toolbar data-menu-action has no dispatcher case: $menuAction"
+    return
+  }
+
+  if ($Service.SaveDirectPattern) {
+    Assert-True ($ActionSource -match $Service.SaveDirectPattern) "$($Service.Path): Save toolbar button uses direct binding, but the expected click listener was not found"
+    return
+  }
+
+  Assert-True $false "$($Service.Path): Save toolbar button must use data-action, data-menu-action, or an explicit SaveDirectPattern contract$(if ($buttonId) { " (id: $buttonId)" } else { '' })"
+}
+
+function Get-CommandActionFromButtonTag {
+  param([string]$Tag)
+
+  foreach ($attribute in @('data-action', 'data-menu-action', 'data-history-action')) {
+    $value = Get-HtmlAttribute $Tag $attribute
+    if ($value) { return $value }
+  }
+  return $null
+}
+
+function Assert-MenuToolbarCommandParity {
+  param(
+    [hashtable]$Service,
+    [string]$Html
+  )
+
+  foreach ($command in @('new', 'open', 'save', 'undo', 'redo')) {
+    $toolbarMatches = [regex]::Matches($Html, "<button\b(?=[^>]*data-office-command=""$command"")[^>]*>")
+    Assert-True ($toolbarMatches.Count -eq 1) "$($Service.Path): expected exactly one toolbar button for standard command: $command"
+    if ($toolbarMatches.Count -ne 1) { continue }
+
+    $toolbarAction = Get-CommandActionFromButtonTag $toolbarMatches[0].Value
+    Assert-True (!!$toolbarAction) "$($Service.Path): toolbar command $command must expose data-action, data-menu-action, or data-history-action"
+    if (!$toolbarAction) { continue }
+
+    $menuPattern = "<button\b(?=[^>]*class=""[^""]*\bmenu-item\b)(?=[^>]*data-action=""$([regex]::Escape($toolbarAction))"")[^>]*>"
+    Assert-True ([regex]::IsMatch($Html, $menuPattern)) "$($Service.Path): toolbar command $command uses '$toolbarAction', but no matching main-menu item was found"
+  }
+}
+
+function Assert-CommandAdapterContract {
+  param([hashtable]$Service)
+
+  $source = ''
+  foreach ($commandFile in $Service.CommandFiles) {
+    $commandPath = Join-Path $Root $commandFile
+    Assert-True (Test-Path $commandPath) "$($Service.Path): command adapter file is missing: $commandFile"
+    if (Test-Path $commandPath) {
+      $source += "`n" + (Get-Content -Raw -Encoding UTF8 $commandPath)
+    }
+  }
+
+  Assert-True ($source -match 'OfficeUI\?\.registerCommands\?\.') "$($Service.Path): must register standard commands through OfficeUI.registerCommands"
+  foreach ($command in @('new', 'open', 'save', 'undo', 'redo')) {
+    Assert-True ($source -match "(^|[\{\s,])$command\s*:") "$($Service.Path): OfficeUI.registerCommands must expose command: $command"
+    $routingPattern = "(?:OfficeUI\?\.runCommand\?\.\(|runOfficeCommand\()[\s\S]{0,90}['""]$command['""]"
+    Assert-True ($source -match $routingPattern) "$($Service.Path): standard command entry points should route $command through OfficeUI.runCommand"
+  }
+}
+
+function Assert-FilePickerContract {
+  param([hashtable]$Service)
+
+  $source = ''
+  foreach ($filePickerFile in $Service.FilePickerFiles) {
+    $filePickerPath = Join-Path $Root $filePickerFile
+    Assert-True (Test-Path $filePickerPath) "$($Service.Path): file picker adapter file is missing: $filePickerFile"
+    if (Test-Path $filePickerPath) {
+      $source += "`n" + (Get-Content -Raw -Encoding UTF8 $filePickerPath)
+    }
+  }
+
+  Assert-True ($source -match 'OfficeUI\?\.openFilePicker\?\.') "$($Service.Path): file-open entry points should use OfficeUI.openFilePicker"
 }
 
 function Assert-StylesheetOrder {
@@ -262,6 +387,11 @@ foreach ($service in $services) {
   Assert-True ($html -match 'office-workspace-focusable[^>]*tabindex="0"|tabindex="0"[^>]*office-workspace-focusable') "$($service.Path): focusable workspace should have tabindex=0"
   Assert-True ($html -match 'class="[^"]*\bmodal(?:-overlay)?\b[^"]*"') "$($service.Path): expected at least one modal surface for standard behavior checks"
   Assert-CommandOrder $html $service.Path
+  Assert-MenuToolbarCommandParity $service $html
+  $actionSource = Get-ServiceActionSource $service
+  Assert-SaveCommandContract $service $html $actionSource
+  Assert-CommandAdapterContract $service
+  Assert-FilePickerContract $service
 
   foreach ($menuKey in $service.Menu) {
     Assert-True ($html -match "data-menu=""$menuKey""") "$($service.Path): expected menu key is missing: $menuKey"
@@ -269,14 +399,6 @@ foreach ($service in $services) {
 
   $markupActions = Get-RegexGroupValues $html 'data-action="([^"]+)"'
   if ($markupActions.Count -gt 0) {
-    $actionSource = ''
-    foreach ($actionFile in $service.ActionFiles) {
-      $actionPath = Join-Path $Root $actionFile
-      Assert-True (Test-Path $actionPath) "$($service.Path): action dispatcher file is missing: $actionFile"
-      if (Test-Path $actionPath) {
-        $actionSource += "`n" + (Get-Content -Raw -Encoding UTF8 $actionPath)
-      }
-    }
     $handledActions = Get-RegexGroupValues $actionSource 'case\s+[''"]([^''"]+)[''"]'
     foreach ($action in $markupActions) {
       Assert-True ($handledActions -contains $action) "$($service.Path): data-action has no dispatcher case: $action"
@@ -363,6 +485,13 @@ if (Test-Path $officeUiPath) {
   Assert-True ($officeUi -match '\bopenModal,') "office-ui.js: openModal must be exported on window.OfficeUI"
   Assert-True ($officeUi -match 'function setPressed\(') "office-ui.js: expected shared setPressed helper for active/aria-pressed state"
   Assert-True ($officeUi -match '\bsetPressed,') "office-ui.js: setPressed must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match 'function openFilePicker\(') "office-ui.js: expected shared openFilePicker helper for file input activation"
+  Assert-True ($officeUi -match '\bopenFilePicker,') "office-ui.js: openFilePicker must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match 'function registerCommand\(') "office-ui.js: expected shared registerCommand helper for editor command adapters"
+  Assert-True ($officeUi -match 'function registerCommands\(') "office-ui.js: expected shared registerCommands helper for editor command adapters"
+  Assert-True ($officeUi -match 'function runCommand\(') "office-ui.js: expected shared runCommand helper for editor command adapters"
+  Assert-True ($officeUi -match '\bregisterCommands,') "office-ui.js: registerCommands must be exported on window.OfficeUI"
+  Assert-True ($officeUi -match '\brunCommand,') "office-ui.js: runCommand must be exported on window.OfficeUI"
   Assert-True ($officeUi -match 'function dispatchOverlayClose\(') "office-ui.js: expected overlay close event helper for local state cleanup"
   Assert-True ($officeUi -match '\bdispatchOverlayClose,') "office-ui.js: dispatchOverlayClose must be exported on window.OfficeUI"
   Assert-True ($officeUi -match "CustomEvent\('office:overlayclose'") "office-ui.js: overlay close helper must emit office:overlayclose"

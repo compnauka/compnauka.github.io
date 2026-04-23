@@ -2238,6 +2238,7 @@ window.initArtSchemesApp = function initArtSchemesApp() {
   }
 
   function openProjectFilePicker() {
+    if (window.OfficeUI?.openFilePicker?.(projectFileInput)) return;
     projectFileInput.value = '';
     projectFileInput.click();
   }
@@ -2396,15 +2397,16 @@ window.initArtSchemesApp = function initArtSchemesApp() {
   }
 
   function dispatchMenuAction(action) {
+    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
       case 'new-project':
-        clearButton?.click();
+        runOfficeCommand('new') || clearButton?.click();
         break;
       case 'open-project':
-        openProjectButton?.click();
+        runOfficeCommand('open') || openProjectButton?.click();
         break;
       case 'save-project':
-        saveProjectButton?.click();
+        runOfficeCommand('save') || saveProjectButton?.click();
         break;
       case 'export-png':
         saveButton?.click();
@@ -2413,10 +2415,10 @@ window.initArtSchemesApp = function initArtSchemesApp() {
         window.print();
         break;
       case 'undo':
-        undo();
+        runOfficeCommand('undo') || undo();
         break;
       case 'redo':
-        redo();
+        runOfficeCommand('redo') || redo();
         break;
       case 'delete-selected':
         deleteSelected();
@@ -2517,26 +2519,26 @@ window.initArtSchemesApp = function initArtSchemesApp() {
     if (mod && e.key.toLowerCase() === 'z') {
       if (e.shiftKey) {
         e.preventDefault();
-        redo();
+        window.OfficeUI?.runCommand?.('redo') || redo();
         return;
       }
       e.preventDefault();
-      undo();
+      window.OfficeUI?.runCommand?.('undo') || undo();
       return;
     }
     if (mod && e.key.toLowerCase() === 'y') {
       e.preventDefault();
-      redo();
+      window.OfficeUI?.runCommand?.('redo') || redo();
       return;
     }
     if (mod && e.shiftKey && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      downloadProjectJson();
+      window.OfficeUI?.runCommand?.('save') || downloadProjectJson();
       return;
     }
     if (mod && e.key.toLowerCase() === 'o') {
       e.preventDefault();
-      openProjectFilePicker();
+      window.OfficeUI?.runCommand?.('open') || openProjectFilePicker();
       return;
     }
     if (mod && e.key.toLowerCase() === 's') {
@@ -2609,6 +2611,13 @@ window.initArtSchemesApp = function initArtSchemesApp() {
   renderTitle();
   setDirty(false);
   window.addEventListener('beforeunload', persistAutosave);
+  window.OfficeUI?.registerCommands?.({
+    new: () => clearButton?.click(),
+    open: openProjectFilePicker,
+    save: downloadProjectJson,
+    undo: undo,
+    redo: redo
+  }, { source: 'flowcharts' });
   promptRestoreAutosave();
 
   connectionModal?.addEventListener('pointerdown', (e) => {

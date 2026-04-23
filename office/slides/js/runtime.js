@@ -504,6 +504,13 @@
   function boot() {
     initDom();
     renderColorPalette();
+    window.OfficeUI?.registerCommands?.({
+      new: confirmNewProject,
+      open: () => window.OfficeUI?.openFilePicker?.(dom.projectFileInput) || dom.projectFileInput.click(),
+      save: saveProjectFile,
+      undo: handleUndo,
+      redo: handleRedo
+    }, { source: 'slides' });
     loadInitialState();
     bindMenus();
     bindToolbar();
@@ -1046,11 +1053,11 @@
 
     if (ctrl) {
       const k = e.key.toLowerCase();
-      if (k === 'z') { e.preventDefault(); e.shiftKey ? handleRedo() : handleUndo(); return; }
-      if (k === 'y') { e.preventDefault(); handleRedo(); return; }
-      if (k === 's') { e.preventDefault(); saveProjectFile(); return; }
-      if (k === 'o') { e.preventDefault(); dom.projectFileInput.click(); return; }
-      if (k === 'n') { e.preventDefault(); confirmNewProject(); return; }
+      if (k === 'z') { e.preventDefault(); window.OfficeUI?.runCommand?.(e.shiftKey ? 'redo' : 'undo') || (e.shiftKey ? handleRedo() : handleUndo()); return; }
+      if (k === 'y') { e.preventDefault(); window.OfficeUI?.runCommand?.('redo') || handleRedo(); return; }
+      if (k === 's') { e.preventDefault(); window.OfficeUI?.runCommand?.('save') || saveProjectFile(); return; }
+      if (k === 'o') { e.preventDefault(); window.OfficeUI?.runCommand?.('open') || window.OfficeUI?.openFilePicker?.(dom.projectFileInput) || dom.projectFileInput.click(); return; }
+      if (k === 'n') { e.preventDefault(); window.OfficeUI?.runCommand?.('new') || confirmNewProject(); return; }
       if (k === 'p') { e.preventDefault(); handlePrint(); return; }
       if (!isText && !isInput) {
         if (k === 'c') { e.preventDefault(); copySelectedElement(); }
@@ -1079,14 +1086,15 @@
   // FIX #7: color-panel now properly opens popover with anchor
   // FIX #6: insert-triangle handled
   function dispatchAction(action, trigger = null) {
+    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
-      case 'new-project': confirmNewProject(); break;
-      case 'open-project': dom.projectFileInput.click(); break;
-      case 'save-project': saveProjectFile(); break;
+      case 'new-project': runOfficeCommand('new') || confirmNewProject(); break;
+      case 'open-project': runOfficeCommand('open') || window.OfficeUI?.openFilePicker?.(dom.projectFileInput) || dom.projectFileInput.click(); break;
+      case 'save-project': runOfficeCommand('save') || saveProjectFile(); break;
       case 'export-pdf': handleExportPdf(); break;
       case 'print': handlePrint(); break;
-      case 'undo': handleUndo(); break;
-      case 'redo': handleRedo(); break;
+      case 'undo': runOfficeCommand('undo') || handleUndo(); break;
+      case 'redo': runOfficeCommand('redo') || handleRedo(); break;
       case 'copy': copySelectedElement(); break;
       case 'paste': pasteElement(); break;
       case 'duplicate-element': duplicateSelectedElement(); break;
@@ -1227,7 +1235,7 @@
       <div class="helper-text">Для шкільних комп'ютерів найнадійніше — завантаження файлу.</div>
     </div>`,
       confirmText: 'Додати', cancelText: 'Скасувати',
-      onMount: () => { $('#pickImageFile').addEventListener('click', () => dom.imageFileInput.click()); },
+      onMount: () => { $('#pickImageFile').addEventListener('click', () => window.OfficeUI?.openFilePicker?.(dom.imageFileInput) || dom.imageFileInput.click()); },
       onConfirm: () => { const url = $('#imageUrlField').value.trim(); if (url) insertImage(url); }
     });
   }

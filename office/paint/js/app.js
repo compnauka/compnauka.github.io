@@ -188,7 +188,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
   }
 
   function importImage() {
-    ui.elements.importFileInput.click();
+    window.OfficeUI?.openFilePicker?.(ui.elements.importFileInput) || ui.elements.importFileInput.click();
   }
 
   function handleImportedFile(file) {
@@ -218,15 +218,16 @@ window.ArtMalyunky = window.ArtMalyunky || {};
   }
 
   function handleMenuAction(action) {
+    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
       case 'new-drawing':
-        newDrawing();
+        runOfficeCommand('new') || newDrawing();
         break;
       case 'import-image':
-        importImage();
+        runOfficeCommand('open') || importImage();
         break;
       case 'save-png':
-        saveImage('png');
+        runOfficeCommand('save') || saveImage('png');
         break;
       case 'save-jpg':
         saveImage('jpg');
@@ -235,10 +236,10 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         printImage();
         break;
       case 'undo':
-        undo();
+        runOfficeCommand('undo') || undo();
         break;
       case 'redo':
-        redo();
+        runOfficeCommand('redo') || redo();
         break;
       case 'delete-selected':
         deleteSelectedObject();
@@ -610,19 +611,19 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         switch (event.key.toLowerCase()) {
           case 'z':
             event.preventDefault();
-            undo();
+            window.OfficeUI?.runCommand?.('undo') || undo();
             return;
           case 'y':
             event.preventDefault();
-            redo();
+            window.OfficeUI?.runCommand?.('redo') || redo();
             return;
           case 's':
             event.preventDefault();
-            saveImage('png');
+            window.OfficeUI?.runCommand?.('save') || saveImage('png');
             return;
           case 'n':
             event.preventDefault();
-            newDrawing();
+            window.OfficeUI?.runCommand?.('new') || newDrawing();
             return;
           case 'p':
             event.preventDefault();
@@ -739,6 +740,13 @@ window.ArtMalyunky = window.ArtMalyunky || {};
     bindUi();
     await restoreDraftIfAny();
     canvasApi.drawGuides();
+    window.OfficeUI?.registerCommands?.({
+      new: newDrawing,
+      open: importImage,
+      save: () => saveImage('png'),
+      undo: undo,
+      redo: redo
+    }, { source: 'paint' });
   }
 
   window.addEventListener('DOMContentLoaded', init);

@@ -255,7 +255,7 @@ window.ArtVector = window.ArtVector || {};
   }
 
   function openProject() {
-    ui.elements.projectFileInput.click();
+    window.OfficeUI?.openFilePicker?.(ui.elements.projectFileInput) || ui.elements.projectFileInput.click();
   }
 
   async function handleProjectFile(file) {
@@ -658,15 +658,16 @@ window.ArtVector = window.ArtVector || {};
   }
 
   function handleMenuAction(action) {
+    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
-      case 'new-project': newProject(); break;
-      case 'open-project': openProject(); break;
-      case 'save-project': saveProject(); break;
+      case 'new-project': runOfficeCommand('new') || newProject(); break;
+      case 'open-project': runOfficeCommand('open') || openProject(); break;
+      case 'save-project': runOfficeCommand('save') || saveProject(); break;
       case 'export-svg': exportSvg(); break;
       case 'export-png': exportPng(); break;
       case 'print': printProject(); break;
-      case 'undo': undo(); break;
-      case 'redo': redo(); break;
+      case 'undo': runOfficeCommand('undo') || undo(); break;
+      case 'redo': runOfficeCommand('redo') || redo(); break;
       case 'duplicate': duplicateSelected(); break;
       case 'delete-selected': deleteSelected(); break;
       case 'bring-front': bringFront(); break;
@@ -753,7 +754,9 @@ window.ArtVector = window.ArtVector || {};
     ui.elements.strokeWidthSlider.addEventListener('input', (event) => updateStrokeWidth(event.target.value));
     ui.elements.opacitySlider.addEventListener('input', (event) => updateOpacity(event.target.value));
     ui.elements.fontSizeSlider.addEventListener('input', (event) => updateFontSize(event.target.value));
-    if (ui.elements.snapToggleBtn) ui.elements.snapToggleBtn.addEventListener('click', toggleSnap);
+    if (ui.elements.snapToggleBtn && !ui.elements.snapToggleBtn.matches('[data-action="toggle-snap"]')) {
+      ui.elements.snapToggleBtn.addEventListener('click', toggleSnap);
+    }
 
     document.addEventListener('click', (event) => {
       const renameTrigger = event.target.closest('#fileName');
@@ -843,12 +846,12 @@ window.ArtVector = window.ArtVector || {};
 
       if (event.ctrlKey && event.key.toLowerCase() === 'z') {
         event.preventDefault();
-        undo();
+        window.OfficeUI?.runCommand?.('undo') || undo();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'y') {
         event.preventDefault();
-        redo();
+        window.OfficeUI?.runCommand?.('redo') || redo();
         return;
       }
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 's') {
@@ -858,17 +861,17 @@ window.ArtVector = window.ArtVector || {};
       }
       if (event.ctrlKey && event.key.toLowerCase() === 's') {
         event.preventDefault();
-        saveProject();
+        window.OfficeUI?.runCommand?.('save') || saveProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'o') {
         event.preventDefault();
-        openProject();
+        window.OfficeUI?.runCommand?.('open') || openProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
-        newProject();
+        window.OfficeUI?.runCommand?.('new') || newProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'd') {
@@ -925,6 +928,13 @@ window.ArtVector = window.ArtVector || {};
     bindCanvas();
     bindKeyboard();
     ui.updateAll();
+    window.OfficeUI?.registerCommands?.({
+      new: newProject,
+      open: openProject,
+      save: saveProject,
+      undo: undo,
+      redo: redo
+    }, { source: 'vector' });
   }
 
   window.addEventListener('DOMContentLoaded', init);

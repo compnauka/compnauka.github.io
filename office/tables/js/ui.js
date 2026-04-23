@@ -431,6 +431,7 @@ function exportWorkbook() {
 function triggerWorkbookImport() {
   const input = document.getElementById('workbookFileInput');
   if (!input) return;
+  if (window.OfficeUI?.openFilePicker?.(input)) return;
   input.value = '';
   input.click();
 }
@@ -461,15 +462,17 @@ function importWorkbookText(text) {
 }
 
 function dispatchUiAction(action) {
+  const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
+  if (action === 'new' && runOfficeCommand('new')) return;
   switch (action) {
     case 'new': askConfirm('Створити нову таблицю? Поточні дані буде очищено.', clearAll, 'Створити'); break;
-    case 'open-workbook': triggerWorkbookImport(); break;
-    case 'save-workbook': exportWorkbook(); break;
+    case 'open-workbook': runOfficeCommand('open') || triggerWorkbookImport(); break;
+    case 'save-workbook': runOfficeCommand('save') || exportWorkbook(); break;
     case 'import-csv': triggerCSVImport(); break;
     case 'export-csv': exportCSV(); break;
     case 'print': window.print(); break;
-    case 'undo': undo(); break;
-    case 'redo': redo(); break;
+    case 'undo': runOfficeCommand('undo') || undo(); break;
+    case 'redo': runOfficeCommand('redo') || redo(); break;
     case 'copy': copySelectionToClipboard(); break;
     case 'paste': navigator.clipboard?.readText().then(text => { if (text) pasteToGrid(text, active.c, active.r); }).catch(() => showInfoModal('Браузер не дозволив вставлення з буфера обміну.')); break;
     case 'clear-selection': deleteSelection(); break;
