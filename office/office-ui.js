@@ -28,6 +28,11 @@
     return element.id;
   }
 
+  function setAttributeIfChanged(element, name, value) {
+    if (!element || element.getAttribute(name) === value) return;
+    element.setAttribute(name, value);
+  }
+
   function isVisible(element) {
     if (!element) return false;
     if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
@@ -69,7 +74,7 @@
     const openMenus = qsa('.menu-dropdown.open');
     const hadOpen = !!trigger || openMenus.length > 0;
     openMenus.forEach(menu => menu.classList.remove('open'));
-    qsa('.menu-title').forEach(title => title.setAttribute('aria-expanded', 'false'));
+    qsa('.menu-title').forEach(title => setAttributeIfChanged(title, 'aria-expanded', 'false'));
     if (restoreFocus && trigger) trigger.focus();
     if (hadOpen) dispatchOverlayClose('menu');
     return hadOpen;
@@ -92,7 +97,7 @@
 
     qsa('.picker-trigger[aria-expanded="true"], .tool-group-trigger[aria-expanded="true"]').forEach(button => {
       trigger = trigger || button;
-      button.setAttribute('aria-expanded', 'false');
+      setAttributeIfChanged(button, 'aria-expanded', 'false');
       button.classList.remove('active');
     });
 
@@ -106,7 +111,7 @@
     let hadOpen = false;
     qsa('.palette-toggle[aria-expanded="true"]').forEach(button => {
       trigger = trigger || button;
-      button.setAttribute('aria-expanded', 'false');
+      setAttributeIfChanged(button, 'aria-expanded', 'false');
     });
     qsa('.palette-popover').forEach(popover => {
       if (!popover.hasAttribute('hidden')) hadOpen = true;
@@ -128,7 +133,7 @@
     modal.hidden = false;
     modal.classList.remove('hidden');
     modal.classList.add('active');
-    modal.setAttribute('aria-hidden', 'false');
+    setAttributeIfChanged(modal, 'aria-hidden', 'false');
     enhanceModal(modal);
     if (focus) syncModalState(modal);
     return true;
@@ -139,7 +144,7 @@
     if (!modal) return false;
     modal.classList.remove('active');
     modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
+    setAttributeIfChanged(modal, 'aria-hidden', 'true');
     if (restoreFocus) {
       const triggerId = modal.dataset.officeReturnFocus;
       const trigger = triggerId ? document.getElementById(triggerId) : null;
@@ -166,7 +171,7 @@
       : (target instanceof Element ? [target] : Array.from(target || []));
     elements.forEach(element => {
       element.classList.toggle(activeClass, pressed);
-      element.setAttribute('aria-pressed', String(pressed));
+      setAttributeIfChanged(element, 'aria-pressed', String(pressed));
     });
   }
 
@@ -174,7 +179,7 @@
     const name = title?.dataset?.menu;
     if (!name) return;
     closeTopOverlay();
-    title.setAttribute('aria-expanded', 'true');
+    setAttributeIfChanged(title, 'aria-expanded', 'true');
     const escapedName = window.CSS?.escape ? CSS.escape(name) : name.replace(/"/g, '\\"');
     const menu = qs(`.menu-dropdown[data-menu="${escapedName}"]`);
     menu?.classList.add('open');
@@ -265,16 +270,16 @@
     if (!panel.getAttribute('role')) {
       panel.setAttribute('role', modal.getAttribute('role') || 'dialog');
     }
-    panel.setAttribute('aria-modal', 'true');
+    setAttributeIfChanged(panel, 'aria-modal', 'true');
 
     const title = qs('.modal-title, h2, h3, [id$="Title"]', panel);
     if (title && !panel.getAttribute('aria-labelledby')) {
       if (!title.id) title.id = `${modal.id}-title`;
-      panel.setAttribute('aria-labelledby', title.id);
+      setAttributeIfChanged(panel, 'aria-labelledby', title.id);
     }
 
     if (!isVisible(modal)) {
-      modal.setAttribute('aria-hidden', 'true');
+      setAttributeIfChanged(modal, 'aria-hidden', 'true');
     }
 
     modal.addEventListener('pointerdown', event => {
@@ -286,7 +291,7 @@
 
   function syncModalState(modal) {
     const visible = isVisible(modal);
-    modal.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    setAttributeIfChanged(modal, 'aria-hidden', visible ? 'false' : 'true');
     if (!visible) return;
 
     const active = document.activeElement;
@@ -442,11 +447,11 @@
       requestAnimationFrame(() => {
         qsa('.picker-wrap').forEach(wrap => {
           const trigger = qs('.picker-trigger', wrap);
-          if (trigger) trigger.setAttribute('aria-expanded', wrap.classList.contains('open') ? 'true' : 'false');
+          if (trigger) setAttributeIfChanged(trigger, 'aria-expanded', wrap.classList.contains('open') ? 'true' : 'false');
         });
         qsa('.tool-picker').forEach(wrap => {
           const trigger = qs('.tool-group-trigger', wrap);
-          if (trigger) trigger.setAttribute('aria-expanded', wrap.classList.contains('open') ? 'true' : 'false');
+          if (trigger) setAttributeIfChanged(trigger, 'aria-expanded', wrap.classList.contains('open') ? 'true' : 'false');
         });
       });
     }, true);

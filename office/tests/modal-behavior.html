@@ -61,7 +61,7 @@
     const services = [...document.querySelectorAll('#fixtures > section')];
 
     function settle() {
-      return new Promise(resolve => setTimeout(resolve, 20));
+      return new Promise(resolve => setTimeout(resolve, 50));
     }
 
     async function checkService(host) {
@@ -71,10 +71,8 @@
 
       if (modal) {
         trigger.focus();
-        modal.classList.remove('hidden');
-        modal.classList.add('active');
-        modal.setAttribute('aria-hidden', 'false');
         window.OfficeUI.init();
+        window.OfficeUI.openModal(modal, { returnFocus: trigger });
         await settle();
 
         const panel = modal.querySelector('.modal-box, .modal-content, .choffice-modal-content, [role="dialog"], [role="alertdialog"]') || modal;
@@ -83,7 +81,7 @@
         const last = focusables[focusables.length - 1] || panel;
 
         checks.push(['office backdrop class', modal.classList.contains('office-modal-backdrop')]);
-        checks.push(['office modal class', panel.classList.contains('office-modal')]);
+        checks.push(['office modal sizing class respects modal-box contract', panel.classList.contains('modal-box') ? !panel.classList.contains('office-modal') : panel.classList.contains('office-modal')]);
         checks.push(['panel has dialog role', ['dialog', 'alertdialog'].includes(panel.getAttribute('role'))]);
         checks.push(['panel aria-modal true', panel.getAttribute('aria-modal') === 'true']);
         checks.push(['autofocus moves inside modal', panel.contains(document.activeElement)]);

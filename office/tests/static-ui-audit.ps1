@@ -6,12 +6,12 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 $services = @(
-  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help') },
-  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help') },
-  @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help') },
-  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help') },
-  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help') },
-  @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help') }
+  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); OptionalIds = @() },
+  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
+  @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); OptionalIds = @() },
+  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/runtime.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
+  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/app-core.js'); OptionalIds = @('delete-button', 'help-button') },
+  @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help'); ActionFiles = @('vector/js/app.js'); OptionalIds = @() }
 )
 
 $requiredRootFiles = @(
@@ -61,6 +61,90 @@ function Assert-CommandOrder {
     if ($match.Success) {
       Assert-True ($match.Index -gt $lastIndex) "${ServicePath}: standard toolbar command order is wrong near: $command"
       $lastIndex = $match.Index
+    }
+  }
+}
+
+function Assert-StylesheetOrder {
+  param(
+    [string]$Html,
+    [string]$ServicePath
+  )
+
+  $tokens = [regex]::Matches($Html, 'href="\.\./UI_TOKENS\.css"')
+  $local = [regex]::Matches($Html, 'href="style\.css"')
+  $overrides = [regex]::Matches($Html, 'href="\.\./shell-overrides\.css"')
+  Assert-True ($tokens.Count -eq 1) "${ServicePath}: UI_TOKENS.css should be linked exactly once"
+  Assert-True ($local.Count -eq 1) "${ServicePath}: local style.css should be linked exactly once"
+  Assert-True ($overrides.Count -eq 1) "${ServicePath}: shell-overrides.css should be linked exactly once"
+  if ($tokens.Count -eq 1 -and $local.Count -eq 1 -and $overrides.Count -eq 1) {
+    Assert-True ($tokens[0].Index -lt $local[0].Index) "${ServicePath}: UI_TOKENS.css must load before local style.css"
+    Assert-True ($local[0].Index -lt $overrides[0].Index) "${ServicePath}: shell-overrides.css must load after local style.css"
+  }
+}
+
+function Get-RegexGroupValues {
+  param([string]$Content, [string]$Pattern)
+  [regex]::Matches($Content, $Pattern) |
+    ForEach-Object { $_.Groups[1].Value } |
+    Sort-Object -Unique
+}
+
+function Get-FirstMatchedGroupValue {
+  param([System.Text.RegularExpressions.Match]$Match)
+  for ($i = 1; $i -lt $Match.Groups.Count; $i++) {
+    if ($Match.Groups[$i].Success) { return $Match.Groups[$i].Value }
+  }
+  return $null
+}
+
+function Test-ExternalOrVirtualPath {
+  param([string]$Path)
+  return $Path -match '^(?:https?:|mailto:|tel:|data:|blob:|#|/)' -or $Path -eq ''
+}
+
+function Assert-LocalHtmlAssetsExist {
+  param(
+    [string]$Html,
+    [string]$IndexPath,
+    [string]$ServicePath
+  )
+
+  $serviceRoot = Split-Path -Parent $IndexPath
+  $assetMatches = [regex]::Matches($Html, '<(?:script|link|img|source)\b[^>]*(?:src|href)="([^"]+)"')
+  foreach ($match in $assetMatches) {
+    $assetPath = $match.Groups[1].Value
+    if (Test-ExternalOrVirtualPath $assetPath) { continue }
+    $assetPathWithoutQuery = ($assetPath -split '[?#]', 2)[0]
+    $resolved = Join-Path $serviceRoot $assetPathWithoutQuery
+    Assert-True (Test-Path $resolved) "${ServicePath}: local asset path does not exist: $assetPath"
+  }
+}
+
+function Assert-StaticIdReferencesExist {
+  param(
+    [string]$Html,
+    [string]$ServiceRoot,
+    [string]$ServicePath,
+    [string[]]$OptionalIds
+  )
+
+  $ids = Get-RegexGroupValues $Html '\sid="([^"]+)"'
+  $optional = @($OptionalIds)
+  $scriptFiles = Get-ChildItem -Path $ServiceRoot -Recurse -File -Include '*.js'
+  $idPattern = 'getElementById\([''"]([^''"]+)[''"]\)|\$\([''"]#([^''"]+)[''"]\)|utils\.\$\([''"]([^''"]+)[''"]\)'
+
+  foreach ($scriptFile in $scriptFiles) {
+    $relativePath = $scriptFile.FullName.Substring($Root.Length).TrimStart('\', '/').Replace('\', '/')
+    $content = Get-Content -Raw -Encoding UTF8 $scriptFile.FullName
+    $refs = [regex]::Matches($content, $idPattern) |
+      ForEach-Object { Get-FirstMatchedGroupValue $_ } |
+      Where-Object { $_ } |
+      Sort-Object -Unique
+
+    foreach ($ref in $refs) {
+      if ($optional -contains $ref) { continue }
+      Assert-True ($ids -contains $ref) "${relativePath}: static id reference has no matching HTML id: $ref"
     }
   }
 }
@@ -142,6 +226,24 @@ foreach ($service in $services) {
   if (-not (Test-Path $indexPath)) { continue }
 
   $html = Get-Content -Raw -Encoding UTF8 $indexPath
+  Assert-LocalHtmlAssetsExist $html $indexPath $service.Path
+  Assert-StaticIdReferencesExist $html $serviceRoot $service.Path $service.OptionalIds
+  Assert-StylesheetOrder $html $service.Path
+
+  $stylePath = Join-Path $serviceRoot 'style.css'
+  Assert-True (Test-Path $stylePath) "$($service.Path): missing local style.css"
+  if (Test-Path $stylePath) {
+    $style = Get-Content -Raw -Encoding UTF8 $stylePath
+    $localAccent = [regex]::Match($style, '--accent\s*:\s*(#[0-9a-fA-F]{6})')
+    Assert-True $localAccent.Success "$($service.Path): local style.css should expose --accent for the service shell"
+    if ($localAccent.Success -and (Test-Path $themeMapPath)) {
+      $expectedAccent = $themeMap.services.PSObject.Properties[$service.Key].Value.accent
+      Assert-True ($localAccent.Groups[1].Value.ToLowerInvariant() -eq $expectedAccent.ToLowerInvariant()) "$($service.Path): local --accent must match SERVICE_THEME_MAP.json ($expectedAccent)"
+    }
+    Assert-True ($style -notmatch '--office-[\w-]+\s*:') "$($service.Path): local style.css should not redefine shared --office-* tokens"
+    Assert-True ($style -notmatch '(^|[}\r\n]\s*)[^{}]*\.office-[^{]+\{') "$($service.Path): local style.css should not redefine shared .office-* component selectors"
+  }
+
   Assert-True ($html -match 'href="\.\./UI_TOKENS\.css"') "$($service.Path): UI_TOKENS.css is not linked before local styling"
   Assert-True ($html -match 'href="\.\./shell-overrides\.css"') "$($service.Path): shell-overrides.css is not linked after local styling"
   Assert-True ($html -match 'src="\.\./office-ui\.js"') "$($service.Path): office-ui.js is not linked"
@@ -164,6 +266,23 @@ foreach ($service in $services) {
   foreach ($menuKey in $service.Menu) {
     Assert-True ($html -match "data-menu=""$menuKey""") "$($service.Path): expected menu key is missing: $menuKey"
   }
+
+  $markupActions = Get-RegexGroupValues $html 'data-action="([^"]+)"'
+  if ($markupActions.Count -gt 0) {
+    $actionSource = ''
+    foreach ($actionFile in $service.ActionFiles) {
+      $actionPath = Join-Path $Root $actionFile
+      Assert-True (Test-Path $actionPath) "$($service.Path): action dispatcher file is missing: $actionFile"
+      if (Test-Path $actionPath) {
+        $actionSource += "`n" + (Get-Content -Raw -Encoding UTF8 $actionPath)
+      }
+    }
+    $handledActions = Get-RegexGroupValues $actionSource 'case\s+[''"]([^''"]+)[''"]'
+    foreach ($action in $markupActions) {
+      Assert-True ($handledActions -contains $action) "$($service.Path): data-action has no dispatcher case: $action"
+    }
+  }
+
   Assert-True ($html -notmatch '\son(?:click|keydown|mousedown|change)=') "$($service.Path): inline event handlers should stay migrated to data attributes and JS bindings"
   Assert-True ($html -notmatch '\sstyle=') "$($service.Path): inline styles should stay migrated to CSS classes"
 
@@ -247,6 +366,8 @@ if (Test-Path $officeUiPath) {
   Assert-True ($officeUi -match 'function dispatchOverlayClose\(') "office-ui.js: expected overlay close event helper for local state cleanup"
   Assert-True ($officeUi -match '\bdispatchOverlayClose,') "office-ui.js: dispatchOverlayClose must be exported on window.OfficeUI"
   Assert-True ($officeUi -match "CustomEvent\('office:overlayclose'") "office-ui.js: overlay close helper must emit office:overlayclose"
+  Assert-True ($officeUi -match 'function setAttributeIfChanged\(') "office-ui.js: observed attributes must be written only when changed to avoid MutationObserver loops"
+  Assert-True ($officeUi -match "setAttributeIfChanged\(modal,\s*'aria-hidden',\s*visible \? 'false' : 'true'\)") "office-ui.js: modal sync must not repeatedly set aria-hidden from MutationObserver callbacks"
   Assert-True ($officeUi -match 'getActiveModal\(\)\?\.contains\(event\.target\)') "office-ui.js: global pointerdown close must ignore clicks inside the active modal"
   Assert-True ($officeUi -match '\.menu-dropdown') "office-ui.js: global pointerdown close must ignore interactions inside actual menu dropdowns"
   Assert-True ($officeUi -match '!panel\.classList\.contains\(''modal-box''\)') "office-ui.js: enhanceModal must not add office-modal sizing to existing modal-box panels"
