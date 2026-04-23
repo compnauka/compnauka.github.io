@@ -13,7 +13,7 @@
 
 ## Нормативні документи
 
-- `ART_OFFICE_UI_STANDARD.md` — головний UI-стандарт усієї лінійки
+- `OFFICE_UI_STANDARD.md` — головний UI-стандарт усієї лінійки
 - `UI_TOKENS.css` — спільні CSS-токени та базові shell-компоненти
 - `design-tokens.json` — машинозчитуваний набір дизайн-токенів
 - `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структури меню
@@ -28,6 +28,7 @@
 - `DROPDOWN_STANDARD.md` — єдиний стандарт dropdown, menu, picker і popover-поведінки
 - `CONTEXTUAL_UI_STANDARD.md` — єдиний стандарт контекстного UI
 - `CHANGELOG_STANDARD.md` — стандарт ведення changelog для UI-змін
+- `CHANGELOG.md` — фактичний журнал системних змін пакета
 - `UI_REVIEW_TEMPLATE.md` — шаблон формалізованого UI-рев'ю
 - `PROMPT_FOR_AGENT.md` — регламент для агента або розробника
 

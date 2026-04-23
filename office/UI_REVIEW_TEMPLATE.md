@@ -70,7 +70,7 @@ UI-рев'ю обов'язкове, якщо:
 
 Обов'язково перелічити нормативні документи, за якими оцінювався сервіс:
 
-- `ART_OFFICE_UI_STANDARD.md`
+- `OFFICE_UI_STANDARD.md`
 - `UI_STANDARD.md` конкретного сервісу
 - `UI_MIGRATION_TO_STANDARD.md` конкретного сервісу
 - релевантні поведінкові стандарти (`KEYBOARD_SHORTCUTS.md`, `MODAL_STANDARD.md`, `DROPDOWN_STANDARD.md`, `WORKSPACE_ACCESSIBILITY.md`)

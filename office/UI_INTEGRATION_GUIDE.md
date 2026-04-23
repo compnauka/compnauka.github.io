@@ -8,7 +8,7 @@
 
 У корені монорепи або спільного шару UI повинні існувати:
 
-- `ART_OFFICE_UI_STANDARD.md`
+- `OFFICE_UI_STANDARD.md`
 - `UI_TOKENS.css`
 - `design-tokens.json`
 - `SERVICE_THEME_MAP.json`
@@ -206,41 +206,10 @@ Contextbar показується лише коли це справді доре
 
 Зміна вважається завершеною лише якщо:
 
-- shell-рівень відповідає `ART_OFFICE_UI_STANDARD.md`;
+- shell-рівень відповідає `OFFICE_UI_STANDARD.md`;
 - локальний сервіс відповідає своєму `UI_STANDARD.md`;
 - відмінності від локального стандарту явно зафіксовані;
 - використані глобальні токени з `UI_TOKENS.css` або `design-tokens.json`;
 - нові елементи мають стани `default / hover / active / focus-visible / disabled`;
 - toolbar не збільшує когнітивне навантаження і не дублює contextual UI;
 - shortcuts, modal, dropdown і workspace focus перевірені за окремими стандартами.
-## Implementation Status (2026-04-23)
-
-Вже впроваджено в коді:
-
-- нейтральні service routes без старого брендового префікса у runtime-навігації;
-- спільний shell через `UI_TOKENS.css`;
-- спільний поведінковий шар через `office-ui.js`;
-- спільна keyboard/dropdown-поведінка;
-- спільний modal enhancer для існуючих modal-патернів;
-- runtime modal API naming:
-  - info: `showInfoModal(...)`
-  - confirm: `showConfirmModal(...)`
-  - prompt/input: `showPromptModal(...)`
-  - старі `showAlert`, `alertModal`, `showTextPrompt` не використовуються;
-- confirm footer order:
-  - secondary/cancel ліворуч: `Скасувати`
-  - primary праворуч: конкретна дія (`Створити`, `Видалити`, `Очистити`, `Завантажити`, `Продовжити`);
-- спільний status/announce API:
-  - `window.OfficeUI.updateStatus(message, slot?)`
-  - `window.OfficeUI.announce(message)`
-  - `document.dispatchEvent(new CustomEvent('office:status', { detail: { message, slot } }))`
-- statusbar slot contract:
-  - кожен редактор має `data-office-status-slot="primary"`
-  - кожен редактор має `data-office-status-slot="secondary"`
-  - додаткові службові слоти допускаються як `meta`, `zoom`, `canvas`, `style` або локально обґрунтовані значення;
-
-Ще потребує повної редакторної міграції:
-
-- локальні модальні сценарії ще треба візуально вирівняти між редакторами;
-- statusbar-контент у кожному редакторі ще треба візуально і текстово відполірувати;
-- нормативні shell-приклади в цьому документі переведені на `office-*` / `data-office-service`.

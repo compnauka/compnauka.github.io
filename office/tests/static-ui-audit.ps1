@@ -15,7 +15,7 @@ $services = @(
 )
 
 $requiredRootFiles = @(
-  'ART_OFFICE_UI_STANDARD.md',
+  'OFFICE_UI_STANDARD.md',
   'UI_INTEGRATION_GUIDE.md',
   'UI_TOKENS.css',
   'design-tokens.json',
@@ -26,6 +26,8 @@ $requiredRootFiles = @(
   'DROPDOWN_STANDARD.md',
   'CONTEXTUAL_UI_STANDARD.md',
   'COMPONENT_CHECKLIST.md',
+  'CHANGELOG.md',
+  'CHANGELOG_STANDARD.md',
   'office-ui.js',
   'offline.js',
   'sw.js'
@@ -78,8 +80,12 @@ $normativeDocFiles = @(
   'DROPDOWN_STANDARD.md',
   'CONTEXTUAL_UI_STANDARD.md',
   'UI_REVIEW_TEMPLATE.md',
+  'OFFICE_UI_STANDARD.md',
+  'CHANGELOG.md',
   'CHANGELOG_STANDARD.md'
 )
+
+$oldGlobalStandardFile = ('ART' + '_OFFICE_UI_STANDARD.md')
 
 $legacyBrandPatterns = @(
   'data-art-service',
@@ -101,6 +107,7 @@ foreach ($docFile in $normativeDocFiles) {
   foreach ($pattern in $legacyBrandPatterns) {
     Assert-True ($content -notmatch $pattern) "${docFile}: contains legacy branded shell term matching ${pattern}"
   }
+  Assert-True (-not $content.Contains($oldGlobalStandardFile)) "${docFile}: still references old global standard filename"
 }
 
 $rootIndexPath = Join-Path $Root 'index.html'
