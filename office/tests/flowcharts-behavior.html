@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Office PLUS Flowcharts Behavior Smoke</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; color: #162033; }
+    pre { white-space: pre-wrap; padding: 16px; border: 1px solid #d6dce5; border-radius: 8px; background: #f8fafc; }
+    iframe { width: 1px; height: 1px; border: 0; position: absolute; left: -9999px; top: 0; }
+    .pass { color: #15803d; }
+    .fail { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <h1>Office PLUS Flowcharts Behavior Smoke</h1>
+  <pre id="result">Running...</pre>
+
+  <script>
+    const result = document.getElementById('result');
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function loadFrame() {
+      return new Promise((resolve, reject) => {
+        const frame = document.createElement('iframe');
+        frame.src = '../flowcharts/index.html';
+        frame.addEventListener('load', () => resolve(frame), { once: true });
+        frame.addEventListener('error', () => reject(new Error('flowcharts frame failed to load')), { once: true });
+        document.body.appendChild(frame);
+      });
+    }
+
+    function addCheck(checks, name, ok, detail = '') {
+      checks.push({ name, ok: !!ok, detail });
+    }
+
+    async function runEditorChecks(win, doc) {
+      const checks = [];
+      const requiredNamespaces = [
+        'FlowchartsAutosave',
+        'FlowchartsModals',
+        'FlowchartsEditorUtils',
+        'FlowchartsTitle',
+        'FlowchartsShapeGeometry',
+        'FlowchartsShapePlacement',
+        'FlowchartsHandles',
+        'FlowchartsRouting',
+        'FlowchartsConnectionsDom',
+        'FlowchartsApp'
+      ];
+
+      requiredNamespaces.forEach(name => {
+        addCheck(checks, `namespace ${name}`, !!win[name]);
+      });
+
+      await wait(500);
+      const initialShapeCount = doc.querySelectorAll('.shape').length;
+      doc.querySelector('.shape-button[data-shape="process"]')?.click();
+      doc.querySelector('.shape-button[data-shape="decision"]')?.click();
+      await wait(500);
+
+      const shapes = [...doc.querySelectorAll('.shape')];
+      addCheck(checks, 'shape buttons create shapes', shapes.length >= initialShapeCount + 2, `count=${shapes.length}`);
+      addCheck(checks, 'created process shape', !!doc.querySelector('.shape.process'));
+      addCheck(checks, 'created decision shape', !!doc.querySelector('.shape.decision'));
+      addCheck(checks, 'handle groups created', doc.querySelectorAll('#connectors-layer g[data-shape-id]').length >= 2);
+
+      return checks;
+    }
+
+    function runModuleChecks(win, doc) {
+      const checks = [];
+      const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'flowcharts-smoke-svg';
+      doc.body.appendChild(svg);
+
+      const from = doc.createElement('div');
+      from.id = 'smoke-from';
+      from.className = 'shape process';
+      Object.assign(from.style, {
+        position: 'absolute',
+        left: '40px',
+        top: '40px',
+        width: '120px',
+        height: '70px'
+      });
+
+      const to = doc.createElement('div');
+      to.id = 'smoke-to';
+      to.className = 'shape decision';
+      Object.assign(to.style, {
+        position: 'absolute',
+        left: '260px',
+        top: '160px',
+        width: '110px',
+        height: '80px'
+      });
+      doc.body.appendChild(from);
+      doc.body.appendChild(to);
+
+      const state = {
+        shapes: [
+          { id: from.id, type: 'process' },
+          { id: to.id, type: 'decision' }
+        ],
+        connections: [],
+        selectedConnId: null,
+        connDrag: null
+      };
+
+      const shapeGeometry = win.FlowchartsShapeGeometry?.createShapeGeometry?.({ state });
+      addCheck(checks, 'shape geometry factory', !!shapeGeometry);
+      addCheck(checks, 'shape geometry hit-test', shapeGeometry?.findShapeAt?.(270, 170, null)?.id === to.id);
+
+      const routing = win.FlowchartsRouting?.createRouting?.({
+        state,
+        routeModes: ['auto', 'vertical', 'horizontal'],
+        domShapeToBox: shapeGeometry?.domShapeToBox,
+        decisionVertexDistance: shapeGeometry?.decisionVertexDistance
+      });
+      addCheck(checks, 'routing factory', !!routing);
+
+      const connectionsDom = win.FlowchartsConnectionsDom?.createConnectionsDom?.({
+        state,
+        svgLayer: svg,
+        routeModes: ['auto', 'vertical', 'horizontal'],
+        buildMergeContext: routing?.buildMergeContext,
+        computeConnectionGeometry: routing?.computeConnectionGeometry,
+        pointAlongPolyline: routing?.pointAlongPolyline
+      });
+      addCheck(checks, 'connections DOM factory', !!connectionsDom);
+
+      const path = connectionsDom?.connectShapes?.(from, to, null);
+      addCheck(checks, 'connectShapes returns path', !!path);
+      addCheck(checks, 'connection state recorded', state.connections.length === 1);
+      addCheck(checks, 'connection path rendered', !!doc.getElementById('conn-smoke-from-smoke-to'));
+      addCheck(checks, 'connection hit path rendered', !!doc.getElementById('hit-conn-smoke-from-smoke-to'));
+      addCheck(checks, 'connection path has geometry', !!path?.getAttribute('d'));
+
+      connectionsDom?.removeConnectionDom?.('conn-smoke-from-smoke-to');
+      addCheck(checks, 'removeConnectionDom removes path', !doc.getElementById('conn-smoke-from-smoke-to'));
+
+      svg.remove();
+      from.remove();
+      to.remove();
+      return checks;
+    }
+
+    async function run() {
+      const frame = await loadFrame();
+      const win = frame.contentWindow;
+      const doc = frame.contentDocument;
+      const checks = [
+        ...(await runEditorChecks(win, doc)),
+        ...runModuleChecks(win, doc)
+      ];
+
+      const failures = checks.filter(check => !check.ok);
+      result.className = failures.length ? 'fail' : 'pass';
+      result.textContent = checks.map(check =>
+        `${check.ok ? 'PASS' : 'FAIL'} ${check.name}${check.detail ? ` (${check.detail})` : ''}`
+      ).join('\n') + `\n\n${failures.length ? 'FAILED' : 'PASSED'}`;
+      document.body.dataset.flowcharts = failures.length ? 'failed' : 'passed';
+      frame.remove();
+    }
+
+    run().catch(error => {
+      result.className = 'fail';
+      result.textContent = String(error && error.stack || error);
+      document.body.dataset.flowcharts = 'failed';
+    });
+  </script>
+</body>
+</html>

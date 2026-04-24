@@ -6,9 +6,11 @@
 
 - [ ] Запущено `powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1`.
 - [ ] Запущено `git diff --check`.
+- [ ] Запущено `powershell -ExecutionPolicy Bypass -File tests\run-browser-smoke.ps1` після змін у runtime/UI поведінці.
 - [ ] Не додано inline `onclick`, `onkeydown`, `style`.
 - [ ] Не перевизначено локально `--office-*`.
 - [ ] Не перевизначено локально `.office-*` component selectors.
+- [ ] Локальні browser-smoke артефакти прибрано через `tests\cleanup-test-artifacts.ps1`.
 
 ## Shell
 
@@ -38,6 +40,11 @@
 - [ ] Dropdown/picker state слухає `office:overlayclose`, якщо має локальний open-state.
 - [ ] `Escape` закриває верхній overlay.
 - [ ] Focus не губиться після закриття.
+
+## Offline
+
+- [ ] Нові локальні JS/CSS/image/font asset-и, підключені в HTML редакторів, додано в `sw.js` `CORE_ASSETS`.
+- [ ] `CORE_ASSETS` не містить шляхів до видалених або перейменованих файлів.
 
 ## Browser QA
 

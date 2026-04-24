@@ -4,6 +4,15 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   'use strict';
 
   const UI = window.ArtSchemesUI || {};
+  const editorUtils = window.FlowchartsEditorUtils || {};
+  const autosaveApi = window.FlowchartsAutosave || {};
+  const modalsApi = window.FlowchartsModals || {};
+  const titleApi = window.FlowchartsTitle || {};
+  const routingApi = window.FlowchartsRouting || {};
+  const connectionsDomApi = window.FlowchartsConnectionsDom || {};
+  const shapeGeometryApi = window.FlowchartsShapeGeometry || {};
+  const handlesApi = window.FlowchartsHandles || {};
+  const shapePlacementApi = window.FlowchartsShapePlacement || {};
 
   const core = window.FlowchartCore || null;
   const projectIo = window.FlowchartsProjectIO || null;
@@ -187,7 +196,6 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     MAX_UNDO: 30,
 
     // schedulers
-    _titleRaf: 0,
     _refreshRaf: 0,
   };
 
@@ -202,7 +210,6 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const MERGE_LEAD = 34;
   const GRID_SIZE = 20;
   const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
-  let autosaveRaf = 0;
 
   // ================= UNDO SNAPSHOTS =================
   function captureSnapshot() {
@@ -252,13 +259,6 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     }, 1800);
   }
 
-  function syncHeaderTitle() {
-    if (!fileNameEl) return;
-    const value = (state.diagramTitle || '').trim();
-    fileNameEl.textContent = value || 'схема';
-    fileNameEl.title = value ? 'Клікни, щоб змінити назву' : 'Додай назву схемі';
-  }
-
   function saveSnapshot() {
     state.undoStack.push(captureSnapshot());
 
@@ -286,9 +286,8 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     state.dragState = null;
     state.connDrag = null;
     state.pendingConn = null;
-    if (state._titleRaf) cancelAnimationFrame(state._titleRaf);
+    titleController.cancel?.();
     if (state._refreshRaf) cancelAnimationFrame(state._refreshRaf);
-    state._titleRaf = 0;
     state._refreshRaf = 0;
 
     state.baseColors = { ...DEFAULT_BASE_COLORS, ...(snap.baseColors || {}) };
@@ -297,7 +296,7 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     state.lastShapeType = snap.lastShapeType || 'process';
     state.snapEnabled = snap.snapEnabled !== undefined ? !!snap.snapEnabled : true;
 
-    if (titleInput) titleInput.value = state.diagramTitle;
+    titleController.syncInput?.();
     renderTitle();
     updateSnapButton();
 
@@ -352,107 +351,14 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const openModal = UI.openModal || ((modal) => modal?.classList.add('active'));
   const closeModal = UI.closeModal || ((modal) => modal?.classList.remove('active'));
 
-  function showMessageModal(text) {
-    const modal = document.getElementById('message-modal');
-    const textEl = document.getElementById('message-modal-text');
-    const btns = document.getElementById('message-modal-buttons');
-    if (!modal || !textEl || !btns) return;
+  const modalHelpers = modalsApi.createModalHelpers?.({ openModal, closeModal }) || {};
+  const showMessageModal = modalHelpers.showMessageModal || (() => {});
+  const showConfirmModal = modalHelpers.showConfirmModal || (() => {});
+  const showRestoreDraftModal = modalHelpers.showRestoreDraftModal || (() => {});
+  modalHelpers.bindBackdropClose?.();
 
-    textEl.textContent = text;
-    btns.innerHTML = '';
-    const ok = document.createElement('button');
-    ok.textContent = 'OK';
-    ok.className = 'modal-btn ok-btn';
-    ok.addEventListener('click', () => closeModal(modal));
-    btns.appendChild(ok);
-    openModal(modal);
-    setTimeout(() => ok.focus(), 30);
-  }
-
-  function showConfirmModal(text, onOk) {
-    const modal = document.getElementById('message-modal');
-    const textEl = document.getElementById('message-modal-text');
-    const btns = document.getElementById('message-modal-buttons');
-    if (!modal || !textEl || !btns) return;
-
-    textEl.textContent = text;
-    btns.innerHTML = '';
-
-    const cancel = document.createElement('button');
-    cancel.textContent = 'Скасувати';
-    cancel.className = 'modal-btn cancel-btn';
-    cancel.addEventListener('click', () => closeModal(modal));
-
-    const ok = document.createElement('button');
-    ok.textContent = 'Очистити';
-    ok.className = 'modal-btn no-btn';
-    ok.addEventListener('click', () => { closeModal(modal); onOk?.(); });
-
-    btns.appendChild(cancel);
-    btns.appendChild(ok);
-    openModal(modal);
-    setTimeout(() => cancel.focus(), 30);
-  }
-
-  function showRestoreDraftModal(text, onRestore, onDiscard) {
-    const modal = document.getElementById('message-modal');
-    const textEl = document.getElementById('message-modal-text');
-    const btns = document.getElementById('message-modal-buttons');
-    if (!modal || !textEl || !btns) return;
-
-    textEl.textContent = text;
-    btns.innerHTML = '';
-
-    const discard = document.createElement('button');
-    discard.textContent = 'Нова схема';
-    discard.className = 'modal-btn cancel-btn';
-    discard.addEventListener('click', () => {
-      closeModal(modal);
-      onDiscard?.();
-    });
-
-    const restore = document.createElement('button');
-    restore.textContent = 'Відкрити чернетку';
-    restore.className = 'modal-btn ok-btn';
-    restore.addEventListener('click', () => {
-      closeModal(modal);
-      onRestore?.();
-    });
-
-    btns.appendChild(discard);
-    btns.appendChild(restore);
-    openModal(modal);
-    setTimeout(() => restore.focus(), 30);
-  }
-
-  // Close modals by click on backdrop
-  document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('pointerdown', (e) => {
-      if (e.target === modal) closeModal(modal);
-    });
-  });
-
-  function rgbToHex(rgb) {
-    if (!rgb || rgb === 'transparent') return '#ffffff';
-    if (rgb.startsWith('#')) return rgb;
-    const m = rgb.match(/\d+/g);
-    if (m && m.length >= 3) {
-      return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('');
-    }
-    return '#ffffff';
-  }
-
-  function sanitizeFilename(name) {
-    const fallback = 'блок-схема';
-    const base = (name || '').trim() || fallback;
-    const safe = base
-      .replace(/[\\/:*?"<>|]/g, '')
-      .replace(/[().,]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 60);
-    return safe || fallback;
-  }
+  const rgbToHex = editorUtils.rgbToHex || (() => '#ffffff');
+  const sanitizeFilename = editorUtils.sanitizeFilename || ((name) => (name || 'блок-схема').trim() || 'блок-схема');
 
   // ================= TITLE =================
   function findStartElement() {
@@ -460,153 +366,36 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     return startShape ? document.getElementById(startShape.id) : null;
   }
 
-  function renderTitle() {
-    syncHeaderTitle();
-    if (!titleDisplay) return;
-    titleDisplay.style.display = 'none';
-    titleDisplay.textContent = '';
-  }
+  const titleController = titleApi.createTitleController?.({
+    titleInput,
+    titleDisplay,
+    fileNameEl,
+    getTitle: () => state.diagramTitle,
+    setTitle: (value) => { state.diagramTitle = value; },
+    onChange: () => scheduleAutosave(),
+  }) || {};
+  const renderTitle = titleController.render || (() => {});
+  const scheduleTitleUpdate = titleController.schedule || (() => {});
+  titleController.bindInput?.();
 
-  function updateTitlePosition() {
-    state._titleRaf = 0;
-    if (titleDisplay) titleDisplay.style.display = 'none';
-  }
-
-  function scheduleTitleUpdate() {
-    if (state._titleRaf) return;
-    state._titleRaf = requestAnimationFrame(updateTitlePosition);
-  }
-
-  titleInput?.addEventListener('input', () => {
-    state.diagramTitle = titleInput.value;
-    renderTitle();
-    scheduleAutosave();
-  });
-
-  function persistAutosave() {
-    try {
-      const project = collectProjectData();
-      const hasContent = (project.shapes?.length || 0) > 0
-        || (project.connections?.length || 0) > 0
-        || !!String(project.diagramTitle || '').trim();
-
-      if (!hasContent) {
-        localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
-        return;
-      }
-
-      localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify({
-        savedAt: new Date().toISOString(),
-        project,
-      }));
-    } catch (error) {
-      console.warn('Flowchart editor: autosave failed.', error);
-    }
-  }
-
-  function scheduleAutosave() {
-    if (autosaveRaf) return;
-    autosaveRaf = requestAnimationFrame(() => {
-      autosaveRaf = 0;
-      persistAutosave();
-    });
-  }
-
-  function clearAutosave() {
-    try {
-      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
-    } catch (error) {
-      console.warn('Flowchart editor: failed to clear autosave.', error);
-    }
-  }
-
-  function readAutosaveDraft() {
-    try {
-      const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
-      if (!raw) return null;
-      const draft = JSON.parse(raw);
-      if (!draft || typeof draft !== 'object' || !draft.project) return null;
-      const parsedProject = core?.parseProject ? core.parseProject(draft.project) : draft.project;
-      const hasContent = (parsedProject.shapes?.length || 0) > 0
-        || (parsedProject.connections?.length || 0) > 0
-        || !!String(parsedProject.diagramTitle || '').trim();
-      if (!hasContent) return null;
-      return {
-        savedAt: draft.savedAt || null,
-        project: parsedProject,
-      };
-    } catch (error) {
-      console.warn('Flowchart editor: failed to read autosave.', error);
-      clearAutosave();
-      return null;
-    }
-  }
-
-  function promptRestoreAutosave() {
-    const draft = readAutosaveDraft();
-    if (!draft) return;
-    const when = draft.savedAt
-      ? new Date(draft.savedAt).toLocaleString('uk-UA')
-      : 'невідомий час';
-    showRestoreDraftModal(
-      `Знайдено незбережену чернетку від ${when}. Хочеш продовжити роботу з нею або почати нову схему?`,
-      () => {
-        restoreSnapshot(draft.project);
-        setDirty(false);
-        showMessageModal('Чернетку відкрито.');
-      },
-      () => {
-        clearAutosave();
-        setDirty(false);
-      },
-    );
-  }
+  const autosave = autosaveApi.createAutosaveController?.({
+    storageKey: AUTOSAVE_STORAGE_KEY,
+    collectProjectData,
+    parseProject: core?.parseProject,
+    showRestoreDraftModal,
+    onRestoreDraft: (project) => {
+      restoreSnapshot(project);
+      setDirty(false);
+      showMessageModal('Чернетку відкрито.');
+    },
+    onDiscardDraft: () => setDirty(false),
+  }) || {};
+  const persistAutosave = autosave.persist || (() => {});
+  const scheduleAutosave = autosave.schedule || (() => {});
+  const promptRestoreAutosave = autosave.promptRestore || (() => {});
 
   // ================= TEXT WRAP =================
-  function smartWrapText(raw, type) {
-    if (core?.smartWrapText) return core.smartWrapText(raw, type);
-    const text = (raw || '').trim();
-    if (!text) return '';
-    const maxChars = (type === 'decision') ? 12 : (type === 'start-end') ? 16 : (type === 'input-output') ? 18 : 18;
-    const maxLines = (type === 'decision') ? 4 : 4;
-
-    const words = text.split(/\s+/).filter(Boolean);
-    const lines = [];
-    let line = '';
-
-    function pushLine(l) { if (l) lines.push(l); }
-
-    function splitLongWord(word) {
-      const parts = [];
-      let w = word;
-      while (w.length > maxChars) {
-        let cut = maxChars - 1; // reserve for hyphen
-        if (w.length - cut < 3) cut = w.length - 3;
-        if (cut < 3) break;
-        parts.push(w.slice(0, cut) + '-');
-        w = w.slice(cut);
-      }
-      parts.push(w);
-      return parts;
-    }
-
-    for (const w of words) {
-      const chunks = (w.length > maxChars) ? splitLongWord(w) : [w];
-      for (const chunk of chunks) {
-        if (!line) line = chunk;
-        else if ((line.length + 1 + chunk.length) <= maxChars) line += ' ' + chunk;
-        else { pushLine(line); line = chunk; }
-        if (lines.length >= maxLines) break;
-      }
-      if (lines.length >= maxLines) break;
-    }
-    pushLine(line);
-
-    if (lines.length > maxLines) lines.length = maxLines;
-    const used = lines.join(' ').replace(/-/g, '');
-    if (used.length < text.length) lines[lines.length - 1] = lines[lines.length - 1].replace(/\s*…?$/, '') + '…';
-    return lines.join('\n');
-  }
+  const smartWrapText = (raw, type) => editorUtils.smartWrapText?.(raw, type, core) || '';
 
   function hasStartBlock() {
     return state.shapes.some(s => s.type === 'start-end' && (s.textRaw || '').trim().toLowerCase() === 'початок');
@@ -650,846 +439,72 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   }
 
   // ================= HANDLES (SVG) =================
-  const shapeHandleGroups = {};
-
   const DECISION_HANDLE_OUTSET = 8; // px: handles sit slightly outside the diamond
   const DECISION_CONN_OUTSET = 2; // px: keep endpoints close to diamond border
 
-  function getShapeType(shapeEl) {
-    if (!shapeEl) return 'process';
-    if (shapeEl.classList.contains('start-end')) return 'start-end';
-    if (shapeEl.classList.contains('decision')) return 'decision';
-    if (shapeEl.classList.contains('input-output')) return 'input-output';
-    if (shapeEl.classList.contains('subroutine')) return 'subroutine';
-    if (shapeEl.classList.contains('connector')) return 'connector';
-    return 'process';
-  }
+  const shapeGeometry = shapeGeometryApi.createShapeGeometry?.({
+    core,
+    state,
+    decisionHandleOutset: DECISION_HANDLE_OUTSET,
+    decisionConnOutset: DECISION_CONN_OUTSET,
+  }) || {};
+  const decisionVertexDistance = shapeGeometry.decisionVertexDistance || (() => 0);
+  const domShapeToBox = shapeGeometry.domShapeToBox || (() => ({ left: 0, top: 0, width: 0, height: 0, type: 'process' }));
+  const findShapeAt = shapeGeometry.findShapeAt || (() => null);
+  const getHandlePositions = shapeGeometry.getHandlePositions || (() => ({}));
 
-  function domShapeToBox(shapeEl) {
-    return {
-      left: shapeEl.offsetLeft,
-      top: shapeEl.offsetTop,
-      width: shapeEl.offsetWidth,
-      height: shapeEl.offsetHeight,
-      type: getShapeType(shapeEl),
-    };
-  }
-
-  function decisionVertexDistance(shapeEl) {
-    if (core?.decisionVertexDistance) return core.decisionVertexDistance(domShapeToBox(shapeEl));
-    // .decision uses transform: rotate(45deg); offsetWidth is pre-transform.
-    // For a rotated square, vertex distance along axis is width / sqrt(2).
-    return (shapeEl.offsetWidth || 0) / Math.SQRT2;
-  }
-
-  function getHandlePositions(shapeEl) {
-    const cx = shapeEl.offsetLeft + shapeEl.offsetWidth / 2;
-    const cy = shapeEl.offsetTop + shapeEl.offsetHeight / 2;
-
-    if (shapeEl.classList.contains('connector')) {
-      const r = Math.min(shapeEl.offsetWidth, shapeEl.offsetHeight) / 2;
-      return {
-        top: { x: cx, y: cy - r },
-        right: { x: cx + r, y: cy },
-        bottom: { x: cx, y: cy + r },
-        left: { x: cx - r, y: cy },
-      };
-    }
-
-    if (shapeEl.classList.contains('decision')) {
-      const d = decisionVertexDistance(shapeEl);
-      const o = DECISION_HANDLE_OUTSET;
-      return {
-        top: { x: cx, y: cy - d - o },
-        right: { x: cx + d + o, y: cy },
-        bottom: { x: cx, y: cy + d + o },
-        left: { x: cx - d - o, y: cy },
-      };
-    }
-
-    const hw = shapeEl.offsetWidth / 2;
-    const hh = shapeEl.offsetHeight / 2;
-    return {
-      top: { x: cx, y: cy - hh },
-      right: { x: cx + hw, y: cy },
-      bottom: { x: cx, y: cy + hh },
-      left: { x: cx - hw, y: cy },
-    };
-  }
-
-  function getConnectionPoint(shapeEl, toX, toY) {
-    const cx = shapeEl.offsetLeft + shapeEl.offsetWidth / 2;
-    const cy = shapeEl.offsetTop + shapeEl.offsetHeight / 2;
-    const dx = toX - cx;
-    const dy = toY - cy;
-
-    if (shapeEl.classList.contains('connector')) {
-      const r = Math.min(shapeEl.offsetWidth, shapeEl.offsetHeight) / 2;
-      const len = Math.hypot(dx, dy) || 1;
-      return { x: cx + (dx / len) * r, y: cy + (dy / len) * r };
-    }
-
-    if (shapeEl.classList.contains('decision')) {
-      // Intersection of ray (center -> target) with diamond boundary |x| + |y| = d
-      const d = decisionVertexDistance(shapeEl) + DECISION_CONN_OUTSET;
-      const adx = Math.abs(dx);
-      const ady = Math.abs(dy);
-      const denom = (adx + ady) || 1;
-      const t = d / denom;
-      return { x: cx + dx * t, y: cy + dy * t };
-    }
-
-    const hw = shapeEl.offsetWidth / 2;
-    const hh = shapeEl.offsetHeight / 2;
-    if (dx === 0 && dy === 0) return { x: cx, y: cy };
-
-    const sx = hw / (Math.abs(dx) || 0.001);
-    const sy = hh / (Math.abs(dy) || 0.001);
-    const s = Math.min(sx, sy);
-    return { x: cx + dx * s, y: cy + dy * s };
-  }
-
-  function findShapeAt(x, y, excludeId) {
-    for (let i = state.shapes.length - 1; i >= 0; i--) {
-      const s = state.shapes[i];
-      if (s.id === excludeId) continue;
-      const el = document.getElementById(s.id);
-      if (!el) continue;
-      const cx = el.offsetLeft + el.offsetWidth / 2;
-      const cy = el.offsetTop + el.offsetHeight / 2;
-      const dx = Math.abs(x - cx);
-      const dy = Math.abs(y - cy);
-
-      if (s.type === 'connector') {
-        const r = Math.min(el.offsetWidth, el.offsetHeight) / 2 + 10;
-        if ((dx * dx + dy * dy) <= (r * r)) return el;
-      } else
-        if (s.type === 'decision') {
-          const d = decisionVertexDistance(el);
-          // Diamond hit test: |dx| + |dy| <= d (with small margin)
-          if ((dx + dy) <= (d + 14)) return el;
-        } else {
-          if (dx <= el.offsetWidth / 2 + 10 && dy <= el.offsetHeight / 2 + 10) return el;
-        }
-    }
-    return null;
-  }
-
-  function createHandleGroup(shapeEl) {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.dataset.shapeId = shapeEl.id;
-    ['top', 'right', 'bottom', 'left'].forEach(pos => {
-      const hitCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      hitCircle.setAttribute('r', '22');
-      hitCircle.setAttribute('fill', 'transparent');
-      hitCircle.setAttribute('stroke', 'none');
-      hitCircle.classList.add('conn-handle', 'conn-handle-hit-area');
-      hitCircle.dataset.shapeId = shapeEl.id;
-      hitCircle.dataset.pos = pos;
-      g.appendChild(hitCircle);
-
-      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('r', '10');
-      c.setAttribute('fill', 'white');
-      c.setAttribute('stroke', '#4361ee');
-      c.setAttribute('stroke-width', '3');
-      c.classList.add('conn-handle', 'conn-handle-visual');
-      c.dataset.shapeId = shapeEl.id;
-      c.dataset.pos = pos;
-      c.style.pointerEvents = 'none';
-      g.appendChild(c);
-    });
-    svgLayer.appendChild(g);
-    shapeHandleGroups[shapeEl.id] = g;
-    updateHandleGroup(shapeEl.id);
-    attachHandleListeners(shapeEl.id);
-    return g;
-  }
-
-  function updateHandleGroup(shapeId) {
-    const el = document.getElementById(shapeId);
-    const g = shapeHandleGroups[shapeId];
-    if (!el || !g) return;
-    const pts = getHandlePositions(el);
-    const sides = ['top', 'right', 'bottom', 'left'];
-    const hitCircles = g.querySelectorAll('.conn-handle-hit-area');
-    const visualCircles = g.querySelectorAll('.conn-handle-visual');
-    sides.forEach((pos, i) => {
-      if (hitCircles[i]) {
-        hitCircles[i].setAttribute('cx', pts[pos].x);
-        hitCircles[i].setAttribute('cy', pts[pos].y);
-      }
-      if (visualCircles[i]) {
-        visualCircles[i].setAttribute('cx', pts[pos].x);
-        visualCircles[i].setAttribute('cy', pts[pos].y);
-      }
-    });
-  }
-
-  function showHandlesForShape(shapeId) {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.remove('visible')));
-    const g = shapeHandleGroups[shapeId];
-    if (g) g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.add('visible'));
-  }
-
-  function hideAllHandles() {
-    Object.values(shapeHandleGroups).forEach(g => g.querySelectorAll('.conn-handle-visual').forEach(c => c.classList.remove('visible')));
-  }
-
-  function removeHandleGroup(shapeId) {
-    const g = shapeHandleGroups[shapeId];
-    if (g) { g.remove(); delete shapeHandleGroups[shapeId]; }
-  }
-
-  // ================= TEMP LINE (during connect drag) =================
-  const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  tempLine.setAttribute('stroke', '#4361ee');
-  tempLine.setAttribute('stroke-width', '2.5');
-  tempLine.setAttribute('stroke-dasharray', '8 5');
-  tempLine.setAttribute('marker-end', 'url(#arrowhead)');
-  tempLine.style.display = 'none';
-  tempLine.style.pointerEvents = 'none';
-  svgLayer.appendChild(tempLine);
-
-  function onHandlePointerDown(e) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const shapeId = this.dataset.shapeId;
-    const pos = this.dataset.pos;
-    const shapeEl = document.getElementById(shapeId);
-    if (!shapeEl) return;
-
-    const pts = getHandlePositions(shapeEl);
-    const startPt = pts[pos];
-
-    tempLine.setAttribute('x1', startPt.x);
-    tempLine.setAttribute('y1', startPt.y);
-    tempLine.setAttribute('x2', startPt.x);
-    tempLine.setAttribute('y2', startPt.y);
-    tempLine.style.display = '';
-    state.connDrag = { fromShapeId: shapeId };
-
-    this.setPointerCapture(e.pointerId);
-
-    const onMove = (ev) => {
-      const pt = clientToCanvas(ev.clientX, ev.clientY);
-      tempLine.setAttribute('x2', pt.x);
-      tempLine.setAttribute('y2', pt.y);
-    };
-
-    const onUp = (ev) => {
-      this.removeEventListener('pointermove', onMove);
-      this.removeEventListener('pointerup', onUp);
-      this.removeEventListener('pointercancel', onUp);
-      tempLine.style.display = 'none';
-
-      if (!state.connDrag) return;
-      const fromId = state.connDrag.fromShapeId;
-      state.connDrag = null;
-
-      const pt = clientToCanvas(ev.clientX, ev.clientY);
-      const targetEl = findShapeAt(pt.x, pt.y, fromId);
-      if (!targetEl) return;
-      if (targetEl.id === fromId) return;
-
-      const fromEl = document.getElementById(fromId);
-      const fromData = state.shapes.find(s => s.id === fromId);
-
-      if (fromData?.type === 'decision') {
-        state.pendingConn = { fromEl, toEl: targetEl };
-        openModal(connectionModal);
-      } else {
-        saveSnapshot();
-        connectShapes(fromEl, targetEl, null);
-      }
-    };
-
-    this.addEventListener('pointermove', onMove);
-    this.addEventListener('pointerup', onUp);
-    this.addEventListener('pointercancel', onUp);
-  }
-
-  function attachHandleListeners(shapeId) {
-    const g = shapeHandleGroups[shapeId];
-    if (!g) return;
-    g.querySelectorAll('.conn-handle-hit-area').forEach(c => c.addEventListener('pointerdown', onHandlePointerDown));
-  }
+  const handles = handlesApi.createHandlesController?.({
+    svgLayer,
+    state,
+    getHandlePositions,
+    clientToCanvas,
+    findShapeAt,
+    getShapeData: (shapeId) => state.shapes.find(shape => shape.id === shapeId),
+    onDecisionConnect: ({ fromEl, toEl }) => {
+      state.pendingConn = { fromEl, toEl };
+      openModal(connectionModal);
+    },
+    onDirectConnect: ({ fromEl, toEl }) => {
+      saveSnapshot();
+      connectShapes(fromEl, toEl, null);
+    },
+  }) || {};
+  const createHandleGroup = handles.createHandleGroup || (() => null);
+  const hideAllHandles = handles.hideAllHandles || (() => {});
+  const removeHandleGroup = handles.removeHandleGroup || (() => {});
+  const showHandlesForShape = handles.showHandlesForShape || (() => {});
+  const updateAllHandleGroups = handles.updateAllHandleGroups || (() => {});
+  const updateHandleGroup = handles.updateHandleGroup || (() => {});
 
   // ================= CONNECTIONS (orthogonal) =================
-  function polylineLength(points) {
-    let len = 0;
-    for (let i = 1; i < points.length; i++) {
-      const dx = points[i].x - points[i - 1].x;
-      const dy = points[i].y - points[i - 1].y;
-      len += Math.hypot(dx, dy);
-    }
-    return len;
-  }
-
-  function pointAlongPolyline(points, t) {
-    if (core?.pointAlongPolyline) return core.pointAlongPolyline(points, t);
-    const total = polylineLength(points);
-    if (total <= 0) return points[0] || { x: 0, y: 0 };
-    const target = total * t;
-    let acc = 0;
-    for (let i = 1; i < points.length; i++) {
-      const a = points[i - 1], b = points[i];
-      const seg = Math.hypot(b.x - a.x, b.y - a.y);
-      if (acc + seg >= target) {
-        const r = (target - acc) / (seg || 1);
-        return { x: a.x + (b.x - a.x) * r, y: a.y + (b.y - a.y) * r };
-      }
-      acc += seg;
-    }
-    return points[points.length - 1];
-  }
-
-  // Returns the 4 cardinal connector points for a shape (center of each edge)
-  function getEdgePoints(el) {
-    if (core?.getEdgePoints) return core.getEdgePoints(domShapeToBox(el), DECISION_CONN_OUTSET);
-    const cx = el.offsetLeft + el.offsetWidth / 2;
-    const cy = el.offsetTop + el.offsetHeight / 2;
-    if (el.classList.contains('decision')) {
-      const d = decisionVertexDistance(el) + DECISION_CONN_OUTSET;
-      return {
-        top: { x: cx, y: cy - d, side: 'top' },
-        bottom: { x: cx, y: cy + d, side: 'bottom' },
-        left: { x: cx - d, y: cy, side: 'left' },
-        right: { x: cx + d, y: cy, side: 'right' },
-      };
-    }
-
-    const hw = el.offsetWidth / 2;
-    const hh = el.offsetHeight / 2;
-    return {
-      top: { x: cx, y: cy - hh, side: 'top' },
-      bottom: { x: cx, y: cy + hh, side: 'bottom' },
-      left: { x: cx - hw, y: cy, side: 'left' },
-      right: { x: cx + hw, y: cy, side: 'right' },
-    };
-  }
-
-  // Build a clean 2-turn orthogonal path from one edge-midpoint to another.
-  // exitSide / entrySide tell us the direction so we know how to bridge them.
-  function orthogonalPath(fromPt, toPt, exitSide, entrySide) {
-    const pts = [fromPt];
-    const dx = toPt.x - fromPt.x;
-    const dy = toPt.y - fromPt.y;
-
-    // Same side exits/entries that form an L naturally:
-    // bottom→top or top→bottom: vertical first then horizontal if needed
-    if ((exitSide === 'bottom' && entrySide === 'top') ||
-      (exitSide === 'top' && entrySide === 'bottom')) {
-      if (Math.abs(dx) < 2) {
-        // Already aligned — straight vertical
-        pts.push(toPt);
-      } else {
-        const yMid = fromPt.y + dy / 2;
-        pts.push({ x: fromPt.x, y: yMid });
-        pts.push({ x: toPt.x, y: yMid });
-        pts.push(toPt);
-      }
-      return pts;
-    }
-
-    if ((exitSide === 'right' && entrySide === 'left') ||
-      (exitSide === 'left' && entrySide === 'right')) {
-      if (Math.abs(dy) < 2) {
-        pts.push(toPt);
-      } else {
-        const xMid = fromPt.x + dx / 2;
-        pts.push({ x: xMid, y: fromPt.y });
-        pts.push({ x: xMid, y: toPt.y });
-        pts.push(toPt);
-      }
-      return pts;
-    }
-
-    // L-shaped connections (e.g. bottom→left, right→top, etc.)
-    // Determine the bend corner based on exit direction
-    if (exitSide === 'bottom' || exitSide === 'top') {
-      // Go vertical first, then horizontal
-      pts.push({ x: fromPt.x, y: toPt.y });
-    } else {
-      // Go horizontal first, then vertical
-      pts.push({ x: toPt.x, y: fromPt.y });
-    }
-    pts.push(toPt);
-    return pts;
-  }
-
-  // Choose the best exit/entry side pair given two shapes.
-  // Rules: prefer bottom→top for vertical flow, left/right for horizontal.
-  function chooseSides(fromEl, toEl, routeMode = 'auto') {
-    if (core?.chooseSides) return core.chooseSides(domShapeToBox(fromEl), domShapeToBox(toEl), routeMode);
-    const fcx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
-    const fcy = fromEl.offsetTop + fromEl.offsetHeight / 2;
-    const tcx = toEl.offsetLeft + toEl.offsetWidth / 2;
-    const tcy = toEl.offsetTop + toEl.offsetHeight / 2;
-    const dx = tcx - fcx;
-    const dy = tcy - fcy;
-
-    if (routeMode === 'vertical') {
-      return dy >= 0 ? { exit: 'bottom', entry: 'top' } : { exit: 'top', entry: 'bottom' };
-    }
-    if (routeMode === 'horizontal') {
-      return dx >= 0 ? { exit: 'right', entry: 'left' } : { exit: 'left', entry: 'right' };
-    }
-
-    const fhw = fromEl.offsetWidth / 2;
-    const fhh = fromEl.offsetHeight / 2;
-    const thw = toEl.offsetWidth / 2;
-    const thh = toEl.offsetHeight / 2;
-
-    // Gaps between edges (negative = overlapping)
-    const gapRight = dx - fhw - thw;   // from.right → to.left
-    const gapLeft = -dx - fhw - thw;  // from.left  → to.right
-    const gapBottom = dy - fhh - thh;   // from.bottom→ to.top
-    const gapTop = -dy - fhh - thh;  // from.top   → to.bottom
-
-    // Primary axis: whichever has the bigger gap wins
-    const hGap = Math.max(gapRight, gapLeft);
-    const vGap = Math.max(gapBottom, gapTop);
-
-    if (vGap >= hGap) {
-      // Vertical primary
-      if (dy >= 0) return { exit: 'bottom', entry: 'top' };
-      else return { exit: 'top', entry: 'bottom' };
-    } else {
-      // Horizontal primary
-      if (dx >= 0) return { exit: 'right', entry: 'left' };
-      else return { exit: 'left', entry: 'right' };
-    }
-  }
-
-  function routeOrthogonal(fromEl, toEl, routeMode = 'auto') {
-    if (core?.routeOrthogonal) return core.routeOrthogonal(domShapeToBox(fromEl), domShapeToBox(toEl), routeMode);
-    const { exit, entry } = chooseSides(fromEl, toEl, routeMode);
-    const fromEdges = getEdgePoints(fromEl);
-    const toEdges = getEdgePoints(toEl);
-    const fromPt = fromEdges[exit];
-    const toPt = toEdges[entry];
-    const pts = orthogonalPath(fromPt, toPt, exit, entry);
-    return { pts, exit, entry };
-  }
-
-  function chooseExitSideToPoint(fromEl, toPt, routeMode = 'auto') {
-    if (core?.chooseExitSideToPoint) return core.chooseExitSideToPoint(domShapeToBox(fromEl), toPt, routeMode);
-    const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
-    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
-    const dx = toPt.x - cx;
-    const dy = toPt.y - cy;
-    if (routeMode === 'vertical') return dy >= 0 ? 'bottom' : 'top';
-    if (routeMode === 'horizontal') return dx >= 0 ? 'right' : 'left';
-    return Math.abs(dy) >= Math.abs(dx)
-      ? (dy >= 0 ? 'bottom' : 'top')
-      : (dx >= 0 ? 'right' : 'left');
-  }
-
-  function routeToPoint(fromEl, toPt, routeMode = 'auto', entrySide = 'top') {
-    if (core?.routeToPoint) return core.routeToPoint(domShapeToBox(fromEl), toPt, routeMode, entrySide);
-    const fromEdges = getEdgePoints(fromEl);
-    const exit = chooseExitSideToPoint(fromEl, toPt, routeMode);
-    const fromPt = fromEdges[exit];
-    const pts = orthogonalPath(fromPt, { x: toPt.x, y: toPt.y, side: entrySide }, exit, entrySide);
-    return { pts, exit, entry: entrySide };
-  }
-
-  function pointsToPathD(points) {
-    if (!points.length) return '';
-    let d = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) d += ` L ${points[i].x} ${points[i].y}`;
-    return d;
-  }
-
-  function computeDecisionConnection(fromEl, toEl, side) {
-    if (core?.getDecisionBranchRoute) {
-      const routed = core.getDecisionBranchRoute(domShapeToBox(fromEl), domShapeToBox(toEl), side, DECISION_CONN_OUTSET);
-      return { d: pointsToPathD(routed.pts), pts: routed.pts };
-    }
-
-    const fromEdges = getEdgePoints(fromEl);
-    const toEdges = getEdgePoints(toEl);
-    const fromPt = side === 'right' ? fromEdges.right : fromEdges.left;
-    const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
-    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
-    const toCx = toEl.offsetLeft + toEl.offsetWidth / 2;
-    const toCy = toEl.offsetTop + toEl.offsetHeight / 2;
-    const hDist = side === 'right' ? toCx - cx : cx - toCx;
-    const vDist = toCy - cy;
-    const entry = vDist < -30 ? side : (Math.abs(vDist) < 30 && hDist > 20 ? (side === 'right' ? 'left' : 'right') : 'top');
-    const toPt = toEdges[entry];
-    const margin = 40;
-    let pts;
-
-    if (entry === side) {
-      const corridor = side === 'right'
-        ? Math.max(fromPt.x, toPt.x) + margin
-        : Math.min(fromPt.x, toPt.x) - margin;
-      pts = [fromPt, { x: corridor, y: fromPt.y }, { x: corridor, y: toPt.y }, toPt];
-    } else if (Math.abs(toPt.y - fromPt.y) < 4) {
-      pts = [fromPt, toPt];
-    } else if (
-      (side === 'right' && toPt.x > fromPt.x + 4) ||
-      (side === 'left' && toPt.x < fromPt.x - 4)
-    ) {
-      pts = [fromPt, { x: toPt.x, y: fromPt.y }, toPt];
-    } else {
-      const xOut = side === 'right' ? fromPt.x + margin : fromPt.x - margin;
-      pts = [fromPt, { x: xOut, y: fromPt.y }, { x: xOut, y: toPt.y }, toPt];
-    }
-
-    return { d: pointsToPathD(pts), pts };
-  }
-
-  function getDecisionEntrySide(fromEl, toEl, side) {
-    if (core?.getDecisionBranchRoute) {
-      return core.getDecisionBranchRoute(domShapeToBox(fromEl), domShapeToBox(toEl), side, DECISION_CONN_OUTSET).entry;
-    }
-    const cx = fromEl.offsetLeft + fromEl.offsetWidth / 2;
-    const cy = fromEl.offsetTop + fromEl.offsetHeight / 2;
-    const toCx = toEl.offsetLeft + toEl.offsetWidth / 2;
-    const toCy = toEl.offsetTop + toEl.offsetHeight / 2;
-    const hDist = side === 'right' ? toCx - cx : cx - toCx;
-    const vDist = toCy - cy;
-    if (vDist < -30) return side;
-    if (Math.abs(vDist) < 30 && hDist > 20) return side === 'right' ? 'left' : 'right';
-    return 'top';
-  }
-
-  function getConnectionEntrySide(conn) {
-    const fromEl = document.getElementById(conn.from);
-    const toEl = document.getElementById(conn.to);
-    if (!fromEl || !toEl) return 'top';
-
-    const fromData = state.shapes.find(s => s.id === conn.from);
-    if (fromData?.type === 'decision' && (conn.type === 'yes' || conn.type === 'no')) {
-      const side = conn.type === 'yes' ? 'left' : 'right';
-      return getDecisionEntrySide(fromEl, toEl, side);
-    }
-
-    const routeMode = ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto';
-    return chooseSides(fromEl, toEl, routeMode).entry;
-  }
-
-  function sortConnsBySourcePosition(conns, entrySide) {
-    return conns.slice().sort((a, b) => {
-      const aFrom = document.getElementById(a.from);
-      const bFrom = document.getElementById(b.from);
-      if (!aFrom || !bFrom) return a.id.localeCompare(b.id);
-      const aCx = aFrom.offsetLeft + aFrom.offsetWidth / 2;
-      const bCx = bFrom.offsetLeft + bFrom.offsetWidth / 2;
-      const aCy = aFrom.offsetTop + aFrom.offsetHeight / 2;
-      const bCy = bFrom.offsetTop + bFrom.offsetHeight / 2;
-      if (entrySide === 'left' || entrySide === 'right') return aCy - bCy || aCx - bCx;
-      return aCx - bCx || aCy - bCy;
-    });
-  }
-
-  function getFanInOffset(conn, entrySide, toEl) {
-    const incoming = state.connections
-      .filter(c => c.to === conn.to && getConnectionEntrySide(c) === entrySide);
-    const sortedIncoming = sortConnsBySourcePosition(incoming, entrySide);
-
-    if (sortedIncoming.length <= 1) return 0;
-    const idx = sortedIncoming.findIndex(c => c.id === conn.id);
-    if (idx < 0) return 0;
-
-    const slot = idx - (sortedIncoming.length - 1) / 2;
-    const spacing = 16;
-    const rawOffset = slot * spacing;
-
-    if (entrySide === 'top' || entrySide === 'bottom') {
-      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
-      return Math.max(-max, Math.min(max, rawOffset));
-    }
-    const max = Math.max(12, toEl.offsetHeight / 2 - 14);
-    return Math.max(-max, Math.min(max, rawOffset));
-  }
-
-  function applyEntryOffset(points, entrySide, offset, toEl) {
-    if (!offset || !points || points.length < 2) return points;
-    const out = points.map(p => ({ ...p }));
-    const last = out.length - 1;
-
-    if (entrySide === 'top' || entrySide === 'bottom') {
-      const cx = toEl.offsetLeft + toEl.offsetWidth / 2;
-      const max = Math.max(14, toEl.offsetWidth / 2 - 16);
-      const shiftedX = Math.max(cx - max, Math.min(cx + max, out[last].x + offset));
-      out[last].x = shiftedX;
-      out[last - 1].x = shiftedX;
-    } else {
-      const cy = toEl.offsetTop + toEl.offsetHeight / 2;
-      const max = Math.max(12, toEl.offsetHeight / 2 - 14);
-      const shiftedY = Math.max(cy - max, Math.min(cy + max, out[last].y + offset));
-      out[last].y = shiftedY;
-      out[last - 1].y = shiftedY;
-    }
-    return out;
-  }
-
-  function buildMergeContext() {
-    const groups = new Map();
-
-    state.connections.forEach(conn => {
-      if (conn.type) return; // keep Yes/No branches independent
-      const fromEl = document.getElementById(conn.from);
-      const toEl = document.getElementById(conn.to);
-      if (!fromEl || !toEl) return;
-      const entrySide = getConnectionEntrySide(conn);
-      const key = `${conn.to}|${entrySide}`;
-      if (!groups.has(key)) groups.set(key, { toEl, entrySide, conns: [] });
-      groups.get(key).conns.push(conn);
-    });
-
-    const byConnId = {};
-    groups.forEach(group => {
-      if (group.conns.length < 2) return;
-      const targetEdges = getEdgePoints(group.toEl);
-      const targetPt = targetEdges[group.entrySide];
-      const junction = { x: targetPt.x, y: targetPt.y };
-      if (group.entrySide === 'top') junction.y -= MERGE_LEAD;
-      if (group.entrySide === 'bottom') junction.y += MERGE_LEAD;
-      if (group.entrySide === 'left') junction.x -= MERGE_LEAD;
-      if (group.entrySide === 'right') junction.x += MERGE_LEAD;
-
-      const sorted = sortConnsBySourcePosition(group.conns, group.entrySide);
-
-      const primaryIdx = Math.floor((sorted.length - 1) / 2);
-      sorted.forEach((conn, idx) => {
-        byConnId[conn.id] = {
-          isMerged: true,
-          isPrimary: idx === primaryIdx,
-          entrySide: group.entrySide,
-          junction,
-          targetPt,
-        };
-      });
-    });
-
-    return byConnId;
-  }
-
-  function computeConnectionGeometry(fromEl, toEl, conn, mergeContext) {
-    const connType = conn?.type || null;
-    const fromData = state.shapes.find(s => s.id === fromEl.id);
-
-    // Special clean routing for decision Yes/No.
-    // Standard convention: Так (Yes) exits LEFT, Ні (No) exits RIGHT.
-    if (fromData?.type === 'decision') {
-      if (connType === 'yes') return computeDecisionConnection(fromEl, toEl, 'left');
-      if (connType === 'no') return computeDecisionConnection(fromEl, toEl, 'right');
-    }
-
-    const mergeMeta = mergeContext?.[conn.id];
-    if (mergeMeta?.isMerged) {
-      const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-      let pts = routeToPoint(fromEl, mergeMeta.junction, routeMode, mergeMeta.entrySide).pts;
-      if (mergeMeta.isPrimary) {
-        const last = pts[pts.length - 1];
-        if (!last || last.x !== mergeMeta.targetPt.x || last.y !== mergeMeta.targetPt.y) {
-          pts = pts.concat([{ x: mergeMeta.targetPt.x, y: mergeMeta.targetPt.y }]);
-        }
-      }
-      return { d: pointsToPathD(pts), pts };
-    }
-
-    const routeMode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-    const routed = routeOrthogonal(fromEl, toEl, routeMode);
-    const offset = conn ? getFanInOffset(conn, routed.entry, toEl) : 0;
-    const pts = applyEntryOffset(routed.pts, routed.entry, offset, toEl);
-    const d = pointsToPathD(pts);
-    return { d, pts };
-  }
-
-  function removeConnectionDom(connId) {
-    document.getElementById(connId)?.remove();
-    document.getElementById(`label-${connId}`)?.remove();
-    document.getElementById(`hit-${connId}`)?.remove();
-  }
-
-  function markerForConnection(conn) {
-    if (conn?.type === 'yes') return 'url(#arrowhead-yes)';
-    if (conn?.type === 'no') return 'url(#arrowhead-no)';
-    return 'url(#arrowhead)';
-  }
-
-  function getConnectionLabelText(conn) {
-    return core?.resolveConnectionLabel ? core.resolveConnectionLabel(conn) : '';
-  }
-
-  function updateConnection(connId) {
-    const conn = state.connections.find(c => c.id === connId);
-    const path = document.getElementById(connId);
-    const hit = document.getElementById(`hit-${connId}`);
-    if (!conn || !path) return;
-    const fromEl = document.getElementById(conn.from);
-    const toEl = document.getElementById(conn.to);
-    if (!fromEl || !toEl) return;
-    const mergeContext = buildMergeContext();
-    const mergeMeta = mergeContext[conn.id];
-    const geo = computeConnectionGeometry(fromEl, toEl, conn, mergeContext);
-    path.setAttribute('d', geo.d);
-    hit?.setAttribute('d', geo.d);
-    if (state.selectedConnId !== connId) {
-      path.setAttribute('marker-end', mergeMeta?.isMerged && !mergeMeta.isPrimary ? 'none' : markerForConnection(conn));
-    }
-    const labelText = getConnectionLabelText(conn);
-    if (labelText) {
-      if (!document.getElementById(`label-${connId}`)) addConnectionLabel(connId);
-      updateConnectionLabel(connId, geo.pts);
-    } else {
-      document.getElementById(`label-${connId}`)?.remove();
-    }
-  }
-
-  function updateConnectionsForShape(shapeId) {
-    state.connections.forEach(conn => {
-      if (conn.from === shapeId || conn.to === shapeId) updateConnection(conn.id);
-    });
-  }
-
-  function connectShapes(fromEl, toEl, connType, forcedId, isRestore = false, forcedRouteMode = 'auto') {
-    connType = connType || null;
-    if (!fromEl || !toEl) return null;
-    if (fromEl.id === toEl.id) return null;
-
-    const connId = forcedId || (connType
-      ? `conn-${fromEl.id}-${toEl.id}-${connType}`
-      : `conn-${fromEl.id}-${toEl.id}`);
-
-    if (!isRestore && state.connections.some(c => c.id === connId)) {
-      showMessageModal('Ці фігури вже з\'єднані!');
-      return null;
-    }
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.id = connId;
-    path.classList.add('conn-line');
-    path.setAttribute('fill', 'none');
-
-    if (connType === 'yes') {
-      path.setAttribute('stroke', '#4caf50');
-      path.setAttribute('stroke-width', '2.8');
-      path.setAttribute('marker-end', 'url(#arrowhead-yes)');
-    } else if (connType === 'no') {
-      path.setAttribute('stroke', '#f44336');
-      path.setAttribute('stroke-width', '2.8');
-      path.setAttribute('marker-end', 'url(#arrowhead-no)');
-    } else {
-      path.setAttribute('stroke', '#555');
-      path.setAttribute('stroke-width', '2.8');
-      path.setAttribute('marker-end', 'url(#arrowhead)');
-    }
-    path.style.pointerEvents = 'none';
-
-    const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    hitPath.id = `hit-${connId}`;
-    hitPath.classList.add('conn-hit');
-    hitPath.dataset.connId = connId;
-
-    const firstG = svgLayer.querySelector('g[data-shape-id]') || svgLayer.lastChild;
-    svgLayer.insertBefore(path, firstG);
-    svgLayer.insertBefore(hitPath, firstG);
-
-    hitPath.addEventListener('pointerdown', (e) => {
-      if (state.connDrag) return;
-      e.stopPropagation();
-      selectConnection(connId);
-    });
-
-    if (!state.connections.find(c => c.id === connId)) {
-      const routeMode = ROUTE_MODES.includes(forcedRouteMode) ? forcedRouteMode : 'auto';
-      state.connections.push({ id: connId, from: fromEl.id, to: toEl.id, type: connType, routeMode, label: null });
-    }
-
-    updateConnection(connId);
-    return path;
-  }
-
-  function addConnectionLabel(connId) {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.id = `label-${connId}`;
-    g.style.pointerEvents = 'none';
-
-    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('rx', '11');
-    bg.setAttribute('ry', '11');
-    bg.setAttribute('fill', 'white');
-    bg.setAttribute('stroke', '#607d8b');
-    bg.setAttribute('stroke-width', '2');
-
-    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    txt.setAttribute('text-anchor', 'middle');
-    txt.setAttribute('dominant-baseline', 'central');
-    txt.setAttribute('fill', '#37474f');
-    txt.setAttribute('font-family', "'Nunito', Arial, sans-serif");
-    txt.setAttribute('font-size', '14px');
-    txt.setAttribute('font-weight', '900');
-    txt.textContent = '';
-
-    g.appendChild(bg);
-    g.appendChild(txt);
-
-    const firstHandleG = svgLayer.querySelector('g[data-shape-id]');
-    svgLayer.insertBefore(g, firstHandleG);
-    updateConnectionLabel(connId);
-  }
-
-  function updateConnectionLabel(connId, ptsOverride) {
-    const labelGroup = document.getElementById(`label-${connId}`);
-    const conn = state.connections.find(c => c.id === connId);
-    const path = document.getElementById(connId);
-    if (!labelGroup || !conn || !path) return;
-
-    let pts = ptsOverride;
-    if (!pts) {
-      const fromEl = document.getElementById(conn.from);
-      const toEl = document.getElementById(conn.to);
-      if (!fromEl || !toEl) return;
-      pts = computeConnectionGeometry(fromEl, toEl, conn).pts;
-    }
-
-    let p = core?.getConnectionLabelPosition
-      ? core.getConnectionLabelPosition(pts, conn.type)
-      : pointAlongPolyline(pts, (conn.type === 'yes' || conn.type === 'no') ? 0.28 : 0.5);
-    if (core?.resolveConnectionLabelOverlap) {
-      const occupied = Array.from(svgLayer.querySelectorAll('g[id^="label-"]'))
-        .filter((group) => group.id !== `label-${connId}`)
-        .map((group) => {
-          const textNode = group.querySelector('text');
-          if (!textNode) return null;
-          const x = Number(textNode.getAttribute('x'));
-          const y = Number(textNode.getAttribute('y'));
-          if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-          return { x, y };
-        })
-        .filter(Boolean);
-      p = core.resolveConnectionLabelOverlap(p, conn.type, occupied);
-    }
-    const txt = labelGroup.querySelector('text');
-    const bg = labelGroup.querySelector('rect');
-    const labelText = getConnectionLabelText(conn);
-    if (!labelText) {
-      labelGroup.remove();
-      return;
-    }
-    txt.textContent = labelText;
-    bg.setAttribute('stroke', conn.type === 'yes' ? '#4caf50' : conn.type === 'no' ? '#f44336' : '#607d8b');
-    txt.setAttribute('fill', conn.type === 'yes' ? '#2e7d32' : conn.type === 'no' ? '#c62828' : '#37474f');
-    txt.setAttribute('x', p.x);
-    txt.setAttribute('y', p.y);
-    try {
-      const bbox = txt.getBBox();
-      const pad = 7;
-      bg.setAttribute('x', bbox.x - pad);
-      bg.setAttribute('y', bbox.y - pad);
-      bg.setAttribute('width', bbox.width + pad * 2);
-      bg.setAttribute('height', bbox.height + pad * 2);
-    } catch (_) { }
-  }
+  const routing = routingApi.createRouting?.({
+    core,
+    state,
+    routeModes: ROUTE_MODES,
+    mergeLead: MERGE_LEAD,
+    decisionConnOutset: DECISION_CONN_OUTSET,
+    domShapeToBox,
+    decisionVertexDistance,
+  }) || {};
+  const buildMergeContext = routing.buildMergeContext || (() => ({}));
+  const computeConnectionGeometry = routing.computeConnectionGeometry || (() => ({ d: '', pts: [] }));
+  const pointAlongPolyline = routing.pointAlongPolyline || ((points) => points?.[0] || { x: 0, y: 0 });
+
+  const connectionsDom = connectionsDomApi.createConnectionsDom?.({
+    core,
+    state,
+    svgLayer,
+    routeModes: ROUTE_MODES,
+    buildMergeContext,
+    computeConnectionGeometry,
+    pointAlongPolyline,
+    onSelectConnection: (connId) => selectConnection(connId),
+    onDuplicateConnection: () => showMessageModal('Ці фігури вже з\'єднані!'),
+  }) || {};
+  const removeConnectionDom = connectionsDom.removeConnectionDom || (() => {});
+  const updateConnection = connectionsDom.updateConnection || (() => {});
+  const updateConnectionsForShape = connectionsDom.updateConnectionsForShape || (() => {});
+  const connectShapes = connectionsDom.connectShapes || (() => null);
 
   // ================= SELECT CONNECTION =================
   function clearConnectionSelection(updateBar = true) {
@@ -1642,63 +657,9 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   });
 
   // ================= SHAPES =================
-  function getShapeSizeHint(type) {
-    if (type === 'connector') return { w: 60, h: 60 };
-    if (type === 'decision') return { w: 140, h: 140 };
-    if (type === 'start-end') return { w: 170, h: 78 };
-    if (type === 'input-output') return { w: 170, h: 84 };
-    if (type === 'subroutine') return { w: 190, h: 84 };
-    return { w: 150, h: 84 };
-  }
-
-  function rectsOverlap(a, b, gap = 14) {
-    return !(
-      (a.left + a.w + gap) < b.left ||
-      (b.left + b.w + gap) < a.left ||
-      (a.top + a.h + gap) < b.top ||
-      (b.top + b.h + gap) < a.top
-    );
-  }
-
-  function hasShapeCollision(left, top, w, h) {
-    const nextRect = { left, top, w, h };
-    return state.shapes.some(s => {
-      const el = document.getElementById(s.id);
-      if (!el) return false;
-      const rect = {
-        left: el.offsetLeft,
-        top: el.offsetTop,
-        w: el.offsetWidth || getShapeSizeHint(s.type).w,
-        h: el.offsetHeight || getShapeSizeHint(s.type).h,
-      };
-      return rectsOverlap(nextRect, rect);
-    });
-  }
-
-  function findAutoShapePosition(type, startLeft, startTop) {
-    const hint = getShapeSizeHint(type);
-    const minLeft = 20;
-    const minTop = 20;
-    const x0 = Math.max(minLeft, Math.round(startLeft));
-    const y0 = Math.max(minTop, Math.round(startTop));
-    if (!hasShapeCollision(x0, y0, hint.w, hint.h)) return { left: x0, top: y0 };
-
-    const stepX = 56;
-    const stepY = 48;
-    const maxRing = 14;
-
-    for (let ring = 1; ring <= maxRing; ring++) {
-      for (let dx = -ring; dx <= ring; dx++) {
-        for (let dy = -ring; dy <= ring; dy++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
-          const left = Math.max(minLeft, x0 + dx * stepX);
-          const top = Math.max(minTop, y0 + dy * stepY);
-          if (!hasShapeCollision(left, top, hint.w, hint.h)) return { left, top };
-        }
-      }
-    }
-    return { left: x0 + stepX, top: y0 + stepY };
-  }
+  const shapePlacement = shapePlacementApi.createShapePlacement?.({ state, snapToGrid }) || {};
+  const getShapeSizeHint = shapePlacement.getShapeSizeHint || (() => ({ w: 150, h: 84 }));
+  const resolveShapePosition = shapePlacement.resolveShapePosition || (() => ({ left: 20, top: 20 }));
 
   function createShape(type, color, textRaw, posLeft, posTop, forcedId, isRestore = false) {
     if (!forcedId) state.shapeCounter++;
@@ -1718,13 +679,9 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     const containerRect = canvasContainer.getBoundingClientRect();
     const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - 75;
     const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - 30;
-    const autoPos = (posLeft === undefined || posTop === undefined)
-      ? findAutoShapePosition(type, defaultLeft, defaultTop)
-      : null;
-    const finalLeft = posLeft !== undefined ? posLeft : snapToGrid(autoPos.left);
-    const finalTop = posTop !== undefined ? posTop : snapToGrid(autoPos.top);
-    shape.style.left = finalLeft + 'px';
-    shape.style.top = finalTop + 'px';
+    const position = resolveShapePosition(type, { posLeft, posTop, defaultLeft, defaultTop });
+    shape.style.left = position.left + 'px';
+    shape.style.top = position.top + 'px';
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -2343,17 +1300,7 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   UI.renderHelpPanelContent?.(helpPanel);
   updateSnapButton();
   updateFloatingBarOffset();
-  fileNameEl?.addEventListener('click', () => {
-    titleInput?.focus();
-    titleInput?.select();
-  });
-  fileNameEl?.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      titleInput?.focus();
-      titleInput?.select();
-    }
-  });
+  titleController.bindHeaderFocus?.();
 
 
   function toggleHelp(show) {
@@ -2456,7 +1403,7 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   function refreshAll() {
     state._refreshRaf = 0;
     state.connections.forEach(c => updateConnection(c.id));
-    Object.keys(shapeHandleGroups).forEach(updateHandleGroup);
+    updateAllHandleGroups();
     scheduleTitleUpdate();
   }
   function scheduleRefresh() {

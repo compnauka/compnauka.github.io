@@ -26,4 +26,13 @@
 - `flowcharts/js/app.js` — boot і shell-adapter (`FlowchartsApp.boot`).
 - `flowcharts/js/core.js` — доменна логіка блоків, зв'язків і моделі схеми.
 - `flowcharts/js/ui.js` — DOM/UI-шар редактора.
-- `flowcharts/js/editor.js` — orchestration шару редактора й взаємодія між core та UI.
+- `flowcharts/js/autosave.js` — локальний controller автозбереження чернетки.
+- `flowcharts/js/modals.js` — message/confirm/restore modal helpers.
+- `flowcharts/js/editor-utils.js` — чисті утиліти редактора.
+- `flowcharts/js/title.js` — синхронізація назви схеми в header/input.
+- `flowcharts/js/shape-geometry.js` — geometry helpers для фігур, handles і hit-test.
+- `flowcharts/js/shape-placement.js` — розміри фігур, collision check і авто-розміщення.
+- `flowcharts/js/handles.js` — SVG handles і temp-line controller для створення зв'язків.
+- `flowcharts/js/routing.js` — geometry/routing для стрілок.
+- `flowcharts/js/connections-dom.js` — SVG DOM для стрілок, hit-path і підписів.
+- `flowcharts/js/editor.js` — orchestration шару редактора й взаємодія між локальними модулями, core та UI.

@@ -247,6 +247,28 @@ function Assert-LocalHtmlAssetsExist {
   }
 }
 
+function Get-LocalHtmlAssetPaths {
+  param(
+    [string]$Html,
+    [string]$IndexPath
+  )
+
+  $htmlRoot = Split-Path -Parent $IndexPath
+  $assetMatches = [regex]::Matches($Html, '<(?:script|link|img|source)\b[^>]*(?:src|href)="([^"]+)"')
+  foreach ($match in $assetMatches) {
+    $assetPath = $match.Groups[1].Value
+    if (Test-ExternalOrVirtualPath $assetPath) { continue }
+
+    $assetPathWithoutQuery = ($assetPath -split '[?#]', 2)[0]
+    $resolved = [IO.Path]::GetFullPath((Join-Path $htmlRoot $assetPathWithoutQuery))
+    if (-not $resolved.StartsWith($Root, [StringComparison]::OrdinalIgnoreCase)) { continue }
+    if (-not (Test-Path $resolved -PathType Leaf)) { continue }
+
+    $relative = $resolved.Substring($Root.Length).TrimStart('\', '/').Replace('\', '/')
+    "./$relative"
+  }
+}
+
 function Assert-StaticIdReferencesExist {
   param(
     [string]$Html,
@@ -272,6 +294,47 @@ function Assert-StaticIdReferencesExist {
       if ($optional -contains $ref) { continue }
       Assert-True ($ids -contains $ref) "${relativePath}: static id reference has no matching HTML id: $ref"
     }
+  }
+}
+
+function Assert-ServiceWorkerPrecache {
+  param([string]$ServiceWorkerContent)
+
+  $precacheAssets = [regex]::Matches($ServiceWorkerContent, "['""](\./[^'""]+)['""]") |
+    ForEach-Object { $_.Groups[1].Value } |
+    Sort-Object -Unique
+
+  foreach ($asset in $precacheAssets) {
+    $localPath = Join-Path $Root ($asset.Substring(2) -replace '/', [IO.Path]::DirectorySeparatorChar)
+    Assert-True (Test-Path $localPath) "sw.js: precache asset does not exist: $asset"
+  }
+
+  $requiredAssets = New-Object System.Collections.Generic.HashSet[string]
+  foreach ($asset in @(
+    './index.html',
+    './office-shell.js',
+    './office-ui.js',
+    './offline.js',
+    './UI_TOKENS.css',
+    './shell-overrides.css',
+    './design-tokens.json',
+    './SERVICE_THEME_MAP.json'
+  )) {
+    [void]$requiredAssets.Add($asset)
+  }
+
+  foreach ($service in $services) {
+    [void]$requiredAssets.Add("./$($service.Path)/index.html")
+    $indexPath = Join-Path (Join-Path $Root $service.Path) 'index.html'
+    if (-not (Test-Path $indexPath)) { continue }
+    $html = Get-Content -Raw -Encoding UTF8 $indexPath
+    foreach ($asset in Get-LocalHtmlAssetPaths $html $indexPath) {
+      [void]$requiredAssets.Add($asset)
+    }
+  }
+
+  foreach ($asset in $requiredAssets) {
+    Assert-True ($precacheAssets -contains $asset) "sw.js: CORE_ASSETS is missing required local asset: $asset"
   }
 }
 
@@ -542,6 +605,10 @@ if (Test-Path $flowchartsIndexPath) {
   $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
   Assert-True ($flowchartsHtml -match 'src="js/core\.js"') "flowcharts/index.html: should load js/core.js as the shared domain layer"
   Assert-True ($flowchartsHtml -match 'src="js/ui\.js"') "flowcharts/index.html: should load js/ui.js as the shared UI helper layer"
+  foreach ($moduleName in @('autosave', 'modals', 'editor-utils', 'title', 'shape-geometry', 'shape-placement', 'handles', 'routing', 'connections-dom')) {
+    Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""") "flowcharts/index.html: should load js/$moduleName.js before editor.js"
+    Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""[\s\S]*src=""js/editor\.js""") "flowcharts/index.html: js/$moduleName.js must load before js/editor.js"
+  }
   Assert-True ($flowchartsHtml -match 'src="js/editor\.js"') "flowcharts/index.html: should load js/editor.js as the editor implementation"
   Assert-True ($flowchartsHtml -match 'src="js/app\.js"') "flowcharts/index.html: should load js/app.js as the shell adapter layer"
   Assert-True ($flowchartsHtml -match 'src="js/runtime\.js"') "flowcharts/index.html: should load js/runtime.js as the runtime entrypoint"
@@ -568,6 +635,26 @@ if (Test-Path $flowchartsEditorPath) {
   Assert-True ($flowchartsEditor -match 'window\.initFlowchartsEditor\s*=\s*function initFlowchartsEditor') "flowcharts/js/editor.js: editor implementation should expose initFlowchartsEditor"
   Assert-True ($flowchartsEditor -match 'Office(?:UI|Shell)\?*\.registerCommands\?*\.') "flowcharts/js/editor.js: editor implementation should register standard shell commands"
   Assert-True ($flowchartsEditor -match 'Office(?:UI|Shell)\?*\.openFilePicker\?*\.') "flowcharts/js/editor.js: editor implementation should use OfficeUI.openFilePicker or OfficeShell.openFilePicker"
+}
+
+$flowchartsModuleContracts = @{
+  'flowcharts/js/autosave.js' = 'window\.FlowchartsAutosave\s*='
+  'flowcharts/js/modals.js' = 'window\.FlowchartsModals\s*='
+  'flowcharts/js/editor-utils.js' = 'window\.FlowchartsEditorUtils\s*='
+  'flowcharts/js/title.js' = 'window\.FlowchartsTitle\s*='
+  'flowcharts/js/shape-geometry.js' = 'window\.FlowchartsShapeGeometry\s*='
+  'flowcharts/js/shape-placement.js' = 'window\.FlowchartsShapePlacement\s*='
+  'flowcharts/js/handles.js' = 'window\.FlowchartsHandles\s*='
+  'flowcharts/js/routing.js' = 'window\.FlowchartsRouting\s*='
+  'flowcharts/js/connections-dom.js' = 'window\.FlowchartsConnectionsDom\s*='
+}
+foreach ($modulePath in $flowchartsModuleContracts.Keys) {
+  $fullPath = Join-Path $Root $modulePath
+  Assert-True (Test-Path $fullPath) "flowcharts: expected local module file: $modulePath"
+  if (Test-Path $fullPath) {
+    $moduleSource = Get-Content -Raw -Encoding UTF8 $fullPath
+    Assert-True ($moduleSource -match $flowchartsModuleContracts[$modulePath]) "${modulePath}: should expose its Flowcharts module namespace"
+  }
 }
 
 $tablesIndexPath = Join-Path $Root 'tables/index.html'
@@ -684,6 +771,7 @@ if (Test-Path $swPath) {
   Assert-True ($sw -match 'event\.waitUntil\(refresh\)') "sw.js: asset refresh should continue in the background"
   Assert-True ($sw -match 'trimRuntimeCache') "sw.js: runtime cache should be pruned after writes"
   Assert-True ($sw -notmatch 'caches\.match\(request\)\.then\(cached => \{\s*if \(cached\) return cached;\s*return fetch\(request\)') "sw.js: legacy blanket cache-first handler should be removed"
+  Assert-ServiceWorkerPrecache $sw
 }
 
 $modalContractFiles = @(

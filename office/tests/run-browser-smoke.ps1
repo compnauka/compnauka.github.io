@@ -34,6 +34,30 @@ function Wait-ForServer {
   throw "Local smoke server did not start on port $PortNumber."
 }
 
+function Invoke-SmokePage {
+  param(
+    [string]$Url,
+    [string]$PassPattern,
+    [string]$Name
+  )
+
+  $dom = & $chromePath `
+    '--headless=new' `
+    '--disable-gpu' `
+    '--disable-crash-reporter' `
+    '--no-first-run' `
+    "--user-data-dir=$profilePath" `
+    '--virtual-time-budget=8000' `
+    '--dump-dom' `
+    $Url 2>&1 | Out-String
+
+  if ($dom -notmatch $PassPattern) {
+    throw "$Name failed.`n$dom"
+  }
+
+  Write-Host "$Name passed."
+}
+
 $chromePath = Get-ChromePath
 $server = $null
 $profilePath = Join-Path $PSScriptRoot ('.browser-profile-office-browser-smoke-' + [guid]::NewGuid().ToString())
@@ -49,21 +73,8 @@ try {
 
   Wait-ForServer -PortNumber $Port
 
-  $dom = & $chromePath `
-    '--headless=new' `
-    '--disable-gpu' `
-    '--disable-crash-reporter' `
-    '--no-first-run' `
-    "--user-data-dir=$profilePath" `
-    '--virtual-time-budget=8000' `
-    '--dump-dom' `
-    "http://127.0.0.1:$Port/tests/browser-smoke.html" 2>&1 | Out-String
-
-  if ($dom -notmatch 'data-smoke="passed"') {
-    throw "Browser smoke failed.`n$dom"
-  }
-
-  Write-Host 'Browser smoke passed.'
+  Invoke-SmokePage "http://127.0.0.1:$Port/tests/browser-smoke.html" 'data-smoke="passed"' 'Browser smoke'
+  Invoke-SmokePage "http://127.0.0.1:$Port/tests/flowcharts-behavior.html" 'data-flowcharts="passed"' 'Flowcharts behavior smoke'
 } finally {
   if ($server -and -not $server.HasExited) {
     Stop-Process -Id $server.Id -Force

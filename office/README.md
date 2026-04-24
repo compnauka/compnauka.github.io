@@ -79,6 +79,12 @@ powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
 powershell -ExecutionPolicy Bypass -File tests\run-browser-smoke.ps1
 ```
 
+Очищення локальних артефактів browser smoke:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\cleanup-test-artifacts.ps1
+```
+
 Тест перевіряє:
 
 - наявність обов'язкових стандартів;
@@ -93,8 +99,9 @@ powershell -ExecutionPolicy Bypass -File tests\run-browser-smoke.ps1
 - `OfficeShell.registerCommands` / `OfficeShell.runCommand` як стандартний adapter-шар для `new/open/save/undo/redo`;
 - `OfficeShell.openFilePicker` для file-open entry points;
 - modal/dropdown/statusbar контракти.
+- `sw.js` precache-контракт: `CORE_ASSETS` не має мертвих шляхів і містить локальні asset-и, які підключають HTML-файли редакторів.
 
-`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури, а `tests/run-browser-smoke.ps1` автоматизує той самий сценарій через headless Chrome. Для `slides/` єдине джерело логіки тепер `slides/js/app.js`, а `slides/js/runtime.js` лишається тонкою module-entry обгорткою для стабільного підключення в HTML. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком.
+`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури, а `tests/run-browser-smoke.ps1` автоматизує цей сценарій через headless Chrome і додатково запускає `tests/flowcharts-behavior.html` для runtime-перевірки модулів ПЛЮС Схем. Для `slides/` єдине джерело логіки тепер `slides/js/app.js`, а `slides/js/runtime.js` лишається тонкою module-entry обгорткою для стабільного підключення в HTML. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком. Директорії `tests/.browser-profile*` і файли `.browser-smoke.*` є локальними артефактами запуску; вони ігноруються git і чистяться через `tests\cleanup-test-artifacts.ps1`.
 
 Локальний сервер для першої браузерної перевірки:
 
