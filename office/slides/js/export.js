@@ -124,21 +124,22 @@ export function printPresentation(fileName, slides) {
   const printWindow = window.open('', '_blank', 'width=1200,height=800');
   if (!printWindow) return false;
 
-  const style = `
-    <style>
-      body { margin: 0; padding: 24px; background: #e5e7eb; font-family: Arial, sans-serif; }
-      .page { width: ${STAGE_WIDTH}px; height: ${STAGE_HEIGHT}px; background: #fff; position: relative; overflow: hidden; margin: 0 auto 24px; box-shadow: 0 8px 24px rgba(0,0,0,.12); page-break-after: always; }
-    </style>
-  `;
+  const doc = printWindow.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"></head><body></body></html>');
+  doc.close();
+  doc.title = fileName || 'presentation';
 
-  const pages = slides.map(slide => {
+  const style = doc.createElement('style');
+  style.textContent = `body{margin:0;padding:24px;background:#e5e7eb;font-family:Arial,sans-serif}.page{width:${STAGE_WIDTH}px;height:${STAGE_HEIGHT}px;background:#fff;position:relative;overflow:hidden;margin:0 auto 24px;box-shadow:0 8px 24px rgba(0,0,0,.12);page-break-after:always}`;
+  doc.head.appendChild(style);
+
+  slides.forEach(slide => {
     const page = createSlideSnapshot(slide);
     page.className = 'page';
-    return page.outerHTML;
-  }).join('');
+    doc.body.appendChild(doc.importNode(page, true));
+  });
 
-  printWindow.document.write(`<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>${fileName}</title>${style}</head><body>${pages}</body></html>`);
-  printWindow.document.close();
   printWindow.focus();
   printWindow.print();
   return true;

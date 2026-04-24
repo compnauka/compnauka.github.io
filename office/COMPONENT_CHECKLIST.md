@@ -15,20 +15,20 @@
 - [ ] Є `body.office-app`.
 - [ ] Є правильний `data-office-service`.
 - [ ] Підключено `UI_TOKENS.css`, локальний `style.css`, `shell-overrides.css`.
-- [ ] Підключено `office-ui.js` і `offline.js`.
+- [ ] Підключено `office-shell.js`, `office-ui.js` і `offline.js` у правильному порядку.
 - [ ] Є header, menubar, toolbar, workspace, statusbar.
 
 ## Standard Commands
 
 - [ ] Toolbar містить `new/open/save/undo/redo` у правильному порядку.
 - [ ] Toolbar action збігається з action у головному меню.
-- [ ] Редактор реєструє `OfficeUI.registerCommands`.
-- [ ] Entry points маршрутизуються через `OfficeUI.runCommand`.
+- [ ] Редактор реєструє `OfficeShell.registerCommands` або `OfficeUI.registerCommands`.
+- [ ] Entry points маршрутизуються через `OfficeShell.runCommand` або `OfficeUI.runCommand`.
 - [ ] Hotkeys не викликають стару логіку напряму, якщо вже є adapter.
 
 ## File Picker
 
-- [ ] Відкриття file input іде через `OfficeUI.openFilePicker`.
+- [ ] Відкриття file input іде через `OfficeShell.openFilePicker` або `OfficeUI.openFilePicker`.
 - [ ] Повторний вибір того самого файлу не губить `change`.
 - [ ] Валідація формату лишається локальною.
 

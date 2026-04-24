@@ -1,6 +1,7 @@
 'use strict';
 
 window.ArtMalyunky = window.ArtMalyunky || {};
+window.PaintApp = window.PaintApp || {};
 
 (() => {
   const { constants, state, utils, canvasApi, ui } = window.ArtMalyunky;
@@ -181,14 +182,28 @@ window.ArtMalyunky = window.ArtMalyunky || {};
       ui.showInfoModal('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
       return;
     }
-    printWindow.document.write(`<!DOCTYPE html><html lang="uk"><head><title>${state.fileName}</title><style>body{margin:0;padding:24px;display:grid;place-items:center;background:#f5f7fb}img{max-width:100%;height:auto;box-shadow:0 8px 28px rgba(0,0,0,.12)}</style></head><body><img src="${dataUrl}" alt="${state.fileName}"></body></html>`);
-    printWindow.document.close();
+    const doc = printWindow.document;
+    const title = state.fileName || constants.DEFAULT_FILE_NAME;
+    doc.open();
+    doc.write('<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"></head><body></body></html>');
+    doc.close();
+    doc.title = title;
+
+    const style = doc.createElement('style');
+    style.textContent = 'body{margin:0;padding:24px;display:grid;place-items:center;background:#f5f7fb}img{max-width:100%;height:auto;box-shadow:0 8px 28px rgba(0,0,0,.12)}';
+    doc.head.appendChild(style);
+
+    const image = doc.createElement('img');
+    image.src = dataUrl;
+    image.alt = title;
+    doc.body.appendChild(image);
+
     printWindow.focus();
     printWindow.print();
   }
 
   function importImage() {
-    window.OfficeUI?.openFilePicker?.(ui.elements.importFileInput) || ui.elements.importFileInput.click();
+    window.OfficeShell?.openFilePicker?.(ui.elements.importFileInput) || ui.elements.importFileInput.click();
   }
 
   function handleImportedFile(file) {
@@ -217,8 +232,21 @@ window.ArtMalyunky = window.ArtMalyunky || {};
     }
   }
 
+  function runOfficeCommand(command) {
+    return window.OfficeShell?.runCommand?.(command) || false;
+  }
+
+  function createShellCommands() {
+    return {
+      new: newDrawing,
+      open: importImage,
+      save: () => saveImage('png'),
+      undo: undo,
+      redo: redo
+    };
+  }
+
   function handleMenuAction(action) {
-    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
       case 'new-drawing':
         runOfficeCommand('new') || newDrawing();
@@ -611,19 +639,19 @@ window.ArtMalyunky = window.ArtMalyunky || {};
         switch (event.key.toLowerCase()) {
           case 'z':
             event.preventDefault();
-            window.OfficeUI?.runCommand?.('undo') || undo();
+            runOfficeCommand('undo') || undo();
             return;
           case 'y':
             event.preventDefault();
-            window.OfficeUI?.runCommand?.('redo') || redo();
+            runOfficeCommand('redo') || redo();
             return;
           case 's':
             event.preventDefault();
-            window.OfficeUI?.runCommand?.('save') || saveImage('png');
+            runOfficeCommand('save') || saveImage('png');
             return;
           case 'n':
             event.preventDefault();
-            window.OfficeUI?.runCommand?.('new') || newDrawing();
+            runOfficeCommand('new') || newDrawing();
             return;
           case 'p':
             event.preventDefault();
@@ -728,7 +756,7 @@ window.ArtMalyunky = window.ArtMalyunky || {};
     }
   }
 
-  async function init() {
+  async function initPaintEditor() {
     ui.init();
     canvasApi.init({
       canvas: ui.elements.drawingCanvas,
@@ -740,14 +768,12 @@ window.ArtMalyunky = window.ArtMalyunky || {};
     bindUi();
     await restoreDraftIfAny();
     canvasApi.drawGuides();
-    window.OfficeUI?.registerCommands?.({
-      new: newDrawing,
-      open: importImage,
-      save: () => saveImage('png'),
-      undo: undo,
-      redo: redo
-    }, { source: 'paint' });
   }
 
-  window.addEventListener('DOMContentLoaded', init);
+  window.PaintApp.boot = () =>
+    window.OfficeShell?.bootEditor?.({
+      source: 'paint',
+      commands: createShellCommands,
+      boot: initPaintEditor
+    }) ?? (window.OfficeUI?.registerCommands?.(createShellCommands(), { source: 'paint' }), initPaintEditor());
 })();

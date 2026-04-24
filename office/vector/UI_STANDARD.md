@@ -3,6 +3,7 @@
 Статус: локальний довідник редактора.
 
 Глобальні правила дивись у `../UI_INTEGRATION_GUIDE.md` та `../OFFICE_UI_STANDARD.md`.
+Архітектурну межу між shared root-шаром і локальним шаром редактора дивись у `../ARCHITECTURE.md`.
 
 ## Специфіка
 
@@ -16,3 +17,14 @@
 - Не дублювати toggle/listener для одного `data-action`.
 - File picker має йти через `OfficeUI.openFilePicker`.
 - Контекстні властивості об'єкта не мають перетворювати toolbar на важкий ribbon.
+
+## Локальна структура
+
+- `vector/index.html` — HTML shell редактора.
+- `vector/style.css` — локальні стилі редактора.
+- `vector/js/runtime.js` — стабільний runtime entrypoint без бізнес-логіки.
+- `vector/js/app.js` — boot і shell-adapter (`VectorApp.boot`).
+- `vector/js/state.js` — локальний runtime state.
+- `vector/js/ui.js` — DOM/UI-шар редактора.
+- `vector/js/editor.js` — доменна логіка векторного редактора.
+- `vector/js/constants.js`, `vector/js/utils.js` — допоміжні модулі редактора.

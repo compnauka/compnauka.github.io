@@ -6,6 +6,8 @@ import { clearDraft, loadDraft, saveDraft } from './storage.js';
 import { createBasicSlideElements, createDefaultPresentation, createImageElement, createShapeElement, createSlide, createTemplateDefinition, createTextElement } from './templates.js';
 import { $, $$, clamp, debounce, deepClone, downloadTextFile, getTextFromContentEditable, readFileAsDataURL, readFileAsText } from './utils.js';
 
+window.SlidesApp = window.SlidesApp || {};
+
 const dom = {};
 const elementDomMap = new Map();
 
@@ -135,8 +137,9 @@ function initDom() {
   dom.presentNext = $('#presentNext');
 }
 
-function boot() {
+function initSlidesEditor() {
   initDom();
+  registerOfficeCommands();
   renderColorPalette();
   loadInitialState();
   bindMenus();
@@ -145,6 +148,30 @@ function boot() {
   bindStage();
   bindPresentation();
   renderAll();
+}
+
+function registerOfficeCommands() {
+  const commandMap = {
+    new: () => confirmNewProject(),
+    open: () => openProjectPicker(),
+    save: () => saveProjectFile(),
+    undo: () => handleUndo(),
+    redo: () => handleRedo()
+  };
+  window.OfficeShell?.registerCommands?.('slides', commandMap) ||
+    window.OfficeUI?.registerCommands?.(commandMap, { source: 'slides' });
+}
+
+function runOfficeCommand(command) {
+  return window.OfficeShell?.runCommand?.(command) || false;
+}
+
+function openProjectPicker() {
+  window.OfficeShell?.openFilePicker?.(dom.projectFileInput) || dom.projectFileInput.click();
+}
+
+function openImagePicker() {
+  window.OfficeShell?.openFilePicker?.(dom.imageFileInput) || dom.imageFileInput.click();
 }
 
 function loadInitialState() {
@@ -832,27 +859,27 @@ function handleKeyboardShortcuts(event) {
     const key = event.key.toLowerCase();
     if (key === 'z') {
       event.preventDefault();
-      if (event.shiftKey) handleRedo(); else handleUndo();
+      if (event.shiftKey) runOfficeCommand('redo') || handleRedo(); else runOfficeCommand('undo') || handleUndo();
       return;
     }
     if (key === 'y') {
       event.preventDefault();
-      handleRedo();
+      runOfficeCommand('redo') || handleRedo();
       return;
     }
     if (key === 's') {
       event.preventDefault();
-      saveProjectFile();
+      runOfficeCommand('save') || saveProjectFile();
       return;
     }
     if (key === 'o') {
       event.preventDefault();
-      dom.projectFileInput.click();
+      runOfficeCommand('open') || openProjectPicker();
       return;
     }
     if (key === 'n') {
       event.preventDefault();
-      confirmNewProject();
+      runOfficeCommand('new') || confirmNewProject();
       return;
     }
     if (key === 'p') {
@@ -904,13 +931,13 @@ function handleKeyboardShortcuts(event) {
 
 function dispatchAction(action, trigger = null) {
   switch (action) {
-    case 'new-project': confirmNewProject(); break;
-    case 'open-project': dom.projectFileInput.click(); break;
-    case 'save-project': saveProjectFile(); break;
+    case 'new-project': runOfficeCommand('new') || confirmNewProject(); break;
+    case 'open-project': runOfficeCommand('open') || openProjectPicker(); break;
+    case 'save-project': runOfficeCommand('save') || saveProjectFile(); break;
     case 'export-pdf': handleExportPdf(); break;
     case 'print': handlePrint(); break;
-    case 'undo': handleUndo(); break;
-    case 'redo': handleRedo(); break;
+    case 'undo': runOfficeCommand('undo') || handleUndo(); break;
+    case 'redo': runOfficeCommand('redo') || handleRedo(); break;
     case 'copy': copySelectedElement(); break;
     case 'paste': pasteElement(); break;
     case 'duplicate-element': duplicateSelectedElement(); break;
@@ -1109,7 +1136,7 @@ function promptImageInsert() {
     confirmText: 'Додати',
     cancelText: 'Скасувати',
     onMount: () => {
-      $('#pickImageFile').addEventListener('click', () => dom.imageFileInput.click());
+      $('#pickImageFile').addEventListener('click', () => openImagePicker());
     },
     onConfirm: () => {
       const url = $('#imageUrlField').value.trim();
@@ -1431,5 +1458,8 @@ function showConfirmModal({ title, text, confirmText = 'Продовжити', o
   });
 }
 
-document.addEventListener('DOMContentLoaded', boot);
+window.SlidesApp.boot = initSlidesEditor;
+window.SlidesApp.runCommand = runOfficeCommand;
+window.SlidesApp.openProjectPicker = openProjectPicker;
+window.SlidesApp.openImagePicker = openImagePicker;
 

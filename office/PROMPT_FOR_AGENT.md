@@ -13,8 +13,8 @@
 Практичні правила:
 
 - Перед змінами перевірити наявний патерн у редакторі.
-- Для стандартних команд використовувати `OfficeUI.registerCommands` і `OfficeUI.runCommand`.
-- Для відкриття file input використовувати `OfficeUI.openFilePicker`.
+- Для стандартних команд використовувати `OfficeShell.registerCommands` / `OfficeShell.runCommand` або сумісно `OfficeUI.registerCommands` / `OfficeUI.runCommand`.
+- Для відкриття file input використовувати `OfficeShell.openFilePicker` або `OfficeUI.openFilePicker`.
 - Для modal state використовувати або делегувати в `OfficeUI.openModal` / `OfficeUI.closeModal`.
 - Не додавати браузерні тести без потреби; спершу додавати статичний contract check.
 - Після змін запускати `tests/run-tests.ps1` і `git diff --check`.

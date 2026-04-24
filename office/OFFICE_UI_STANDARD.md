@@ -41,11 +41,11 @@
 - hotkeys;
 - command adapter.
 
-Кодовий контракт: `OfficeUI.registerCommands` і `OfficeUI.runCommand`.
+Кодовий контракт: `OfficeShell.registerCommands` / `OfficeShell.runCommand` як thin adapter-шар і `OfficeUI.registerCommands` / `OfficeUI.runCommand` як базовий shared shell API.
 
 ## Файли і збереження
 
-Відкриття локального файлу має використовувати `OfficeUI.openFilePicker`.
+Відкриття локального файлу має використовувати `OfficeShell.openFilePicker` або `OfficeUI.openFilePicker`.
 
 Кожен редактор сам відповідає за:
 

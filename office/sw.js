@@ -1,13 +1,18 @@
-﻿const CACHE_VERSION = 'office-plus-v4';
+const CACHE_VERSION = 'office-plus-v6';
+const PRECACHE_NAME = `${CACHE_VERSION}-precache`;
+const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+const MAX_RUNTIME_ENTRIES = 80;
 const CORE_ASSETS = [
   './design-tokens.json',
-  './flowcharts/app-core.js',
-  './flowcharts/flowchart-core.js',
   './flowcharts/index.html',
-  './flowcharts/main.js',
+  './flowcharts/js/app.js',
+  './flowcharts/js/core.js',
+  './flowcharts/js/editor.js',
+  './flowcharts/js/runtime.js',
   './flowcharts/style.css',
-  './flowcharts/ui.js',
+  './flowcharts/js/ui.js',
   './index.html',
+  './office-shell.js',
   './office-ui.js',
   './offline.js',
   './shell-overrides.css',
@@ -15,6 +20,7 @@ const CORE_ASSETS = [
   './paint/js/app.js',
   './paint/js/canvas.js',
   './paint/js/constants.js',
+  './paint/js/runtime.js',
   './paint/js/state.js',
   './paint/js/ui.js',
   './paint/js/utils.js',
@@ -32,14 +38,14 @@ const CORE_ASSETS = [
   './slides/js/utils.js',
   './slides/style.css',
   './tables/index.html',
-  './tables/js/app-core.js',
+  './tables/js/app.js',
+  './tables/js/core.js',
   './tables/js/grid.js',
-  './tables/js/main.js',
+  './tables/js/runtime.js',
+  './tables/js/state.js',
   './tables/js/ui.js',
   './tables/js/workbook.js',
-  './tables/logic.js',
   './tables/style.css',
-  './text/app.js',
   './text/core/history.js',
   './text/core/sanitize.js',
   './text/core/selection.js',
@@ -48,6 +54,8 @@ const CORE_ASSETS = [
   './text/formats/rtf.js',
   './text/formats/txt.js',
   './text/index.html',
+  './text/js/app.js',
+  './text/js/runtime.js',
   './text/style.css',
   './text/ui/editor.js',
   './text/ui/menu.js',
@@ -61,6 +69,7 @@ const CORE_ASSETS = [
   './vector/js/app.js',
   './vector/js/constants.js',
   './vector/js/editor.js',
+  './vector/js/runtime.js',
   './vector/js/state.js',
   './vector/js/ui.js',
   './vector/js/utils.js',
@@ -76,9 +85,11 @@ const CORE_ASSETS = [
   './vendor/mammoth/mammoth.browser.min.js'
 ];
 
+const ASSET_EXTENSIONS = /\.(?:css|js|json|png|jpg|jpeg|svg|woff2|ico|webmanifest)$/i;
+
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_VERSION)
+    caches.open(PRECACHE_NAME)
       .then(cache => cache.addAll(CORE_ASSETS))
       .then(() => self.skipWaiting())
   );
@@ -87,7 +98,11 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_VERSION).map(key => caches.delete(key))))
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key !== PRECACHE_NAME && key !== RUNTIME_CACHE)
+          .map(key => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
@@ -99,16 +114,79 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
-        if (!response || response.status !== 200 || response.type !== 'basic') return response;
-        const copy = response.clone();
-        caches.open(CACHE_VERSION).then(cache => cache.put(request, copy));
-        return response;
-      });
-    })
-  );
+  if (request.mode === 'navigate' || acceptsHtml(request)) {
+    event.respondWith(networkFirstPage(request));
+    return;
+  }
+
+  if (!shouldCacheAsset(url)) return;
+
+  const refresh = refreshAsset(request);
+  event.waitUntil(refresh);
+  event.respondWith(assetFromCacheOrNetwork(request, refresh));
 });
 
+function acceptsHtml(request) {
+  return request.headers.get('accept')?.includes('text/html') === true;
+}
+
+function shouldCacheAsset(url) {
+  return ASSET_EXTENSIONS.test(url.pathname);
+}
+
+async function networkFirstPage(request) {
+  const cache = await caches.open(PRECACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (isCacheable(response)) {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+async function assetFromCacheOrNetwork(request, refreshPromise) {
+  const runtime = await caches.open(RUNTIME_CACHE);
+  const precache = await caches.open(PRECACHE_NAME);
+  const cached = await runtime.match(request) || await precache.match(request);
+  if (cached) return cached;
+
+  const refreshed = await refreshPromise;
+  if (refreshed) return refreshed;
+
+  const fallback = await precache.match(request);
+  if (fallback) return fallback;
+  throw new Error(`Asset unavailable: ${request.url}`);
+}
+
+async function refreshAsset(request) {
+  try {
+    const response = await fetch(request);
+    if (!isCacheable(response)) return response;
+
+    const runtime = await caches.open(RUNTIME_CACHE);
+    await runtime.put(request, response.clone());
+    await trimRuntimeCache(runtime);
+    return response;
+  } catch (error) {
+    return null;
+  }
+}
+
+function isCacheable(response) {
+  if (!response || response.status !== 200 || response.type !== 'basic') return false;
+  const cacheControl = response.headers.get('Cache-Control') || '';
+  return !/no-store/i.test(cacheControl);
+}
+
+async function trimRuntimeCache(cache) {
+  const keys = await cache.keys();
+  const overflow = keys.length - MAX_RUNTIME_ENTRIES;
+  if (overflow <= 0) return;
+
+  await Promise.all(keys.slice(0, overflow).map(key => cache.delete(key)));
+}

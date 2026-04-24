@@ -3,6 +3,7 @@
 ## Поточний стан
 
 Базовий shell, command adapter, file picker і modal/dropdown контракти підключені.
+Локальна структура вже вирівняна до `text/js/runtime.js -> text/js/app.js` поверх шарів `text/core/`, `text/ui/` і `text/formats/`.
 
 ## Найближчий борг
 

@@ -3,6 +3,7 @@
 ## Поточний стан
 
 Базовий shell, command adapter, toolbar/menu parity і file picker підключені.
+Локальна структура вже вирівняна до `flowcharts/js/core.js`, `flowcharts/js/ui.js`, `flowcharts/js/editor.js`, `flowcharts/js/app.js`, `flowcharts/js/runtime.js`.
 
 ## Найближчий борг
 

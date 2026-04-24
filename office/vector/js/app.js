@@ -1,6 +1,7 @@
 'use strict';
 
 window.ArtVector = window.ArtVector || {};
+window.VectorApp = window.VectorApp || {};
 
 (() => {
   const { constants, state, utils, editor, ui } = window.ArtVector;
@@ -255,7 +256,7 @@ window.ArtVector = window.ArtVector || {};
   }
 
   function openProject() {
-    window.OfficeUI?.openFilePicker?.(ui.elements.projectFileInput) || ui.elements.projectFileInput.click();
+    window.OfficeShell?.openFilePicker?.(ui.elements.projectFileInput) || ui.elements.projectFileInput.click();
   }
 
   async function handleProjectFile(file) {
@@ -299,8 +300,22 @@ window.ArtVector = window.ArtVector || {};
       const url = URL.createObjectURL(blob);
       const printWindow = window.open('', '_blank', 'width=1000,height=800');
       if (!printWindow) throw new Error('Print window blocked');
-      printWindow.document.write(`<!DOCTYPE html><html lang="uk"><head><title>${state.fileName}</title><style>body{margin:0;padding:24px;display:grid;place-items:center;background:#f3f5f8}img{max-width:100%;height:auto;box-shadow:0 10px 30px rgba(0,0,0,.12)}</style></head><body><img src="${url}" alt="${state.fileName}"></body></html>`);
-      printWindow.document.close();
+      const doc = printWindow.document;
+      const title = state.fileName || constants.DEFAULT_FILE_NAME;
+      doc.open();
+      doc.write('<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"></head><body></body></html>');
+      doc.close();
+      doc.title = title;
+
+      const style = doc.createElement('style');
+      style.textContent = 'body{margin:0;padding:24px;display:grid;place-items:center;background:#f3f5f8}img{max-width:100%;height:auto;box-shadow:0 10px 30px rgba(0,0,0,.12)}';
+      doc.head.appendChild(style);
+
+      const image = doc.createElement('img');
+      image.src = url;
+      image.alt = title;
+      doc.body.appendChild(image);
+
       printWindow.focus();
       printWindow.print();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -657,8 +672,21 @@ window.ArtVector = window.ArtVector || {};
     return target.closest ? target.closest('[data-handle]') : null;
   }
 
+  function runOfficeCommand(command) {
+    return window.OfficeShell?.runCommand?.(command) || false;
+  }
+
+  function createShellCommands() {
+    return {
+      new: newProject,
+      open: openProject,
+      save: saveProject,
+      undo: undo,
+      redo: redo
+    };
+  }
+
   function handleMenuAction(action) {
-    const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
     switch (action) {
       case 'new-project': runOfficeCommand('new') || newProject(); break;
       case 'open-project': runOfficeCommand('open') || openProject(); break;
@@ -846,12 +874,12 @@ window.ArtVector = window.ArtVector || {};
 
       if (event.ctrlKey && event.key.toLowerCase() === 'z') {
         event.preventDefault();
-        window.OfficeUI?.runCommand?.('undo') || undo();
+        runOfficeCommand('undo') || undo();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'y') {
         event.preventDefault();
-        window.OfficeUI?.runCommand?.('redo') || redo();
+        runOfficeCommand('redo') || redo();
         return;
       }
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 's') {
@@ -861,17 +889,17 @@ window.ArtVector = window.ArtVector || {};
       }
       if (event.ctrlKey && event.key.toLowerCase() === 's') {
         event.preventDefault();
-        window.OfficeUI?.runCommand?.('save') || saveProject();
+        runOfficeCommand('save') || saveProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'o') {
         event.preventDefault();
-        window.OfficeUI?.runCommand?.('open') || openProject();
+        runOfficeCommand('open') || openProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
-        window.OfficeUI?.runCommand?.('new') || newProject();
+        runOfficeCommand('new') || newProject();
         return;
       }
       if (event.ctrlKey && event.key.toLowerCase() === 'd') {
@@ -919,7 +947,7 @@ window.ArtVector = window.ArtVector || {};
     }
   }
 
-  function init() {
+  function initVectorEditor() {
     const elements = ui.init();
     editor.init(elements);
     editor.resizeArtboard(state.canvasWidth, state.canvasHeight);
@@ -928,14 +956,12 @@ window.ArtVector = window.ArtVector || {};
     bindCanvas();
     bindKeyboard();
     ui.updateAll();
-    window.OfficeUI?.registerCommands?.({
-      new: newProject,
-      open: openProject,
-      save: saveProject,
-      undo: undo,
-      redo: redo
-    }, { source: 'vector' });
   }
 
-  window.addEventListener('DOMContentLoaded', init);
+  window.VectorApp.boot = () =>
+    window.OfficeShell?.bootEditor?.({
+      source: 'vector',
+      commands: createShellCommands,
+      boot: initVectorEditor
+    }) ?? (window.OfficeUI?.registerCommands?.(createShellCommands(), { source: 'vector' }), initVectorEditor());
 })();

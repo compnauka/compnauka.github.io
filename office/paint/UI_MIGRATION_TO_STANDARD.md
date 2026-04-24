@@ -3,6 +3,7 @@
 ## Поточний стан
 
 Базовий shell, standard commands і file picker підключені.
+Локальна структура вже вирівняна до `paint/js/runtime.js -> paint/js/app.js -> service modules`.
 
 ## Найближчий борг
 

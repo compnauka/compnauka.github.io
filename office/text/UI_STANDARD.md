@@ -3,6 +3,7 @@
 Статус: локальний довідник редактора.
 
 Глобальні правила дивись у `../UI_INTEGRATION_GUIDE.md` та `../OFFICE_UI_STANDARD.md`.
+Архітектурну межу між shared root-шаром і локальним шаром редактора дивись у `../ARCHITECTURE.md`.
 
 ## Специфіка
 
@@ -17,3 +18,13 @@
 - Не перевантажувати toolbar форматуванням, яке залежить від контексту.
 - Тримати modal save/open сценарії сумісними з shared modal contract.
 - Зберегти сторінковий workspace як головну робочу модель.
+
+## Локальна структура
+
+- `text/index.html` — HTML shell редактора.
+- `text/style.css` — локальні стилі редактора.
+- `text/js/runtime.js` — стабільний runtime entrypoint без бізнес-логіки.
+- `text/js/app.js` — boot і shell-adapter (`TextApp.boot`).
+- `text/core/` — доменна логіка документа, сторінок і редактора.
+- `text/ui/` — локальний UI-шар, меню, модальні вікна й toolbar.
+- `text/formats/` — імпорт/експорт і форматні адаптери.

@@ -16,8 +16,10 @@
 ### Активні джерела правди
 
 - `README.md` — карта пакета, поточний стан і політика документації
+- `ARCHITECTURE.md` — межа між shared root-шаром і локальними шарами редакторів
 - `UI_INTEGRATION_GUIDE.md` — технічний контракт інтеграції редакторів із shared shell
 - `OFFICE_UI_STANDARD.md` — головний UI-стандарт усієї лінійки
+- `office-shell.js` — shared helper для boot, command routing і file picker у редакторах
 - `UI_TOKENS.css` — спільні CSS-токени та базові shell-компоненти
 - `design-tokens.json` — машинозчитуваний набір дизайн-токенів
 - `SERVICE_THEME_MAP.json` — карта сервісів, акцентів і структури меню
@@ -71,6 +73,12 @@
 powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
 ```
 
+Запуск headless browser smoke:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\run-browser-smoke.ps1
+```
+
 Тест перевіряє:
 
 - наявність обов'язкових стандартів;
@@ -82,11 +90,11 @@ powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
 - focusable workspace;
 - очікувані пункти меню;
 - parity між стандартними командами тулбара і головного меню;
-- `OfficeUI.registerCommands` / `OfficeUI.runCommand` для `new/open/save/undo/redo`;
-- `OfficeUI.openFilePicker` для file-open entry points;
+- `OfficeShell.registerCommands` / `OfficeShell.runCommand` як стандартний adapter-шар для `new/open/save/undo/redo`;
+- `OfficeShell.openFilePicker` для file-open entry points;
 - modal/dropdown/statusbar контракти.
 
-`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком.
+`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури, а `tests/run-browser-smoke.ps1` автоматизує той самий сценарій через headless Chrome. Для `slides/` єдине джерело логіки тепер `slides/js/app.js`, а `slides/js/runtime.js` лишається тонкою module-entry обгорткою для стабільного підключення в HTML. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком.
 
 Локальний сервер для першої браузерної перевірки:
 
@@ -104,7 +112,7 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
 Станом на зараз у пакеті вже зроблено такі базові кроки:
 
 - прибрано жорстку прив'язку runtime-маршрутів до старого брендового префікса;
-- усі 6 редакторів підключені до спільного shell-шару через `UI_TOKENS.css`, `office-ui.js` та `offline.js`;
+- усі 6 редакторів підключені до спільного shell-шару через `UI_TOKENS.css`, `office-shell.js`, `office-ui.js` та `offline.js`;
 - уніфіковано базовий app shell:
   - header
   - menubar
@@ -118,11 +126,11 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
   - `undo`
   - `redo`
 - додано command-adapter контракт:
-  - `OfficeUI.registerCommands(...)`
-  - `OfficeUI.runCommand(...)`
+- `OfficeShell.registerCommands(...)`
+- `OfficeShell.runCommand(...)`
   - parity між тулбаром, головним меню і hotkeys
 - додано shared file-picker helper:
-  - `OfficeUI.openFilePicker(inputOrId)`
+- `OfficeShell.openFilePicker(inputOrId)`
   - централізоване скидання `input.value`
 - додано спільну поведінку dropdown/menu:
   - відкриття з клавіатури

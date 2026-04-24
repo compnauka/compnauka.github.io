@@ -6,11 +6,11 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 $services = @(
-  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); CommandFiles = @('text/app.js'); FilePickerFiles = @('text/ui/menu.js', 'text/ui/editor.js'); OptionalIds = @() },
-  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/main.js'); FilePickerFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
+  @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); CommandFiles = @('text/js/app.js'); FilePickerFiles = @('text/ui/menu.js', 'text/ui/editor.js'); OptionalIds = @() },
+  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/app.js'); FilePickerFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
   @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); CommandFiles = @('paint/js/app.js'); FilePickerFiles = @('paint/js/app.js'); OptionalIds = @() },
-  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/runtime.js'); CommandFiles = @('slides/js/runtime.js'); FilePickerFiles = @('slides/js/runtime.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
-  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/app-core.js'); CommandFiles = @('flowcharts/app-core.js'); FilePickerFiles = @('flowcharts/app-core.js'); OptionalIds = @('delete-button', 'help-button') },
+  @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/app.js'); CommandFiles = @('slides/js/app.js'); FilePickerFiles = @('slides/js/app.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
+  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/js/editor.js'); CommandFiles = @('flowcharts/js/editor.js'); FilePickerFiles = @('flowcharts/js/editor.js'); OptionalIds = @('delete-button', 'help-button') },
   @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help'); ActionFiles = @('vector/js/app.js'); CommandFiles = @('vector/js/app.js'); FilePickerFiles = @('vector/js/app.js'); OptionalIds = @() }
 )
 
@@ -29,6 +29,7 @@ $requiredRootFiles = @(
   'COMPONENT_CHECKLIST.md',
   'CHANGELOG.md',
   'CHANGELOG_STANDARD.md',
+  'office-shell.js',
   'office-ui.js',
   'offline.js',
   'sw.js'
@@ -167,11 +168,11 @@ function Assert-CommandAdapterContract {
     }
   }
 
-  Assert-True ($source -match 'OfficeUI\?\.registerCommands\?\.') "$($Service.Path): must register standard commands through OfficeUI.registerCommands"
+  Assert-True ($source -match 'Office(?:UI|Shell)\?*\.registerCommands\?*\.') "$($Service.Path): must register standard commands through OfficeUI.registerCommands or OfficeShell.registerCommands"
   foreach ($command in @('new', 'open', 'save', 'undo', 'redo')) {
     Assert-True ($source -match "(^|[\{\s,])$command\s*:") "$($Service.Path): OfficeUI.registerCommands must expose command: $command"
-    $routingPattern = "(?:OfficeUI\?\.runCommand\?\.\(|runOfficeCommand\()[\s\S]{0,90}['""]$command['""]"
-    Assert-True ($source -match $routingPattern) "$($Service.Path): standard command entry points should route $command through OfficeUI.runCommand"
+    $routingPattern = "(?:Office(?:UI|Shell)\?*\.runCommand\?*\.?\(|runOfficeCommand\()[\s\S]{0,90}['""]$command['""]"
+    Assert-True ($source -match $routingPattern) "$($Service.Path): standard command entry points should route $command through OfficeUI.runCommand or OfficeShell.runCommand"
   }
 }
 
@@ -187,7 +188,7 @@ function Assert-FilePickerContract {
     }
   }
 
-  Assert-True ($source -match 'OfficeUI\?\.openFilePicker\?\.') "$($Service.Path): file-open entry points should use OfficeUI.openFilePicker"
+  Assert-True ($source -match 'Office(?:UI|Shell)\?*\.openFilePicker\?*\.') "$($Service.Path): file-open entry points should use OfficeUI.openFilePicker or OfficeShell.openFilePicker"
 }
 
 function Assert-StylesheetOrder {
@@ -371,8 +372,11 @@ foreach ($service in $services) {
 
   Assert-True ($html -match 'href="\.\./UI_TOKENS\.css"') "$($service.Path): UI_TOKENS.css is not linked before local styling"
   Assert-True ($html -match 'href="\.\./shell-overrides\.css"') "$($service.Path): shell-overrides.css is not linked after local styling"
+  Assert-True ($html -match 'src="\.\./office-shell\.js"') "$($service.Path): office-shell.js is not linked"
   Assert-True ($html -match 'src="\.\./office-ui\.js"') "$($service.Path): office-ui.js is not linked"
   Assert-True ($html -match 'src="\.\./offline\.js"') "$($service.Path): offline.js is not registered"
+  Assert-True ($html -match 'src="\.\./office-shell\.js"[\s\S]*src="\.\./office-ui\.js"') "$($service.Path): office-shell.js must be linked before office-ui.js"
+  Assert-True ($html -match 'src="\.\./office-ui\.js"[\s\S]*src="\.\./offline\.js"') "$($service.Path): office-ui.js must be linked before offline.js"
   Assert-True ($html -match '<body[^>]*class="[^"]*\boffice-app\b[^"]*"') "$($service.Path): body is missing office-app class"
   Assert-True ($html -match "<body[^>]*data-office-service=""$($service.Key)""") "$($service.Path): body has missing or wrong data-office-service"
   Assert-True ($html -match '<header[^>]*class="[^"]*\boffice-header\b[^"]*"') "$($service.Path): header is missing office-header class"
@@ -424,14 +428,21 @@ foreach ($scriptFile in $serviceScriptFiles) {
 $runtimeFiles = @(
   'paint/js/ui.js',
   'paint/js/app.js',
+  'paint/js/runtime.js',
   'vector/js/ui.js',
   'vector/js/app.js',
+  'vector/js/runtime.js',
+  'tables/js/app.js',
+  'tables/js/core.js',
   'tables/js/ui.js',
   'tables/js/grid.js',
-  'tables/js/main.js',
+  'tables/js/runtime.js',
+  'tables/js/state.js',
   'tables/js/workbook.js',
   'slides/js/app.js',
-  'slides/js/runtime.js'
+  'slides/js/runtime.js',
+  'text/js/app.js',
+  'text/js/runtime.js'
 )
 
 foreach ($runtimeFile in $runtimeFiles) {
@@ -442,6 +453,20 @@ foreach ($runtimeFile in $runtimeFiles) {
   Assert-True ($content -notmatch '\balertModal\b') "${runtimeFile}: legacy alertModal API should be renamed to modal semantics"
   Assert-True ($content -notmatch '\bshowTextPrompt\b') "${runtimeFile}: legacy showTextPrompt API should be renamed to modal semantics"
   Assert-True ($content -notmatch "confirmText\s*=\s*'Так'") "${runtimeFile}: confirm modal defaults should use specific actions, not Так"
+}
+
+$printSafetyFiles = @(
+  'paint/js/app.js',
+  'vector/js/app.js',
+  'slides/js/export.js',
+  'slides/js/app.js'
+)
+
+foreach ($printSafetyFile in $printSafetyFiles) {
+  $fullPath = Join-Path $Root $printSafetyFile
+  if (-not (Test-Path $fullPath)) { continue }
+  $content = Get-Content -Raw -Encoding UTF8 $fullPath
+  Assert-True ($content -notmatch '\.document\.write\(`<!DOCTYPE html') "${printSafetyFile}: print windows should build DOM nodes instead of injecting raw HTML templates"
 }
 
 $modalMarkupFiles = @(
@@ -463,11 +488,147 @@ foreach ($modalMarkupFile in $modalMarkupFiles) {
 $slidesIndexPath = Join-Path $Root 'slides/index.html'
 if (Test-Path $slidesIndexPath) {
   $slidesHtml = Get-Content -Raw -Encoding UTF8 $slidesIndexPath
-  Assert-True ($slidesHtml -match 'src="js/runtime\.js"') "slides/index.html: should load the checked runtime bundle"
-  Assert-True ($slidesHtml -notmatch 'src="js/app\.js"') "slides/index.html: should not load source app.js directly while runtime.js is the deployed bundle"
+  Assert-True ($slidesHtml -match 'type="module"\s+src="js/runtime\.js"|src="js/runtime\.js"\s+type="module"') "slides/index.html: should load runtime.js as the module entrypoint"
+  Assert-True ($slidesHtml -notmatch 'src="js/app\.js"') "slides/index.html: should not load source app.js directly while runtime.js stays the stable entrypoint"
+}
+
+$slidesRuntimePath = Join-Path $Root 'slides/js/runtime.js'
+if (Test-Path $slidesRuntimePath) {
+  $slidesRuntime = Get-Content -Raw -Encoding UTF8 $slidesRuntimePath
+  Assert-True ($slidesRuntime -match "import\s+['""]\.\/app\.js['""]") "slides/js/runtime.js: should be a thin wrapper that imports app.js"
+  Assert-True ($slidesRuntime -notmatch "document\.addEventListener\('DOMContentLoaded',\s*boot\)") "slides/js/runtime.js: runtime wrapper should not duplicate application boot logic"
+}
+
+$paintIndexPath = Join-Path $Root 'paint/index.html'
+if (Test-Path $paintIndexPath) {
+  $paintHtml = Get-Content -Raw -Encoding UTF8 $paintIndexPath
+  Assert-True ($paintHtml -match 'src="js/app\.js"') "paint/index.html: should load js/app.js as the local boot layer"
+  Assert-True ($paintHtml -match 'src="js/runtime\.js"') "paint/index.html: should load js/runtime.js as the runtime entrypoint"
+}
+
+$paintRuntimePath = Join-Path $Root 'paint/js/runtime.js'
+if (Test-Path $paintRuntimePath) {
+  $paintRuntime = Get-Content -Raw -Encoding UTF8 $paintRuntimePath
+  Assert-True ($paintRuntime -match 'window\.PaintApp\?\.boot\?\.') "paint/js/runtime.js: runtime should boot through PaintApp"
+}
+
+$paintAppPath = Join-Path $Root 'paint/js/app.js'
+if (Test-Path $paintAppPath) {
+  $paintApp = Get-Content -Raw -Encoding UTF8 $paintAppPath
+  Assert-True ($paintApp -match 'window\.PaintApp\s*=') "paint/js/app.js: should expose PaintApp facade"
+}
+
+$vectorIndexPath = Join-Path $Root 'vector/index.html'
+if (Test-Path $vectorIndexPath) {
+  $vectorHtml = Get-Content -Raw -Encoding UTF8 $vectorIndexPath
+  Assert-True ($vectorHtml -match 'src="js/app\.js"') "vector/index.html: should load js/app.js as the local boot layer"
+  Assert-True ($vectorHtml -match 'src="js/runtime\.js"') "vector/index.html: should load js/runtime.js as the runtime entrypoint"
+}
+
+$vectorRuntimePath = Join-Path $Root 'vector/js/runtime.js'
+if (Test-Path $vectorRuntimePath) {
+  $vectorRuntime = Get-Content -Raw -Encoding UTF8 $vectorRuntimePath
+  Assert-True ($vectorRuntime -match 'window\.VectorApp\?\.boot\?\.') "vector/js/runtime.js: runtime should boot through VectorApp"
+}
+
+$vectorAppPath = Join-Path $Root 'vector/js/app.js'
+if (Test-Path $vectorAppPath) {
+  $vectorApp = Get-Content -Raw -Encoding UTF8 $vectorAppPath
+  Assert-True ($vectorApp -match 'window\.VectorApp\s*=') "vector/js/app.js: should expose VectorApp facade"
+}
+
+$flowchartsIndexPath = Join-Path $Root 'flowcharts/index.html'
+if (Test-Path $flowchartsIndexPath) {
+  $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
+  Assert-True ($flowchartsHtml -match 'src="js/core\.js"') "flowcharts/index.html: should load js/core.js as the shared domain layer"
+  Assert-True ($flowchartsHtml -match 'src="js/ui\.js"') "flowcharts/index.html: should load js/ui.js as the shared UI helper layer"
+  Assert-True ($flowchartsHtml -match 'src="js/editor\.js"') "flowcharts/index.html: should load js/editor.js as the editor implementation"
+  Assert-True ($flowchartsHtml -match 'src="js/app\.js"') "flowcharts/index.html: should load js/app.js as the shell adapter layer"
+  Assert-True ($flowchartsHtml -match 'src="js/runtime\.js"') "flowcharts/index.html: should load js/runtime.js as the runtime entrypoint"
+  Assert-True ($flowchartsHtml -notmatch 'src="main\.js"|src="app-core\.js"|src="ui\.js"|src="flowchart-core\.js"') "flowcharts/index.html: should not load legacy root scripts after js/ migration"
+}
+
+$flowchartsAppPath = Join-Path $Root 'flowcharts/js/app.js'
+if (Test-Path $flowchartsAppPath) {
+  $flowchartsApp = Get-Content -Raw -Encoding UTF8 $flowchartsAppPath
+  Assert-True ($flowchartsApp -match 'window\.FlowchartsApp\s*=') "flowcharts/js/app.js: should expose a stable FlowchartsApp facade"
+  Assert-True ($flowchartsApp -match 'window\.FlowchartsApp\.boot\s*=') "flowcharts/js/app.js: shell adapter should expose FlowchartsApp.boot"
+  Assert-True ($flowchartsApp -match 'window\.initFlowchartsEditor\?\.\(\)') "flowcharts/js/app.js: shell adapter should delegate boot to initFlowchartsEditor"
+}
+
+$flowchartsRuntimePath = Join-Path $Root 'flowcharts/js/runtime.js'
+if (Test-Path $flowchartsRuntimePath) {
+  $flowchartsRuntime = Get-Content -Raw -Encoding UTF8 $flowchartsRuntimePath
+  Assert-True ($flowchartsRuntime -match 'window\.FlowchartsApp\?\.boot\?\.') "flowcharts/js/runtime.js: runtime should boot through the FlowchartsApp facade"
+}
+
+$flowchartsEditorPath = Join-Path $Root 'flowcharts/js/editor.js'
+if (Test-Path $flowchartsEditorPath) {
+  $flowchartsEditor = Get-Content -Raw -Encoding UTF8 $flowchartsEditorPath
+  Assert-True ($flowchartsEditor -match 'window\.initFlowchartsEditor\s*=\s*function initFlowchartsEditor') "flowcharts/js/editor.js: editor implementation should expose initFlowchartsEditor"
+  Assert-True ($flowchartsEditor -match 'Office(?:UI|Shell)\?*\.registerCommands\?*\.') "flowcharts/js/editor.js: editor implementation should register standard shell commands"
+  Assert-True ($flowchartsEditor -match 'Office(?:UI|Shell)\?*\.openFilePicker\?*\.') "flowcharts/js/editor.js: editor implementation should use OfficeUI.openFilePicker or OfficeShell.openFilePicker"
+}
+
+$tablesIndexPath = Join-Path $Root 'tables/index.html'
+if (Test-Path $tablesIndexPath) {
+  $tablesHtml = Get-Content -Raw -Encoding UTF8 $tablesIndexPath
+  Assert-True ($tablesHtml -match 'src="js/core\.js"') "tables/index.html: should load js/core.js as the shared data/calculation layer"
+  Assert-True ($tablesHtml -match 'src="js/state\.js"') "tables/index.html: should load js/state.js as the UI state layer"
+  Assert-True ($tablesHtml -match 'src="js/app\.js"') "tables/index.html: should load js/app.js as the boot and command layer"
+  Assert-True ($tablesHtml -match 'src="js/runtime\.js"') "tables/index.html: should load js/runtime.js as the runtime entrypoint"
+  Assert-True ($tablesHtml -notmatch 'src="logic\.js"|src="js/app-core\.js"|src="js/main\.js"') "tables/index.html: should not load legacy table script names after js/ migration"
+}
+
+$tablesAppPath = Join-Path $Root 'tables/js/app.js'
+if (Test-Path $tablesAppPath) {
+  $tablesApp = Get-Content -Raw -Encoding UTF8 $tablesAppPath
+  Assert-True ($tablesApp -match 'window\.TablesApp\s*=\s*window\.TablesApp\s*\|\|\s*\{\}') "tables/js/app.js: should expose a stable TablesApp facade"
+  Assert-True ($tablesApp -match 'window\.TablesApp\.boot\s*=') "tables/js/app.js: should expose TablesApp.boot as the stable boot function"
+  Assert-True ($tablesApp -match 'window\.initTablesApp\s*=\s*initTablesEditor') "tables/js/app.js: should keep initTablesApp as a compatibility alias"
+  Assert-True ($tablesApp -match 'Office(?:UI|Shell)\?*\.registerCommands\?*\.') "tables/js/app.js: should register standard shell commands"
+}
+
+$tablesRuntimePath = Join-Path $Root 'tables/js/runtime.js'
+if (Test-Path $tablesRuntimePath) {
+  $tablesRuntime = Get-Content -Raw -Encoding UTF8 $tablesRuntimePath
+  Assert-True ($tablesRuntime -match 'window\.TablesApp\?\.boot\?\.') "tables/js/runtime.js: runtime should boot through the TablesApp facade"
+}
+
+$slidesAppPath = Join-Path $Root 'slides/js/app.js'
+if (Test-Path $slidesAppPath) {
+  $slidesApp = Get-Content -Raw -Encoding UTF8 $slidesAppPath
+  Assert-True ($slidesApp -match 'window\.SlidesApp\s*=\s*window\.SlidesApp\s*\|\|\s*\{\}') "slides/js/app.js: should expose a stable SlidesApp facade"
+  Assert-True ($slidesApp -match 'window\.SlidesApp\.boot\s*=') "slides/js/app.js: should expose SlidesApp.boot as the stable boot function"
+  Assert-True ($slidesApp -notmatch 'DOMContentLoaded') "slides/js/app.js: app module should not self-boot after runtime split"
+}
+
+$slidesRuntimePath = Join-Path $Root 'slides/js/runtime.js'
+if (Test-Path $slidesRuntimePath) {
+  $slidesRuntime = Get-Content -Raw -Encoding UTF8 $slidesRuntimePath
+  Assert-True ($slidesRuntime -match 'window\.SlidesApp\?\.boot\?\.') "slides/js/runtime.js: runtime should boot through the SlidesApp facade"
 }
 
 $textIndexPath = Join-Path $Root 'text/index.html'
+if (Test-Path $textIndexPath) {
+  $textHtml = Get-Content -Raw -Encoding UTF8 $textIndexPath
+  Assert-True ($textHtml -match 'src="js/app\.js"') "text/index.html: should load js/app.js as the local boot layer"
+  Assert-True ($textHtml -match 'src="js/runtime\.js"') "text/index.html: should load js/runtime.js as the runtime entrypoint"
+  Assert-True ($textHtml -notmatch 'src="app\.js"') "text/index.html: should not load the legacy root app.js path after js/ migration"
+}
+
+$textAppPath = Join-Path $Root 'text/js/app.js'
+if (Test-Path $textAppPath) {
+  $textApp = Get-Content -Raw -Encoding UTF8 $textAppPath
+  Assert-True ($textApp -match 'window\.TextApp\s*=') "text/js/app.js: should expose TextApp facade"
+  Assert-True ($textApp -match 'Office(?:UI|Shell)\?*\.registerCommands\?*\.') "text/js/app.js: should register standard shell commands"
+}
+
+$textRuntimePath = Join-Path $Root 'text/js/runtime.js'
+if (Test-Path $textRuntimePath) {
+  $textRuntime = Get-Content -Raw -Encoding UTF8 $textRuntimePath
+  Assert-True ($textRuntime -match 'window\.TextApp\?\.boot\?\.') "text/js/runtime.js: runtime should boot through TextApp"
+}
 if (Test-Path $textIndexPath) {
   $textHtml = Get-Content -Raw -Encoding UTF8 $textIndexPath
   $textModalStart = $textHtml.IndexOf('<!-- Зберегти як -->')
@@ -476,6 +637,16 @@ if (Test-Path $textIndexPath) {
     $textModalHtml = $textHtml.Substring($textModalStart, $textModalEnd - $textModalStart)
     Assert-True ($textModalHtml -notmatch '\son(?:click|keydown)=') "text/index.html: modal inline handlers should stay migrated to data attributes and JS bindings"
   }
+}
+
+$officeShellPath = Join-Path $Root 'office-shell.js'
+if (Test-Path $officeShellPath) {
+  $officeShell = Get-Content -Raw -Encoding UTF8 $officeShellPath
+  Assert-True ($officeShell -match 'function runCommand\(') "office-shell.js: expected shared runCommand helper for editor shell adapters"
+  Assert-True ($officeShell -match 'function openFilePicker\(') "office-shell.js: expected shared openFilePicker helper for editor shell adapters"
+  Assert-True ($officeShell -match 'function registerCommands\(') "office-shell.js: expected shared registerCommands helper for editor shell adapters"
+  Assert-True ($officeShell -match 'function bootEditor\(') "office-shell.js: expected shared bootEditor helper for standard editor boot flow"
+  Assert-True ($officeShell -match 'window\.OfficeShell\s*=') "office-shell.js: helper API must be exported on window.OfficeShell"
 }
 
 $officeUiPath = Join-Path $Root 'office-ui.js'
@@ -503,13 +674,25 @@ if (Test-Path $officeUiPath) {
   Assert-True ($officeUi -match '!panel\.contains\(document\.activeElement\)') "office-ui.js: modal focus sync must avoid refocusing when focus is already inside the modal"
 }
 
+$swPath = Join-Path $Root 'sw.js'
+if (Test-Path $swPath) {
+  $sw = Get-Content -Raw -Encoding UTF8 $swPath
+  Assert-True ($sw -match 'const PRECACHE_NAME =') "sw.js: expected a dedicated precache bucket"
+  Assert-True ($sw -match 'const RUNTIME_CACHE =') "sw.js: expected a dedicated runtime cache bucket"
+  Assert-True ($sw -match 'const MAX_RUNTIME_ENTRIES =') "sw.js: runtime cache should declare an explicit size cap"
+  Assert-True ($sw -match "request\.mode === 'navigate' \|\| acceptsHtml\(request\)") "sw.js: HTML requests should use a dedicated navigation strategy"
+  Assert-True ($sw -match 'event\.waitUntil\(refresh\)') "sw.js: asset refresh should continue in the background"
+  Assert-True ($sw -match 'trimRuntimeCache') "sw.js: runtime cache should be pruned after writes"
+  Assert-True ($sw -notmatch 'caches\.match\(request\)\.then\(cached => \{\s*if \(cached\) return cached;\s*return fetch\(request\)') "sw.js: legacy blanket cache-first handler should be removed"
+}
+
 $modalContractFiles = @(
   'text/ui/modals.js',
   'tables/js/ui.js',
   'paint/js/ui.js',
   'vector/js/ui.js',
-  'slides/js/runtime.js',
-  'flowcharts/ui.js'
+  'slides/js/app.js',
+  'flowcharts/js/ui.js'
 )
 
 foreach ($modalContractFile in $modalContractFiles) {
@@ -526,7 +709,7 @@ foreach ($modalContractFile in $modalContractFiles) {
 $sharedModalApiFiles = @(
   'text/ui/modals.js',
   'tables/js/ui.js',
-  'flowcharts/ui.js'
+  'flowcharts/js/ui.js'
 )
 
 foreach ($sharedModalApiFile in $sharedModalApiFiles) {
@@ -543,7 +726,7 @@ $menuStateContractFiles = @(
   @{ File = 'paint/js/ui.js'; State = 'openPickerName' },
   @{ File = 'vector/js/ui.js'; State = 'openMenuName' },
   @{ File = 'vector/js/ui.js'; State = 'openPickerName' },
-  @{ File = 'flowcharts/ui.js'; State = 'openMenuName' }
+  @{ File = 'flowcharts/js/ui.js'; State = 'openMenuName' }
 )
 
 foreach ($contract in $menuStateContractFiles) {

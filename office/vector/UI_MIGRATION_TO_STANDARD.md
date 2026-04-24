@@ -3,6 +3,7 @@
 ## Поточний стан
 
 Базовий shell, command adapter, toolbar/menu parity і file picker підключені.
+Локальна структура вже вирівняна до `vector/js/runtime.js -> vector/js/app.js -> service modules`.
 
 ## Найближчий борг
 

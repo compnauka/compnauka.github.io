@@ -3,6 +3,7 @@
 ## Поточний стан
 
 Базовий shell, command adapter, file picker і статичний UI-аудит підключені.
+Локальна структура вже вирівняна до `tables/js/core.js`, `tables/js/state.js`, `tables/js/grid.js`, `tables/js/workbook.js`, `tables/js/ui.js`, `tables/js/app.js`, `tables/js/runtime.js`.
 
 ## Найближчий борг
 

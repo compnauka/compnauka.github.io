@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-04-24
+
+### Shared shell adapter
+
+- Додано `office-shell.js` як thin adapter-шар між локальними `js/app.js` і `window.OfficeUI`.
+- Командний роутинг, file picker і boot wiring у редакторах почали уніфікуватися через `OfficeShell.runCommand`, `OfficeShell.openFilePicker`, `OfficeShell.registerCommands`, `OfficeShell.bootEditor`.
+- Усі редактори підключають shared root-скрипти в одному порядку: `office-shell.js` -> `office-ui.js` -> `offline.js`.
+
+### Shared documentation and audit
+
+- `ARCHITECTURE.md`, `UI_INTEGRATION_GUIDE.md`, `OFFICE_UI_STANDARD.md`, `SERVICE_SHELL_BLUEPRINTS.md`, `README.md` і `APP_SHELL.html` синхронізовано з новим shared shell-контрактом.
+- Статичний аудит тепер перевіряє наявність `office-shell.js` і порядок підключення shared root-скриптів.
+
 ## 2026-04-23
 
 ### Уніфікація shell

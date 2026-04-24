@@ -3,6 +3,7 @@
 Статус: локальний довідник редактора.
 
 Глобальні правила дивись у `../UI_INTEGRATION_GUIDE.md` та `../OFFICE_UI_STANDARD.md`.
+Архітектурну межу між shared root-шаром і локальним шаром редактора дивись у `../ARCHITECTURE.md`.
 
 ## Специфіка
 
@@ -17,3 +18,15 @@
 - Не ламати ввід у клітинках глобальними hotkeys.
 - Тримати header/context menus синхронізованими з `office:overlayclose`.
 - Уникати дублювання formatting controls між toolbar і контекстом.
+
+## Локальна структура
+
+- `tables/index.html` — HTML shell редактора.
+- `tables/style.css` — локальні стилі редактора.
+- `tables/js/runtime.js` — стабільний runtime entrypoint без бізнес-логіки.
+- `tables/js/app.js` — boot і shell-adapter (`TablesApp.boot`, із сумісним alias `initTablesApp`).
+- `tables/js/core.js` — базова доменна логіка табличного редактора.
+- `tables/js/state.js` — локальний runtime state і app-core шар.
+- `tables/js/grid.js` — grid/rendering логіка.
+- `tables/js/workbook.js` — workbook-специфічні сценарії.
+- `tables/js/ui.js` — DOM/UI-шар редактора.

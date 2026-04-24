@@ -19,7 +19,7 @@
 
 ## Контракт
 
-- `new/open/save/undo/redo` мають маршрутизуватись через `OfficeUI.runCommand`.
+- `new/open/save/undo/redo` мають маршрутизуватись через `OfficeShell.runCommand` або `OfficeUI.runCommand`.
 - Комбінації, показані в меню, мають реально працювати.
 - Якщо редактор має виняток, він має бути очевидним у меню або title.
 - Hotkeys не мають спрацьовувати всередині input/textarea/select, якщо це ламає введення тексту.

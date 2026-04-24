@@ -1,18 +1,13 @@
 'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const editor = document.getElementById('editor');
-  const announcer = document.getElementById('ariaAnnouncer');
-  if (!editor) return;
+window.TextApp = window.TextApp || {};
 
-  ArtToolbar.init(editor);
-  ArtMenu.init();
-  ArtEditor.init(editor, announcer);
-  ArtHistory.init(editor);
-  ArtHistory.markSaved();
-  ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
-  ArtToolbar.updateState();
-  window.OfficeUI?.registerCommands?.({
+function runOfficeCommand(command) {
+  return window.OfficeShell?.runCommand?.(command) || false;
+}
+
+function createShellCommands() {
+  return {
     new: () => ArtMenu.dispatch('new'),
     open: () => ArtMenu.dispatch('open'),
     save: () => ArtEditor.saveAs('docx'),
@@ -24,9 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
       ArtHistory.redo();
       ArtToolbar.updateState();
     }
-  }, { source: 'text' });
+  };
+}
 
-  const runOfficeCommand = command => window.OfficeUI?.runCommand?.(command);
+window.TextApp.boot = () => {
+  const editor = document.getElementById('editor');
+  const announcer = document.getElementById('ariaAnnouncer');
+  if (!editor) return;
+
+  ArtToolbar.init(editor);
+  ArtMenu.init();
+  ArtEditor.init(editor, announcer);
+  ArtHistory.init(editor);
+  ArtHistory.markSaved();
+  ArtHistory.onButtonsUpdate(() => ArtToolbar.updateState());
+  ArtToolbar.updateState();
+  window.OfficeShell?.registerCommands?.('text', createShellCommands()) ||
+    window.OfficeUI?.registerCommands?.(createShellCommands(), { source: 'text' });
 
   document.querySelectorAll('.tb-btn').forEach(button => {
     button.addEventListener('mousedown', event => event.preventDefault());
@@ -157,4 +166,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.art = { menu: ArtMenu, editor: ArtEditor, toolbar: ArtToolbar, modals: ArtModals, history: ArtHistory };
-});
+};

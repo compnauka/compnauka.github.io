@@ -6,6 +6,7 @@
 
 У корені пакета мають існувати:
 
+- `office-shell.js`
 - `office-ui.js`
 - `UI_TOKENS.css`
 - `shell-overrides.css`
@@ -20,11 +21,12 @@
 <link rel="stylesheet" href="../UI_TOKENS.css">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="../shell-overrides.css">
+<script src="../office-shell.js" defer></script>
 <script src="../office-ui.js" defer></script>
 <script src="../offline.js" defer></script>
 ```
 
-Порядок важливий: shared tokens -> локальні стилі -> shell overrides.
+Порядок важливий: shared tokens -> локальні стилі -> shell overrides -> office-shell -> office-ui -> offline.
 
 ## 2. DOM-контракт shell
 
@@ -59,13 +61,19 @@
 
 1. Позначити кнопки тулбара через `data-office-command`.
 2. Мати відповідний пункт головного меню з тим самим локальним action.
-3. Зареєструвати локальну реалізацію через `OfficeUI.registerCommands`.
-4. Маршрутизувати тулбар, меню і hotkeys через `OfficeUI.runCommand`.
+3. Зареєструвати локальну реалізацію через `OfficeShell.registerCommands` або напряму через `OfficeUI.registerCommands`.
+4. Маршрутизувати тулбар, меню і hotkeys через `OfficeShell.runCommand` або `OfficeUI.runCommand`.
 
 Приклад:
 
 ```js
-window.OfficeUI?.registerCommands?.({
+window.OfficeShell?.registerCommands?.('vector', {
+  new: createProject,
+  open: openProject,
+  save: saveProject,
+  undo: undo,
+  redo: redo
+}) || window.OfficeUI?.registerCommands?.({
   new: createProject,
   open: openProject,
   save: saveProject,
@@ -75,7 +83,7 @@ window.OfficeUI?.registerCommands?.({
 ```
 
 ```js
-window.OfficeUI?.runCommand?.('save') || saveProject();
+window.OfficeShell?.runCommand?.('save') || saveProject();
 ```
 
 Це гарантує, що меню, тулбар і клавіатура не роз'їдуться.
@@ -85,7 +93,7 @@ window.OfficeUI?.runCommand?.('save') || saveProject();
 Відкриття локальних файлів має йти через:
 
 ```js
-OfficeUI.openFilePicker(inputOrId)
+OfficeShell.openFilePicker(inputOrId)
 ```
 
 Helper:
@@ -99,7 +107,8 @@ Helper:
 Приклад:
 
 ```js
-window.OfficeUI?.openFilePicker?.('projectFileInput') ||
+window.OfficeShell?.openFilePicker?.('projectFileInput') ||
+  window.OfficeUI?.openFilePicker?.('projectFileInput') ||
   document.getElementById('projectFileInput')?.click();
 ```
 
@@ -119,6 +128,8 @@ Shared API:
 - `OfficeUI.announce(message)`
 
 Локальні modal helpers мають делегувати в `OfficeUI.openModal/closeModal` і мати fallback.
+
+`OfficeShell` не замінює modal/status API. Він відповідає лише за boot, command routing і file picker adapter.
 
 Overlay state у локальних меню/picker має слухати подію:
 
@@ -143,9 +154,9 @@ powershell -ExecutionPolicy Bypass -File tests\run-tests.ps1
 - shell-класи;
 - порядок `new/open/save/undo/redo`;
 - parity між тулбаром і головним меню;
-- реєстрацію `OfficeUI.registerCommands`;
-- маршрутизацію стандартних команд через `OfficeUI.runCommand`;
-- використання `OfficeUI.openFilePicker`;
+- реєстрацію `OfficeShell.registerCommands` або `OfficeUI.registerCommands`;
+- маршрутизацію стандартних команд через `OfficeShell.runCommand` або `OfficeUI.runCommand`;
+- використання `OfficeShell.openFilePicker` або `OfficeUI.openFilePicker`;
 - modal/dropdown/statusbar контракти;
 - відсутність inline handlers/styles у HTML.
 

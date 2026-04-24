@@ -24,7 +24,7 @@
 - `office-statusbar`
 - toolbar-команди `new/open/save/undo/redo`
 - parity між тулбаром і головним меню
-- command adapter через `OfficeUI.registerCommands`
-- file picker через `OfficeUI.openFilePicker`
+- command adapter через `OfficeShell.registerCommands` або `OfficeUI.registerCommands`
+- file picker через `OfficeShell.openFilePicker` або `OfficeUI.openFilePicker`
 
 Деталі дивись у `UI_INTEGRATION_GUIDE.md`.

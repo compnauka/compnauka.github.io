@@ -1,5 +1,3 @@
-import './app.js';
-
 document.addEventListener('DOMContentLoaded', () => {
-  window.SlidesApp?.boot?.();
+  window.FlowchartsApp?.boot?.();
 });
