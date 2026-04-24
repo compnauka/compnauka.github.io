@@ -605,7 +605,7 @@ if (Test-Path $flowchartsIndexPath) {
   $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
   Assert-True ($flowchartsHtml -match 'src="js/core\.js"') "flowcharts/index.html: should load js/core.js as the shared domain layer"
   Assert-True ($flowchartsHtml -match 'src="js/ui\.js"') "flowcharts/index.html: should load js/ui.js as the shared UI helper layer"
-  foreach ($moduleName in @('autosave', 'modals', 'editor-utils', 'title', 'shape-geometry', 'shape-placement', 'handles', 'routing', 'connections-dom')) {
+  foreach ($moduleName in @('autosave', 'modals', 'editor-utils', 'status', 'connection-selection', 'shape-deletion', 'title', 'shape-geometry', 'shape-placement', 'handles', 'routing', 'connections-dom')) {
     Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""") "flowcharts/index.html: should load js/$moduleName.js before editor.js"
     Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""[\s\S]*src=""js/editor\.js""") "flowcharts/index.html: js/$moduleName.js must load before js/editor.js"
   }
@@ -641,6 +641,9 @@ $flowchartsModuleContracts = @{
   'flowcharts/js/autosave.js' = 'window\.FlowchartsAutosave\s*='
   'flowcharts/js/modals.js' = 'window\.FlowchartsModals\s*='
   'flowcharts/js/editor-utils.js' = 'window\.FlowchartsEditorUtils\s*='
+  'flowcharts/js/status.js' = 'window\.FlowchartsStatus\s*='
+  'flowcharts/js/connection-selection.js' = 'window\.FlowchartsConnectionSelection\s*='
+  'flowcharts/js/shape-deletion.js' = 'window\.FlowchartsShapeDeletion\s*='
   'flowcharts/js/title.js' = 'window\.FlowchartsTitle\s*='
   'flowcharts/js/shape-geometry.js' = 'window\.FlowchartsShapeGeometry\s*='
   'flowcharts/js/shape-placement.js' = 'window\.FlowchartsShapePlacement\s*='

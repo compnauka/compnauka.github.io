@@ -13,6 +13,9 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const shapeGeometryApi = window.FlowchartsShapeGeometry || {};
   const handlesApi = window.FlowchartsHandles || {};
   const shapePlacementApi = window.FlowchartsShapePlacement || {};
+  const statusApi = window.FlowchartsStatus || {};
+  const connectionSelectionApi = window.FlowchartsConnectionSelection || {};
+  const shapeDeletionApi = window.FlowchartsShapeDeletion || {};
 
   const core = window.FlowchartCore || null;
   const projectIo = window.FlowchartsProjectIO || null;
@@ -126,33 +129,6 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
 
   document.querySelectorAll('.title-hint, .color-hint').forEach((el) => el.remove());
 
-  const connectionLabelModal = document.createElement('div');
-  connectionLabelModal.id = 'connection-label-modal';
-  connectionLabelModal.className = 'modal';
-  connectionLabelModal.setAttribute('role', 'dialog');
-  connectionLabelModal.setAttribute('aria-modal', 'true');
-  connectionLabelModal.setAttribute('aria-labelledby', 'connection-label-modal-title');
-  connectionLabelModal.innerHTML = `
-    <div class="modal-content">
-      <h2 id="connection-label-modal-title"><i class="fa-solid fa-tag"></i> Підпис стрілки</h2>
-      <p>Введи довільний підпис для стрілки або залиш поле порожнім, щоб прибрати власний підпис.</p>
-      <input id="connection-label-input" type="text" maxlength="40"
-        aria-label="Підпис стрілки"
-        style="width:100%;padding:12px;border:2px solid var(--light-border);border-radius:10px;font-size:16px;font-family:var(--font);font-weight:800;margin-bottom:14px;display:block;">
-      <div class="modal-buttons">
-        <button class="modal-btn cancel-btn" id="cancel-connection-label">Скасувати</button>
-        <button class="modal-btn ok-btn" id="save-connection-label"><i class="fa-solid fa-check"></i> Зберегти</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(connectionLabelModal);
-  const connectionLabelInput = connectionLabelModal.querySelector('#connection-label-input');
-  const cancelConnectionLabelBtn = connectionLabelModal.querySelector('#cancel-connection-label');
-  const saveConnectionLabelBtn = connectionLabelModal.querySelector('#save-connection-label');
-  let pendingConnectionLabelId = null;
-
-
-
   // ================= STATE =================
   const DEFAULT_BASE_COLORS = core?.DEFAULT_BASE_COLORS
     ? { ...core.DEFAULT_BASE_COLORS }
@@ -242,22 +218,9 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     if (redoButton) redoButton.disabled = state.redoStack.length === 0;
   }
 
-  let dirtyBadgeTimer = 0;
-  let savedBadgeTimer = 0;
-
-  function setDirty(flag) {
-    if (dirtyBadgeTimer) clearTimeout(dirtyBadgeTimer);
-    if (dirtyDotEl) dirtyDotEl.style.opacity = flag ? '1' : '0';
-  }
-
-  function flashSavedBadge() {
-    if (!savedBadgeEl) return;
-    if (savedBadgeTimer) clearTimeout(savedBadgeTimer);
-    savedBadgeEl.style.opacity = '1';
-    savedBadgeTimer = setTimeout(() => {
-      savedBadgeEl.style.opacity = '0';
-    }, 1800);
-  }
+  const statusController = statusApi.createStatusController?.({ dirtyDotEl, savedBadgeEl }) || {};
+  const setDirty = statusController.setDirty || (() => {});
+  const flashSavedBadge = statusController.flashSavedBadge || (() => {});
 
   function saveSnapshot() {
     state.undoStack.push(captureSnapshot());
@@ -507,102 +470,29 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const connectShapes = connectionsDom.connectShapes || (() => null);
 
   // ================= SELECT CONNECTION =================
-  function clearConnectionSelection(updateBar = true) {
-    if (state.selectedConnId) {
-      const path = document.getElementById(state.selectedConnId);
-      if (path) {
-        path.setAttribute('stroke', path._origStroke || '#555');
-        path.setAttribute('stroke-width', '2.8');
-        path.removeAttribute('stroke-dasharray');
-        path.setAttribute('marker-end', path._origMarker || 'url(#arrowhead)');
-      }
-    }
+  const connectionSelection = connectionSelectionApi.createConnectionSelectionController?.({
+    state,
+    routeModes: ROUTE_MODES,
+    routeModeLabels: ROUTE_MODE_LABELS,
+    selectionStateEl,
+    routeButton: routeConnBtn,
+    labelButton: editConnLabelBtn,
+    editShapeButton: editShapeBtn,
+    deleteButton: toolbarDeleteBtn,
+    saveSnapshot,
+    updateConnection,
+    deselectAll,
+    hideAllHandles,
+    openModal,
+    closeModal,
+  }) || {};
+  const clearConnectionSelection = connectionSelection.clearConnectionSelection || ((updateBar = true) => {
     state.selectedConnId = null;
     if (updateBar) updateConnectionBar();
-  }
-
-  function selectConnection(connId) {
-    deselectAll(false);
-    hideAllHandles();
-    if (state.selectedConnId === connId) {
-      clearConnectionSelection();
-      return;
-    }
-    clearConnectionSelection(false);
-    state.selectedConnId = connId;
-    const path = document.getElementById(connId);
-    if (path) {
-      path._origStroke = path.getAttribute('stroke');
-      path._origMarker = path.getAttribute('marker-end');
-      path.setAttribute('stroke', '#e91e63');
-      path.setAttribute('stroke-width', '3.5');
-      path.setAttribute('stroke-dasharray', '9 4');
-      path.setAttribute('marker-end', 'url(#arrowhead-selected)');
-    }
-    updateConnectionBar();
-  }
-
-  function updateConnectionBar() {
-    const hasSelectedConn = !!state.selectedConnId;
-    const hasShapeSelected = !!state.selectedShape;
-    const hasAnySelection = hasSelectedConn || hasShapeSelected;
-
-    if (selectionStateEl) {
-      if (hasSelectedConn) {
-        const conn = state.connections.find((c) => c.id === state.selectedConnId);
-        const label = conn?.type === 'yes' ? 'стрілка Так' : conn?.type === 'no' ? 'стрілка Ні' : 'стрілка';
-        selectionStateEl.textContent = `Вибрано: ${label}`;
-        selectionStateEl.classList.remove('is-empty');
-      } else if (hasShapeSelected) {
-        const shapeData = state.shapes.find((shape) => shape.id === state.selectedShape.id);
-        const text = String(shapeData?.textRaw || '').trim() || 'блок';
-        selectionStateEl.textContent = `Вибрано: ${text}`;
-        selectionStateEl.classList.remove('is-empty');
-      } else {
-        selectionStateEl.textContent = 'Нічого не вибрано';
-        selectionStateEl.classList.add('is-empty');
-      }
-    }
-
-    if (routeConnBtn) {
-      if (!hasSelectedConn) {
-        routeConnBtn.disabled = true;
-        routeConnBtn.querySelector('span')?.replaceChildren('Маршрут');
-      } else {
-        routeConnBtn.disabled = false;
-        const conn = state.connections.find((c) => c.id === state.selectedConnId);
-        const mode = ROUTE_MODES.includes(conn?.routeMode) ? conn.routeMode : 'auto';
-        const label = `Маршрут: ${ROUTE_MODE_LABELS[mode]}`;
-        const span = routeConnBtn.querySelector('span');
-        if (span) span.textContent = label;
-        else routeConnBtn.textContent = label;
-      }
-    }
-
-    if (editConnLabelBtn) {
-      editConnLabelBtn.disabled = !hasSelectedConn;
-      const conn = hasSelectedConn ? state.connections.find((c) => c.id === state.selectedConnId) : null;
-      const labelSpan = editConnLabelBtn.querySelector('span');
-      const labelText = conn?.label ? 'Підпис: змінити' : 'Підпис';
-      if (labelSpan) labelSpan.textContent = labelText;
-    }
-
-    if (editShapeBtn) editShapeBtn.disabled = !hasShapeSelected || hasSelectedConn;
-    if (toolbarDeleteBtn) toolbarDeleteBtn.disabled = !hasAnySelection;
-  }
-
-  function cycleSelectedConnectionRouteMode() {
-    if (!state.selectedConnId) return;
-    const conn = state.connections.find(c => c.id === state.selectedConnId);
-    if (!conn) return;
-
-    const current = ROUTE_MODES.includes(conn.routeMode) ? conn.routeMode : 'auto';
-    const next = ROUTE_MODES[(ROUTE_MODES.indexOf(current) + 1) % ROUTE_MODES.length];
-    saveSnapshot();
-    conn.routeMode = next;
-    updateConnection(conn.id);
-    updateConnectionBar();
-  }
+  });
+  const selectConnection = connectionSelection.selectConnection || (() => {});
+  const updateConnectionBar = connectionSelection.updateConnectionBar || (() => {});
+  const cycleSelectedConnectionRouteMode = connectionSelection.cycleSelectedConnectionRouteMode || (() => {});
 
   function deleteConnection(connId) {
     const conn = state.connections.find(c => c.id === connId);
@@ -612,49 +502,6 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     state.connections = state.connections.filter(c => c.id !== connId);
     clearConnectionSelection();
   }
-
-  function editSelectedConnectionLabel() {
-    if (!state.selectedConnId) return;
-    const conn = state.connections.find(c => c.id === state.selectedConnId);
-    if (!conn) return;
-    pendingConnectionLabelId = conn.id;
-    if (connectionLabelInput) connectionLabelInput.value = conn.label ?? '';
-    openModal(connectionLabelModal);
-    setTimeout(() => connectionLabelInput?.focus(), 40);
-  }
-
-  function saveConnectionLabel() {
-    if (!pendingConnectionLabelId) {
-      closeModal(connectionLabelModal);
-      return;
-    }
-    const conn = state.connections.find(c => c.id === pendingConnectionLabelId);
-    pendingConnectionLabelId = null;
-    if (!conn) {
-      closeModal(connectionLabelModal);
-      return;
-    }
-    const normalized = (connectionLabelInput?.value || '').trim();
-    saveSnapshot();
-    conn.label = normalized || null;
-    updateConnection(conn.id);
-    updateConnectionBar();
-    closeModal(connectionLabelModal);
-  }
-
-  routeConnBtn?.addEventListener('click', cycleSelectedConnectionRouteMode);
-  editConnLabelBtn?.addEventListener('click', editSelectedConnectionLabel);
-  cancelConnectionLabelBtn?.addEventListener('click', () => {
-    pendingConnectionLabelId = null;
-    closeModal(connectionLabelModal);
-  });
-  saveConnectionLabelBtn?.addEventListener('click', saveConnectionLabel);
-  connectionLabelInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      saveConnectionLabel();
-    }
-  });
 
   // ================= SHAPES =================
   const shapePlacement = shapePlacementApi.createShapePlacement?.({ state, snapToGrid }) || {};
@@ -997,85 +844,28 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   });
 
   // ================= DELETE / CLEAR =================
-  function performShapeDeletion(shapeEl) {
-    if (!shapeEl) return;
-    const shapeId = shapeEl.id;
-    saveSnapshot();
-
-    const toRemove = state.connections.filter(c => c.from === shapeId || c.to === shapeId).map(c => c.id);
-    toRemove.forEach(id => removeConnectionDom(id));
-    state.connections = state.connections.filter(c => c.from !== shapeId && c.to !== shapeId);
-
-    document.getElementById(shapeId)?.remove();
-    removeHandleGroup(shapeId);
-    state.shapes = state.shapes.filter(s => s.id !== shapeId);
-
-    deselectAll(false);
-    clearConnectionSelection(false);
-    updateConnectionBar();
-    scheduleRefresh();
-  }
-
-  function shouldConfirmShapeDeletion(shapeEl) {
-    if (!shapeEl) return false;
-    const hasConnections = state.connections.some(c => c.from === shapeEl.id || c.to === shapeEl.id);
-    const shapeData = state.shapes.find(s => s.id === shapeEl.id);
-    const text = String(shapeData?.textRaw || '').trim();
-    const defaultText = String(getDefaultText(shapeData?.type, state.shapes) || '').trim();
-    const hasMeaningfulCustomText = !!text && text !== defaultText;
-    return hasConnections || hasMeaningfulCustomText;
-  }
-
-  function deleteSelected() {
-    if (state.selectedConnId) {
-      deleteConnection(state.selectedConnId);
-      return;
-    }
-    if (!state.selectedShape) return;
-
-    const shapeEl = state.selectedShape;
-    if (!shouldConfirmShapeDeletion(shapeEl)) {
-      performShapeDeletion(shapeEl);
-      return;
-    }
-
-    const linkedCount = state.connections.filter(c => c.from === shapeEl.id || c.to === shapeEl.id).length;
-    const shapeData = state.shapes.find(s => s.id === shapeEl.id);
-    const text = String(shapeData?.textRaw || '').trim();
-    const connectionWord = linkedCount === 1 ? "з'єднання" : "з'єднань";
-    const detail = linkedCount > 0
-      ? ` Буде також видалено ${linkedCount} ${connectionWord}.`
-      : '';
-    const label = text ? ` «${text.slice(0, 40)}${text.length > 40 ? '…' : ''}»` : '';
-    showConfirmModal(`Видалити блок${label}?${detail}`, () => performShapeDeletion(shapeEl));
-  }
+  const shapeDeletion = shapeDeletionApi.createShapeDeletionController?.({
+    state,
+    clearButton,
+    saveSnapshot,
+    removeConnectionDom,
+    removeHandleGroup,
+    deselectAll,
+    clearConnectionSelection,
+    updateConnectionBar,
+    scheduleRefresh,
+    getDefaultText,
+    showConfirmModal,
+    hideAllHandles,
+    updateHistoryButtons,
+    deleteConnection,
+  }) || {};
+  const deleteSelected = shapeDeletion.deleteSelected || (() => {});
 
   editShapeBtn?.addEventListener('click', () => {
     if (state.selectedShape) openTextModal(state.selectedShape);
   });
   toolbarDeleteBtn?.addEventListener('click', deleteSelected);
-
-  clearButton?.addEventListener('click', () => {
-    showConfirmModal('Очистити все полотно?', () => {
-      saveSnapshot();
-      state.shapes.forEach(s => {
-        document.getElementById(s.id)?.remove();
-        removeHandleGroup(s.id);
-      });
-      state.connections.forEach(c => removeConnectionDom(c.id));
-
-      state.shapes = [];
-      state.connections = [];
-      state.selectedShape = null;
-      state.selectedConnId = null;
-      state.shapeCounter = 0;
-      state.redoStack = [];
-      hideAllHandles();
-      updateHistoryButtons();
-      updateConnectionBar();
-      scheduleRefresh();
-    });
-  });
 
   // ================= SAVE AS IMAGE =================
   function computeShapesBounds() {

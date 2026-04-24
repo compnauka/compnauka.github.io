@@ -43,6 +43,9 @@
         'FlowchartsAutosave',
         'FlowchartsModals',
         'FlowchartsEditorUtils',
+        'FlowchartsStatus',
+        'FlowchartsConnectionSelection',
+        'FlowchartsShapeDeletion',
         'FlowchartsTitle',
         'FlowchartsShapeGeometry',
         'FlowchartsShapePlacement',
@@ -142,6 +145,85 @@
 
       connectionsDom?.removeConnectionDom?.('conn-smoke-from-smoke-to');
       addCheck(checks, 'removeConnectionDom removes path', !doc.getElementById('conn-smoke-from-smoke-to'));
+
+      const selectionState = doc.createElement('div');
+      const routeButton = doc.createElement('button');
+      routeButton.innerHTML = '<span>Маршрут</span>';
+      const labelButton = doc.createElement('button');
+      labelButton.innerHTML = '<span>Підпис</span>';
+      const editShapeButton = doc.createElement('button');
+      const deleteButton = doc.createElement('button');
+      const selectedPath = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+      selectedPath.id = 'conn-selection-smoke';
+      selectedPath.setAttribute('stroke', '#555');
+      selectedPath.setAttribute('marker-end', 'url(#arrowhead)');
+      svg.appendChild(selectedPath);
+      state.connections = [{ id: selectedPath.id, from: from.id, to: to.id, routeMode: 'auto', type: 'yes' }];
+      state.selectedConnId = null;
+      let updatedConnectionId = null;
+      let snapshots = 0;
+
+      const selection = win.FlowchartsConnectionSelection?.createConnectionSelectionController?.({
+        state,
+        routeModes: ['auto', 'vertical', 'horizontal'],
+        routeModeLabels: { auto: 'Авто', vertical: 'Вертикально', horizontal: 'Горизонтально' },
+        selectionStateEl: selectionState,
+        routeButton,
+        labelButton,
+        editShapeButton,
+        deleteButton,
+        saveSnapshot: () => { snapshots += 1; },
+        updateConnection: (id) => { updatedConnectionId = id; },
+        deselectAll: () => {},
+        hideAllHandles: () => {},
+        openModal: (modal) => modal.classList.add('active'),
+        closeModal: (modal) => modal.classList.remove('active')
+      });
+      addCheck(checks, 'connection selection factory', !!selection);
+      selection?.selectConnection?.(selectedPath.id);
+      addCheck(checks, 'connection selection state', state.selectedConnId === selectedPath.id);
+      addCheck(checks, 'connection selection highlights path', selectedPath.getAttribute('stroke') === '#e91e63');
+      addCheck(checks, 'connection toolbar enables route', routeButton.disabled === false);
+      selection?.cycleSelectedConnectionRouteMode?.();
+      addCheck(checks, 'connection route cycles mode', state.connections[0].routeMode === 'vertical');
+      addCheck(checks, 'connection route updates DOM', updatedConnectionId === selectedPath.id && snapshots === 1);
+      selection?.clearConnectionSelection?.();
+      addCheck(checks, 'connection selection clears state', state.selectedConnId === null);
+
+      const deleteState = {
+        shapes: [
+          { id: from.id, type: 'process', textRaw: 'Process' },
+          { id: to.id, type: 'decision', textRaw: 'Decision' }
+        ],
+        connections: [{ id: 'conn-delete-smoke', from: from.id, to: to.id }],
+        selectedShape: from,
+        selectedConnId: null,
+        shapeCounter: 2,
+        redoStack: ['redo']
+      };
+      const deletionCalls = { snapshots: 0, removedConnections: [], removedHandles: [], refreshed: 0 };
+      const deletion = win.FlowchartsShapeDeletion?.createShapeDeletionController?.({
+        state: deleteState,
+        saveSnapshot: () => { deletionCalls.snapshots += 1; },
+        removeConnectionDom: (id) => deletionCalls.removedConnections.push(id),
+        removeHandleGroup: (id) => deletionCalls.removedHandles.push(id),
+        deselectAll: () => { deleteState.selectedShape = null; },
+        clearConnectionSelection: () => { deleteState.selectedConnId = null; },
+        updateConnectionBar: () => {},
+        scheduleRefresh: () => { deletionCalls.refreshed += 1; },
+        getDefaultText: () => 'Process',
+        showConfirmModal: (_message, onConfirm) => onConfirm(),
+        hideAllHandles: () => {},
+        updateHistoryButtons: () => {},
+        deleteConnection: () => {}
+      });
+      addCheck(checks, 'shape deletion factory', !!deletion);
+      addCheck(checks, 'shape deletion confirms connected shape', deletion?.shouldConfirmShapeDeletion?.(from) === true);
+      deletion?.deleteSelected?.();
+      addCheck(checks, 'shape deletion removes shape state', !deleteState.shapes.some(item => item.id === from.id));
+      addCheck(checks, 'shape deletion removes linked connection state', deleteState.connections.length === 0);
+      addCheck(checks, 'shape deletion removes DOM node', !doc.getElementById(from.id));
+      addCheck(checks, 'shape deletion calls cleanup hooks', deletionCalls.snapshots === 1 && deletionCalls.removedConnections[0] === 'conn-delete-smoke' && deletionCalls.removedHandles[0] === from.id);
 
       svg.remove();
       from.remove();

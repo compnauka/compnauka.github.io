@@ -29,6 +29,9 @@
 - `flowcharts/js/autosave.js` — локальний controller автозбереження чернетки.
 - `flowcharts/js/modals.js` — message/confirm/restore modal helpers.
 - `flowcharts/js/editor-utils.js` — чисті утиліти редактора.
+- `flowcharts/js/status.js` — dirty/saved badge controller.
+- `flowcharts/js/connection-selection.js` — вибір стрілок, connection toolbar і modal для підпису.
+- `flowcharts/js/shape-deletion.js` — видалення вибраних фігур, пов'язаних стрілок і очищення полотна.
 - `flowcharts/js/title.js` — синхронізація назви схеми в header/input.
 - `flowcharts/js/shape-geometry.js` — geometry helpers для фігур, handles і hit-test.
 - `flowcharts/js/shape-placement.js` — розміри фігур, collision check і авто-розміщення.
