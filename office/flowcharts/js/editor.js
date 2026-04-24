@@ -6,6 +6,7 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const UI = window.ArtSchemesUI || {};
 
   const core = window.FlowchartCore || null;
+  const projectIo = window.FlowchartsProjectIO || null;
 
   // ================= DOM =================
   const canvas = document.getElementById('flowchart-canvas');
@@ -2193,212 +2194,65 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     };
   }
 
-  function downloadProjectJson() {
-    const project = collectProjectData();
-    const filename = sanitizeFilename(state.diagramTitle || 'блок-схема');
-    const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `${filename}.json`;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-    setDirty(false);
-    flashSavedBadge();
-  }
+  const projectBridge = projectIo?.createProjectBridge?.({
+    core,
+    state,
+    projectFileInput,
+    canvas,
+    canvasContainer,
+    titleDisplay,
+    saveTitleModal,
+    saveTitleInput,
+    saveWithTitleBtn,
+    saveWithoutTitleBtn,
+    closeSaveTitleBtn,
+    titleInput,
+    saveButton,
+    newProjectButton,
+    saveProjectButton,
+    openProjectButton,
+    clearButton,
+    collectProjectData,
+    saveSnapshot,
+    restoreSnapshot,
+    setDirty,
+    flashSavedBadge,
+    showMessageModal,
+    sanitizeFilename,
+    computeShapesBounds,
+    clearConnectionSelection,
+    hideAllHandles,
+    updateConnectionBar,
+    setZoom,
+    scheduleRefresh,
+    openModal,
+    closeModal,
+    renderTitle,
+  });
 
-  function getImportErrorMessage(error) {
-    if (error instanceof SyntaxError) {
-      return 'Файл має помилку в JSON-форматі й не може бути відкритий.';
-    }
-
-    const message = String(error?.message || '');
-    if (message.includes('Too many shapes')) {
-      return 'У файлі занадто багато блоків. Максимум 500.';
-    }
-    if (message.includes('Too many connections')) {
-      return 'У файлі занадто багато стрілок. Максимум 1000.';
-    }
-    if (message.includes('Invalid project data')) {
-      return 'Це не схоже на JSON-проєкт із цього редактора.';
-    }
-
+  const downloadProjectJson = projectBridge?.downloadProjectJson || function noopDownloadProjectJson() {};
+  const getImportErrorMessage = projectBridge?.getImportErrorMessage || function defaultGetImportErrorMessage() {
     return 'Не вдалося відкрити проєкт. Перевір JSON-файл.';
-  }
-
-  function importProjectData(rawProject) {
-    const parsed = core?.parseProject ? core.parseProject(rawProject) : (typeof rawProject === 'string' ? JSON.parse(rawProject) : rawProject);
-    saveSnapshot();
-    restoreSnapshot(parsed);
-    setDirty(false);
-    flashSavedBadge();
-    showMessageModal('Проєкт завантажено.');
-  }
-
-  function openProjectFilePicker() {
+  };
+  const importProjectData = projectBridge?.importProjectData || function noopImportProjectData() {};
+  const openProjectFilePicker = projectBridge?.openProjectFilePicker || function fallbackOpenProjectFilePicker() {
     if (window.OfficeShell?.openFilePicker?.(projectFileInput)) return;
     projectFileInput.value = '';
     projectFileInput.click();
-  }
-
-  function runOfficeCommand(command) {
+  };
+  const runOfficeCommand = projectBridge?.runOfficeCommand || function fallbackRunOfficeCommand(command) {
     return window.OfficeShell?.runCommand?.(command) || false;
-  }
-
-  function registerShellCommands(commandMap) {
+  };
+  const registerShellCommands = projectBridge?.registerShellCommands || function fallbackRegisterShellCommands(commandMap) {
     return window.OfficeShell?.registerCommands?.('flowcharts', commandMap) ||
       window.OfficeUI?.registerCommands?.(commandMap, { source: 'flowcharts' });
-  }
-
-  async function exportPng(options = {}) {
-    const suppressTitle = !!options.suppressTitle;
-    if (!window.html2canvas) {
-      showMessageModal('html2canvas не завантажився. Перевір інтернет або скрипт.');
-      return;
-    }
-    if (state.shapes.length === 0) {
-      showMessageModal('Спочатку додай хоча б один блок.');
-      return;
-    }
-
-    const prevScale = state.scale;
-    const prevScroll = { left: canvasContainer.scrollLeft, top: canvasContainer.scrollTop };
-    const prevTitleDisplay = titleDisplay ? titleDisplay.style.display : null;
-    const prevTitleLeft = titleDisplay ? titleDisplay.style.left : '';
-    const prevTitleTop = titleDisplay ? titleDisplay.style.top : '';
-    const prevTitleTransform = titleDisplay ? titleDisplay.style.transform : '';
-    const prevCanvasWidth = canvas.style.width;
-    const prevCanvasHeight = canvas.style.height;
-    if (suppressTitle && titleDisplay) titleDisplay.style.display = 'none';
-    setZoom(1);
-    await new Promise(r => setTimeout(r, 60));
-
-    let b = computeShapesBounds();
-    const pad = 90;
-    if (!suppressTitle && titleDisplay && (state.diagramTitle || '').trim()) {
-      titleDisplay.style.left = `${(b.minX + b.maxX) / 2}px`;
-      titleDisplay.style.top = `${Math.max(24, b.minY - 70)}px`;
-      titleDisplay.style.transform = 'translateX(-50%)';
-      titleDisplay.style.display = '';
-      await new Promise(r => requestAnimationFrame(r));
-      b = computeShapesBounds();
-    }
-
-    const exportRight = Math.max(canvas.offsetWidth, b.maxX + pad);
-    const exportBottom = Math.max(canvas.offsetHeight, b.maxY + pad);
-    canvas.style.width = `${Math.ceil(exportRight)}px`;
-    canvas.style.height = `${Math.ceil(exportBottom)}px`;
-    await new Promise(r => requestAnimationFrame(r));
-
-    const x = Math.max(0, b.minX - pad);
-    const y = Math.max(0, b.minY - pad);
-    const w = Math.max(1, Math.ceil((b.maxX - b.minX) + pad * 2));
-    const h = Math.max(1, Math.ceil((b.maxY - b.minY) + pad * 2));
-
-    const prevSel = state.selectedShape;
-    prevSel?.classList.remove('selected');
-    clearConnectionSelection(false);
-    hideAllHandles();
-    updateConnectionBar();
-
-    try {
-      const c = await window.html2canvas(canvas, {
-        backgroundColor: '#fafbff',
-        x, y, width: w, height: h,
-        scale: 2,
-        useCORS: true,
-      });
-      const filename = sanitizeFilename(state.diagramTitle || 'блок-схема');
-      const link = document.createElement('a');
-      link.download = `${filename}.png`;
-      link.href = c.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setDirty(false);
-      flashSavedBadge();
-    } catch (err) {
-      console.error(err);
-      showMessageModal('Не вдалося зберегти картинку. Спробуй інший браузер або зменши масштаб.');
-    } finally {
-      if (suppressTitle && titleDisplay) titleDisplay.style.display = prevTitleDisplay;
-      if (!suppressTitle && titleDisplay) {
-        titleDisplay.style.left = prevTitleLeft;
-        titleDisplay.style.top = prevTitleTop;
-        titleDisplay.style.transform = prevTitleTransform;
-        titleDisplay.style.display = prevTitleDisplay;
-      }
-      canvas.style.width = prevCanvasWidth;
-      canvas.style.height = prevCanvasHeight;
-      if (prevSel) prevSel.classList.add('selected');
-      setZoom(prevScale);
-      canvasContainer.scrollLeft = prevScroll.left;
-      canvasContainer.scrollTop = prevScroll.top;
-      scheduleRefresh();
-    }
-  }
-
-  function openSaveTitlePrompt() {
-    if (!saveTitleModal) {
-      exportPng();
-      return;
-    }
-    if (saveTitleInput) {
-      const current = (state.diagramTitle || titleInput?.value || '').trim();
-      saveTitleInput.value = current;
-    }
-    openModal(saveTitleModal);
-    setTimeout(() => saveTitleInput?.focus(), 40);
-  }
-
-  saveWithTitleBtn?.addEventListener('click', () => {
-    const title = (saveTitleInput?.value || '').trim();
-    if (!title) {
-      showMessageModal('Введи назву або натисни "Зберегти без назви".');
-      return;
-    }
-    state.diagramTitle = title;
-    if (titleInput) titleInput.value = title;
-    renderTitle();
-    closeModal(saveTitleModal);
+  };
+  const exportPng = projectBridge?.exportPng || (async function noopExportPng() {});
+  const openSaveTitlePrompt = projectBridge?.openSaveTitlePrompt || function fallbackOpenSaveTitlePrompt() {
     exportPng();
-  });
+  };
 
-  saveWithoutTitleBtn?.addEventListener('click', () => {
-    closeModal(saveTitleModal);
-    exportPng({ suppressTitle: true });
-  });
-
-  closeSaveTitleBtn?.addEventListener('click', () => closeModal(saveTitleModal));
-
-  saveButton?.addEventListener('click', openSaveTitlePrompt);
-  newProjectButton?.addEventListener('click', () => clearButton?.click());
-  saveProjectButton?.addEventListener('click', downloadProjectJson);
-  openProjectButton?.addEventListener('click', openProjectFilePicker);
-  projectFileInput.addEventListener('change', () => {
-    const file = projectFileInput.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showMessageModal('Файл занадто великий. Максимум 2 МБ.');
-      projectFileInput.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        importProjectData(String(reader.result || ''));
-      } catch (error) {
-        console.error(error);
-        showMessageModal(getImportErrorMessage(error));
-      }
-    };
-    reader.onerror = () => {
-      showMessageModal('Не вдалося прочитати файл проєкту.');
-    };
-    reader.readAsText(file, 'utf-8');
-  });
+  projectBridge?.bindProjectControls?.();
 
   // ================= MENUS =================
   function triggerShapeButton(type) {

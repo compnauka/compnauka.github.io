@@ -8,6 +8,7 @@ const CORE_ASSETS = [
   './flowcharts/js/app.js',
   './flowcharts/js/core.js',
   './flowcharts/js/editor.js',
+  './flowcharts/js/project-io.js',
   './flowcharts/js/runtime.js',
   './flowcharts/style.css',
   './flowcharts/js/ui.js',
