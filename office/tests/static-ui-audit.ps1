@@ -10,7 +10,7 @@ $services = @(
   @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/app.js'); FilePickerFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
   @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); CommandFiles = @('paint/js/app.js'); FilePickerFiles = @('paint/js/app.js'); OptionalIds = @() },
   @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/app.js'); CommandFiles = @('slides/js/app.js'); FilePickerFiles = @('slides/js/app.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
-  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/js/editor.js'); CommandFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js'); FilePickerFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js'); OptionalIds = @('delete-button', 'help-button') },
+  @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/js/editor.js', 'flowcharts/js/menu-actions.js'); CommandFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js', 'flowcharts/js/menu-actions.js'); FilePickerFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js'); OptionalIds = @('delete-button', 'help-button') },
   @{ Key = 'vector'; Path = 'vector'; Menu = @('file', 'edit', 'insert', 'format', 'help'); ActionFiles = @('vector/js/app.js'); CommandFiles = @('vector/js/app.js'); FilePickerFiles = @('vector/js/app.js'); OptionalIds = @() }
 )
 
@@ -605,7 +605,7 @@ if (Test-Path $flowchartsIndexPath) {
   $flowchartsHtml = Get-Content -Raw -Encoding UTF8 $flowchartsIndexPath
   Assert-True ($flowchartsHtml -match 'src="js/core\.js"') "flowcharts/index.html: should load js/core.js as the shared domain layer"
   Assert-True ($flowchartsHtml -match 'src="js/ui\.js"') "flowcharts/index.html: should load js/ui.js as the shared UI helper layer"
-  foreach ($moduleName in @('autosave', 'modals', 'editor-utils', 'status', 'connection-selection', 'shape-deletion', 'title', 'shape-geometry', 'shape-placement', 'handles', 'routing', 'connections-dom')) {
+  foreach ($moduleName in @('autosave', 'modals', 'editor-utils', 'status', 'colors', 'connection-selection', 'shape-selection', 'shape-deletion', 'shape-text', 'shape-interactions', 'shape-factory', 'viewport', 'keyboard-shortcuts', 'history', 'menu-actions', 'flow-actions', 'title', 'shape-geometry', 'shape-placement', 'handles', 'routing', 'connections-dom')) {
     Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""") "flowcharts/index.html: should load js/$moduleName.js before editor.js"
     Assert-True ($flowchartsHtml -match "src=""js/$moduleName\.js""[\s\S]*src=""js/editor\.js""") "flowcharts/index.html: js/$moduleName.js must load before js/editor.js"
   }
@@ -642,8 +642,18 @@ $flowchartsModuleContracts = @{
   'flowcharts/js/modals.js' = 'window\.FlowchartsModals\s*='
   'flowcharts/js/editor-utils.js' = 'window\.FlowchartsEditorUtils\s*='
   'flowcharts/js/status.js' = 'window\.FlowchartsStatus\s*='
+  'flowcharts/js/colors.js' = 'window\.FlowchartsColors\s*='
   'flowcharts/js/connection-selection.js' = 'window\.FlowchartsConnectionSelection\s*='
+  'flowcharts/js/shape-selection.js' = 'window\.FlowchartsShapeSelection\s*='
   'flowcharts/js/shape-deletion.js' = 'window\.FlowchartsShapeDeletion\s*='
+  'flowcharts/js/shape-text.js' = 'window\.FlowchartsShapeText\s*='
+  'flowcharts/js/shape-interactions.js' = 'window\.FlowchartsShapeInteractions\s*='
+  'flowcharts/js/shape-factory.js' = 'window\.FlowchartsShapeFactory\s*='
+  'flowcharts/js/viewport.js' = 'window\.FlowchartsViewport\s*='
+  'flowcharts/js/keyboard-shortcuts.js' = 'window\.FlowchartsKeyboardShortcuts\s*='
+  'flowcharts/js/history.js' = 'window\.FlowchartsHistory\s*='
+  'flowcharts/js/menu-actions.js' = 'window\.FlowchartsMenuActions\s*='
+  'flowcharts/js/flow-actions.js' = 'window\.FlowchartsFlowActions\s*='
   'flowcharts/js/title.js' = 'window\.FlowchartsTitle\s*='
   'flowcharts/js/shape-geometry.js' = 'window\.FlowchartsShapeGeometry\s*='
   'flowcharts/js/shape-placement.js' = 'window\.FlowchartsShapePlacement\s*='
@@ -665,9 +675,30 @@ if (Test-Path $tablesIndexPath) {
   $tablesHtml = Get-Content -Raw -Encoding UTF8 $tablesIndexPath
   Assert-True ($tablesHtml -match 'src="js/core\.js"') "tables/index.html: should load js/core.js as the shared data/calculation layer"
   Assert-True ($tablesHtml -match 'src="js/state\.js"') "tables/index.html: should load js/state.js as the UI state layer"
+  Assert-True ($tablesHtml -match 'src="js/structure\.js"') "tables/index.html: should load js/structure.js as the sheet structure layer"
+  Assert-True ($tablesHtml -match 'src="js/grid\.js"[\s\S]*src="js/structure\.js"[\s\S]*src="js/workbook\.js"') "tables/index.html: js/structure.js should load after grid.js and before workbook.js"
+  Assert-True ($tablesHtml -match 'src="js/charts\.js"') "tables/index.html: should load js/charts.js as the chart layer"
+  Assert-True ($tablesHtml -match 'src="js/workbook\.js"[\s\S]*src="js/charts\.js"[\s\S]*src="js/ui\.js"') "tables/index.html: js/charts.js should load after workbook.js and before ui.js"
   Assert-True ($tablesHtml -match 'src="js/app\.js"') "tables/index.html: should load js/app.js as the boot and command layer"
   Assert-True ($tablesHtml -match 'src="js/runtime\.js"') "tables/index.html: should load js/runtime.js as the runtime entrypoint"
   Assert-True ($tablesHtml -notmatch 'src="logic\.js"|src="js/app-core\.js"|src="js/main\.js"') "tables/index.html: should not load legacy table script names after js/ migration"
+}
+
+$tablesStructurePath = Join-Path $Root 'tables/js/structure.js'
+if (Test-Path $tablesStructurePath) {
+  $tablesStructure = Get-Content -Raw -Encoding UTF8 $tablesStructurePath
+  Assert-True ($tablesStructure -match 'window\.TablesStructure\s*=') "tables/js/structure.js: should expose a stable TablesStructure namespace"
+  foreach ($structureFunction in @('insertRow', 'deleteRow', 'insertColumn', 'deleteColumn', 'updateInsertHover')) {
+    Assert-True ($tablesStructure -match "function $structureFunction\(") "tables/js/structure.js: should own $structureFunction"
+  }
+}
+
+$tablesChartPath = Join-Path $Root 'tables/js/charts.js'
+if (Test-Path $tablesChartPath) {
+  $tablesCharts = Get-Content -Raw -Encoding UTF8 $tablesChartPath
+  Assert-True ($tablesCharts -match 'window\.TablesCharts\s*=') "tables/js/charts.js: should expose a stable TablesCharts namespace"
+  Assert-True ($tablesCharts -match 'function makeChart\(') "tables/js/charts.js: should own chart creation from selected ranges"
+  Assert-True ($tablesCharts -match 'function setChartType\(') "tables/js/charts.js: should own chart type switching"
 }
 
 $tablesAppPath = Join-Path $Root 'tables/js/app.js'

@@ -162,7 +162,7 @@ function initMenusAndToolbar() {
       btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
     });
     document.querySelectorAll('[data-chart-type]').forEach(btn => {
-      btn.addEventListener('click', () => setChartType(btn.dataset.chartType));
+      btn.addEventListener('click', () => TablesCharts.setChartType(btn.dataset.chartType));
     });
 
     menusInitialized = true;
@@ -477,44 +477,44 @@ function dispatchUiAction(action) {
     case 'paste': navigator.clipboard?.readText().then(text => { if (text) pasteToGrid(text, active.c, active.r); }).catch(() => showInfoModal('Браузер не дозволив вставлення з буфера обміну.')); break;
     case 'clear-selection': deleteSelection(); break;
     case 'insert-row-above': {
-      const target = headerMenuState?.type === 'row' ? headerMenuState.index : (getWholeRowSelectionRange()?.start || active.r);
-      insertRow(target);
+      const target = headerMenuState?.type === 'row' ? headerMenuState.index : (TablesStructure.getWholeRowSelectionRange()?.start || active.r);
+      TablesStructure.insertRow(target);
       closeHeaderContextMenu();
       break;
     }
     case 'insert-row-below': {
-      const range = getWholeRowSelectionRange();
+      const range = TablesStructure.getWholeRowSelectionRange();
       const target = headerMenuState?.type === 'row' ? headerMenuState.index + 1 : ((range?.end || active.r) + 1);
-      insertRow(target);
+      TablesStructure.insertRow(target);
       closeHeaderContextMenu();
       break;
     }
     case 'delete-row': {
-      const range = headerMenuState?.type === 'row' ? { start: headerMenuState.index, end: headerMenuState.index } : (getWholeRowSelectionRange() || { start: active.r, end: active.r });
-      deleteRow(range.start, range.end - range.start + 1);
+      const range = headerMenuState?.type === 'row' ? { start: headerMenuState.index, end: headerMenuState.index } : (TablesStructure.getWholeRowSelectionRange() || { start: active.r, end: active.r });
+      TablesStructure.deleteRow(range.start, range.end - range.start + 1);
       closeHeaderContextMenu();
       break;
     }
     case 'insert-col-left': {
-      const target = headerMenuState?.type === 'col' ? headerMenuState.index : (getWholeColSelectionRange()?.start ?? active.c);
-      insertColumn(target);
+      const target = headerMenuState?.type === 'col' ? headerMenuState.index : (TablesStructure.getWholeColSelectionRange()?.start ?? active.c);
+      TablesStructure.insertColumn(target);
       closeHeaderContextMenu();
       break;
     }
     case 'insert-col-right': {
-      const range = getWholeColSelectionRange();
+      const range = TablesStructure.getWholeColSelectionRange();
       const target = headerMenuState?.type === 'col' ? headerMenuState.index + 1 : ((range?.end ?? active.c) + 1);
-      insertColumn(target);
+      TablesStructure.insertColumn(target);
       closeHeaderContextMenu();
       break;
     }
     case 'delete-col': {
-      const range = headerMenuState?.type === 'col' ? { start: headerMenuState.index, end: headerMenuState.index } : (getWholeColSelectionRange() || { start: active.c, end: active.c });
-      deleteColumn(range.start, range.end - range.start + 1);
+      const range = headerMenuState?.type === 'col' ? { start: headerMenuState.index, end: headerMenuState.index } : (TablesStructure.getWholeColSelectionRange() || { start: active.c, end: active.c });
+      TablesStructure.deleteColumn(range.start, range.end - range.start + 1);
       closeHeaderContextMenu();
       break;
     }
-    case 'chart': makeChart(); break;
+    case 'chart': TablesCharts.makeChart(); break;
     case 'style-bold': applyToggleClass('style-text-bold'); break;
     case 'style-italic': applyToggleClass('style-text-italic'); break;
     case 'style-underline': applyToggleClass('style-text-underline'); break;

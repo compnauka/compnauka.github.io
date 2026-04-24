@@ -4,7 +4,7 @@
 
 Базовий shell, command adapter, toolbar/menu parity і file picker підключені.
 Локальна структура вже вирівняна до `flowcharts/js/core.js`, `flowcharts/js/ui.js`, `flowcharts/js/editor.js`, `flowcharts/js/app.js`, `flowcharts/js/runtime.js`.
-Частину колишнього монолітного `editor.js` винесено в локальні модулі: `autosave.js`, `modals.js`, `editor-utils.js`, `status.js`, `connection-selection.js`, `shape-deletion.js`, `title.js`, `shape-geometry.js`, `shape-placement.js`, `handles.js`, `routing.js`, `connections-dom.js`.
+Частину колишнього монолітного `editor.js` винесено в локальні модулі: `autosave.js`, `modals.js`, `editor-utils.js`, `status.js`, `colors.js`, `connection-selection.js`, `shape-selection.js`, `shape-deletion.js`, `shape-text.js`, `shape-interactions.js`, `shape-factory.js`, `viewport.js`, `keyboard-shortcuts.js`, `history.js`, `menu-actions.js`, `flow-actions.js`, `title.js`, `shape-geometry.js`, `shape-placement.js`, `handles.js`, `routing.js`, `connections-dom.js`.
 
 ## Найближчий борг
 

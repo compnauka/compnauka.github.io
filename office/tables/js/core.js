@@ -267,6 +267,63 @@ function countNonEmptyArgs(args) {
   }).length;
 }
 
+function countNumericArgs(args) {
+  return args.filter(arg => {
+    const src = String(arg || '').trim();
+    if (src === '') return false;
+
+    if (isCellReference(src)) {
+      const raw = resolveRawCellValue(src);
+      if (raw === undefined || raw === null || String(raw).trim() === '') return false;
+      if (String(raw).startsWith('=')) {
+        try {
+          return Number.isFinite(Number(evaluateFormula(String(raw).substring(1))));
+        } catch (_) {
+          return false;
+        }
+      }
+      return Number.isFinite(Number(String(raw).replace(',', '.')));
+    }
+
+    try {
+      return Number.isFinite(Number(resolveExpressionValue(src)));
+    } catch (_) {
+      return false;
+    }
+  }).length;
+}
+
+function resolveExpressionValue(value) {
+  const src = String(value || '').trim();
+  if (src === '') return 0;
+  if (isCellReference(src)) return resolveValue(src);
+  if (!isNaN(src)) return parseFloat(src);
+
+  const expanded = src
+    .replace(/(\d+(?:\.\d+)?)%/g, (m, n) => String(parseFloat(n) / 100))
+    .replace(/\b([A-Z]+)(\d+)\b/g, (m, c, r) => String(resolveValue(c + r)));
+  return safeMathEval(expanded);
+}
+
+function evaluateCondition(condition) {
+  const src = String(condition || '').trim();
+  if (src === '') return false;
+
+  const match = /^(.+?)(>=|<=|<>|!=|=|>|<)(.+)$/.exec(src);
+  if (!match) return resolveExpressionValue(src) !== 0;
+
+  const left = resolveExpressionValue(match[1]);
+  const op = match[2];
+  const right = resolveExpressionValue(match[3]);
+
+  if (op === '>=') return left >= right;
+  if (op === '<=') return left <= right;
+  if (op === '>') return left > right;
+  if (op === '<') return left < right;
+  if (op === '=') return left === right;
+  return left !== right;
+}
+
 function evaluateFormula(expr) {
   calcDepth++;
   if (calcDepth > MAX_CALC_DEPTH) {
@@ -287,11 +344,33 @@ function evaluateFormula(expr) {
     while (changed && guard++ < 30) {
       changed = false;
 
+      clean = clean.replace(/\b(AND|OR)\(([^()]*)\)/g, (m, func, args) => {
+        changed = true;
+        const rawArgs = splitFormulaArgs(args);
+        if (rawArgs.length === 0) return '0';
+        if (func === 'AND') return rawArgs.every(evaluateCondition) ? '1' : '0';
+        return rawArgs.some(evaluateCondition) ? '1' : '0';
+      });
+
+      clean = clean.replace(/\bNOT\(([^()]*)\)/g, (m, args) => {
+        changed = true;
+        return evaluateCondition(args) ? '0' : '1';
+      });
+
+      clean = clean.replace(/\bIF\(([^()]*)\)/g, (m, args) => {
+        changed = true;
+        const parts = splitFormulaArgs(args);
+        const condition = parts[0] ?? '0';
+        const whenTrue = parts[1] ?? '1';
+        const whenFalse = parts[2] ?? '0';
+        return String(resolveExpressionValue(evaluateCondition(condition) ? whenTrue : whenFalse));
+      });
+
       clean = clean.replace(/\b(SUM|AVG|MAX|MIN|COUNT|COUNTA|MEDIAN)\(([^()]*)\)/g, (m, func, args) => {
         changed = true;
         const rawArgs = splitFormulaArgs(args);
         const vals = rawArgs.map(a => resolveValue(a.trim())).filter(v => isFinite(v));
-        if (func === 'COUNT') return String(vals.length);
+        if (func === 'COUNT') return String(countNumericArgs(rawArgs));
         if (func === 'COUNTA') return String(countNonEmptyArgs(rawArgs));
         if (vals.length === 0) return '0';
         if (func === 'SUM') return String(vals.reduce((a, b) => a + b, 0));
@@ -306,10 +385,12 @@ function evaluateFormula(expr) {
         return '0';
       });
 
-      clean = clean.replace(/\b(ABS|SQRT)\(([^()]*)\)/g, (m, func, args) => {
+      clean = clean.replace(/\b(ABS|SQRT|INT|FLOOR|CEIL|CEILING)\(([^()]*)\)/g, (m, func, args) => {
         changed = true;
         const val = resolveValue(splitFormulaArgs(args)[0]);
         if (func === 'ABS') return String(Math.abs(val));
+        if (func === 'INT' || func === 'FLOOR') return String(Math.floor(val));
+        if (func === 'CEIL' || func === 'CEILING') return String(Math.ceil(val));
         if (func === 'SQRT') {
           if (val < 0) throw new Error('⚠️ Корінь із від’ємного числа не підтримується');
           return String(Math.sqrt(val));
@@ -317,11 +398,15 @@ function evaluateFormula(expr) {
         return '0';
       });
 
-      clean = clean.replace(/\b(ROUND|POW|POWER)\(([^()]*)\)/g, (m, func, args) => {
+      clean = clean.replace(/\b(ROUND|POW|POWER|MOD)\(([^()]*)\)/g, (m, func, args) => {
         changed = true;
         const parts = splitFormulaArgs(args);
         const a = resolveValue(parts[0]);
         const b = resolveValue(parts[1]);
+        if (func === 'MOD') {
+          if (b === 0) throw new Error('➗ Ділення на нуль! Перевір знаменник формули');
+          return String(a % b);
+        }
         if (func === 'ROUND') {
           const digits = Number.isFinite(b) ? b : 0;
           const factor = Math.pow(10, digits);
@@ -331,6 +416,7 @@ function evaluateFormula(expr) {
       });
     }
 
+    clean = clean.replace(/(\d+(?:\.\d+)?)%/g, (m, n) => String(parseFloat(n) / 100));
     clean = clean.replace(/\b([A-Z]+)(\d+)\b/g, (m, c, r) => String(resolveValue(c + r)));
 
     const res = safeMathEval(clean);

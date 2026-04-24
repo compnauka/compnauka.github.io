@@ -14,8 +14,18 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const handlesApi = window.FlowchartsHandles || {};
   const shapePlacementApi = window.FlowchartsShapePlacement || {};
   const statusApi = window.FlowchartsStatus || {};
+  const colorsApi = window.FlowchartsColors || {};
   const connectionSelectionApi = window.FlowchartsConnectionSelection || {};
+  const shapeSelectionApi = window.FlowchartsShapeSelection || {};
   const shapeDeletionApi = window.FlowchartsShapeDeletion || {};
+  const shapeTextApi = window.FlowchartsShapeText || {};
+  const shapeInteractionsApi = window.FlowchartsShapeInteractions || {};
+  const shapeFactoryApi = window.FlowchartsShapeFactory || {};
+  const viewportApi = window.FlowchartsViewport || {};
+  const keyboardApi = window.FlowchartsKeyboardShortcuts || {};
+  const historyApi = window.FlowchartsHistory || {};
+  const menuActionsApi = window.FlowchartsMenuActions || {};
+  const flowActionsApi = window.FlowchartsFlowActions || {};
 
   const core = window.FlowchartCore || null;
   const projectIo = window.FlowchartsProjectIO || null;
@@ -103,22 +113,7 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     saveButton.title = 'Зберегти зображення (Ctrl+S)';
   }
 
-  function updateSnapButton() {
-    const active = state.snapEnabled;
-    snapToggleButton?.setAttribute('aria-pressed', String(active));
-    snapToggleButton?.classList.toggle('is-active', active);
-    if (snapToggleButton) {
-      snapToggleButton.title = active
-        ? 'Прив\'язка до сітки увімкнена (G)'
-        : 'Прив\'язка до сітки вимкнена (G)';
-    }
-    document.querySelector('.menu-item[data-action="toggle-grid"]')?.classList.toggle('checked', active);
-  }
-
-  snapToggleButton?.addEventListener('click', () => {
-    state.snapEnabled = !state.snapEnabled;
-    updateSnapButton();
-  });
+  let updateSnapButton = () => {};
 
   const projectFileInput = document.createElement('input');
   projectFileInput.id = 'project-file-input';
@@ -187,128 +182,14 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const GRID_SIZE = 20;
   const AUTOSAVE_STORAGE_KEY = 'flowchart-designer-2-autosave';
 
-  // ================= UNDO SNAPSHOTS =================
-  function captureSnapshot() {
-    const shapeSnap = state.shapes.map(s => {
-      const el = document.getElementById(s.id);
-      return {
-        id: s.id,
-        type: s.type,
-        color: s.color,
-        textRaw: s.textRaw,
-        left: el ? el.offsetLeft : 0,
-        top: el ? el.offsetTop : 0,
-      };
-    });
-    const connSnap = state.connections.map(c => ({ ...c }));
-
-    return {
-      shapes: shapeSnap,
-      connections: connSnap,
-      baseColors: { ...state.baseColors },
-      diagramTitle: state.diagramTitle,
-      shapeCounter: state.shapeCounter,
-      lastShapeType: state.lastShapeType,
-      snapEnabled: state.snapEnabled,
-    };
-  }
-
-  function updateHistoryButtons() {
-    if (undoButton) undoButton.disabled = state.undoStack.length === 0;
-    if (redoButton) redoButton.disabled = state.redoStack.length === 0;
-  }
-
   const statusController = statusApi.createStatusController?.({ dirtyDotEl, savedBadgeEl }) || {};
   const setDirty = statusController.setDirty || (() => {});
   const flashSavedBadge = statusController.flashSavedBadge || (() => {});
-
-  function saveSnapshot() {
-    state.undoStack.push(captureSnapshot());
-
-    if (state.undoStack.length > state.MAX_UNDO) state.undoStack.shift();
-    state.redoStack = [];
-    updateHistoryButtons();
-    setDirty(true);
-    scheduleAutosave();
-  }
-
-  function restoreSnapshot(snap) {
-    // remove shapes
-    state.shapes.forEach(s => {
-      document.getElementById(s.id)?.remove();
-      removeHandleGroup(s.id);
-    });
-    // remove connections
-    state.connections.forEach(c => removeConnectionDom(c.id));
-
-    state.shapes = [];
-    state.connections = [];
-    state.selectedShape = null;
-    state.selectedConnId = null;
-    state.activeShape = null;
-    state.dragState = null;
-    state.connDrag = null;
-    state.pendingConn = null;
-    titleController.cancel?.();
-    if (state._refreshRaf) cancelAnimationFrame(state._refreshRaf);
-    state._refreshRaf = 0;
-
-    state.baseColors = { ...DEFAULT_BASE_COLORS, ...(snap.baseColors || {}) };
-    state.diagramTitle = snap.diagramTitle || '';
-    state.shapeCounter = snap.shapeCounter || 0;
-    state.lastShapeType = snap.lastShapeType || 'process';
-    state.snapEnabled = snap.snapEnabled !== undefined ? !!snap.snapEnabled : true;
-
-    titleController.syncInput?.();
-    renderTitle();
-    updateSnapButton();
-
-    (snap.shapes || []).forEach(s => {
-      createShape(s.type, s.color, s.textRaw, s.left, s.top, s.id, true);
-      const num = parseInt((s.id || '').split('-')[1], 10);
-      if (!Number.isNaN(num)) state.shapeCounter = Math.max(state.shapeCounter, num);
-    });
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        (snap.connections || []).forEach(c => {
-          const fromEl = document.getElementById(c.from);
-          const toEl = document.getElementById(c.to);
-          if (fromEl && toEl) {
-            connectShapes(fromEl, toEl, c.type || null, c.id, true, c.routeMode || 'auto');
-            const restoredConn = state.connections.find(conn => conn.id === c.id);
-            if (restoredConn) restoredConn.label = c.label ?? null;
-          }
-        });
-        scheduleRefresh();
-        updateConnectionBar();
-        syncColorPickerToCurrent();
-      });
-    });
-
-    updateHistoryButtons();
-    scheduleAutosave();
-  }
-
-  function undo() {
-    if (state.undoStack.length === 0) return;
-    state.redoStack.push(captureSnapshot());
-    if (state.redoStack.length > state.MAX_UNDO) state.redoStack.shift();
-    const snap = state.undoStack.pop();
-    restoreSnapshot(snap);
-  }
-
-  function redo() {
-    if (state.redoStack.length === 0) return;
-    state.undoStack.push(captureSnapshot());
-    if (state.undoStack.length > state.MAX_UNDO) state.undoStack.shift();
-    const snap = state.redoStack.pop();
-    restoreSnapshot(snap);
-  }
-
-  updateHistoryButtons();
-  undoButton?.addEventListener('click', undo);
-  redoButton?.addEventListener('click', redo);
+  let saveSnapshot = () => {};
+  let restoreSnapshot = () => {};
+  let undo = () => {};
+  let redo = () => {};
+  let updateHistoryButtons = () => {};
 
 
   const openModal = UI.openModal || ((modal) => modal?.classList.add('active'));
@@ -375,20 +256,34 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     }
   }
 
-  function getBaseColor(type) {
-    return state.baseColors[type] || DEFAULT_BASE_COLORS[type] || '#3f51b5';
-  }
+  const colorController = colorsApi.createColorController?.({
+    state,
+    defaultBaseColors: DEFAULT_BASE_COLORS,
+    colorButtons: Array.from(document.querySelectorAll('.color-option')),
+    saveSnapshot: (...args) => saveSnapshot(...args),
+    scheduleRefresh,
+  }) || {};
+  const getBaseColor = colorController.getBaseColor || ((type) => state.baseColors[type] || DEFAULT_BASE_COLORS[type] || '#3f51b5');
+  const syncColorPickerToCurrent = colorController.syncColorPickerToCurrent || (() => {});
+  const applyColor = colorController.applyColor || (() => {});
+  colorController.bind?.();
 
-  function setShapeText(shapeEl, raw) {
-    const s = state.shapes.find(x => x.id === shapeEl.id);
-    const rawText = (raw || '').trim();
-    if (s) s.textRaw = rawText;
-    const type = s?.type || (shapeEl.classList.contains('decision') ? 'decision' : 'process');
-    const content = shapeEl.querySelector('.content');
-    const defaultText = getDefaultText(type);
-    if (content) content.textContent = smartWrapText(rawText || defaultText, type);
-    shapeEl.setAttribute('aria-label', `Фігура: ${rawText || defaultText}`);
-  }
+  const shapeText = shapeTextApi.createShapeTextController?.({
+    state,
+    textModal,
+    shapeTextArea,
+    cancelButton: cancelText,
+    saveButton: saveText,
+    openModal,
+    closeModal,
+    saveSnapshot: (...args) => saveSnapshot(...args),
+    scheduleRefresh,
+    smartWrapText,
+    getDefaultText,
+  }) || {};
+  const setShapeText = shapeText.setShapeText || (() => {});
+  const openTextModal = shapeText.openTextModal || (() => {});
+  shapeText.bind?.();
 
   // ================= COORDINATES =================
   function clientToCanvas(clientX, clientY) {
@@ -469,6 +364,16 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const updateConnectionsForShape = connectionsDom.updateConnectionsForShape || (() => {});
   const connectShapes = connectionsDom.connectShapes || (() => null);
 
+  let clearConnectionSelection = (updateBar = true) => {
+    state.selectedConnId = null;
+    if (updateBar) updateConnectionBar();
+  };
+  let selectConnection = () => {};
+  let updateConnectionBar = () => {};
+  let cycleSelectedConnectionRouteMode = () => {};
+  let selectShape = () => {};
+  let deselectAll = () => {};
+
   // ================= SELECT CONNECTION =================
   const connectionSelection = connectionSelectionApi.createConnectionSelectionController?.({
     state,
@@ -479,20 +384,17 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     labelButton: editConnLabelBtn,
     editShapeButton: editShapeBtn,
     deleteButton: toolbarDeleteBtn,
-    saveSnapshot,
+    saveSnapshot: (...args) => saveSnapshot(...args),
     updateConnection,
-    deselectAll,
+    deselectAll: (...args) => deselectAll(...args),
     hideAllHandles,
     openModal,
     closeModal,
   }) || {};
-  const clearConnectionSelection = connectionSelection.clearConnectionSelection || ((updateBar = true) => {
-    state.selectedConnId = null;
-    if (updateBar) updateConnectionBar();
-  });
-  const selectConnection = connectionSelection.selectConnection || (() => {});
-  const updateConnectionBar = connectionSelection.updateConnectionBar || (() => {});
-  const cycleSelectedConnectionRouteMode = connectionSelection.cycleSelectedConnectionRouteMode || (() => {});
+  clearConnectionSelection = connectionSelection.clearConnectionSelection || clearConnectionSelection;
+  selectConnection = connectionSelection.selectConnection || selectConnection;
+  updateConnectionBar = connectionSelection.updateConnectionBar || updateConnectionBar;
+  cycleSelectedConnectionRouteMode = connectionSelection.cycleSelectedConnectionRouteMode || cycleSelectedConnectionRouteMode;
 
   function deleteConnection(connId) {
     const conn = state.connections.find(c => c.id === connId);
@@ -508,130 +410,71 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
   const getShapeSizeHint = shapePlacement.getShapeSizeHint || (() => ({ w: 150, h: 84 }));
   const resolveShapePosition = shapePlacement.resolveShapePosition || (() => ({ left: 20, top: 20 }));
 
-  function createShape(type, color, textRaw, posLeft, posTop, forcedId, isRestore = false) {
-    if (!forcedId) state.shapeCounter++;
-    const shapeId = forcedId || `shape-${state.shapeCounter}`;
-    if (forcedId && document.getElementById(forcedId)) return document.getElementById(forcedId);
+  const shapeInteractions = shapeInteractionsApi.createShapeInteractionsController?.({
+    state,
+    onShapePointerDown,
+    openTextModal,
+    clearConnectionSelection: (...args) => clearConnectionSelection(...args),
+    selectShape: (...args) => selectShape(...args),
+    showHandlesForShape,
+    hideAllHandles,
+    deleteSelected: (...args) => deleteSelected(...args),
+  }) || {};
+  const bindShapeInteractions = shapeInteractions.bindShape || ((shape) => {
+    shape?.addEventListener('pointerdown', onShapePointerDown);
+  });
 
-    const usedColor = color || getBaseColor(type);
-    const raw = (textRaw !== undefined && textRaw !== null) ? String(textRaw) : getDefaultText(type);
+  const shapeFactory = shapeFactoryApi.createShapeFactory?.({
+    state,
+    canvas,
+    canvasContainer,
+    getBaseColor,
+    getDefaultText,
+    resolveShapePosition,
+    setShapeText,
+    bindShapeInteractions,
+    createHandleGroup,
+    scheduleRefresh,
+  }) || {};
+  const createShape = shapeFactory.createShape || (() => null);
 
-    const shape = document.createElement('div');
-    shape.id = shapeId;
-    shape.className = `shape ${type}`;
-    shape.setAttribute('role', 'button');
-    shape.setAttribute('tabindex', '0');
-    shape.style.backgroundColor = usedColor;
+  const history = historyApi.createHistoryController?.({
+    state,
+    undoButton,
+    redoButton,
+    defaultBaseColors: DEFAULT_BASE_COLORS,
+    removeHandleGroup,
+    removeConnectionDom,
+    createShape,
+    connectShapes,
+    scheduleRefresh,
+    updateConnectionBar: (...args) => updateConnectionBar(...args),
+    syncColorPickerToCurrent,
+    scheduleAutosave,
+    setDirty,
+    cancelTitleUpdate: () => titleController.cancel?.(),
+    syncTitleInput: () => titleController.syncInput?.(),
+    renderTitle,
+    updateSnapButton,
+  }) || {};
+  saveSnapshot = history.saveSnapshot || saveSnapshot;
+  restoreSnapshot = history.restoreSnapshot || restoreSnapshot;
+  undo = history.undo || undo;
+  redo = history.redo || redo;
+  updateHistoryButtons = history.updateHistoryButtons || updateHistoryButtons;
+  history.bind?.();
 
-    const containerRect = canvasContainer.getBoundingClientRect();
-    const defaultLeft = (canvasContainer.scrollLeft + containerRect.width / 2) / state.scale - 75;
-    const defaultTop = (canvasContainer.scrollTop + containerRect.height / 3) / state.scale - 30;
-    const position = resolveShapePosition(type, { posLeft, posTop, defaultLeft, defaultTop });
-    shape.style.left = position.left + 'px';
-    shape.style.top = position.top + 'px';
-
-    const content = document.createElement('div');
-    content.className = 'content';
-    shape.appendChild(content);
-    canvas.appendChild(shape);
-
-    if (!state.shapes.find(s => s.id === shapeId)) {
-      state.shapes.push({ id: shapeId, type, color: usedColor, textRaw: raw });
-    }
-
-    setShapeText(shape, raw);
-
-    if (!isRestore) {
-      shape.classList.add('new-pop');
-      setTimeout(() => shape.classList.remove('new-pop'), 350);
-    }
-
-    shape.addEventListener('pointerdown', onShapePointerDown);
-
-    shape.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      openTextModal(shape);
-    });
-
-    // long-press edit (touch)
-    let longPressTimer = null;
-    let longPressPointerId = null;
-    shape.addEventListener('pointerdown', (ev) => {
-      if (longPressTimer) clearTimeout(longPressTimer);
-      longPressPointerId = ev.pointerId;
-      longPressTimer = setTimeout(() => {
-        longPressTimer = null;
-        longPressPointerId = null;
-        openTextModal(shape);
-      }, 650);
-    });
-    const cancelLP = (ev) => {
-      if (longPressPointerId !== null && ev?.pointerId !== undefined && ev.pointerId !== longPressPointerId) return;
-      if (longPressTimer) clearTimeout(longPressTimer);
-      longPressTimer = null;
-      longPressPointerId = null;
-    };
-    shape.addEventListener('pointerup', cancelLP);
-    shape.addEventListener('pointercancel', cancelLP);
-    shape.addEventListener('pointermove', cancelLP);
-
-    shape.addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearConnectionSelection();
-      selectShape(shape);
-    });
-
-    shape.addEventListener('pointerenter', () => {
-      if (!state.connDrag) showHandlesForShape(shape.id);
-    });
-    shape.addEventListener('pointerleave', () => {
-      if (!state.connDrag) {
-        if (state.selectedShape && state.selectedShape !== shape) showHandlesForShape(state.selectedShape.id);
-        else if (!state.selectedShape) hideAllHandles();
-      }
-    });
-
-    shape.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTextModal(shape); }
-      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSelected(); }
-    });
-
-    createHandleGroup(shape);
-    scheduleRefresh();
-    return shape;
-  }
-
-  function openTextModal(shapeEl) {
-    state.activeShape = shapeEl;
-    const s = state.shapes.find(x => x.id === shapeEl.id);
-    if (shapeTextArea) shapeTextArea.value = (s?.textRaw || '').trim();
-    openModal(textModal);
-    setTimeout(() => shapeTextArea?.focus(), 50);
-  }
-
-  function selectShape(el) {
-    clearConnectionSelection(false);
-    if (state.selectedShape && state.selectedShape !== el) state.selectedShape.classList.remove('selected');
-    state.selectedShape = el;
-    el.classList.add('selected');
-    el.setAttribute('aria-selected', 'true');
-    showHandlesForShape(el.id);
-
-    const hex = rgbToHex(el.style.backgroundColor);
-    state.currentColor = hex;
-    syncColorPickerToCurrent(hex);
-    updateConnectionBar();
-  }
-
-  function deselectAll(updateBar = true) {
-    if (state.selectedShape) {
-      state.selectedShape.classList.remove('selected');
-      state.selectedShape.setAttribute('aria-selected', 'false');
-      state.selectedShape = null;
-    }
-    hideAllHandles();
-    if (updateBar) updateConnectionBar();
-  }
+  const shapeSelection = shapeSelectionApi.createShapeSelectionController?.({
+    state,
+    clearConnectionSelection: (...args) => clearConnectionSelection(...args),
+    showHandlesForShape,
+    hideAllHandles,
+    rgbToHex,
+    syncColorPickerToCurrent,
+    updateConnectionBar: (...args) => updateConnectionBar(...args),
+  }) || {};
+  selectShape = shapeSelection.selectShape || selectShape;
+  deselectAll = shapeSelection.deselectAll || deselectAll;
 
   // ================= DRAG SHAPES =================
   function onShapePointerDown(e) {
@@ -691,157 +534,44 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     e.preventDefault();
   }
 
-  // ================= ZOOM =================
-  function setZoom(newScale) {
-    newScale = Math.max(state.minScale, Math.min(state.maxScale, newScale));
-    const cr = canvasContainer.getBoundingClientRect();
-    const scx = (canvasContainer.scrollLeft + cr.width / 2) / state.scale;
-    const scy = (canvasContainer.scrollTop + cr.height / 2) / state.scale;
+  // ================= VIEWPORT =================
+  const viewport = viewportApi.createViewportController?.({
+    state,
+    canvas,
+    canvasContainer,
+    svgLayer,
+    zoomInBtn,
+    zoomOutBtn,
+    zoomResetBtn,
+    zoomLevelText,
+    scheduleRefresh,
+    deselectAll,
+    clearConnectionSelection,
+    updateConnectionBar,
+  }) || {};
+  const setZoom = viewport.setZoom || (() => {});
+  const isOnBackground = viewport.isOnBackground || ((target) => target === canvas || target === canvasContainer || target === svgLayer);
+  viewport.bind?.();
 
-    state.scale = newScale;
-    canvas.style.transform = `scale(${newScale})`;
-    if (zoomLevelText) zoomLevelText.textContent = `${Math.round(newScale * 100)}%`;
-
-    canvasContainer.scrollLeft = scx * newScale - cr.width / 2;
-    canvasContainer.scrollTop = scy * newScale - cr.height / 2;
-
-    scheduleRefresh();
-  }
-
-  zoomInBtn?.addEventListener('click', () => setZoom(state.scale + state.scaleStep));
-  zoomOutBtn?.addEventListener('click', () => setZoom(state.scale - state.scaleStep));
-  zoomResetBtn?.addEventListener('click', () => setZoom(1));
-
-  canvasContainer.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    setZoom(state.scale + Math.sign(e.deltaY) * -0.1);
-  }, { passive: false });
-
-  // ================= PAN (drag background) =================
-  let isPanning = false;
-  let panStart = { x: 0, y: 0 };
-  let panScroll = { left: 0, top: 0 };
-
-  function isOnBackground(target) {
-    return target === canvas || target === canvasContainer || target === svgLayer;
-  }
-
-  canvasContainer.addEventListener('pointerdown', (e) => {
-    if (e.button === 2) return;
-    if (!isOnBackground(e.target)) return;
-
-    // deselect
-    deselectAll(false);
-    clearConnectionSelection(false);
-    updateConnectionBar();
-
-    isPanning = true;
-    panStart = { x: e.clientX, y: e.clientY };
-    panScroll = { left: canvasContainer.scrollLeft, top: canvasContainer.scrollTop };
-    canvasContainer.setPointerCapture(e.pointerId);
-    canvasContainer.style.cursor = 'grabbing';
-  });
-
-  canvasContainer.addEventListener('pointermove', (e) => {
-    if (!isPanning) return;
-    const dx = e.clientX - panStart.x;
-    const dy = e.clientY - panStart.y;
-    canvasContainer.scrollLeft = panScroll.left - dx;
-    canvasContainer.scrollTop = panScroll.top - dy;
-  });
-
-  function stopPanning() {
-    if (!isPanning) return;
-    isPanning = false;
-    canvasContainer.style.cursor = 'default';
-  }
-  canvasContainer.addEventListener('pointerup', stopPanning);
-  canvasContainer.addEventListener('pointercancel', stopPanning);
-
-  // ================= COLOR PICKER =================
-  const colorButtons = Array.from(document.querySelectorAll('.color-option'));
-  function syncColorPickerToCurrent(forcedHex) {
-    const hex = (forcedHex || state.currentColor || '').toLowerCase();
-    colorButtons.forEach(btn => {
-      const c = (btn.dataset.color || '').toLowerCase();
-      if (c === hex) btn.classList.add('selected');
-      else btn.classList.remove('selected');
-    });
-  }
-
-  function applyColor(hex) {
-    if (!hex) return;
-    state.currentColor = hex;
-    syncColorPickerToCurrent(hex);
-
-    if (state.selectedShape) {
-      saveSnapshot();
-      state.selectedShape.style.backgroundColor = hex;
-      const s = state.shapes.find(x => x.id === state.selectedShape.id);
-      if (s) {
-        s.color = hex;
-        state.baseColors[s.type] = hex;
-      }
-      scheduleRefresh();
-      return;
-    }
-
-    if (state.baseColors[state.lastShapeType] !== hex) saveSnapshot();
-    state.baseColors[state.lastShapeType] = hex;
-  }
-
-  colorButtons.forEach(btn => {
-    btn.addEventListener('click', () => applyColor(btn.dataset.color));
-  });
-
-  // ================= SHAPE BUTTONS (ADD) =================
-  document.querySelectorAll('.shape-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.shape;
-      if (!type) return;
-      state.lastShapeType = type;
-      saveSnapshot();
-      const newEl = createShape(type);
-      if (newEl) {
-        const base = getBaseColor(type);
-        newEl.style.backgroundColor = base;
-        const s = state.shapes.find(x => x.id === newEl.id);
-        if (s) s.color = base;
-        selectShape(newEl);
-      }
-    });
-  });
-
-  // ================= TEXT MODAL =================
-  cancelText?.addEventListener('click', () => {
-    state.activeShape = null;
-    closeModal(textModal);
-  });
-  saveText?.addEventListener('click', () => {
-    if (!state.activeShape) { closeModal(textModal); return; }
-    saveSnapshot();
-    setShapeText(state.activeShape, shapeTextArea?.value || '');
-    closeModal(textModal);
-    state.activeShape = null;
-    scheduleRefresh();
-  });
-
-  // ================= CONNECTION MODAL =================
-  function finishDecisionConnection(kind) {
-    if (!state.pendingConn) return;
-    const { fromEl, toEl } = state.pendingConn;
-    state.pendingConn = null;
-    closeModal(connectionModal);
-    saveSnapshot();
-    connectShapes(fromEl, toEl, kind);
-    scheduleRefresh();
-  }
-  connectionYesBtn?.addEventListener('click', () => finishDecisionConnection('yes'));
-  connectionNoBtn?.addEventListener('click', () => finishDecisionConnection('no'));
-  cancelConnBtn?.addEventListener('click', () => {
-    state.pendingConn = null;
-    closeModal(connectionModal);
-  });
+  // ================= FLOW ACTIONS =================
+  const flowActions = flowActionsApi.createFlowActionsController?.({
+    state,
+    snapToggleButton,
+    shapeButtons: document.querySelectorAll('.shape-button'),
+    connectionModal,
+    connectionYesBtn,
+    connectionNoBtn,
+    cancelConnBtn,
+    saveSnapshot: (...args) => saveSnapshot(...args),
+    createShape,
+    getBaseColor,
+    selectShape: (...args) => selectShape(...args),
+    connectShapes,
+    scheduleRefresh,
+    closeModal,
+  }) || {};
+  updateSnapButton = flowActions.updateSnapButton || updateSnapButton;
+  flowActions.bind?.();
 
   // ================= DELETE / CLEAR =================
   const shapeDeletion = shapeDeletionApi.createShapeDeletionController?.({
@@ -1001,193 +731,50 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
 
   projectBridge?.bindProjectControls?.();
 
-  // ================= MENUS =================
-  function triggerShapeButton(type) {
-    document.querySelector(`.shape-button[data-shape="${type}"]`)?.click();
-  }
-
-  function dispatchMenuAction(action) {
-    switch (action) {
-      case 'new-project':
-        runOfficeCommand('new') || clearButton?.click();
-        break;
-      case 'open-project':
-        runOfficeCommand('open') || openProjectButton?.click();
-        break;
-      case 'save-project':
-        runOfficeCommand('save') || saveProjectButton?.click();
-        break;
-      case 'export-png':
-        saveButton?.click();
-        break;
-      case 'print':
-        window.print();
-        break;
-      case 'undo':
-        runOfficeCommand('undo') || undo();
-        break;
-      case 'redo':
-        runOfficeCommand('redo') || redo();
-        break;
-      case 'delete-selected':
-        deleteSelected();
-        break;
-      case 'clear-canvas':
-        clearButton?.click();
-        break;
-      case 'insert-start-end':
-        triggerShapeButton('start-end');
-        break;
-      case 'insert-process':
-        triggerShapeButton('process');
-        break;
-      case 'insert-decision':
-        triggerShapeButton('decision');
-        break;
-      case 'insert-input-output':
-        triggerShapeButton('input-output');
-        break;
-      case 'insert-subroutine':
-        triggerShapeButton('subroutine');
-        break;
-      case 'insert-connector':
-        triggerShapeButton('connector');
-        break;
-      case 'zoom-75':
-        setZoom(0.75);
-        break;
-      case 'zoom-100':
-        setZoom(1);
-        break;
-      case 'zoom-125':
-        setZoom(1.25);
-        break;
-      case 'zoom-150':
-        setZoom(1.5);
-        break;
-      case 'zoom-reset':
-        setZoom(1);
-        break;
-      case 'toggle-grid':
-        snapToggleButton?.click();
-        break;
-      case 'help-panel':
-        toggleHelp(true);
-        break;
-      case 'open-manual':
-        window.open('manual.html', '_blank', 'noopener');
-        break;
-      case 'about':
-        showMessageModal('ПЛЮС Схеми — редактор блок-схем для шкільного офісного пакета ПЛЮС. Він зберігає проєкти у JSON, експортує схеми у PNG та допомагає учням вивчати алгоритми на практиці.');
-        break;
-    }
-  }
-
-  const menuApi = UI.initMenus ? UI.initMenus(dispatchMenuAction) : null;
-
-
-  // ================= HELP PANEL =================
-  UI.renderHelpPanelContent?.(helpPanel);
+  // ================= MENUS / HELP =================
+  const menuActions = menuActionsApi.createMenuActionsController?.({
+    UI,
+    helpPanel,
+    helpButton,
+    helpClose,
+    clearButton,
+    openProjectButton,
+    saveProjectButton,
+    saveButton,
+    snapToggleButton,
+    runOfficeCommand,
+    undo,
+    redo,
+    deleteSelected,
+    setZoom,
+    showMessageModal,
+  }) || {};
+  const toggleHelp = menuActions.toggleHelp || (() => {});
+  const menuApi = menuActions.bind?.() || null;
   updateSnapButton();
   updateFloatingBarOffset();
   titleController.bindHeaderFocus?.();
 
-
-  function toggleHelp(show) {
-    if (!helpPanel) return;
-    if (typeof show === 'boolean') {
-      helpPanel.hidden = !show;
-      return;
-    }
-    helpPanel.hidden = !helpPanel.hidden;
-  }
-  helpButton?.addEventListener('click', () => toggleHelp());
-  helpClose?.addEventListener('click', () => toggleHelp(false));
-
   // ================= GLOBAL SHORTCUTS =================
-  function detectMacPlatform() {
-    const uad = navigator.userAgentData;
-    if (uad && typeof uad.platform === 'string') return /mac/i.test(uad.platform);
-    return /mac|iphone|ipad|ipod/i.test(navigator.userAgent || '');
-  }
-  const isMacPlatform = detectMacPlatform();
-
-  document.addEventListener('keydown', (e) => {
-    const mod = isMacPlatform ? e.metaKey : e.ctrlKey;
-
-    if (mod && e.key.toLowerCase() === 'z') {
-      if (e.shiftKey) {
-        e.preventDefault();
-        runOfficeCommand('redo') || redo();
-        return;
-      }
-      e.preventDefault();
-      runOfficeCommand('undo') || undo();
-      return;
-    }
-    if (mod && e.key.toLowerCase() === 'y') {
-      e.preventDefault();
-      runOfficeCommand('redo') || redo();
-      return;
-    }
-    if (mod && e.shiftKey && e.key.toLowerCase() === 's') {
-      e.preventDefault();
-      runOfficeCommand('save') || downloadProjectJson();
-      return;
-    }
-    if (mod && e.key.toLowerCase() === 'o') {
-      e.preventDefault();
-      runOfficeCommand('open') || openProjectFilePicker();
-      return;
-    }
-    if (mod && e.key.toLowerCase() === 's') {
-      e.preventDefault();
-      openSaveTitlePrompt();
-      return;
-    }
-    if (!mod && e.key.toLowerCase() === 'r' && state.selectedConnId) {
-      const tag = (document.activeElement?.tagName || '').toLowerCase();
-      if (tag !== 'input' && tag !== 'textarea') {
-        e.preventDefault();
-        cycleSelectedConnectionRouteMode();
-      }
-      return;
-    }
-    if (!mod && e.key.toLowerCase() === 'g') {
-      const tag = (document.activeElement?.tagName || '').toLowerCase();
-      if (tag !== 'input' && tag !== 'textarea') {
-        e.preventDefault();
-        snapToggleButton?.click();
-      }
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      closeMenus();
-      if (helpPanel && !helpPanel.hidden) toggleHelp(false);
-      closeModal(textModal);
-      closeModal(connectionModal);
-      closeModal(document.getElementById('message-modal'));
-      closeModal(saveTitleModal);
-      state.pendingConn = null;
-      state.activeShape = null;
-    }
-
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      const tag = (document.activeElement?.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
-      deleteSelected();
-    }
-  });
-
-  // ================= CANVAS CLICK (deselect) =================
-  svgLayer.addEventListener('pointerdown', (e) => {
-    if ((e.target instanceof SVGElement) && e.target.classList.contains('conn-hit')) return;
-    if (!isOnBackground(e.target)) return;
-    deselectAll(false);
-    clearConnectionSelection(false);
-    updateConnectionBar();
-  });
+  keyboardApi.createKeyboardShortcutsController?.({
+    state,
+    runOfficeCommand,
+    undo,
+    redo,
+    downloadProjectJson,
+    openProjectFilePicker,
+    openSaveTitlePrompt,
+    cycleSelectedConnectionRouteMode,
+    snapToggleButton,
+    closeMenus,
+    helpPanel,
+    toggleHelp,
+    closeModal,
+    textModal,
+    connectionModal,
+    saveTitleModal,
+    deleteSelected,
+  })?.bind?.();
 
   // ================= REFRESH LAYOUT =================
   function refreshAll() {
@@ -1218,13 +805,5 @@ window.initFlowchartsEditor = function initFlowchartsEditor() {
     redo: redo
   });
   promptRestoreAutosave();
-
-  connectionModal?.addEventListener('pointerdown', (e) => {
-    if (e.target === connectionModal) {
-      state.pendingConn = null;
-      closeModal(connectionModal);
-    }
-  });
-
 
 };

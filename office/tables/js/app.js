@@ -79,9 +79,9 @@ function initTablesEditor() {
 
   // insert hover
   if (gridWrap) {
-    gridWrap.addEventListener('mousemove', updateInsertHover);
-    gridWrap.addEventListener('mouseleave', hideInsertButtons);
-    gridWrap.addEventListener('scroll', hideInsertButtons);
+    gridWrap.addEventListener('mousemove', TablesStructure.updateInsertHover);
+    gridWrap.addEventListener('mouseleave', TablesStructure.hideInsertButtons);
+    gridWrap.addEventListener('scroll', TablesStructure.hideInsertButtons);
   }
 
   if (insertColBtn) {
@@ -89,8 +89,8 @@ function initTablesEditor() {
     insertColBtn.addEventListener('click', (e) => {
       e.preventDefault();
       if (hoverInsertColAt === null) return;
-      insertColumn(hoverInsertColAt);
-      hideInsertButtons();
+      TablesStructure.insertColumn(hoverInsertColAt);
+      TablesStructure.hideInsertButtons();
     });
   }
 
@@ -99,8 +99,8 @@ function initTablesEditor() {
     insertRowBtn.addEventListener('click', (e) => {
       e.preventDefault();
       if (hoverInsertRowAt === null) return;
-      insertRow(hoverInsertRowAt);
-      hideInsertButtons();
+      TablesStructure.insertRow(hoverInsertRowAt);
+      TablesStructure.hideInsertButtons();
     });
   }
 
