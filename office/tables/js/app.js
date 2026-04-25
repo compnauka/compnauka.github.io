@@ -74,7 +74,7 @@ function initTablesEditor() {
   });
 
   document.addEventListener('mousemove', (e) => {
-    if (isResizing && resizeCol !== null) resizeColumn(e);
+    if (isResizing && resizeCol !== null) TablesColumnSizing.resizeColumn(e);
   });
 
   // insert hover

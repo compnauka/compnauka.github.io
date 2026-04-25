@@ -1,18 +1,18 @@
 # Архітектура Office
 
-Цей репозиторій має два незалежні, але узгоджені шари.
+Цей репозиторій має два незалежні, але узгоджені шари: shared root layer і локальні service layers редакторів.
 
 ## Shared Root Layer
 
 Корінь `office/` містить спільну інфраструктуру для всіх редакторів:
 
-- `office-shell.js` — thin adapter-шар для boot, command routing і file picker, який використовують локальні `js/app.js`
-- `office-ui.js` — shell-контракт, стандартні команди, modal/menu helpers, file picker
-- `offline.js` — реєстрація Service Worker
-- `sw.js` — offline/cache policy
-- `UI_TOKENS.css`, `shell-overrides.css` — shared shell styling
-- `vendor/` — локальні сторонні залежності
-- документи стандартів і тести в `tests/`
+- `office-shell.js` — thin adapter-шар для boot, command routing і file picker, який використовують локальні `js/app.js`.
+- `office-ui.js` — shell-контракт, стандартні команди, modal/menu helpers, file picker.
+- `offline.js` — реєстрація Service Worker.
+- `sw.js` — offline/cache policy.
+- `UI_TOKENS.css`, `shell-overrides.css` — shared shell styling.
+- `vendor/` — локальні сторонні залежності.
+- документи стандартів і тести в `tests/`.
 
 Цей шар не повинен містити редактор-специфічну бізнес-логіку.
 
@@ -22,23 +22,47 @@
 
 Рекомендована структура сервісу:
 
-- `index.html` — HTML shell сервісу
-- `style.css` — локальні стилі сервісу
-- `js/runtime.js` — стабільний entrypoint для HTML
-- `js/app.js` — boot + адаптер до shared shell, який експонує `window.<Editor>App.boot`
-- `js/state.js` — локальний UI/runtime state
-- `js/ui.js` — DOM/UI helper layer
-- `js/core.js` або доменні модулі на кшталт `editor.js`, `grid.js`, `workbook.js`
-- `js/export.js`, `js/storage.js`, `js/utils.js`, `js/constants.js` — за потреби
+- `index.html` — HTML shell сервісу.
+- `style.css` — локальні стилі сервісу.
+- `js/runtime.js` — стабільний entrypoint для HTML.
+- `js/app.js` — boot + адаптер до shared shell, який експонує `window.<Editor>App.boot`.
+- `js/state.js` — локальний UI/runtime state.
+- `js/ui.js` — DOM/UI helper layer.
+- `js/core.js` або доменні модулі на кшталт `editor.js`, `grid.js`, `workbook.js`.
+- `js/export.js`, `js/storage.js`, `js/utils.js`, `js/constants.js` — за потреби.
 
 ## Layer Rules
 
 - `index.html` підключає shared root-файли лише наприкінці: `../office-shell.js`, `../office-ui.js` і `../offline.js`.
 - `js/runtime.js` не містить бізнес-логіки; він лише запускає `window.<Editor>App.boot` із `js/app.js`.
 - `js/app.js` не дублює shared root API, а делегує в `window.OfficeShell` і `window.OfficeUI`.
-- shared root-шар не повинен знати про внутрішню структуру конкретного редактора, окрім стабільних ресурсних шляхів у `sw.js` і тестах.
-- сервісні модулі можуть залежати від shared root API, але не повинні конфліктувати з глобальними іменами інших сервісів.
+- Shared root-шар не повинен знати про внутрішню структуру конкретного редактора, окрім стабільних ресурсних шляхів у `sw.js` і тестах.
+- Сервісні модулі можуть залежати від shared root API, але не повинні конфліктувати з глобальними іменами інших сервісів.
+
+## Правило Нарізки Модулів
+
+Рефакторинг має зменшувати зв'язність, а не просто збільшувати кількість файлів. Новий локальний JS-файл виправданий, якщо він:
+
+- має самостійну доменну відповідальність;
+- зменшує змішування UI, state, persistence, parsing або domain logic;
+- має стабільний порядок підключення в `index.html`;
+- доданий у `sw.js` і покритий статичним аудитом або browser-smoke сценарієм.
+
+Якщо файл менший за 30-40 рядків і не має чіткої окремої ролі, краще спочатку перевірити, чи не варто залишити його частиною сусіднього шару.
+
+## Поточний Стан Таблиць
+
+`tables/` уже пройшов великий етап розділення:
+
+- `core.js` став фасадом ініціалізації;
+- модель, storage, адресація і формули винесені в окремі core-шари;
+- формульний рушій розділений на parser, references, functions і coordinator;
+- UI-дії, clipboard, formatting, structure, charts, sorting, workbook file і calculation рознесені по доменних модулях.
+
+Це корисне розділення, але Таблиці вже близько до межі, де подальше дроблення може стати надмірним. Наступний етап для `tables/` — стабілізація, інтеграційні перевірки й розвиток можливостей, а не механічне створення нових файлів.
 
 ## Поточна Ціль
 
 Мета міграції — щоб усі редактори мали схожу семантику файлів, навіть якщо конкретні доменні модулі різняться.
+
+Поточний рекомендований фокус після стабілізації Таблиць — перейти до `slides/`, бо Таблиці й Flowcharts уже отримали значний архітектурний виграш, а редактор презентацій має більший потенціал для наступного зменшення технічного боргу.

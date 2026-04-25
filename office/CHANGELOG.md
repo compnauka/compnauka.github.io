@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-04-25
+
+### Tables architecture and stabilization decision
+
+- `tables/js/core.js` split into dedicated model, storage, addressing and formula layers.
+- Formula logic split into `formula-parser.js`, `formula-references.js`, `formula-functions.js` and `formula-engine.js`.
+- Tables UI/runtime logic further separated into focused modules for clipboard, formatting, structure, charts, sorting, workbook file operations, view options, cell-format UI and calculation.
+- `tables/index.html`, `sw.js`, `tests/static-ui-audit.ps1` and `tests/tables-formula-behavior.html` synchronized with the new split module graph.
+- Technical conclusion recorded: Tables should pause aggressive file splitting and move into stabilization, integration testing and feature hardening.
+- Recommended next editor after Tables stabilization: `slides/`.
+
 ## 2026-04-24
 
 ### Shared shell adapter

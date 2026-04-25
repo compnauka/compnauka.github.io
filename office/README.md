@@ -65,6 +65,14 @@
 5. Уніфікувати поведінку keyboard shortcuts, dropdown, modal і workspace focus.
 6. Після цього полірувати редактори по одному за локальними `UI_MIGRATION_TO_STANDARD.md`.
 
+### Поточний технічний висновок
+
+`tables/` уже пройшов великий етап декомпозиції: `core.js` став фасадом, формульне ядро розділене на parser/references/functions/engine, а UI, clipboard, formatting, structure, charts, sorting, workbook file і calculation винесені в окремі модулі.
+
+Це розділення поки корисне, але подальше агресивне дроблення Таблиць не є пріоритетом. Наступні кроки для Таблиць мають бути стабілізаційними: перевірити boot, формули, форматування, import/export workbook, CSV, діаграми й додати точкові browser-smoke сценарії.
+
+Після короткої стабілізації рекомендований наступний фокус — `slides/`, бо Таблиці й Flowcharts уже отримали основний архітектурний виграш.
+
 ## Тести
 
 Запуск базового статичного аудиту:
@@ -167,6 +175,7 @@ powershell -ExecutionPolicy Bypass -File tests\serve-office.ps1 -Port 4173
   - локальні vendor-ресурси
   - `offline.js`
   - `sw.js`
+- Таблиці розділено на доменні JS-шари з перевіркою в `tests/static-ui-audit.ps1` і `tests/tables-formula-behavior.html`.
 
 ## Що ще залишилось
 

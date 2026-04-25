@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 
 $services = @(
   @{ Key = 'text'; Path = 'text'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('text/ui/menu.js'); CommandFiles = @('text/js/app.js'); FilePickerFiles = @('text/ui/menu.js', 'text/ui/editor.js'); OptionalIds = @() },
-  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/app.js'); FilePickerFiles = @('tables/js/ui.js'); OptionalIds = @('header') },
+  @{ Key = 'tables'; Path = 'tables'; Menu = @('file', 'edit', 'insert', 'format', 'data', 'view', 'help'); ActionFiles = @('tables/js/ui.js'); CommandFiles = @('tables/js/app.js'); FilePickerFiles = @('tables/js/ui.js', 'tables/js/workbook-file.js'); OptionalIds = @('header') },
   @{ Key = 'paint'; Path = 'paint'; Menu = @('file', 'edit', 'view', 'help'); ActionFiles = @('paint/js/app.js'); CommandFiles = @('paint/js/app.js'); FilePickerFiles = @('paint/js/app.js'); OptionalIds = @() },
   @{ Key = 'slides'; Path = 'slides'; Menu = @('file', 'edit', 'insert', 'slide', 'view', 'help'); ActionFiles = @('slides/js/app.js'); CommandFiles = @('slides/js/app.js'); FilePickerFiles = @('slides/js/app.js'); OptionalIds = @('imageUrlField', 'pickImageFile') },
   @{ Key = 'flowcharts'; Path = 'flowcharts'; Menu = @('file', 'edit', 'insert', 'view', 'help'); ActionFiles = @('flowcharts/js/editor.js', 'flowcharts/js/menu-actions.js'); CommandFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js', 'flowcharts/js/menu-actions.js'); FilePickerFiles = @('flowcharts/js/editor.js', 'flowcharts/js/project-io.js'); OptionalIds = @('delete-button', 'help-button') },
@@ -389,6 +389,7 @@ if (Test-Path $rootIndexPath) {
   $rootHtml = Get-Content -Raw -Encoding UTF8 $rootIndexPath
   Assert-True ($rootHtml -notmatch '/office/art-') "Root index still contains old /office/art-* links"
   Assert-True ($rootHtml -notmatch '/office/office-') "Root index contains invalid /office/office-* links"
+  Assert-True ($rootHtml -match "pathname\.endsWith\('/office'\)") "Root index should redirect /office to /office/ before relative assets load"
   foreach ($service in $services) {
     Assert-True ($rootHtml -match "href=""$($service.Path)/""") "Root index is missing relative link to $($service.Path)/"
   }
@@ -442,6 +443,7 @@ foreach ($service in $services) {
   Assert-True ($html -match 'src="\.\./office-ui\.js"[\s\S]*src="\.\./offline\.js"') "$($service.Path): office-ui.js must be linked before offline.js"
   Assert-True ($html -match '<body[^>]*class="[^"]*\boffice-app\b[^"]*"') "$($service.Path): body is missing office-app class"
   Assert-True ($html -match "<body[^>]*data-office-service=""$($service.Key)""") "$($service.Path): body has missing or wrong data-office-service"
+  Assert-True ($html -notmatch 'href="/office"') "$($service.Path): back link should be relative so custom domains under /office/ resolve correctly"
   Assert-True ($html -match '<header[^>]*class="[^"]*\boffice-header\b[^"]*"') "$($service.Path): header is missing office-header class"
   Assert-True ($html -match '<nav[^>]*class="[^"]*\boffice-menubar\b[^"]*"') "$($service.Path): menubar is missing office-menubar class"
   Assert-True ($html -match 'class="[^"]*\boffice-toolbar\b[^"]*"') "$($service.Path): toolbar is missing office-toolbar class"
@@ -495,8 +497,15 @@ $runtimeFiles = @(
   'vector/js/ui.js',
   'vector/js/app.js',
   'vector/js/runtime.js',
+  'tables/js/addressing.js',
   'tables/js/app.js',
   'tables/js/core.js',
+  'tables/js/formula-engine.js',
+  'tables/js/formula-functions.js',
+  'tables/js/formula-parser.js',
+  'tables/js/formula-references.js',
+  'tables/js/model.js',
+  'tables/js/storage.js',
   'tables/js/ui.js',
   'tables/js/grid.js',
   'tables/js/runtime.js',
@@ -673,15 +682,146 @@ foreach ($modulePath in $flowchartsModuleContracts.Keys) {
 $tablesIndexPath = Join-Path $Root 'tables/index.html'
 if (Test-Path $tablesIndexPath) {
   $tablesHtml = Get-Content -Raw -Encoding UTF8 $tablesIndexPath
-  Assert-True ($tablesHtml -match 'src="js/core\.js"') "tables/index.html: should load js/core.js as the shared data/calculation layer"
+  foreach ($tablesCoreModule in @('addressing', 'model', 'storage', 'formula-parser', 'formula-references', 'formula-functions', 'formula-engine', 'core')) {
+    Assert-True ($tablesHtml -match "src=""js/$tablesCoreModule\.js""") "tables/index.html: should load js/$tablesCoreModule.js as part of the split core layer"
+  }
+  Assert-True ($tablesHtml -match 'src="js/addressing\.js"[\s\S]*src="js/model\.js"[\s\S]*src="js/storage\.js"[\s\S]*src="js/formula-parser\.js"[\s\S]*src="js/formula-references\.js"[\s\S]*src="js/formula-functions\.js"[\s\S]*src="js/formula-engine\.js"[\s\S]*src="js/core\.js"[\s\S]*src="js/state\.js"') "tables/index.html: split core modules should load before state.js in dependency order"
   Assert-True ($tablesHtml -match 'src="js/state\.js"') "tables/index.html: should load js/state.js as the UI state layer"
+  Assert-True ($tablesHtml -match 'src="js/column-sizing\.js"') "tables/index.html: should load js/column-sizing.js as the column sizing layer"
+  Assert-True ($tablesHtml -match 'src="js/state\.js"[\s\S]*src="js/column-sizing\.js"[\s\S]*src="js/formula-bar\.js"') "tables/index.html: js/column-sizing.js should load after state.js and before formula-bar.js"
+  Assert-True ($tablesHtml -match 'src="js/formula-bar\.js"') "tables/index.html: should load js/formula-bar.js as the formula bar layer"
+  Assert-True ($tablesHtml -match 'src="js/column-sizing\.js"[\s\S]*src="js/formula-bar\.js"[\s\S]*src="js/grid\.js"') "tables/index.html: js/formula-bar.js should load after column-sizing.js and before grid.js"
+  Assert-True ($tablesHtml -match 'src="js/clipboard\.js"') "tables/index.html: should load js/clipboard.js as the clipboard layer"
+  Assert-True ($tablesHtml -match 'src="js/grid\.js"[\s\S]*src="js/clipboard\.js"[\s\S]*src="js/structure\.js"') "tables/index.html: js/clipboard.js should load after grid.js and before structure.js"
+  Assert-True ($tablesHtml -match 'src="js/selection-actions\.js"') "tables/index.html: should load js/selection-actions.js as the selection command layer"
+  Assert-True ($tablesHtml -match 'src="js/clipboard\.js"[\s\S]*src="js/selection-actions\.js"[\s\S]*src="js/structure\.js"') "tables/index.html: js/selection-actions.js should load after clipboard.js and before structure.js"
+  Assert-True ($tablesHtml -match 'src="js/formatting\.js"') "tables/index.html: should load js/formatting.js as the formatting layer"
+  Assert-True ($tablesHtml -match 'src="js/selection-actions\.js"[\s\S]*src="js/formatting\.js"[\s\S]*src="js/structure\.js"') "tables/index.html: js/formatting.js should load after selection-actions.js and before structure.js"
   Assert-True ($tablesHtml -match 'src="js/structure\.js"') "tables/index.html: should load js/structure.js as the sheet structure layer"
   Assert-True ($tablesHtml -match 'src="js/grid\.js"[\s\S]*src="js/structure\.js"[\s\S]*src="js/workbook\.js"') "tables/index.html: js/structure.js should load after grid.js and before workbook.js"
   Assert-True ($tablesHtml -match 'src="js/charts\.js"') "tables/index.html: should load js/charts.js as the chart layer"
   Assert-True ($tablesHtml -match 'src="js/workbook\.js"[\s\S]*src="js/charts\.js"[\s\S]*src="js/ui\.js"') "tables/index.html: js/charts.js should load after workbook.js and before ui.js"
+  foreach ($tablesUiModule in @('sorting', 'workbook-file', 'view-options', 'cell-format-ui')) {
+    Assert-True ($tablesHtml -match "src=""js/$tablesUiModule\.js""") "tables/index.html: should load js/$tablesUiModule.js as a UI sublayer"
+    Assert-True ($tablesHtml -match "src=""js/ui\.js""[\s\S]*src=""js/$tablesUiModule\.js""[\s\S]*src=""js/calculation\.js""") "tables/index.html: js/$tablesUiModule.js should load after ui.js and before calculation.js"
+  }
+  Assert-True ($tablesHtml -match 'src="js/calculation\.js"') "tables/index.html: should load js/calculation.js as the calculation layer"
+  Assert-True ($tablesHtml -match 'src="js/ui\.js"[\s\S]*src="js/calculation\.js"[\s\S]*src="js/app\.js"') "tables/index.html: js/calculation.js should load after ui.js and before app.js"
   Assert-True ($tablesHtml -match 'src="js/app\.js"') "tables/index.html: should load js/app.js as the boot and command layer"
   Assert-True ($tablesHtml -match 'src="js/runtime\.js"') "tables/index.html: should load js/runtime.js as the runtime entrypoint"
   Assert-True ($tablesHtml -notmatch 'src="logic\.js"|src="js/app-core\.js"|src="js/main\.js"') "tables/index.html: should not load legacy table script names after js/ migration"
+}
+
+$tablesAddressingPath = Join-Path $Root 'tables/js/addressing.js'
+if (Test-Path $tablesAddressingPath) {
+  $tablesAddressing = Get-Content -Raw -Encoding UTF8 $tablesAddressingPath
+  Assert-True ($tablesAddressing -match 'window\.TablesAddressing\s*=') "tables/js/addressing.js: should expose a stable TablesAddressing namespace"
+  foreach ($addressingFunction in @('buildCols', 'colToIndex', 'expandRange', 'indexToCol', 'shiftFormulaRefs')) {
+    Assert-True ($tablesAddressing -match "function $addressingFunction\(") "tables/js/addressing.js: should own $addressingFunction"
+  }
+}
+
+$tablesModelPath = Join-Path $Root 'tables/js/model.js'
+if (Test-Path $tablesModelPath) {
+  $tablesModel = Get-Content -Raw -Encoding UTF8 $tablesModelPath
+  Assert-True ($tablesModel -match 'window\.TablesModel\s*=') "tables/js/model.js: should expose a stable TablesModel namespace"
+  foreach ($modelBinding in @('DEFAULT_ROWS', 'DEFAULT_COL_COUNT', 'ROWS', 'COL_COUNT', 'cellData', 'cellStyles', 'colWidths')) {
+    Assert-True ($tablesModel -match "\b$modelBinding\b") "tables/js/model.js: should own shared model binding $modelBinding"
+  }
+  Assert-True ($tablesModel -match 'function setGridSize\(') "tables/js/model.js: should own setGridSize"
+}
+
+$tablesStoragePath = Join-Path $Root 'tables/js/storage.js'
+if (Test-Path $tablesStoragePath) {
+  $tablesStorage = Get-Content -Raw -Encoding UTF8 $tablesStoragePath
+  Assert-True ($tablesStorage -match 'window\.TablesStorage\s*=') "tables/js/storage.js: should expose a stable TablesStorage namespace"
+  foreach ($storageFunction in @('loadStateFromStorage', 'persistStateToStorage', 'safeGetItem', 'safeParseJSON', 'safeSetItem')) {
+    Assert-True ($tablesStorage -match "function $storageFunction\(") "tables/js/storage.js: should own $storageFunction"
+  }
+}
+
+$tablesFormulaParserPath = Join-Path $Root 'tables/js/formula-parser.js'
+if (Test-Path $tablesFormulaParserPath) {
+  $tablesFormulaParser = Get-Content -Raw -Encoding UTF8 $tablesFormulaParserPath
+  Assert-True ($tablesFormulaParser -match 'window\.TablesFormulaParser\s*=') "tables/js/formula-parser.js: should expose a stable TablesFormulaParser namespace"
+  foreach ($formulaParserFunction in @('safeMathEval', 'splitFormulaArgs')) {
+    Assert-True ($tablesFormulaParser -match "function $formulaParserFunction\(") "tables/js/formula-parser.js: should own $formulaParserFunction"
+  }
+}
+
+$tablesFormulaReferencesPath = Join-Path $Root 'tables/js/formula-references.js'
+if (Test-Path $tablesFormulaReferencesPath) {
+  $tablesFormulaReferences = Get-Content -Raw -Encoding UTF8 $tablesFormulaReferencesPath
+  Assert-True ($tablesFormulaReferences -match 'window\.TablesFormulaReferences\s*=') "tables/js/formula-references.js: should expose a stable TablesFormulaReferences namespace"
+  foreach ($formulaReferenceFunction in @('evaluateCondition', 'resolveExpressionValue', 'resolveValue')) {
+    Assert-True ($tablesFormulaReferences -match "function $formulaReferenceFunction\(") "tables/js/formula-references.js: should own $formulaReferenceFunction"
+  }
+}
+
+$tablesFormulaFunctionsPath = Join-Path $Root 'tables/js/formula-functions.js'
+if (Test-Path $tablesFormulaFunctionsPath) {
+  $tablesFormulaFunctions = Get-Content -Raw -Encoding UTF8 $tablesFormulaFunctionsPath
+  Assert-True ($tablesFormulaFunctions -match 'window\.TablesFormulaFunctions\s*=') "tables/js/formula-functions.js: should expose a stable TablesFormulaFunctions namespace"
+  foreach ($formulaFunction in @('evaluateAggregateFunction', 'evaluateBinaryMathFunction', 'evaluateIfFunction', 'evaluateLogicalFunction', 'evaluateUnaryMathFunction')) {
+    Assert-True ($tablesFormulaFunctions -match "function $formulaFunction\(") "tables/js/formula-functions.js: should own $formulaFunction"
+  }
+}
+
+$tablesFormulaEnginePath = Join-Path $Root 'tables/js/formula-engine.js'
+if (Test-Path $tablesFormulaEnginePath) {
+  $tablesFormulaEngine = Get-Content -Raw -Encoding UTF8 $tablesFormulaEnginePath
+  Assert-True ($tablesFormulaEngine -match 'window\.TablesFormulaEngine\s*=') "tables/js/formula-engine.js: should expose a stable TablesFormulaEngine namespace"
+  Assert-True ($tablesFormulaEngine -match 'function evaluateFormula\(') "tables/js/formula-engine.js: should own evaluateFormula"
+}
+
+$tablesCorePath = Join-Path $Root 'tables/js/core.js'
+if (Test-Path $tablesCorePath) {
+  $tablesCore = Get-Content -Raw -Encoding UTF8 $tablesCorePath
+  Assert-True ($tablesCore -match 'window\.TablesCore\s*=') "tables/js/core.js: should expose the split core facade"
+  Assert-True ($tablesCore -match 'loadStateFromStorage\(\)') "tables/js/core.js: should initialize persisted state after split core modules load"
+}
+
+$tablesColumnSizingPath = Join-Path $Root 'tables/js/column-sizing.js'
+if (Test-Path $tablesColumnSizingPath) {
+  $tablesColumnSizing = Get-Content -Raw -Encoding UTF8 $tablesColumnSizingPath
+  Assert-True ($tablesColumnSizing -match 'window\.TablesColumnSizing\s*=') "tables/js/column-sizing.js: should expose a stable TablesColumnSizing namespace"
+  foreach ($columnSizingFunction in @('applyColWidths', 'resizeColumn', 'startResize')) {
+    Assert-True ($tablesColumnSizing -match "function $columnSizingFunction\(") "tables/js/column-sizing.js: should own $columnSizingFunction"
+  }
+}
+
+$tablesFormulaBarPath = Join-Path $Root 'tables/js/formula-bar.js'
+if (Test-Path $tablesFormulaBarPath) {
+  $tablesFormulaBar = Get-Content -Raw -Encoding UTF8 $tablesFormulaBarPath
+  Assert-True ($tablesFormulaBar -match 'window\.TablesFormulaBar\s*=') "tables/js/formula-bar.js: should expose a stable TablesFormulaBar namespace"
+  Assert-True ($tablesFormulaBar -match 'function insertChar\(') "tables/js/formula-bar.js: should own insertChar"
+}
+
+$tablesClipboardPath = Join-Path $Root 'tables/js/clipboard.js'
+if (Test-Path $tablesClipboardPath) {
+  $tablesClipboard = Get-Content -Raw -Encoding UTF8 $tablesClipboardPath
+  Assert-True ($tablesClipboard -match 'window\.TablesClipboard\s*=') "tables/js/clipboard.js: should expose a stable TablesClipboard namespace"
+  foreach ($clipboardFunction in @('applyTsvToGridData', 'copySelectionToClipboard', 'pasteToGrid', 'serializeSelectionToTsv')) {
+    Assert-True ($tablesClipboard -match "function $clipboardFunction\(") "tables/js/clipboard.js: should own $clipboardFunction"
+  }
+}
+
+$tablesSelectionActionsPath = Join-Path $Root 'tables/js/selection-actions.js'
+if (Test-Path $tablesSelectionActionsPath) {
+  $tablesSelectionActions = Get-Content -Raw -Encoding UTF8 $tablesSelectionActionsPath
+  Assert-True ($tablesSelectionActions -match 'window\.TablesSelectionActions\s*=') "tables/js/selection-actions.js: should expose a stable TablesSelectionActions namespace"
+  foreach ($selectionActionFunction in @('applyFunc', 'deleteSelection')) {
+    Assert-True ($tablesSelectionActions -match "function $selectionActionFunction\(") "tables/js/selection-actions.js: should own $selectionActionFunction"
+  }
+}
+
+$tablesFormattingPath = Join-Path $Root 'tables/js/formatting.js'
+if (Test-Path $tablesFormattingPath) {
+  $tablesFormatting = Get-Content -Raw -Encoding UTF8 $tablesFormattingPath
+  Assert-True ($tablesFormatting -match 'window\.TablesFormatting\s*=') "tables/js/formatting.js: should expose a stable TablesFormatting namespace"
+  foreach ($formattingFunction in @('applyStyleToSelection', 'autoFitColumns', 'cycleColor', 'toggleStyle')) {
+    Assert-True ($tablesFormatting -match "function $formattingFunction\(") "tables/js/formatting.js: should own $formattingFunction"
+  }
 }
 
 $tablesStructurePath = Join-Path $Root 'tables/js/structure.js'
@@ -699,6 +839,49 @@ if (Test-Path $tablesChartPath) {
   Assert-True ($tablesCharts -match 'window\.TablesCharts\s*=') "tables/js/charts.js: should expose a stable TablesCharts namespace"
   Assert-True ($tablesCharts -match 'function makeChart\(') "tables/js/charts.js: should own chart creation from selected ranges"
   Assert-True ($tablesCharts -match 'function setChartType\(') "tables/js/charts.js: should own chart type switching"
+}
+
+$tablesSortingPath = Join-Path $Root 'tables/js/sorting.js'
+if (Test-Path $tablesSortingPath) {
+  $tablesSorting = Get-Content -Raw -Encoding UTF8 $tablesSortingPath
+  Assert-True ($tablesSorting -match 'window\.TablesSorting\s*=') "tables/js/sorting.js: should expose a stable TablesSorting namespace"
+  foreach ($sortingFunction in @('compareSortValues', 'sortSelection')) {
+    Assert-True ($tablesSorting -match "function $sortingFunction\(") "tables/js/sorting.js: should own $sortingFunction"
+  }
+}
+
+$tablesWorkbookFilePath = Join-Path $Root 'tables/js/workbook-file.js'
+if (Test-Path $tablesWorkbookFilePath) {
+  $tablesWorkbookFile = Get-Content -Raw -Encoding UTF8 $tablesWorkbookFilePath
+  Assert-True ($tablesWorkbookFile -match 'window\.TablesWorkbookFile\s*=') "tables/js/workbook-file.js: should expose a stable TablesWorkbookFile namespace"
+  foreach ($workbookFileFunction in @('exportWorkbook', 'importWorkbookText', 'triggerWorkbookImport')) {
+    Assert-True ($tablesWorkbookFile -match "function $workbookFileFunction\(") "tables/js/workbook-file.js: should own $workbookFileFunction"
+  }
+}
+
+$tablesViewOptionsPath = Join-Path $Root 'tables/js/view-options.js'
+if (Test-Path $tablesViewOptionsPath) {
+  $tablesViewOptions = Get-Content -Raw -Encoding UTF8 $tablesViewOptionsPath
+  Assert-True ($tablesViewOptions -match 'window\.TablesViewOptions\s*=') "tables/js/view-options.js: should expose a stable TablesViewOptions namespace"
+  foreach ($viewOptionsFunction in @('changeTheme', 'setZoom')) {
+    Assert-True ($tablesViewOptions -match "function $viewOptionsFunction\(") "tables/js/view-options.js: should own $viewOptionsFunction"
+  }
+}
+
+$tablesCellFormatUiPath = Join-Path $Root 'tables/js/cell-format-ui.js'
+if (Test-Path $tablesCellFormatUiPath) {
+  $tablesCellFormatUi = Get-Content -Raw -Encoding UTF8 $tablesCellFormatUiPath
+  Assert-True ($tablesCellFormatUi -match 'window\.TablesCellFormatUi\s*=') "tables/js/cell-format-ui.js: should expose a stable TablesCellFormatUi namespace"
+  foreach ($cellFormatUiFunction in @('applyNumberFormat', 'formatDisplayValue', 'getSelectionStats', 'updateSelectionStats', 'updateToolbarState')) {
+    Assert-True ($tablesCellFormatUi -match "function $cellFormatUiFunction\(") "tables/js/cell-format-ui.js: should own $cellFormatUiFunction"
+  }
+}
+
+$tablesCalculationPath = Join-Path $Root 'tables/js/calculation.js'
+if (Test-Path $tablesCalculationPath) {
+  $tablesCalculation = Get-Content -Raw -Encoding UTF8 $tablesCalculationPath
+  Assert-True ($tablesCalculation -match 'window\.TablesCalculation\s*=') "tables/js/calculation.js: should expose a stable TablesCalculation namespace"
+  Assert-True ($tablesCalculation -match 'function recalculateAll\(') "tables/js/calculation.js: should own recalculateAll"
 }
 
 $tablesAppPath = Join-Path $Root 'tables/js/app.js'
@@ -861,7 +1044,7 @@ foreach ($contract in $menuStateContractFiles) {
 
 $pressedStateFiles = @(
   'text/ui/toolbar.js',
-  'tables/js/ui.js'
+  'tables/js/cell-format-ui.js'
 )
 
 foreach ($pressedStateFile in $pressedStateFiles) {
