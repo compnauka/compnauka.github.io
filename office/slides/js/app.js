@@ -1,10 +1,26 @@
 ﻿import { COLOR_PALETTE, DEFAULT_SHAPE_STYLE, DEFAULT_TEXT_STYLE, FONT_SIZES, STAGE_HEIGHT, STAGE_WIDTH } from './constants.js';
-import { exportPresentationPdf, printPresentation, createSlideSnapshot, createThumbSnapshot } from './export.js';
+import { exportPresentationPdf, printPresentation, createSlideSnapshot } from './export.js';
 import { pushHistory, redo, resetHistory, undo } from './history.js';
+import {
+  closeModal as closeModalUi,
+  showConfirmModal as showConfirmModalUi,
+  showInfoModal as showInfoModalUi,
+  showModal as showModalUi
+} from './modal-ui.js';
+import { normalizeElement, normalizePresentation, parsePresentationText, savePresentationFile } from './project.js';
+import { renderStage as renderStageView, syncSelectionUi as syncStageSelectionUi } from './stage-renderer.js';
+import { renderSlideList as renderSlideListView } from './slide-list.js';
+import {
+  bindStage as bindStageInteractions,
+  onElementPointerDown as handleElementPointerDown,
+  onHandlePointerDown as handleHandlePointerDown,
+  onStagePointerMove as handleStagePointerMove,
+  onStagePointerUp as handleStagePointerUp
+} from './stage-interactions.js';
 import { state, applyPresentationData, getCurrentSlide, getCurrentSlideIndex, getSelectedElement, serializePresentation } from './state.js';
 import { clearDraft, loadDraft, saveDraft } from './storage.js';
 import { createBasicSlideElements, createDefaultPresentation, createImageElement, createShapeElement, createSlide, createTemplateDefinition, createTextElement } from './templates.js';
-import { $, $$, clamp, debounce, deepClone, downloadTextFile, getTextFromContentEditable, readFileAsDataURL, readFileAsText } from './utils.js';
+import { $, $$, clamp, debounce, deepClone, getTextFromContentEditable, readFileAsDataURL, readFileAsText } from './utils.js';
 
 window.SlidesApp = window.SlidesApp || {};
 
@@ -12,20 +28,6 @@ const dom = {};
 const elementDomMap = new Map();
 
 let colorAnchorButton = null;
-let draggedSlideId = null;
-let modalHandlerAbort = null;
-
-const pointer = {
-  mode: 'none',
-  elementId: null,
-  handle: null,
-  pointerId: null,
-  startX: 0,
-  startY: 0,
-  dragOffsetX: 0,
-  dragOffsetY: 0,
-  startBox: null
-};
 
 const autosave = debounce(() => {
   saveDraft(serializePresentation());
@@ -48,61 +50,6 @@ function markDirty(statusText = 'Є незбережені зміни') {
   updateDirtyUi();
   setStatusRight(statusText);
   autosave();
-}
-
-function normalizePresentation(raw) {
-  if (!raw || typeof raw !== 'object') return null;
-  if (!Array.isArray(raw.slides) || raw.slides.length === 0) return null;
-
-  const slides = raw.slides.map((slide, slideIndex) => ({
-    id: typeof slide.id === 'string' ? slide.id : `slide_${slideIndex}`,
-    background: typeof slide.background === 'string' ? slide.background : '#ffffff',
-    elements: Array.isArray(slide.elements)
-      ? slide.elements.map((element, elementIndex) => normalizeElement(element, elementIndex))
-      : []
-  }));
-
-  return {
-    fileName: typeof raw.fileName === 'string' && raw.fileName.trim() ? raw.fileName.trim() : 'моя презентація',
-    slides,
-    currentSlideId: slides.some(slide => slide.id === raw.currentSlideId) ? raw.currentSlideId : slides[0].id,
-    selectedElementId: null
-  };
-}
-
-function normalizeElement(element, index) {
-  const type = ['text', 'image', 'shape'].includes(element?.type) ? element.type : 'text';
-  const shape = ['rect', 'circle', 'triangle'].includes(element?.shape) ? element.shape : 'rect';
-  const placeholder = typeof element?.placeholder === 'string' && element.placeholder.trim()
-    ? element.placeholder
-    : (type === 'text' ? 'Введіть текст…' : '');
-  const hasTextContent = typeof element?.content === 'string' && element.content.length > 0;
-  const isPlaceholder = type === 'text'
-    ? (typeof element?.isPlaceholder === 'boolean' ? element.isPlaceholder : !hasTextContent)
-    : false;
-  const content = type === 'text'
-    ? (hasTextContent ? element.content : placeholder)
-    : (typeof element?.content === 'string' ? element.content : '');
-
-  return {
-    id: typeof element?.id === 'string' ? element.id : `el_${index}_${Math.random().toString(36).slice(2, 7)}`,
-    type,
-    shape,
-    x: Number.isFinite(element?.x) ? element.x : 120,
-    y: Number.isFinite(element?.y) ? element.y : 120,
-    w: Number.isFinite(element?.w) ? element.w : 240,
-    h: Number.isFinite(element?.h) ? element.h : 120,
-    z: Number.isFinite(element?.z) ? element.z : index + 1,
-    rotation: Number.isFinite(element?.rotation) ? element.rotation : 0,
-    content,
-    placeholder,
-    isPlaceholder,
-    style: {
-      ...DEFAULT_TEXT_STYLE,
-      ...DEFAULT_SHAPE_STYLE,
-      ...(element?.style || {})
-    }
-  };
 }
 
 function initDom() {
@@ -228,264 +175,28 @@ function renderColorPalette() {
 }
 
 function renderSlideList() {
-  dom.slideList.innerHTML = '';
-  state.slides.forEach((slide, index) => {
-    const card = document.createElement('div');
-    card.className = `slide-card${slide.id === state.currentSlideId ? ' active' : ''}`;
-    card.draggable = true;
-    card.dataset.slideId = slide.id;
-
-    card.addEventListener('click', () => {
-      state.currentSlideId = slide.id;
-      state.selectedElementId = null;
-      closeColorPopover();
-      renderAll();
-      setStatusRight('Слайд вибрано');
-    });
-
-    const startDrag = event => {
-      draggedSlideId = slide.id;
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', slide.id);
-      requestAnimationFrame(() => card.classList.add('dragging-card'));
-    };
-    card.addEventListener('dragstart', startDrag);
-    card.addEventListener('dragend', () => {
-      draggedSlideId = null;
-      card.classList.remove('dragging-card');
-      $$('.slide-card.drag-over').forEach(node => node.classList.remove('drag-over'));
-    });
-    card.addEventListener('dragover', event => {
-      event.preventDefault();
-      if (draggedSlideId && draggedSlideId !== slide.id) card.classList.add('drag-over');
-    });
-    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-    card.addEventListener('drop', event => {
-      event.preventDefault();
-      card.classList.remove('drag-over');
-      const fromId = draggedSlideId || event.dataTransfer.getData('text/plain');
-      if (fromId && fromId !== slide.id) reorderSlides(fromId, slide.id);
-    });
-
-    const head = document.createElement('div');
-    head.className = 'slide-card-head';
-
-    const titleWrap = document.createElement('div');
-    titleWrap.className = 'slide-card-title-wrap';
-
-    const dragHandle = document.createElement('button');
-    dragHandle.type = 'button';
-    dragHandle.className = 'slide-drag-handle';
-    dragHandle.title = 'Перетягни, щоб змінити порядок';
-    dragHandle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
-    dragHandle.draggable = true;
-    dragHandle.addEventListener('dragstart', startDrag);
-    dragHandle.addEventListener('click', event => event.stopPropagation());
-
-    const title = document.createElement('div');
-    title.className = 'slide-card-title';
-    title.textContent = `Слайд ${index + 1}`;
-    titleWrap.append(dragHandle, title);
-
-    const cardActions = document.createElement('div');
-    cardActions.className = 'slide-card-actions';
-    cardActions.appendChild(makeMiniAction('fa-solid fa-arrow-up', 'Перемістити вгору', () => moveSlideById(slide.id, -1)));
-    cardActions.appendChild(makeMiniAction('fa-solid fa-arrow-down', 'Перемістити вниз', () => moveSlideById(slide.id, 1)));
-    cardActions.appendChild(makeMiniAction('fa-regular fa-copy', 'Дублювати слайд', () => duplicateSlide(slide.id)));
-    cardActions.appendChild(makeMiniAction('fa-regular fa-trash-can', 'Видалити слайд', () => confirmDeleteSlide(slide.id)));
-
-    head.append(titleWrap, cardActions);
-
-    const thumbButton = document.createElement('button');
-    thumbButton.type = 'button';
-    thumbButton.className = 'slide-thumb-button';
-    thumbButton.draggable = false;
-
-    const thumb = document.createElement('div');
-    thumb.className = 'slide-thumb';
-    thumb.appendChild(createThumbSnapshot(slide));
-    thumbButton.appendChild(thumb);
-
-    card.append(head, thumbButton);
-    dom.slideList.appendChild(card);
+  renderSlideListView({
+    host: dom.slideList,
+    closeColorPopover,
+    confirmDeleteSlide,
+    duplicateSlide,
+    markDirty,
+    moveSlide,
+    renderAll,
+    setStatusRight
   });
-}
-
-function reorderSlides(fromId, toId) {
-  const fromIndex = state.slides.findIndex(slide => slide.id === fromId);
-  const toIndex = state.slides.findIndex(slide => slide.id === toId);
-  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
-  pushHistory();
-  const [slide] = state.slides.splice(fromIndex, 1);
-  state.slides.splice(toIndex, 0, slide);
-  state.currentSlideId = slide.id;
-  renderAll();
-  markDirty('Порядок слайдів змінено');
-}
-
-function moveSlideById(slideId, direction) {
-  const index = state.slides.findIndex(slide => slide.id === slideId);
-  if (index === -1) return;
-  state.currentSlideId = slideId;
-  moveSlide(direction);
-}
-
-function makeMiniAction(iconClass, title, handler) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'mini-btn';
-  button.title = title;
-  button.innerHTML = `<i class="${iconClass}"></i>`;
-  button.addEventListener('click', event => {
-    event.stopPropagation();
-    handler();
-  });
-  return button;
 }
 
 function renderStage() {
-  dom.stage.innerHTML = '';
-  elementDomMap.clear();
-  const slide = getCurrentSlide();
-  if (!slide) return;
-
-  dom.stage.style.background = slide.background || '#ffffff';
-  dom.stage.dataset.baseWidth = String(STAGE_WIDTH);
-  dom.stage.dataset.baseHeight = String(STAGE_HEIGHT);
-
-  const sorted = [...slide.elements].sort((a, b) => (a.z || 1) - (b.z || 1));
-  sorted.forEach(element => {
-    const node = renderElementNode(element);
-    elementDomMap.set(element.id, node);
-    dom.stage.appendChild(node);
+  renderStageView({
+    elementDomMap,
+    markDirty,
+    onElementPointerDown,
+    onHandlePointerDown,
+    renderSlideList,
+    selectElement,
+    stage: dom.stage
   });
-
-  syncSelectionUi();
-}
-
-function renderElementNode(element) {
-  const wrap = document.createElement('div');
-  wrap.className = `stage-element${element.id === state.selectedElementId ? ' selected' : ''}`;
-  wrap.dataset.id = element.id;
-  wrap.style.left = `${element.x}px`;
-  wrap.style.top = `${element.y}px`;
-  wrap.style.width = `${element.w}px`;
-  wrap.style.height = `${element.h}px`;
-  wrap.style.zIndex = String(element.z || 1);
-  wrap.style.transform = `rotate(${element.rotation || 0}deg)`;
-
-  const content = document.createElement('div');
-  content.className = 'element-content';
-
-  if (element.type === 'text') {
-    const textBox = document.createElement('div');
-    textBox.className = 'text-element';
-    textBox.contentEditable = 'true';
-    textBox.spellcheck = false;
-    textBox.textContent = element.content || '';
-    applyTextStylesToNode(textBox, element);
-    textBox.addEventListener('pointerdown', event => {
-      event.stopPropagation();
-      selectElement(element.id);
-    });
-    textBox.addEventListener('focus', () => {
-      selectElement(element.id);
-      if (element.isPlaceholder) {
-        element.content = '';
-        element.isPlaceholder = false;
-        textBox.textContent = '';
-        applyTextStylesToNode(textBox, element);
-      }
-    });
-    textBox.addEventListener('input', () => {
-      const value = getTextFromContentEditable(textBox);
-      element.content = value;
-      element.isPlaceholder = false;
-      markDirty('Текст змінено');
-      renderSlideList();
-    });
-    textBox.addEventListener('blur', () => {
-      const value = getTextFromContentEditable(textBox).trim();
-      if (!value && element.placeholder) {
-        element.content = element.placeholder;
-        element.isPlaceholder = true;
-        textBox.textContent = element.placeholder;
-        applyTextStylesToNode(textBox, element);
-        renderSlideList();
-        markDirty('Поле очищено');
-      }
-    });
-    content.appendChild(textBox);
-  }
-
-  if (element.type === 'image') {
-    const img = document.createElement('img');
-    img.className = 'image-element';
-    img.src = element.content;
-    img.alt = '';
-    img.draggable = false;
-    content.appendChild(img);
-  }
-
-  if (element.type === 'shape') {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', '0 0 100 100');
-    svg.setAttribute('class', 'shape-element');
-    let shape;
-    if (element.shape === 'circle') {
-      shape = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-      shape.setAttribute('cx', '50%');
-      shape.setAttribute('cy', '50%');
-      shape.setAttribute('rx', '48%');
-      shape.setAttribute('ry', '48%');
-    } else if (element.shape === 'triangle') {
-      shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      shape.setAttribute('points', '50,4 96,96 4,96');
-    } else {
-      shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      shape.setAttribute('x', '2%');
-      shape.setAttribute('y', '2%');
-      shape.setAttribute('width', '96%');
-      shape.setAttribute('height', '96%');
-      shape.setAttribute('rx', '12');
-      shape.setAttribute('ry', '12');
-    }
-    shape.setAttribute('fill', element.style.fill || DEFAULT_SHAPE_STYLE.fill);
-    shape.setAttribute('stroke', element.style.stroke || DEFAULT_SHAPE_STYLE.stroke);
-    shape.setAttribute('stroke-width', '8');
-    svg.appendChild(shape);
-    content.appendChild(svg);
-  }
-
-  wrap.appendChild(content);
-  wrap.appendChild(createHandles(element.id));
-  wrap.addEventListener('pointerdown', event => onElementPointerDown(event, element.id));
-  return wrap;
-}
-
-function createHandles(elementId) {
-  const handles = document.createElement('div');
-  handles.className = 'resize-handles';
-  ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(handleName => {
-    const handle = document.createElement('div');
-    handle.className = `resize-handle ${handleName}`;
-    handle.dataset.handle = handleName;
-    handle.addEventListener('pointerdown', event => onHandlePointerDown(event, elementId, handleName));
-    handles.appendChild(handle);
-  });
-  return handles;
-}
-
-function applyTextStylesToNode(node, element) {
-  node.style.fontSize = `${element.style.fontSize || 28}px`;
-  node.style.color = element.isPlaceholder ? (element.style.color || '#94a3b8') : (element.style.color || '#111827');
-  node.style.fontWeight = element.style.bold ? '900' : '700';
-  node.style.fontStyle = element.isPlaceholder ? 'normal' : (element.style.italic ? 'italic' : 'normal');
-  node.style.textDecoration = element.isPlaceholder ? 'none' : (element.style.underline ? 'underline' : 'none');
-  node.style.textAlign = element.style.align || 'left';
-  node.classList.toggle('is-placeholder', !!element.isPlaceholder);
 }
 
 function renderToolbarState() {
@@ -504,9 +215,7 @@ function renderToolbarState() {
 }
 
 function syncSelectionUi() {
-  elementDomMap.forEach((node, id) => {
-    node.classList.toggle('selected', id === state.selectedElementId);
-  });
+  syncStageSelectionUi(elementDomMap);
 }
 
 function selectElement(id) {
@@ -523,136 +232,24 @@ function clearSelection() {
   renderStatus();
 }
 
-function getStagePoint(clientX, clientY) {
-  const rect = dom.stage.getBoundingClientRect();
-  const scaleX = STAGE_WIDTH / rect.width;
-  const scaleY = STAGE_HEIGHT / rect.height;
-  return {
-    x: (clientX - rect.left) * scaleX,
-    y: (clientY - rect.top) * scaleY
-  };
-}
-
 function onElementPointerDown(event, elementId) {
-  if (event.target.closest('.text-element')) return;
-  event.preventDefault();
-  event.stopPropagation();
-
-  const element = findElementById(elementId);
-  const node = elementDomMap.get(elementId);
-  if (!element || !node) return;
-
-  pushHistory();
-  selectElement(elementId);
-
-  const point = getStagePoint(event.clientX, event.clientY);
-  pointer.mode = 'drag';
-  pointer.elementId = elementId;
-  pointer.pointerId = event.pointerId;
-  pointer.dragOffsetX = point.x - element.x;
-  pointer.dragOffsetY = point.y - element.y;
-  node.classList.add('dragging');
-  node.setPointerCapture(event.pointerId);
+  handleElementPointerDown(event, elementId, { elementDomMap, findElementById, selectElement, stage: dom.stage });
 }
 
 function onHandlePointerDown(event, elementId, handle) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  const element = findElementById(elementId);
-  if (!element) return;
-
-  pushHistory();
-  selectElement(elementId);
-
-  const point = getStagePoint(event.clientX, event.clientY);
-  pointer.mode = 'resize';
-  pointer.elementId = elementId;
-  pointer.handle = handle;
-  pointer.pointerId = event.pointerId;
-  pointer.startX = point.x;
-  pointer.startY = point.y;
-  pointer.startBox = { x: element.x, y: element.y, w: element.w, h: element.h };
-
-  const node = elementDomMap.get(elementId);
-  node?.setPointerCapture(event.pointerId);
+  handleHandlePointerDown(event, elementId, handle, { elementDomMap, findElementById, selectElement, stage: dom.stage });
 }
 
 function bindStage() {
-  dom.stage.addEventListener('pointerdown', event => {
-    if (event.target === dom.stage) clearSelection();
-  });
-
-  dom.stage.addEventListener('pointermove', onStagePointerMove);
-  dom.stage.addEventListener('pointerup', onStagePointerUp);
-  dom.stage.addEventListener('pointercancel', onStagePointerUp);
+  bindStageInteractions(dom.stage, { clearSelection, onStagePointerMove, onStagePointerUp });
 }
 
 function onStagePointerMove(event) {
-  if (pointer.mode === 'none' || pointer.pointerId !== event.pointerId) return;
-  const element = findElementById(pointer.elementId);
-  const node = elementDomMap.get(pointer.elementId);
-  if (!element || !node) return;
-
-  const point = getStagePoint(event.clientX, event.clientY);
-
-  if (pointer.mode === 'drag') {
-    element.x = clamp(point.x - pointer.dragOffsetX, 0, STAGE_WIDTH - element.w);
-    element.y = clamp(point.y - pointer.dragOffsetY, 0, STAGE_HEIGHT - element.h);
-    node.style.left = `${element.x}px`;
-    node.style.top = `${element.y}px`;
-    return;
-  }
-
-  if (pointer.mode === 'resize' && pointer.startBox) {
-    const dx = point.x - pointer.startX;
-    const dy = point.y - pointer.startY;
-    let { x, y, w, h } = pointer.startBox;
-    const handle = pointer.handle;
-    const has = symbol => handle.includes(symbol);
-
-    if (has('e')) w += dx;
-    if (has('s')) h += dy;
-    if (has('w')) { x += dx; w -= dx; }
-    if (has('n')) { y += dy; h -= dy; }
-
-    w = Math.max(40, w);
-    h = Math.max(30, h);
-    x = clamp(x, 0, STAGE_WIDTH - w);
-    y = clamp(y, 0, STAGE_HEIGHT - h);
-
-    element.x = x;
-    element.y = y;
-    element.w = w;
-    element.h = h;
-
-    node.style.left = `${x}px`;
-    node.style.top = `${y}px`;
-    node.style.width = `${w}px`;
-    node.style.height = `${h}px`;
-  }
+  handleStagePointerMove(event, { elementDomMap, findElementById, stage: dom.stage });
 }
 
 function onStagePointerUp(event) {
-  if (pointer.mode === 'none' || pointer.pointerId !== event.pointerId) return;
-  const node = elementDomMap.get(pointer.elementId);
-  node?.classList.remove('dragging');
-  pointer.mode = 'none';
-  pointer.elementId = null;
-  pointer.handle = null;
-  pointer.pointerId = null;
-  pointer.startBox = null;
-  normalizeZIndexes();
-  renderSlideList();
-  markDirty('Положення змінено');
-}
-
-function normalizeZIndexes() {
-  const slide = getCurrentSlide();
-  if (!slide) return;
-  slide.elements
-    .sort((a, b) => (a.z || 1) - (b.z || 1))
-    .forEach((element, index) => { element.z = index + 1; });
+  handleStagePointerUp(event, { elementDomMap, markDirty, renderSlideList });
 }
 
 function bindMenus() {
@@ -1009,18 +606,10 @@ function confirmNewProject() {
 }
 
 function saveProjectFile() {
-  const fileName = `${slugify(state.fileName)}.artslides.json`;
-  downloadTextFile(fileName, JSON.stringify(serializePresentation(), null, 2));
+  savePresentationFile(serializePresentation());
   state.unsavedChanges = false;
   updateDirtyUi();
   setStatusRight('Файл збережено');
-}
-
-function slugify(value) {
-  return value
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '') || 'presentation';
 }
 
 async function onProjectFileSelected() {
@@ -1029,7 +618,7 @@ async function onProjectFileSelected() {
   if (!file) return;
   try {
     const text = await readFileAsText(file);
-    const parsed = normalizePresentation(JSON.parse(text));
+    const parsed = parsePresentationText(text);
     if (!parsed) throw new Error('invalid');
     applyPresentationData(parsed);
     resetHistory();
@@ -1406,56 +995,19 @@ function showShortcuts() {
 }
 
 function showModal({ title, text = '', body = '', confirmText = 'Гаразд', cancelText = 'Скасувати', icon = 'fa-solid fa-circle-info', onConfirm = null, onMount = null, showCancel = true }) {
-  dom.modalTitle.textContent = title;
-  dom.modalText.textContent = text;
-  dom.modalBody.innerHTML = body;
-  dom.modalIcon.innerHTML = `<i class="${icon}"></i>`;
-  dom.modalConfirm.textContent = confirmText;
-  dom.modalCancel.textContent = cancelText;
-  dom.modalCancel.classList.toggle('hidden', !showCancel);
-  dom.modalOverlay.classList.remove('hidden');
-  dom.modalOverlay.classList.add('active');
-  dom.modalOverlay.setAttribute('aria-hidden', 'false');
-
-  const confirmHandler = () => {
-    onConfirm?.();
-    closeModal();
-  };
-  const cancelHandler = () => closeModal();
-
-  modalHandlerAbort?.abort();
-  modalHandlerAbort = new AbortController();
-  dom.modalConfirm.addEventListener('click', confirmHandler, { signal: modalHandlerAbort.signal });
-  dom.modalCancel.addEventListener('click', cancelHandler, { signal: modalHandlerAbort.signal });
-  onMount?.();
+  showModalUi(dom, { title, text, body, confirmText, cancelText, icon, onConfirm, onMount, showCancel });
 }
 
 function closeModal() {
-  modalHandlerAbort?.abort();
-  modalHandlerAbort = null;
-  dom.modalOverlay.classList.add('hidden');
-  dom.modalOverlay.classList.remove('active');
-  dom.modalOverlay.setAttribute('aria-hidden', 'true');
-  dom.modalBody.innerHTML = '';
+  closeModalUi(dom);
 }
 
 function showInfoModal(title, text) {
-  showModal({
-    title,
-    text,
-    confirmText: 'Гаразд',
-    showCancel: false
-  });
+  showInfoModalUi(dom, title, text);
 }
 
 function showConfirmModal({ title, text, confirmText = 'Продовжити', onConfirm }) {
-  showModal({
-    title,
-    text,
-    confirmText,
-    cancelText: 'Скасувати',
-    onConfirm
-  });
+  showConfirmModalUi(dom, { title, text, confirmText, onConfirm });
 }
 
 window.SlidesApp.boot = initSlidesEditor;

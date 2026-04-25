@@ -512,7 +512,12 @@ $runtimeFiles = @(
   'tables/js/state.js',
   'tables/js/workbook.js',
   'slides/js/app.js',
+  'slides/js/modal-ui.js',
+  'slides/js/project.js',
   'slides/js/runtime.js',
+  'slides/js/slide-list.js',
+  'slides/js/stage-interactions.js',
+  'slides/js/stage-renderer.js',
   'text/js/app.js',
   'text/js/runtime.js'
 )
@@ -569,6 +574,50 @@ if (Test-Path $slidesRuntimePath) {
   $slidesRuntime = Get-Content -Raw -Encoding UTF8 $slidesRuntimePath
   Assert-True ($slidesRuntime -match "import\s+['""]\.\/app\.js['""]") "slides/js/runtime.js: should be a thin wrapper that imports app.js"
   Assert-True ($slidesRuntime -notmatch "document\.addEventListener\('DOMContentLoaded',\s*boot\)") "slides/js/runtime.js: runtime wrapper should not duplicate application boot logic"
+}
+
+$slidesProjectPath = Join-Path $Root 'slides/js/project.js'
+if (Test-Path $slidesProjectPath) {
+  $slidesProject = Get-Content -Raw -Encoding UTF8 $slidesProjectPath
+  foreach ($projectFunction in @('normalizeElement', 'normalizePresentation', 'parsePresentationText', 'savePresentationFile', 'slugify')) {
+    Assert-True ($slidesProject -match "export function $projectFunction\(") "slides/js/project.js: should own $projectFunction"
+  }
+}
+
+$slidesModalUiPath = Join-Path $Root 'slides/js/modal-ui.js'
+if (Test-Path $slidesModalUiPath) {
+  $slidesModalUi = Get-Content -Raw -Encoding UTF8 $slidesModalUiPath
+  foreach ($modalUiFunction in @('closeModal', 'showConfirmModal', 'showInfoModal', 'showModal')) {
+    Assert-True ($slidesModalUi -match "export function $modalUiFunction\(") "slides/js/modal-ui.js: should own $modalUiFunction"
+  }
+}
+
+$slidesSlideListPath = Join-Path $Root 'slides/js/slide-list.js'
+if (Test-Path $slidesSlideListPath) {
+  $slidesSlideList = Get-Content -Raw -Encoding UTF8 $slidesSlideListPath
+  Assert-True ($slidesSlideList -match 'export function renderSlideList\(') "slides/js/slide-list.js: should own slide list rendering"
+  foreach ($slideListFunction in @('reorderSlides', 'moveSlideById', 'makeMiniAction')) {
+    Assert-True ($slidesSlideList -match "function $slideListFunction\(") "slides/js/slide-list.js: should keep $slideListFunction inside the slide list layer"
+  }
+}
+
+$slidesStageRendererPath = Join-Path $Root 'slides/js/stage-renderer.js'
+if (Test-Path $slidesStageRendererPath) {
+  $slidesStageRenderer = Get-Content -Raw -Encoding UTF8 $slidesStageRendererPath
+  Assert-True ($slidesStageRenderer -match 'export function renderStage\(') "slides/js/stage-renderer.js: should own stage rendering"
+  Assert-True ($slidesStageRenderer -match 'export function syncSelectionUi\(') "slides/js/stage-renderer.js: should own stage selection DOM sync"
+  foreach ($stageRendererFunction in @('renderElementNode', 'createTextNode', 'createShapeNode', 'createHandles', 'applyTextStylesToNode')) {
+    Assert-True ($slidesStageRenderer -match "function $stageRendererFunction\(") "slides/js/stage-renderer.js: should keep $stageRendererFunction inside the stage renderer layer"
+  }
+}
+
+$slidesStageInteractionsPath = Join-Path $Root 'slides/js/stage-interactions.js'
+if (Test-Path $slidesStageInteractionsPath) {
+  $slidesStageInteractions = Get-Content -Raw -Encoding UTF8 $slidesStageInteractionsPath
+  foreach ($stageInteractionFunction in @('bindStage', 'getStagePoint', 'onElementPointerDown', 'onHandlePointerDown', 'onStagePointerMove', 'onStagePointerUp')) {
+    Assert-True ($slidesStageInteractions -match "export function $stageInteractionFunction\(") "slides/js/stage-interactions.js: should own $stageInteractionFunction"
+  }
+  Assert-True ($slidesStageInteractions -match 'const pointer\s*=') "slides/js/stage-interactions.js: should own pointer interaction state"
 }
 
 $paintIndexPath = Join-Path $Root 'paint/index.html'
@@ -996,7 +1045,7 @@ $modalContractFiles = @(
   'tables/js/ui.js',
   'paint/js/ui.js',
   'vector/js/ui.js',
-  'slides/js/app.js',
+  'slides/js/modal-ui.js',
   'flowcharts/js/ui.js'
 )
 
