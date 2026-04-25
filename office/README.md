@@ -69,9 +69,9 @@
 
 `tables/` уже пройшов великий етап декомпозиції: `core.js` став фасадом, формульне ядро розділене на parser/references/functions/engine, а UI, clipboard, formatting, structure, charts, sorting, workbook file і calculation винесені в окремі модулі.
 
-Це розділення поки корисне, але подальше агресивне дроблення Таблиць не є пріоритетом. Наступні кроки для Таблиць мають бути стабілізаційними: перевірити boot, формули, форматування, import/export workbook, CSV, діаграми й додати точкові browser-smoke сценарії.
+`slides/` також отримав керовану структуру: project helpers, slide list, stage renderer, stage interactions і modal UI винесені з `app.js`, runtime boot став стійким до timing-проблем, а `tests/slides-behavior.html` фіксує browser-runtime boot, stage render і project helpers. Подальше механічне дроблення Слайдів не є пріоритетом; наступні кроки там мають бути функціональними: теми, макети, вирівнювання об'єктів, transitions/animations, таблиці/діаграми у слайдах і presenter/export сценарії.
 
-Після короткої стабілізації рекомендований наступний фокус — `slides/`, бо Таблиці й Flowcharts уже отримали основний архітектурний виграш.
+Наступний рекомендований фокус для зменшення техборгу перед нарощуванням функціоналу — `paint/`. У ньому найбільший практичний виграш дасть обережне відокремлення file/export, tool actions і canvas interaction від великого `app.js`/`canvas.js` без створення зайвих дрібних модулів.
 
 ## Тести
 
@@ -109,7 +109,7 @@ powershell -ExecutionPolicy Bypass -File tests\cleanup-test-artifacts.ps1
 - modal/dropdown/statusbar контракти.
 - `sw.js` precache-контракт: `CORE_ASSETS` не має мертвих шляхів і містить локальні asset-и, які підключають HTML-файли редакторів.
 
-`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури, а `tests/run-browser-smoke.ps1` автоматизує цей сценарій через headless Chrome і додатково запускає `tests/flowcharts-behavior.html` для runtime-перевірки модулів ПЛЮС Схем. Для `slides/` єдине джерело логіки тепер `slides/js/app.js`, а `slides/js/runtime.js` лишається тонкою module-entry обгорткою для стабільного підключення в HTML. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком. Директорії `tests/.browser-profile*` і файли `.browser-smoke.*` є локальними артефактами запуску; вони ігноруються git і чистяться через `tests\cleanup-test-artifacts.ps1`.
+`tests/browser-smoke.html` можна відкрити в браузері як додатковий smoke-тест DOM-структури, а `tests/run-browser-smoke.ps1` автоматизує цей сценарій через headless Chrome і додатково запускає поведінкові перевірки для Flowcharts, Slides і Tables. Для `slides/` `slides/js/runtime.js` лишається тонкою module-entry обгорткою для стабільного підключення в HTML, а `tests/slides-behavior.html` перевіряє, що `SlidesApp.boot`, список слайдів, сцена і project helpers справді працюють у браузері. Зовнішні CDN-ресурси поки лише позначаються warning-ами: їх винесення в локальний `vendor/` є окремим наступним кроком. Директорії `tests/.browser-profile*` і файли `.browser-smoke.*` є локальними артефактами запуску; вони ігноруються git і чистяться через `tests\cleanup-test-artifacts.ps1`.
 
 Локальний сервер для першої браузерної перевірки:
 

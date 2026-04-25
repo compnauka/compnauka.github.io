@@ -2,6 +2,24 @@
 
 ## 2026-04-25
 
+### Slides architecture and behavior smoke
+
+- `slides/js/app.js` reduced to a coordinator by moving project helpers, slide list rendering, stage rendering, stage interactions and modal UI into focused modules.
+- `slides/js/runtime.js` now boots safely whether `DOMContentLoaded` is still pending or already complete.
+- `tests/slides-behavior.html` added and wired into `tests/run-browser-smoke.ps1` to verify browser module import, `SlidesApp.boot`, slide list render, stage render, project normalization/parsing and Ukrainian slug generation.
+- Damaged Unicode/control characters in Slides project/template text literals were cleaned so browser module imports no longer fail with `SyntaxError: Invalid or unexpected token`.
+- Technical conclusion recorded: pause mechanical Slides splitting and move to feature work on top of the current structure.
+- Recommended next editor for debt reduction before feature growth: `paint/`.
+
+### Paint document lifecycle split
+
+- `paint/js/document.js` added to own autosave draft, draft restore, image import, PNG/JPG export and print.
+- `paint/js/object-interactions.js` added to own object selection, move, resize and delete behavior.
+- `paint/js/app.js` reduced back toward a coordinator role for boot, tool state and canvas interactions.
+- `paint/js/runtime.js` made resilient to `DOMContentLoaded` timing, matching the newer Slides runtime pattern.
+- `tests/paint-behavior.html` added to verify browser boot, document module export, canvas initialization and standard command markers.
+- `paint/index.html`, `sw.js`, `tests/static-ui-audit.ps1`, `tests/run-browser-smoke.ps1` and `paint/UI_MIGRATION_TO_STANDARD.md` synchronized with the new document module.
+
 ### Tables architecture and stabilization decision
 
 - `tables/js/core.js` split into dedicated model, storage, addressing and formula layers.

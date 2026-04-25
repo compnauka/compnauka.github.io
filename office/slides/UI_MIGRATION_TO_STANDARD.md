@@ -1,15 +1,15 @@
 # UI_MIGRATION_TO_STANDARD.md — ПЛЮС Слайди
 
-## Поточний стан
+## Поточний Стан
 
-Базовий shell, command adapter, file picker і runtime-аудит підключені. `slides/js/runtime.js` лишається стабільним module entrypoint, а `slides/js/app.js` все ще є головним coordinator-файлом редактора.
+Базовий shell, command adapter, file picker і runtime-аудіт підключені. `slides/js/runtime.js` лишається стабільним module entrypoint, а `slides/js/app.js` тепер є координатором верхнього рівня, не єдиним місцем усієї логіки редактора.
 
-Почато декомпозицію `app.js`: файлово-проєктну логіку, список слайдів, stage rendering, pointer interactions і modal UI винесено в окремі модулі.
+Поточний прохід зменшив технічний борг без надмірного збільшення кількості файлів: з `app.js` винесено тільки ті частини, які мають самостійну відповідальність і потрібні для майбутнього PowerPoint-подібного функціоналу.
 
-## Поточна структура
+## Поточна Структура
 
-- `slides/js/runtime.js` — module entrypoint, який запускає `SlidesApp.boot`.
-- `slides/js/app.js` — boot, UI coordinator, stage interactions, command dispatch.
+- `slides/js/runtime.js` — module entrypoint, який стійко запускає `SlidesApp.boot`.
+- `slides/js/app.js` — boot, UI coordinator, command dispatch і зв'язування модулів.
 - `slides/js/project.js` — нормалізація презентації/елементів, import/export JSON payload, filename slug.
 - `slides/js/slide-list.js` — thumbnails, drag reorder і кнопки керування слайдами.
 - `slides/js/stage-renderer.js` — DOM-рендеринг сцени, елементів, handles і selected-state.
@@ -22,13 +22,30 @@
 - `slides/js/export.js` — PDF export, print і snapshot rendering.
 - `slides/js/utils.js` — DOM, file і utility helpers.
 
-## Найближчий борг
+## Зафіксовані Перевірки
 
-- Розділити `app.js` далі тільки за чіткими межами: menu/color popover UI, presentation mode, object commands.
-- Перевірити open/save presentation у браузері після винесення `project.js`.
-- Вирівняти modal тексти та statusbar повідомлення.
-- Додати browser-smoke сценарій для імпорту/експорту `.artslides.json`.
+- `tests/run-tests.ps1` перевіряє статичний shell/module контракт.
+- `tests/run-browser-smoke.ps1` запускає `tests/slides-behavior.html`.
+- `tests/slides-behavior.html` перевіряє:
+  - browser import `slides/js/app.js`;
+  - наявність `SlidesApp.boot`;
+  - рендер списку слайдів;
+  - рендер stage і stage elements;
+  - стандартні команди `new/open/save/undo/redo`;
+  - `normalizePresentation`, `parsePresentationText`, `slugify` з українським текстом.
+
+## Найближчий Борг
+
+Подальше дроблення `app.js` робити тільки за чіткою межею відповідальності. Найближчі перспективні напрями вже мають бути функціональними:
+
+- themes і slide layouts;
+- align/distribute/order object commands;
+- tables/charts всередині слайдів;
+- transition/animation controls;
+- presenter mode і export сценарії.
 
 ## Обмеження
 
-Не повторювати помилку надмірного дроблення: новий модуль у `slides/js` має з'являтися лише тоді, коли він забирає самостійну відповідальність з `app.js` і може бути зафіксований у статичному аудиті або browser-smoke тесті. Після поточного проходу наступний крок має бути стабілізаційним або поведінковим, а не механічним подрібненням.
+Не повторювати помилку надмірного дроблення. Новий модуль у `slides/js` має з'являтися лише тоді, коли він забирає самостійну відповідальність з `app.js`, додається в `sw.js` за потреби і покривається статичним аудитом або browser-smoke тестом.
+
+Поточний висновок: Слайди достатньо стабілізовані для функціонального розвитку. Наступний редактор для техборгу перед нарощуванням можливостей — `paint/`.

@@ -10,7 +10,7 @@ function mergeShapeStyle(style = {}) {
 }
 
 export function createTextElement(overrides = {}) {
-  const placeholder = overrides.placeholder ?? 'Введіть текст…';
+  const placeholder = overrides.placeholder ?? 'Введіть текст...';
   const isPlaceholder = overrides.isPlaceholder ?? (overrides.content == null);
   return {
     id: uid(),
@@ -126,8 +126,7 @@ export function createDefaultPresentation() {
         w: 660,
         h: 160,
         z: 1,
-        content: 'Привіт!
-Створи свою презентацію',
+        content: 'Привіт!\nСтвори свою презентацію',
         placeholder: 'Заголовок',
         isPlaceholder: false,
         style: { fontSize: 56, align: 'center', bold: true, color: '#111827' }
@@ -183,7 +182,7 @@ export function createTemplateDefinition(type) {
           w: 520,
           h: 90,
           z: 3,
-          content: 'Автор: …',
+          content: 'Автор: ...',
           isPlaceholder: false,
           style: { fontSize: 28, align: 'center', color: '#475569' }
         })
@@ -211,9 +210,7 @@ export function createTemplateDefinition(type) {
           w: 410,
           h: 320,
           z: 2,
-          content: '• Пункт 1
-• Пункт 2
-• Пункт 3',
+          content: '• Пункт 1\n• Пункт 2\n• Пункт 3',
           isPlaceholder: false,
           style: { fontSize: 28, color: '#111827' }
         }),
@@ -279,9 +276,9 @@ export function createTemplateDefinition(type) {
       createTextElement({ x: 80, y: 175, w: 200, h: 70, z: 10, content: 'Ідея 1', isPlaceholder: false, style: { fontSize: 32, bold: true, align: 'center' } }),
       createTextElement({ x: 380, y: 175, w: 200, h: 70, z: 11, content: 'Ідея 2', isPlaceholder: false, style: { fontSize: 32, bold: true, align: 'center' } }),
       createTextElement({ x: 680, y: 175, w: 200, h: 70, z: 12, content: 'Ідея 3', isPlaceholder: false, style: { fontSize: 32, bold: true, align: 'center' } }),
-      createTextElement({ x: 80, y: 250, w: 200, h: 170, z: 13, content: 'Напиши тут…', isPlaceholder: false, style: { fontSize: 24 } }),
-      createTextElement({ x: 380, y: 250, w: 200, h: 170, z: 14, content: 'Напиши тут…', isPlaceholder: false, style: { fontSize: 24 } }),
-      createTextElement({ x: 680, y: 250, w: 200, h: 170, z: 15, content: 'Напиши тут…', isPlaceholder: false, style: { fontSize: 24 } })
+      createTextElement({ x: 80, y: 250, w: 200, h: 170, z: 13, content: 'Напиши тут...', isPlaceholder: false, style: { fontSize: 24 } }),
+      createTextElement({ x: 380, y: 250, w: 200, h: 170, z: 14, content: 'Напиши тут...', isPlaceholder: false, style: { fontSize: 24 } }),
+      createTextElement({ x: 680, y: 250, w: 200, h: 170, z: 15, content: 'Напиши тут...', isPlaceholder: false, style: { fontSize: 24 } })
     ]
   };
 }

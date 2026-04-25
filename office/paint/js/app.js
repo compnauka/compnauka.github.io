@@ -5,39 +5,20 @@ window.PaintApp = window.PaintApp || {};
 
 (() => {
   const { constants, state, utils, canvasApi, ui } = window.ArtMalyunky;
-
-  const autosaveDraft = utils.debounce(() => {
-    if (state.suppressAutosave) return;
-    try {
-      const payload = {
-        fileName: state.fileName,
-        currentTool: state.currentTool,
-        currentBrush: state.currentBrush,
-        currentShape: state.currentShape,
-        currentStamp: state.currentStamp,
-        currentColor: state.currentColor,
-        currentSize: state.currentSize,
-        currentOpacity: state.currentOpacity,
-        guideMode: state.guideMode,
-        snapshot: canvasApi.snapshot()
-      };
-      localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(payload));
-    } catch (error) {
-      console.warn('Не вдалося зберегти чернетку.', error);
-    }
-  }, 260);
+  const paintDocument = window.ArtMalyunky.paintDocument.createPaintDocument({ markDirty, markSaved, pushUndo });
+  const objectInteractions = window.ArtMalyunky.objectInteractions.createPaintObjectInteractions({ markDirty, pushUndo });
 
   function markDirty() {
     state.unsavedChanges = true;
     ui.updateDirtyUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function markSaved() {
     state.unsavedChanges = false;
     ui.updateDirtyUI();
     ui.flashSavedBadge();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function pushUndo() {
@@ -51,7 +32,7 @@ window.PaintApp = window.PaintApp || {};
     await canvasApi.restoreSnapshot(snapshot);
     state.suppressAutosave = false;
     ui.updateDetailStatus();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   async function undo() {
@@ -73,7 +54,7 @@ window.PaintApp = window.PaintApp || {};
   function setTool(toolName) {
     state.currentTool = toolName;
     ui.updateToolUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setBrush(brushName) {
@@ -81,7 +62,7 @@ window.PaintApp = window.PaintApp || {};
     state.currentTool = 'brush';
     ui.renderBrushes();
     ui.updateToolUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setShape(shapeName) {
@@ -89,7 +70,7 @@ window.PaintApp = window.PaintApp || {};
     state.currentTool = 'shapes';
     ui.updateShapeUI();
     ui.updateToolUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setStamp(stamp) {
@@ -97,49 +78,32 @@ window.PaintApp = window.PaintApp || {};
     state.currentTool = 'stamps';
     ui.updateStampUI();
     ui.updateToolUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setGuide(mode) {
     state.guideMode = mode;
     ui.updateGuideUI();
     canvasApi.drawGuides();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setColor(hex) {
     state.currentColor = hex;
     ui.updateColorUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setSize(value) {
     state.currentSize = utils.clamp(Number(value), 1, 48);
     ui.updateSizeUI();
-    autosaveDraft();
+    paintDocument.autosaveDraft();
   }
 
   function setOpacity(value) {
     state.currentOpacity = utils.clamp(Number(value), 1, 100);
     ui.updateOpacityUI();
-    autosaveDraft();
-  }
-
-  function getSelectedObject() {
-    if (!state.selectedObjectId) return null;
-    return canvasApi.getObjectById(state.selectedObjectId);
-  }
-
-  function selectObject(id) {
-    state.selectedObjectId = id;
-    canvasApi.renderObjects();
-    ui.updateDetailStatus(getSelectedObject());
-  }
-
-  function deselectObject() {
-    state.selectedObjectId = null;
-    canvasApi.renderObjects();
-    ui.updateDetailStatus();
+    paintDocument.autosaveDraft();
   }
 
   async function clearCanvasWithConfirm() {
@@ -164,72 +128,7 @@ window.PaintApp = window.PaintApp || {};
     state.unsavedChanges = false;
     ui.updateDirtyUI();
     ui.updateDetailStatus();
-    autosaveDraft();
-  }
-
-  function saveImage(type = 'png') {
-    const ext = type === 'jpg' ? 'jpg' : 'png';
-    const mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
-    const dataUrl = canvasApi.exportImage(mime, 0.92);
-    utils.downloadDataUrl(dataUrl, `${state.fileName || constants.DEFAULT_FILE_NAME}.${ext}`);
-    markSaved();
-  }
-
-  function printImage() {
-    const dataUrl = canvasApi.exportImage('image/png');
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
-      ui.showInfoModal('Друк заблоковано', 'Браузер не відкрив вікно друку. Дозвольте спливаючі вікна для цієї сторінки.', '⚠️');
-      return;
-    }
-    const doc = printWindow.document;
-    const title = state.fileName || constants.DEFAULT_FILE_NAME;
-    doc.open();
-    doc.write('<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"></head><body></body></html>');
-    doc.close();
-    doc.title = title;
-
-    const style = doc.createElement('style');
-    style.textContent = 'body{margin:0;padding:24px;display:grid;place-items:center;background:#f5f7fb}img{max-width:100%;height:auto;box-shadow:0 8px 28px rgba(0,0,0,.12)}';
-    doc.head.appendChild(style);
-
-    const image = doc.createElement('img');
-    image.src = dataUrl;
-    image.alt = title;
-    doc.body.appendChild(image);
-
-    printWindow.focus();
-    printWindow.print();
-  }
-
-  function importImage() {
-    window.OfficeShell?.openFilePicker?.(ui.elements.importFileInput) || ui.elements.importFileInput.click();
-  }
-
-  function handleImportedFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      pushUndo();
-      try {
-        await canvasApi.loadImageFile(event.target.result);
-        markDirty();
-      } catch (error) {
-        console.error(error);
-        ui.showInfoModal('Помилка імпорту', 'Не вдалося відкрити зображення.', '⚠️');
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function deleteSelectedObject() {
-    if (!state.selectedObjectId) return;
-    pushUndo();
-    const removed = canvasApi.deleteSelectedObject();
-    if (removed) {
-      ui.updateDetailStatus();
-      markDirty();
-    }
+    paintDocument.autosaveDraft();
   }
 
   function runOfficeCommand(command) {
@@ -239,8 +138,8 @@ window.PaintApp = window.PaintApp || {};
   function createShellCommands() {
     return {
       new: newDrawing,
-      open: importImage,
-      save: () => saveImage('png'),
+      open: paintDocument.importImage,
+      save: () => paintDocument.saveImage('png'),
       undo: undo,
       redo: redo
     };
@@ -252,16 +151,16 @@ window.PaintApp = window.PaintApp || {};
         runOfficeCommand('new') || newDrawing();
         break;
       case 'import-image':
-        runOfficeCommand('open') || importImage();
+        runOfficeCommand('open') || paintDocument.importImage();
         break;
       case 'save-png':
-        runOfficeCommand('save') || saveImage('png');
+        runOfficeCommand('save') || paintDocument.saveImage('png');
         break;
       case 'save-jpg':
-        saveImage('jpg');
+        paintDocument.saveImage('jpg');
         break;
       case 'print':
-        printImage();
+        paintDocument.printImage();
         break;
       case 'undo':
         runOfficeCommand('undo') || undo();
@@ -270,7 +169,7 @@ window.PaintApp = window.PaintApp || {};
         runOfficeCommand('redo') || redo();
         break;
       case 'delete-selected':
-        deleteSelectedObject();
+        objectInteractions.deleteSelectedObject();
         break;
       case 'clear-canvas':
         clearCanvasWithConfirm();
@@ -287,7 +186,7 @@ window.PaintApp = window.PaintApp || {};
       case 'fit-canvas':
         canvasApi.resizeToContainer();
         ui.updateCanvasInfo(state.canvasWidth, state.canvasHeight);
-        autosaveDraft();
+        paintDocument.autosaveDraft();
         break;
       case 'show-shortcuts':
         ui.showInfoModal('Клавіатурні скорочення', 'B — пензлик\nE — гумка\nF — заливка\nG — фігури\nT — штампи\nDelete / Backspace — видалити вибраний об\'єкт\n[ / ] — менша або більша товщина\nCtrl+Z — скасувати\nCtrl+Y — повернути\nCtrl+S — зберегти PNG\nCtrl+N — новий малюнок\nEsc — закрити меню або зняти виділення', '⌨️');
@@ -374,7 +273,7 @@ window.PaintApp = window.PaintApp || {};
       const obj = canvasApi.commitPendingObject();
       state.isDrawing = false;
       if (obj) {
-        selectObject(obj.id);
+        objectInteractions.selectObject(obj.id);
         markDirty();
       }
       return;
@@ -393,81 +292,10 @@ window.PaintApp = window.PaintApp || {};
       const obj = canvasApi.commitPendingObject();
       state.isDrawing = false;
       if (obj) {
-        selectObject(obj.id);
+        objectInteractions.selectObject(obj.id);
         markDirty();
       }
     }
-  }
-
-  function startObjectMove(id, point) {
-    const obj = canvasApi.getObjectById(id);
-    if (!obj) return;
-    pushUndo();
-    selectObject(id);
-    state.objectInteraction = {
-      type: 'move',
-      objectId: id,
-      startX: point.x,
-      startY: point.y,
-      original: utils.deepClone(obj)
-    };
-  }
-
-  function startObjectResize(id, handle, point) {
-    const obj = canvasApi.getObjectById(id);
-    if (!obj) return;
-    pushUndo();
-    selectObject(id);
-    state.objectInteraction = {
-      type: 'resize',
-      objectId: id,
-      handle,
-      startX: point.x,
-      startY: point.y,
-      original: utils.deepClone(obj)
-    };
-  }
-
-  function updateObjectInteraction(point) {
-    if (!state.objectInteraction) return;
-    const interaction = state.objectInteraction;
-    const obj = canvasApi.getObjectById(interaction.objectId);
-    if (!obj) return;
-    const dx = point.x - interaction.startX;
-    const dy = point.y - interaction.startY;
-
-    if (interaction.type === 'move') {
-      const nextX = utils.clamp(interaction.original.x + dx, 0, state.canvasWidth - interaction.original.w);
-      const nextY = utils.clamp(interaction.original.y + dy, 0, state.canvasHeight - interaction.original.h);
-      canvasApi.updateObject(obj.id, { x: nextX, y: nextY });
-      ui.updateDetailStatus(canvasApi.getObjectById(obj.id));
-      return;
-    }
-
-    const minSize = obj.kind === 'stamp' ? 32 : 12;
-    let left = interaction.original.x;
-    let top = interaction.original.y;
-    let right = interaction.original.x + interaction.original.w;
-    let bottom = interaction.original.y + interaction.original.h;
-
-    if (interaction.handle.includes('w')) left = utils.clamp(interaction.original.x + dx, 0, right - minSize);
-    if (interaction.handle.includes('e')) right = utils.clamp(interaction.original.x + interaction.original.w + dx, left + minSize, state.canvasWidth);
-    if (interaction.handle.includes('n')) top = utils.clamp(interaction.original.y + dy, 0, bottom - minSize);
-    if (interaction.handle.includes('s')) bottom = utils.clamp(interaction.original.y + interaction.original.h + dy, top + minSize, state.canvasHeight);
-
-    canvasApi.updateObject(obj.id, {
-      x: left,
-      y: top,
-      w: right - left,
-      h: bottom - top
-    });
-    ui.updateDetailStatus(canvasApi.getObjectById(obj.id));
-  }
-
-  function finishObjectInteraction() {
-    if (!state.objectInteraction) return;
-    state.objectInteraction = null;
-    markDirty();
   }
 
   function bindCanvas() {
@@ -479,7 +307,7 @@ window.PaintApp = window.PaintApp || {};
       const point = canvasApi.getPointerPosition(event);
       state.lastPointer = point;
       ui.updateCoords(point.x, point.y);
-      deselectObject();
+      objectInteractions.deselectObject();
       if (state.currentTool === 'shapes' || state.currentTool === 'stamps') beginObjectCreation(point, event);
       else beginRasterStroke(point, event);
     });
@@ -496,7 +324,7 @@ window.PaintApp = window.PaintApp || {};
         const point = canvasApi.getPointerPosition(event);
         state.lastPointer = point;
         ui.updateCoords(point.x, point.y);
-        updateObjectInteraction(point);
+        objectInteractions.updateObjectInteraction(point);
       }
     });
 
@@ -505,13 +333,13 @@ window.PaintApp = window.PaintApp || {};
       state.lastPointer = point;
       ui.updateCoords(point.x, point.y);
       finishCanvasInteraction(point);
-      finishObjectInteraction();
+      objectInteractions.finishObjectInteraction();
     });
 
     document.addEventListener('pointercancel', () => {
       state.isDrawing = false;
       canvasApi.cancelPendingObject();
-      finishObjectInteraction();
+      objectInteractions.finishObjectInteraction();
     });
 
     objectLayer.addEventListener('pointerdown', (event) => {
@@ -522,9 +350,9 @@ window.PaintApp = window.PaintApp || {};
       event.stopPropagation();
       const point = canvasApi.getPointerPosition(event);
       if (handle) {
-        startObjectResize(objectNode.dataset.id, handle.dataset.handle, point);
+        objectInteractions.startObjectResize(objectNode.dataset.id, handle.dataset.handle, point);
       } else {
-        startObjectMove(objectNode.dataset.id, point);
+        objectInteractions.startObjectMove(objectNode.dataset.id, point);
       }
     });
 
@@ -532,7 +360,7 @@ window.PaintApp = window.PaintApp || {};
       const objectNode = event.target.closest('.art-object');
       if (!objectNode) return;
       event.stopPropagation();
-      selectObject(objectNode.dataset.id);
+      objectInteractions.selectObject(objectNode.dataset.id);
     });
   }
 
@@ -599,7 +427,7 @@ window.PaintApp = window.PaintApp || {};
     ui.elements.shuffleStampsBtn.addEventListener('click', () => {
       ui.renderStamps();
       ui.updateStampUI();
-      autosaveDraft();
+      paintDocument.autosaveDraft();
     });
 
     ui.elements.nativeColorPicker.addEventListener('input', (event) => {
@@ -618,7 +446,7 @@ window.PaintApp = window.PaintApp || {};
     ui.elements.opacitySlider.addEventListener('input', (event) => setOpacity(event.target.value));
 
     ui.elements.importFileInput.addEventListener('change', (event) => {
-      handleImportedFile(event.target.files[0]);
+      paintDocument.handleImportedFile(event.target.files[0]);
       event.target.value = '';
     });
 
@@ -626,7 +454,7 @@ window.PaintApp = window.PaintApp || {};
       if (event.target.id === 'fileName') {
         ui.beginRename(() => {
           ui.updateFileNameUI();
-          autosaveDraft();
+          paintDocument.autosaveDraft();
         });
       }
     });
@@ -647,7 +475,7 @@ window.PaintApp = window.PaintApp || {};
             return;
           case 's':
             event.preventDefault();
-            runOfficeCommand('save') || saveImage('png');
+            runOfficeCommand('save') || paintDocument.saveImage('png');
             return;
           case 'n':
             event.preventDefault();
@@ -655,7 +483,7 @@ window.PaintApp = window.PaintApp || {};
             return;
           case 'p':
             event.preventDefault();
-            printImage();
+            paintDocument.printImage();
             return;
           default:
             break;
@@ -689,7 +517,7 @@ window.PaintApp = window.PaintApp || {};
           ui.closePickers();
           ui.elements.advancedColorPanel?.classList.add('hidden');
           ui.elements.advancedColorBtn?.classList.remove('active');
-          deselectObject();
+          objectInteractions.deselectObject();
           canvasApi.cancelPendingObject();
           state.isDrawing = false;
           break;
@@ -697,7 +525,7 @@ window.PaintApp = window.PaintApp || {};
         case 'delete':
           if (state.selectedObjectId) {
             event.preventDefault();
-            deleteSelectedObject();
+            objectInteractions.deleteSelectedObject();
           }
           break;
         default:
@@ -708,52 +536,16 @@ window.PaintApp = window.PaintApp || {};
     window.addEventListener('resize', utils.debounce(() => {
       canvasApi.resizeToContainer();
       ui.updateCanvasInfo(state.canvasWidth, state.canvasHeight);
-      autosaveDraft();
+      paintDocument.autosaveDraft();
     }, 120));
 
     window.addEventListener('beforeunload', (event) => {
-      autosaveDraft();
+      paintDocument.autosaveDraft();
       if (state.unsavedChanges) {
         event.preventDefault();
         event.returnValue = '';
       }
     });
-  }
-
-  async function restoreDraftIfAny() {
-    try {
-      const raw = localStorage.getItem(constants.STORAGE_KEY);
-      if (!raw) return;
-      const draft = JSON.parse(raw);
-      if (!draft) return;
-      state.fileName = draft.fileName || constants.DEFAULT_FILE_NAME;
-      state.currentTool = draft.currentTool || 'brush';
-      state.currentBrush = draft.currentBrush || 'pencil';
-      state.currentShape = draft.currentShape || 'line';
-      state.currentStamp = draft.currentStamp || constants.DEFAULT_STAMP;
-      state.currentColor = draft.currentColor || constants.DEFAULT_COLOR;
-      state.currentSize = Number(draft.currentSize || constants.DEFAULT_SIZE);
-      state.currentOpacity = Number(draft.currentOpacity || constants.DEFAULT_OPACITY);
-      state.guideMode = draft.guideMode || constants.DEFAULT_GUIDE;
-      ui.renderBrushes();
-      ui.renderStamps();
-      ui.updateFileNameUI();
-      ui.updateToolUI();
-      ui.updateShapeUI();
-      ui.updateStampUI();
-      ui.updateColorUI();
-      ui.updateSizeUI();
-      ui.updateOpacityUI();
-      ui.updateGuideUI();
-      if (draft.snapshot) {
-        await canvasApi.restoreSnapshot(draft.snapshot);
-      }
-      state.unsavedChanges = false;
-      ui.updateDirtyUI();
-      ui.updateDetailStatus();
-    } catch (error) {
-      console.warn('Не вдалося відновити чернетку.', error);
-    }
   }
 
   async function initPaintEditor() {
@@ -766,7 +558,7 @@ window.PaintApp = window.PaintApp || {};
     ui.updateCanvasInfo(state.canvasWidth, state.canvasHeight);
     bindCanvas();
     bindUi();
-    await restoreDraftIfAny();
+    await paintDocument.restoreDraftIfAny();
     canvasApi.drawGuides();
   }
 

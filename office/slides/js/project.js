@@ -28,7 +28,7 @@ export function normalizeElement(element, index) {
   const shape = ['rect', 'circle', 'triangle'].includes(element?.shape) ? element.shape : 'rect';
   const placeholder = typeof element?.placeholder === 'string' && element.placeholder.trim()
     ? element.placeholder
-    : (type === 'text' ? 'Введіть текст…' : '');
+    : (type === 'text' ? 'Введіть текст...' : '');
   const hasTextContent = typeof element?.content === 'string' && element.content.length > 0;
   const isPlaceholder = type === 'text'
     ? (typeof element?.isPlaceholder === 'boolean' ? element.isPlaceholder : !hasTextContent)

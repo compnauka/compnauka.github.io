@@ -43,6 +43,8 @@ const CORE_ASSETS = [
   './paint/js/app.js',
   './paint/js/canvas.js',
   './paint/js/constants.js',
+  './paint/js/document.js',
+  './paint/js/object-interactions.js',
   './paint/js/runtime.js',
   './paint/js/state.js',
   './paint/js/ui.js',
