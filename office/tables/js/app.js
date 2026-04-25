@@ -406,7 +406,5 @@ function initTouchSupport() {
   }, { passive: false });
 }
 
-}
-
 window.TablesApp.boot = initTablesEditor;
 window.initTablesApp = initTablesEditor;

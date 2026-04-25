@@ -49,7 +49,7 @@ function Invoke-SmokePage {
     "--user-data-dir=$profilePath" `
     '--virtual-time-budget=8000' `
     '--dump-dom' `
-    $Url 2>&1 | Out-String
+    $Url 2>$null | Out-String
 
   if ($dom -notmatch $PassPattern) {
     throw "$Name failed.`n$dom"
@@ -75,6 +75,7 @@ try {
 
   Invoke-SmokePage "http://127.0.0.1:$Port/tests/browser-smoke.html" 'data-smoke="passed"' 'Browser smoke'
   Invoke-SmokePage "http://127.0.0.1:$Port/tests/flowcharts-behavior.html" 'data-flowcharts="passed"' 'Flowcharts behavior smoke'
+  Invoke-SmokePage "http://127.0.0.1:$Port/tests/tables-render-behavior.html" 'data-tables-render="passed"' 'Tables render smoke'
   Invoke-SmokePage "http://127.0.0.1:$Port/tests/tables-formula-behavior.html" 'data-tables-formula="passed"' 'Tables formula smoke'
 } finally {
   if ($server -and -not $server.HasExited) {
