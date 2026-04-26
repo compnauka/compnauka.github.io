@@ -1,4 +1,4 @@
-﻿# Редакторська матриця банку питань
+# Редакторська матриця банку питань
 
 Статуси:
 - `залишити` — питання вже методично чисте або потребує лише дрібної косметики
@@ -40,9 +40,9 @@
 ## Як додавати нові питання, щоб вони співіснували з банком
 
 Для практичної роботи використовуй:
-- [NEW_QUESTION_FORM.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/NEW_QUESTION_FORM.md)
-- [QUESTION_TEMPLATE.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/QUESTION_TEMPLATE.md)
-- [BANK_GROWTH_GUIDE.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/BANK_GROWTH_GUIDE.md)
+- [NEW_QUESTION_FORM.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/NEW_QUESTION_FORM.md)
+- [QUESTION_TEMPLATE.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/QUESTION_TEMPLATE.md)
+- [BANK_GROWTH_GUIDE.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/BANK_GROWTH_GUIDE.md)
 
 1. Спочатку обери `conceptKey`, а вже потім оболонку сюжету.
 2. Одразу познач два метарівні:

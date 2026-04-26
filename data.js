@@ -482,6 +482,20 @@ const CATEGORIES = [
     color: "#14b8a6",
     services: [
       {
+        name: "Магічний квадрат",
+        description: "Математична головоломка, що розвиває логічне мислення додавання, пошук закономірностей.",
+        link: "games/magic_square/index.html",
+        image: "images/81.jpg",
+        tags: ["3-4 класи"]
+      },
+      {
+        name: "Математичні головоломки",
+        description: "Різноманітні математичні головоломки, що розвивають логічне мислення, уважність та кмітливість.",
+        link: "games/math_quiz/index.html",
+        image: "images/80.jpg",
+        tags: ["3-4 класи"]
+      },
+      {
         name: "Танграм",
         description: "Китайська головоломка, що розвиває логічне мислення та просторову уяву.",
         link: "games/tangram/index.html",

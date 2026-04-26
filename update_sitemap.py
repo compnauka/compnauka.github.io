@@ -2,8 +2,8 @@ import re
 import os
 
 BASE_URL = "https://itnauka.org/"
-DATA_FILE = "d:/GIT/compnauka.github.io/data.js"
-SITEMAP_FILE = "d:/GIT/compnauka.github.io/sitemap.xml"
+DATA_FILE = "d:/GIT/itnauka.org/data.js"
+SITEMAP_FILE = "d:/GIT/itnauka.org/sitemap.xml"
 
 # Core pages with high priority
 CORE_PAGES = [

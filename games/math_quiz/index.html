@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математичні головоломки | Інтерактивний тренажер для 3-4 класів</title>
+    <meta name="description" content="Безкоштовний математичний тренажер для учнів 3–4 класів. Логічні задачі, послідовності, рівності та магічні квадрати для розвитку математичних здібностей.">
+    <meta name="keywords" content="математика, 3 клас, 4 клас, математичний тренажер, логічні задачі, магічні квадрати, математичні головоломки, навчання онлайн">
+    <link rel="canonical" href="https://itnauka.org/games/math_quiz/" />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://itnauka.org/games/math_quiz/" />
+    <meta property="og:title" content="Математичні головоломки | Інтерактивний тренажер для 3-4 класів" />
+    <meta property="og:description" content="Розвивайте логіку та математичні навички дитини за допомогою цікавих завдань та ігор." />
+    <meta property="og:image" content="https://itnauka.org/images/4.jpg" />
+    <meta property="og:locale" content="uk_UA" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Математичні головоломки | Інтерактивний тренажер для 3-4 класів" />
+    <meta name="twitter:description" content="Безкоштовний тренажер з математики для школярів." />
+    <meta name="twitter:image" content="https://itnauka.org/images/4.jpg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../../favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+    <link rel="shortcut icon" href="../../favicon.ico" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Математичні головоломки",
+      "operatingSystem": "Web",
+      "applicationCategory": "EducationalApplication",
+      "description": "Інтерактивний тренажер для 3-4 класів з математики: логічні задачі, послідовності, рівності.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "UAH"
+      },
+      "educationalUse": "Practice",
+      "learningResourceType": "Quiz",
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Students"
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <canvas id="celebration-canvas" aria-hidden="true"></canvas>
+
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="title-block">
+                <a href="../../" class="back-link" aria-label="Повернутися на головну">← На головну</a>
+                <h1>Математичні головоломки</h1>
+                <p>Короткі математичні завдання для 3–4 класу з акцентом на практику.</p>
+            </div>
+
+            <div class="top-actions" aria-label="Налаштування сайту">
+                <button id="sound-toggle" class="toolbar-button" type="button" aria-pressed="true" aria-label="Увімкнути або вимкнути звук">Звук: увімк.</button>
+                <button id="theme-toggle" class="toolbar-button toolbar-button-secondary" type="button" aria-label="Змінити тему оформлення">Тема</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <section class="session-panel" aria-label="Керування набором завдань">
+                <div class="settings-row">
+                    <label>
+                        <span>Рівень</span>
+                        <select id="level" class="select">
+                            <option value="easy">Легкий</option>
+                            <option value="medium" selected>Середній</option>
+                            <option value="hard">Складний</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Кількість</span>
+                        <select id="task-count" class="select">
+                            <option value="3">3</option>
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                    </label>
+
+                    <button id="new-set-btn" class="button button-secondary" type="button">Новий набір</button>
+                </div>
+
+                <div class="progress-area" aria-label="Прогрес виконання">
+                    <div class="progress-line">
+                        <span id="progress-label">0 із 0 завдань</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-track" aria-hidden="true">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div class="mini-stats">
+                        <span>Підказки: <strong id="stat-hints">0</strong></span>
+                        <span>Спроби: <strong id="stat-attempts">0</strong></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="task-header" aria-labelledby="tasks-title">
+                <div>
+                    <p class="eyebrow">Поточний набір</p>
+                    <h2 id="tasks-title">Завдання</h2>
+                </div>
+                <p>Розв’яжи всі задачі та перевір результат.</p>
+            </section>
+
+            <section id="puzzles-container" class="puzzles-container" aria-live="polite"></section>
+
+            <section class="actions-bar" aria-label="Дії з відповідями">
+                <button id="check-btn" class="button button-primary" type="button">Перевірити</button>
+                <button id="global-hint-btn" class="button button-secondary" type="button">Підказка</button>
+                <button id="solution-btn" class="button button-ghost" type="button" disabled>Пояснення</button>
+            </section>
+
+            <section id="result-summary" class="result-summary" hidden></section>
+            <section id="solution-panel" class="solution-panel" hidden aria-label="Пояснення розв’язання"></section>
+
+            <details class="teacher-note">
+                <summary>Педагогічна цінність</summary>
+                <div>
+                    <p><strong>Що тренує:</strong> обчислення, пошук закономірностей, обернені дії, уважність до умов.</p>
+                    <p><strong>Як використати на уроці:</strong> після перевірки попросіть учня пояснити одну задачу за схемою: «Що відомо? Що шукаю? Яке правило використовую?»</p>
+                </div>
+            </details>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 <a href="https://itnauka.org/">Комп'ютерна наука з Паном Артемом</a>. Всі права захищено.</p>
+        </footer>
+    </div>
+
+    <noscript>
+        <div class="noscript-message">Для роботи тренажера потрібно увімкнути JavaScript.</div>
+    </noscript>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

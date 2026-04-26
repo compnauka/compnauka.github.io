@@ -1,4 +1,4 @@
-﻿# Універсальний шаблон уроку
+# Універсальний шаблон уроку
 
 Проєкт побудований на шаблонах уроків у `js/lessons/*.js` і підтримує два режими:
 - `student` — видно лише те, що потрібно дитині.
@@ -271,9 +271,9 @@ fill: {
 ## Що має знати наступний агент
 
 Перед додаванням нового уроку або нового циклу треба спочатку:
-1. Прочитати [AI_LESSON_WORKFLOW.md](/C:/Users/artem/Documents/GitHub/compnauka.github.io/course/new_lessons/AI_LESSON_WORKFLOW.md).
+1. Прочитати [AI_LESSON_WORKFLOW.md](/C:/Users/artem/Documents/GitHub/itnauka.org/course/new_lessons/AI_LESSON_WORKFLOW.md).
 2. Переглянути вже реалізовані уроки в `js/lessons/*.js`, щоб не ламати стиль подачі.
-3. Перевірити [PROJECT_STANDARDS.md](/C:/Users/artem/Documents/GitHub/compnauka.github.io/course/new_lessons/PROJECT_STANDARDS.md), але пам’ятати, що для цього підручника діє проєктне правило: прогрес уроку не зберігається між сесіями.
+3. Перевірити [PROJECT_STANDARDS.md](/C:/Users/artem/Documents/GitHub/itnauka.org/course/new_lessons/PROJECT_STANDARDS.md), але пам’ятати, що для цього підручника діє проєктне правило: прогрес уроку не зберігається між сесіями.
 4. Починати не з CSS або `app.js`, а з контентного файлу нового уроку і його місця в загальній лінійці.
 5. Після змін у рендері або нових активностях запускати не лише `tests/run-tests.ps1`, а й `tests/run-browser-smoke.ps1`.
 6. Якщо зміни зачіпають layout або стилі, окремо перевіряти вузький viewport і mobile-friendly поведінку головної сторінки, уроку та локальних майстерень.

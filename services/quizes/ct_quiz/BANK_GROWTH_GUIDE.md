@@ -10,11 +10,11 @@
 ## Робочий порядок
 
 Найзручніший шлях для швидкої спільної роботи:
-1. Відкрий [NEW_QUESTION_FORM.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/NEW_QUESTION_FORM.md).
+1. Відкрий [NEW_QUESTION_FORM.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/NEW_QUESTION_FORM.md).
 2. Заповни бланк і надішли мені.
 
 Або повний ручний шлях:
-1. Відкрий [QUESTION_TEMPLATE.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/QUESTION_TEMPLATE.md).
+1. Відкрий [QUESTION_TEMPLATE.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/QUESTION_TEMPLATE.md).
 2. Заповни чернетку нового питання.
 3. Визнач:
    - `conceptKey`

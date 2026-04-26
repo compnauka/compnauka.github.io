@@ -1,7 +1,7 @@
 # Assessment Blueprint for CT Quiz
 
 Цей документ зводить в одну рамку:
-- висновки з [deep-research-report.md](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/deep-research-report.md)
+- висновки з [deep-research-report.md](/d:/GIT/itnauka.org/services/quizes/ct_quiz/deep-research-report.md)
 - поточну архітектуру банку питань
 - технічну логіку відбору та інтерпретації результатів
 - пріоритетні розриви між дослідницькою моделлю і поточною реалізацією
@@ -24,7 +24,7 @@
 - класифікація
 - ефективність способу
 
-Поточна реалізація вже відповідає цій рамці через `conceptRoot` і `conceptKey` у [questions.js](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/questions.js) та через гарантоване покриття required roots у [app-config.js](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/app-config.js) і [quiz-core.js](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/quiz-core.js).
+Поточна реалізація вже відповідає цій рамці через `conceptRoot` і `conceptKey` у [questions.js](/d:/GIT/itnauka.org/services/quizes/ct_quiz/questions.js) та через гарантоване покриття required roots у [app-config.js](/d:/GIT/itnauka.org/services/quizes/ct_quiz/app-config.js) і [quiz-core.js](/d:/GIT/itnauka.org/services/quizes/ct_quiz/quiz-core.js).
 
 ## 2. Вікова прогресія
 
@@ -48,7 +48,7 @@
 - `progressionBand`
 - `isCore`
 
-Це вже захищено тестами в [tests/content-guidelines.test.js](/d:/GIT/compnauka.github.io/services/quizes/ct_quiz/tests/content-guidelines.test.js).
+Це вже захищено тестами в [tests/content-guidelines.test.js](/d:/GIT/itnauka.org/services/quizes/ct_quiz/tests/content-guidelines.test.js).
 
 ## 3. Competency to Evidence Map
 

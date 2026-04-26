@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $port = 4173
-$root = "C:\Users\artem\Documents\GitHub\compnauka.github.io\course\new_lessons"
+$root = "C:\Users\artem\Documents\GitHub\itnauka.org\course\new_lessons"
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $port)
 $listener.Start()
 
