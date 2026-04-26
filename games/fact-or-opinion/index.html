@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Факт чи думка? — Тренажер критичного мислення | Комп'ютерна Наука</title>
+  <meta name="description"
+    content="Навчися розрізняти факти, думки та судження за допомогою інтерактивного тренажера. Розвивай критичне мислення разом з паном Артемом.">
+  <meta name="keywords"
+    content="критичне мислення, факт чи думка, медіаграмотність, логіка, онлайн гра, навчання дітей, комп'ютерна наука">
+  <link rel="canonical" href="https://itnauka.org/games/fact-or-opinion/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://itnauka.org/games/fact-or-opinion/" />
+  <meta property="og:title" content="Факт чи думка? — Тренажер критичного мислення" />
+  <meta property="og:description"
+    content="Навчися розрізняти факти, думки та судження за допомогою інтерактивного тренажера. Розвивай критичне мислення." />
+  <meta property="og:image" content="https://itnauka.org/images/4.jpg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://itnauka.org/games/fact-or-opinion/" />
+  <meta property="twitter:title" content="Факт чи думка? — Тренажер критичного мислення" />
+  <meta property="twitter:description"
+    content="Навчися розрізняти факти, думки та судження за допомогою інтерактивного тренажера." />
+  <meta property="twitter:image" content="https://itnauka.org/images/4.jpg" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="../../favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+  <link rel="shortcut icon" href="../../favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png" />
+  <link rel="manifest" href="../../site.webmanifest" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Факт чи думка?",
+    "operatingSystem": "Any",
+    "applicationCategory": "EducationalGame",
+    "description": "Тренажер для розвитку критичного мислення: навчися розрізняти факти від думок.",
+    "url": "https://itnauka.org/games/fact-or-opinion/",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Комп'ютерна наука з паном Артемом"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="app-shell" aria-live="polite">
+    <section id="start-screen" class="screen screen--active" data-screen="start">
+      <p class="eyebrow">Тренажер критичного мислення</p>
+      <h1>Факт чи думка?</h1>
+      <p class="lead">
+        Прочитай твердження та визнач, чи можна його перевірити, чи це лише оцінка,
+        смак, припущення або забобон.
+      </p>
+
+      <div class="rules" aria-label="Короткі правила гри">
+        <article class="rule-card rule-card--fact">
+          <h2>Факт</h2>
+          <p>Можна перевірити, довести або підтвердити джерелом.</p>
+        </article>
+        <article class="rule-card rule-card--opinion">
+          <h2>Думка</h2>
+          <p>Показує ставлення, смак, оцінку, вірування або припущення.</p>
+        </article>
+      </div>
+
+      <button class="btn btn--primary btn--wide" id="start-btn" type="button">
+        Почати гру
+      </button>
+    </section>
+
+    <section id="game-screen" class="screen" data-screen="game" aria-labelledby="statement-text">
+      <div class="topbar" aria-label="Поточний стан гри">
+        <span id="progress-text">Питання 1 з 10</span>
+        <span id="score-text">Рахунок: 0</span>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
+      <article class="statement-card">
+        <p class="statement-label">Твердження</p>
+        <h2 id="statement-text"></h2>
+      </article>
+
+      <div class="answers" role="group" aria-label="Оберіть тип твердження">
+        <button class="btn btn--fact" id="btn-fact" type="button">
+          Це факт
+        </button>
+        <button class="btn btn--opinion" id="btn-opinion" type="button">
+          Це думка
+        </button>
+      </div>
+    </section>
+
+    <section id="feedback-screen" class="screen" data-screen="feedback" aria-labelledby="feedback-title">
+      <div class="feedback-mark" id="feedback-mark" aria-hidden="true"></div>
+      <h2 id="feedback-title"></h2>
+
+      <article class="feedback-card">
+        <p class="feedback-type" id="feedback-type"></p>
+        <blockquote id="feedback-statement"></blockquote>
+        <p id="feedback-explanation"></p>
+        <p class="source" id="feedback-source"></p>
+      </article>
+
+      <button class="btn btn--primary btn--wide" id="next-btn" type="button">
+        Далі
+      </button>
+    </section>
+
+    <section id="end-screen" class="screen" data-screen="end" aria-labelledby="end-title">
+      <p class="eyebrow">Підсумок</p>
+      <h2 id="end-title">Гру завершено!</h2>
+      <div class="result-card">
+        <p>Твій результат</p>
+        <strong id="final-score">0 з 10</strong>
+      </div>
+      <p class="lead" id="end-message"></p>
+      <button class="btn btn--primary btn--wide" id="restart-btn" type="button">
+        Грати знову
+      </button>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="noscript-message">Для роботи гри потрібно увімкнути JavaScript у браузері.</p>
+  </noscript>
+
+  <script src="facts.js"></script>
+  <script src="opinions.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
