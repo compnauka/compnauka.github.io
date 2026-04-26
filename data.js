@@ -503,6 +503,13 @@ const CATEGORIES = [
         tags: []
       },
       {
+        name: "Факт чи думка",
+        description: "Інтерактивна гра для розвитку критичного мислення. Допоможе навчитися розрізняти факти та думки.",
+        link: "games/fact-or-opinion/index.html",
+        image: "images/82.jpg",
+        tags: []
+      },
+      {
         name: "Змійка",
         description: "Керуй змійкою, збирай їжу та ставай довшим. Розвиває швидкість реакції та координацію рухів.",
         link: "games/snake.html",
