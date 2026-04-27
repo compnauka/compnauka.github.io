@@ -1,0 +1,362 @@
+/* ============================================
+   ІНТЕРАКТИВНИЙ УРОК: ДАНІ ТА ІНФОРМАЦІЯ
+   Стилі для 3-4 класів (адаптивні)
+   ============================================ */
+
+/* Базові налаштування */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Фокус для доступності */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+/* Покращення для тач-інтерфейсів */
+.touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Картки */
+.card-hover {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Клітинки таблиці */
+.cell-hover {
+    transition: background-color 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.cell-hover:hover {
+    background-color: #e0e7ff;
+    cursor: pointer;
+    border-color: #4f46e5;
+    transform: scale(1.02);
+}
+
+.cell-hover:active {
+    transform: scale(0.98);
+}
+
+/* Анімації квізів */
+.correct-anim {
+    animation: pulse-green 0.6s ease-in-out;
+}
+
+.wrong-anim {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes pulse-green {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.03);
+        background-color: #dcfce7;
+        border-color: #22c55e;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-6px);
+    }
+
+    75% {
+        transform: translateX(6px);
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+}
+
+/* Підтримка prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    .animate-bounce {
+        animation: none !important;
+    }
+}
+
+/* ============================================
+   МОБІЛЬНІ ПОКРАЩЕННЯ
+   ============================================ */
+
+/* Таблиця на малих екранах */
+@media (max-width: 640px) {
+    .cell-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+
+    .quiz-btn {
+        font-size: 0.9375rem;
+        padding: 0.875rem;
+    }
+
+    /* Збільшення області дотику */
+    nav a,
+    nav button {
+        min-height: 44px;
+    }
+
+    /* Компактніші відступи в секціях */
+    section>div {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Планшети */
+@media (min-width: 641px) and (max-width: 1023px) {
+    .cell-btn {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+}
+
+/* Великі екрани */
+@media (min-width: 1280px) {
+    .container {
+        max-width: 1200px;
+    }
+}
+
+/* ============================================
+   СТИЛІ ДЛЯ ГРИ "СОРТУВАННЯ"
+   ============================================ */
+
+.sort-chip {
+    cursor: grab;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.sort-chip:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.sort-chip.sorted {
+    opacity: 1;
+    cursor: default;
+}
+
+.sort-chip.selected {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #78350f;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.sort-zone {
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.sort-zone:hover,
+.sort-zone:focus-visible {
+    border-style: dashed;
+    transform: translateY(-1px);
+}
+
+.sort-zone.wrong-drop {
+    animation: shake 0.35s ease-in-out;
+    border-color: #ef4444 !important;
+    background-color: #fee2e2 !important;
+}
+
+#sort-cat-zone.drag-over,
+#sort-num-zone.drag-over {
+    background-color: rgba(168, 85, 247, 0.15);
+    border-style: dashed;
+}
+
+/* ============================================
+   СТИЛІ ДЛЯ ДРУКУ
+   ============================================ */
+
+@media print {
+
+    nav,
+    footer,
+    #scroll-top-btn,
+    .quiz-btn,
+    .cell-btn,
+    .sort-chip,
+    .addr-btn,
+    #start-screen button,
+    #result-screen button,
+    a[href="#test"] {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+    }
+
+    section {
+        page-break-inside: avoid;
+        margin: 1rem 0 !important;
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .bg-slate-800 {
+        background: #f3f4f6 !important;
+        color: black !important;
+    }
+
+    .text-white {
+        color: black !important;
+    }
+
+    .example-answer {
+        display: block !important;
+    }
+}
+
+/* ============================================
+   ДОДАТКОВІ УТИЛІТИ
+   ============================================ */
+
+/* Прихований текст тільки для скрінрідерів */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* Покращення скролбару */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Горизонтальний скрол для таблиць */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+}
+/* ============================================
+   КОМФОРТНА ШИРИНА ОСНОВНОГО ВМІСТУ
+   ============================================ */
+
+/*
+   На широких моніторах основна навчальна частина не розтягується на всю ширину.
+   Так дитині не потрібно переводити погляд далеко зліва направо під час читання.
+*/
+@media (min-width: 1024px) {
+    main#main-content.container {
+        max-width: 1080px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    main#main-content.container {
+        max-width: 1040px !important;
+    }
+}
+
+@media (min-width: 1536px) {
+    main#main-content.container {
+        max-width: 1040px !important;
+    }
+}

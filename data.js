@@ -119,6 +119,13 @@ const CATEGORIES = [
         tags: ["3-4 класи", "5-7 класи", "Клавіатура"]
       },
       {
+        name: "Дані та інформація",
+        description: "Інтерактивний урок про те, як дані та інформація допомагають нам приймати розумні рішення.",
+        link: "services/digital_literacy/data-and-information/index.html",
+        image: "images/83.jpg",
+        tags: ["3-4 класи", "5-7 класи"]
+      },
+      {
         name: "Шукаємо в Інтернеті",
         description: "Інтерактивне опанування пошукових систем.",
         link: "services/security_and_safety/search_engine/index.html",

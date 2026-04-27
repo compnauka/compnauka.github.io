@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description"
+        content="Інтерактивний урок з інформатики для 3–4 класів: дані, інформація, типи даних, таблиці, графіки.">
+    <meta name="theme-color" content="#3730a3">
+    <meta property="og:title" content="Дані та інформація | Інтерактивний урок">
+    <meta property="og:description" content="Урок для молодших школярів про те, як комп'ютери працюють із даними.">
+    <meta property="og:type" content="website">
+    <title>Дані та інформація | Комп'ютерна наука</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-slate-50 text-slate-900 text-lg leading-relaxed relative">
+
+    <!-- Skip to content -->
+    <a href="#main-content"
+        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-yellow-400 focus:text-indigo-900 focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
+        Перейти до основного вмісту
+    </a>
+
+    <!-- Navigation -->
+    <nav class="bg-indigo-800 text-white p-4 sticky top-0 z-50 shadow-xl" role="navigation" aria-label="Головне меню">
+        <div class="container mx-auto flex flex-wrap justify-between items-center">
+            <a href="#"
+                class="font-black text-xl md:text-2xl flex items-center focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-lg px-2 py-1">
+                <i class="fas fa-robot text-yellow-400 mr-3" aria-hidden="true"></i>
+                <span>Дані та інформація</span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex space-x-6 text-lg font-bold">
+                <a href="#data-info"
+                    class="hover:text-yellow-300 transition border-b-2 border-transparent hover:border-yellow-300 py-1">Що
+                    це?</a>
+                <a href="#types"
+                    class="hover:text-yellow-300 transition border-b-2 border-transparent hover:border-yellow-300 py-1">Типи</a>
+                <a href="#tools"
+                    class="hover:text-yellow-300 transition border-b-2 border-transparent hover:border-yellow-300 py-1">Таблиці</a>
+                <a href="#charts"
+                    class="hover:text-yellow-300 transition border-b-2 border-transparent hover:border-yellow-300 py-1">Графіки</a>
+                <a href="#usage"
+                    class="hover:text-yellow-300 transition border-b-2 border-transparent hover:border-yellow-300 py-1">Користь</a>
+            </div>
+
+            <div class="hidden md:block">
+                <a href="#test"
+                    class="bg-yellow-400 text-indigo-900 font-bold px-6 py-2 rounded-full hover:bg-yellow-300 hover:scale-105 transition shadow-lg text-lg inline-block">Тест</a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" type="button"
+                class="md:hidden text-2xl focus:outline-none p-2 rounded-lg hover:bg-indigo-700 transition"
+                aria-label="Відкрити меню" aria-expanded="false" aria-controls="mobile-menu">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu"
+            class="hidden md:hidden absolute top-full left-0 w-full bg-indigo-900 shadow-2xl border-t border-indigo-700"
+            role="menu">
+            <div class="flex flex-col p-4 space-y-2 font-bold">
+                <a href="#data-info"
+                    class="block hover:text-yellow-300 hover:bg-indigo-800 py-3 px-4 rounded-xl transition"
+                    onclick="closeMobileMenu()" role="menuitem">Що таке дані?</a>
+                <a href="#types" class="block hover:text-yellow-300 hover:bg-indigo-800 py-3 px-4 rounded-xl transition"
+                    onclick="closeMobileMenu()" role="menuitem">Типи даних</a>
+                <a href="#tools" class="block hover:text-yellow-300 hover:bg-indigo-800 py-3 px-4 rounded-xl transition"
+                    onclick="closeMobileMenu()" role="menuitem">Таблиці</a>
+                <a href="#charts"
+                    class="block hover:text-yellow-300 hover:bg-indigo-800 py-3 px-4 rounded-xl transition"
+                    onclick="closeMobileMenu()" role="menuitem">Графіки</a>
+                <a href="#usage" class="block hover:text-yellow-300 hover:bg-indigo-800 py-3 px-4 rounded-xl transition"
+                    onclick="closeMobileMenu()" role="menuitem">Користь</a>
+                <a href="#test" class="block bg-yellow-400 text-indigo-900 text-center py-3 rounded-xl mt-2"
+                    onclick="closeMobileMenu()" role="menuitem">Тест</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="container mx-auto p-6 md:p-8 text-center max-w-4xl my-6 md:my-8">
+        <h1 class="text-3xl sm:text-4xl md:text-6xl font-black text-indigo-900 mb-6 leading-tight">Стань майстром
+            інформації!</h1>
+        <p class="text-lg sm:text-xl md:text-2xl text-slate-700 mb-8 max-w-2xl mx-auto">Дізнайся, як перетворити
+            звичайні числа та слова на суперсилу, яка допомагає приймати розумні рішення.</p>
+        <a href="#data-info"
+            class="inline-block bg-indigo-600 text-white text-lg md:text-xl font-bold py-3 md:py-4 px-8 md:px-10 rounded-2xl shadow-xl hover:bg-indigo-700 transition animate-bounce touch-manipulation">Почати
+            урок 👇</a>
+    </header>
+
+    <main id="main-content" class="container mx-auto px-4 pb-16">
+
+        <!-- РОЗДІЛ 1: Дані та інформація -->
+        <section id="data-info" class="my-8 md:my-12 scroll-mt-28">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-t-8 border-blue-500">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-700 mb-6 md:mb-8 flex items-center">
+                    <span class="bg-blue-100 p-3 rounded-xl mr-4 shrink-0"><i class="fas fa-lightbulb"
+                            aria-hidden="true"></i></span>
+                    <span>Розділ 1: Від даних до інформації</span>
+                </h2>
+
+                <div class="space-y-8 text-lg md:text-xl text-slate-700">
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div
+                            class="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-200 hover:border-blue-300 transition duration-300">
+                            <div class="text-blue-600 text-3xl mb-3"><i class="fas fa-database" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-xl md:text-2xl mb-3">Що таке дані?</h3>
+                            <p class="mb-4 leading-relaxed"><strong>Дані</strong> — це сирі факти, цифри, символи або
+                                результати спостережень. Вони об'єктивні, але неорганізовані. Самі по собі вони не
+                                відповідають на питання "Чому?" або "Що робити?".</p>
+                            <div class="space-y-2">
+                                <p class="text-base text-slate-500 bg-white p-3 rounded-lg border border-slate-100">
+                                    <i class="fas fa-arrow-right mr-2 text-blue-400"></i>Приклад: Число "38.6", сигнал
+                                    датчика, набір літер.
+                                </p>
+                                <p class="text-base text-slate-500 bg-white p-3 rounded-lg border border-slate-100">
+                                    <i class="fas fa-arrow-right mr-2 text-blue-400"></i>Ще приклад: Слово "Дощ", число
+                                    "25", звук "біп".
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-indigo-50 p-5 md:p-6 rounded-2xl border border-indigo-200 hover:border-indigo-300 transition duration-300">
+                            <div class="text-indigo-600 text-3xl mb-3"><i class="fas fa-project-diagram"
+                                    aria-hidden="true"></i></div>
+                            <h3 class="font-bold text-indigo-900 text-xl md:text-2xl mb-3">Що таке інформація?</h3>
+                            <p class="mb-4 leading-relaxed"><strong>Інформація</strong> — це дані, які були
+                                <strong>оброблені</strong>, структуровані та наділені змістом. Інформація корисна для
+                                отримувача і допомагає приймати рішення.
+                            </p>
+                            <div class="space-y-2">
+                                <p class="text-base text-indigo-800 bg-white p-3 rounded-lg border border-indigo-100">
+                                    <i class="fas fa-check mr-2 text-green-500"></i>Приклад: "У пацієнта температура
+                                    38,6°C — це лихоманка".
+                                </p>
+                                <p class="text-base text-indigo-800 bg-white p-3 rounded-lg border border-indigo-100">
+                                    <i class="fas fa-check mr-2 text-green-500"></i>Ще приклад: "Сьогодні 25°C — можна
+                                    йти у футболці".
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Процес перетворення -->
+                    <div
+                        class="bg-slate-800 text-white p-6 md:p-8 pb-12 md:pb-16 rounded-2xl shadow-lg text-center my-6 md:my-8">
+                        <h4
+                            class="text-base md:text-lg font-bold text-slate-400 uppercase tracking-widest mb-6 md:mb-8">
+                            Процес перетворення</h4>
+                        <div
+                            class="flex flex-wrap items-start justify-center gap-x-3 md:gap-x-4 gap-y-10 md:gap-y-16 text-lg md:text-2xl font-bold">
+                            <div class="group relative flex flex-col items-center">
+                                <span class="border-b-2 border-yellow-400 pb-1 cursor-help">Дані</span>
+                                <span
+                                    class="absolute top-full mt-3 md:mt-4 w-max max-w-[200px] md:max-w-xs px-3 py-2 text-sm font-normal text-slate-200 bg-slate-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition z-20 pointer-events-none">
+                                    Сирі факти (числа, фото, звуки)
+                                    <span
+                                        class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-700 rotate-45"></span>
+                                </span>
+                            </div>
+                            <div class="flex items-center h-8 text-slate-500 text-sm mt-1"><i class="fas fa-plus"
+                                    aria-hidden="true"></i></div>
+                            <div class="group relative flex flex-col items-center">
+                                <span class="border-b-2 border-yellow-400 pb-1 cursor-help">Контекст</span>
+                                <span
+                                    class="absolute top-full mt-3 md:mt-4 w-max max-w-[200px] md:max-w-xs px-3 py-2 text-sm font-normal text-slate-200 bg-slate-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition z-20 pointer-events-none">
+                                    Умови, пояснення, ситуація
+                                    <span
+                                        class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-700 rotate-45"></span>
+                                </span>
+                            </div>
+                            <div class="flex items-center h-8 text-slate-500 text-sm mt-1"><i class="fas fa-plus"
+                                    aria-hidden="true"></i></div>
+                            <div class="group relative flex flex-col items-center">
+                                <span class="border-b-2 border-yellow-400 pb-1 cursor-help">Обробка</span>
+                                <span
+                                    class="absolute top-full mt-3 md:mt-4 w-max max-w-[200px] md:max-w-xs px-3 py-2 text-sm font-normal text-slate-200 bg-slate-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition z-20 pointer-events-none">
+                                    Структурування, аналіз, порівняння
+                                    <span
+                                        class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-700 rotate-45"></span>
+                                </span>
+                            </div>
+                            <div class="flex items-center h-8 text-yellow-400 mt-1"><i class="fas fa-arrow-right"
+                                    aria-hidden="true"></i></div>
+                            <div class="relative flex flex-col items-center">
+                                <span
+                                    class="bg-yellow-500 text-slate-900 px-3 md:px-4 py-1 rounded-lg shadow-lg transform md:scale-110 font-black">Інформація</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Додаткові приклади -->
+                    <div class="bg-blue-50 rounded-2xl p-5 md:p-6 border border-blue-200">
+                        <h4 class="font-bold text-blue-900 text-lg md:text-xl mb-4"><i
+                                class="fas fa-list-check mr-2"></i>Тренування: дані чи інформація?</h4>
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"170"</p>
+                                <p class="text-sm text-blue-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-database mr-1"></i> Дані (просто число)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"Зріст учня — 170 см"</p>
+                                <p class="text-sm text-green-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-circle-info mr-1"></i> Інформація (є зміст)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"Червоний, Зелений, Синій"</p>
+                                <p class="text-sm text-blue-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-database mr-1"></i> Дані (перелік)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"Світлофор горить червоним — зупинись!"</p>
+                                <p class="text-sm text-green-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-circle-info mr-1"></i> Інформація (дія)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"Біп-біп-біп"</p>
+                                <p class="text-sm text-blue-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-database mr-1"></i> Дані (звук)</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition cursor-pointer"
+                                onclick="toggleExample(this)">
+                                <p class="font-bold text-slate-800">"Будильник дзвонить — час вставати!"</p>
+                                <p class="text-sm text-green-600 mt-2 hidden example-answer"><i
+                                        class="fas fa-circle-info mr-1"></i> Інформація (розуміння)</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-blue-500 mt-3 italic">Натисни на картку, щоб побачити відповідь 👆</p>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-400">
+                        <div class="text-3xl md:text-4xl shrink-0" aria-hidden="true">🧩</div>
+                        <div>
+                            <h4 class="font-bold text-blue-900 text-lg">Щоб краще запам'ятати:</h4>
+                            <p class="text-base text-blue-800">
+                                Уяви <strong>пазл</strong>. Окремий шматочок — це дані (ми бачимо колір, форму, але не
+                                розуміємо суті). Зібрана картина — це інформація (ми бачимо сюжет і розуміємо
+                                зображення).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Квіз 1 -->
+                <div class="mt-8 md:mt-10 bg-white rounded-2xl p-5 md:p-8 border-2 border-slate-100 shadow-sm">
+                    <h3 class="text-xl md:text-2xl font-bold text-slate-800 mb-4"><i
+                            class="fas fa-question-circle mr-2 text-blue-500"></i>Перевір розуміння</h3>
+                    <p class="text-base md:text-lg mb-6 font-medium">Комп'ютер зафіксував на складі число "500". Це
+                        дані. Що потрібно менеджеру, щоб це стало корисною інформацією?</p>
+                    <div class="grid gap-4 md:grid-cols-2" id="quiz1-options">
+                        <button type="button"
+                            onclick="checkQuiz(1, true, this, 'Правильно! Контекст (що це?) та Обробка (чи це багато?) перетворюють число на знання.')"
+                            class="quiz-btn p-4 md:p-5 bg-slate-50 rounded-xl border-2 border-transparent hover:border-blue-400 hover:bg-white shadow-sm text-left text-base md:text-lg font-semibold transition group touch-manipulation">
+                            <span class="block text-sm text-slate-500 mb-1 group-hover:text-blue-500">Варіант А</span>
+                            Знати, що це "кількість коробок з взуттям", і що на полиці місця лише для 400.
+                        </button>
+                        <button type="button"
+                            onclick="checkQuiz(1, false, this, 'Ні. Збільшення шрифту змінює вигляд даних, але не додає їм змісту.')"
+                            class="quiz-btn p-4 md:p-5 bg-slate-50 rounded-xl border-2 border-transparent hover:border-blue-400 hover:bg-white shadow-sm text-left text-base md:text-lg font-semibold transition group touch-manipulation">
+                            <span class="block text-sm text-slate-500 mb-1 group-hover:text-blue-500">Варіант Б</span>
+                            Надрукувати це число дуже великим шрифтом на дверях складу.
+                        </button>
+                    </div>
+                    <div id="quiz1-feedback" class="mt-4 text-base md:text-lg font-bold hidden p-4 rounded-xl"
+                        aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- РОЗДІЛ 2: Типи Даних -->
+        <section id="types" class="my-8 md:my-12 scroll-mt-28">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-t-8 border-purple-500">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-700 mb-6 flex items-center">
+                    <span class="bg-purple-100 p-3 rounded-xl mr-4 shrink-0"><i class="fas fa-layer-group"
+                            aria-hidden="true"></i></span>
+                    <span>Розділ 2: Які бувають дані?</span>
+                </h2>
+
+                <p class="text-lg md:text-xl text-slate-700 mb-6">Усі дані у світі можна поділити на дві великі команди.
+                    Давай розберемося, хто є хто.</p>
+
+                <div class="grid md:grid-cols-2 gap-6 md:gap-8">
+                    <!-- Група 1 -->
+                    <div
+                        class="bg-purple-50 p-5 md:p-6 rounded-3xl border-2 border-purple-100 hover:border-purple-300 transition duration-300">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-purple-200 p-3 rounded-full mr-3 shrink-0"><i
+                                    class="fas fa-font text-purple-700 text-xl" aria-hidden="true"></i></div>
+                            <h3 class="text-xl md:text-2xl font-bold text-purple-900">Слова-назви (Категорії)</h3>
+                        </div>
+                        <p class="text-base md:text-lg mb-4">Це дані, які відповідають на питання
+                            <strong>"Який?"</strong> або <strong>"Хто?"</strong>. Це назви груп. Їх не можна додавати чи
+                            віднімати.
+                        </p>
+                        <ul class="space-y-3 bg-white p-4 rounded-2xl shadow-sm text-base md:text-lg">
+                            <li class="flex items-center"><i
+                                    class="fas fa-pizza-slice text-purple-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Вид піци (Пепероні, Сирна)</li>
+                            <li class="flex items-center"><i class="fas fa-dog text-purple-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Порода собаки (Мопс, Коргі)</li>
+                            <li class="flex items-center"><i class="fas fa-palette text-purple-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Улюблений колір (Синій)</li>
+                            <li class="flex items-center"><i
+                                    class="fas fa-calendar text-purple-500 w-8 text-center mr-2" aria-hidden="true"></i>
+                                День тижня (Понеділок)</li>
+                            <li class="flex items-center"><i
+                                    class="fas fa-toggle-on text-purple-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Так / Ні</li>
+                        </ul>
+                    </div>
+
+                    <!-- Група 2 -->
+                    <div
+                        class="bg-pink-50 p-5 md:p-6 rounded-3xl border-2 border-pink-100 hover:border-pink-300 transition duration-300">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-pink-200 p-3 rounded-full mr-3 shrink-0"><i
+                                    class="fas fa-calculator text-pink-700 text-xl" aria-hidden="true"></i></div>
+                            <h3 class="text-xl md:text-2xl font-bold text-pink-900">Числа-лічилки (точна кількість)</h3>
+                        </div>
+                        <p class="text-base md:text-lg mb-4">Це дані, які відповідають на питання
+                            <strong>"Скільки?"</strong>. Це завжди точні числа, які ми отримуємо, коли щось рахуємо.
+                        </p>
+                        <ul class="space-y-3 bg-white p-4 rounded-2xl shadow-sm text-base md:text-lg">
+                            <li class="flex items-center"><i class="fas fa-users text-pink-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Кількість друзів (5)</li>
+                            <li class="flex items-center"><i class="fas fa-futbol text-pink-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Голи у футболі (2)</li>
+                            <li class="flex items-center"><i
+                                    class="fas fa-shoe-prints text-pink-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Розмір взуття (36)</li>
+                            <li class="flex items-center"><i class="fas fa-cubes text-pink-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Оцінка в школі (10)</li>
+                            <li class="flex items-center"><i class="fas fa-coins text-pink-500 w-8 text-center mr-2"
+                                    aria-hidden="true"></i> Ціна (45 грн)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Інтерактивна вправа: Сортування -->
+                <div class="mt-8 bg-purple-50 rounded-2xl p-5 md:p-6 border border-purple-200">
+                    <h4 class="font-bold text-purple-900 text-lg md:text-xl mb-4"><i class="fas fa-gamepad mr-2"
+                            aria-hidden="true"></i>Гра
+                        "Розсортуй дані"</h4>
+                    <p class="text-base md:text-lg mb-4">Обери картку, а потім натисни на колонку, куди її треба
+                        покласти. На комп'ютері картки також можна перетягувати мишкою.</p>
+                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
+                        <div class="sort-zone bg-purple-100 p-4 rounded-xl border-2 border-purple-300 min-h-[160px]"
+                            id="sort-cat-zone" data-zone-type="cat" role="button" tabindex="0"
+                            aria-label="Колонка для слів-назв" ondrop="dropSort(event, 'cat')"
+                            ondragover="allowDrop(event)" onclick="placeSelectedSort('cat')"
+                            onkeydown="handleSortZoneKey(event, 'cat')">
+                            <p class="font-bold text-purple-800 text-center mb-2">📁 Слова-назви</p>
+                            <div class="sort-items flex flex-wrap gap-2" id="cat-items" aria-live="polite"></div>
+                        </div>
+                        <div class="sort-zone bg-pink-100 p-4 rounded-xl border-2 border-pink-300 min-h-[160px]"
+                            id="sort-num-zone" data-zone-type="num" role="button" tabindex="0"
+                            aria-label="Колонка для чисел-лічилок" ondrop="dropSort(event, 'num')"
+                            ondragover="allowDrop(event)" onclick="placeSelectedSort('num')"
+                            onkeydown="handleSortZoneKey(event, 'num')">
+                            <p class="font-bold text-pink-800 text-center mb-2">🔢 Числа-лічилки</p>
+                            <div class="sort-items flex flex-wrap gap-2" id="num-items" aria-live="polite"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-center" id="sort-source"
+                        aria-label="Картки для сортування">
+                        <button type="button" draggable="true" data-sort-type="cat" data-sort-order="1"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">Червоний</button>
+                        <button type="button" draggable="true" data-sort-type="num" data-sort-order="2"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">7
+                            штук</button>
+                        <button type="button" draggable="true" data-sort-type="cat" data-sort-order="3"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">Вівторок</button>
+                        <button type="button" draggable="true" data-sort-type="num" data-sort-order="4"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">12
+                            років</button>
+                        <button type="button" draggable="true" data-sort-type="cat" data-sort-order="5"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">Кіт</button>
+                        <button type="button" draggable="true" data-sort-type="num" data-sort-order="6"
+                            ondragstart="dragSort(event)" ondragend="finishSortDrag(event)"
+                            onclick="selectSortChip(event, this)"
+                            class="sort-chip bg-white border-2 border-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 hover:shadow-md transition touch-manipulation">150
+                            см</button>
+                    </div>
+                    <button type="button" onclick="resetSort()"
+                        class="mt-4 text-sm text-purple-600 underline hover:text-purple-800 font-semibold">🔄 Почати
+                        спочатку</button>
+                    <div id="sort-feedback" class="mt-3 text-center font-bold hidden" aria-live="polite"></div>
+                </div>
+
+                <!-- Квіз 2 -->
+                <div class="mt-8 md:mt-10 bg-purple-50 rounded-2xl p-5 md:p-8 border border-purple-200">
+                    <h3 class="text-xl md:text-2xl font-bold text-purple-900 mb-4"><i
+                            class="fas fa-question-circle mr-2"></i>Міні-тест №2</h3>
+                    <p class="text-base md:text-lg mb-6 font-medium">Ти запитав друзів: "Яке морозиво ви любите?".
+                        Відповіді: "Шоколадне", "Ванільне", "Полуничне". Який це тип даних?</p>
+                    <div class="grid gap-4 md:grid-cols-2" id="quiz2-options">
+                        <button type="button"
+                            onclick="checkQuiz(2, true, this, 'Правильно! Це назви смаків, їх не можна порахувати як математику (Шоколад + Ваніль не дорівнює 5).')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-purple-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Слова-назви (Категорії)
+                        </button>
+                        <button type="button"
+                            onclick="checkQuiz(2, false, this, 'Ні. Ми не рахуємо кількість морозива, ми називаємо його смак.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-purple-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Числа-лічилки
+                        </button>
+                    </div>
+                    <div id="quiz2-feedback" class="mt-4 text-base md:text-lg font-bold hidden p-4 rounded-xl"
+                        aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- РОЗДІЛ 3: Таблиці -->
+        <section id="tools" class="my-8 md:my-12 scroll-mt-28">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-t-8 border-green-500">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-700 mb-6 flex items-center">
+                    <span class="bg-green-100 p-3 rounded-xl mr-4 shrink-0"><i class="fas fa-table"
+                            aria-hidden="true"></i></span>
+                    <span>Розділ 3: Порядок у даних</span>
+                </h2>
+
+                <p class="text-lg md:text-xl text-slate-700 mb-6">Уяви, що в тебе 100 ігрових карток, і вони валяються
+                    по всій кімнаті. Знайти потрібну неможливо! Так само і з даними. Щоб їх не загубити, ми
+                    використовуємо <strong>електронні таблиці</strong>.</p>
+
+                <p class="text-base md:text-lg mb-4">Це як шахівниця. Кожна клітинка має свою адресу:</p>
+                <ul class="list-disc list-inside mb-6 pl-4 text-base md:text-lg space-y-2">
+                    <li><strong>Стовпці</strong> (стоять вертикально) мають літери: A, B, C...</li>
+                    <li><strong>Рядки</strong> (лежать горизонтально) мають цифри: 1, 2, 3...</li>
+                    <li><strong>Адреса</strong> — це перетин. Наприклад: <span
+                            class="bg-yellow-200 px-2 py-1 rounded font-mono font-bold text-black">B2</span></li>
+                </ul>
+
+                <!-- Інтерактивний Симулятор -->
+                <div class="bg-slate-100 p-4 md:p-6 rounded-3xl border border-slate-300 shadow-inner">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 gap-2">
+                        <h3 class="text-lg md:text-xl font-bold text-slate-600"><i
+                                class="fas fa-mouse-pointer mr-2"></i>Спробуй сам: натисни на клітинку!</h3>
+                        <span class="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">💡
+                            Підказка: спочатку літера, потім цифра</span>
+                    </div>
+
+                    <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-2">
+                        <div class="grid grid-cols-4 gap-2 min-w-[320px] md:min-w-0 text-base md:text-lg font-mono bg-white p-3 md:p-4 rounded-xl shadow-sm"
+                            role="grid" aria-label="Інтерактивна таблиця фруктів">
+                            <!-- Заголовки -->
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold rounded text-slate-500"
+                                role="columnheader"></div>
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 rounded"
+                                role="columnheader">A <br><span class="text-xs font-normal">Фрукт</span></div>
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 rounded"
+                                role="columnheader">B <br><span class="text-xs font-normal">Кількість</span></div>
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 rounded"
+                                role="columnheader">C <br><span class="text-xs font-normal">Ціна</span></div>
+
+                            <!-- Рядок 1 -->
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 flex items-center justify-center rounded"
+                                role="rowheader">1</div>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-slate-800 font-medium focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('A1', 'Текст', 'Яблуко')"
+                                aria-label="Комірка A1, значення: Яблуко">Яблуко</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-blue-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('B1', 'Число', '10')"
+                                aria-label="Комірка B1, значення: 10">10</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-green-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('C1', 'Гроші', '20 ₴')"
+                                aria-label="Комірка C1, значення: 20 гривень">20 ₴</button>
+
+                            <!-- Рядок 2 -->
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 flex items-center justify-center rounded"
+                                role="rowheader">2</div>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-slate-800 font-medium focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('A2', 'Текст', 'Груша')"
+                                aria-label="Комірка A2, значення: Груша">Груша</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-blue-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('B2', 'Число', '5')" aria-label="Комірка B2, значення: 5">5</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-green-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('C2', 'Гроші', '25 ₴')"
+                                aria-label="Комірка C2, значення: 25 гривень">25 ₴</button>
+
+                            <!-- Рядок 3 (новий) -->
+                            <div class="bg-slate-200 p-2 md:p-3 text-center font-bold text-slate-700 flex items-center justify-center rounded"
+                                role="rowheader">3</div>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-slate-800 font-medium focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('A3', 'Текст', 'Банан')"
+                                aria-label="Комірка A3, значення: Банан">Банан</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-blue-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('B3', 'Число', '12')"
+                                aria-label="Комірка B3, значення: 12">12</button>
+                            <button type="button"
+                                class="cell-btn bg-white border-2 border-slate-200 p-2 md:p-3 rounded cell-hover text-green-600 font-bold focus:z-10 focus:ring-2 focus:ring-indigo-500"
+                                onclick="showCell('C3', 'Гроші', '18 ₴')"
+                                aria-label="Комірка C3, значення: 18 гривень">18 ₴</button>
+                        </div>
+                    </div>
+
+                    <!-- Результат кліку -->
+                    <div id="cell-info"
+                        class="mt-4 md:mt-6 p-4 bg-green-100 border border-green-300 rounded-2xl hidden transition-all"
+                        aria-live="polite">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-white p-3 rounded-xl text-2xl md:text-3xl shadow-sm shrink-0"
+                                aria-hidden="true">📍</div>
+                            <div class="min-w-0">
+                                <p class="text-green-900 font-bold text-lg md:text-xl">Ти вибрав клітинку: <span
+                                        id="cell-addr-display"
+                                        class="bg-white px-2 md:px-3 py-1 rounded border border-green-300 ml-1 md:ml-2 font-mono text-xl md:text-2xl text-black inline-block mt-1 md:mt-0"></span>
+                                </p>
+                                <p class="text-green-800 mt-1 text-base md:text-lg">Там написано: <span
+                                        id="cell-val-display" class="font-bold"></span> (Тип: <span
+                                        id="cell-type-display"></span>)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Вправа на адреси -->
+                <div class="mt-6 bg-green-50 rounded-2xl p-5 md:p-6 border border-green-200">
+                    <h4 class="font-bold text-green-900 text-lg md:text-xl mb-3"><i
+                            class="fas fa-crosshairs mr-2"></i>Вправа: Знайди адресу</h4>
+                    <p class="text-base md:text-lg mb-4">Де в таблиці знаходиться ціна бананів? Натисни правильну
+                        кнопку:</p>
+                    <div class="flex flex-wrap gap-3" id="addr-exercise">
+                        <button type="button" onclick="checkAddr(this, false)"
+                            class="addr-btn px-5 py-2 bg-white border-2 border-slate-200 rounded-xl font-mono font-bold text-lg hover:border-green-400 transition touch-manipulation">A3</button>
+                        <button type="button" onclick="checkAddr(this, false)"
+                            class="addr-btn px-5 py-2 bg-white border-2 border-slate-200 rounded-xl font-mono font-bold text-lg hover:border-green-400 transition touch-manipulation">B3</button>
+                        <button type="button" onclick="checkAddr(this, true)"
+                            class="addr-btn px-5 py-2 bg-white border-2 border-slate-200 rounded-xl font-mono font-bold text-lg hover:border-green-400 transition touch-manipulation">C3</button>
+                        <button type="button" onclick="checkAddr(this, false)"
+                            class="addr-btn px-5 py-2 bg-white border-2 border-slate-200 rounded-xl font-mono font-bold text-lg hover:border-green-400 transition touch-manipulation">C2</button>
+                    </div>
+                    <div id="addr-feedback" class="mt-3 font-bold hidden" aria-live="polite"></div>
+                </div>
+
+                <!-- Квіз 3 -->
+                <div class="mt-8 md:mt-10 bg-green-50 rounded-2xl p-5 md:p-8 border border-green-200">
+                    <h3 class="text-xl md:text-2xl font-bold text-green-900 mb-4"><i
+                            class="fas fa-question-circle mr-2"></i>Міні-тест №3</h3>
+                    <p class="text-base md:text-lg mb-6 font-medium">Якщо "A" — це стовпець, а "1" — це рядок, то як
+                        називається найперша клітинка в кутку таблиці?</p>
+                    <div class="grid gap-3 md:grid-cols-3" id="quiz3-options">
+                        <button type="button"
+                            onclick="checkQuiz(3, true, this, 'Молодець! Спочатку буква, потім цифра.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-green-400 shadow-sm text-base md:text-lg font-semibold transition touch-manipulation">A1</button>
+                        <button type="button"
+                            onclick="checkQuiz(3, false, this, 'Не зовсім. У таблицях ми спочатку називаємо літеру стовпця.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-green-400 shadow-sm text-base md:text-lg font-semibold transition touch-manipulation">1A</button>
+                        <button type="button"
+                            onclick="checkQuiz(3, false, this, 'Ні, це назва іншої клітинки (другий стовпець, перший рядок).')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-green-400 shadow-sm text-base md:text-lg font-semibold transition touch-manipulation">B1</button>
+                    </div>
+                    <div id="quiz3-feedback" class="mt-4 text-base md:text-lg font-bold hidden p-4 rounded-xl"
+                        aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- РОЗДІЛ 4: Графіки (Візуалізація) -->
+        <section id="charts" class="my-8 md:my-12 scroll-mt-28">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-t-8 border-orange-500">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-orange-700 mb-6 flex items-center">
+                    <span class="bg-orange-100 p-3 rounded-xl mr-4 shrink-0"><i class="fas fa-chart-pie"
+                            aria-hidden="true"></i></span>
+                    <span>Розділ 4: Картинки замість цифр</span>
+                </h2>
+
+                <p class="text-lg md:text-xl text-slate-700 mb-6 md:mb-8">Дивитися на величезні таблиці нудно і важко.
+                    Нашому мозку подобаються картинки! Це називається <strong>Візуалізація</strong>.</p>
+
+                <div class="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+                    <!-- Стовпчикова -->
+                    <div class="bg-orange-50 p-5 md:p-6 rounded-3xl border border-orange-200 text-center hover:bg-white transition shadow-sm"
+                        role="img"
+                        aria-label="Стовпчикова діаграма. Порівняння кількості яблук: Макс - 9, Оля - 6, Яна - 4."
+                        aria-describedby="bar-desc">
+                        <h3 class="text-xl md:text-2xl font-bold text-orange-900 mb-4">Стовпчикова діаграма</h3>
+                        <p class="text-slate-600 mb-4 text-base md:text-lg">Коли треба порівняти: <strong>"У кого
+                                більше?"</strong></p>
+
+                        <div class="h-48 flex items-end justify-center gap-4 border-b-4 border-slate-300 pb-1"
+                            aria-hidden="true">
+                            <div
+                                class="w-10 md:w-12 bg-blue-500 rounded-t-lg relative group h-[60%] transition-all duration-500 hover:brightness-110">
+                                <span
+                                    class="absolute bottom-2 left-1/2 -translate-x-1/2 text-white font-bold text-sm md:text-base">6</span>
+                                <span
+                                    class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-slate-600 font-bold text-xs md:text-sm">Оля</span>
+                            </div>
+                            <div
+                                class="w-10 md:w-12 bg-red-500 rounded-t-lg relative group h-[90%] transition-all duration-500 hover:brightness-110">
+                                <span
+                                    class="absolute bottom-2 left-1/2 -translate-x-1/2 text-white font-bold text-sm md:text-base">9</span>
+                                <span
+                                    class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-slate-600 font-bold text-xs md:text-sm">Макс</span>
+                            </div>
+                            <div
+                                class="w-10 md:w-12 bg-green-500 rounded-t-lg relative group h-[40%] transition-all duration-500 hover:brightness-110">
+                                <span
+                                    class="absolute bottom-2 left-1/2 -translate-x-1/2 text-white font-bold text-sm md:text-base">4</span>
+                                <span
+                                    class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-slate-600 font-bold text-xs md:text-sm">Яна</span>
+                            </div>
+                        </div>
+                        <p id="bar-desc" class="sr-only">Діаграма показує, що Макс зібрав найбільше яблук (9), Оля — 6,
+                            а Яна — 4.</p>
+                        <p class="mt-10 text-sm text-slate-500 italic" aria-hidden="true">Одразу видно, що Макс переміг!
+                        </p>
+                    </div>
+
+                    <!-- Кругова -->
+                    <div class="bg-orange-50 p-5 md:p-6 rounded-3xl border border-orange-200 text-center hover:bg-white transition shadow-sm"
+                        role="img" aria-label="Кругова діаграма. Розподіл часу: Сон — 60%, Школа — 40%."
+                        aria-describedby="pie-desc">
+                        <h3 class="text-xl md:text-2xl font-bold text-orange-900 mb-4">Кругова діаграма (Піца)</h3>
+                        <p class="text-slate-600 mb-4 text-base md:text-lg">Коли треба показати частки: <strong>"Яку
+                                частину займає?"</strong></p>
+
+                        <div class="flex flex-col items-center py-2" aria-hidden="true">
+                            <div
+                                class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-[conic-gradient(#fbbf24_0%_60%,#3b82f6_60%_100%)] shadow-lg border-4 border-white mb-4 transition-transform hover:scale-105">
+                            </div>
+
+                            <div class="flex flex-wrap justify-center gap-4 text-sm font-bold">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
+                                    <span>Сон (60%)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                                    <span>Школа (40%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p id="pie-desc" class="sr-only">Кругова діаграма показує, що сон займає більшу частину (60
+                            відсотків, жовтий колір) у порівнянні зі школою (40 відсотків, синій колір).</p>
+                        <p class="mt-2 text-sm text-slate-500 italic" aria-hidden="true">Видно, що більшу частину часу
+                            ми спимо.</p>
+                    </div>
+                </div>
+
+                <!-- Лінійний графік (новий) -->
+                <div
+                    class="mt-6 md:mt-8 bg-orange-50 p-5 md:p-6 rounded-3xl border border-orange-200 max-w-4xl mx-auto">
+                    <h3 class="text-xl md:text-2xl font-bold text-orange-900 mb-4 text-center">Лінійний графік</h3>
+                    <p class="text-slate-600 mb-4 text-center text-base md:text-lg">Коли треба побачити <strong>"Як
+                            змінюється?"</strong> з часом</p>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm" aria-hidden="true">
+                        <svg viewBox="0 0 400 200" class="w-full h-auto max-h-[250px]">
+                            <!-- Сітка -->
+                            <line x1="40" y1="170" x2="380" y2="170" stroke="#cbd5e1" stroke-width="2" />
+                            <line x1="40" y1="130" x2="380" y2="130" stroke="#e2e8f0" stroke-width="1" />
+                            <line x1="40" y1="90" x2="380" y2="90" stroke="#e2e8f0" stroke-width="1" />
+                            <line x1="40" y1="50" x2="380" y2="50" stroke="#e2e8f0" stroke-width="1" />
+                            <line x1="40" y1="10" x2="380" y2="10" stroke="#e2e8f0" stroke-width="1" />
+                            <line x1="40" y1="170" x2="40" y2="10" stroke="#cbd5e1" stroke-width="2" />
+
+                            <!-- Підписи -->
+                            <text x="20" y="175" font-size="12" fill="#64748b">0</text>
+                            <text x="15" y="135" font-size="12" fill="#64748b">5</text>
+                            <text x="10" y="95" font-size="12" fill="#64748b">10</text>
+                            <text x="10" y="55" font-size="12" fill="#64748b">15</text>
+                            <text x="10" y="15" font-size="12" fill="#64748b">20</text>
+
+                            <text x="50" y="190" font-size="12" fill="#64748b">Пн</text>
+                            <text x="130" y="190" font-size="12" fill="#64748b">Вт</text>
+                            <text x="210" y="190" font-size="12" fill="#64748b">Ср</text>
+                            <text x="290" y="190" font-size="12" fill="#64748b">Чт</text>
+                            <text x="360" y="190" font-size="12" fill="#64748b">Пт</text>
+
+                            <!-- Лінія -->
+                            <polyline points="60,130 140,90 220,110 300,50 380,70" fill="none" stroke="#f97316"
+                                stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+                            <!-- Точки -->
+                            <circle cx="60" cy="130" r="6" fill="#f97316" />
+                            <circle cx="140" cy="90" r="6" fill="#f97316" />
+                            <circle cx="220" cy="110" r="6" fill="#f97316" />
+                            <circle cx="300" cy="50" r="6" fill="#f97316" />
+                            <circle cx="380" cy="70" r="6" fill="#f97316" />
+
+                            <!-- Підписи точок -->
+                            <text x="55" y="120" font-size="11" fill="#c2410c" font-weight="bold">5</text>
+                            <text x="135" y="80" font-size="11" fill="#c2410c" font-weight="bold">10</text>
+                            <text x="215" y="100" font-size="11" fill="#c2410c" font-weight="bold">8</text>
+                            <text x="295" y="40" font-size="11" fill="#c2410c" font-weight="bold">15</text>
+                            <text x="375" y="60" font-size="11" fill="#c2410c" font-weight="bold">13</text>
+                        </svg>
+                        <p class="text-center text-sm text-slate-500 mt-2">Кількість вирішених прикладів з математики за
+                            тиждень</p>
+                    </div>
+                    <p class="sr-only">Лінійний графік показує, що учень вирішував приклади: понеділок — 5, вівторок —
+                        10, середа — 8, четвер — 15, п'ятниця — 13. Найбільше прикладів у четвер.</p>
+                </div>
+
+                <!-- Квіз 4 -->
+                <div class="mt-8 md:mt-10 bg-orange-50 rounded-2xl p-5 md:p-8 border border-orange-200">
+                    <h3 class="text-xl md:text-2xl font-bold text-orange-900 mb-4"><i
+                            class="fas fa-question-circle mr-2"></i>Міні-тест №4</h3>
+                    <p class="text-base md:text-lg mb-6 font-medium">Ти хочеш показати, що 90% класу любить собак, і
+                        тільки 10% — котів. Який графік краще покаже цю велику різницю як частину цілого класу?</p>
+                    <div class="grid gap-4 md:grid-cols-2" id="quiz4-options">
+                        <button type="button"
+                            onclick="checkQuiz(4, false, this, 'Можна, але для часток цілого (відсотків) краще підходить кругова.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-orange-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Стовпчикова діаграма
+                        </button>
+                        <button type="button"
+                            onclick="checkQuiz(4, true, this, 'Правильно! Вона виглядатиме як піца, де майже все з\'їли любителі собак.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-orange-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Кругова діаграма
+                        </button>
+                    </div>
+                    <div id="quiz4-feedback" class="mt-4 text-base md:text-lg font-bold hidden p-4 rounded-xl"
+                        aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- РОЗДІЛ 5: Як це допомагає? -->
+        <section id="usage" class="my-8 md:my-12 scroll-mt-28">
+            <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-t-8 border-teal-500">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-teal-700 mb-6 flex items-center">
+                    <span class="bg-teal-100 p-3 rounded-xl mr-4 shrink-0"><i class="fas fa-rocket"
+                            aria-hidden="true"></i></span>
+                    <span>Розділ 5: Суперсила даних</span>
+                </h2>
+                <p class="text-lg md:text-xl text-slate-700 mb-6 md:mb-8">Навіщо все це вчити? Тому що дані допомагають
+                    нам <strong>передбачати майбутнє</strong> і не робити помилок.</p>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">📺</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">YouTube та Netflix</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Вони збирають дані про те, які мультики ти
+                            дивишся. Аналізують їх. І потім пропонують тобі нові відео, які тобі точно сподобаються! Це
+                            магія даних.</p>
+                    </div>
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">☔</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">Прогноз погоди</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Тисячі датчиків вимірюють вітер і вологість.
+                            Суперкомп'ютер обробляє ці дані та каже: "Візьми парасольку". І ти залишаєшся сухим.</p>
+                    </div>
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">🏥</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">Лікарі</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Розумний годинник рахує твій пульс (дані). Якщо
+                            серце б'ється занадто швидко, він каже "Сядь і відпочинь!" (інформація). Це рятує життя.</p>
+                    </div>
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">🎮</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">Відеоігри</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Гра запам'ятовує, на якому рівні ти зупинився. Це
+                            дані! А ще вона робить складнішими рівні, коли ти граєш краще.</p>
+                    </div>
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">🗺️</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">Google Maps</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Дані про дороги та пробки допомагають побудувати
+                            найшвидший маршрут до школи. Без даних навігатор був би сліпим!</p>
+                    </div>
+                    <div class="bg-teal-50 p-5 md:p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="text-3xl md:text-4xl mb-4" aria-hidden="true">🎵</div>
+                        <h3 class="font-bold text-lg md:text-xl mb-2">Spotify</h3>
+                        <p class="text-slate-700 text-base md:text-lg">Аналізує, які пісні ти слухаєш, і створює
+                            плейлист "Тобі сподобається". Це як друг-музикант, який знає твій смак.</p>
+                    </div>
+                </div>
+
+                <!-- Квіз 5 -->
+                <div class="mt-8 md:mt-10 bg-teal-50 rounded-2xl p-5 md:p-8 border border-teal-200">
+                    <h3 class="text-xl md:text-2xl font-bold text-teal-900 mb-4"><i
+                            class="fas fa-question-circle mr-2"></i>Міні-тест №5</h3>
+                    <p class="text-base md:text-lg mb-6 font-medium">Магазин іграшок записує, які іграшки купують
+                        найчастіше. Навіщо?</p>
+                    <div class="grid gap-4 md:grid-cols-2" id="quiz5-options">
+                        <button type="button"
+                            onclick="checkQuiz(5, false, this, 'Це було б весело, але бізнес працює інакше.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-teal-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Щоб продавці могли погратися ними вночі
+                        </button>
+                        <button type="button"
+                            onclick="checkQuiz(5, true, this, 'Точно! Дані допомагають магазину зрозуміти, що зараз модно, і замовити більше популярних іграшок.')"
+                            class="quiz-btn p-4 bg-white rounded-xl border-2 border-transparent hover:border-teal-400 shadow-sm text-left text-base md:text-lg font-semibold transition touch-manipulation">
+                            Щоб замовити більше популярних іграшок на склад
+                        </button>
+                    </div>
+                    <div id="quiz5-feedback" class="mt-4 text-base md:text-lg font-bold hidden p-4 rounded-xl"
+                        aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ФІНАЛЬНИЙ ТЕСТ -->
+        <section id="test" class="my-12 md:my-16">
+            <div
+                class="bg-slate-900 text-white rounded-[2rem] md:rounded-[3rem] shadow-2xl p-6 md:p-16 text-center relative overflow-hidden">
+                <!-- Декоративні елементи -->
+                <div
+                    class="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-indigo-500 opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4">
+                </div>
+                <div
+                    class="absolute bottom-0 left-0 w-48 h-48 md:w-64 md:h-64 bg-purple-500 opacity-20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4">
+                </div>
+
+                <div class="relative z-10 max-w-3xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl lg:text-5xl font-black mb-4 md:mb-6 text-yellow-400">Фінальний
+                        тест</h2>
+                    <p class="text-lg md:text-xl text-slate-300 mb-8 md:mb-10">5 випадкових питань, щоб перевірити, чи
+                        готовий ти стати Агентом даних!</p>
+
+                    <div id="start-screen">
+                        <button type="button" onclick="startFinalTest()"
+                            class="bg-yellow-400 text-slate-900 text-xl md:text-2xl font-bold py-3 md:py-4 px-8 md:px-12 rounded-full hover:bg-yellow-300 transition transform hover:scale-105 shadow-[0_0_20px_rgba(250,204,21,0.5)] touch-manipulation">
+                            🚀 Почати тест
+                        </button>
+                    </div>
+
+                    <div id="quiz-container"
+                        class="hidden text-left bg-white text-slate-900 p-5 md:p-8 rounded-3xl shadow-2xl">
+                        <!-- Прогрес-бар -->
+                        <div class="w-full bg-slate-200 rounded-full h-3 mb-4 overflow-hidden">
+                            <div id="progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-500"
+                                style="width: 0%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-4 md:mb-6 border-b pb-4 border-slate-200">
+                            <span class="text-slate-500 font-bold text-sm md:text-base">Питання <span id="q-number"
+                                    class="text-indigo-600 text-xl md:text-2xl">1</span> з 5</span>
+                            <span
+                                class="bg-indigo-100 text-indigo-800 px-3 md:px-4 py-1 rounded-full font-bold text-sm md:text-base">Бали:
+                                <span id="score-display">0</span></span>
+                        </div>
+
+                        <h3 id="question-text"
+                            class="text-xl md:text-2xl font-bold mb-6 md:mb-8 leading-snug min-h-[60px] md:min-h-[80px]"
+                            aria-live="polite">...</h3>
+
+                        <div id="answers-area" class="grid gap-3 md:gap-4">
+                            <!-- Кнопки відповідей генеруються JS -->
+                        </div>
+                    </div>
+
+                    <div id="result-screen"
+                        class="hidden bg-white text-slate-900 p-6 md:p-10 rounded-3xl shadow-2xl mt-6 md:mt-8">
+                        <div class="text-6xl md:text-8xl mb-4" id="result-icon" aria-hidden="true">🏆</div>
+                        <h3 class="text-3xl md:text-4xl font-black mb-4">Результат: <span id="final-score"
+                                class="text-indigo-600">0</span>/5</h3>
+                        <p id="result-msg" class="text-lg md:text-xl text-slate-600 mb-6 md:mb-8">...</p>
+
+                        <!-- Детальний розбір -->
+                        <div id="result-details" class="text-left mb-6 md:mb-8 hidden">
+                            <h4 class="font-bold text-slate-800 mb-3 text-lg">Твої відповіді:</h4>
+                            <div id="result-details-list" class="space-y-2 text-base"></div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button type="button" onclick="startFinalTest()"
+                                class="w-full sm:w-auto bg-indigo-600 text-white text-lg md:text-xl font-bold py-3 md:py-4 px-8 md:px-10 rounded-xl hover:bg-indigo-700 transition touch-manipulation">
+                                🔄 Спробувати ще раз
+                            </button>
+                            <a href="#data-info" onclick="hideResult()"
+                                class="w-full sm:w-auto bg-slate-200 text-slate-800 text-lg md:text-xl font-bold py-3 md:py-4 px-8 md:px-10 rounded-xl hover:bg-slate-300 transition inline-flex items-center justify-center touch-manipulation">
+                                📚 Повторити урок
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Scroll To Top Button -->
+    <button id="scroll-top-btn" type="button"
+        class="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-indigo-600 text-white p-3 md:p-4 rounded-full shadow-lg hidden hover:bg-indigo-700 transition z-40 touch-manipulation"
+        aria-label="Прокрутити вгору">
+        <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 md:py-12 text-center">
+        <div class="container mx-auto px-4">
+            <p class="text-base md:text-lg font-medium text-slate-300 mb-2">© 2026 Комп'ютерна наука з паном Артемом</p>
+            <p class="text-sm text-slate-500">Інтерактивний урок для учнів 3–4 класів</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
