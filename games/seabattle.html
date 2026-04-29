@@ -571,7 +571,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getDatabase, ref, onValue, update, remove, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+        import { getDatabase, ref, onValue, update, remove, runTransaction, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         // 🔴 КРИТИЧНО: Ваша конфігурація Firebase видима на клієнті.
@@ -620,6 +620,21 @@
         const SHIPS_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
         let playerId;
 
+        // Firebase Anonymous Auth identifies a browser profile, not a specific player tab.
+        // A separate per-tab player id lets the same computer/browser test the game in two tabs.
+        function getTabPlayerId() {
+            let id = sessionStorage.getItem('seaBattlePlayerId');
+            if (!id) {
+                if (crypto?.randomUUID) {
+                    id = crypto.randomUUID();
+                } else {
+                    id = `player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                }
+                sessionStorage.setItem('seaBattlePlayerId', id);
+            }
+            return id;
+        }
+
         const myBoardEl = document.getElementById('myBoard');
         const enemyBoardEl = document.getElementById('enemyBoard');
         const statusEl = document.getElementById('status');
@@ -661,14 +676,25 @@
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 const candidateCode = Math.floor(100000 + Math.random() * 900000).toString();
                 const candidateRef = ref(db, `games/${candidateCode}`);
+
                 const txResult = await runTransaction(candidateRef, (currentData) => {
                     if (currentData !== null) return;
                     return initialGameState;
                 }, { applyLocally: false });
-                if (txResult.committed) return candidateCode;
+
+                if (txResult.committed) {
+                    const checkSnapshot = await get(candidateRef);
+                    if (!checkSnapshot.exists()) {
+                        console.error('Код згенеровано, але гру не знайдено в Firebase:', candidateCode);
+                        throw new Error('GAME_WAS_NOT_SAVED');
+                    }
+                    console.log('Гру створено:', candidateCode);
+                    return candidateCode;
+                }
             }
             throw new Error('NO_FREE_GAME_CODE');
         }
+
 
         // --- Основна логіка ---
         
@@ -700,10 +726,12 @@
             if (gameState.unsubscribeListener) gameState.unsubscribeListener();
         });
         
-        function showMenuMessage(message) {
+        let menuMessageTimer = null;
+        function showMenuMessage(message, duration = 6000) {
             const msgEl = document.getElementById('menuMessage');
             msgEl.textContent = message;
-            setTimeout(() => { msgEl.textContent = ''; }, 3000);
+            if (menuMessageTimer) clearTimeout(menuMessageTimer);
+            menuMessageTimer = setTimeout(() => { msgEl.textContent = ''; }, duration);
         }
 
         window.createGame = async function() {
@@ -713,14 +741,18 @@
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
-                playerId = auth.currentUser.uid;
+                const authUid = auth.currentUser.uid;
+                playerId = getTabPlayerId();
 
                 gameState.playerNumber = 1;
 
                 const initialGameState = {
-                    player1: { id: playerId, ready: false, board: null },
-                    player2: { id: null, ready: false, board: null },
-                    currentTurn: 1, gameStarted: false, moves: [], winner: null,
+                    player1: { id: playerId, uid: authUid, ready: false, board: null },
+                    player2: { ready: false },
+                    currentTurn: 1,
+                    gameStarted: false,
+                    moves: [],
+                    winner: null,
                     createdAt: Date.now()
                 };
                 
@@ -737,6 +769,8 @@
                     showMenuMessage("Відмовлено в доступі. Налаштуйте правила безпеки Firebase.");
                 } else if (String(error).includes('NO_FREE_GAME_CODE')) {
                     showMenuMessage("Не вдалося згенерувати вільний код. Спробуйте ще раз.");
+                } else if (String(error).includes('GAME_WAS_NOT_SAVED')) {
+                    showMenuMessage("Гру не вдалося зберегти в Firebase. Перевірте правила бази.");
                 } else {
                     showMenuMessage("Не вдалося створити гру. Перевірте з'єднання.");
                 }
@@ -752,41 +786,55 @@
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
-                playerId = auth.currentUser.uid;
+
+                const authUid = auth.currentUser.uid;
+                playerId = getTabPlayerId();
 
                 const codeInput = document.getElementById('joinCode').value;
                 const sanitizedCode = codeInput.replace(/[^0-9]/g, '');
 
-                if (sanitizedCode.length !== 6) return showMenuMessage("Код має складатися з 6 цифр!");
-                
+                if (sanitizedCode.length !== 6) {
+                    return showMenuMessage("Код має складатися з 6 цифр!");
+                }
+
                 const gameRef = ref(db, `games/${sanitizedCode}`);
+
+                // First read the room directly. Do not use a whole-game transaction for this check:
+                // runTransaction can initially receive null before the remote value is cached.
+                const gameSnapshot = await get(gameRef);
+                if (!gameSnapshot.exists()) {
+                    return showMenuMessage('Гра не знайдена! Перевірте код або оновіть сторінку з грою.');
+                }
+
+                const gameData = gameSnapshot.val();
+                if (hasGameExpired(gameData.createdAt)) {
+                    return showMenuMessage('Термін дії гри минув! Створіть нову гру.');
+                }
+                if (gameData.gameStarted) {
+                    return showMenuMessage('Гра вже почалася. Створіть нову кімнату.');
+                }
+                if (gameData.player1?.id === playerId) {
+                    return showMenuMessage("Це ваша кімната. Для тесту другого гравця відкрийте іншу вкладку, інкогніто або інший пристрій.");
+                }
+
+                const player2Ref = ref(db, `games/${sanitizedCode}/player2`);
                 let joinError = '';
-                const txResult = await runTransaction(gameRef, (gameData) => {
-                    if (!gameData) {
-                        joinError = 'NOT_FOUND';
-                        return;
-                    }
-                    if (hasGameExpired(gameData.createdAt)) {
-                        joinError = 'EXPIRED';
-                        return;
-                    }
-                    if (gameData.player1?.id === playerId) {
-                        joinError = 'OWN_GAME';
-                        return;
-                    }
-                    if (gameData.player2?.id && gameData.player2.id !== playerId) {
+
+                // Atomically reserve only player2. This prevents two users from joining the same room.
+                const txResult = await runTransaction(player2Ref, (player2Data) => {
+                    if (player2Data?.id && player2Data.id !== playerId) {
                         joinError = 'ROOM_TAKEN';
                         return;
                     }
-                    gameData.player2 = gameData.player2 || { id: null, ready: false, board: null };
-                    gameData.player2.id = playerId;
-                    return gameData;
+
+                    return {
+                        id: playerId,
+                        uid: authUid,
+                        ready: false
+                    };
                 }, { applyLocally: false });
 
                 if (!txResult.committed) {
-                    if (joinError === 'NOT_FOUND') return showMenuMessage('Гра не знайдена!');
-                    if (joinError === 'EXPIRED') return showMenuMessage('Термін дії гри минув!');
-                    if (joinError === 'OWN_GAME') return showMenuMessage("Ви не можете приєднатись до власної гри!");
                     if (joinError === 'ROOM_TAKEN') return showMenuMessage('Кімната вже зайнята!');
                     return showMenuMessage("Помилка приєднання. Спробуйте ще раз.");
                 }
@@ -798,7 +846,7 @@
             } catch(error) {
                 console.error("Помилка приєднання до гри:", error);
                 if (String(error).includes('PERMISSION_DENIED')) {
-                     showMenuMessage("Відмовлено в доступі. Перевірте правила безпеки.");
+                     showMenuMessage("Відмовлено в доступі. Перевірте правила безпеки Firebase.");
                 } else {
                     showMenuMessage("Помилка приєднання. Перевірте код та з'єднання.");
                 }
@@ -1181,11 +1229,16 @@
         
         // --- Ініціалізація ---
         document.getElementById('gameCodeDisplay').onclick = () => {
+            if (!gameState.code) return;
+
             navigator.clipboard.writeText(gameState.code).then(() => {
                 const el = document.getElementById('gameCodeDisplay');
-                const originalText = `Код гри: ${gameState.code}`;
-                el.textContent = 'Скопійовано!';
-                setTimeout(() => { el.textContent = originalText; }, 1500);
+                el.innerHTML = 'Скопійовано!';
+                setTimeout(() => {
+                    el.innerHTML = `Код гри: <span id="displayCode">${gameState.code}</span>`;
+                }, 1500);
+            }).catch(() => {
+                showMenuMessage(`Скопіюйте код вручну: ${gameState.code}`);
             });
         };
         
@@ -1213,6 +1266,17 @@
             soundToggle.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
             soundToggle.title = isMuted ? 'Увімкнути звук' : 'Вимкнути звук';
             if(!isMuted) initAudio();
+        });
+
+        document.getElementById('joinCode').addEventListener('input', (event) => {
+            event.target.value = event.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+
+        document.getElementById('joinCode').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                joinGame();
+            }
         });
 
         createBoardDOM('myBoard', handleMyBoardClick);
