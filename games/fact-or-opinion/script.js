@@ -2,7 +2,6 @@
   'use strict';
 
   const CONFIG = {
-    totalQuestions: 10,
     factsPerRound: 5,
     opinionsPerRound: 5,
     maxSameTypeInRow: 2,
@@ -96,6 +95,10 @@
       .filter(Boolean);
   }
 
+  function getTotalQuestions() {
+    return CONFIG.factsPerRound + CONFIG.opinionsPerRound;
+  }
+
   function normalizeItem(item, type, index) {
     if (!item || typeof item !== 'object') {
       console.warn(`Пропущено запис №${index + 1}: очікувався обʼєкт.`);
@@ -120,9 +123,19 @@
     if (type === 'fact') {
       normalized.sourceTitle = String(item.sourceTitle || 'Джерело').trim();
       normalized.sourceUrl = getSafeUrl(item.sourceUrl);
+      normalized.sourceLanguage = getSafeSourceLanguage(item.sourceLanguage, normalized.sourceUrl);
     }
 
     return normalized;
+  }
+
+  function getSafeSourceLanguage(value, sourceUrl) {
+    const language = String(value || '').trim().toLowerCase();
+    if (['uk', 'en'].includes(language)) return language;
+    if (sourceUrl.includes('.ua') || sourceUrl.includes('uk.wikipedia.org') || sourceUrl.includes('zakon.rada.gov.ua')) {
+      return 'uk';
+    }
+    return sourceUrl ? 'en' : '';
   }
 
   function getSafeUrl(value) {
@@ -198,8 +211,8 @@
 
     setAnswerButtonsDisabled(false);
     elements.statementText.textContent = currentItem.text;
-    elements.progressText.textContent = `Питання ${state.currentIndex + 1} з ${CONFIG.totalQuestions}`;
-    elements.progressFill.style.width = `${((state.currentIndex + 1) / CONFIG.totalQuestions) * 100}%`;
+    elements.progressText.textContent = `Питання ${state.currentIndex + 1} з ${getTotalQuestions()}`;
+    elements.progressFill.style.width = `${((state.currentIndex + 1) / getTotalQuestions()) * 100}%`;
 
     restartStatementAnimation();
   }
@@ -270,12 +283,26 @@
     link.rel = 'noopener noreferrer';
     link.textContent = item.sourceTitle;
     elements.feedbackSource.append(link);
+
+    const languageLabel = getSourceLanguageLabel(item.sourceLanguage);
+    if (languageLabel) {
+      const language = document.createElement('span');
+      language.className = 'source-language';
+      language.textContent = ` · ${languageLabel}`;
+      elements.feedbackSource.append(language);
+    }
+  }
+
+  function getSourceLanguageLabel(language) {
+    if (language === 'uk') return 'українською';
+    if (language === 'en') return 'англійською';
+    return '';
   }
 
   function goToNextStep() {
     state.currentIndex += 1;
 
-    if (state.currentIndex >= CONFIG.totalQuestions) {
+    if (state.currentIndex >= getTotalQuestions()) {
       showEndScreen();
       return;
     }
@@ -286,13 +313,13 @@
 
   function showEndScreen() {
     showScreen('end');
-    elements.finalScore.textContent = `${state.score} з ${CONFIG.totalQuestions}`;
+    elements.finalScore.textContent = `${state.score} з ${getTotalQuestions()}`;
     elements.endMessage.textContent = getEndMessage(state.score);
     elements.buttons.restart.focus();
   }
 
   function getEndMessage(score) {
-    if (score === CONFIG.totalQuestions) {
+    if (score === getTotalQuestions()) {
       return 'Відмінно! Ти дуже уважно відрізняєш перевірені факти від особистих думок.';
     }
 
@@ -327,7 +354,7 @@
   }
 
   function isLastQuestion() {
-    return state.currentIndex === CONFIG.totalQuestions - 1;
+    return state.currentIndex === getTotalQuestions() - 1;
   }
 
   function shuffle(items) {
