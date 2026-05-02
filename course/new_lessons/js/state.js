@@ -1,3 +1,5 @@
+// Progress persistence is intentionally disabled for shared school computers.
+// Session-level UI preferences may be allowed elsewhere, but lesson answers and completion must reset.
 export const STORAGE_KEY = "interactive-lesson-v4";
 export const MODE_KEY = "lesson-mode-v4";
 export const SOUND_KEY = "lesson-sound-v4";

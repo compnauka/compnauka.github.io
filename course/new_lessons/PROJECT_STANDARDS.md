@@ -1,3 +1,40 @@
+# Project Standards — доповнення після аудиту
+
+## Аудитне доповнення 2026-05-02
+
+Цей проєкт є інтерактивним підручником з інформатики для 1–2 класів. Для нього діють жорсткіші правила, ніж для універсального навчального сайту.
+
+### Блокери перед релізом
+
+- У репозиторії та архіві не може бути `.browser-profile/`, `tests/.browser-profile/`, cookies, login data, history, web data, local state, `.env` або приватних ключів.
+- Уроки не зберігають дитячий прогрес між відкриттями сторінки.
+- Embedded tools за замовчуванням дозволені тільки як локальні same-origin ресурси з `tools/`.
+- `iframe` має `sandbox`, `referrerpolicy="no-referrer"`, `loading="lazy"`.
+- `window.open` має `noopener,noreferrer`.
+- `sw.js` має містити всі опубліковані HTML-сторінки уроків і потрібні JS/CSS/tools/assets.
+- `lesson-page.template.html` не повинен дублювати підключення `manifest`, `tokens.css`, `styles.css`.
+
+### Правила для 1–2 класів
+
+- Одна картка — одна навчальна дія.
+- Одна інструкція — одна проста дія.
+- Учнівський текст має бути коротким, без методичних пояснень.
+- Оптимально 4–6 основних карток у student mode.
+- Canvas або drag-only активності не можуть бути єдиним способом виконати ключову навчальну дію.
+- Помилки пояснюються м’яко: без звинувачення дитини та без сирих технічних повідомлень.
+
+### Архітектурний напрям
+
+Не ускладнювати стек без потреби. Головне покращення — не фреймворк, а суворий контентний контракт:
+
+```text
+lesson content → schema → validator → generator → tests → deploy
+```
+
+Деталі зафіксовані в `AGENTS.md`, `ARCHITECTURE.md`, `SECURITY.md`, `PEDAGOGICAL_QUALITY.md`, `TESTING.md`.
+
+---
+
 # PROJECT STANDARDS — Educational Tool Development
 
 ## Project-Specific Override For `course/new_lessons`

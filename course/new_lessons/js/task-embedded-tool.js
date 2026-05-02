@@ -10,12 +10,23 @@ import {
 const embeddedToolContexts = new Map();
 let messageListenerBound = false;
 
+const TRUSTED_TOOL_PATH_SEGMENT = "/tools/";
+
+function isTrustedToolUrl(url) {
+  return url.origin === window.location.origin && url.pathname.includes(TRUSTED_TOOL_PATH_SEGMENT);
+}
+
 function buildToolUrl(rawUrl, activityId) {
   if (!rawUrl) {
     return "";
   }
 
   const url = new URL(rawUrl, window.location.href);
+  if (!isTrustedToolUrl(url)) {
+    console.warn("Blocked untrusted embedded tool URL:", rawUrl);
+    return "";
+  }
+
   url.searchParams.set("activityId", activityId);
   return url.toString();
 }
@@ -23,7 +34,9 @@ function buildToolUrl(rawUrl, activityId) {
 function getAllowedOrigins(activity) {
   return [activity.launchUrl, activity.embedUrl]
     .filter(Boolean)
-    .map((rawUrl) => new URL(rawUrl, window.location.href).origin);
+    .map((rawUrl) => new URL(rawUrl, window.location.href))
+    .filter(isTrustedToolUrl)
+    .map((url) => url.origin);
 }
 
 function getDefaultProgress(activity) {
@@ -167,7 +180,9 @@ export function renderEmbeddedToolTask(activity, state) {
               data-embedded-frame="${activity.id}"
               src="${escapeHtml(embedUrl)}"
               title="${escapeHtml(activity.frameTitle || activity.title)}"
-              loading="lazy"></iframe>
+              loading="lazy"
+              referrerpolicy="no-referrer"
+              sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
           </div>
         ` : ""}
 
@@ -207,7 +222,10 @@ export function setupEmbeddedToolTask(activity, state, refs, showFeedback, reren
       };
       state.activityState[activity.id] = progress;
       persistState(state);
-      window.open(launchUrl, "_blank");
+      const openedWindow = window.open(launchUrl, "_blank", "noopener,noreferrer");
+      if (openedWindow) {
+        openedWindow.opener = null;
+      }
       rerenderTask(`[data-activity-id="${activity.id}"]`);
       showFeedback("Інструмент відкрито в окремій вкладці.", "is-success", "✓");
     });

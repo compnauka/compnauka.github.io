@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -65,6 +65,11 @@ $textFiles = @(
   "AI_LESSON_WORKFLOW.md",
   "INTERACTIVE_ACTIVITY_ROADMAP.md",
   "PROJECT_STANDARDS.md",
+  "AGENTS.md",
+  "ARCHITECTURE.md",
+  "SECURITY.md",
+  "PEDAGOGICAL_QUALITY.md",
+  "TESTING.md",
   "scripts\generate-lesson-pages.ps1"
 ) + (Get-ChildItem -Path "js" -Recurse -Filter "*.js" | ForEach-Object { $_.FullName })
 
@@ -88,6 +93,13 @@ $generatorPath = Join-Path $root "scripts\generate-lesson-pages.ps1"
 $guidePath = Join-Path $root "LESSON_TEMPLATE_GUIDE.md"
 $workflowPath = Join-Path $root "AI_LESSON_WORKFLOW.md"
 $landingPath = Join-Path $root "js\landing.js"
+$templatePath = Join-Path $root "lesson-page.template.html"
+$embeddedToolPath = Join-Path $root "js\task-embedded-tool.js"
+$agentsPath = Join-Path $root "AGENTS.md"
+$architecturePath = Join-Path $root "ARCHITECTURE.md"
+$securityPath = Join-Path $root "SECURITY.md"
+$pedagogyPath = Join-Path $root "PEDAGOGICAL_QUALITY.md"
+$testingPath = Join-Path $root "TESTING.md"
 
 $indexText = $decoded[$indexPath]
 $catalogText = $decoded[$catalogPath]
@@ -99,6 +111,35 @@ $generatorText = $decoded[$generatorPath]
 $guideText = $decoded[$guidePath]
 $workflowText = $decoded[$workflowPath]
 $landingText = $decoded[$landingPath]
+$templateText = $decoded[$templatePath]
+$embeddedToolText = $decoded[$embeddedToolPath]
+$agentsText = $decoded[$agentsPath]
+$architectureText = $decoded[$architecturePath]
+$securityText = $decoded[$securityPath]
+$pedagogyText = $decoded[$pedagogyPath]
+$testingText = $decoded[$testingPath]
+
+$browserProfiles = Get-ChildItem -Path $root -Force -Directory -Recurse -Filter ".browser-profile" -ErrorAction SilentlyContinue
+Assert-True ($browserProfiles.Count -eq 0) "Repository archive should not contain .browser-profile directories."
+
+$sensitiveNames = @("Cookies", "Safe Browsing Cookies", "Login Data", "Login Data For Account", "History", "Web Data", "Local State")
+foreach ($sensitiveName in $sensitiveNames) {
+  $matches = Get-ChildItem -Path $root -Force -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq $sensitiveName }
+  Assert-True ($matches.Count -eq 0) "Repository archive should not contain browser profile file $sensitiveName."
+}
+
+Assert-True ([regex]::Matches($templateText, 'rel="manifest"').Count -eq 1) "lesson-page.template.html should include manifest only once."
+Assert-True ([regex]::Matches($templateText, 'href="tokens.css"').Count -eq 1) "lesson-page.template.html should include tokens.css only once."
+Assert-True ([regex]::Matches($templateText, 'href="styles.css"').Count -eq 1) "lesson-page.template.html should include styles.css only once."
+Assert-True ($embeddedToolText.Contains('sandbox="allow-scripts allow-same-origin allow-forms"')) "embedded tool iframes should use sandbox."
+Assert-True ($embeddedToolText.Contains('referrerpolicy="no-referrer"')) "embedded tool iframes should use no-referrer."
+Assert-True ($embeddedToolText.Contains('"noopener,noreferrer"')) "embedded tool launch should use noopener,noreferrer."
+Assert-True ($embeddedToolText.Contains('TRUSTED_TOOL_PATH_SEGMENT')) "embedded tool URLs should be allowlisted to trusted local tools."
+Assert-True ($agentsText.Contains('Непорушні правила')) "AGENTS.md should document non-negotiable rules."
+Assert-True ($securityText.Contains('Критична проблема')) "SECURITY.md should document the browser profile blocker."
+Assert-True ($pedagogyText.Contains('Норма складності уроку')) "PEDAGOGICAL_QUALITY.md should document grade 1-2 complexity limits."
+Assert-True ($architectureText.Contains('контент як дані')) "ARCHITECTURE.md should document the content-as-data direction."
+Assert-True ($testingText.Contains('Security checks')) "TESTING.md should document security checks."
 
 Assert-True ($indexText -match "Інтерактивний підручник з інформатики для 1 та 2 класу") "index.html should contain the textbook heading."
 Assert-True ($indexText.Contains('id="landing-student-modules"')) "index.html should contain the student modules container."
@@ -156,6 +197,11 @@ $expectedLessons = @(
 foreach ($lessonId in $expectedLessons) {
   Assert-True ($catalogText.Contains("id: `"$lessonId`"")) "catalog.js should include lesson id $lessonId."
   Assert-True ($generatorText.Contains("Id = `"$lessonId`"")) "generate-lesson-pages.ps1 should include lesson id $lessonId."
+}
+
+$lessonHtmlFiles = Get-ChildItem -Path $root -Filter "m*-*.html" | ForEach-Object { "./$($_.Name)" }
+foreach ($lessonHtmlFile in $lessonHtmlFiles) {
+  Assert-True ($serviceWorkerText.Contains($lessonHtmlFile)) "sw.js should pre-cache lesson page $lessonHtmlFile."
 }
 
 Assert-True ($catalogText.Contains("Види інформації та способи подання")) "catalog.js should include the presentation lesson label."
