@@ -64,6 +64,7 @@ export const computerPartsLessonTemplate = {
     "складати просту модель комп’ютера з готових елементів"
   ],
   activityOrder: ["click-trainer", "classify", "fill", "creative"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Що Ми Бачимо Перед Собою",

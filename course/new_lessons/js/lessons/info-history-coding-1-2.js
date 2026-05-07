@@ -64,6 +64,7 @@ export const infoHistoryCodingLessonTemplate = {
     "створювати власний дуже простий приклад кодування без перевантаження складними правилами"
   ],
   activityOrder: ["key-trainer", "pick", "creative", "transfer"],
+  optionalActivities: ["creative", "transfer"],
   sections: [
     {
       title: "Навіщо Людям Потрібні Коди",

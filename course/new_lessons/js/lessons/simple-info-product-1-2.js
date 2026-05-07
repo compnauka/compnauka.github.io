@@ -64,6 +64,7 @@ export const simpleInfoProductLessonTemplate = {
     "пояснювати, для кого створено продукт"
   ],
   activityOrder: ["key-trainer", "classify", "creative", "embedded-tool", "transfer"],
+  optionalActivities: ["creative", "transfer"],
   sections: [
     {
       title: "Що Називаємо Інформаційним Продуктом",

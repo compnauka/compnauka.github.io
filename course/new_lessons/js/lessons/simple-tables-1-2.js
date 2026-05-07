@@ -70,6 +70,7 @@ export const simpleTablesLessonTemplate = {
     "пояснювати, чому таблиця зручна для короткого подання даних"
   ],
   activityOrder: ["fill", "table-read", "creative", "transfer"],
+  optionalActivities: ["creative", "transfer"],
   sections: [
     {
       title: "Що Таке Схема І Таблиця",

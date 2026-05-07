@@ -17,11 +17,11 @@ export function renderClassifyTask(activity, state) {
     <article class="task-card" data-activity-id="${activity.id}">
       <div class="task-card__header">
         <div>
-          <span class="task-badge">${escapeHtml(activity.badge)}</span>
+          <span class="task-badge${activity.optional ? ' task-badge--optional' : ''}">${escapeHtml(activity.badge)}</span>
           <h3>${escapeHtml(activity.title)}</h3>
           <p class="task-prompt">${escapeHtml(activity.prompt)}</p>
         </div>
-        <span class="task-score">${score}/${activity.items.length}</span>
+        <span class="task-score"${score === 0 ? ' data-score-zero' : ''}>${score}/${activity.items.length}</span>
       </div>
       <div class="board">
         <div class="board__column">

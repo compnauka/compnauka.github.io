@@ -70,6 +70,7 @@ export const commandsExecutorsLessonTemplate = {
     "формулювати короткі однозначні команди"
   ],
   activityOrder: ["classify", "scenarios", "creative"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Хто Такий Виконавець",

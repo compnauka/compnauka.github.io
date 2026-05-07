@@ -102,11 +102,11 @@ export function renderTraceContourTask(activity, state) {
     <article class="task-card" data-activity-id="${activity.id}">
       <div class="task-card__header">
         <div>
-          <span class="task-badge">${escapeHtml(activity.badge)}</span>
+          <span class="task-badge${activity.optional ? ' task-badge--optional' : ''}">${escapeHtml(activity.badge)}</span>
           <h3>${escapeHtml(activity.title)}</h3>
           <p class="task-prompt">${escapeHtml(activity.prompt)}</p>
         </div>
-        <span class="task-score">${Math.min(doneCount, total)}/${total}</span>
+        <span class="task-score"${doneCount === 0 ? ' data-score-zero' : ''}>${Math.min(doneCount, total)}/${total}</span>
       </div>
       <div class="trace-card ${completed ? "is-correct" : ""}">
         <div class="trace-card__meta">
@@ -146,6 +146,11 @@ export function setupTraceContourTask(activity, state, refs, showFeedback) {
 
   state.activityState[activity.id] = getActivityState(activity.id, state);
   const activityState = state.activityState[activity.id];
+
+  if (window.matchMedia("(pointer: coarse)").matches) {
+    activity.hitRadius = Math.max(activity.hitRadius || 24, 38);
+  }
+
   redrawCanvas(canvas, activity, activityState);
 
   let drawing = false;

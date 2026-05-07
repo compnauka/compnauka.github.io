@@ -70,6 +70,7 @@ export const signYourWorkLessonTemplate = {
     "завершувати простий продукт підписом автора"
   ],
   activityOrder: ["key-trainer", "classify", "fill", "embedded-tool", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Хто Такий Автор",

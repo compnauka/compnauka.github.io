@@ -64,6 +64,7 @@ export const computerProblemsHelpLessonTemplate = {
     "пояснювати словами, що саме не працює"
   ],
   activityOrder: ["sequence", "truefalse", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Як Зрозуміти, Що Є Проблема",

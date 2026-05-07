@@ -64,6 +64,7 @@ export const devicePurposeLessonTemplate = {
     "коротко пояснювати власний вибір"
   ],
   activityOrder: ["click-trainer", "classify", "transfer", "scenarios"],
+  optionalActivities: ["transfer", "scenarios"],
   sections: [
     {
       title: "Що Допомагає Бачити",

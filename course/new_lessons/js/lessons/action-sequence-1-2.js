@@ -70,6 +70,7 @@ export const actionSequenceLessonTemplate = {
     "складати короткий план дій"
   ],
   activityOrder: ["sequence", "truefalse", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Чому Порядок Важливий",

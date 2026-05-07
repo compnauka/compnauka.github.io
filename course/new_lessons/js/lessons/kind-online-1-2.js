@@ -64,6 +64,7 @@ export const kindOnlineLessonTemplate = {
     "пояснювати, чому краще писати доброзичливо"
   ],
   activityOrder: ["classify", "fill", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Чому Слова Важливі І В Повідомленнях",

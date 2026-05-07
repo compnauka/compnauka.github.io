@@ -70,6 +70,7 @@ export const setsOrderLessonTemplate = {
     "переносити навички групування на знайомі життєві приклади"
   ],
   activityOrder: ["trace-contour", "classify", "sequence", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Що Таке Група Предметів",

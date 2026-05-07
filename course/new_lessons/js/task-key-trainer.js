@@ -65,11 +65,11 @@ export function renderKeyTrainerTask(activity, state) {
     <article class="task-card" data-activity-id="${activity.id}">
       <div class="task-card__header">
         <div>
-          <span class="task-badge">${escapeHtml(activity.badge)}</span>
+          <span class="task-badge${activity.optional ? ' task-badge--optional' : ''}">${escapeHtml(activity.badge)}</span>
           <h3>${escapeHtml(activity.title)}</h3>
           <p class="task-prompt">${escapeHtml(activity.prompt)}</p>
         </div>
-        <span class="task-score">${doneCount}/${activity.rounds.length}</span>
+        <span class="task-score"${doneCount === 0 ? ' data-score-zero' : ''}>${doneCount}/${activity.rounds.length}</span>
       </div>
 
       ${completed ? `

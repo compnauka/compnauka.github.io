@@ -64,6 +64,7 @@ export const drawInProgramLessonTemplate = {
     "бачити в цифровому малюнку власний інформаційний продукт"
   ],
   activityOrder: ["classify", "sequence", "embedded-tool", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Що Таке Малюнок У Програмі",

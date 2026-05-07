@@ -64,6 +64,7 @@ export const searchOnlineLessonTemplate = {
     "пояснювати, що саме шукали і що саме знайшли"
   ],
   activityOrder: ["fill", "classify", "embedded-tool", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Що Таке Пошук",

@@ -64,6 +64,7 @@ export const infoPresentationLessonTemplate = {
     "пояснювати свій вибір на конкретному прикладі простими словами"
   ],
   activityOrder: ["key-trainer", "classify", "fill", "creative"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Одну Думку Можна Подати По-Різному",

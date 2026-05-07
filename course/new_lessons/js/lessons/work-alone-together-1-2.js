@@ -64,6 +64,7 @@ export const workAloneTogetherLessonTemplate = {
     "бачити, що спільна робота потребує домовленості"
   ],
   activityOrder: ["key-trainer", "classify", "scenarios", "creative", "embedded-tool"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Коли Працюю Сам",

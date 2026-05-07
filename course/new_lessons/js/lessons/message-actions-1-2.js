@@ -79,6 +79,7 @@ export const messageActionsLessonTemplate = {
     "застосовувати знання в нових побутових ситуаціях"
   ],
   activityOrder: ["sequence", "truefalse", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Що Ми Робимо З Повідомленням",

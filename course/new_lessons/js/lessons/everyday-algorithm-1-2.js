@@ -70,6 +70,7 @@ export const everydayAlgorithmLessonTemplate = {
     "переносити ідею алгоритму в шкільні та домашні ситуації"
   ],
   activityOrder: ["fill", "sequence", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Що Таке Алгоритм У Житті",

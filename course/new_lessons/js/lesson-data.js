@@ -277,7 +277,7 @@ function enrichAssetRefs(value) {
   return nextValue;
 }
 
-function cloneActivities(activities, activityOrder = null) {
+function cloneActivities(activities, activityOrder = null, optionalActivities = []) {
   const builders = {
     draw: () => (activities.draw ? { ...activities.draw, fallbackOptions: [...activities.draw.fallbackOptions] } : null),
     classify: () => (activities.classify ? buildClassifyActivity(activities.classify) : null),
@@ -298,10 +298,21 @@ function cloneActivities(activities, activityOrder = null) {
   const defaultOrder = ["draw", "classify", "sequence", "truefalse", "pick", "fill", "scenarios", "creative", "transfer", "table-read", "click-trainer", "trace-contour", "key-trainer", "embedded-tool"];
   const order = Array.isArray(activityOrder) && activityOrder.length > 0 ? activityOrder : defaultOrder;
 
+  const optionalSet = new Set(Array.isArray(optionalActivities) ? optionalActivities : []);
+  let requiredCounter = 0;
+
   return order
     .map((key) => builders[key]?.())
     .filter(Boolean)
-    .map((activity) => enrichAssetRefs(activity));
+    .map((activity) => {
+      const isOptional = optionalSet.has(activity.type);
+      if (!isOptional) requiredCounter += 1;
+      return enrichAssetRefs({
+        ...activity,
+        badge: isOptional ? "Додатково" : `Завдання ${requiredCounter}`,
+        optional: isOptional
+      });
+    });
 }
 
 function assertTemplate(template) {
@@ -338,7 +349,7 @@ export function createLessonData(template) {
     goalNote: template.goalNote,
     objectives: [...template.objectives],
     sections: cloneSections(template.sections),
-    activities: cloneActivities(template.activities, template.activityOrder),
+    activities: cloneActivities(template.activities, template.activityOrder, template.optionalActivities),
     quiz: buildQuiz(template.quiz),
     reflection: {
       ...template.reflection,

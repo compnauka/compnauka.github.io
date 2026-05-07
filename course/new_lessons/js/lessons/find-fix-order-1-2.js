@@ -70,6 +70,7 @@ export const findFixOrderLessonTemplate = {
     "перевіряти, чи працює виправлений план"
   ],
   activityOrder: ["pick", "sequence", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Коли План Ламається",

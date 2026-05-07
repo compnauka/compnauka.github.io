@@ -204,6 +204,8 @@
   goal: "...",
   goalNote: "...",
   objectives: ["..."],
+  activityOrder: ["classify", "scenarios", "transfer"],   // обов'язкове — визначає порядок і набір
+  optionalActivities: ["transfer"],                       // необов'язкове — ці завдання отримують бейдж "Додатково"
   sections: [ ... ],
   activities: {
     draw: { ... },
@@ -224,6 +226,28 @@
   quiz: { count: 4, questions: [...] },
   reflection: { prompt: "...", options: [...], note: "..." }
 }
+```
+
+### `activityOrder` — порядок і вибір активностей
+
+`activityOrder` визначає, які типи активностей відображаються і в якому порядку. Нумерація бейджів (`Завдання 1`, `Завдання 2`, ...) генерується автоматично з `lesson-data.js` — в самих шаблонах значення поля `badge` ігнорується.
+
+```js
+activityOrder: ["classify", "scenarios", "transfer"]
+// Результат: Завдання 1 (classify), Завдання 2 (scenarios), Завдання 3 (transfer)
+```
+
+### `optionalActivities` — необов'язкові завдання
+
+`optionalActivities` — масив типів активностей, які позначаються як розширені. Такі завдання отримують бейдж «Додатково» (жовтий стиль) замість порядкового номера, і не рахуються в послідовній нумерації обов'язкових завдань.
+
+```js
+activityOrder: ["classify", "scenarios", "creative"],
+optionalActivities: ["creative"],
+// Результат: Завдання 1 (classify), Завдання 2 (scenarios), Додатково (creative)
+```
+
+Це поле необов'язкове. Якщо не задане — всі активності є обов'язковими і нумеруються послідовно. Типові кандидати на «Додатково»: `creative`, `transfer`.
 ```
 
 ### Формат `fill`

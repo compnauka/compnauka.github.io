@@ -25,11 +25,11 @@ export function renderTrueFalseTask(activity, state) {
     <article class="task-card" data-activity-id="${activity.id}">
       <div class="task-card__header">
         <div>
-          <span class="task-badge">${escapeHtml(activity.badge)}</span>
+          <span class="task-badge${activity.optional ? ' task-badge--optional' : ''}">${escapeHtml(activity.badge)}</span>
           <h3>${escapeHtml(activity.title)}</h3>
           <p class="task-prompt">${escapeHtml(activity.prompt)}</p>
         </div>
-        <span class="task-score">${answeredCount}/${activity.statements.length}</span>
+        <span class="task-score"${answeredCount === 0 ? ' data-score-zero' : ''}>${answeredCount}/${activity.statements.length}</span>
       </div>
       <div class="truefalse-list">
         ${activity.statements.map((statement, index) => `

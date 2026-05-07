@@ -77,6 +77,7 @@ export const infoTypesLessonTemplate = {
     "коротко пояснювати свою відповідь словами «я бачу», «я чую», «я відчуваю»"
   ],
   activityOrder: ["trace-contour", "draw", "classify", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Що Ми Дізнаємося Про Світ",

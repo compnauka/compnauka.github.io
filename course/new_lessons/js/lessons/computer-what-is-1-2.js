@@ -64,6 +64,7 @@ export const computerWhatIsLessonTemplate = {
     "помічати, що комп’ютери бувають не лише на письмовому столі"
   ],
   activityOrder: ["classify", "scenarios", "truefalse"],
+  optionalActivities: ["truefalse"],
   sections: [
     {
       title: "Що Називаємо Комп’ютером",

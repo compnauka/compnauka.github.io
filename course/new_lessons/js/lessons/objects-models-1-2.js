@@ -64,6 +64,7 @@ export const objectsModelsLessonTemplate = {
     "створювати просту модель з готових елементів або за зразком"
   ],
   activityOrder: ["trace-contour", "classify", "fill", "creative"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Що Може Бути Об’єктом",

@@ -64,6 +64,7 @@ export const algorithmRepresentationLessonTemplate = {
     "пояснювати, чому обраний спосіб запису зрозумілий"
   ],
   activityOrder: ["fill", "pick", "creative", "transfer"],
+  optionalActivities: ["creative", "transfer"],
   sections: [
     {
       title: "Один План - Різний Запис",

@@ -64,6 +64,7 @@ export const computerSafetyLessonTemplate = {
     "переносити правила безпеки на знайомі шкільні та домашні ситуації"
   ],
   activityOrder: ["truefalse", "pick", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Як Сидіти І Дивитися На Екран",

@@ -64,6 +64,7 @@ export const internetWhatForLessonTemplate = {
     "пам'ятати про дорослого поруч у незнайомих ситуаціях"
   ],
   activityOrder: ["classify", "scenarios", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Що Дає Інтернет",

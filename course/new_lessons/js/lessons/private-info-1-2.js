@@ -64,6 +64,7 @@ export const privateInfoLessonTemplate = {
     "пояснювати, чому деякі дані не варто повідомляти"
   ],
   activityOrder: ["click-trainer", "classify", "truefalse", "transfer"],
+  optionalActivities: ["transfer"],
   sections: [
     {
       title: "Що Таке Особиста Інформація",

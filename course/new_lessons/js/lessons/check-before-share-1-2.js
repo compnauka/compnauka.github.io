@@ -70,6 +70,7 @@ export const checkBeforeShareLessonTemplate = {
     "пояснювати, чому перевірка важлива"
   ],
   activityOrder: ["truefalse", "scenarios", "creative"],
+  optionalActivities: ["creative"],
   sections: [
     {
       title: "Чому Не Треба Вірити Всьому Відразу",

@@ -64,6 +64,7 @@ export const computerTypesLessonTemplate = {
     "порівнювати пристрої за однією-двома зрозумілими ознаками"
   ],
   activityOrder: ["classify", "pick", "scenarios"],
+  optionalActivities: ["scenarios"],
   sections: [
     {
       title: "Настільний Комп’ютер І Ноутбук",
