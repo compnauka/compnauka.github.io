@@ -193,37 +193,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         actions.appendChild(btn);
 
-        // Copy link & QR buttons (icon-only)
-        const fullUrl = new URL(service.link, window.location.href).href;
+        // Copy link & QR buttons (icon-only, не для картки підтримки)
+        if (!isSupportCard) {
+            const fullUrl = new URL(service.link, window.location.href).href;
 
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "btn btn-icon";
-        copyBtn.title = "Скопіювати посилання";
-        copyBtn.setAttribute("aria-label", "Скопіювати посилання");
-        copyBtn.innerHTML = '<i class="fas fa-link"></i>';
-        copyBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            navigator.clipboard.writeText(fullUrl).then(() => {
-                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                copyBtn.classList.add("btn-icon--copied");
-                setTimeout(() => {
-                    copyBtn.innerHTML = '<i class="fas fa-link"></i>';
-                    copyBtn.classList.remove("btn-icon--copied");
-                }, 1500);
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "btn btn-icon";
+            copyBtn.title = "Скопіювати посилання";
+            copyBtn.setAttribute("aria-label", "Скопіювати посилання");
+            copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+            copyBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    copyBtn.classList.add("btn-icon--copied");
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+                        copyBtn.classList.remove("btn-icon--copied");
+                    }, 1500);
+                });
             });
-        });
-        actions.appendChild(copyBtn);
+            actions.appendChild(copyBtn);
 
-        const qrBtn = document.createElement("button");
-        qrBtn.className = "btn btn-icon";
-        qrBtn.title = "Показати QR-код";
-        qrBtn.setAttribute("aria-label", "Показати QR-код");
-        qrBtn.innerHTML = '<i class="fas fa-qrcode"></i>';
-        qrBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openQrModal(service.name, fullUrl);
-        });
-        actions.appendChild(qrBtn);
+            const qrBtn = document.createElement("button");
+            qrBtn.className = "btn btn-icon";
+            qrBtn.title = "Показати QR-код";
+            qrBtn.setAttribute("aria-label", "Показати QR-код");
+            qrBtn.innerHTML = '<i class="fas fa-qrcode"></i>';
+            qrBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                openQrModal(service.name, fullUrl);
+            });
+            actions.appendChild(qrBtn);
+        }
 
         if (service.secondLink) {
             const secondBtn = document.createElement("a");
