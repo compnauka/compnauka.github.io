@@ -1,3 +1,26 @@
+// --- QR MODAL ---
+function openQrModal(title, url) {
+    const overlay = document.getElementById("qrModalOverlay");
+    const canvas = document.getElementById("qrModalCanvas");
+    const titleEl = document.getElementById("qrModalTitle");
+    const urlEl = document.getElementById("qrModalUrl");
+
+    canvas.innerHTML = "";
+    titleEl.textContent = title;
+    urlEl.textContent = url;
+
+    new QRCode(canvas, {
+        text: url,
+        width: 220,
+        height: 220,
+        colorDark: "#1e293b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    overlay.classList.add("open");
+}
+
 // --- APP LOGIC ---
 document.addEventListener("DOMContentLoaded", () => {
     const sidebarNav = document.getElementById("sidebarNav");
@@ -146,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tagsDiv.appendChild(span);
             });
             body.appendChild(tagsDiv);
-        }
+        }
         // Buttons
         const actions = document.createElement("div");
         actions.style.display = "flex";
@@ -167,6 +190,38 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.innerHTML = service.primaryLabel || 'Відкрити';
         }
         actions.appendChild(btn);
+
+        // Copy link & QR buttons (icon-only)
+        const fullUrl = new URL(service.link, window.location.href).href;
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn btn-icon";
+        copyBtn.title = "Скопіювати посилання";
+        copyBtn.setAttribute("aria-label", "Скопіювати посилання");
+        copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+        copyBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.classList.add("btn-icon--copied");
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+                    copyBtn.classList.remove("btn-icon--copied");
+                }, 1500);
+            });
+        });
+        actions.appendChild(copyBtn);
+
+        const qrBtn = document.createElement("button");
+        qrBtn.className = "btn btn-icon";
+        qrBtn.title = "Показати QR-код";
+        qrBtn.setAttribute("aria-label", "Показати QR-код");
+        qrBtn.innerHTML = '<i class="fas fa-qrcode"></i>';
+        qrBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            openQrModal(service.name, fullUrl);
+        });
+        actions.appendChild(qrBtn);
 
         if (service.secondLink) {
             const secondBtn = document.createElement("a");
@@ -315,6 +370,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (CATEGORIES.length > 0) {
         setActiveCategory(CATEGORIES[0].id);
     }
+
+    // --- QR MODAL CLOSE ---
+    const qrOverlay = document.getElementById("qrModalOverlay");
+    document.getElementById("qrModalClose").addEventListener("click", () => qrOverlay.classList.remove("open"));
+    qrOverlay.addEventListener("click", (e) => { if (e.target === qrOverlay) qrOverlay.classList.remove("open"); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") qrOverlay.classList.remove("open"); });
 
     // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
