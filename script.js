@@ -11,8 +11,8 @@ function openQrModal(title, url) {
 
     new QRCode(canvas, {
         text: url,
-        width: 220,
-        height: 220,
+        width: 512,
+        height: 512,
         colorDark: "#1e293b",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
