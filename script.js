@@ -182,6 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.target = service.linkTarget || "_blank";
         if (btn.target === "_blank") btn.rel = "noopener noreferrer";
         btn.style.flex = "1";
+        btn.style.whiteSpace = "nowrap";
 
         // Special styling for PDFs
         if (service.link && service.link.endsWith('.pdf') && !service.primaryLabel) {
@@ -233,6 +234,8 @@ document.addEventListener("DOMContentLoaded", () => {
             secondBtn.target = service.secondLinkTarget || "_self";
             if (secondBtn.target === "_blank") secondBtn.rel = "noopener noreferrer";
             secondBtn.className = "btn btn-success";
+            secondBtn.style.flex = "1";
+            secondBtn.style.whiteSpace = "nowrap";
             secondBtn.textContent = service.secondLabel || "Докладніше";
             actions.appendChild(secondBtn);
         }
