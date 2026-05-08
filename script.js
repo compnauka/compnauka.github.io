@@ -173,13 +173,15 @@ document.addEventListener("DOMContentLoaded", () => {
         // Buttons
         const actions = document.createElement("div");
         actions.style.display = "flex";
-        actions.style.gap = "10px";
-        actions.style.flexWrap = "wrap";
+        actions.style.gap = "8px";
+        actions.style.flexWrap = "nowrap";
+        actions.style.alignItems = "center";
 
         const btn = document.createElement("a");
         btn.href = service.link;
         btn.target = service.linkTarget || "_blank";
         if (btn.target === "_blank") btn.rel = "noopener noreferrer";
+        btn.style.flex = "1";
 
         // Special styling for PDFs
         if (service.link && service.link.endsWith('.pdf') && !service.primaryLabel) {
