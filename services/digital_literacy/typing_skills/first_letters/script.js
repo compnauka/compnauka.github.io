@@ -10,7 +10,7 @@ const AppConfig = {
     },
     colorsCount: 8,
     boardRows: 4,
-    minBoardColumns: 6,
+    minBoardColumns: 5,
     tapThreshold: 22,
     statusMessageDuration: 2200,
 
@@ -237,6 +237,7 @@ class LetterEditor {
         /** Стан перетягування */
         this.drag = {
             active: false,
+            pointerId: null,    // активний pointerId; ігнорує другий палець під час drag
             ghost: null,
             char: '',
             colorClass: '',
@@ -275,6 +276,7 @@ class LetterEditor {
         const columns = this._calculateBoardColumns();
         const capacity = columns * AppConfig.boardRows;
         this.boardColumns = columns;
+        this.el.dropzone.style.setProperty('--board-columns', String(columns));
 
         this.el.dropzone.innerHTML = '';
         const frag = document.createDocumentFragment();
@@ -332,7 +334,10 @@ class LetterEditor {
         this.resizeTimer = window.setTimeout(() => {
             const nextColumns = this._calculateBoardColumns();
             if (nextColumns === this.boardColumns) return;
-            this._renderBoard(this._getBoardItems());
+
+            const items = this._getBoardItems();
+            this._cancelActiveDrag();
+            this._renderBoard(items);
         }, 120);
     }
 
@@ -435,6 +440,8 @@ class LetterEditor {
     }
     /** Встановлює мову та синхронізує стан кнопок-перемикачів */
     _setLang(lang) {
+        this._cancelActiveDrag();
+
         this.lang = lang;
         const isUk = lang === 'uk';
         this.el.langUk.classList.toggle('btn--lang-active', isUk);
@@ -460,10 +467,12 @@ class LetterEditor {
         // ВИПРАВЛЕННЯ B5: додано діалог підтвердження
         this.el.clearBtn.addEventListener('click', () => {
             if (!this._boardHasLetters()) return;
+            this._cancelActiveDrag();
             this._toggleOverlay(true);
         });
         this.el.confirmYes.addEventListener('click', () => {
             this._toggleOverlay(false);
+            this._cancelActiveDrag();
             this.sound.clear();
             this._renderBoard([]);
         });
@@ -481,6 +490,10 @@ class LetterEditor {
         document.addEventListener('pointercancel', this._onCancel.bind(this));
         window.addEventListener('resize', this._handleResize.bind(this));
         window.addEventListener('orientationchange', this._handleResize.bind(this));
+        window.addEventListener('blur', () => this._cancelActiveDrag());
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) this._cancelActiveDrag();
+        });
     }
 
     _toggleSound() {
@@ -504,6 +517,8 @@ class LetterEditor {
     }
 
     _onLetterKeyDown(e) {
+        if (this.drag.active) return;
+
         const letter = e.target.closest('.letter');
         if (!letter || (e.key !== 'Enter' && e.key !== ' ')) return;
         e.preventDefault();
@@ -539,8 +554,20 @@ class LetterEditor {
 
         e.preventDefault();
 
+        /*
+         * ВИПРАВЛЕННЯ B6: multi-touch guard.
+         * Якщо дитина тримає одну літеру пальцем і торкається іншої,
+         * другий pointerdown більше не перезаписує стан drag і не залишає
+         * «підвішений» ghost-елемент поза дошкою.
+         */
+        if (this.drag.active) return;
+
+        // Прибираємо можливі «сироти» після старої помилки або системного cancel.
+        this._removeGhostLetters();
+
         const d = this.drag;
         d.active = true;
+        d.pointerId = e.pointerId;
         d.char = letter.dataset.char;
         d.colorClass = letter.dataset.color;
         d.startX = e.clientX;
@@ -567,7 +594,7 @@ class LetterEditor {
        Pointer Move
        ---------------------------------------------------------- */
     _onMove(e) {
-        if (!this.drag.active) return;
+        if (!this.drag.active || e.pointerId !== this.drag.pointerId) return;
         e.preventDefault();
         this._moveGhost(e.clientX, e.clientY);
         this._highlightCellAt(e.clientX, e.clientY);
@@ -577,7 +604,7 @@ class LetterEditor {
        Pointer Up
        ---------------------------------------------------------- */
     _onUp(e) {
-        if (!this.drag.active) return;
+        if (!this.drag.active || e.pointerId !== this.drag.pointerId) return;
 
         const d = this.drag;
         const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
@@ -668,13 +695,10 @@ class LetterEditor {
     /* ----------------------------------------------------------
        Pointer Cancel
        ---------------------------------------------------------- */
-    _onCancel() {
-        // ВИПРАВЛЕННЯ B2: завжди відновлюємо opacity при скасуванні
-        if (this.drag.sourceLetter) {
-            this.drag.sourceLetter.style.opacity = '1';
-        }
-        this._clearHighlights();
-        this._cleanupDrag();
+    _onCancel(e) {
+        if (!this.drag.active) return;
+        if (e && e.pointerId !== this.drag.pointerId) return;
+        this._cancelActiveDrag();
     }
 
     /* ----------------------------------------------------------
@@ -726,12 +750,30 @@ class LetterEditor {
         this.el.dropzone.classList.remove('drag-over');
     }
 
+    /** Скасовує активне перетягування без втрати літери */
+    _cancelActiveDrag() {
+        if (this.drag.sourceLetter) {
+            this.drag.sourceLetter.style.opacity = '1';
+        }
+        this._clearHighlights();
+        this._cleanupDrag();
+    }
+
+    /** Прибирає всі ghost-елементи, включно з можливими «сиротами» */
+    _removeGhostLetters() {
+        document
+            .querySelectorAll('.letter--ghost')
+            .forEach((ghost) => ghost.remove());
+    }
+
     /** Прибирає ghost та скидає стан перетягування */
     _cleanupDrag() {
-        if (this.drag.ghost?.parentNode) {
-            this.drag.ghost.parentNode.removeChild(this.drag.ghost);
+        if (this.drag.sourceLetter) {
+            this.drag.sourceLetter.style.opacity = '1';
         }
+        this._removeGhostLetters();
         this.drag.active = false;
+        this.drag.pointerId = null;
         this.drag.ghost = null;
         this.drag.sourceCell = null;
         this.drag.sourceLetter = null;
