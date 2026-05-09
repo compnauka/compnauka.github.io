@@ -1,0 +1,790 @@
+/* ============================================================
+   ЗМІННІ / Variables
+   ============================================================ */
+ :root {
+    --board-rows: 4;
+    --board-cell-size: 56px;
+    --key-size: 54px;
+    --letter-font: 34px;
+    --board-gap: 7px;
+    --key-gap: 8px;
+    --board-pad: 11px;
+    --keyboard-pad: 12px;
+    --board-height: 276px;
+    --keyboard-height: 214px;
+
+    /* Фон */
+    --bg-from: #dbeafe;
+    --bg-to: #ede9fe;
+
+    /* Дошка */
+    --board-bg: #ffffff;
+    --board-border: #93c5fd;
+    --cell-bg: #eff6ff;
+    --cell-border: #bfdbfe;
+
+    /* Шапка */
+    --header-bg: rgba(255, 255, 255, 0.85);
+
+    /* 8 кольорів літер */
+    --c0: #ef4444;
+    --c1: #f97316;
+    --c2: #fbbf24;
+    --c3: #22c55e;
+    --c4: #3b82f6;
+    --c5: #a855f7;
+    --c6: #ec4899;
+    --c7: #14b8a6;
+
+    --text-dark: #1e293b;
+    --text-light: #ffffff;
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.18);
+
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+}
+
+/* ============================================================
+   iOS / МОБІЛЬНА АДАПТАЦІЯ
+   ============================================================ */
+
+/* Фіксуємо висоту з урахуванням dynamic viewport (Safari адресний рядок) */
+html {
+    height: 100%;
+    overflow: hidden;
+    /* Забороняємо автоматичне збільшення шрифту при повороті */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+
+/* Скролювані контейнери — ізолюємо від навігаційних жестів браузера */
+.letter-bank,
+.editor-board {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Кнопки і статичні елементи — дозволяємо лише tap, без zoom */
+button,
+.board-hint,
+.app-title {
+    touch-action: manipulation;
+}
+
+/* Літери-для-перетягування — повністю блокуємо стандартні touch-дії */
+.letter {
+    touch-action: none;
+    /* Прибираємо highlight при tap на iOS */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   БАЗОВІ СТИЛІ / Base
+   ============================================================ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%);
+    min-height: 100vh;
+    height: 100vh;
+    /* ← fallback для старих браузерів */
+    height: 100dvh;
+    /* ← Safari з адресним рядком (перезаписує vh) */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Декоративні кола на фоні */
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    width: 400px;
+    height: 400px;
+    top: -120px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(147, 197, 253, 0.35) 0%, transparent 70%);
+}
+
+body::after {
+    width: 350px;
+    height: 350px;
+    bottom: -80px;
+    right: -80px;
+    background: radial-gradient(circle, rgba(196, 181, 253, 0.35) 0%, transparent 70%);
+}
+
+/* ============================================================
+   ШАПКА / Header
+   ============================================================ */
+.app-header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--header-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.app-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text-dark);
+    letter-spacing: -0.3px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* ============================================================
+   КНОПКИ / Buttons
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: var(--shadow-sm);
+    color: var(--text-light);
+}
+
+.btn:active {
+    transform: scale(0.93);
+    box-shadow: none;
+}
+
+.btn:focus-visible,
+.letter:focus-visible {
+    outline: 4px solid rgba(37, 99, 235, 0.45);
+    outline-offset: 3px;
+}
+
+
+.lang-switcher {
+    display: flex;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 2px;
+}
+
+.btn--lang {
+    padding: 8px 12px;
+    border-radius: calc(var(--radius-md) - 3px);
+    font-size: 13px;
+    font-weight: 700;
+    background: transparent;
+    color: #64748b;
+    box-shadow: none;
+    touch-action: manipulation;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.btn--lang-active {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn--clear {
+    background: linear-gradient(135deg, #fb7185, #ef4444);
+}
+
+.btn--toggle {
+    background: linear-gradient(135deg, #38bdf8, #2563eb);
+}
+
+.btn--toggle-off {
+    background: linear-gradient(135deg, #cbd5e1, #64748b);
+}
+
+.btn--yes {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    font-size: 18px;
+    padding: 14px 28px;
+    border-radius: var(--radius-lg);
+}
+
+.btn--no {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    font-size: 18px;
+    padding: 14px 28px;
+    border-radius: var(--radius-lg);
+}
+
+/* ============================================================
+   ОСНОВНИЙ КОНТЕНТ / Main Layout
+   ============================================================ */
+.app-main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px 12px;
+    gap: 8px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ============================================================
+   ДОШКА / Board
+   ============================================================ */
+.board-wrapper {
+    flex: 0 0 var(--board-height);
+    position: relative;
+    height: var(--board-height);
+    min-height: var(--board-height);
+}
+
+.editor-board {
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--board-cell-size), 1fr));
+    grid-auto-rows: var(--board-cell-size);
+    gap: var(--board-gap);
+    background: var(--board-bg);
+    border: 3px dashed var(--board-border);
+    border-radius: var(--radius-xl);
+    padding: var(--board-pad);
+    overflow: hidden;
+    align-content: flex-start;
+    box-shadow: var(--shadow-md), inset 0 2px 8px rgba(147, 197, 253, 0.12);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Стан під час перетягування / While dragging */
+.editor-board.drag-over {
+    border-color: #3b82f6;
+    box-shadow:
+        var(--shadow-lg),
+        inset 0 2px 8px rgba(59, 130, 246, 0.15),
+        0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+/* Підказка на порожній дошці */
+.board-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: #94a3b8;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.board-hint.hidden {
+    opacity: 0;
+}
+
+.status-message {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%) translateY(8px);
+    max-width: min(92%, 520px);
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 16px;
+    font-weight: 800;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.status-message--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+@keyframes boardFullShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.editor-board.board-full {
+    animation: boardFullShake 0.32s ease;
+    border-color: #fb923c;
+}
+
+/* ============================================================
+   КОМІРКИ / Cells
+   ============================================================ */
+.cell {
+    background: var(--cell-bg);
+    border: 2px dashed var(--cell-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Підсвітка під час hover */
+.cell.cell--highlight {
+    background: #dbeafe;
+    border: 2px solid #60a5fa;
+}
+
+/* ============================================================
+   ЛІТЕРИ / Letters
+   ============================================================ */
+.letter {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--letter-font);
+    font-weight: 900;
+    color: var(--text-light);
+    border-radius: var(--radius-sm);
+    touch-action: none;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18), var(--shadow-sm);
+    cursor: grab;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Блик зверху для об'ємного вигляду */
+.letter::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 50% 0;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-sm) var(--radius-sm) 60% 60%;
+    pointer-events: none;
+}
+
+/* Hover для літер у банку */
+.letter-bank .letter:hover {
+    transform: scale(1.14) translateY(-4px);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.14), var(--shadow-md);
+    cursor: grab;
+}
+
+/* Літери на дошці */
+.editor-board .letter {
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15), var(--shadow-sm);
+}
+
+.editor-board .letter:hover {
+    transform: scale(1.08);
+}
+
+/* Привид під час перетягування */
+.letter--ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.92;
+    transform: scale(1.18) rotate(6deg);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+    cursor: grabbing;
+    width: var(--key-size);
+    height: var(--key-size);
+}
+
+/* ============================================================
+   КОЛЬОРИ ЛІТЕР / Letter Color Variants (8 кольорів)
+   ============================================================ */
+.color-0 {
+    background: linear-gradient(145deg, #ef4444, #b91c1c);
+}
+
+.color-1 {
+    background: linear-gradient(145deg, #f97316, #c2410c);
+}
+
+.color-2 {
+    background: linear-gradient(145deg, #fbbf24, #d97706);
+    color: var(--text-dark);
+}
+
+.color-3 {
+    background: linear-gradient(145deg, #22c55e, #15803d);
+}
+
+.color-4 {
+    background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+}
+
+.color-5 {
+    background: linear-gradient(145deg, #a855f7, #7e22ce);
+}
+
+.color-6 {
+    background: linear-gradient(145deg, #ec4899, #be185d);
+}
+
+.color-7 {
+    background: linear-gradient(145deg, #14b8a6, #0f766e);
+}
+
+/* ============================================================
+   КЛАВІАТУРА ЛІТЕР / Letter Keyboard
+   ============================================================ */
+.bank-section {
+    flex: 0 0 var(--keyboard-height);
+    height: var(--keyboard-height);
+    min-height: var(--keyboard-height);
+}
+
+.letter-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--key-gap);
+    justify-content: center;
+    align-content: center;
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--keyboard-pad);
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: var(--radius-xl);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-sm);
+}
+
+.letter-bank .letter {
+    width: var(--key-size);
+    height: var(--key-size);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   АНІМАЦІЇ / Animations
+   ============================================================ */
+
+/* Поява літери на дошці */
+@keyframes letterBounceIn {
+    0% {
+        transform: scale(0.15) rotate(-18deg);
+        opacity: 0;
+    }
+
+    55% {
+        transform: scale(1.28) rotate(7deg);
+        opacity: 1;
+    }
+
+    72% {
+        transform: scale(0.92) rotate(-3deg);
+    }
+
+    88% {
+        transform: scale(1.06) rotate(1deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.letter.bounce-in {
+    animation: letterBounceIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Озвучення/торкання літери на дошці */
+@keyframes letterSpeak {
+
+    0%,
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    25% {
+        transform: scale(1.22) rotate(-6deg);
+    }
+
+    60% {
+        transform: scale(1.22) rotate(6deg);
+    }
+}
+
+.letter.speaking {
+    animation: letterSpeak 0.38s ease;
+}
+
+/* Зникнення літери (при перетягуванні назад до банку) */
+@keyframes letterPopOut {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    40% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.letter.pop-out {
+    animation: letterPopOut 0.22s ease-in forwards;
+    pointer-events: none;
+}
+
+/* ============================================================
+   ІСКРИ / Sparkles
+   ============================================================ */
+@keyframes sparkleOut {
+    0% {
+        transform: translate(0, 0) scale(1.3);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+    }
+}
+
+.sparkle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 20px;
+    z-index: 2000;
+    animation: sparkleOut 0.6s ease-out forwards;
+    will-change: transform, opacity;
+    line-height: 1;
+}
+
+.sparkles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2000;
+    overflow: hidden;
+}
+
+/* ============================================================
+   ДІАЛОГ ПІДТВЕРДЖЕННЯ / Confirm Dialog
+   ============================================================ */
+@keyframes overlayIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dialogIn {
+    from {
+        transform: scale(0.65) translateY(24px);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: overlayIn 0.2s ease;
+}
+
+.overlay[aria-hidden="true"] {
+    display: none;
+}
+
+.confirm-box {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 290px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    animation: dialogIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.confirm-emoji {
+    font-size: 56px;
+    margin-bottom: 12px;
+    line-height: 1.2;
+}
+
+.confirm-text {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 22px;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* ============================================================
+   МЕДІАЗАПИТИ / Responsive
+   ============================================================ */
+@media (min-width: 600px) {
+    :root {
+        --board-cell-size: 58px;
+        --key-size: 56px;
+        --letter-font: 36px;
+        --board-height: 286px;
+        --keyboard-height: 220px;
+    }
+
+    .app-title {
+        font-size: 28px;
+    }
+
+    .btn {
+        font-size: 16px;
+        padding: 12px 20px;
+    }
+
+    .board-hint {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 420px) {
+    :root {
+        --board-cell-size: 48px;
+        --key-size: 44px;
+        --letter-font: 31px;
+        --board-height: 232px;
+        --keyboard-height: 172px;
+        --board-gap: 5px;
+        --key-gap: 5px;
+        --board-pad: 8px;
+        --keyboard-pad: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-header {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .app-title {
+        font-size: 20px;
+        line-height: 1.15;
+    }
+
+    .btn {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+
+    .btn--toggle span:last-child,
+    .btn--clear span:last-child {
+        display: none;
+    }
+}
+
+
+@media (max-height: 620px) and (min-width: 520px) {
+    :root {
+        --board-cell-size: 52px;
+        --key-size: 48px;
+        --letter-font: 31px;
+        --board-height: 242px;
+        --keyboard-height: 188px;
+        --board-pad: 9px;
+        --keyboard-pad: 8px;
+    }
+
+    .app-header {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .btn {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .sparkle {
+        display: none;
+    }
+}

@@ -42,6 +42,13 @@ const CATEGORIES = [
         tags: ["1-2 класи", "Клавіатура"]
       },
       {
+        name: "Перші букви",
+        description: "Перший текстовий редактор для найменших учнів. Вчимося перетягувати та складати слова.",
+        link: "services/digital_literacy/typing_skills/first_letters/index.html",
+        image: "images/84.jpg",
+        tags: ["1-2 класи", "Клавіатура"]
+      },
+      {
         name: "Тиць! Перші клавіші",
         description: "Тренажер для роботи з клавіатурою для початківців. Вивчаємо розташування клавіш.",
         link: "services/digital_literacy/typing_skills/tyts/index.html",
