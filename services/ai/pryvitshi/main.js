@@ -60,11 +60,13 @@ function loadSection(index) {
   const sectionKey = sectionKeys[index];
   const data = bookSections[sectionKey];
 
-  // Bottom nav visibility
+  // Bottom nav + chat padding — обкладинка без нижньої панелі
   if (index === 0) {
     bottomNav.classList.add('bottom-nav--hidden');
+    chatWindow.classList.add('chat-window--cover');
   } else {
     bottomNav.classList.remove('bottom-nav--hidden');
+    chatWindow.classList.remove('chat-window--cover');
   }
 
   // Buttons + indicator
