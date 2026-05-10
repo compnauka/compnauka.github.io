@@ -106,14 +106,16 @@ function loadSection(index) {
   }
 
   // Staggered messages
-  let delay = 100;
+  // Повільніший темп: дітям легше встигати читати репліки.
+  const MESSAGE_DELAY_MS = 650;
+  let delay = 150;
 
   data.messages.forEach((msg) => {
     const id = setTimeout(() => {
       appendMessage(msg, chatWindow, () => nextBtn.click());
     }, delay);
     messageTimers.push(id);
-    delay += 300;
+    delay += MESSAGE_DELAY_MS;
   });
 
   // Random quiz
@@ -121,7 +123,7 @@ function loadSection(index) {
     const quiz = data.quizzes[Math.floor(Math.random() * data.quizzes.length)];
     const id = setTimeout(() => {
       appendMessage({ type: 'quiz', content: quiz }, chatWindow);
-    }, delay + 200);
+    }, delay + 450);
     messageTimers.push(id);
   }
 }
