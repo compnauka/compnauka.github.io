@@ -42,7 +42,8 @@ function renderBlock(block) {
       p.textContent = block.text;
       return p;
     }
-    case 'list': {
+    case 'list':
+    case 'unordered-list': {
       const ul = document.createElement('ul');
       ul.className = 'block-list';
       block.items.forEach(item => ul.appendChild(buildListItem(item)));
@@ -85,6 +86,38 @@ function renderBlock(block) {
       p.className = 'block-highlight';
       p.textContent = block.text;
       return p;
+    }
+    case 'table': {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'block-table-wrap';
+      const table = document.createElement('table');
+      table.className = 'block-table';
+      if (block.headers) {
+        const thead = document.createElement('thead');
+        const tr = document.createElement('tr');
+        block.headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+        table.appendChild(thead);
+      }
+      if (block.rows) {
+        const tbody = document.createElement('tbody');
+        block.rows.forEach(row => {
+          const tr = document.createElement('tr');
+          row.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+      }
+      wrapper.appendChild(table);
+      return wrapper;
     }
     default:
       return null;
