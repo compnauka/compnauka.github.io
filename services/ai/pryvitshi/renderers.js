@@ -284,6 +284,25 @@ function buildDialogBubble(msg) {
   return wrapper;
 }
 
+// ---------- NARRATOR ----------
+
+function buildNarrator(msg) {
+  const div = document.createElement('div');
+  div.className = 'msg-narrator fade-in-up';
+
+  if (msg.blocks) {
+    div.appendChild(renderBlocks(msg.blocks));
+  } else if (msg.content) {
+    const p = document.createElement('p');
+    p.textContent = msg.content;
+    div.appendChild(p);
+  }
+
+  if (msg.image) div.appendChild(buildImage(msg.image, msg.alt));
+
+  return div;
+}
+
 // ---------- PUBLIC API ----------
 
 export function appendMessage(msg, chatWindow, onStart) {
@@ -294,6 +313,11 @@ export function appendMessage(msg, chatWindow, onStart) {
 
   if (msg.type === 'quiz') {
     chatWindow.appendChild(buildQuizElement(msg.content, checkAnswer));
+    return;
+  }
+
+  if (msg.type === 'narrator') {
+    chatWindow.appendChild(buildNarrator(msg));
     return;
   }
 
