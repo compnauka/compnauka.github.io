@@ -1,4 +1,6 @@
 import { buildQuizElement, checkAnswer } from './quiz.js';
+import { buildClassifierActivity } from './activity-classifier.js';
+import { buildTwentyQuestionsActivity } from './activity-20questions.js';
 
 // ---------- BLOCK RENDERING ----------
 
@@ -42,8 +44,7 @@ function renderBlock(block) {
       p.textContent = block.text;
       return p;
     }
-    case 'list':
-    case 'unordered-list': {
+    case 'list': {
       const ul = document.createElement('ul');
       ul.className = 'block-list';
       block.items.forEach(item => ul.appendChild(buildListItem(item)));
@@ -351,6 +352,16 @@ export function appendMessage(msg, chatWindow, onStart) {
 
   if (msg.type === 'narrator') {
     chatWindow.appendChild(buildNarrator(msg));
+    return;
+  }
+
+  if (msg.type === 'activity') {
+    const builders = {
+      classifier:    buildClassifierActivity,
+      '20questions': buildTwentyQuestionsActivity,
+    };
+    const build = builders[msg.activityType];
+    if (build) chatWindow.appendChild(build(msg.content));
     return;
   }
 

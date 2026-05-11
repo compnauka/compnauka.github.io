@@ -54,6 +54,24 @@ function clearMessageTimers() {
 // ---------- SECTION LOAD ----------
 
 function loadSection(index) {
+  // Exit-анімація якщо розділ вже завантажений
+  if (chatWindow.children.length > 0) {
+    clearMessageTimers();
+    chatWindow.classList.add('chat-window--exit');
+    const id = setTimeout(() => _renderSection(index), 180);
+    messageTimers.push(id);
+    return;
+  }
+  _renderSection(index);
+}
+
+function _renderSection(index) {
+  chatWindow.classList.remove('chat-window--exit');
+  chatWindow.classList.add('chat-window--enter');
+  chatWindow.addEventListener('animationend', () => {
+    chatWindow.classList.remove('chat-window--enter');
+  }, { once: true });
+
   clearMessageTimers();
   saveAndUpdateProgress(index);
 
@@ -109,8 +127,10 @@ function loadSection(index) {
 
   // Staggered messages
   // Повільніший темп: дітям легше встигати читати репліки.
-  const MESSAGE_DELAY_MS = 650;
-  let delay = 150;
+  // При prefers-reduced-motion всі повідомлення з'являються одразу.
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MESSAGE_DELAY_MS = prefersReducedMotion ? 0 : 650;
+  let delay = prefersReducedMotion ? 0 : 150;
 
   data.messages.forEach((msg) => {
     const id = setTimeout(() => {
