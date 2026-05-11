@@ -19,7 +19,6 @@ let messageTimers = [];
 // ---------- DOM ----------
 
 const chatWindow     = document.getElementById('chatWindow');
-const appMain        = document.getElementById('main-content');
 const navContainer   = document.getElementById('navContainer');
 const prevBtn        = document.getElementById('prevBtn');
 const nextBtn        = document.getElementById('nextBtn');
@@ -95,7 +94,7 @@ function _renderSection(index) {
 
   // Clear chat
   chatWindow.innerHTML = '';
-  appMain.scrollTop = 0;
+  chatWindow.scrollTop = 0;
 
   // Announce section to screen readers (replaces aria-live on chatWindow)
   a11yAnnouncer.textContent = '';
