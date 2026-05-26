@@ -26,6 +26,7 @@ const MathPuzzles = (() => {
             html: document.documentElement,
             container: document.getElementById('puzzles-container'),
             level: document.getElementById('level'),
+            challengeMode: document.getElementById('challenge-mode'),
             taskCount: document.getElementById('task-count'),
             newSetBtn: document.getElementById('new-set-btn'),
             checkBtn: document.getElementById('check-btn'),
@@ -110,7 +111,7 @@ const MathPuzzles = (() => {
     }
 
     function inputMarkup(id, label) {
-        return `<input class="game-input" id="${id}" data-answer-id="${id}" inputmode="numeric" autocomplete="off" maxlength="4" aria-label="${escapeHtml(label)}">`;
+        return `<input class="game-input" id="${id}" data-answer-id="${id}" inputmode="numeric" autocomplete="off" maxlength="5" aria-label="${escapeHtml(label)}">`;
     }
 
     function valueBlock(value) {
@@ -125,16 +126,149 @@ const MathPuzzles = (() => {
         return `<span class="symbol-token" aria-label="Символ ${escapeHtml(label)}">${escapeHtml(label)}</span>`;
     }
 
+    const GRADE_PROFILES = {
+        grade1: {
+            grade: 1,
+            maxBase: 10,
+            pyramidMaxBase: 10,
+            sequenceLength: 5,
+            sequenceStepMin: 1,
+            sequenceStepMax: 3,
+            hiddenSequence: 1,
+            pyramidRows: 3,
+            hiddenPyramid: 1,
+            balanceMax: 20,
+            symbolMax: 6,
+            symbolCount: 2,
+            magicSize: 2,
+            hiddenMagic: 2,
+            machineMax: 20,
+            machineSteps: 1,
+            operations: ['add', 'subtract'],
+            choiceSpread: 6
+        },
+        grade2: {
+            grade: 2,
+            maxBase: 18,
+            pyramidMaxBase: 18,
+            sequenceLength: 5,
+            sequenceStepMin: 2,
+            sequenceStepMax: 8,
+            hiddenSequence: 2,
+            pyramidRows: 3,
+            hiddenPyramid: 2,
+            balanceMax: 60,
+            symbolMax: 12,
+            symbolCount: 3,
+            magicSize: 3,
+            hiddenMagic: 3,
+            machineMax: 100,
+            machineSteps: 1,
+            operations: ['add', 'subtract', 'multiply-small'],
+            choiceSpread: 12
+        },
+        grade3: {
+            grade: 3,
+            maxBase: 28,
+            pyramidMaxBase: 24,
+            sequenceLength: 6,
+            sequenceStepMin: 3,
+            sequenceStepMax: 12,
+            hiddenSequence: 2,
+            pyramidRows: 3,
+            hiddenPyramid: 3,
+            balanceMax: 120,
+            symbolMax: 18,
+            symbolCount: 3,
+            magicSize: 3,
+            hiddenMagic: 4,
+            machineMax: 250,
+            machineSteps: 2,
+            operations: ['add', 'subtract', 'multiply-small'],
+            choiceSpread: 18
+        },
+        grade4: {
+            grade: 4,
+            maxBase: 38,
+            pyramidMaxBase: 26,
+            sequenceLength: 6,
+            sequenceStepMin: 4,
+            sequenceStepMax: 18,
+            hiddenSequence: 3,
+            pyramidRows: 4,
+            hiddenPyramid: 4,
+            balanceMax: 250,
+            symbolMax: 24,
+            symbolCount: 4,
+            magicSize: 4,
+            hiddenMagic: 6,
+            machineMax: 900,
+            machineSteps: 2,
+            operations: ['add', 'subtract', 'multiply-small', 'divide'],
+            choiceSpread: 24
+        }
+    };
+
+    const CHALLENGE_PROFILES = {
+        practice: {
+            label: 'тренування',
+            hiddenSequenceDelta: -1,
+            hiddenPyramidDelta: -1,
+            hiddenMagicDelta: -1,
+            machineStepsDelta: -1,
+            symbolCountDelta: 0,
+            sequenceStepBonus: 0,
+            choiceSpreadBonus: 0
+        },
+        challenge: {
+            label: 'виклик',
+            hiddenSequenceDelta: 0,
+            hiddenPyramidDelta: 0,
+            hiddenMagicDelta: 0,
+            machineStepsDelta: 0,
+            symbolCountDelta: 0,
+            sequenceStepBonus: 0,
+            choiceSpreadBonus: 0
+        },
+        olympiad: {
+            label: 'олімпіадний',
+            hiddenSequenceDelta: 1,
+            hiddenPyramidDelta: 1,
+            hiddenMagicDelta: 2,
+            machineStepsDelta: 1,
+            symbolCountDelta: 1,
+            sequenceStepBonus: 4,
+            choiceSpreadBonus: 8
+        }
+    };
+
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+    }
+
     function levelConfig() {
-        const level = dom.level.value;
-        return {
-            level,
-            maxBase: level === 'easy' ? 12 : level === 'medium' ? 24 : 42,
-            hiddenPyramid: level === 'easy' ? 1 : level === 'medium' ? 2 : 3,
-            hiddenMagic: level === 'easy' ? 3 : level === 'medium' ? 4 : 5,
-            hiddenSequence: level === 'easy' ? 1 : level === 'medium' ? 2 : 3,
-            operationMax: level === 'easy' ? 25 : level === 'medium' ? 60 : 99
-        };
+        const gradeProfile = GRADE_PROFILES[dom.level.value] || GRADE_PROFILES.grade3;
+        const modeKey = dom.challengeMode?.value || 'challenge';
+        const modeProfile = CHALLENGE_PROFILES[modeKey] || CHALLENGE_PROFILES.challenge;
+        const cfg = { ...gradeProfile, mode: modeKey, modeLabel: modeProfile.label };
+        const pyramidCells = (cfg.pyramidRows * (cfg.pyramidRows + 1)) / 2;
+
+        cfg.sequenceStepMax += modeProfile.sequenceStepBonus;
+        cfg.choiceSpread += modeProfile.choiceSpreadBonus;
+        cfg.hiddenSequence = clamp(cfg.hiddenSequence + modeProfile.hiddenSequenceDelta, 1, cfg.sequenceLength - 1);
+        cfg.hiddenPyramid = clamp(cfg.hiddenPyramid + modeProfile.hiddenPyramidDelta, 1, pyramidCells - 1);
+        cfg.machineSteps = clamp(cfg.machineSteps + modeProfile.machineStepsDelta, 1, 3);
+        cfg.symbolCount = clamp(cfg.symbolCount + modeProfile.symbolCountDelta, 2, 4);
+
+        if (cfg.mode === 'olympiad' && cfg.grade >= 3) {
+            cfg.magicSize = 4;
+        }
+        if (cfg.mode === 'olympiad' && cfg.grade === 2) {
+            cfg.magicSize = 3;
+        }
+        cfg.hiddenMagic = clamp(cfg.hiddenMagic + modeProfile.hiddenMagicDelta, 1, cfg.magicSize * cfg.magicSize - 1);
+
+        return cfg;
     }
 
     function cardMarkup(puzzle, body) {
@@ -159,10 +293,13 @@ const MathPuzzles = (() => {
     }
 
     function createSequence(index, cfg) {
-        const start = randomInt(2, cfg.level === 'easy' ? 14 : cfg.level === 'medium' ? 28 : 45);
-        const step = randomInt(2, cfg.level === 'easy' ? 5 : cfg.level === 'medium' ? 9 : 15);
-        const sequence = Array.from({ length: 5 }, (_, position) => start + position * step);
-        const hiddenPositions = shuffle([0, 1, 2, 3, 4]).slice(0, cfg.hiddenSequence);
+        const step = randomInt(cfg.sequenceStepMin, cfg.sequenceStepMax);
+        const isDescending = cfg.grade >= 3 && Math.random() > 0.65;
+        const startMin = isDescending ? step * (cfg.sequenceLength - 1) + 2 : 2;
+        const startMax = isDescending ? cfg.machineMax : Math.max(startMin, cfg.machineMax - step * (cfg.sequenceLength - 1));
+        const start = randomInt(startMin, startMax);
+        const sequence = Array.from({ length: cfg.sequenceLength }, (_, position) => start + (isDescending ? -1 : 1) * position * step);
+        const hiddenPositions = shuffle(Array.from({ length: cfg.sequenceLength }, (_, position) => position)).slice(0, cfg.hiddenSequence);
         const hiddenMap = new Map();
 
         hiddenPositions.forEach((position, localIndex) => {
@@ -188,10 +325,10 @@ const MathPuzzles = (() => {
             answerIds: Array.from(hiddenMap.values()),
             hints: [
                 'Порівняй два сусідні відомі числа. Наскільки вони відрізняються?',
-                `У цьому ланцюжку щоразу додається ${step}.`,
+                `У цьому ланцюжку щоразу ${isDescending ? 'віднімається' : 'додається'} ${step}.`,
                 `Початок ланцюжка: ${sequence.slice(0, 3).join(', ')}...`
             ],
-            solution: `Правило: щоразу додаємо ${step}. Повний ланцюжок: ${sequence.join(' → ')}.`
+            solution: `Правило: щоразу ${isDescending ? 'віднімаємо' : 'додаємо'} ${step}. Повний ланцюжок: ${sequence.join(' → ')}.`
         };
 
         puzzle.markup = cardMarkup(puzzle, `<div class="sequence">${nodes}</div>`);
@@ -199,36 +336,34 @@ const MathPuzzles = (() => {
     }
 
     function createPyramid(index, cfg) {
-        const a = randomInt(3, cfg.maxBase);
-        const b = randomInt(3, cfg.maxBase);
-        const c = randomInt(3, cfg.maxBase);
-        const d = a + b;
-        const e = b + c;
-        const f = d + e;
+        const bottom = Array.from({ length: cfg.pyramidRows }, () => randomInt(2, cfg.pyramidMaxBase || cfg.maxBase));
+        const rows = [bottom];
+        while (rows[rows.length - 1].length > 1) {
+            const previous = rows[rows.length - 1];
+            rows.push(previous.slice(0, -1).map((value, position) => value + previous[position + 1]));
+        }
 
-        const candidates = [
-            { id: `pyramid-${index}-top`, value: f, label: 'Верхня цеглинка' },
-            { id: `pyramid-${index}-mid-left`, value: d, label: 'Ліва цеглинка другого ряду' },
-            { id: `pyramid-${index}-bottom-right`, value: c, label: 'Права нижня цеглинка' }
-        ];
+        const candidates = rows.flatMap((row, level) => row.map((value, col) => ({
+            id: `pyramid-${index}-${level}-${col}`,
+            value,
+            level,
+            col,
+            label: `Ряд ${level + 1}, клітинка ${col + 1}`
+        })));
         const hidden = shuffle(candidates).slice(0, cfg.hiddenPyramid);
         const hiddenIds = new Set(hidden.map(item => item.id));
         hidden.forEach(item => addAnswer(item.id, item.value));
 
-        const cell = (id, value, label) => hiddenIds.has(id) ? inputBlock(id, label) : valueBlock(value);
+        const cell = (item) => hiddenIds.has(item.id) ? inputBlock(item.id, item.label) : valueBlock(item.value);
+        const pyramidRows = rows
+            .map((row, level) => row.map((value, col) => ({ id: `pyramid-${index}-${level}-${col}`, value, level, col, label: `Ряд ${level + 1}, клітинка ${col + 1}` })))
+            .reverse()
+            .map(row => `<div class="pyramid-row">${row.map(cell).join('')}</div>`)
+            .join('');
 
         const body = `
-            <div class="pyramid" role="group" aria-label="Математична піраміда">
-                <div class="pyramid-row">${cell(`pyramid-${index}-top`, f, 'Верхня цеглинка')}</div>
-                <div class="pyramid-row">
-                    ${cell(`pyramid-${index}-mid-left`, d, 'Ліва цеглинка другого ряду')}
-                    ${valueBlock(e)}
-                </div>
-                <div class="pyramid-row">
-                    ${valueBlock(a)}
-                    ${valueBlock(b)}
-                    ${cell(`pyramid-${index}-bottom-right`, c, 'Права нижня цеглинка')}
-                </div>
+            <div class="pyramid" style="--pyramid-cols:${cfg.pyramidRows}" role="group" aria-label="Математична піраміда">
+                ${pyramidRows}
             </div>
         `;
 
@@ -242,10 +377,10 @@ const MathPuzzles = (() => {
             answerIds: hidden.map(item => item.id),
             hints: [
                 'Працюй знизу вгору: дві сусідні цеглинки утворюють цеглинку над ними.',
-                `Правий блок другого ряду: ${b} + ${c} = ${e}.`,
-                'Якщо шукаєш нижню цеглинку, відніми від верхньої сусідню нижню.'
+                'Якщо пропуск зверху, додай дві цеглинки під ним. Якщо пропуск знизу, скористайся оберненою дією.',
+                `Нижній ряд: ${bottom.join(', ')}.`
             ],
-            solution: `Нижній ряд: ${a}, ${b}, ${c}. Другий ряд: ${a} + ${b} = ${d}, ${b} + ${c} = ${e}. Верх: ${d} + ${e} = ${f}.`
+            solution: `Нижній ряд: ${bottom.join(', ')}. Повна піраміда знизу вгору: ${rows.map(row => row.join(', ')).join(' / ')}.`
         };
 
         puzzle.markup = cardMarkup(puzzle, body);
@@ -253,7 +388,7 @@ const MathPuzzles = (() => {
     }
 
     function createBalance(index, cfg) {
-        const max = cfg.level === 'easy' ? 25 : cfg.level === 'medium' ? 55 : 90;
+        const max = cfg.balanceMax;
         let leftKnown;
         let unknown;
         let rightA;
@@ -272,7 +407,7 @@ const MathPuzzles = (() => {
         const optionsSet = new Set([unknown]);
         let attempts = 0;
         while (optionsSet.size < 4 && attempts < 100) {
-            const candidate = unknown + randomInt(-14, 14);
+            const candidate = unknown + randomInt(-cfg.choiceSpread, cfg.choiceSpread);
             if (candidate > 0 && candidate <= max) optionsSet.add(candidate);
             attempts++;
         }
@@ -325,36 +460,46 @@ const MathPuzzles = (() => {
     }
 
     function createSymbols(index, cfg) {
-        const max = cfg.level === 'easy' ? 8 : cfg.level === 'medium' ? 15 : 24;
-        const circle = randomInt(2, max);
-        const triangle = randomInt(2, max);
-        const square = randomInt(2, max);
-        const answer = circle + triangle + square;
+        const symbols = ['●', '▲', '■', '◆'].slice(0, cfg.symbolCount);
+        const values = symbols.map(() => randomInt(2, cfg.symbolMax));
+
+        // For 2 symbols: asking for the total sum is trivial (answer is directly shown
+        // in equation row 1). Instead ask for the value of the second symbol.
+        const useSingleTarget = cfg.symbolCount === 2;
+        const answer = useSingleTarget ? values[1] : values.reduce((sum, value) => sum + value, 0);
         const answerId = `symbols-${index}`;
         addAnswer(answerId, answer);
+
+        const equationRows = [
+            `
+                <div class="equation-row">
+                    <div class="equation-expression">${symbolToken(symbols[0])} + ${symbolToken(symbols[0])}</div>
+                    <strong>=</strong>
+                    <strong>${values[0] * 2}</strong>
+                </div>
+            `,
+            ...symbols.slice(1).map((symbol, position) => `
+                <div class="equation-row">
+                    <div class="equation-expression">${symbolToken(symbols[position])} + ${symbolToken(symbol)}</div>
+                    <strong>=</strong>
+                    <strong>${values[position] + values[position + 1]}</strong>
+                </div>
+            `)
+        ].join('');
+
+        const targetExpression = useSingleTarget
+            ? symbolToken(symbols[1])
+            : symbols.map(symbolToken).join(' + ');
+        const targetLabel = useSingleTarget ? `Значення ${symbols[1]}` : 'Сума символів';
 
         const body = `
             <div class="symbol-board">
                 <div class="equation-list">
-                    <div class="equation-row">
-                        <div class="equation-expression">${symbolToken('●')} + ${symbolToken('●')}</div>
-                        <strong>=</strong>
-                        <strong>${circle * 2}</strong>
-                    </div>
-                    <div class="equation-row">
-                        <div class="equation-expression">${symbolToken('●')} + ${symbolToken('▲')}</div>
-                        <strong>=</strong>
-                        <strong>${circle + triangle}</strong>
-                    </div>
-                    <div class="equation-row">
-                        <div class="equation-expression">${symbolToken('▲')} + ${symbolToken('■')}</div>
-                        <strong>=</strong>
-                        <strong>${triangle + square}</strong>
-                    </div>
+                    ${equationRows}
                     <div class="equation-row target-row">
-                        <div class="equation-expression">${symbolToken('●')} + ${symbolToken('▲')} + ${symbolToken('■')}</div>
+                        <div class="equation-expression">${targetExpression}</div>
                         <strong>=</strong>
-                        <div class="input-holder">${inputMarkup(answerId, 'Сума символів')}</div>
+                        <div class="input-holder">${inputMarkup(answerId, targetLabel)}</div>
                     </div>
                 </div>
             </div>
@@ -370,10 +515,14 @@ const MathPuzzles = (() => {
             answerIds: [answerId],
             hints: [
                 'Почни з першого рядка: два однакові символи дають відому суму.',
-                `Якщо ● + ● = ${circle * 2}, то ● = ${circle}.`,
-                `Далі знайди ▲, потім ■, і лише після цього рахуй останній рядок.`
+                `Якщо ${symbols[0]} + ${symbols[0]} = ${values[0] * 2}, то ${symbols[0]} = ${values[0]}.`,
+                useSingleTarget
+                    ? `З другого рядка: ${symbols[0]} + ${symbols[1]} = ${values[0] + values[1]}. Відніми ${symbols[0]}.`
+                    : 'Далі знаходь символи по черзі й лише після цього рахуй останній рядок.'
             ],
-            solution: `● = ${circle}, бо ${circle} + ${circle} = ${circle * 2}. ▲ = ${triangle}, бо ${circle} + ${triangle} = ${circle + triangle}. ■ = ${square}, бо ${triangle} + ${square} = ${triangle + square}. Отже, ${circle} + ${triangle} + ${square} = ${answer}.`
+            solution: useSingleTarget
+                ? `${symbols[0]} = ${values[0]}, тому ${symbols[1]} = ${values[0] + values[1]} − ${values[0]} = ${values[1]}.`
+                : `${symbols.map((symbol, position) => `${symbol} = ${values[position]}`).join(', ')}. Отже, ${values.join(' + ')} = ${answer}.`
         };
 
         puzzle.markup = cardMarkup(puzzle, body);
@@ -381,27 +530,112 @@ const MathPuzzles = (() => {
     }
 
     function rotateSquare(square) {
-        return [
-            [square[2][0], square[1][0], square[0][0]],
-            [square[2][1], square[1][1], square[0][1]],
-            [square[2][2], square[1][2], square[0][2]]
-        ];
+        const size = square.length;
+        return Array.from({ length: size }, (_, row) =>
+            Array.from({ length: size }, (_, col) => square[size - 1 - col][row])
+        );
+    }
+
+    function generateMagicSquare(size, shift) {
+        if (size === 2) {
+            const a = randomInt(2, 9);
+            const b = randomInt(2, 9);
+            return {
+                square: [[a, b], [b, a]],
+                targetSum: a + b,
+                includesDiagonals: false
+            };
+        }
+
+        if (size === 4) {
+            const base = Array.from({ length: 4 }, (_, row) =>
+                Array.from({ length: 4 }, (_, col) => {
+                    const value = row * 4 + col + 1;
+                    const keep = row % 4 === col % 4 || (row % 4) + (col % 4) === 3;
+                    return (keep ? value : 17 - value) + shift;
+                })
+            );
+
+            return {
+                square: base,
+                targetSum: 34 + shift * 4,
+                includesDiagonals: true
+            };
+        }
+
+        return {
+            square: [[8, 1, 6], [3, 5, 7], [4, 9, 2]].map(row => row.map(value => value + shift)),
+            targetSum: 15 + shift * 3,
+            includesDiagonals: true
+        };
+    }
+
+    function getMagicLines(size, includesDiagonals) {
+        const rows = Array.from({ length: size }, (_, row) =>
+            Array.from({ length: size }, (_, col) => `${row},${col}`)
+        );
+        const cols = Array.from({ length: size }, (_, col) =>
+            Array.from({ length: size }, (_, row) => `${row},${col}`)
+        );
+        const lines = [...rows, ...cols];
+
+        if (includesDiagonals) {
+            lines.push(Array.from({ length: size }, (_, index) => `${index},${index}`));
+            lines.push(Array.from({ length: size }, (_, index) => `${index},${size - 1 - index}`));
+        }
+
+        return lines;
+    }
+
+    function hasSolvingPath(size, hiddenKeys, includesDiagonals) {
+        const unresolved = new Set(hiddenKeys);
+        const lines = getMagicLines(size, includesDiagonals);
+
+        while (unresolved.size > 0) {
+            const nextLine = lines.find(line => line.filter(key => unresolved.has(key)).length === 1);
+            if (!nextLine) return false;
+            const nextKey = nextLine.find(key => unresolved.has(key));
+            unresolved.delete(nextKey);
+        }
+
+        return true;
+    }
+
+    function chooseMagicHiddenPositions(size, count, includesDiagonals) {
+        const allKeys = Array.from({ length: size }, (_, row) =>
+            Array.from({ length: size }, (_, col) => `${row},${col}`)
+        ).flat();
+
+        for (let attempt = 0; attempt < 120; attempt++) {
+            const hiddenKeys = [];
+            for (const key of shuffle(allKeys)) {
+                if (hiddenKeys.length >= count) break;
+                const candidate = [...hiddenKeys, key];
+                if (hasSolvingPath(size, candidate, includesDiagonals)) {
+                    hiddenKeys.push(key);
+                }
+            }
+
+            if (hiddenKeys.length === count) {
+                return hiddenKeys.map(key => key.split(',').map(Number));
+            }
+        }
+
+        return shuffle(allKeys).slice(0, count).map(key => key.split(',').map(Number));
     }
 
     function createMagicSquare(index, cfg) {
-        const shift = randomInt(1, cfg.level === 'easy' ? 3 : cfg.level === 'medium' ? 6 : 12);
-        let square = [[8, 1, 6], [3, 5, 7], [4, 9, 2]].map(row => row.map(value => value + shift));
-        const targetSum = 15 + shift * 3;
+        const size = cfg.magicSize;
+        const shift = randomInt(1, cfg.grade === 2 ? 4 : cfg.grade === 3 ? 8 : 12);
+        const magic = generateMagicSquare(size, shift);
+        let square = magic.square;
+        const { targetSum, includesDiagonals } = magic;
 
         const rotations = randomInt(0, 3);
         for (let i = 0; i < rotations; i++) square = rotateSquare(square);
         if (Math.random() > 0.5) square = square.map(row => [...row].reverse());
 
-        const positions = shuffle([
-            [0, 0], [0, 1], [0, 2],
-            [1, 0], [1, 1], [1, 2],
-            [2, 0], [2, 1], [2, 2]
-        ]).slice(0, cfg.hiddenMagic);
+        const positions = chooseMagicHiddenPositions(size, cfg.hiddenMagic, includesDiagonals);
 
         const hidden = new Map();
         positions.forEach(([row, col], localIndex) => {
@@ -411,8 +645,8 @@ const MathPuzzles = (() => {
         });
 
         let cells = '';
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
                 const key = `${row},${col}`;
                 if (hidden.has(key)) {
                     cells += `<div class="magic-cell input-holder">${inputMarkup(hidden.get(key), `Клітинка ${row + 1}, ${col + 1}`)}</div>`;
@@ -428,38 +662,79 @@ const MathPuzzles = (() => {
             type: 'magic',
             title: 'Магічний квадрат',
             skill: 'суми',
-            description: `У кожному рядку, стовпчику й діагоналі сума має бути ${targetSum}.`,
+            description: includesDiagonals
+                ? `У кожному рядку, стовпчику й діагоналі сума має бути ${targetSum}.`
+                : `У кожному рядку і стовпчику сума має бути ${targetSum}.`,
             answerIds: Array.from(hidden.values()),
             hints: [
                 `Шукай рядок або стовпчик, де невідоме лише одне число. Сума має бути ${targetSum}.`,
-                'Щоб знайти пропуск, від магічної суми відніми два відомі числа.',
-                'Перевір кожну відповідь у рядку і в стовпчику одночасно.'
+                `Щоб знайти пропуск, від потрібної суми відніми відомі числа в цьому рядку або стовпчику.`,
+                includesDiagonals ? 'Перевір відповідь у рядку, стовпчику й діагоналі, якщо клітинка на діагоналі.' : 'Перевір відповідь і в рядку, і в стовпчику.'
             ],
             solution: `Магічна сума — ${targetSum}. Повний квадрат: ${square.map(row => row.join(', ')).join(' / ')}.`
         };
 
-        puzzle.markup = cardMarkup(puzzle, `<div class="magic-square" aria-label="Магічний квадрат">${cells}</div>`);
+        puzzle.markup = cardMarkup(puzzle, `<div class="magic-square" style="--magic-size:${size}" aria-label="Магічний квадрат">${cells}</div>`);
         return puzzle;
     }
 
+    function createMachineStep(current, cfg) {
+        const operation = shuffle(cfg.operations)[0];
+
+        if (operation === 'subtract' && current > 2) {
+            const operand = randomInt(1, Math.max(1, Math.min(current - 1, cfg.sequenceStepMax + 6)));
+            return { label: `− ${operand}`, result: current - operand, text: `відняти ${operand}` };
+        }
+
+        if (operation === 'multiply-small') {
+            const operand = randomInt(2, cfg.grade <= 2 ? 5 : 9);
+            if (current * operand <= cfg.machineMax) {
+                return { label: `× ${operand}`, result: current * operand, text: `помножити на ${operand}` };
+            }
+        }
+
+        if (operation === 'divide') {
+            const divisors = shuffle([2, 3, 4, 5, 6, 7, 8, 9]).filter(divisor => current % divisor === 0 && current / divisor > 1);
+            if (divisors.length) {
+                const operand = divisors[0];
+                return { label: `÷ ${operand}`, result: current / operand, text: `поділити на ${operand}` };
+            }
+        }
+
+        if (current >= cfg.machineMax) {
+            const operand = randomInt(1, Math.max(1, Math.min(current - 1, cfg.sequenceStepMax + 8)));
+            return { label: `− ${operand}`, result: current - operand, text: `відняти ${operand}` };
+        }
+
+        const maxOperand = Math.max(1, Math.min(cfg.sequenceStepMax + 8, cfg.machineMax - current));
+        const operand = randomInt(1, maxOperand);
+        return { label: `+ ${operand}`, result: current + operand, text: `додати ${operand}` };
+    }
+
     function createMachine(index, cfg) {
-        const operation = Math.random() > 0.5 ? 'add' : 'multiply';
-        const start = randomInt(2, cfg.level === 'easy' ? 12 : cfg.level === 'medium' ? 25 : 45);
-        const operand = operation === 'add'
-            ? randomInt(3, cfg.level === 'easy' ? 12 : cfg.level === 'medium' ? 25 : 45)
-            : randomInt(2, cfg.level === 'easy' ? 5 : cfg.level === 'medium' ? 8 : 11);
-        const result = operation === 'add' ? start + operand : start * operand;
+        const start = randomInt(2, Math.max(3, Math.floor(cfg.machineMax / (cfg.grade >= 3 ? 5 : 3))));
+        const steps = [];
+        let result = start;
+
+        for (let i = 0; i < cfg.machineSteps; i++) {
+            const step = createMachineStep(result, cfg);
+            steps.push(step);
+            result = step.result;
+        }
+
         const answerId = `machine-${index}`;
         addAnswer(answerId, result);
 
-        const sign = operation === 'add' ? `+ ${operand}` : `× ${operand}`;
-        const operationText = operation === 'add' ? 'додавання' : 'множення';
+        const operationText = cfg.machineSteps > 1 ? 'кілька дій' : steps[0].text;
+        const operationNodes = steps.map(step => `
+            <span class="seq-arrow">→</span>
+            <div class="operation-box">${step.label}</div>
+        `).join('');
 
         const body = `
             <div class="machine" aria-label="Математична машина">
                 <div class="machine-box">${start}</div>
-                <span class="seq-arrow">→</span>
-                <div class="operation-box">${sign}</div>
+                ${operationNodes}
                 <span class="seq-arrow">→</span>
                 <div class="input-holder">${inputMarkup(answerId, 'Результат математичної машини')}</div>
             </div>
@@ -474,11 +749,11 @@ const MathPuzzles = (() => {
             description: 'Виконай дію машини та запиши результат.',
             answerIds: [answerId],
             hints: [
-                `Машина бере число ${start} і виконує дію ${sign}.`,
-                operation === 'add' ? `Потрібно додати ${operand}.` : `Потрібно взяти ${start} по ${operand} разів.`,
-                `Результат: ${start} ${operation === 'add' ? '+' : '×'} ${operand}.`
+                `Машина починає з числа ${start}. Виконуй дії зліва направо.`,
+                `Кроки: ${steps.map(step => step.text).join(', ')}.`,
+                `Після всіх дій результат дорівнює ${result}.`
             ],
-            solution: `Машина виконує дію ${start} ${operation === 'add' ? '+' : '×'} ${operand} = ${result}.`
+            solution: `Починаємо з ${start}: ${steps.map(step => step.label).join(' → ')}. Результат: ${result}.`
         };
 
         puzzle.markup = cardMarkup(puzzle, body);
@@ -869,6 +1144,7 @@ const MathPuzzles = (() => {
     function bindStaticControls() {
         dom.newSetBtn.addEventListener('click', generateSet);
         dom.level.addEventListener('change', generateSet);
+        dom.challengeMode.addEventListener('change', generateSet);
         dom.taskCount.addEventListener('change', generateSet);
         dom.checkBtn.addEventListener('click', checkAnswers);
         dom.globalHintBtn.addEventListener('click', () => showHint());
