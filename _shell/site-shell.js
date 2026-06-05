@@ -8,6 +8,7 @@
    Налаштування через data-атрибути на тезі <script> (усі необов'язкові):
        data-back   — куди веде кнопка «Назад» (типово "/")
        data-brand  — підпис бренду (типово "Комп'ютерна наука")
+       data-title  — назва сервісу (показується як хлібна крихта: Бренд › Назва)
        data-no-footer — наявність атрибута вимикає вставку футера (напр. для повноекранних ігор)
    ========================================================================= */
 (function () {
@@ -17,6 +18,7 @@
     var cfg = {
         back: (script && script.dataset.back) || '/',
         brand: (script && script.dataset.brand) || "Комп'ютерна наука",
+        title: (script && script.dataset.title) || '',
         noFooter: !!(script && script.hasAttribute('data-no-footer'))
     };
 
@@ -51,18 +53,29 @@
         { href: 'https://www.linkedin.com/in/artemkysliakov/', icon: 'fa-linkedin-in', label: 'LinkedIn' }
     ];
 
+    // Екранування значень конфігу (data-back/brand/title) перед вставкою в innerHTML
+    function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
     function buildHeader() {
         var header = document.createElement('header');
         header.className = 'ss-header';
         header.innerHTML =
             '<div class="ss-header-left">' +
-                '<a class="ss-back" href="' + cfg.back + '" aria-label="На головну">' +
+                '<a class="ss-back" href="' + esc(cfg.back) + '" aria-label="На головну">' +
                     '<i class="fas fa-arrow-left" aria-hidden="true"></i><span>Назад</span>' +
                 '</a>' +
                 '<a class="ss-brand" href="/" aria-label="Комп\'ютерна наука — на головну">' +
                     '<i class="fas fa-laptop-code ss-brand-icon" aria-hidden="true"></i>' +
-                    '<span class="ss-brand-text">' + cfg.brand + '</span>' +
+                    '<span class="ss-brand-text">' + esc(cfg.brand) + '</span>' +
                 '</a>' +
+                (cfg.title
+                    ? '<span class="ss-sep" aria-hidden="true">›</span>' +
+                      '<span class="ss-title">' + esc(cfg.title) + '</span>'
+                    : '') +
             '</div>' +
             '<button class="ss-theme-toggle" type="button" aria-label="Змінити тему">' +
                 '<i class="fas fa-moon" aria-hidden="true"></i>' +
