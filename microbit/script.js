@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initMobileMenu() {
         const toggle = document.querySelector('.mobile-toggle');
         const navLinks = document.querySelector('.nav-links');
-        
+
         toggle.addEventListener('click', () => {
             document.body.classList.toggle('nav-active');
         });
@@ -48,7 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
      * Зміна стилю заголовка при прокрутці.
      */
     function initHeaderScroll() {
-        const header = document.querySelector('header');
+        // Саме локальна навігація micro:bit, а не спільний хедер сайту (.ss-header)
+        const header = document.querySelector('header:not(.ss-header)');
+        if (!header) return;
         window.addEventListener('scroll', () => {
             header.classList.toggle('scrolled', window.scrollY > 50);
         });

@@ -1,0 +1,196 @@
+/* =========================================================================
+   site-shell.css — спільна обгортка (хедер + футер) для всіх сервісів itnauka.org
+   Стилі навмисно scoped під .ss-* класи, щоб НЕ конфліктувати з власними
+   стилями кожного сервісу. Підключається автоматично через site-shell.js.
+   ========================================================================= */
+
+.ss-header,
+.ss-footer {
+    --ss-primary: #3b82f6;
+    --ss-primary-dark: #2563eb;
+    --ss-primary-light: #eff6ff;
+    --ss-surface: #ffffff;
+    --ss-text: #1e293b;
+    --ss-text-soft: #64748b;
+    --ss-border: #e2e8f0;
+    --ss-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+    /* Захист від глобальних header{}/footer{} стилів сервісів (margin, text-align тощо) */
+    margin: 0;
+    max-width: none;
+    border-radius: 0;
+    text-align: start;
+}
+
+body.dark-mode .ss-header,
+body.dark-mode .ss-footer {
+    --ss-primary: #60a5fa;
+    --ss-primary-dark: #3b82f6;
+    --ss-primary-light: #1e293b;
+    --ss-surface: #1e293b;
+    --ss-text: #ffffff;
+    --ss-text-soft: #e2e8f0;
+    --ss-border: #475569;
+    --ss-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.ss-header *,
+.ss-footer * {
+    box-sizing: border-box;
+}
+
+/* --- HEADER --- */
+.ss-header {
+    height: 64px;
+    background-color: var(--ss-surface);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 20px;
+    box-shadow: var(--ss-shadow);
+    border-bottom: 1px solid var(--ss-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ss-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.ss-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--ss-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ss-text-soft);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ss-back:hover {
+    background-color: var(--ss-primary-light);
+    color: var(--ss-primary);
+    border-color: var(--ss-primary);
+}
+
+.ss-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.ss-brand-icon {
+    font-size: 1.7rem;
+    color: var(--ss-primary);
+}
+
+.ss-brand-text {
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.05;
+    color: var(--ss-text);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ss-theme-toggle {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: var(--ss-text-soft);
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ss-theme-toggle:hover {
+    background-color: var(--ss-primary-light);
+    color: var(--ss-primary);
+}
+
+/* --- FOOTER --- */
+.ss-footer {
+    background-color: var(--ss-surface);
+    padding: 22px 20px;
+    text-align: center;
+    border-top: 1px solid var(--ss-border);
+    color: var(--ss-text-soft);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ss-footer-socials {
+    display: flex;
+    gap: 14px;
+}
+
+.ss-social {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ss-primary-light);
+    color: var(--ss-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.ss-social:hover {
+    background: var(--ss-primary);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.ss-footer-copy {
+    margin: 0;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 600px) {
+    .ss-header {
+        padding: 0 14px;
+    }
+
+    .ss-back span {
+        display: none;
+    }
+
+    .ss-back {
+        padding: 8px 12px;
+    }
+
+    .ss-brand-text {
+        font-size: 1.05rem;
+    }
+}
