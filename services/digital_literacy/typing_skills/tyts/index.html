@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
+    <!-- Спільний хедер сайту (без футера — повноекранна гра) -->
+    <script src="/_shell/site-shell.js" data-back="/#digital-literacy" data-no-footer defer></script>
+
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
     <script>
@@ -37,6 +40,26 @@
             --target-shadow: #eab308;
             --target-border: #ca8a04;
         }
+
+        /* Темна тема (узгоджено зі спільним site-shell) */
+        body.dark-mode {
+            --key-bg: #334155;
+            --key-text-main: #f1f5f9;
+            --key-text-sub: #cbd5e1;
+            --bg-color: #0f172a;
+            --key-shadow: #0e7490;
+            --key-border: #22d3ee;
+            --keyboard-base-bg: #1e293b;
+            --keyboard-base-border: #334155;
+            /* перебиваємо inline dot-grid від applyRandomTheme() */
+            background-image: radial-gradient(#334155 2px, transparent 2px) !important;
+        }
+        body.dark-mode .func-key { background-color: #475569; color: #cbd5e1; }
+        body.dark-mode [class*="bg-white"] { background-color: #1e293b !important; }
+        body.dark-mode .text-slate-700 { color: #f1f5f9 !important; }
+        body.dark-mode .text-slate-500 { color: #cbd5e1 !important; }
+        body.dark-mode .text-slate-400 { color: #94a3b8 !important; }
+        body.dark-mode .border-slate-100 { border-color: #334155 !important; }
 
         body {
             font-family: 'Fredoka', sans-serif;
@@ -162,7 +185,7 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center">
+<body class="h-screen flex flex-col items-center">
 
     <canvas id="confetti" class="confetti-canvas"></canvas>
 
@@ -180,8 +203,8 @@
         </div>
     </div>
 
-    <!-- Header Panel -->
-    <div class="absolute top-4 w-full flex justify-between px-6 md:px-12 items-center max-w-6xl">
+    <!-- Header Panel (нижче спільного хедера сайту) -->
+    <div class="absolute top-[72px] w-full flex justify-between px-6 md:px-12 items-center max-w-6xl">
         <div class="flex items-center gap-3">
             <div class="bg-white p-2 rounded-xl shadow-sm border-2 border-slate-100">
                 <i id="header-icon" class="fa-solid fa-keyboard text-3xl" style="color: var(--key-border)"></i>
@@ -204,6 +227,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Центрований ігровий екран під спільним хедером -->
+    <div class="game-screen flex-1 w-full flex flex-col items-center justify-center">
 
     <!-- Task Display -->
     <div class="mb-6 md:mb-10 text-center relative z-10">
@@ -228,6 +254,8 @@
     <div class="md:hidden mt-6 text-slate-500 text-sm font-medium">
         <i class="fa-solid fa-tablet-screen-button mr-1"></i> Рекомендовано планшет або ПК з фізичною клавіатурою
     </div>
+
+    </div><!-- /game-screen -->
 
     <script>
         /* --- VARIABLES & CONFIG --- */

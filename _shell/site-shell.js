@@ -8,7 +8,7 @@
    Налаштування через data-атрибути на тезі <script> (усі необов'язкові):
        data-back   — куди веде кнопка «Назад» (типово "/")
        data-brand  — підпис бренду (типово "Комп'ютерна наука")
-       data-no-footer — будь-яке значення, щоб не вставляти футер
+       data-no-footer — наявність атрибута вимикає вставку футера (напр. для повноекранних ігор)
    ========================================================================= */
 (function () {
     'use strict';
@@ -17,7 +17,7 @@
     var cfg = {
         back: (script && script.dataset.back) || '/',
         brand: (script && script.dataset.brand) || "Комп'ютерна наука",
-        noFooter: !!(script && script.dataset.noFooter)
+        noFooter: !!(script && script.hasAttribute('data-no-footer'))
     };
 
     // Базовий шлях до папки _shell (щоб коректно знайти CSS незалежно від глибини).

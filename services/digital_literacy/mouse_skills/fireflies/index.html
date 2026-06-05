@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 
+    <!-- Спільний хедер сайту (без футера — повноекранна гра) -->
+    <script src="/_shell/site-shell.js" data-back="/#digital-literacy" data-no-footer defer></script>
+
         <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
     <script>
@@ -31,6 +34,14 @@
             user-select: none;
             -webkit-user-select: none;
             font-family: 'Nunito', sans-serif;
+        }
+
+        /* Гра займає екран під спільним хедером (64px), без накладання */
+        .game-screen {
+            position: relative;
+            width: 100%;
+            height: calc(100dvh - 64px);
+            overflow: hidden;
         }
 
         /* --- Animations --- */
@@ -128,6 +139,8 @@
     </style>
 </head>
 <body class="bg-slate-950 h-screen w-screen relative overflow-hidden font-sans select-none text-slate-100">
+
+    <div class="game-screen">
 
     <!-- Header: Оптимізовано відступ для мобільних (mt-10) -->
     <div class="absolute top-16 md:top-6 w-full text-center pointer-events-none z-10 px-4 md:px-4">
@@ -234,6 +247,8 @@
             </button>
         </div>
     </div>
+
+    </div><!-- /game-screen -->
 
     <script>
         // --- Configuration ---
@@ -471,9 +486,11 @@
             el.style.fontSize = `${size}px`;
 
             const pad = 50;
-            const x = pad + Math.random() * (window.innerWidth - pad * 2);
-            const y = pad + Math.random() * (window.innerHeight * CONSTANTS.SPAWN_ZONE_Y_LIMIT); 
-            
+            const areaW = ELEMENTS.gameArea.clientWidth;
+            const areaH = ELEMENTS.gameArea.clientHeight;
+            const x = pad + Math.random() * (areaW - pad * 2);
+            const y = pad + Math.random() * (areaH * CONSTANTS.SPAWN_ZONE_Y_LIMIT);
+
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
 

@@ -113,6 +113,14 @@
 - [x] Створено [`_shell/site-shell.js`](_shell/site-shell.js) + [`_shell/site-shell.css`](_shell/site-shell.css) — самодостатній shell зі scoped `.ss-*` класами (не конфліктує з власними стилями сервісів).
 - [x] Shell містить: кнопку «Назад» (налаштовується через `data-back`), бренд-посилання на `/`, перемикач теми зі спільним `localStorage["theme"]`, футер із соцмережами; авто-підвантаження Font Awesome, якщо сервіс його не має.
 - [x] Підключення в сервіс — один рядок: `<script src="/_shell/site-shell.js" defer></script>`.
+- [x] `data-no-footer` (наявність атрибута) вимикає футер — для повноекранних ігор/тренажерів, де важлива висота без скролу.
+- [x] Shell-хедер/футер мають `width:100%; align-self:stretch; flex:0 0 auto` — щоб бути на всю ширину навіть коли body — центрований flex/grid (`items-center`), і не стискатись у flex-колонці.
+
+> **Повноекранні ігри (рецепт):**
+> - Якщо футер не потрібен — `data-no-footer` + наявний `body{height:100dvh;overflow:hidden}` + поле `flex-1 min-h-0` (поле саме стискається, скролу нема).
+> - Якщо футер **потрібен**, а гра має лишатись на повний екран — загорнути ігрову частину в обгортку з **визначеною** висотою `height: calc(100dvh - 64px)` (64px = `.ss-header`), а футер винести під неї (буде нижче згину, доступний скролом). body — `min-height:100dvh` без `overflow:hidden`; для гри з декоративними елементами за краями додати `html,body{overflow-x:hidden}`. ⚠️ Саме `height` (не `min-height`) — інакше `%`-висоти всередині (`h-full`) колапсують. Приклад — `mouse103`.
+> - **Чиста повноекранна гра** (увесь UI `absolute inset-0`/`top-4` відносно `body`, `touch-action:none`): загорнути все в `.game-screen { position:relative; height:calc(100dvh - 64px); overflow:hidden }` — обгортка стає containing block, і абсолютний UI лягає під хедер, а не накладається. `data-no-footer` (скрол/футер конфліктують з `touch-action:none`). Приклади — `fireflies`, `jailfish`.
+>   - ⚠️ **Координати drag/spawn:** після обгортки containing block зсунутий на 64px. Якщо drag пише `el.style.top = clientY - offset` у елемент **усередині** `.game-screen` — віднімати `gameArea.getBoundingClientRect().top` (інакше зсув +64px). Spawn рахувати від `gameArea.clientWidth/clientHeight`, не `window.inner*`. (Виняток — якщо на час drag елемент `appendChild(document.body)`, як у `fireflies`: тоді контекст = body, віднімати не треба.)
 
 > **Конвенція кнопки «Назад» (`data-back`):** головна сторінка підтримує глибокі посилання на
 > категорію через хеш `#<id-категорії>` (див. `script.js` + `CATEGORIES` у `data.js`). Тож кнопку
@@ -132,11 +140,17 @@
 - [x] `microbit/` ✅ (shell на обох сторінках index + technical-details з `data-back="/#useful-links"`; власну фіксовану навігацію переведено на `sticky; top:64px`, щоб стояла під спільним хедером; додано повну темну тему в `microbit/style.css`; прибрано дубль копірайту)
 - [ ] `howto/`
 - [ ] `checkup/`
-- [x] `edexpo/` ✅ (на Tailwind CDN; підключено shell з `data-back="/#useful-links"`; власну шапку «UA EdTech Expo» видалено як зайву, кнопку «Запропонувати проєкт» перенесено в hero; додано контейнерний блок темної теми поверх Tailwind-утиліт у inline `<style>`; власний футер-кредит спільноти лишено як осмислений)
+- [x] `edexpo/` ✅ (на Tailwind CDN; підключено shell з `data-back="/#useful-links"`; власну шапку «UA EdTech Expo» видалено як зайву, кнопку «Запропонувати проєкт» перенесено в hero; додано контейнерний блок темної теми поверх Tailwind-утиліт у inline `<style>`; власний футер «Community Driven» прибрано як дубль — лишився канонічний від shell)
 
 ### Етап 3. Великі набори (потребують обережності)
 - [ ] `games/` — 23 окремі ігри, у кожної свій layout.
 - [ ] `services/` — 53 тренажери; уніфікувати поетапно за підкатегоріями.
+  - [x] `services/computational_thinking/index.html` ✅ (shell з `data-back="/#computational-thinking"`; додано темну тему; прибрано дубль-копірайт у власному футері; власну градієнтну шапку-заголовок і таб-навігацію лишено; зменшено початковий блок під новий хедер; перевірено світлу/темну/mobile)
+  - [x] `services/digital_literacy/typing_skills/tyts/index.html` ✅ (тренажер «Тиць! Перші клавіші» — **лише фізична клавіатура** (keydown), без drag/кліків → жодних координат; shell з `data-no-footer`; центрований контент загорнуто в `.game-screen flex-1`, щоб shell лишився зверху, абсолютну панель-шапку опущено на `top:72px`; темна тема через CSS-змінні + утиліти (`[class*="bg-white"]`, `text-slate-*`) + перебито inline dot-grid; перевірено світлу/темну/mobile, keydown)
+  - [x] `services/digital_literacy/typing_skills/key_puzzle/index.html` ✅ (drag-пазл, усе `position:fixed` відносно viewport, власний `#header`; shell з `data-no-footer`; shell **накладається** зверху (z1000 над усім), власні `#header`/`#main` опущено на `top:64px`; координати пазлів НЕ ламаються, бо `#pieces-layer` лишається `fixed inset:0` — drag перевірено 1:1; додано темну тему через CSS-змінні + `.func-key` + перебито inline dot-grid; **виправлено баг** `document.body.className=` що стирав `dark-mode` при зміні складності → `classList`; **scatter-зону пазлів прив'язано до фактичного `#header.bottom`** (динамічно) + clamp, щоб фішки не лягали під хедер; перевірено світлу/темну, drag, 0 перекриттів на всіх складностях desktop+mobile)
+  - [x] `services/digital_literacy/mouse_skills/fireflies/index.html` + `…/jailfish/index.html` ✅ (чисті повноекранні ігри на Tailwind — `body h-screen overflow-hidden`, увесь UI `absolute` відносно body, без header/footer; shell з `data-no-footer`; гру загорнуто в `.game-screen { position:relative; height:calc(100dvh - 64px); overflow:hidden }` → стає контейнером позиціювання, тож абсолютний UI не лізе під хедер; гра вміщується без скролу; перевірено desktop+mobile)
+  - [x] `services/digital_literacy/mouse_skills/mouse103/index.html` ✅ (повноекранна гра на Tailwind; shell з хедером **і футером**; ігрову частину загорнуто в `.game-screen { height: calc(100dvh - 64px) }` → **перший екран = гра на повну висоту без скролу**, а футер — нижче згину (доступний скролом); `html,body{overflow-x:hidden}` проти горизонтального скролу від десктоп-візуалізації миші; помірна темна тема (затемнення фону поля); перевірено desktop+mobile, обидві теми)
+  - [x] `services/coding/python/index.html` ✅ (shell з `data-back="/#programming"`; вже на токенах сайту; **`prefers-color-scheme` → `body.dark-mode`**, щоб тему контролював перемикач; додано dark-стилі для `.search-bar`/`.search-input`/`.file-links`; прибрано дубль-футер (він би став світлим у dark через `background: var(--text-primary)`); перевірено світлу/темну/mobile)
 - [ ] `tools/` — 15 інструментів.
 - [ ] `course/` — навчальні уроки (узгодити з власною дизайн-системою курсу).
 

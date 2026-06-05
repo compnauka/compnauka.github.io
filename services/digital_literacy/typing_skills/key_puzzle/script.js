@@ -394,7 +394,9 @@ function startNewGame() {
     placedKeys       = new Set();
     pieceOriginalPos = {};
 
-    document.body.className = 'diff-' + currentDifficulty;
+    // Зберігаємо клас dark-mode (від спільного site-shell), оновлюємо лише клас складності
+    document.body.classList.remove('diff-easy', 'diff-medium', 'diff-hard');
+    document.body.classList.add('diff-' + currentDifficulty);
     applyTheme(randomTheme());
 
     const numHints     = 7 + Math.floor(Math.random() * 5);
@@ -467,6 +469,9 @@ function scatterPieces(pieces) {
     const W = window.innerWidth;
     const H = window.innerHeight;
     const S = 58;
+    // Низ внутрішнього хедера гри (зміщений під спільний хедер сайту) — щоб фішки не лягали під нього.
+    const hb = (document.getElementById('header')?.getBoundingClientRect().bottom) || 70;
+    const topClearY = hb + 10;
 
     const kx1 = board.left   - margin;
     const kx2 = board.right  + margin;
@@ -474,7 +479,7 @@ function scatterPieces(pieces) {
     const ky2 = board.bottom + margin;
 
     const allZones = [
-        { x1: 60,       x2: W - 60 - S, y1: 70,      y2: ky1 - S - 8  },
+        { x1: 60,       x2: W - 60 - S, y1: topClearY, y2: ky1 - S - 8 },
         { x1: 60,       x2: W - 60 - S, y1: ky2 + 8, y2: H - 70 - S   },
         { x1: 18,       x2: kx1 - S - 8, y1: ky1,    y2: ky2 - S      },
         { x1: kx2 + 8,  x2: W - 18 - S, y1: ky1,     y2: ky2 - S      }
@@ -495,8 +500,11 @@ function scatterPieces(pieces) {
             y = zone.y1 + Math.random() * (zone.y2 - zone.y1);
         } else {
             x = 20 + Math.random() * (W - 80);
-            y = 20 + Math.random() * (H * 0.28);
+            y = topClearY + Math.random() * (H * 0.22);
         }
+
+        // Гарантія: жодна фішка не стартує під внутрішнім хедером гри
+        y = Math.max(y, topClearY);
 
         el.style.left = x + 'px';
         el.style.top  = y + 'px';
