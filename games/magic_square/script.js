@@ -181,10 +181,11 @@ const MagicSquareGame = (() => {
     }
 
     function loadPreferences() {
-        const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'light';
+        // Тему повністю контролює спільний хедер через body.dark-mode (динамічно).
+        // data-theme тримаємо світлим, інакше гра «застрягне» темною при вимкненні теми.
         const savedSound = localStorage.getItem(STORAGE_KEYS.sound);
         state.soundEnabled = savedSound === null ? true : savedSound === 'true';
-        dom.html.setAttribute('data-theme', savedTheme);
+        dom.html.setAttribute('data-theme', 'light');
         updateSoundButton();
     }
 
@@ -602,7 +603,7 @@ const MagicSquareGame = (() => {
         dom.hintBtn.addEventListener('click', showHint);
         dom.solutionBtn.addEventListener('click', toggleSolutions);
         dom.soundToggle.addEventListener('click', toggleSound);
-        dom.themeToggle.addEventListener('click', toggleTheme);
+        dom.themeToggle?.addEventListener('click', toggleTheme);
     }
 
     function init() {

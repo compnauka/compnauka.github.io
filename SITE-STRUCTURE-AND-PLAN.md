@@ -101,6 +101,12 @@
 - `data-brand` — підпис бренду (типово «Комп'ютерна наука»);
 - `data-no-footer` — не вставляти футер (якщо у сервісу вже є повноцінний свій).
 
+> **Хелпер `.ss-fs`** (у `site-shell.css`) — для повноекранних макетів, де `body` є flex-колонкою з
+> `justify-content:center` (контент центрувався по вертикалі). Після вставки `.ss-header` таке центрування
+> відсувало хедер від верху (з'являвся зайвий зазор). Клас `ss-fs` на `<body>` повертає
+> `justify-content:flex-start`, тож хедер притиснутий до верху, а контент іде одразу під ним.
+> Використовувати разом із `data-no-footer`. Приклади — `maze`, `mouse_keys`.
+
 > Темну тему **самого контенту** сервісу shell не робить автоматично — він лише перемикає клас
 > `body.dark-mode` і стилізує власну обгортку. Тому в кожному сервісі окремо додаємо правила
 > `body.dark-mode { … }` (через CSS-змінні або точкові перевизначення) — це робиться при адаптації.
@@ -156,6 +162,30 @@
   - [x] `tools/bit_converter/index.html` ✅ (центрована картка-тул; shell з `data-back="/#digital-tools"`; body→flex-col + `margin:auto`; темна тема; прибрано стрей `</script>`)
   - [x] `services/quizes/` ✅ — `sorting_hub` (хаб: прибрано title-блок, shell `data-back="/#quiz"`, темна тема) + `ct_quiz` (utilities+tokens: body→`flex-col items-center`, inline dark-overrides для `.bg-white`/`text-gray-*`) + `save_server` (повноекранна ретро-гра, вже темна: shell `data-no-footer`, game-container→`h-[calc(100dvh-80px)]`)
   - [x] `services/coding/python/index.html` ✅ (shell з `data-back="/#programming"`; вже на токенах сайту; **`prefers-color-scheme` → `body.dark-mode`**, щоб тему контролював перемикач; додано dark-стилі для `.search-bar`/`.search-input`/`.file-links`; прибрано дубль-футер (він би став світлим у dark через `background: var(--text-primary)`); перевірено світлу/темну/mobile)
+
+#### Пакет із 18 сервісів (ігри + assembly + digital_literacy) ✅
+
+- [x] `games/magic_square` + `games/math_quiz` ✅ (тренажери з власним `topbar` і `data-theme`; shell `data-back="/#games"` + `data-title`; темну тему **зведено містком** — у `[data-theme="dark"]` додано `, body.dark-mode`; у math_quiz прибрано дубль-футер)
+- [x] `games/tangram` ✅ (повноекранна canvas-гра, `data-theme`; shell `data-no-footer`, `#app→flex:1` під 64px хедера; містком `[data-theme="dark"], body.dark-mode`; drag канви рахується від `canvas.getBoundingClientRect()` — офсет хедера враховується сам)
+- [x] `games/fact-or-opinion` ✅ (картка-екрани `.app-shell`, `body display:grid place-items:center` → перероблено на `block` + `.app-shell{margin:24px auto; width:min(100%-32px,760px)}`; **додано власну темну тему** — `body.dark-mode` перевизначає `--bg/--surface/--text` + `.app-shell/.rule-card/.statement-card`; `data-back="/#games"`)
+- [x] `games/seabattle.html` ✅ (центрована paper-картка на тлі моря; `body flex row→column !important`, `justify-start`, `padding:0`, картка `margin:24px auto; width:min(1200px,100%-32px); box-sizing:border-box`; модалки `z-index:1000` лишають хедер під собою на момент показу — ок; `data-back="/#games"`)
+- [x] `services/coding/farmbot` + `farmbot_plus` ✅ (контентні сторінки-ігри; shell `data-back="/#programming"` + `data-title`; **додано темну тему** через перевизначення `:root`-змінних; hardcoded `white/#fff` (`.cell`, `.modal-card`, code) → `var(--card-color)`/`var(--code-bg)`; прибрано дубль-футери; файли нормалізовано CRLF→LF)
+- [x] `services/assembly/hardware.html` + `software.html` ✅ (story-choice симулятори, **вже завжди-тёмні**, `body flex center` центрує картку 650px; inline-оверайд: `body flex-direction:column; justify-content:flex-start; padding:0`, `#game-container{margin:24px auto; width:min(650px,100%-32px) !important; box-sizing:border-box}`; `data-back="/#digital-literacy"`)
+- [x] `services/digital_literacy/data-and-information` ✅ (контентний урок на справжньому Tailwind CDN; sticky `<nav top-0 z-50>` → `top-16 z-40`, щоб стояв під хедером; прибрано дубль-футер; `data-back="/#digital-literacy"`; темну тему лишено світлою — багата кольорова сторінка)
+- [x] `services/digital_literacy/mouse_skills/windows` ✅ (fullscreen desktop-симулятор, `body height:100vh overflow:hidden`; `body→flex-col`, `.desktop{flex:1}`, `.control-panel top:20→84px`, `.window.maximized height:calc(100vh-64px)`; `data-no-footer`)
+- [x] `services/digital_literacy/mouse_skills/maze` + `mouse_keys` ✅ (Tailwind-ігри `flex-col justify-center` — додано клас **`ss-fs`** (хедер flush-top), `data-no-footer`; у mouse_keys прибрано `p-4` body (full-bleed хедер) → `pb-4`, а поле `#gameBoard` із фіксованого `h-[60vh]` переведено на **`flex-1 min-h-0`**, щоб займало залишок висоти під 64px-хедером і не обрізалось при `body overflow:hidden`)
+- [x] `services/digital_literacy/mouse_skills/svitlo` ✅ (Tailwind-сцена «Рятівники світла», `.city-background 100vh` + HUD `fixed top-4`; `body→flex-col`, `.city-background height:calc(100vh-64px)`, HUD `top-4→top-20`; `data-no-footer`)
+- [x] `services/digital_literacy/typing_skills/key_ppo` ✅ (immersive keyboard-гра «Захисники неба», усі шари `position:absolute` від viewport; зсунуто `#ui-layer/#game-area/#damage-overlay/#the-wall/.menu-overlay` на `top:64px`; хедер z1000 над грою, back доступний; `data-no-footer`)
+- [x] `services/digital_literacy/typing_skills/keymaster` ✅ (Tailwind `darkMode:'class'`, власний nav+перемикач, `body h-screen flex-col` (main `flex-grow` сам поглинає 64px); shell `data-no-footer` + **містком** inline-скрипт `body.dark-mode → html.dark` (MutationObserver), щоб перемикач shell керував `dark:`-утилітами)
+- [x] `services/digital_literacy/typing_skills/urls_typing` + `typing_lesson` ✅ (контентні сторінки з власним header+footer; shell `data-back="/#digital-literacy"`; прибрано body-padding для full-bleed хедера (перенесено в `.container`); прибрано дубль-футери; urls_typing — додано темну тему через `:root`-змінні; typing_lesson — лишено світлою (багата сторінка))
+
+> **Прибирання дублів після пакета (бо хедер тепер дає «Назад» і перемикач теми):**
+> - `math_quiz` — прибрано власну кнопку `← На головну` (дублювала «Назад» хедера).
+> - **Власні перемикачі теми** прибрано з `magic_square`, `math_quiz`, `tangram`, `keymaster` — їх замінює перемикач у спільному хедері. JS-обробники зроблено null-safe (`dom.themeToggle?.addEventListener`), щоб видалення кнопки не ламало гру.
+> - У `magic_square`/`math_quiz` `loadPreferences` більше **не виставляє `data-theme="dark"`** (тримає `data-theme="light"` сталим). Інакше при вимкненні теми хедер прибирає лише `body.dark-mode`, а застряглий `data-theme="dark"` й далі активував би темні CSS-змінні (`[data-theme="dark"]` у селекторі) → гра лишалась темною. Тепер єдиний динамічний тригер — `body.dark-mode` від хедера.
+> - `tangram` — канва читає тему з `data-theme` у JS, тож додано місток `body.dark-mode → data-theme` + `dispatchEvent('resize')` (перемальовує канву); `keymaster` — місток `body.dark-mode → html.dark` (Tailwind `darkMode:'class'`).
+> - Перевірено в браузері: 0 дубль-футерів/кнопок «додому»/перемикачів теми на всіх 18; консоль без помилок; перемикач теми хедера коректно вмикає/вимикає dark на `magic_square`, `math_quiz`, `tangram`, `keymaster`, `fact-or-opinion`, `farmbot(+plus)`, `urls_typing`.
+
 - [ ] `tools/` — 15 інструментів.
 - [ ] `course/` — навчальні уроки (узгодити з власною дизайн-системою курсу).
 

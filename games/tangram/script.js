@@ -50,7 +50,7 @@
         btnReset.addEventListener('click', resetPieces);
         btnSave.addEventListener('click', saveAsSquare);
 
-        btnTheme.addEventListener('click', () => {
+        btnTheme?.addEventListener('click', () => {
             const current = htmlEl.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             htmlEl.setAttribute('data-theme', next);

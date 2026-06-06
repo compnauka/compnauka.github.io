@@ -58,6 +58,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
+
+    <!-- Спільний хедер сайту -->
+    <script src="/_shell/site-shell.js" data-back="/#games" data-title="Танграм" data-no-footer defer></script>
+    <script>
+        /* Місток: тема спільного хедера (body.dark-mode) → data-theme гри + перемалювання канви */
+        (function () {
+            function sync() {
+                var dark = document.body.classList.contains('dark-mode');
+                document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+                window.dispatchEvent(new Event('resize'));
+            }
+            function start() {
+                sync();
+                new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+            else start();
+        })();
+    </script>
+    <style>
+        /* Сумісність зі спільним хедером (64px зверху) */
+        #app { flex: 1 1 auto !important; height: auto !important; min-height: 0; }
+    </style>
 </head>
 
 <body>
@@ -75,9 +98,6 @@
                     <i class="fas fa-book-open"></i>
                     <span>Що таке Танграм</span>
                 </a>
-                <button class="icon-btn" id="btn-theme" title="Тема" aria-label="Змінити тему">
-                    <i class="fas fa-moon"></i>
-                </button>
             </div>
         </header>
 
