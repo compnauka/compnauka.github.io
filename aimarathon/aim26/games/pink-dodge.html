@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pink Dodge Game</title>
+
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ff4da6, #ffb3d9);
+    font-family: Arial;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  .score {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff2e93;
+  }
+
+  .start {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 0, 120, 0.2);
+    color: white;
+    font-size: 24px;
+    flex-direction: column;
+  }
+
+  .btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #ff2e93;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+  }
+</style>
+</head>
+
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div class="score">Score: 0</div>
+
+<div class="start" id="startScreen">
+  💗 Pink Dodge Game<br/>
+  <button class="btn" onclick="startGame()">Start</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let player = { x: canvas.width/2, y: canvas.height - 80, size: 25 };
+let keys = {};
+let blocks = [];
+let score = 0;
+let running = false;
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function spawnBlock() {
+  blocks.push({
+    x: Math.random() * canvas.width,
+    y: -20,
+    size: 20 + Math.random() * 30,
+    speed: 2 + Math.random() * 3
+  });
+}
+
+function drawPlayer() {
+  // heart glow
+  ctx.shadowColor = "#ff2e93";
+  ctx.shadowBlur = 20;
+
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+}
+
+function drawBlocks() {
+  ctx.fillStyle = "#ff2e93";
+  blocks.forEach(b => {
+    ctx.fillRect(b.x, b.y, b.size, b.size);
+  });
+}
+
+function update() {
+  if (!running) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // move player
+  if (keys["ArrowLeft"]) player.x -= 6;
+  if (keys["ArrowRight"]) player.x += 6;
+
+  // не випускаємо гравця за межі екрана
+  if (player.x < player.size) player.x = player.size;
+  if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
+
+  // spawn blocks
+  if (Math.random() < 0.03) spawnBlock();
+
+  // update blocks
+  blocks.forEach(b => b.y += b.speed);
+
+  // collision
+  blocks.forEach(b => {
+    if (
+      Math.abs(b.x - player.x) < b.size &&
+      Math.abs(b.y - player.y) < b.size
+    ) {
+      running = false;
+      document.getElementById("startScreen").style.display = "flex";
+    }
+  });
+
+  // remove offscreen
+  blocks = blocks.filter(b => b.y < canvas.height + 50);
+
+  drawPlayer();
+  drawBlocks();
+
+  score++;
+  document.querySelector(".score").innerText = "Score: " + score;
+
+  requestAnimationFrame(update);
+}
+
+function startGame() {
+  blocks = [];
+  score = 0;
+  player.x = canvas.width/2;
+  running = true;
+  document.getElementById("startScreen").style.display = "none";
+  update();
+}
+</script>
+
+</body>
+</html>

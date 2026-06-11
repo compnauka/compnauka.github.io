@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Minecraft 2D</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#87CEEB;
+    font-family:Arial;
+}
+
+#toolbar{
+    position:fixed;
+    top:10px;
+    left:10px;
+    z-index:100;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+}
+
+button{
+    margin:2px;
+}
+
+canvas{
+    display:block;
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div id="toolbar">
+<h3>Блоки</h3>
+
+<button onclick="selected='grass'">🌱</button>
+<button onclick="selected='dirt'">🟫</button>
+<button onclick="selected='stone'">⬜</button>
+<button onclick="selected='water'">🟦</button>
+<button onclick="selected='wood'">🪵</button>
+<button onclick="selected='leaf'">🍃</button>
+
+<p>ЛКМ = будувати<br>ПКМ = ламати</p>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const BLOCK = 32;
+const WORLD_W = 50;
+const WORLD_H = 25;
+
+let selected = "grass";
+
+const colors = {
+grass:"#4CAF50",
+dirt:"#8B5A2B",
+stone:"#777",
+water:"#2196F3",
+wood:"#6D4C41",
+leaf:"#2E7D32"
+};
+
+let world = [];
+
+for(let y=0;y<WORLD_H;y++){
+    world[y]=[];
+
+    for(let x=0;x<WORLD_W;x++){
+
+        if(y<15) world[y][x]="air";
+        else if(y===15) world[y][x]="grass";
+        else if(y<20) world[y][x]="dirt";
+        else world[y][x]="stone";
+    }
+}
+
+for(let y=10;y<15;y++){
+    world[y][8]="wood";
+}
+
+for(let y=7;y<11;y++){
+    for(let x=6;x<11;x++){
+        world[y][x]="leaf";
+    }
+}
+
+let player = {
+x:200,
+y:100,
+w:28,
+h:28,
+vx:0,
+vy:0
+};
+
+let keys = {};
+
+document.addEventListener("keydown",e=>{
+keys[e.key]=true;
+});
+
+document.addEventListener("keyup",e=>{
+keys[e.key]=false;
+});
+
+function solid(type){
+return type!=="air" && type!=="water";
+}
+
+function updatePlayer(){
+
+if(keys["a"]||keys["ArrowLeft"])
+player.vx=-4;
+else if(keys["d"]||keys["ArrowRight"])
+player.vx=4;
+else
+player.vx=0;
+
+if(
+(keys["w"]||keys["ArrowUp"]||keys[" "])
+&& onGround()
+){
+player.vy=-12;
+}
+
+player.vy+=0.6;
+
+player.x+=player.vx;
+
+player.y+=player.vy;
+
+if(player.y > WORLD_H*BLOCK){
+player.x=200;
+player.y=100;
+player.vy=0;
+}
+
+resolveCollisions();
+}
+
+function onGround(){
+
+let bx=Math.floor((player.x+player.w/2)/BLOCK);
+let by=Math.floor((player.y+player.h+1)/BLOCK);
+
+if(by<0||by>=WORLD_H) return false;
+
+return solid(world[by][bx]);
+}
+
+function resolveCollisions(){
+
+let left=Math.floor(player.x/BLOCK);
+let right=Math.floor((player.x+player.w)/BLOCK);
+
+let top=Math.floor(player.y/BLOCK);
+let bottom=Math.floor((player.y+player.h)/BLOCK);
+
+for(let y=top;y<=bottom;y++){
+for(let x=left;x<=right;x++){
+
+if(
+x>=0&&x<WORLD_W&&
+y>=0&&y<WORLD_H&&
+solid(world[y][x])
+){
+
+let bx=x*BLOCK;
+let by=y*BLOCK;
+
+if(player.vy>0){
+player.y=by-player.h;
+player.vy=0;
+}
+
+if(player.vy<0){
+player.y=by+BLOCK;
+player.vy=0;
+}
+}
+}
+}
+}
+
+canvas.addEventListener("click",e=>{
+
+const rect=canvas.getBoundingClientRect();
+
+let x=Math.floor(e.clientX/BLOCK);
+let y=Math.floor(e.clientY/BLOCK);
+
+if(x>=0&&x<WORLD_W&&y>=0&&y<WORLD_H)
+world[y][x]=selected;
+});
+
+canvas.addEventListener("contextmenu",e=>{
+e.preventDefault();
+
+let x=Math.floor(e.clientX/BLOCK);
+let y=Math.floor(e.clientY/BLOCK);
+
+if(x>=0&&x<WORLD_W&&y>=0&&y<WORLD_H)
+world[y][x]="air";
+});
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+for(let y=0;y<WORLD_H;y++){
+for(let x=0;x<WORLD_W;x++){
+
+let block=world[y][x];
+
+if(block==="air") continue;
+
+ctx.fillStyle=colors[block];
+ctx.fillRect(
+x*BLOCK,
+y*BLOCK,
+BLOCK,
+BLOCK
+);
+
+ctx.strokeStyle="#0002";
+ctx.strokeRect(
+x*BLOCK,
+y*BLOCK,
+BLOCK,
+BLOCK
+);
+}
+}
+
+ctx.fillStyle="blue";
+ctx.fillRect(
+player.x,
+player.y,
+player.w,
+player.h
+);
+}
+
+function loop(){
+
+updatePlayer();
+draw();
+
+requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>

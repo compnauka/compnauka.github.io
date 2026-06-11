@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block Blast Kitty ULTRA</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: radial-gradient(circle, #2a0033, #000);
+    font-family: Arial;
+}
+
+/* HUD */
+#hud, #timer, #level, #best {
+    position: absolute;
+    color: #ff4fd8;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff00ff;
+}
+
+#hud { top: 10px; left: 10px; }
+#timer { top: 10px; right: 10px; }
+#level { top: 40px; left: 10px; }
+#best { top: 70px; left: 10px; }
+
+/* MENU */
+#menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center;
+    color: white;
+}
+
+/* END SCREEN */
+#end {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center;
+    color: #ff4fd8;
+    display: none;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 18px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+canvas { display: block; }
+</style>
+</head>
+
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div id="menu">
+    <h1>🎀 BLOCK BLAST KITTY ULTRA</h1>
+    <button onclick="startGame()">PLAY</button>
+</div>
+
+<div id="hud">Очки: 0 | Комбо: 0</div>
+<div id="timer">60</div>
+<div id="level">Level: Easy</div>
+<div id="best">Best: 0</div>
+
+<div id="end"></div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let blocks = [];
+let particles = [];
+
+let score = 0;
+let combo = 0;
+let time = 60;
+let running = false;
+let level = 1;
+let blockCount = 8;
+
+let best = Number(localStorage.getItem("kitty_best")) || 0;
+document.getElementById("best").innerText = "Best: " + best;
+
+/* -------- LEVEL -------- */
+function updateLevel(){
+
+    if(score < 10){
+        level = 1;
+        blockCount = 8;
+    }
+    else if(score < 25){
+        level = 2;
+        blockCount = 12;
+    }
+    else if(score < 45){
+        level = 3;
+        blockCount = 16;
+    }
+    else {
+        level = 4;
+        blockCount = 20;
+    }
+
+    document.getElementById("level").innerText =
+        "Level: " + (level==1?"Easy 🟢":level==2?"Normal 🟡":level==3?"Hard 🔴":"ULTRA 🟣");
+}
+
+/* -------- BLOCKS -------- */
+function makeBlock(){
+    return {
+        x: Math.random()*(canvas.width-80),
+        y: Math.random()*(canvas.height-80),
+        w: 60,
+        h: 60,
+        pulse: Math.random()*2,
+        color: Math.random()>0.5?"#ff4fd8":"#ff9bd5"
+    };
+}
+
+function spawn(){
+    blocks=[];
+    for(let i=0;i<blockCount;i++) blocks.push(makeBlock());
+}
+
+spawn();
+
+/* -------- CLICK -------- */
+canvas.addEventListener("click",e=>{
+    if(!running) return;
+
+    const r=canvas.getBoundingClientRect();
+    let mx=e.clientX-r.left;
+    let my=e.clientY-r.top;
+
+    for(let i=0;i<blocks.length;i++){
+        let b=blocks[i];
+
+        if(mx>b.x && mx<b.x+b.w && my>b.y && my<b.y+b.h){
+            blocks.splice(i,1);
+            score+=1+combo;
+            combo++;
+            break;
+        }
+    }
+
+    // 🏆 WIN CONDITION
+    if(blocks.length === 0){
+        winGame();
+    }
+});
+
+/* -------- TIMER -------- */
+setInterval(()=>{
+    if(!running) return;
+
+    time--;
+    document.getElementById("timer").innerText=time;
+
+    if(time<=0) endGame();
+},1000);
+
+/* -------- WIN -------- */
+function winGame(){
+    running=false;
+
+    if(score>best){
+        localStorage.setItem("kitty_best",score);
+        best=score;
+    }
+
+    document.getElementById("end").style.display="block";
+    document.getElementById("end").innerHTML=`
+        🏆 YOU WIN!<br>
+        Score: ${score}<br><br>
+        <button onclick="startGame()">Restart</button>
+        <button onclick="home()">Home</button>
+    `;
+}
+
+/* -------- GAME OVER -------- */
+function endGame(){
+    running=false;
+
+    document.getElementById("end").style.display="block";
+    document.getElementById("end").innerHTML=`
+        💀 GAME OVER<br>
+        Score: ${score}<br><br>
+        <button onclick="startGame()">Restart</button>
+        <button onclick="home()">Home</button>
+    `;
+}
+
+/* -------- HOME -------- */
+function home(){
+    document.getElementById("menu").style.display="block";
+    document.getElementById("end").style.display="none";
+    running=false;
+}
+
+/* -------- START -------- */
+function startGame(){
+    document.getElementById("menu").style.display="none";
+    document.getElementById("end").style.display="none";
+
+    score=0;
+    combo=0;
+    time=60;
+    level=1;
+    running=true;
+
+    spawn();
+}
+
+/* -------- UPDATE -------- */
+function update(){
+    updateLevel();
+
+    document.getElementById("hud").innerText=
+        "Очки: "+score+" | Комбо: "+combo;
+
+    document.getElementById("best").innerText=
+        "Best: "+Math.max(best,score);
+}
+
+/* -------- DRAW -------- */
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    blocks.forEach(b=>{
+        b.pulse+=0.1;
+        let s=1+Math.sin(b.pulse)*0.1;
+
+        ctx.save();
+        ctx.translate(b.x+b.w/2,b.y+b.h/2);
+        ctx.scale(s,s);
+
+        ctx.shadowColor="#ff00ff";
+        ctx.shadowBlur=20;
+
+        ctx.fillStyle=b.color;
+        ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
+
+        ctx.restore();
+    });
+}
+
+/* -------- LOOP -------- */
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Geometry Dash</title>
+<style>
+body{margin:0;overflow:hidden;background:#87CEEB;font-family:Arial}
+canvas{display:block}
+
+#ui{
+position:absolute;
+top:10px;left:10px;
+font-size:28px;
+color:white;
+font-weight:bold;
+text-shadow:2px 2px 5px black;
+}
+
+#menu{
+position:absolute;
+inset:0;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,0.5);
+color:white;
+font-size:30px;
+}
+
+button{
+padding:12px 24px;
+font-size:20px;
+cursor:pointer;
+margin-top:10px;
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div id="ui">0</div>
+
+<div id="menu">
+    <div id="text">Minecraft Dash</div>
+    <button onclick="startGame()">Грати</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const c=document.getElementById("c");
+const ctx=c.getContext("2d");
+
+c.width=innerWidth;
+c.height=innerHeight;
+
+const ground=c.height-120;
+
+let score=0;
+let running=false;
+let gameOver=false;
+
+const player={
+x:150,
+y:ground-50,
+w:50,
+h:50,
+vy:0,
+jumps:0,
+rot:0
+};
+
+let blocks=[];
+
+// 🎮 старт
+function startGame(){
+document.getElementById("menu").style.display="none";
+
+blocks=[];
+score=0;
+running=true;
+gameOver=false;
+
+player.y=ground-50;
+player.vy=0;
+player.jumps=0;
+player.rot=0;
+
+spawn();
+loop();
+}
+
+// 🔁 перезапуск
+function restart(){
+running=false;
+document.getElementById("menu").style.display="flex";
+document.getElementById("text").innerText="Ти програв 😅";
+document.querySelector("button").innerText="Грати ще";
+}
+
+// 🦘 стрибок + подвійний стрибок
+function jump(){
+if(player.jumps<2){
+player.vy=-16;
+player.jumps++;
+}
+}
+
+document.addEventListener("keydown",e=>{
+if(e.code==="Space"||e.code==="ArrowUp")jump();
+});
+c.onclick=jump;
+
+// 🧱 багато блоків
+function spawn(){
+const levels=[ground-50,ground-100,ground-150];
+
+blocks.push({
+x:c.width+100,
+y:levels[Math.floor(Math.random()*levels.length)],
+w:50,
+h:50
+});
+
+if(running)
+setTimeout(spawn,350);
+}
+
+// 🟩 блок
+function drawBlock(x,y,s){
+ctx.fillStyle="#3CB043";
+ctx.fillRect(x,y,s,s);
+ctx.fillStyle="#6B3F1D";
+ctx.fillRect(x,y+s*0.7,s,s*0.3);
+ctx.strokeStyle="#000";
+ctx.strokeRect(x,y,s,s);
+}
+
+// 🧍 гравець (куб + обертання)
+function drawPlayer(){
+ctx.save();
+ctx.translate(player.x+25,player.y+25);
+ctx.rotate(player.rot*Math.PI/180);
+
+drawBlock(-25,-25,50);
+
+ctx.fillStyle="black";
+ctx.fillRect(-10,-10,5,5);
+ctx.fillRect(5,-10,5,5);
+
+ctx.restore();
+}
+
+// ⚙️ логіка
+function update(){
+
+if(gameOver) return;
+
+score++;
+document.getElementById("ui").innerText=Math.floor(score/10);
+
+// фізика
+player.vy+=0.8;
+player.y+=player.vy;
+
+// обертання тільки в повітрі
+if(player.jumps>0){
+player.rot+=12;
+}
+
+let onGround=false;
+
+for(let b of blocks){
+b.x-=7;
+
+// 🧱 приземлення (безпечне)
+if(
+player.vy>=0 &&
+player.x+player.w>b.x &&
+player.x<b.x+b.w &&
+player.y+player.h>=b.y &&
+player.y+player.h<=b.y+15
+){
+player.y=b.y-player.h;
+player.vy=0;
+player.jumps=0;
+onGround=true;
+player.rot=Math.round(player.rot/90)*90;
+}
+
+// ☠️ смерть тільки від бокового удару
+if(
+player.x<b.x+b.w &&
+player.x+player.w>b.x &&
+player.y<b.y+b.h &&
+player.y+player.h>b.y+10
+){
+gameOver=true;
+setTimeout(restart,200);
+}
+}
+
+// 🌍 земля
+if(!onGround && player.y>=ground-player.h){
+player.y=ground-player.h;
+player.vy=0;
+player.jumps=0;
+player.rot=Math.round(player.rot/90)*90;
+}
+
+// чистка
+blocks=blocks.filter(b=>b.x>-100);
+}
+
+// 🎨 малювання
+function draw(){
+ctx.clearRect(0,0,c.width,c.height);
+
+// небо
+ctx.fillStyle="#87CEEB";
+ctx.fillRect(0,0,c.width,c.height);
+
+// земля
+ctx.fillStyle="#2ecc71";
+ctx.fillRect(0,ground,c.width,200);
+
+// блоки
+blocks.forEach(b=>drawBlock(b.x,b.y,50));
+
+// гравець
+drawPlayer();
+}
+
+// 🔁 цикл
+function loop(){
+if(!gameOver && running){
+update();
+draw();
+requestAnimationFrame(loop);
+}
+}
+</script>
+
+</body>
+</html>

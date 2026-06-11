@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Неонові Хрестики-Нолики</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:
+        radial-gradient(circle at top,#1a1a40,#090912 60%);
+    color:white;
+}
+
+.container{
+    text-align:center;
+}
+
+h1{
+    font-size:3rem;
+    color:#00ffff;
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+    margin-bottom:20px;
+}
+
+.status{
+    font-size:1.3rem;
+    margin-bottom:20px;
+    color:#ff4dff;
+    text-shadow:0 0 10px #ff4dff;
+}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(3,120px);
+    grid-template-rows:repeat(3,120px);
+    gap:12px;
+    justify-content:center;
+}
+
+.cell{
+    background:rgba(255,255,255,0.05);
+    border:2px solid #00ffff;
+    border-radius:18px;
+    cursor:pointer;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:4rem;
+    font-weight:bold;
+
+    box-shadow:
+        0 0 10px #00ffff,
+        inset 0 0 10px #00ffff;
+
+    transition:.2s;
+}
+
+.cell:hover{
+    transform:scale(1.05);
+    box-shadow:
+        0 0 20px #00ffff,
+        inset 0 0 20px #00ffff;
+}
+
+.x{
+    color:#00ffff;
+    text-shadow:
+        0 0 15px #00ffff,
+        0 0 30px #00ffff;
+}
+
+.o{
+    color:#ff4dff;
+    text-shadow:
+        0 0 15px #ff4dff,
+        0 0 30px #ff4dff;
+}
+
+button{
+    margin-top:25px;
+    padding:12px 30px;
+    font-size:1rem;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    background:#111;
+    color:white;
+
+    box-shadow:
+        0 0 15px #00ffff;
+
+    transition:.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+    box-shadow:
+        0 0 25px #00ffff;
+}
+
+.win{
+    animation:pulse .8s infinite alternate;
+}
+
+@keyframes pulse{
+    from{
+        box-shadow:
+            0 0 10px #39ff14,
+            inset 0 0 10px #39ff14;
+    }
+    to{
+        box-shadow:
+            0 0 25px #39ff14,
+            inset 0 0 25px #39ff14;
+    }
+}
+</style>
+</head>
+
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div class="container">
+    <h1>✦ Хрестики-Нолики ✦</h1>
+
+    <div class="status" id="status">
+        Хід: X
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <button onclick="restartGame()">Нова гра</button>
+</div>
+
+<script>
+const board = document.getElementById("board");
+const statusText = document.getElementById("status");
+
+let currentPlayer = "X";
+let cells = Array(9).fill("");
+let gameActive = true;
+
+const winPatterns = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+];
+
+for(let i=0;i<9;i++){
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.dataset.index = i;
+    cell.addEventListener("click", handleMove);
+    board.appendChild(cell);
+}
+
+function handleMove(e){
+    const index = e.target.dataset.index;
+
+    if(cells[index] || !gameActive) return;
+
+    cells[index] = currentPlayer;
+    e.target.textContent = currentPlayer;
+    e.target.classList.add(currentPlayer.toLowerCase());
+
+    checkWinner();
+
+    if(gameActive){
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        statusText.textContent = `Хід: ${currentPlayer}`;
+    }
+}
+
+function checkWinner(){
+
+    for(let pattern of winPatterns){
+
+        const [a,b,c] = pattern;
+
+        if(
+            cells[a] &&
+            cells[a] === cells[b] &&
+            cells[a] === cells[c]
+        ){
+            gameActive = false;
+
+            document.querySelectorAll(".cell")[a].classList.add("win");
+            document.querySelectorAll(".cell")[b].classList.add("win");
+            document.querySelectorAll(".cell")[c].classList.add("win");
+
+            statusText.textContent =
+                `🎉 Переміг ${cells[a]}!`;
+            return;
+        }
+    }
+
+    if(!cells.includes("")){
+        gameActive = false;
+        statusText.textContent = "🤝 Нічия!";
+    }
+}
+
+function restartGame(){
+    cells = Array(9).fill("");
+    currentPlayer = "X";
+    gameActive = true;
+
+    statusText.textContent = "Хід: X";
+
+    document.querySelectorAll(".cell").forEach(cell=>{
+        cell.textContent = "";
+        cell.className = "cell";
+    });
+}
+</script>
+
+</body>
+</html>

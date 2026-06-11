@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Runner 2</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    font-family: Arial;
+    color: white;
+    text-align: center;
+  }
+
+  h1 {
+    color: #55ff55;
+  }
+
+  #game {
+    position: relative;
+    width: 600px;
+    height: 200px;
+    margin: 20px auto;
+    background: #222;
+    overflow: hidden;
+    border: 2px solid #55ff55;
+  }
+
+  #player {
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    width: 30px;
+    height: 30px;
+    background: #55ff55;
+  }
+
+  .lava {
+    position: absolute;
+    bottom: 0;
+    width: 30px;
+    height: 30px;
+    background: orange;
+  }
+
+  .jump {
+    animation: jump 0.5s linear;
+  }
+
+  @keyframes jump {
+    0% { bottom: 0; }
+    50% { bottom: 100px; }
+    100% { bottom: 0; }
+  }
+
+  button {
+    margin-top: 10px;
+    font-size: 18px;
+    padding: 10px;
+  }
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<h1>⛏️ Minecraft Runner 🔥</h1>
+
+<div id="game">
+  <div id="player"></div>
+</div>
+
+<button onclick="jump()">Стрибок ⬆️</button>
+
+<p id="score">Очки: 0</p>
+<p id="status"></p>
+
+<script>
+let player = document.getElementById("player");
+let game = document.getElementById("game");
+let scoreText = document.getElementById("score");
+let statusText = document.getElementById("status");
+
+let score = 0;
+let gameOver = false;
+
+// стрибок
+function jump() {
+  if (gameOver) return;
+
+  if (!player.classList.contains("jump")) {
+    player.classList.add("jump");
+    setTimeout(() => {
+      player.classList.remove("jump");
+    }, 500);
+  }
+}
+
+// пробіл
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") jump();
+});
+
+// лава
+function createLava() {
+  if (gameOver) return;
+
+  let lava = document.createElement("div");
+  lava.classList.add("lava");
+  lava.style.left = "600px";
+  game.appendChild(lava);
+
+  let move = setInterval(() => {
+    if (gameOver) {
+      clearInterval(move);
+      return;
+    }
+
+    let lavaLeft = parseInt(window.getComputedStyle(lava).left);
+    lava.style.left = lavaLeft - 5 + "px";
+
+    let playerBottom = parseInt(window.getComputedStyle(player).bottom);
+
+    if (lavaLeft < 80 && lavaLeft > 20 && playerBottom < 20) {
+      gameOver = true;
+      clearInterval(move);
+      statusText.innerHTML =
+        "💀 Ти програв! Очки: " + score +
+        ' <button onclick="location.reload()">Грати ще раз 🔄</button>';
+    }
+
+    if (lavaLeft < -30) {
+      lava.remove();
+      clearInterval(move);
+
+      if (!gameOver) {
+        score++;
+        scoreText.innerText = "Очки: " + score;
+      }
+    }
+  }, 20);
+}
+
+setInterval(createLava, 1500);
+</script>
+
+</body>
+</html>
