@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 Math Kingdom</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#ffd6f5,#ffb3e6,#ffcce6);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:700px;
+    background:white;
+    border-radius:25px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+h1{
+    text-align:center;
+    color:#ff4fa3;
+    margin-bottom:15px;
+}
+
+.stats{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.stat{
+    background:#ffe6f3;
+    padding:10px 15px;
+    border-radius:15px;
+    font-weight:bold;
+}
+
+.level-buttons{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.level-buttons button{
+    flex:1;
+}
+
+button{
+    border:none;
+    border-radius:15px;
+    padding:12px;
+    background:#ff66b3;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.question{
+    text-align:center;
+    font-size:40px;
+    margin:20px 0;
+    color:#ff4fa3;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    font-size:22px;
+    border-radius:15px;
+    border:2px solid #ff99cc;
+    text-align:center;
+}
+
+.result{
+    text-align:center;
+    margin-top:15px;
+    font-weight:bold;
+    min-height:30px;
+}
+
+.shop{
+    margin-top:25px;
+}
+
+.shop h2{
+    color:#ff4fa3;
+    margin-bottom:10px;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff0f8;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.progress{
+    margin-top:15px;
+}
+
+.bar{
+    height:20px;
+    background:#eee;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(to right,#ff66b3,#ff1493);
+}
+
+.unlocked{
+    color:green;
+    font-weight:bold;
+}
+
+.locked{
+    color:red;
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div class="container">
+
+<h1>🌸 Math Kingdom 👑</h1>
+
+<div class="stats">
+<div class="stat">❤️ <span id="lives">3</span></div>
+<div class="stat">💎 <span id="coins">0</span></div>
+<div class="stat">⭐ Рівень <span id="playerLevel">1</span></div>
+</div>
+
+<div class="level-buttons">
+<button onclick="setLevel('easy')">🩷 Легкий</button>
+<button onclick="setLevel('medium')">💖 Середній</button>
+<button onclick="setLevel('hard')">👑 Складний</button>
+</div>
+
+<div class="question" id="question">
+Обери рівень
+</div>
+
+<input type="number" id="answer">
+
+<br><br>
+
+<button style="width:100%" onclick="checkAnswer()">
+Відповісти
+</button>
+
+<div class="result" id="result"></div>
+
+<div class="progress">
+<p>Прогрес рівня</p>
+<div class="bar">
+<div class="fill" id="xpBar"></div>
+</div>
+</div>
+
+<div class="shop">
+<h2>🛍️ Магазин</h2>
+
+<div class="item">
+<span>👑 Корона (50 💎)</span>
+<button onclick="buy('Корона',50)">Купити</button>
+</div>
+
+<div class="item">
+<span>🦄 Єдиноріг (100 💎)</span>
+<button onclick="buy('Єдиноріг',100)">Купити</button>
+</div>
+
+<div class="item">
+<span>🏰 Замок (200 💎)</span>
+<button onclick="buy('Замок',200)">Купити</button>
+</div>
+
+<div id="inventory"></div>
+
+</div>
+
+</div>
+
+<script>
+let currentLevel='easy';
+let correctAnswer=0;
+
+let lives=3;
+let coins=0;
+let xp=0;
+let level=1;
+
+let inventory=[];
+
+load();
+
+function setLevel(levelName){
+currentLevel=levelName;
+generateQuestion();
+}
+
+function random(min,max){
+return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function generateQuestion(){
+
+let a,b;
+
+if(currentLevel==="easy"){
+
+if(Math.random()>0.5){
+a=random(1,50);
+b=random(1,50);
+correctAnswer=a+b;
+question.innerHTML=`${a} + ${b}`;
+}else{
+a=random(20,80);
+b=random(1,20);
+correctAnswer=a-b;
+question.innerHTML=`${a} - ${b}`;
+}
+
+}
+
+if(currentLevel==="medium"){
+
+if(Math.random()>0.5){
+a=random(2,12);
+b=random(2,12);
+correctAnswer=a*b;
+question.innerHTML=`${a} × ${b}`;
+}else{
+b=random(2,12);
+correctAnswer=random(2,12);
+a=b*correctAnswer;
+question.innerHTML=`${a} ÷ ${b}`;
+}
+
+}
+
+if(currentLevel==="hard"){
+
+let denominator=random(2,10);
+let numerator=random(1,denominator);
+
+question.innerHTML=
+`${numerator}/${denominator} = ? (%)`;
+
+correctAnswer=Math.round(
+(numerator/denominator)*100
+);
+
+}
+
+answer.value="";
+}
+
+function checkAnswer(){
+
+let user=Number(answer.value);
+
+if(user===correctAnswer){
+
+result.innerHTML="✅ Правильно!";
+
+let reward=5;
+
+if(currentLevel==="medium") reward=10;
+if(currentLevel==="hard") reward=20;
+
+coins+=reward;
+xp+=10;
+
+if(xp>=100){
+xp=0;
+level++;
+}
+
+}else{
+
+result.innerHTML=
+`❌ Неправильно. Правильна відповідь: ${correctAnswer}`;
+
+lives--;
+
+if(lives<=0){
+alert("Гру завершено! Починаємо заново.");
+lives=3;
+coins=0;
+xp=0;
+level=1;
+inventory=[];
+}
+}
+
+updateUI();
+save();
+generateQuestion();
+}
+
+function buy(item,price){
+
+if(inventory.includes(item)){
+alert("У тебе вже є цей предмет!");
+return;
+}
+
+if(coins>=price){
+
+coins-=price;
+inventory.push(item);
+alert("Куплено: "+item);
+
+}else{
+alert("Недостатньо монет!");
+}
+
+updateUI();
+save();
+}
+
+function updateUI(){
+
+document.getElementById("coins").textContent=coins;
+document.getElementById("lives").textContent=lives;
+document.getElementById("playerLevel").textContent=level;
+
+document.getElementById("xpBar").style.width=
+xp+"%";
+
+let html="<h3>🎀 Колекція</h3>";
+
+inventory.forEach(i=>{
+html+=`<p class="unlocked">✅ ${i}</p>`;
+});
+
+document.getElementById("inventory").innerHTML=html;
+}
+
+function save(){
+localStorage.setItem("mathGame",JSON.stringify({
+lives,
+coins,
+xp,
+level,
+inventory
+}));
+}
+
+function load(){
+
+let data=JSON.parse(
+localStorage.getItem("mathGame")
+);
+
+if(data){
+lives=data.lives;
+coins=data.coins;
+xp=data.xp;
+level=data.level;
+inventory=data.inventory || [];
+}
+
+updateUI();
+}
+
+generateQuestion();
+</script>
+
+</body>
+</html>

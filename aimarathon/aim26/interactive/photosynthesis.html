@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Фотосинтез — інтерактивна презентація</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #0f172a;
+        color: white;
+        overflow: hidden;
+    }
+
+    .slide {
+        display: none;
+        height: 100vh;
+        padding: 60px;
+        box-sizing: border-box;
+        animation: fade 0.5s ease-in-out;
+    }
+
+    .active {
+        display: block;
+    }
+
+    h1, h2 {
+        color: #4ade80;
+    }
+
+    .nav {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #22c55e;
+        color: black;
+        font-weight: bold;
+    }
+
+    button:hover {
+        background: #16a34a;
+    }
+
+    .card {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 15px;
+        max-width: 700px;
+    }
+
+    @keyframes fade {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+
+    .quiz button {
+        display: block;
+        margin: 10px 0;
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<!-- Слайд 1 -->
+<div class="slide active">
+    <h1>🌿 Фотосинтез</h1>
+    <div class="card">
+        <p>Фотосинтез — це процес, під час якого рослини перетворюють світло на енергію.</p>
+        <p>Він відбувається у хлоропластах листків.</p>
+    </div>
+</div>
+
+<!-- Слайд 2 -->
+<div class="slide">
+    <h2>☀️ Що потрібно для фотосинтезу?</h2>
+    <div class="card">
+        <ul>
+            <li>Сонячне світло</li>
+            <li>Вуглекислий газ (CO₂)</li>
+            <li>Вода (H₂O)</li>
+            <li>Хлорофіл</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Слайд 3 -->
+<div class="slide">
+    <h2>🍃 Як відбувається процес?</h2>
+    <div class="card">
+        <p>Рослина поглинає світло, CO₂ і воду.</p>
+        <p>У результаті утворюється глюкоза та кисень.</p>
+        <p><b>Формула:</b> 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</p>
+    </div>
+</div>
+
+<!-- Слайд 4 -->
+<div class="slide quiz">
+    <h2>🧠 Міні-тест</h2>
+    <div class="card">
+        <p>Що виділяється під час фотосинтезу?</p>
+        <button onclick="answer(false)">Вуглекислий газ</button>
+        <button onclick="answer(true)">Кисень</button>
+        <button onclick="answer(false)">Азот</button>
+        <p id="result"></p>
+    </div>
+</div>
+
+<!-- Навігація -->
+<div class="nav">
+    <button onclick="prevSlide()">⬅ Назад</button>
+    <button onclick="nextSlide()">Вперед ➡</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll(".slide");
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove("active"));
+    slides[index].classList.add("active");
+}
+
+function nextSlide() {
+    if (current < slides.length - 1) {
+        current++;
+        showSlide(current);
+    }
+}
+
+function prevSlide() {
+    if (current > 0) {
+        current--;
+        showSlide(current);
+    }
+}
+
+function answer(correct) {
+    const result = document.getElementById("result");
+    if (correct) {
+        result.textContent = "✅ Правильно! Фотосинтез виділяє кисень.";
+        result.style.color = "#4ade80";
+    } else {
+        result.textContent = "❌ Спробуй ще раз.";
+        result.style.color = "#f87171";
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Планети Сонячної системи</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#000814;
+    color:white;
+    overflow:hidden;
+}
+
+.stars{
+    position:fixed;
+    inset:0;
+    background-image:
+    radial-gradient(white 1px, transparent 1px);
+    background-size:40px 40px;
+    opacity:.4;
+}
+
+.container{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    position:relative;
+    z-index:2;
+}
+
+.planet{
+    width:320px;
+    height:320px;
+    border-radius:50%;
+    margin-bottom:25px;
+    transition:.5s;
+    box-shadow:
+        inset -40px -30px 80px rgba(0,0,0,.5),
+        0 0 40px rgba(255,255,255,.15);
+}
+
+.info{
+    text-align:center;
+    max-width:700px;
+}
+
+.info h1{
+    margin-bottom:10px;
+    font-size:2.2rem;
+}
+
+.info h2{
+    margin-bottom:10px;
+    color:#ffd166;
+}
+
+.info p{
+    font-size:1.1rem;
+    line-height:1.6;
+}
+
+.controls{
+    margin-top:25px;
+}
+
+button{
+    width:60px;
+    height:60px;
+    border:none;
+    border-radius:50%;
+    margin:0 10px;
+    cursor:pointer;
+    font-size:28px;
+    color:white;
+    background:#1c2541;
+}
+
+button:hover{
+    background:#3a506b;
+}
+
+.solar-system{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:25px;
+}
+
+.sun{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    background:orange;
+    box-shadow:0 0 50px orange;
+}
+
+.orbit-planet{
+    border-radius:50%;
+}
+
+.hidden{
+    display:none;
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div class="stars"></div>
+
+<div class="container">
+
+    <div id="planet" class="planet"></div>
+
+    <div id="solarSystem" class="solar-system hidden">
+        <div class="sun"></div>
+
+        <div class="orbit-planet" style="width:10px;height:10px;background:#999;"></div>
+        <div class="orbit-planet" style="width:14px;height:14px;background:#c68c53;"></div>
+        <div class="orbit-planet" style="width:16px;height:16px;background:#2d8cff;"></div>
+        <div class="orbit-planet" style="width:12px;height:12px;background:#d14f32;"></div>
+        <div class="orbit-planet" style="width:40px;height:40px;background:#caa472;"></div>
+        <div class="orbit-planet" style="width:34px;height:34px;background:#e8d5a2;"></div>
+        <div class="orbit-planet" style="width:24px;height:24px;background:#8be9fd;"></div>
+        <div class="orbit-planet" style="width:22px;height:22px;background:#4f79ff;"></div>
+    </div>
+
+    <div class="info">
+        <h2 id="number"></h2>
+        <h1 id="name"></h1>
+        <p id="fact"></p>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevSlide()">◀</button>
+        <button onclick="nextSlide()">▶</button>
+    </div>
+
+</div>
+
+<script>
+
+const slides = [
+{
+    name:"Меркурій",
+    number:"1-ша планета від Сонця",
+    fact:"Рік на Меркурії триває лише 88 земних діб.",
+    color:"linear-gradient(135deg,#9d9d9d,#4e4e4e)"
+},
+{
+    name:"Венера",
+    number:"2-га планета від Сонця",
+    fact:"Венера обертається навколо осі у протилежному напрямку.",
+    color:"linear-gradient(135deg,#f7c16b,#9b5b00)"
+},
+{
+    name:"Земля",
+    number:"3-тя планета від Сонця",
+    fact:"Єдина відома планета, де існує життя.",
+    color:"linear-gradient(135deg,#1f8fff,#1f6b2a)"
+},
+{
+    name:"Марс",
+    number:"4-та планета від Сонця",
+    fact:"На Марсі знаходиться найбільший вулкан Сонячної системи.",
+    color:"linear-gradient(135deg,#ff7e5f,#8b2f1d)"
+},
+{
+    name:"Юпітер",
+    number:"5-та планета від Сонця",
+    fact:"Юпітер — найбільша планета Сонячної системи.",
+    color:"linear-gradient(135deg,#d8a673,#9f6330)"
+},
+{
+    name:"Сатурн",
+    number:"6-та планета від Сонця",
+    fact:"Сатурн має найвідоміші кільця серед усіх планет.",
+    color:"linear-gradient(135deg,#f0e0aa,#b89b4e)"
+},
+{
+    name:"Уран",
+    number:"7-ма планета від Сонця",
+    fact:"Уран обертається майже лежачи на боці.",
+    color:"linear-gradient(135deg,#a0ffff,#4fb3c8)"
+},
+{
+    name:"Нептун",
+    number:"8-ма планета від Сонця",
+    fact:"На Нептуні дмуть одні з найсильніших вітрів у Сонячній системі.",
+    color:"linear-gradient(135deg,#4d6fff,#102a9d)"
+},
+{
+    solarSystem:true,
+    name:"Сонячна система",
+    number:"Усі планети разом",
+    fact:"Сонячна система складається із Сонця та восьми планет."
+}
+];
+
+let current = 0;
+
+function render(){
+
+    const planet = document.getElementById("planet");
+    const solar = document.getElementById("solarSystem");
+
+    if(slides[current].solarSystem){
+
+        planet.classList.add("hidden");
+        solar.classList.remove("hidden");
+
+    }else{
+
+        solar.classList.add("hidden");
+        planet.classList.remove("hidden");
+
+        planet.style.background = slides[current].color;
+    }
+
+    document.getElementById("number").textContent =
+        slides[current].number;
+
+    document.getElementById("name").textContent =
+        slides[current].name;
+
+    document.getElementById("fact").textContent =
+        "Цікавий факт: " + slides[current].fact;
+}
+
+function nextSlide(){
+    current++;
+    if(current >= slides.length) current = 0;
+    render();
+}
+
+function prevSlide(){
+    current--;
+    if(current < 0) current = slides.length - 1;
+    render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>

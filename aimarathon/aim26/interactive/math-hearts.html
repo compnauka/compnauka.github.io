@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Математична Країна Сердечок</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    text-align:center;
+    min-height:100vh;
+    background:linear-gradient(
+        45deg,
+        #ff6b6b,
+        #ffd93d,
+        #6bff95,
+        #6bcfff,
+        #c06bff
+    );
+    background-size:400% 400%;
+    animation:bg 10s infinite ease;
+}
+
+@keyframes bg{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+.container{
+    margin-top:50px;
+}
+
+h1{
+    color:white;
+    font-size:50px;
+    text-shadow:2px 2px 10px black;
+}
+
+.hearts{
+    font-size:35px;
+    margin:20px;
+}
+
+.question{
+    font-size:60px;
+    color:white;
+    font-weight:bold;
+}
+
+input{
+    font-size:30px;
+    padding:10px;
+    width:150px;
+    border-radius:15px;
+    border:none;
+    text-align:center;
+}
+
+button{
+    margin-top:15px;
+    padding:15px 35px;
+    font-size:24px;
+    border:none;
+    border-radius:15px;
+    background:#ff4081;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.score{
+    font-size:30px;
+    color:white;
+    margin-top:15px;
+}
+
+.message{
+    font-size:35px;
+    margin-top:15px;
+    font-weight:bold;
+    color:white;
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<div class="container">
+    <h1>🌈 Математична Країна Сердечок ❤️</h1>
+
+    <div class="hearts" id="hearts"></div>
+
+    <div class="question" id="question"></div>
+
+    <input type="number" id="answer">
+
+    <br>
+
+    <button onclick="check()">Перевірити</button>
+
+    <div class="message" id="message"></div>
+
+    <div class="score">
+        Правильних відповідей:
+        <span id="score">0</span>
+    </div>
+</div>
+
+<script>
+let hearts = 5;
+let score = 0;
+
+let a,b,correct;
+
+function drawHearts(){
+    document.getElementById("hearts").innerHTML =
+        "❤️".repeat(hearts);
+}
+
+function newQuestion(){
+
+    const type = Math.floor(Math.random()*4);
+
+    if(type===0){
+        a=Math.floor(Math.random()*50)+1;
+        b=Math.floor(Math.random()*50)+1;
+        correct=a+b;
+        question.innerHTML=`${a} + ${b}`;
+    }
+
+    if(type===1){
+        a=Math.floor(Math.random()*50)+20;
+        b=Math.floor(Math.random()*20)+1;
+        correct=a-b;
+        question.innerHTML=`${a} - ${b}`;
+    }
+
+    if(type===2){
+        a=Math.floor(Math.random()*10)+1;
+        b=Math.floor(Math.random()*10)+1;
+        correct=a*b;
+        question.innerHTML=`${a} × ${b}`;
+    }
+
+    if(type===3){
+        b=Math.floor(Math.random()*10)+1;
+        correct=Math.floor(Math.random()*10)+1;
+        a=b*correct;
+        question.innerHTML=`${a} ÷ ${b}`;
+    }
+
+    answer.value="";
+}
+
+function check(){
+
+    let user = Number(answer.value);
+
+    if(user===correct){
+
+        hearts++;
+        score++;
+
+        message.innerHTML="🎉 Правильно!";
+        message.style.color="lime";
+
+        document.getElementById("score").innerText=score;
+    }
+    else{
+
+        hearts--;
+
+        message.innerHTML=
+        `❌ Неправильно! Відповідь: ${correct}`;
+
+        message.style.color="yellow";
+    }
+
+    if(hearts<=0){
+
+        alert(
+        "Гру завершено! Твій результат: "
+        + score);
+
+        hearts=5;
+        score=0;
+
+        document.getElementById("score").innerText=0;
+    }
+
+    drawHearts();
+    newQuestion();
+}
+
+drawHearts();
+newQuestion();
+</script>
+
+</body>
+</html>

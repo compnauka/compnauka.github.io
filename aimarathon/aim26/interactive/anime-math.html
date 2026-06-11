@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аніме Математична Гра</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Trebuchet MS',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    background:linear-gradient(
+    -45deg,
+    #ff7eb3,
+    #ff758c,
+    #7afcff,
+    #a685ff,
+    #ffd166);
+    background-size:400% 400%;
+    animation:bgMove 10s ease infinite;
+}
+
+@keyframes bgMove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.container{
+    width:900px;
+    max-width:95%;
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(15px);
+    border-radius:25px;
+    padding:25px;
+    text-align:center;
+    color:white;
+    box-shadow:0 0 30px rgba(0,0,0,0.3);
+}
+
+h1{
+    font-size:40px;
+    margin-bottom:20px;
+    text-shadow:2px 2px 8px black;
+}
+
+button{
+    padding:12px 22px;
+    border:none;
+    border-radius:15px;
+    cursor:pointer;
+    margin:5px;
+    font-size:18px;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:scale(1.08);
+}
+
+.startBtn{
+    background:#ff66c4;
+    color:white;
+}
+
+.easy{background:#4ade80;}
+.hard{background:#f59e0b;}
+.extreme{background:#ef4444;color:white;}
+
+.hidden{
+    display:none;
+}
+
+.question{
+    font-size:42px;
+    margin:20px 0;
+    font-weight:bold;
+}
+
+input{
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    font-size:20px;
+    text-align:center;
+}
+
+.row{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+
+.calculator{
+    background:rgba(255,255,255,0.2);
+    padding:15px;
+    border-radius:20px;
+}
+
+.calc-display{
+    width:220px;
+    margin-bottom:10px;
+}
+
+.calc-btn{
+    width:50px;
+    height:50px;
+    font-size:20px;
+}
+
+.result{
+    margin-top:15px;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.correct{
+    color:#00ff66;
+}
+
+.wrong{
+    color:#ff4444;
+}
+
+.score{
+    font-size:24px;
+    margin-top:10px;
+}
+
+.hint{
+    margin-top:10px;
+    color:#fffacd;
+    font-size:20px;
+}
+
+#fireworks{
+    position:fixed;
+    top:0;
+    left:0;
+    pointer-events:none;
+}
+
+.finish{
+    font-size:50px;
+    color:gold;
+    text-shadow:0 0 20px yellow;
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+    50%{transform:scale(1.1);}
+}
+</style>
+</head>
+<body>
+<a href="/aimarathon/aim26/" style="position:fixed;right:12px;bottom:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:rgba(15,23,42,.85);color:#fff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.45)">⬅ Повернутись на сторінку марафону</a>
+
+<canvas id="fireworks"></canvas>
+
+<div class="container">
+
+<h1>🌸 Anime Math Game 🌸</h1>
+
+<div id="startScreen">
+<button class="startBtn" onclick="showLevels()">Початок</button>
+</div>
+
+<div id="levels" class="hidden">
+<h2>Оберіть складність</h2>
+<button class="easy" onclick="startGame('easy')">Легко</button>
+<button class="hard" onclick="startGame('hard')">Важко</button>
+<button class="extreme" onclick="startGame('extreme')">Екстримальний</button>
+</div>
+
+<div id="game" class="hidden">
+
+<div class="score">
+Правильних: <span id="score">0</span> / 10
+</div>
+
+<div class="question" id="question">10 + 3</div>
+
+<input id="answer" placeholder="Відповідь">
+
+<br><br>
+
+<button onclick="checkAnswer()">Перевірити</button>
+<button onclick="showHint()">Підказка</button>
+
+<div class="hint" id="hint"></div>
+
+<div class="result" id="result"></div>
+
+<div class="row">
+
+<div class="calculator">
+<h3>Калькулятор</h3>
+
+<input class="calc-display" id="calcDisplay" readonly>
+
+<br>
+
+<div>
+<button class="calc-btn" onclick="calc('7')">7</button>
+<button class="calc-btn" onclick="calc('8')">8</button>
+<button class="calc-btn" onclick="calc('9')">9</button>
+<button class="calc-btn" onclick="calc('/')">÷</button>
+</div>
+
+<div>
+<button class="calc-btn" onclick="calc('4')">4</button>
+<button class="calc-btn" onclick="calc('5')">5</button>
+<button class="calc-btn" onclick="calc('6')">6</button>
+<button class="calc-btn" onclick="calc('*')">×</button>
+</div>
+
+<div>
+<button class="calc-btn" onclick="calc('1')">1</button>
+<button class="calc-btn" onclick="calc('2')">2</button>
+<button class="calc-btn" onclick="calc('3')">3</button>
+<button class="calc-btn" onclick="calc('-')">−</button>
+</div>
+
+<div>
+<button class="calc-btn" onclick="calc('0')">0</button>
+<button class="calc-btn" onclick="calculate()">=</button>
+<button class="calc-btn" onclick="clearCalc()">C</button>
+<button class="calc-btn" onclick="calc('+')">+</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="endScreen" class="hidden">
+<div class="finish">
+🎆 КІНЕЦЬ ГРИ! 🎆
+</div>
+<br>
+<button class="startBtn" onclick="location.reload()">Грати ще раз 🔄</button>
+</div>
+
+</div>
+
+<script>
+let difficulty="";
+let correctAnswer=0;
+let score=0;
+
+function showLevels(){
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("levels").classList.remove("hidden");
+}
+
+function startGame(level){
+    difficulty=level;
+
+    document.getElementById("levels").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    score=0;
+    document.getElementById("score").innerText=score;
+
+    generateQuestion();
+}
+
+function generateQuestion(){
+
+    let a,b,op;
+
+    if(difficulty==="easy"){
+        op=Math.random()>0.5?"+":"-";
+        a=Math.floor(Math.random()*50)+1;
+        b=Math.floor(Math.random()*30)+1;
+
+        if(op==="-" && b>a){
+            [a,b]=[b,a];
+        }
+    }
+
+    if(difficulty==="hard"){
+        op="*";
+        a=Math.floor(Math.random()*10)+1;
+        b=Math.floor(Math.random()*10)+1;
+    }
+
+    if(difficulty==="extreme"){
+        op="*";
+        a=Math.floor(Math.random()*900)+100;
+        b=Math.floor(Math.random()*900)+100;
+    }
+
+    correctAnswer=eval(a+op+b);
+
+    document.getElementById("question").innerText=
+        `${a} ${op} ${b}`;
+
+    document.getElementById("answer").value="";
+    document.getElementById("result").innerHTML="";
+    document.getElementById("hint").innerHTML="";
+}
+
+function checkAnswer(){
+
+    let user=Number(
+        document.getElementById("answer").value
+    );
+
+    let result=document.getElementById("result");
+
+    if(user===correctAnswer){
+
+        score++;
+
+        document.getElementById("score").innerText=score;
+
+        result.innerHTML=
+        '<span class="correct">✓ Правильно</span>';
+
+        if(score>=10){
+            finishGame();
+            return;
+        }
+
+        setTimeout(generateQuestion,1000);
+
+    }else{
+
+        result.innerHTML=
+        '<span class="wrong">✗ Неправильно</span>';
+    }
+}
+
+function showHint(){
+
+    let text="";
+
+    if(difficulty==="easy"){
+        text="Порахуй по черзі або використай калькулятор.";
+    }
+
+    if(difficulty==="hard"){
+        text="Множення — це багаторазове додавання.";
+    }
+
+    if(difficulty==="extreme"){
+        text="Спробуй розбити числа на частини.";
+    }
+
+    document.getElementById("hint").innerText=text;
+}
+
+function calc(v){
+    document.getElementById("calcDisplay").value+=v;
+}
+
+function clearCalc(){
+    document.getElementById("calcDisplay").value="";
+}
+
+function calculate(){
+    try{
+        document.getElementById("calcDisplay").value=
+        eval(document.getElementById("calcDisplay").value);
+    }catch{}
+}
+
+function finishGame(){
+
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("endScreen").classList.remove("hidden");
+
+    startFireworks();
+}
+
+const canvas=document.getElementById("fireworks");
+const ctx=canvas.getContext("2d");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let particles=[];
+
+function startFireworks(){
+
+    setInterval(()=>{
+
+        for(let i=0;i<100;i++){
+
+            particles.push({
+                x:Math.random()*canvas.width,
+                y:Math.random()*canvas.height/2,
+                vx:(Math.random()-0.5)*8,
+                vy:(Math.random()-0.5)*8,
+                life:100,
+                color:`hsl(${Math.random()*360},100%,50%)`
+            });
+        }
+
+    },500);
+
+    animate();
+}
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    particles.forEach((p,index)=>{
+
+        p.x+=p.vx;
+        p.y+=p.vy;
+        p.life--;
+
+        ctx.fillStyle=p.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,3,0,Math.PI*2);
+        ctx.fill();
+
+        if(p.life<=0){
+            particles.splice(index,1);
+        }
+    });
+}
+</script>
+
+</body>
+</html>
