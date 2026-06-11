@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Quiz</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Press Start 2P', cursive;
+    background:
+        linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)),
+        repeating-linear-gradient(
+            90deg,
+            #4caf50 0px,
+            #4caf50 40px,
+            #43a047 40px,
+            #43a047 80px
+        );
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.quiz-box{
+    width:100%;
+    max-width:850px;
+    background:#8B5A2B;
+    border:8px solid #4e342e;
+    box-shadow:10px 10px 0 #2e1b12;
+    padding:30px;
+    color:white;
+}
+
+h1{
+    text-align:center;
+    color:#ffeb3b;
+    margin-bottom:30px;
+    line-height:1.5;
+}
+
+#question{
+    font-size:15px;
+    margin-bottom:25px;
+    line-height:1.7;
+}
+
+.answers{
+    display:grid;
+    gap:15px;
+}
+
+button{
+    font-family:'Press Start 2P', cursive;
+    background:#9ccc65;
+    border:4px solid #33691e;
+    color:#000;
+    padding:15px;
+    cursor:pointer;
+    transition:0.2s;
+    line-height:1.5;
+}
+
+button:hover{
+    transform:translateY(-3px);
+    background:#aed581;
+}
+
+.correct{
+    background:#4caf50 !important;
+    color:white;
+}
+
+.wrong{
+    background:#e53935 !important;
+    color:white;
+}
+
+#nextBtn{
+    margin-top:25px;
+    width:100%;
+    display:none;
+}
+
+#result{
+    text-align:center;
+    font-size:18px;
+    line-height:1.8;
+}
+
+.score{
+    color:#ffeb3b;
+}
+</style>
+</head>
+<body>
+
+<div class="quiz-box">
+    <h1>⛏️ MINECRAFT QUIZ ⛏️</h1>
+
+    <div id="quiz">
+        <div id="question"></div>
+        <div class="answers" id="answers"></div>
+        <button id="nextBtn">ДАЛІ</button>
+    </div>
+</div>
+
+<script>
+const questions = [
+{
+    question: "Який матеріал потрібен для створення алмазної кирки?",
+    answers: [
+        "3 алмази та 2 палиці",
+        "2 алмази та 3 палиці",
+        "4 алмази та 1 палиця",
+        "3 алмази та 3 палиці"
+    ],
+    correct: 0
+},
+{
+    question: "Який моб вибухає поруч із гравцем?",
+    answers: [
+        "Зомбі",
+        "Скелет",
+        "Кріпер",
+        "Ендермен"
+    ],
+    correct: 2
+},
+{
+    question: "Як називається фінальний вимір гри?",
+    answers: [
+        "Нижній світ",
+        "Енд",
+        "Рай",
+        "Глибока темрява"
+    ],
+    correct: 1
+},
+{
+    question: "Який бос живе в Енді?",
+    answers: [
+        "Візер",
+        "Страж",
+        "Король Кріперів",
+        "Ендер-дракон"
+    ],
+    correct: 3
+},
+{
+    question: "Яка руда найцінніша у звичайному світі?",
+    answers: [
+        "Залізна",
+        "Золота",
+        "Алмазна",
+        "Вугільна"
+    ],
+    correct: 2
+}
+];
+
+let currentQuestion = 0;
+let score = 0;
+
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const nextBtn = document.getElementById("nextBtn");
+
+function showQuestion(){
+    nextBtn.style.display = "none";
+
+    let q = questions[currentQuestion];
+
+    questionEl.textContent =
+        `${currentQuestion + 1}. ${q.question}`;
+
+    answersEl.innerHTML = "";
+
+    q.answers.forEach((answer,index)=>{
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+
+        btn.onclick = ()=>{
+            Array.from(answersEl.children)
+                .forEach(b=>b.disabled=true);
+
+            if(index === q.correct){
+                btn.classList.add("correct");
+                score++;
+            } else {
+                btn.classList.add("wrong");
+                answersEl.children[q.correct]
+                    .classList.add("correct");
+            }
+
+            nextBtn.style.display = "block";
+        };
+
+        answersEl.appendChild(btn);
+    });
+}
+
+function showResult(){
+    document.getElementById("quiz").innerHTML = `
+        <div id="result">
+            🏆 Квіз завершено!<br><br>
+            Ваш результат:<br>
+            <span class="score">${score} / ${questions.length}</span>
+            <br><br>
+            <button onclick="location.reload()">
+                ГРАТИ ЗНОВУ
+            </button>
+        </div>
+    `;
+}
+
+nextBtn.onclick = ()=>{
+    currentQuestion++;
+
+    if(currentQuestion < questions.length){
+        showQuestion();
+    } else {
+        showResult();
+    }
+};
+
+showQuestion();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RIVALS Roblox Quiz</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#1e293b,#2563eb);
+    color:white;
+}
+
+.quiz-box{
+    width:90%;
+    max-width:700px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(10px);
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 0 30px rgba(0,0,0,.4);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+}
+
+.progress{
+    height:12px;
+    background:#334155;
+    border-radius:20px;
+    overflow:hidden;
+    margin-bottom:20px;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:#22c55e;
+    transition:.4s;
+}
+
+.question{
+    font-size:22px;
+    margin-bottom:20px;
+}
+
+.answer{
+    display:block;
+    width:100%;
+    padding:15px;
+    margin:10px 0;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:#1e40af;
+    color:white;
+    transition:.3s;
+}
+
+.answer:hover{
+    background:#2563eb;
+    transform:scale(1.02);
+}
+
+#result{
+    text-align:center;
+    display:none;
+}
+
+.score{
+    font-size:50px;
+    margin:15px 0;
+}
+
+.restart{
+    padding:12px 25px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+    font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<div class="quiz-box">
+
+    <h1>🎮 RIVALS QUIZ</h1>
+
+    <div class="top">
+        <div>Питання: <span id="count">1</span>/5</div>
+        <div>⏱ <span id="timer">60</span> c</div>
+    </div>
+
+    <div class="progress">
+        <div class="progress-bar" id="bar"></div>
+    </div>
+
+    <div id="quiz">
+        <div class="question" id="question"></div>
+        <div id="answers"></div>
+    </div>
+
+    <div id="result">
+        <h2>Тест завершено!</h2>
+        <div class="score" id="score"></div>
+        <p id="message"></p>
+        <br>
+        <button class="restart" onclick="location.reload()">
+            Спробувати ще раз
+        </button>
+    </div>
+
+</div>
+
+<script>
+
+const questions = [
+{
+question:"У якій грі Roblox проходить цей тест?",
+answers:["Brookhaven","RIVALS","Blox Fruits","Doors"],
+correct:1
+},
+{
+question:"Який жанр має RIVALS?",
+answers:["FPS-шутер","Тайкун","Симулятор","Гонки"],
+correct:0
+},
+{
+question:"Що найважливіше для перемоги?",
+answers:["Будівництво","Реакція та влучність","Риболовля","Торгівля"],
+correct:1
+},
+{
+question:"Проти кого грають гравці?",
+answers:["Ботів ферми","Інших гравців","Тварин","NPC"],
+correct:1
+},
+{
+question:"Що потрібно робити в боях?",
+answers:["Збирати врожай","Перемагати суперників","Будувати базу","Годувати тварин"],
+correct:1
+}
+];
+
+let current=0;
+let score=0;
+
+const question=document.getElementById("question");
+const answers=document.getElementById("answers");
+const count=document.getElementById("count");
+const bar=document.getElementById("bar");
+
+function loadQuestion(){
+
+    let q=questions[current];
+
+    question.innerText=q.question;
+    answers.innerHTML="";
+
+    q.answers.forEach((ans,index)=>{
+        const btn=document.createElement("button");
+        btn.classList.add("answer");
+        btn.innerText=ans;
+
+        btn.onclick=()=>{
+            if(index===q.correct){
+                score++;
+            }
+
+            current++;
+
+            if(current<questions.length){
+                loadQuestion();
+            }else{
+                finishQuiz();
+            }
+        };
+
+        answers.appendChild(btn);
+    });
+
+    count.innerText=current+1;
+    bar.style.width=(current/questions.length)*100+"%";
+}
+
+function finishQuiz(){
+    clearInterval(timer);
+
+    document.getElementById("quiz").style.display="none";
+    document.getElementById("result").style.display="block";
+
+    document.getElementById("score").innerHTML=
+        score + " / " + questions.length;
+
+    let msg="";
+
+    if(score===5){
+        msg="🏆 Легенда RIVALS!";
+    }else if(score>=3){
+        msg="🔥 Хороший результат!";
+    }else{
+        msg="🎯 Потрібно ще потренуватися!";
+    }
+
+    document.getElementById("message").innerText=msg;
+
+    bar.style.width="100%";
+}
+
+let time=60;
+
+const timer=setInterval(()=>{
+    time--;
+    document.getElementById("timer").innerText=time;
+
+    if(time<=0){
+        clearInterval(timer);
+        finishQuiz();
+    }
+},1000);
+
+loadQuestion();
+
+</script>
+
+</body>
+</html>

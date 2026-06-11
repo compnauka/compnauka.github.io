@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Головоломка за книгами про Гаррі Поттера</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#1e3c72,#2a5298);
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:rgba(255,255,255,0.1);
+    padding:20px;
+    border-radius:15px;
+}
+
+h1,h2{
+    text-align:center;
+}
+
+.card{
+    background:rgba(255,255,255,0.15);
+    padding:15px;
+    margin:15px 0;
+    border-radius:10px;
+}
+
+button{
+    background:#ffd700;
+    color:black;
+    border:none;
+    padding:10px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    margin:5px;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#ffea70;
+}
+
+input{
+    padding:8px;
+    border-radius:6px;
+    border:none;
+}
+
+#result{
+    font-size:24px;
+    text-align:center;
+    margin-top:20px;
+    font-weight:bold;
+}
+
+.correct{
+    color:#7CFC00;
+}
+
+.wrong{
+    color:#ff8080;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>⚡ Таємниця Гоґвортсу ⚡</h1>
+<p style="text-align:center">
+Пройди всі випробування за мотивами перших двох книг про Гаррі Поттера!
+</p>
+
+<div class="card">
+<h2>1. Вибери правильну відповідь</h2>
+<p>Як називається школа чарівництва, де навчався Гаррі?</p>
+
+<button onclick="answer1(true)">Гоґвортс</button>
+<button onclick="answer1(false)">Нарнія</button>
+<button onclick="answer1(false)">Камелот</button>
+
+<p id="q1"></p>
+</div>
+
+<div class="card">
+<h2>2. Загадка від Доббі</h2>
+
+<p>
+У другій книзі хто відкрив Таємну кімнату багато років тому?
+</p>
+
+<input id="answer2" placeholder="Введи ім'я">
+<button onclick="check2()">Перевірити</button>
+
+<p id="q2"></p>
+</div>
+
+<div class="card">
+<h2>3. Магічний код</h2>
+
+<p>
+Склади слово з літер:
+</p>
+
+<h3>Р І Г А Р</h3>
+
+<input id="answer3" placeholder="Слово">
+<button onclick="check3()">Перевірити</button>
+
+<p id="q3"></p>
+</div>
+
+<div class="card">
+<h2>4. Хто це?</h2>
+
+<p>
+Найкращий друг Гаррі з рудим волоссям:
+</p>
+
+<button onclick="answer4(false)">Драко</button>
+<button onclick="answer4(true)">Рон</button>
+<button onclick="answer4(false)">Снейп</button>
+
+<p id="q4"></p>
+</div>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+let score = 0;
+let solved = {
+q1:false,
+q2:false,
+q3:false,
+q4:false
+};
+
+function updateResult(){
+    let total = Object.values(solved).filter(v=>v).length;
+
+    if(total === 4){
+        document.getElementById("result").innerHTML =
+        "🏆 Вітаємо! Ти розкрила Таємницю Гоґвортсу!<br>Твій результат: "
+        + score + " / 4";
+    }
+}
+
+function answer1(correct){
+    if(solved.q1) return;
+
+    if(correct){
+        document.getElementById("q1").innerHTML =
+        "✅ Правильно!";
+        score++;
+    }else{
+        document.getElementById("q1").innerHTML =
+        "❌ Спробуй ще раз.";
+        return;
+    }
+
+    solved.q1 = true;
+    updateResult();
+}
+
+function check2(){
+    if(solved.q2) return;
+
+    let ans =
+    document.getElementById("answer2")
+    .value.trim().toLowerCase();
+
+    if(ans.includes("редл")){
+        document.getElementById("q2").innerHTML =
+        "✅ Так! Це Том Редл.";
+        score++;
+        solved.q2=true;
+        updateResult();
+    }else{
+        document.getElementById("q2").innerHTML =
+        "❌ Підказка: в українському перекладі його звали Том Редл.";
+    }
+}
+
+function check3(){
+    if(solved.q3) return;
+
+    let ans =
+    document.getElementById("answer3")
+    .value.trim().toLowerCase();
+
+    if(ans === "гаррі"){
+        document.getElementById("q3").innerHTML =
+        "✅ Чудово!";
+        score++;
+        solved.q3=true;
+        updateResult();
+    }else{
+        document.getElementById("q3").innerHTML =
+        "❌ Спробуй ще раз.";
+    }
+}
+
+function answer4(correct){
+    if(solved.q4) return;
+
+    if(correct){
+        document.getElementById("q4").innerHTML =
+        "✅ Саме так!";
+        score++;
+        solved.q4=true;
+        updateResult();
+    }else{
+        document.getElementById("q4").innerHTML =
+        "❌ Ні, подумай ще.";
+    }
+}
+</script>
+
+</body>
+</html>

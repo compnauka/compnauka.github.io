@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квіз: Серафина Крін і Серце Світу</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f4f8ff;
+}
+h1 {
+    color: #4a4aff;
+}
+.question {
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+button {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#result {
+    margin-top: 20px;
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<h1>📚 Квіз: Серафина Крін і Серце Світу</h1>
+
+<div id="quiz">
+    <div class="question" id="question"></div>
+    <div id="answers"></div>
+</div>
+
+<div id="result"></div>
+
+<script>
+const questions = [
+{
+    q: "Як звати головну героїню книги?",
+    answers: ["Марта Крін", "Серафина Крін", "Софія Крін"],
+    correct: 1
+},
+{
+    q: "У якому місті живе Серафина?",
+    answers: ["Сонцеград", "Маговія", "Сутінкоград"],
+    correct: 2
+},
+{
+    q: "Ким мріяла стати Серафина?",
+    answers: ["Художницею", "Письменницею", "Лікаркою"],
+    correct: 1
+},
+{
+    q: "Як звали собаку Серафини?",
+    answers: ["Рекс", "Локі", "Барсик"],
+    correct: 1
+},
+{
+    q: "Що було особливого в Локі?",
+    answers: ["Він літав", "Він ставав невидимим", "Він умів говорити"],
+    correct: 2
+}
+];
+
+let current = 0;
+let score = 0;
+
+function showQuestion() {
+    const q = questions[current];
+    document.getElementById("question").textContent =
+        `Питання ${current + 1}: ${q.q}`;
+
+    const answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    q.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+        btn.onclick = () => checkAnswer(index);
+        answersDiv.appendChild(btn);
+    });
+}
+
+function checkAnswer(index) {
+    if (index === questions[current].correct) {
+        score++;
+    }
+
+    current++;
+
+    if (current < questions.length) {
+        showQuestion();
+    } else {
+        document.getElementById("quiz").innerHTML = "";
+        document.getElementById("result").innerHTML =
+            `🎉 Твій результат: ${score} із ${questions.length}`;
+    }
+}
+
+showQuestion();
+</script>
+
+</body>
+</html>

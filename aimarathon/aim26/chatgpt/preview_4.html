@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Головоломки: Енн із Зелених Дахів</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#dff5d8,#fff8dc);
+    margin:0;
+    padding:20px;
+}
+.container{
+    max-width:1000px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+h1{
+    text-align:center;
+    color:#2e8b57;
+}
+.task{
+    border:2px solid #90ee90;
+    padding:15px;
+    margin:15px 0;
+    border-radius:10px;
+}
+button{
+    background:#2e8b57;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:8px;
+    cursor:pointer;
+}
+button:hover{
+    background:#228b22;
+}
+.result{
+    font-weight:bold;
+    margin-top:8px;
+}
+input, select{
+    padding:5px;
+    margin-top:5px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>🌿 Таємниці Енн із Зелених Дахів 🌿</h1>
+<p>Виконай 12 завдань за книгами «Енн із Зелених Дахів» та «Енн з Ейвонлі»!</p>
+
+<div id="tasks"></div>
+
+<h2 id="score">⭐ Бали: 0 / 12</h2>
+</div>
+
+<script>
+let score = 0;
+
+const tasks = [
+{
+q:"1. Як звали дівчинку з рудим волоссям?",
+type:"input",
+a:"енн"
+},
+{
+q:"2. Де жила Енн?",
+type:"input",
+a:"зелені дахи"
+},
+{
+q:"3. Хто всиновив Енн?",
+type:"input",
+a:"марілла і меттью"
+},
+{
+q:"4. Обери найкращу подругу Енн:",
+type:"select",
+options:["Діана","Рейчел","Джозі"],
+a:"Діана"
+},
+{
+q:"5. Хто часто сперечався з Енн, а потім став другом?",
+type:"select",
+options:["Гілберт","Чарлі","Фред"],
+a:"Гілберт"
+},
+{
+q:"6. Якого кольору волосся Енн?",
+type:"select",
+options:["Чорне","Руде","Світле"],
+a:"Руде"
+},
+{
+q:"7. Відгадай слово: ДРУГ ЕНН (7 букв)",
+type:"input",
+a:"гілберт"
+},
+{
+q:"8. У книзі «Енн з Ейвонлі» Енн стала...",
+type:"select",
+options:["Лікаркою","Вчителькою","Письменницею"],
+a:"Вчителькою"
+},
+{
+q:"9. Правда чи ні? Енн любила вигадувати історії.",
+type:"select",
+options:["Правда","Ні"],
+a:"Правда"
+},
+{
+q:"10. Знайди зайве слово:",
+type:"select",
+options:["Діана","Гілберт","Попелюшка"],
+a:"Попелюшка"
+},
+{
+q:"11. Яке слово найкраще описує Енн?",
+type:"select",
+options:["Мрійлива","Сумна","Ледача"],
+a:"Мрійлива"
+},
+{
+q:"12. Склади ім'я подруги Енн: Д _ А Н А",
+type:"input",
+a:"діана"
+}
+];
+
+const container = document.getElementById("tasks");
+
+tasks.forEach((t,i)=>{
+let div=document.createElement("div");
+div.className="task";
+
+let html=`<h3>${t.q}</h3>`;
+
+if(t.type==="input"){
+html+=`<input id="ans${i}">`;
+}else{
+html+=`<select id="ans${i}">
+<option>--обери--</option>
+${t.options.map(o=>`<option>${o}</option>`).join("")}
+</select>`;
+}
+
+html+=`
+<br><br>
+<button onclick="check(${i})">Перевірити</button>
+<div id="res${i}" class="result"></div>
+`;
+
+div.innerHTML=html;
+container.appendChild(div);
+});
+
+function check(i){
+const task=tasks[i];
+let user=document.getElementById("ans"+i).value.trim().toLowerCase();
+let correct=task.a.toLowerCase();
+
+const res=document.getElementById("res"+i);
+
+if(res.dataset.solved==="true") return;
+
+if(user===correct){
+res.innerHTML="✅ Правильно!";
+res.style.color="green";
+res.dataset.solved="true";
+score++;
+}else{
+res.innerHTML="❌ Спробуй ще!";
+res.style.color="red";
+}
+document.getElementById("score").innerHTML=`⭐ Бали: ${score} / 12`;
+
+if(score===12){
+document.getElementById("score").innerHTML=
+"🏆 Вітаємо! Ти справжня знавчиня Енн із Зелених Дахів!";
+}
+}
+</script>
+
+</body>
+</html>
