@@ -906,6 +906,171 @@
             gap: 18px;
         }
 
+        /* --- Галереї фото-робіт із збільшенням (роботи, комікси) --- */
+        .aim-photo-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .aim-robot-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .aim-comic-grid {
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        }
+
+        .aim-zoom {
+            position: relative;
+            display: block;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background: var(--tag-bg);
+            box-shadow: var(--shadow-sm);
+            cursor: zoom-in;
+            transition: var(--transition);
+        }
+
+        .aim-zoom:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .aim-robot-grid .aim-zoom img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+        }
+
+        .aim-comic-grid .aim-zoom img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+        }
+
+        .aim-zoom::after {
+            content: "\f00e"; /* fa magnifying-glass-plus */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.72);
+            color: #fff;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .aim-zoom:hover::after,
+        .aim-zoom:focus-visible::after {
+            opacity: 1;
+        }
+
+        /* --- Лайтбокс --- */
+        .aim-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.92);
+        }
+
+        .aim-lightbox.open {
+            display: block;
+        }
+
+        .aim-lb-stage {
+            position: absolute;
+            inset: 0;
+            overflow: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 24px 12px 70px;
+        }
+
+        .aim-lb-stage img {
+            width: min(94vw, 880px);
+            height: auto;
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+            background: #fff;
+        }
+
+        .aim-lb-close,
+        .aim-lb-prev,
+        .aim-lb-next {
+            position: fixed;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.14);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .aim-lb-close:hover,
+        .aim-lb-prev:hover,
+        .aim-lb-next:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .aim-lb-close {
+            top: 14px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }
+
+        .aim-lb-prev,
+        .aim-lb-next {
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 64px;
+            border-radius: 12px;
+            font-size: 1.8rem;
+        }
+
+        .aim-lb-prev { left: 14px; }
+        .aim-lb-next { right: 14px; }
+
+        .aim-lb-cap {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 14px 16px;
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
+        }
+
+        @media (max-width: 600px) {
+            .aim-lb-prev, .aim-lb-next { width: 40px; height: 54px; font-size: 1.4rem; }
+            .aim-lb-stage img { width: 96vw; }
+        }
+
         /* --- Інфо-блок (примітка) --- */
         .aim-note {
             display: flex;
@@ -1057,16 +1222,13 @@
                 <div class="aim-approach-quote"><i class="fas fa-quote-left" aria-hidden="true"></i></div>
                 <div>
                     <p>
-                        Головна мета, яку я ставив перед собою, — не хайп навколо останніх новин чи нових
-                        ШІ-моделей, а закладання фундаменту — справжнього розуміння технологій штучного
-                        інтелекту. Майже на кожному уроці ми експериментували, пробували, порівнювали,
-                        обговорювали, дискутували й «бруднили руки», щоб знайомитися з технологіями не на
-                        словах, а на ділі.
+                        Головна мета — не хайп навколо новин і нових моделей, а фундамент: щоб діти
+                        справді розуміли технології. Майже на кожному уроці ми пробували, порівнювали,
+                        обговорювали й «бруднили руки» — знайомилися з ШІ на ділі, без хащів термінів.
                     </p>
                     <p>
-                        Я свідомо не занурювався в хащі спеціальних термінів і конкретних рішень. Для мене
-                        цей марафон — теж експеримент: як розповісти дітям початкової школи про штучний
-                        інтелект так, щоб водночас і зацікавити їх, і вберегти від можливих негативних наслідків.
+                        Для мене цей марафон — теж експеримент: як розповісти дітям про штучний інтелект
+                        так, щоб і зацікавити, і вберегти.
                     </p>
                     <div class="aim-approach-author">
                         <img src="/pan_artem.png" alt="Артем Кисляков" loading="lazy" />
@@ -1080,10 +1242,8 @@
         <section class="aim-section" id="resources">
             <h2 class="aim-section-title"><i class="fas fa-toolbox" aria-hidden="true"></i> Ресурси за класами</h2>
             <p class="aim-lead">
-                На момент проведення марафону ми користувалися безкоштовними можливостями цих сервісів —
-                усі вони працюють просто в браузері. Нижче зібрано основні інструменти, які діти вивчали та
-                з якими працювали на кожній паралелі, з коротким описом того, як саме ми їх використовували.
-                Окрім них, під час підготовки ми залучали й інші сервіси — тут наведено найважливіші.
+                Сервіси безкоштовні й працюють просто в браузері. Нижче — головні інструменти кожної
+                паралелі та як ми їх використовували.
             </p>
 
             <nav class="aim-quicknav" aria-label="Швидкий перехід до паралелі">
@@ -1290,11 +1450,9 @@
                             </div>
                         </div>
                         <p class="aim-resource-desc">
-                            Вчилися складати ефективні запити (промпти) для навчання, а на завершення —
-                            створювали власні інтерактивні тести за улюбленою книгою, мультфільмом чи грою
-                            (їх зібрано в розділі «Роботи наших учнів»). Сервіс має вікове обмеження 13+,
-                            тому працювали з ним лише в демонстраційному форматі, під керівництвом учителя:
-                            без власних облікових записів і персональних даних.
+                            Вчилися складати ефективні запити, а на завершення створювали власні
+                            інтерактивні тести за улюбленою книгою, мультфільмом чи грою (див. «Роботи
+                            наших учнів»). 13+, тому лише в демонстраційному форматі під керівництвом учителя.
                         </p>
                         <div class="aim-resource-tags">
                             <span class="tag">генеративний ШІ</span>
@@ -1379,11 +1537,9 @@
                             </div>
                         </div>
                         <p class="aim-resource-desc">
-                            Вчилися складати ефективні запити (промпти) для навчання, а на завершення —
-                            створювали власні ігри та інтерактивні навчальні сторінки (їх зібрано в розділі
-                            «Роботи наших учнів»). Сервіс має вікове обмеження 13+, тому працювали з ним
-                            лише в демонстраційному форматі, під керівництвом учителя: без власних
-                            облікових записів і персональних даних.
+                            Вчилися складати ефективні запити, а на завершення створювали власні ігри
+                            та навчальні проєкти (див. «Роботи наших учнів»). 13+, тому лише в
+                            демонстраційному форматі під керівництвом учителя.
                         </p>
                         <div class="aim-resource-tags">
                             <span class="tag">генеративний ШІ</span>
@@ -1401,9 +1557,8 @@
         <section class="aim-section" id="student-works">
             <h2 class="aim-section-title"><i class="fas fa-shapes" aria-hidden="true"></i> Роботи наших учнів</h2>
             <p class="aim-lead">
-                Найкраще про марафон розповідають самі діти — те, що вони створили власноруч. Нижче
-                зібрано роботи за паралелями; у заголовку кожної галереї зазначено сервіс, у якому її
-                зроблено. Будь-яка робота відкривається в новій вкладці.
+                Найкраще про марафон розповідають самі діти — те, що вони створили власноруч. Натисніть
+                на будь-яку роботу: інтерактивні відкриються в новій вкладці, а фото й комікси збільшаться.
             </p>
 
             <div class="aim-grade aim-grade-1">
@@ -1479,7 +1634,7 @@
                     <div class="aim-grade-badge">3</div>
                     <div>
                         <h3>3-ті класи</h3>
-                        <p>Інтерактивні тести та квізи за улюбленими книгами, мультфільмами й іграми</p>
+                        <p>Інтерактивні тести й квізи та роботи з підручних матеріалів</p>
                     </div>
                 </div>
                 <div class="aim-anim">
@@ -1504,6 +1659,19 @@
                         <a class="aim-student-work" href="chatgpt/preview_17.html" target="_blank" rel="noopener"><i class="fas fa-gamepad" aria-hidden="true"></i><strong>GoreBox</strong><span>Ігровий тест</span></a>
                     </div>
                 </div>
+                <div class="aim-anim">
+                    <p class="aim-anim-title"><i class="fas fa-robot" aria-hidden="true"></i> Роботи з підручних матеріалів:</p>
+                    <div class="aim-photo-grid aim-robot-grid aim-zoom-group">
+                        <a class="aim-zoom" href="diy_robots/robot-1.jpg" data-caption="Картонний робот зі світлодіодними очима"><img src="diy_robots/robot-1.jpg" alt="Робот учнів 3 класу з картону зі світлодіодними очима" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-2.jpg" data-caption="Пінопластовий робот у ковпачку"><img src="diy_robots/robot-2.jpg" alt="Робот учнів 3 класу з пінопласту" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-3.jpg" data-caption="Робот, обгорнутий фольгою"><img src="diy_robots/robot-3.jpg" alt="Робот учнів 3 класу, обгорнутий фольгою" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-4.jpg" data-caption="Рожевий робот із вусиками"><img src="diy_robots/robot-4.jpg" alt="Рожевий робот учнів 3 класу" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-5.jpg" data-caption="Робот у стилі Minecraft"><img src="diy_robots/robot-5.jpg" alt="Робот учнів 3 класу у стилі Minecraft" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-6.jpg" data-caption="Робот-вартовий"><img src="diy_robots/robot-6.jpg" alt="Робот-вартовий учнів 3 класу" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-7.jpg" data-caption="Картонний робот із клавіатурою"><img src="diy_robots/robot-7.jpg" alt="Картонний робот учнів 3 класу з клавіатурою" loading="lazy"></a>
+                        <a class="aim-zoom" href="diy_robots/robot-8.jpg" data-caption="Робот на платі micro:bit"><img src="diy_robots/robot-8.jpg" alt="Lego-робот учнів 3 класу з платою micro:bit" loading="lazy"></a>
+                    </div>
+                </div>
             </div>
 
             <div class="aim-grade aim-grade-4">
@@ -1511,7 +1679,7 @@
                     <div class="aim-grade-badge">4</div>
                     <div>
                         <h3>4-ті класи</h3>
-                        <p>Власні ігри та інтерактивні навчальні проєкти</p>
+                        <p>Власні ігри, інтерактивні навчальні проєкти та комікси про ШІ</p>
                     </div>
                 </div>
                 <div class="aim-anim">
@@ -1540,6 +1708,19 @@
                         <a class="aim-student-work" href="interactive/math-hearts.html" target="_blank" rel="noopener"><i class="fas fa-heart-pulse" aria-hidden="true"></i><strong>Країна Сердечок</strong><span>Тренажер із життями</span></a>
                     </div>
                 </div>
+                <div class="aim-anim">
+                    <p class="aim-anim-title"><i class="fas fa-images" aria-hidden="true"></i> Комікси про штучний інтелект (ChatGPT):</p>
+                    <div class="aim-photo-grid aim-comic-grid aim-zoom-group">
+                        <a class="aim-zoom" href="comics/comic-1.jpg" data-caption="Штучний інтелект у нашому житті"><img src="comics/comic-1.jpg" alt="Дитячий комікс: штучний інтелект у нашому житті" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-2.jpg" data-caption="ШІ — мій розумний помічник"><img src="comics/comic-2.jpg" alt="Дитячий комікс: ШІ — мій розумний помічник" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-3.jpg" data-caption="Знайомство зі штучним інтелектом"><img src="comics/comic-3.jpg" alt="Дитячий комікс: знайомство зі штучним інтелектом" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-4.jpg" data-caption="Це я — твій ШІ-помічник"><img src="comics/comic-4.jpg" alt="Дитячий комікс: твій ШІ-помічник" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-5.jpg" data-caption="ШІ в парку розваг"><img src="comics/comic-5.jpg" alt="Дитячий комікс: ШІ в парку розваг" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-6.jpg" data-caption="Робот на городі"><img src="comics/comic-6.jpg" alt="Дитячий комікс: робот на городі" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-7.jpg" data-caption="2085 рік: не вір рекламі"><img src="comics/comic-7.jpg" alt="Дитячий комікс: 2085 рік, застереження не вірити рекламі" loading="lazy"></a>
+                        <a class="aim-zoom" href="comics/comic-8.jpg" data-caption="ШІ-компаньйон: чи замінить він друзів?"><img src="comics/comic-8.jpg" alt="Дитячий комікс: ШІ-компаньйон і справжня дружба" loading="lazy"></a>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1547,20 +1728,18 @@
         <section class="aim-section" id="beyond">
             <h2 class="aim-section-title"><i class="fas fa-book-open-reader" aria-hidden="true"></i> Не лише на інформатиці</h2>
             <p class="aim-lead">
-                Марафон задумувався для уроків інформатики, читання та «Я досліджую світ», але вчителі
-                підхопили ідею й понесли її далі — інтегрували тему штучного інтелекту в математику,
-                українську мову та інші предмети. А під час проєктної діяльності після уроків діти
-                власноруч майстрували роботів із підручних матеріалів.
+                Задум охопив інформатику, читання та «Я досліджую світ», але вчителі понесли його далі —
+                у математику, українську мову та інші предмети. А після уроків діти майстрували роботів
+                із підручних матеріалів.
             </p>
             <div class="aim-goals">
                 <div class="aim-goal">
                     <div class="aim-goal-icon"><i class="fas fa-book-open" aria-hidden="true"></i></div>
                     <h3>Читання: «Роббі» Айзека Азімова</h3>
                     <p>
-                        Кожна паралель читала й розбирала адаптоване за віком оповідання Айзека Азімова
-                        «Роббі» — зворушливу історію про дівчинку та її робота-няню. Воно стало приводом
-                        поговорити про дружбу з машиною, довіру, відповідальність і про те, чи можуть
-                        роботи мати почуття.
+                        Кожна паралель читала адаптоване за віком оповідання Айзека Азімова «Роббі» —
+                        про дівчинку та її робота-няню. Привід поговорити про дружбу з машиною, довіру
+                        й те, чи можуть роботи мати почуття.
                     </p>
                     <div class="aim-dl">
                         <span class="aim-dl-label">Адаптовані версії оповідання (PDF, відкриваються в новій вкладці):</span>
@@ -1574,9 +1753,8 @@
                     <div class="aim-goal-icon"><i class="fas fa-brain" aria-hidden="true"></i></div>
                     <h3>ЯДС: як працює мозок і як ми вчимося</h3>
                     <p>
-                        На уроках «Я досліджую світ» діти вивчали роботу людського мозку та сам процес
-                        навчання. Так їм стало зрозуміліше, чому штучний інтелект теж «навчається на
-                        прикладах» і чим жива людська думка відрізняється від роботи машини.
+                        Діти вивчали, як працює людський мозок і як ми вчимося. Звідси — зрозуміліше,
+                        чому ШІ теж «навчається на прикладах» і чим жива думка відрізняється від машини.
                     </p>
                     <div class="aim-dl">
                         <span class="aim-dl-label">Презентації про мозок та інтелект (PDF, відкриваються в новій вкладці):</span>
@@ -1610,11 +1788,10 @@
         <section class="aim-section" id="rzkf">
             <h2 class="aim-section-title"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Формула вдалого запиту: РЗКФ</h2>
             <p class="aim-lead">
-                Працюючи з ChatGPT, ми з дітьми експериментували із запитами на прикладі складання плану
-                презентації до уроку. Спершу аналізували, як учні формулюють запити інтуїтивно, а потім я
-                показав їм просту формулу з чотирьох блоків — <strong>РЗКФ</strong> (в англомовних джерелах —
-                <strong>PTCF</strong>). Вона не розв'яже вузькоспеціалізованих завдань, але чудово підходить
-                для більшості повсякденних запитів.
+                На прикладі плану презентації ми з дітьми вчилися складати запити до ChatGPT: спершу — як
+                вийде, а потім за простою формулою з чотирьох блоків — <strong>РЗКФ</strong> (англ.
+                <strong>PTCF</strong>). Вона не для вузьких завдань, але чудово працює для більшості
+                повсякденних запитів.
             </p>
 
             <div class="aim-formula-eq" aria-hidden="true">
@@ -1692,11 +1869,10 @@
                         <span class="aim-case-tag">Перевіряємо факти</span>
                         <h3>«А штучний інтелект помилився!»</h3>
                         <p>
-                            Третьокласники попросили ChatGPT згенерувати завдання з математики для 3 класу — і,
-                            перевіряючи розв'язання, знайшли в них кілька помилок. Цей момент став одним із найкращих
-                            уроків марафону: діти на власному досвіді переконалися, що згенерований штучним інтелектом
-                            контент потрібно критично оцінювати й обов'язково перевіряти. ШІ — потужний помічник,
-                            але він не безпомилковий, а останнє слово завжди лишається за людиною.
+                            Третьокласники попросили ChatGPT скласти завдання з математики — і знайшли в
+                            розв'язаннях кілька помилок. Найкращий урок марафону: діти на власному досвіді
+                            переконалися, що відповіді ШІ треба перевіряти. Він потужний помічник, але не
+                            безпомилковий — останнє слово завжди за людиною.
                         </p>
                     </div>
                 </div>
@@ -1706,20 +1882,11 @@
                         <span class="aim-case-tag">Перевіряємо джерела й мову</span>
                         <h3>Коли український запит отримує відповідь із російського перекладу</h3>
                         <p>
-                            Створюючи тести за книгами про Гаррі Поттера українською, ми помітили в завданнях назви
-                            «Пуфендуй», «Когтевран» і «Букля» — форми з російського перекладу. Модель відповіла
-                            граматично зрозуміло, але спиралася не на ту перекладацьку традицію, яку читали діти.
-                            Це наочний приклад того, що ШІ не «знає правильну книжку» автоматично: він відтворює
-                            закономірності з великої суміші текстів, де одні мови, видання та версії можуть бути
-                            представлені значно більше за інші.
-                        </p>
-                        <p>
-                            Тому якість відповіді залежить не лише від формулювання запиту, а й від якості та
-                            доречності даних, на які спирається модель. Для завдань за конкретним твором варто
-                            називати мову й видання, просити дотримуватися української термінології, додавати
-                            перевірений список імен і назв, а готовий результат звіряти з першоджерелом. Контроль
-                            людини тут потрібен не для «виправлення коми», а щоб зберегти точність, мовний контекст
-                            і повагу до культури, у якій використовується матеріал.
+                            Створюючи тести за книгами про Гаррі Поттера українською, діти побачили в завданнях
+                            назви з російського перекладу — «Пуфендуй», «Когтевран», «Букля». ШІ не «знає
+                            правильну книжку»: він спирається на те, чого в його даних більше. Тож для завдань
+                            за конкретним твором варто називати мову й видання, давати перевірені імена та
+                            звіряти результат із першоджерелом — щоб зберегти і точність, і мовний контекст.
                         </p>
                     </div>
                 </div>
@@ -1739,9 +1906,8 @@
                     <p class="aim-lead">
                         Спеціально до марафону я створив для дітей інтерактивну книгу «Привіт, ШІ!» —
                         знайомство зі світом штучного інтелекту через історію хлопчика Тимка та робота
-                        Розумка. Усередині — цікаві історії, прості пояснення складних речей та інтерактивні
-                        завдання. Вона підійде учням, батькам і вчителям, а читати її можна онлайн —
-                        просто у браузері.
+                        Розумка: цікаві історії, прості пояснення й інтерактивні завдання. Для учнів,
+                        батьків і вчителів — читається онлайн просто у браузері.
                     </p>
                     <a class="btn btn-primary" href="/services/ai/pryvitshi/index.html" target="_blank"
                         rel="noopener" style="width:auto;">
@@ -1756,17 +1922,80 @@
             <div class="aim-note">
                 <i class="fas fa-circle-info" aria-hidden="true"></i>
                 <div>
-                    <strong>Для вчителів і батьків.</strong> Роботу з генеративними сервісами (зокрема
-                    ChatGPT, для якого діє вікове обмеження 13+) учитель проводив у демонстраційному форматі:
-                    учні не створювали власних облікових записів і не вводили персональних даних. Ми
-                    наголошуємо: штучний інтелект — це помічник, а не заміна власному мисленню, тож його
-                    відповіді завжди варто перевіряти. Сторінка ще оновлюватиметься новими матеріалами
-                    та результатами.
+                    <strong>Для вчителів і батьків.</strong> Генеративні сервіси (зокрема ChatGPT, 13+)
+                    учитель показував у демонстраційному форматі — без дитячих акаунтів і персональних
+                    даних. ШІ — помічник, а не заміна власному мисленню, тож його відповіді варто
+                    перевіряти. Сторінка ще оновлюватиметься.
                 </div>
             </div>
         </section>
 
     </main>
+
+    <script>
+        // Лайтбокс для фото-робіт і коміксів: збільшення, гортання, клавіатура
+        (function () {
+            var items = [], idx = 0, box, imgEl, capEl;
+
+            function build() {
+                box = document.createElement('div');
+                box.className = 'aim-lightbox';
+                box.innerHTML =
+                    '<button class="aim-lb-close" type="button" aria-label="Закрити (Esc)"><i class="fas fa-xmark" aria-hidden="true"></i></button>' +
+                    '<button class="aim-lb-prev" type="button" aria-label="Попереднє"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>' +
+                    '<button class="aim-lb-next" type="button" aria-label="Наступне"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
+                    '<div class="aim-lb-stage"><img alt=""></div>' +
+                    '<div class="aim-lb-cap"></div>';
+                document.body.appendChild(box);
+                imgEl = box.querySelector('img');
+                capEl = box.querySelector('.aim-lb-cap');
+                box.querySelector('.aim-lb-close').addEventListener('click', close);
+                box.querySelector('.aim-lb-prev').addEventListener('click', function (e) { e.stopPropagation(); show(idx - 1); });
+                box.querySelector('.aim-lb-next').addEventListener('click', function (e) { e.stopPropagation(); show(idx + 1); });
+                box.querySelector('.aim-lb-stage').addEventListener('click', function (e) { if (e.target !== imgEl) close(); });
+            }
+
+            function show(i) {
+                if (i < 0) i = items.length - 1;
+                if (i >= items.length) i = 0;
+                idx = i;
+                var a = items[idx];
+                imgEl.src = a.getAttribute('href');
+                var cap = a.getAttribute('data-caption') || '';
+                imgEl.alt = cap;
+                capEl.textContent = items.length > 1 ? cap + ' · ' + (idx + 1) + ' / ' + items.length : cap;
+                box.querySelector('.aim-lb-stage').scrollTop = 0;
+                var multi = items.length > 1;
+                box.querySelector('.aim-lb-prev').style.display = multi ? '' : 'none';
+                box.querySelector('.aim-lb-next').style.display = multi ? '' : 'none';
+            }
+
+            function close() {
+                box.classList.remove('open');
+                document.body.style.overflow = '';
+                imgEl.src = '';
+            }
+
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('.aim-zoom');
+                if (!a) return;
+                e.preventDefault();
+                if (!box) build();
+                var group = a.closest('.aim-zoom-group');
+                items = [].slice.call(group.querySelectorAll('.aim-zoom'));
+                box.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                show(items.indexOf(a));
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (!box || !box.classList.contains('open')) return;
+                if (e.key === 'Escape') close();
+                else if (e.key === 'ArrowLeft') show(idx - 1);
+                else if (e.key === 'ArrowRight') show(idx + 1);
+            });
+        })();
+    </script>
 </body>
 
 </html>
