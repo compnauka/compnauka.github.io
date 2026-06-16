@@ -486,6 +486,13 @@ const CATEGORIES = [
         link: "services/ai/pryvitshi/index.html",
         image: "images/4.jpg",
         tags: ["3-4 класи"]
+      },
+      {
+        name: "ШІ-марафон 2026",
+        description: "Підсумки ШІ-марафону у початковій школі: сервіси, роботи учнів, результати опитування та педагогічні висновки.",
+        link: "aimarathon/aim26/",
+        image: "aimarathon/aim26/marathon-poster.jpg",
+        tags: ["1-2 класи", "3-4 класи"]
       }
     ]
   },
