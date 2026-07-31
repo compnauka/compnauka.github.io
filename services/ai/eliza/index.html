@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ЕЛІЗА — перший у світі чат-бот (1966) | Комп'ютерна наука</title>
+
+  <meta name="description"
+    content="Поспілкуйся з Елізою — чат-ботом 1966 року — і натисни «Зазирни в мозок», щоб побачити правила, за якими вона відповідає. Інтерактивний урок про те, як працювали перші чат-боти.">
+  <meta name="keywords"
+    content="еліза, eliza, перший чат-бот, штучний інтелект для дітей, історія ШІ, Вейценбаум, ефект Елізи, комп'ютерна наука, урок інформатики">
+  <meta name="author" content="Артем Кисляков">
+  <meta name="theme-color" content="#0a1a0a">
+  <link rel="canonical" href="https://itnauka.org/services/ai/eliza/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://itnauka.org/services/ai/eliza/" />
+  <meta property="og:title" content="ЕЛІЗА — перший у світі чат-бот (1966)" />
+  <meta property="og:description"
+    content="Поговори з Елізою і зазирни їй у мозок: побач правила, за якими вона відповідає." />
+  <meta property="og:image" content="https://itnauka.org/images/50.jpg" />
+  <meta property="og:locale" content="uk_UA" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ЕЛІЗА — перший у світі чат-бот (1966)" />
+  <meta name="twitter:description" content="Поговори з Елізою і зазирни їй у мозок." />
+  <meta name="twitter:image" content="https://itnauka.org/images/50.jpg" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="../../../favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../../../favicon.svg" />
+  <link rel="shortcut icon" href="../../../favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../../../apple-touch-icon.png" />
+
+  <!-- Шрифти. ВАЖЛИВО: обидва мають кирилицю.
+       У старій версії тут був VT323 — красивий, але без кирилиці,
+       тому весь український текст показувався системним шрифтом. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=PT+Mono&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-N8T05K3NGT');
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ЕЛІЗА — перший у світі чат-бот",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Any",
+    "inLanguage": "uk",
+    "isAccessibleForFree": true,
+    "typicalAgeRange": "8-14",
+    "educationalUse": "Демонстрація на уроці інформатики",
+    "description": "Інтерактивна реконструкція чат-бота ELIZA (Джозеф Вейценбаум, MIT, 1966) з режимом показу внутрішніх правил.",
+    "url": "https://itnauka.org/services/ai/eliza/",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Комп'ютерна наука з паном Артемом",
+      "url": "https://itnauka.org/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <a href="#chat" class="skip-link">Перейти до чату</a>
+
+  <!-- Окремий регіон для скрінрідера: сюди потрапляє ГОТОВА відповідь.
+       Сам чат не має aria-live, бо ефект друкарської машинки змусив би
+       читати текст по літері. -->
+  <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <main class="terminal">
+    <header class="terminal__header">
+      <a class="terminal__back" href="https://itnauka.org/">← На головну</a>
+      <h1 class="terminal__title">ЕЛІЗА</h1>
+      <p class="terminal__subtitle">MIT · 1966 · перший у світі чат-бот</p>
+    </header>
+
+    <nav class="toolbar" aria-label="Керування">
+      <button type="button" id="brainBtn" class="tool tool--brain" aria-pressed="false">
+        <span aria-hidden="true">🧠</span> Зазирни в мозок
+      </button>
+      <button type="button" id="ruleBtn" class="tool">
+        <span aria-hidden="true">＋</span> Своє правило
+      </button>
+      <button type="button" id="aboutBtn" class="tool">
+        <span aria-hidden="true">⚙</span> Як це працює
+      </button>
+      <button type="button" id="historyBtn" class="tool">
+        <span aria-hidden="true">📖</span> Історія
+      </button>
+      <button type="button" id="compareBtn" class="tool">
+        <span aria-hidden="true">⚖</span> 1966 vs 2026
+      </button>
+      <button type="button" id="saveBtn" class="tool">
+        <span aria-hidden="true">💾</span> Зберегти
+      </button>
+      <button type="button" id="resetBtn" class="tool tool--danger">
+        <span aria-hidden="true">↺</span> Спочатку
+      </button>
+    </nav>
+
+    <dl class="stats" aria-label="Показники Елізи">
+      <div class="stats__cell">
+        <dt>Правил у мозку</dt>
+        <dd id="statRules">—</dd>
+      </div>
+      <div class="stats__cell">
+        <dt>Спрацювало правило</dt>
+        <dd id="statRule">—</dd>
+      </div>
+      <div class="stats__cell stats__cell--warn">
+        <dt>Відмовок</dt>
+        <dd id="statFallback">0</dd>
+      </div>
+    </dl>
+
+    <div class="chat" id="chat" role="log" aria-label="Діалог з Елізою" tabindex="0"></div>
+
+    <div class="chips" id="chips" aria-label="Готові фрази"></div>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <label class="sr-only" for="input">Твоє повідомлення до Елізи</label>
+      <input type="text" id="input" name="message" maxlength="300" placeholder="Напиши щось Елізі…"
+        autocomplete="off" autocapitalize="sentences" enterkeyhint="send">
+      <button type="submit" id="send" class="composer__send">Надіслати</button>
+    </form>
+  </main>
+
+  <!-- Видимий текст: і для учнів, і для пошукових систем -->
+  <article class="paper">
+    <h2>Що це таке?</h2>
+    <p>
+      <strong>ЕЛІЗА</strong> — програма, яку в 1964–1966 роках написав
+      <strong>Джозеф Вейценбаум</strong> у Массачусетському технологічному інституті (MIT).
+      Це один із найперших чат-ботів у світі. Найвідоміший її сценарій називався
+      <em>DOCTOR</em>: програма вдавала психотерапевта, який лише перепитує співрозмовника.
+    </p>
+    <p>
+      Усередині Елізи немає ані нейромережі, ані навчання. Там лежить список правил на кшталт
+      «якщо у фразі є слово <em>мама</em> — запитай про сім'ю». Правил у цій версії
+      кілька десятків. Вейценбаум створив Елізу саме для того, щоб <strong>показати,
+      яким поверхневим</strong> буває «розуміння» у комп'ютера.
+    </p>
+    <h2>Ефект Елізи</h2>
+    <p>
+      Сталося несподіване: люди почали щиро прив'язуватися до програми. Секретарка
+      Вейценбаума, яка бачила, як він писав цей код, за кілька хвилин розмови попросила
+      залишити її з програмою наодинці. Схильність людини приписувати комп'ютеру розуміння
+      і почуття, яких у нього немає, назвали <strong>ефектом Елізи</strong>.
+    </p>
+    <p>
+      Саме тому тут є кнопка <strong>«Зазирни в мозок»</strong>: увімкни її й побач, яке
+      правило спрацювало, які слова Еліза висмикнула з твоєї фрази і в який шаблон вставила.
+      Коли механіка видима, ілюзія зникає — і залишається розуміння.
+    </p>
+    <h2>Як це показати на уроці</h2>
+    <ol>
+      <li>Спершу дайте дітям поспілкуватися <em>без</em> режиму мозку 3–4 хвилини.</li>
+      <li>Запитайте: «Як думаєте, вона вас розуміє?»</li>
+      <li>Увімкніть «Зазирни в мозок» і повторіть ті самі фрази.</li>
+      <li>Дайте завдання <strong>«Зламай Елізу»</strong>: знайти фразу, після якої бот відповість дурницю, і пояснити чому.</li>
+      <li>Через кнопку <strong>«Своє правило»</strong> хай кожен додасть власне правило й перевірить його в дії.</li>
+    </ol>
+    <p class="paper__foot">
+      <a href="https://itnauka.org/">Комп'ютерна наука з паном Артемом</a>
+    </p>
+  </article>
+
+  <!-- ─── Діалог: історія ─── -->
+  <dialog id="aboutDialog" class="modal" aria-labelledby="aboutTitle">
+    <form method="dialog" class="modal__close-form">
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </form>
+    <h2 id="aboutTitle">Як улаштована Еліза</h2>
+    <ol class="modal__steps">
+      <li><strong>Шукає ключові слова.</strong> Кожне правило — це шаблон на кшталт «я люблю …».</li>
+      <li><strong>Обирає найвагоміше правило.</strong> Якщо підходять кілька, виграє те, у якого більша вага.</li>
+      <li><strong>Перевертає особу.</strong> «я малюю» → «ти малюєш», «моя мама» → «твоя мама».</li>
+      <li><strong>Вставляє слова в готовий шаблон</strong> і видає результат.</li>
+    </ol>
+    <p class="modal__note">
+      Ніде на цьому шляху немає розуміння змісту. Еліза не знає, що таке мама,
+      школа чи смуток — вона знає лише, які літери в цих словах.
+    </p>
+    <h3>Чому вона іноді говорить дурниці</h3>
+    <p>
+      Бо правил мало. Коли жодне не підходить, Еліза каже «відмовку» на кшталт
+      «Розкажи більше» — і лічильник відмовок угорі зростає. Порахуй, скільки
+      реплік потрібно, щоб її «зламати».
+    </p>
+  </dialog>
+
+  <!-- ─── Діалог: історія ─── -->
+  <dialog id="historyDialog" class="modal" aria-labelledby="historyTitle">
+    <form method="dialog" class="modal__close-form">
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </form>
+    <h2 id="historyTitle">Звідки взялася Еліза</h2>
+
+    <ol class="timeline">
+      <li>
+        <span class="timeline__year">1950</span>
+        <span class="timeline__text">
+          Британський математик <strong>Алан Тюрінг</strong> публікує статтю з
+          питанням «Чи можуть машини мислити?» і пропонує перевірку: якщо людина
+          в переписці не відрізнить машину від людини — вважаймо, що машина
+          пройшла випробування.
+        </span>
+      </li>
+      <li>
+        <span class="timeline__year">1955<br>—1956</span>
+        <span class="timeline__text">
+          У пропозиції семінару 1955 року Джон Маккарті вживає назву
+          <strong>«штучний інтелект»</strong>. Сам літній семінар відбувається
+          1956 року в Дартмутському коледжі й допомагає започаткувати ШІ як
+          окремий напрям досліджень.
+        </span>
+      </li>
+      <li class="timeline__highlight">
+        <span class="timeline__year">1964<br>—1966</span>
+        <span class="timeline__text">
+          <strong>Джозеф Вейценбаум</strong> у Массачусетському технологічному
+          інституті пише <strong>ЕЛІЗУ</strong> — програму, яка підтримує розмову
+          за списком правил. Назва — на честь Елізи Дулітл із п'єси «Пігмаліон»,
+          яку вчили гарно говорити.
+        </span>
+      </li>
+      <li>
+        <span class="timeline__year">DOCTOR</span>
+        <span class="timeline__text">
+          Найвідоміший сценарій Елізи: вона вдає психотерапевта, який лише
+          перепитує. Секретарка Вейценбаума, яка бачила, як він писав цей код,
+          за кілька хвилин розмови попросила залишити її наодинці з програмою.
+          Так з'явилася назва <strong>«ефект Елізи»</strong> — коли людина
+          приписує комп'ютеру розуміння, якого в нього немає.
+        </span>
+      </li>
+      <li>
+        <span class="timeline__year">1970<br>—80-ті</span>
+        <span class="timeline__text">
+          Епоха <strong>експертних систем</strong>: ті самі правила, лише їх
+          тисячі, і пишуть їх фахівці — лікарі, інженери, геологи.
+        </span>
+      </li>
+      <li>
+        <span class="timeline__year">1990<br>—2000-ні</span>
+        <span class="timeline__text">
+          Замість правил комп'ютер починає рахувати <strong>ймовірності</strong>:
+          яке слово найчастіше йде після якого. Правил ніхто не пише — їх
+          заміняє статистика на великих текстах.
+        </span>
+      </li>
+      <li>
+        <span class="timeline__year">Сьогодні</span>
+        <span class="timeline__text">
+          <strong>Нейромережі та великі мовні моделі.</strong> Вони теж не
+          «розуміють» світ так, як людина, але замість кількох десятків правил
+          мають мільярди чисел, підібраних під час навчання.
+        </span>
+      </li>
+    </ol>
+
+    <p class="modal__note">
+      Від Елізи до сучасного ШІ — приблизно 60 років. Але питання Тюрінга
+      1950 року досі без остаточної відповіді.
+    </p>
+  </dialog>
+
+  <!-- ─── Діалог: порівняння ─── -->
+  <dialog id="compareDialog" class="modal" aria-labelledby="compareTitle">
+    <form method="dialog" class="modal__close-form">
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </form>
+    <h2 id="compareTitle">Еліза 1966 vs сучасний ШІ</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th scope="col">Питання</th>
+          <th scope="col">ЕЛІЗА, 1966</th>
+          <th scope="col">Сучасний ШІ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Звідки знання</th>
+          <td>Кілька десятків правил, написаних людиною вручну</td>
+          <td>Навчання на величезній кількості текстів</td>
+        </tr>
+        <tr>
+          <th scope="row">Чи вчиться</th>
+          <td>Ні. Скільки правил написали — стільки й буде</td>
+          <td>Навчається заздалегідь, до розмови. Поки ви спілкуєтесь,
+            вона вже нічого нового не вчить</td>
+        </tr>
+        <tr>
+          <th scope="row">Чи пам'ятає розмову</th>
+          <td>Лише кілька останніх фраз зі словом «мій/моя»</td>
+          <td>Пам'ятає, але не безмежно: коли розмова стає задовгою,
+            найдавніше поступово випадає з пам'яті</td>
+        </tr>
+        <tr>
+          <th scope="row">Чи розуміє зміст</th>
+          <td>Ні. Тільки збіг літер</td>
+          <td>Будує зв'язки між словами, але теж не «думає» як людина</td>
+        </tr>
+        <tr>
+          <th scope="row">Розмір</th>
+          <td>Кілька сторінок коду</td>
+          <td>Мільярди чисел-параметрів</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="modal__note">
+      Спільне в них одне: і Еліза, і сучасний ШІ — це програми. Вони не мають
+      почуттів і не несуть відповідальності за свої слова. Перевіряти відповіді
+      треба в обох випадках.
+    </p>
+  </dialog>
+
+  <!-- ─── Діалог: конструктор правил ─── -->
+  <dialog id="ruleDialog" class="modal" aria-labelledby="ruleTitle">
+    <form method="dialog" class="modal__close-form">
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </form>
+    <h2 id="ruleTitle">Додай Елізі своє правило</h2>
+    <p class="modal__note">
+      За схожим принципом працював і Вейценбаум: щоб бот заговорив про нову тему,
+      правило треба було дописати вручну. У справжній Елізі правила були
+      складніші — вона вміла ще й розбирати фразу на частини та збирати
+      з них відповідь. Тут ти задаєш простішу частину: слово-підказку й відповідь.
+    </p>
+
+    <form id="ruleForm" class="rule-form">
+      <p class="field">
+        <label for="ruleName">Назва теми</label>
+        <input type="text" id="ruleName" maxlength="40" required placeholder="Наприклад: Космос">
+      </p>
+      <p class="field">
+        <label for="ruleKeys">Слова-підказки <small>(через кому)</small></label>
+        <input type="text" id="ruleKeys" maxlength="200" required placeholder="космос, ракет, планет, зорі">
+        <small class="hint">
+          Пиши <strong>початок</strong> слова: «ракет» спрацює і на «ракета», і на «ракетою».
+        </small>
+      </p>
+      <p class="field">
+        <label for="ruleAnswers">Відповіді <small>(кожна з нового рядка)</small></label>
+        <textarea id="ruleAnswers" rows="4" maxlength="500" required
+          placeholder="А ти хотів би полетіти в космос?&#10;Яка планета тобі найцікавіша?"></textarea>
+      </p>
+      <p class="rule-form__actions">
+        <button type="submit" class="tool tool--primary">Додати правило</button>
+      </p>
+    </form>
+
+    <h3>Твої правила</h3>
+    <ul id="customList" class="custom-list"></ul>
+  </dialog>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>

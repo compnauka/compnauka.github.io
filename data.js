@@ -468,8 +468,8 @@ const CATEGORIES = [
     services: [
       {
         name: "ЕЛІЗА. Перший чат-бот",
-        description: "Дізнайтесь, якими були чат-боти на початку розвитку ШІ.",
-        link: "games/eliza.html",
+        description: "Поговоріть із чат-ботом 1966 року й зазирніть у його мозок.",
+        link: "services/ai/eliza/",
         image: "images/50.jpg",
         tags: ["3-4 класи", "5-7 класи"]
       },

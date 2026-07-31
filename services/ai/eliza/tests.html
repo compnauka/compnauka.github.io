@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Перевірки мозку Елізи</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="icon" type="image/png" href="../../../favicon-96x96.png" sizes="96x96" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=PT+Mono&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --green: #33ff33;
+      --green-dim: #1f8f1f;
+      --amber: #ffb000;
+      --red: #ff6b6b;
+      --bg: #0a1a0a;
+      --border: #2a4a2a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #111;
+      color: #bde8bd;
+      font-family: 'PT Mono', 'Courier New', monospace;
+      line-height: 1.6;
+      padding: 24px 16px 60px;
+    }
+
+    .wrap {
+      width: min(100%, 900px);
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-family: 'Pixelify Sans', sans-serif;
+      color: var(--green);
+      font-size: 1.9rem;
+      letter-spacing: .08em;
+      margin-bottom: 4px;
+    }
+
+    .lead {
+      color: var(--green-dim);
+      font-size: .88rem;
+      margin-bottom: 20px;
+    }
+
+    .lead a {
+      color: var(--green);
+    }
+
+    .summary {
+      font-family: 'Pixelify Sans', sans-serif;
+      font-size: 1.3rem;
+      padding: 14px 18px;
+      border: 3px solid var(--border);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 5;
+    }
+
+    .summary.ok {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .summary.bad {
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    section {
+      margin-bottom: 26px;
+    }
+
+    h2 {
+      font-family: 'Pixelify Sans', sans-serif;
+      color: var(--amber);
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h2.has-fail::after {
+      content: ' — Є ПОМИЛКИ';
+      color: var(--red);
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    li {
+      display: grid;
+      grid-template-columns: 1.4rem 1fr;
+      gap: 4px 8px;
+      padding: 3px 0;
+      font-size: .86rem;
+      align-items: baseline;
+    }
+
+    li.pass .mark {
+      color: var(--green);
+    }
+
+    li.fail {
+      background: rgba(255, 107, 107, .1);
+    }
+
+    li.fail .mark,
+    li.fail .label {
+      color: var(--red);
+    }
+
+    .detail {
+      grid-column: 2;
+      color: var(--amber);
+      font-size: .78rem;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      margin-top: 34px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: .82rem;
+      color: var(--green-dim);
+    }
+
+    footer a {
+      color: var(--green);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Перевірки мозку Елізи</h1>
+    <p class="lead">
+      Сторінка для вчителя. Якщо ви дописали правило в <code>rules.js</code>
+      або слово у словник у <code>reflection.js</code> — відкрийте це й
+      переконайтеся, що все лишилося зеленим.
+      <a href="./">← повернутися до Елізи</a>
+    </p>
+
+    <div id="results">Запускаю…</div>
+
+    <footer>
+      Тести працюють лише через http:// — якщо відкрити файл подвійним кліком
+      (протокол file://), браузер заблокує завантаження модулів.
+      Локально запустіть у теці сайту: <code>npx serve .</code>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { runTests } from './tests.js';
+
+    const root = document.getElementById('results');
+    try {
+      const { failed } = runTests(root);
+      document.title = (failed === 0 ? '✓ ' : '✕ ') + 'Перевірки мозку Елізи';
+    } catch (error) {
+      root.textContent = 'Тести не запустилися: ' + error.message;
+      console.error(error);
+    }
+  </script>
+</body>
+
+</html>

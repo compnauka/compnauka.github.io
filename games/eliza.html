@@ -1,534 +1,58 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЕЛІЗА — Перший у світі чат-бот онлайн | Комп'ютерна Наука</title>
-    <meta name="description" content="Дізнайтеся, як працювали перші чат-боти. Спілкуйтеся з Елізою — легендарною програмою, що імітує психотерапевта.">
-    <meta name="keywords" content="еліза, eliza, чат-бот, штучний інтелект, історія ІТ, психотерапевт онлайн, комп'ютерна наука">
-    <link rel="canonical" href="https://itnauka.org/games/eliza.html" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ЕЛІЗА переїхала | Комп'ютерна наука</title>
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://itnauka.org/games/eliza.html" />
-    <meta property="og:title" content="ЕЛІЗА — Перший у світі чат-бот онлайн" />
-    <meta property="og:description" content="Поспілкуйся з Елізою та дізнайся, з чого починався штучний інтелект!" />
-    <meta property="og:image" content="https://itnauka.org/images/50.jpg" />
+  <!-- Сторінка переїхала до services/ai/eliza/.
+       GitHub Pages не вміє серверних редиректів (301), тому робимо це
+       трьома способами одразу:
+       1) rel="canonical" — каже пошуковим системам, яка адреса головна;
+       2) <meta http-equiv="refresh"> — переносить звичайного відвідувача;
+       3) location.replace() — переносить одразу і не засмічує історію браузера,
+          щоб кнопка «Назад» не поверталася на цю ж сторінку по колу.
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://itnauka.org/games/eliza.html" />
-    <meta property="twitter:title" content="ЕЛІЗА — Перший у світі чат-бот онлайн" />
-    <meta property="twitter:description" content="Поспілкуйся з Елізою та дізнайся, з чого починався штучний інтелект!" />
-    <meta property="twitter:image" content="https://itnauka.org/images/50.jpg" />
+       Файл треба зберегти: на стару адресу ведуть закладки учнів,
+       посилання з розсилок і результати пошуку. Видалиш — буде 404. -->
+  <link rel="canonical" href="https://itnauka.org/services/ai/eliza/" />
+  <meta name="robots" content="noindex, follow" />
+  <meta http-equiv="refresh" content="0; url=../services/ai/eliza/" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" href="../favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-    <link rel="shortcut icon" href="../favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="../favicon-96x96.png" sizes="96x96" />
+  <link rel="shortcut icon" href="../favicon.ico" />
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8T05K3NGT"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-N8T05K3NGT');
-    </script>
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "ЕЛІЗА",
-      "operatingSystem": "Any",
-      "applicationCategory": "EducationalGame",
-      "description": "Перший у світі чат-бот, створений у 1966 році.",
-      "url": "https://itnauka.org/games/eliza.html",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Комп'ютерна наука з паном Артемом"
-      }
+  <style>
+    body {
+      background: #0a1a0a;
+      color: #33ff33;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      line-height: 1.7;
     }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --main-bg: #0a1a0a;
-            --text-color: #33ff33;
-            --user-text-color: #88ff88;
-            --border-color: #2a4a2a;
-            --glow-color: rgba(51, 255, 51, 0.3);
-            --scanline-color: rgba(0, 255, 0, 0.05);
-        }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    a {
+      color: #33ff33;
+    }
+  </style>
 
-        body {
-            font-family: 'VT323', monospace;
-            background: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                var(--scanline-color),
-                var(--scanline-color) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            height: 95vh;
-            max-height: 800px;
-            background: #0d1b0d;
-            border: 4px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 
-                0 0 30px var(--glow-color),
-                inset 0 0 20px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background: var(--main-bg);
-            padding: 20px 25px;
-            text-align: center;
-            border-bottom: 3px solid var(--text-color);
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .header::before,
-        .header::after {
-            content: '●';
-            position: absolute;
-            top: 15px;
-            font-size: 18px;
-            color: var(--text-color);
-            text-shadow: 0 0 10px var(--text-color);
-            animation: blink 1.5s infinite;
-        }
-
-        .header::before { left: 25px; }
-        .header::after { right: 25px; animation-delay: 0.75s; }
-
-        @keyframes blink {
-            0%, 49%, 100% { opacity: 1; }
-            50%, 99% { opacity: 0.3; }
-        }
-
-        .header h1 {
-            font-size: 38px;
-            margin-bottom: 8px;
-            color: var(--text-color);
-            text-shadow: 
-                0 0 8px var(--text-color),
-                0 0 15px var(--text-color);
-            font-weight: bold;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-        }
-
-        .header p {
-            font-size: 16px;
-            color: #66ff66;
-            opacity: 0.9;
-            letter-spacing: 2px;
-            text-shadow: 0 0 5px #66ff66;
-        }
-
-        .chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #000;
-            font-size: 20px;
-            line-height: 1.7;
-        }
-        
-        .message {
-            margin-bottom: 15px;
-            word-wrap: break-word;
-            letter-spacing: 0.5px;
-        }
-
-        .eliza {
-            color: var(--text-color);
-            text-shadow: 0 0 4px var(--text-color);
-        }
-        
-        .user {
-            color: var(--user-text-color);
-        }
-
-        .input-area {
-            border-top: 3px solid var(--text-color);
-            padding: 20px;
-            background: var(--main-bg);
-            flex-shrink: 0;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 15px;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px 15px;
-            background-color: #000;
-            border: 2px solid var(--text-color);
-            color: var(--text-color);
-            font-family: 'VT323', 'Courier New', monospace;
-            font-size: 20px;
-            transition: all 0.2s;
-            letter-spacing: 1px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #66ff66;
-            box-shadow: 
-                inset 0 0 10px rgba(0, 0, 0, 0.8),
-                0 0 15px var(--glow-color);
-            background-color: #001100;
-        }
-
-        input::placeholder { color: #226622; }
-        input:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        button {
-            padding: 12px 25px;
-            background: var(--main-bg);
-            border: 2px solid var(--text-color);
-            color: var(--text-color);
-            font-family: 'VT323', 'Courier New', monospace;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 5px var(--text-color);
-        }
-
-        button:hover:not(:disabled) {
-            background: #001a00;
-            box-shadow: 0 0 20px var(--glow-color);
-            border-color: #66ff66;
-            color: #66ff66;
-        }
-        
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            box-shadow: none;
-            background: var(--main-bg);
-        }
-
-        ::-webkit-scrollbar { width: 12px; }
-        ::-webkit-scrollbar-track { background: var(--main-bg); border-left: 1px solid var(--text-color); }
-        ::-webkit-scrollbar-thumb { background: var(--text-color); }
-        ::-webkit-scrollbar-thumb:hover { background: #66ff66; }
-
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
-
-        .container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            background: linear-gradient(to bottom, transparent 0%, rgba(51, 255, 51, 0.05) 50%, transparent 100%);
-            pointer-events: none;
-            animation: scan 7s linear infinite;
-            z-index: 10;
-        }
-
-        @media (max-width: 600px) {
-            body { padding: 0; font-size: 18px; }
-            .container { height: 100vh; max-height: none; border: none; border-radius: 0; }
-            .input-group { flex-direction: column; gap: 10px; }
-            .header h1 { font-size: 28px; letter-spacing: 3px; }
-            .header p { font-size: 14px; }
-            .chat-box { font-size: 18px; padding: 15px; }
-        }
-
-        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
-    </style>
+  <script>
+    location.replace('../services/ai/eliza/');
+  </script>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>ELIZA TERMINAL</h1>
-            <p>SYSTEM READY [MIT 1966]</p>
-        </div>
-        
-        <div class="chat-box" id="chatBox" role="log" aria-live="polite" aria-label="Вікно чату"></div>
-        
-        <div class="input-area">
-            <div class="input-group">
-                <label for="userInput" class="visually-hidden">Ваше повідомлення</label>
-                <input 
-                    type="text" 
-                    id="userInput" 
-                    placeholder="НАПИШИ ЩОСЬ ЦІКАВЕ..." 
-                    autocomplete="off"
-                    aria-label="Введіть ваше повідомлення"
-                    maxlength="500"
-                >
-                <button id="sendBtn" aria-label="Надіслати повідомлення">SEND</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (function() {
-            'use strict';
-
-            const chatBox = document.getElementById('chatBox');
-            const userInput = document.getElementById('userInput');
-            const sendBtn = document.getElementById('sendBtn');
-            
-            // Словник для заміни займенників (класична ELIZA техніка)
-            const pronounSwaps = {
-                "я": "ти", "мене": "тебе", "мій": "твій", "моя": "твоя", "моє": "твоє", "мої": "твої", "мені": "тобі",
-                "ти": "я", "тебе": "мене", "твій": "мій", "твоя": "моя", "твоє": "моє", "твої": "мої", "тобі": "мені",
-                "себе": "тебе", "собі": "тобі"
-            };
-
-            // Розширені шаблони для дітей з класичним ELIZA підходом
-            const patterns = [
-                // Привітання
-                { pattern: /^(привіт|здоров|вітаю|хай|хелоу)/i, responses: ["Привіт! Радий тебе бачити. Про що поговоримо?", "Вітаю! Що нового?", "Здоров! Розкажи щось цікаве."] },
-                
-                // Прощання
-                { pattern: /(бувай|до побачення|па-па|піду|пішов)/i, responses: ["Бувай! Було дуже цікаво поспілкуватися!", "Па-па! Заходь ще!", "До зустрічі! Гарного дня!"] },
-                
-                // Мрії та бажання (з двома групами захоплення)
-                { pattern: /я (хочу|мрію|бажаю|прагну)\s+(.+)/i, responses: ["Що тобі потрібно, щоб досягти {1}?", "Це цікава мрія! Чому саме {1}?", "А що ти робиш, щоб {1}?"] },
-                
-                // Почуття та емоції
-                { pattern: /я почуваюся (.+)/i, responses: ["Чому ти почуваєшся {0}?", "Розкажи більше про те, чому ти {0}.", "Що сталося, що ти так почуваєшся?"] },
-                { pattern: /мені (сумно|весело|нудно|цікаво|страшно|радісно)/i, responses: ["Чому тобі {0}?", "Розкажи, що змусило тебе так відчувати.", "Як часто тобі буває {0}?"] },
-                
-                // Любов до чогось
-                { pattern: /я (люблю|обожнюю|подобається)\s+(.+)/i, responses: ["Любиш {1}? А що в цьому найцікавіше?", "Круто! Розкажи про {1} більше.", "Чому тобі подобається саме {1}?", "Як давно ти любиш {1}?"] },
-                
-                // Думки та переконання
-                { pattern: /я думаю,?\s*що\s+(.+)/i, responses: ["Чому ти думаєш, що {0}?", "Це цікава думка. А що ще ти про це знаєш?", "Завжди думаєш про це чи тільки зараз?"] },
-                { pattern: /я вважаю,?\s*що\s+(.+)/i, responses: ["А інші люди теж так вважають?", "Чому ти в цьому впевнений?", "Розкажи більше про це."] },
-                
-                // Сім'я
-                { pattern: /(мама|тато|батько|мати|батьки|сестра|брат|бабуся|дідусь)/i, responses: ["Розкажи більше про свою сім'ю.", "Сім'я дуже важлива. Що ви любите робити разом?", "А як твоя сім'я ставиться до цього?"] },
-                
-                // Школа
-                { pattern: /(школа|урок|вчителька|вчитель|домашка|домашнє завдання)/i, responses: ["А який твій улюблений урок?", "Що найцікавіше було сьогодні в школі?", "Розкажи якийсь прикольний випадок зі школи.", "Як тобі вчитися?"] },
-                
-                // Друзі
-                { pattern: /(друг|подруга|друзі|товариш|приятель)/i, responses: ["Друзі - це чудово! А яка ваша улюблена спільна гра?", "Що ви найбільше любите робити разом?", "Розкажи про свого найкращого друга.", "Як ви познайомилися?"] },
-                
-                // Ігри та розваги
-                { pattern: /(граю|грав|майнкрафт|роблокс|комп'ютер|телефон|планшет)/i, responses: ["В які ігри ти найбільше любиш грати?", "А з ким ти граєш?", "Що тобі подобається в іграх?", "Скільки часу ти граєш?"] },
-                
-                // Тварини
-                { pattern: /(кіт|кішка|собака|пес|хом'як|папуга|рибки|тварина|звірята|улюбленець)/i, responses: ["А у тебе є улюбленці вдома?", "Тварини такі милі! Розкажи про них.", "Яка твоя улюблена тварина?", "Ти доглядаєш за ними?"] },
-                
-                // Хобі
-                { pattern: /(малюю|малювання|співаю|танцюю|читаю|спорт|футбол|баскетбол)/i, responses: ["Це круте хобі! А як давно ти цим займаєшся?", "Розкажи більше про це.", "Що тобі найбільше подобається в цьому?", "А хтось тебе навчав?"] },
-                
-                // Пояснення причин
-                { pattern: /тому що (.+)/i, responses: ["Зрозуміло. А є ще якісь причини?", "Ти впевнений, що причина тільки в цьому?", "Цікаво. Розкажи більше."] },
-                
-                // Запитання до ELIZA
-                { pattern: /а ти (.+)\?/i, responses: ["Чому тебе це цікавить?", "Що змінилося б, якби я відповів на це?", "Давай краще ти розкажеш про себе.", "Це питання про мене чи про тебе?"] },
-                { pattern: /(.+)\?$/i, responses: ["А ти сам що думаєш про це?", "Цікаве питання. Що ти про це знаєш?", "Чому ти про це запитуєш?"] },
-                
-                // Короткі відповіді
-                { pattern: /^(так|ага|угу|авжеж|звісно)$/i, responses: ["Розумію. Розказуй далі.", "Клас! А що ще?", "Добре, я слухаю.", "Продовжуй."] },
-                { pattern: /^(ні|неа|не дуже)$/i, responses: ["Чому ні?", "Зрозуміло. А як би ти хотів, щоб було?", "Гаразд, тоді розкажи про щось інше.", "Що ти маєш на увазі?"] },
-                
-                // Подяка
-                { pattern: /(дякую|спасибі|дяка)/i, responses: ["Будь ласка! Що ще хочеш обговорити?", "Немає за що! Розкажи щось цікаве.", "Рад допомогти!"] },
-                
-                // Основний патерн з перефразуванням (класична ELIZA)
-                { pattern: /я (.+)/i, rephrase: true }
-            ];
-            
-            // Загальні відповіді, коли нічого не підходить
-            const genericResponses = [
-                "Цікаво! Розкажи про це детальніше.",
-                "Ого! А що було далі?",
-                "І що ти про це думаєш?",
-                "Чому ти так вважаєш?",
-                "Це змусило мене замислитись...",
-                "Круто! Продовжуй, я уважно слухаю.",
-                "Розкажи більше.",
-                "Що ти маєш на увазі?",
-                "Як ти себе при цьому почуваєш?"
-            ];
-
-            // Заміна займенників для рефлексії
-            function swapPronouns(text) {
-                const words = text.toLowerCase().split(/\s+/);
-                const swappedWords = words.map(word => {
-                    const cleanedWord = word.replace(/[.,!?;:]/g, '');
-                    if (pronounSwaps[cleanedWord]) {
-                        return pronounSwaps[cleanedWord] + word.substring(cleanedWord.length);
-                    }
-                    return word;
-                });
-                return swappedWords.join(' ');
-            }
-
-            // Ефект друкарської машинки
-            function typeWriter(element, text, callback) {
-                let i = 0;
-                element.textContent = '';
-                function type() {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                        setTimeout(type, 25 + Math.random() * 25);
-                    } else if (callback) {
-                        callback();
-                    }
-                }
-                type();
-            }
-
-            // Санітізація введення від XSS
-            function sanitizeInput(text) {
-                const temp = document.createElement('div');
-                temp.textContent = text;
-                return temp.textContent;
-            }
-
-            function addMessage(text, isUser) {
-                const message = document.createElement('div');
-                message.className = 'message ' + (isUser ? 'user' : 'eliza');
-                chatBox.appendChild(message);
-
-                if (isUser) {
-                    message.textContent = '> ' + text;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                } else {
-                    const prefix = 'ELIZA: ';
-                    const contentSpan = document.createElement('span');
-                    message.textContent = prefix;
-                    message.appendChild(contentSpan);
-                    
-                    typeWriter(contentSpan, text, () => {
-                        sendBtn.disabled = false;
-                        userInput.disabled = false;
-                        userInput.focus();
-                    });
-                }
-            }
-
-            function getElizaResponse(input) {
-                const normalizedInput = input.trim();
-                
-                // Перевіряємо кожен патерн
-                for (const item of patterns) {
-                    const match = normalizedInput.match(item.pattern);
-                    if (match) {
-                        // Якщо це патерн з перефразуванням (класична ELIZA техніка)
-                        if (item.rephrase) {
-                            const phrase = match[1];
-                            const rephrased = swapPronouns(phrase);
-                            const rephraseFormats = [
-                                "Чому ти кажеш, що ти " + rephrased + "?",
-                                "Що ти маєш на увазі, коли кажеш, що ти " + rephrased + "?",
-                                "Це цікаво, що ти " + rephrased + ". Розкажи більше.",
-                                "І як це, коли ти " + rephrased + "?",
-                                "Як давно ти " + rephrased + "?"
-                            ];
-                            return rephraseFormats[Math.floor(Math.random() * rephraseFormats.length)];
-                        }
-                        
-                        // Звичайні відповіді з підстановкою
-                        const responses = item.responses;
-                        let response = responses[Math.floor(Math.random() * responses.length)];
-                        
-                        // Замінюємо {0} на першу захоплену групу, {1} на другу і т.д.
-                        for (let i = 1; i < match.length; i++) {
-                            const placeholder = '{' + (i - 1) + '}';
-                            if (match[i]) {
-                                response = response.replace(new RegExp(placeholder, 'g'), match[i].trim());
-                            }
-                        }
-
-                        return response;
-                    }
-                }
-                
-                // Якщо нічого не підійшло - загальна відповідь
-                return genericResponses[Math.floor(Math.random() * genericResponses.length)];
-            }
-
-            function sendMessage() {
-                const text = userInput.value.trim();
-                if (text === '' || sendBtn.disabled) return;
-                
-                const sanitizedText = sanitizeInput(text);
-                addMessage(sanitizedText, true);
-                userInput.value = '';
-                sendBtn.disabled = true;
-                userInput.disabled = true;
-
-                setTimeout(() => {
-                    const response = getElizaResponse(sanitizedText);
-                    addMessage(response, false);
-                }, 400 + Math.random() * 400);
-            }
-
-            sendBtn.addEventListener('click', sendMessage);
-            userInput.addEventListener('keypress', e => {
-                if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();
-            });
-
-            window.addEventListener('load', () => {
-                userInput.disabled = true;
-                sendBtn.disabled = true;
-                const welcomeMessage = "Привіт! Я ELIZA, твій робо-співрозмовник. Давай поговоримо про щось цікаве! Розкажи про себе.";
-                addMessage(welcomeMessage, false);
-            });
-
-        })();
-    </script>
+  <main>
+    <p>ЕЛІЗА переїхала на нову адресу.</p>
+    <p><a href="../services/ai/eliza/">Перейти до Елізи →</a></p>
+  </main>
 </body>
+
 </html>
