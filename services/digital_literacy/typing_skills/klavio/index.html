@@ -1,241 +1,92 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Клавіо — клавіатурний тренажер</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Клавіо — тренажери клавіатури</title>
+  <meta name="description" content="Чотири безплатні тренажери клавіатури: Старт, Уроки, Слова та Спринт.">
+  <meta name="theme-color" content="#f8fafc">
+  <link rel="canonical" href="https://itnauka.org/services/digital_literacy/typing_skills/klavio/">
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script>
+    try {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+    } catch (error) {
+      document.documentElement.dataset.theme = "light";
+    }
+  </script>
+  <link rel="stylesheet" href="assets/css/tokens.css?v=20260731-5">
+  <link rel="stylesheet" href="assets/css/site-shell.css?v=20260731-5">
+  <link rel="stylesheet" href="assets/css/components.css?v=20260731-5">
+  <link rel="stylesheet" href="assets/css/page.css?v=20260731-5">
+  <script src="assets/js/site.js?v=20260731-5" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#trainers">Перейти до тренажерів</a>
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="logo">
-      <div class="logo-icon"><i class="fa-solid fa-keyboard"></i></div>
-      <div class="logo-text">Клавіо</div>
-    </div>
-    <nav class="app-nav">
-      <button class="nav-btn" type="button" onclick="showLessonSelect()">
-        <i class="fa-solid fa-book-open"></i><span>Вправи</span>
-      </button>
-      <button class="nav-btn" type="button" onclick="showProgress()">
-        <i class="fa-solid fa-chart-line"></i><span>Показники</span>
-      </button>
-      <button class="nav-btn difficulty-toggle" type="button" onclick="cycleDifficulty()">
-        <i class="fa-solid fa-seedling" id="difficulty-icon"></i>
-        <span id="difficulty-label">Новачок</span>
-      </button>
-      <button class="nav-btn icon-btn" type="button" onclick="showAbout()" title="Про програму">
-        <i class="fa-solid fa-circle-info"></i>
-      </button>
-      <button class="nav-btn icon-btn" type="button" onclick="toggleTheme()" id="theme-toggle-btn" title="Змінити тему">
-        <i class="fa-solid fa-moon" id="theme-icon"></i>
-      </button>
-    </nav>
-  </header>
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <symbol id="icon-brand" viewBox="0 0 48 38"><rect x="7" y="3" width="34" height="25" rx="3" fill="none" stroke="currentColor" stroke-width="4"/><path d="M3 33h42M19 12l-5 4 5 4M29 12l5 4-5 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15.2A8.6 8.6 0 0 1 8.8 4a8.6 8.6 0 1 0 11.2 11.2Z" fill="none"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" fill="none"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none"/></symbol>
+    <symbol id="icon-start" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none"/><path d="M7 9h2M12 9h2M17 9h.01M7 14h2M12 14h5" fill="none"/></symbol>
+    <symbol id="icon-lessons" viewBox="0 0 24 24"><path d="M5 19V9.5a1.5 1.5 0 0 1 3 0V14M8 11V6.5a1.5 1.5 0 0 1 3 0V12M11 11V5.5a1.5 1.5 0 0 1 3 0V12M14 11V7.5a1.5 1.5 0 0 1 3 0V14l1.2-1.2a1.5 1.5 0 0 1 2.1 2.1L17 19.5A4 4 0 0 1 13.8 21H9a4 4 0 0 1-4-2Z" fill="none"/></symbol>
+    <symbol id="icon-words" viewBox="0 0 24 24"><path d="M5 5h14M5 10h10M5 15h14M5 20h7" fill="none"/></symbol>
+    <symbol id="icon-sprint" viewBox="0 0 24 24"><path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" fill="none"/></symbol>
+  </svg>
 
-  <!-- STATS STRIP -->
-  <div class="stats-strip" role="status" aria-live="polite">
-    <div class="stat-pill">
-      <span class="stat-value" id="wpm-value">0</span>
-      <span class="stat-label">симв/хв</span>
-    </div>
-    <div class="stat-pill">
-      <span class="stat-value" id="acc-value">—</span>
-      <span class="stat-label">точність</span>
-    </div>
-    <div class="stat-pill">
-      <span class="stat-value" id="streak-value">0</span>
-      <span class="stat-label">серія <i class="fa-solid fa-fire"></i></span>
-    </div>
-    <div class="stat-pill stat-pill-lesson">
-      <span class="stat-label">ВПРАВА</span>
-      <span class="stat-value" id="lesson-num">1</span>
-    </div>
-    <button class="stat-pill stat-pill-reset" type="button" onclick="confirmResetProgress()">
-      <i class="fa-solid fa-rotate-left"></i>
-      <span class="stat-label">Скинути</span>
-    </button>
-  </div>
-
-  <!-- PROGRESS BAR -->
-  <div class="progress-track">
-    <div class="progress-fill" id="progress-fill" style="width:0%">
-      <div class="progress-glow"></div>
-    </div>
-  </div>
-
-  <!-- MAIN TRAINER -->
-  <main class="trainer-main">
-
-    <!-- LEFT HAND -->
-    <div class="hand-container" id="left-hand-container">
-      <div class="hand-label">Ліва рука</div>
-      <div class="hand-visual hand-visual-left">
-        <img class="hand-image" src="hand.svg" alt="" aria-hidden="true" />
-        <div class="finger f-pinky" id="lh-pinky"></div>
-        <div class="finger f-ring" id="lh-ring"></div>
-        <div class="finger f-middle" id="lh-middle"></div>
-        <div class="finger f-index" id="lh-index"></div>
-        <div class="finger f-thumb" id="lh-thumb"></div>
-      </div>
-      <div class="finger-name-badge" id="left-finger-name"></div>
-    </div>
-
-    <!-- CENTER -->
-    <div class="trainer-center">
-      <div class="text-display-card">
-        <div class="text-display" id="text-display">
-          <span class="td-done" id="td-done"></span><span class="td-cursor" id="td-cursor"> </span><span class="td-todo" id="td-todo"></span>
-        </div>
-        <div class="error-flash" id="error-flash"></div>
-      </div>
-
-      <div class="streak-burst" id="streak-burst"></div>
-
-      <div class="keyboard-card">
-        <div class="keyboard" id="keyboard">
-
-          <!-- Row 0: numbers -->
-          <div class="key-row">
-            <div class="key k-pinky"        id="tilda"></div>
-            <div class="key k-pinky"        id="1"></div>
-            <div class="key k-ring"         id="2"></div>
-            <div class="key k-middle"       id="3"></div>
-            <div class="key k-index1"       id="4"></div>
-            <div class="key k-index2"       id="5"></div>
-            <div class="key k-index2"       id="6"></div>
-            <div class="key k-index1"       id="7"></div>
-            <div class="key k-middle"       id="8"></div>
-            <div class="key k-ring"         id="9"></div>
-            <div class="key k-pinky"        id="0"></div>
-            <div class="key k-pinky"        id="minus"></div>
-            <div class="key k-pinky"        id="plus"></div>
-            <div class="key k-pinky k-back" id="backspace"><i class="fa-solid fa-delete-left"></i></div>
-          </div>
-
-          <!-- Row 1: QWERTY -->
-          <div class="key-row">
-            <div class="key k-pinky k-tab"  id="tab">Tab</div>
-            <div class="key k-pinky"        id="Q"></div>
-            <div class="key k-ring"         id="W"></div>
-            <div class="key k-middle"       id="E"></div>
-            <div class="key k-index1"       id="R"></div>
-            <div class="key k-index2"       id="T"></div>
-            <div class="key k-index2"       id="Y"></div>
-            <div class="key k-index1"       id="U"></div>
-            <div class="key k-middle"       id="I"></div>
-            <div class="key k-ring"         id="O"></div>
-            <div class="key k-pinky"        id="P"></div>
-            <div class="key k-pinky"        id="lsc"></div>
-            <div class="key k-pinky"        id="rsc"></div>
-            <div class="key k-pinky k-tab"  id="bckslash"></div>
-          </div>
-
-          <!-- Row 2: home row -->
-          <div class="key-row">
-            <div class="key k-pinky k-caps" id="capslock">Caps</div>
-            <div class="key k-pinky"        id="A"></div>
-            <div class="key k-ring"         id="S"></div>
-            <div class="key k-middle"       id="D"></div>
-            <div class="key k-index1 home-bump" id="F"></div>
-            <div class="key k-index2"       id="G"></div>
-            <div class="key k-index2"       id="H"></div>
-            <div class="key k-index1 home-bump" id="J"></div>
-            <div class="key k-middle"       id="K"></div>
-            <div class="key k-ring"         id="L"></div>
-            <div class="key k-pinky"        id="ddot"></div>
-            <div class="key k-pinky"        id="apo"></div>
-            <div class="key k-pinky k-enter" id="enter">Enter <i class="fa-solid fa-turn-down"></i></div>
-          </div>
-
-          <!-- Row 3: shift -->
-          <div class="key-row">
-            <div class="key k-pinky k-shift-l" id="shiftleft"><i class="fa-solid fa-arrow-up"></i> Shift</div>
-            <div class="key k-pinky"        id="Z"></div>
-            <div class="key k-ring"         id="X"></div>
-            <div class="key k-middle"       id="C"></div>
-            <div class="key k-index1"       id="V"></div>
-            <div class="key k-index2"       id="B"></div>
-            <div class="key k-index2"       id="N"></div>
-            <div class="key k-index1"       id="M"></div>
-            <div class="key k-middle"       id="comma"></div>
-            <div class="key k-ring"         id="dot"></div>
-            <div class="key k-pinky"        id="slash"></div>
-            <div class="key k-pinky k-shift-r" id="shiftright">Shift <i class="fa-solid fa-arrow-up"></i></div>
-          </div>
-
-          <!-- Row 4: bottom -->
-          <div class="key-row">
-            <div class="key k-pinky k-ctrl" id="controlleft">Ctrl</div>
-            <div class="key k-pinky k-meta" id="metaleft"><i class="fa-brands fa-windows"></i></div>
-            <div class="key k-ring  k-alt"  id="altleft">Alt</div>
-            <div class="key k-thumb k-space" id="space"></div>
-            <div class="key k-ring  k-alt"  id="altright">AltGr</div>
-            <div class="key k-pinky k-meta" id="metaright"><i class="fa-brands fa-windows"></i></div>
-            <div class="key k-pinky k-ctrl" id="controlright">Ctrl</div>
-          </div>
-
+  <div class="site-page">
+    <header class="site-header">
+      <div class="site-header__inner container">
+        <a class="site-brand" href="/" aria-label="Комп’ютерна наука — на головну">
+          <svg class="site-brand__mark" aria-hidden="true"><use href="#icon-brand"></use></svg>
+          <span class="site-brand__name">Комп’ютерна наука</span>
+        </a>
+        <nav class="klavio-nav" aria-label="Тренажери Клавіо">
+          <a href="start/">Старт</a><a href="lessons/">Уроки</a><a href="words/">Слова</a><a href="sprint/">Спринт</a>
+        </nav>
+        <div class="site-header__actions">
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Увімкнути темну тему" aria-pressed="false">
+            <svg class="icon theme-toggle__icon theme-toggle__moon" aria-hidden="true"><use href="#icon-moon"></use></svg><svg class="icon theme-toggle__icon theme-toggle__sun" aria-hidden="true"><use href="#icon-sun"></use></svg>
+          </button>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- RIGHT HAND -->
-    <div class="hand-container" id="right-hand-container">
-      <div class="hand-label">Права рука</div>
-      <div class="hand-visual hand-visual-right">
-        <img class="hand-image" src="hand.svg" alt="" aria-hidden="true" />
-        <div class="finger f-index" id="rh-index"></div>
-        <div class="finger f-middle" id="rh-middle"></div>
-        <div class="finger f-ring" id="rh-ring"></div>
-        <div class="finger f-pinky" id="rh-pinky"></div>
-        <div class="finger f-thumb" id="rh-thumb"></div>
-      </div>
-      <div class="finger-name-badge" id="right-finger-name"></div>
-    </div>
+    <main class="site-main hub-main" id="trainers">
+      <section class="hub-picker container" aria-labelledby="hub-title">
+        <header class="hub-picker__heading">
+          <span class="hub-picker__eyebrow">Клавіатурні тренажери</span>
+          <h1 id="hub-title">Клавіо</h1>
+          <p>Оберіть потрібне тренування.</p>
+        </header>
 
-  </main>
+        <div class="hub-grid">
+          <a class="hub-card hub-card--start" href="start/">
+            <span class="hub-card__icon"><svg class="icon" aria-hidden="true"><use href="#icon-start"></use></svg></span>
+            <span class="hub-card__step">01</span><h2>Старт</h2><p>Знаходити клавіші</p><span class="hub-card__action">Відкрити <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg></span>
+          </a>
+          <a class="hub-card hub-card--lessons" href="lessons/">
+            <span class="hub-card__icon"><svg class="icon" aria-hidden="true"><use href="#icon-lessons"></use></svg></span>
+            <span class="hub-card__step">02</span><h2>Уроки</h2><p>Друкувати правильними пальцями</p><span class="hub-card__action">Відкрити <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg></span>
+          </a>
+          <a class="hub-card hub-card--words" href="words/">
+            <span class="hub-card__icon"><svg class="icon" aria-hidden="true"><use href="#icon-words"></use></svg></span>
+            <span class="hub-card__step">03</span><h2>Слова</h2><p>Друкувати слова й тексти</p><span class="hub-card__action">Відкрити <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg></span>
+          </a>
+          <a class="hub-card hub-card--sprint" href="sprint/">
+            <span class="hub-card__icon"><svg class="icon" aria-hidden="true"><use href="#icon-sprint"></use></svg></span>
+            <span class="hub-card__step">04</span><h2>Спринт</h2><p>Тренувати швидкість</p><span class="hub-card__action">Відкрити <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg></span>
+          </a>
+        </div>
+      </section>
+    </main>
 
-  <!-- MODAL -->
-  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
-  <div class="modal-box" id="modal-box" role="dialog" aria-modal="true">
-    <div class="modal-header" id="modal-header"></div>
-    <div class="modal-body" id="modal-body"></div>
+    <footer class="site-footer hub-footer"><div class="site-footer__inner container"><p class="site-footer__copyright">© <span id="current-year">2026</span> Комп’ютерна наука з Паном Артемом.</p></div></footer>
   </div>
-
-  <!-- LEVEL COMPLETE -->
-  <div class="level-complete" id="level-complete">
-    <div class="lc-inner">
-      <div class="lc-icon" id="lc-icon"><i class="fa-solid fa-trophy"></i></div>
-      <div class="lc-title" id="lc-title">Перейти до наступної вправи?</div>
-      <div class="lc-stats-wrap">
-        <table class="lc-stats" id="lc-stats"></table>
-      </div>
-      <div class="lc-actions">
-        <button class="btn-retry" type="button" onclick="retryCurrentLesson()">
-          Спробувати ще раз
-        </button>
-        <button class="btn-next" type="button" onclick="startNextLesson()">
-          Перейти <i class="fa-solid fa-arrow-right"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="global-toast"></div>
-
-  <script src="js/data.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/keyboard.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/trainer.js"></script>
 </body>
 </html>
-
-
-

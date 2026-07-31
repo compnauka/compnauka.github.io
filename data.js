@@ -70,6 +70,13 @@ const CATEGORIES = [
         tags: ["1-2 класи", "3-4 класи", "Клавіатура"]
       },
       {
+        name: "Клавіо",
+        description: "Система тренажерів: пошук клавіш, уроки сліпого друку, слова та швидкісний спринт.",
+        link: "services/digital_literacy/typing_skills/klavio/index.html",
+        image: "images/11.jpg",
+        tags: ["3-4 класи", "Клавіатура"]
+      },
+      {
         name: "Клавіатурний спринт",
         description: "Тренажер для роботи з клавіатурою.",
         link: "services/digital_literacy/typing_skills/key_sprint/index.html",
