@@ -1,4 +1,16 @@
-(function (root) {
+(function (root, factory) {
+  "use strict";
+
+  const api = factory();
+
+  if (typeof module === "object" && module.exports) {
+    module.exports = api;
+  }
+
+  if (root) {
+    root.KlavioStartData = api;
+  }
+})(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
   function letters(value) {
@@ -23,7 +35,7 @@
     });
   }
 
-  root.KlavioStartData = {
+  return {
     roundLength: 12,
     sets: {
       starter: {
@@ -35,8 +47,10 @@
       alphabet: {
         id: "alphabet",
         label: "Усі літери",
-        description: "Повна українська абетка",
-        targets: letters("абвгґдеєжзиіїйклмнопрстуфхцчшщьюя")
+        // «Ґ» тут свідомо немає: вона набирається комбінацією Ctrl+Alt,
+        // а «Старт» вчить знаходити одну клавішу без модифікаторів.
+        description: "Абетка без «ґ» — вона потребує комбінації клавіш",
+        targets: letters("абвгдеєжзиіїйклмнопрстуфхцчшщьюя")
       },
       digits: {
         id: "digits",
@@ -59,4 +73,4 @@
     encouragement: ["Чудово!", "Саме так!", "Правильно!", "Молодець!", "Влучно!"],
     retry: ["Спробуй ще раз", "Поглянь уважніше", "Майже! Шукай далі"]
   };
-})(window);
+});

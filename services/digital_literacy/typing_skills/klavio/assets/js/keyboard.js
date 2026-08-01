@@ -47,21 +47,22 @@
 
     function setHint(targetOrValue, visible) {
       clearClass("is-target");
-      if (!visible || targetOrValue === null || targetOrValue === undefined) return;
+      clearClass("is-modifier-target");
+      if (!visible || targetOrValue === null || targetOrValue === undefined) return "";
 
       const target = typeof targetOrValue === "object" ? targetOrValue : { value: targetOrValue };
-      const codes = layouts.codesForTarget(target);
-      codes.forEach(function (code) {
+
+      layouts.codesForTarget(target).forEach(function (code) {
         const key = keys.get(code);
         if (key) key.classList.add("is-target");
       });
 
-      if (layouts.requiresShift(target.value)) {
-        const finger = layouts.fingerForCode(codes[0]);
-        const shiftCode = finger && finger.hand === "left" ? "ShiftRight" : "ShiftLeft";
-        const shift = keys.get(shiftCode);
-        if (shift) shift.classList.add("is-target");
-      }
+      layouts.modifierCodesForCharacter(target.value).forEach(function (code) {
+        const key = keys.get(code);
+        if (key) key.classList.add("is-modifier-target");
+      });
+
+      return layouts.comboHintForCharacter(target.value);
     }
 
     function setAllowedTargets(targets) {
@@ -90,7 +91,10 @@
       setHint,
       setAllowedTargets,
       flash,
-      clearHint: function () { clearClass("is-target"); },
+      clearHint: function () {
+        clearClass("is-target");
+        clearClass("is-modifier-target");
+      },
       clearPressed: function () {
         clearClass("is-pressed-correct");
         clearClass("is-pressed-error");

@@ -20,8 +20,27 @@
     return typeof value === "string" ? value.replace(APOSTROPHES, "'") : "";
   }
 
+  // AltGr на Windows приходить як Ctrl+Alt. Це звичайне введення «ґ»,
+  // а не системна комбінація, тому таку подію не можна відкидати.
+  function isAltGraph(event) {
+    return Boolean(event.ctrlKey && event.altKey);
+  }
+
   function isSystemCombination(event) {
-    return Boolean(event.ctrlKey || event.altKey || event.metaKey || event.repeat);
+    if (event.repeat || event.metaKey) return true;
+    if (isAltGraph(event)) return false;
+    return Boolean(event.ctrlKey || event.altKey);
+  }
+
+  // Пробіл має бути видимим у завданні, а не порожнім місцем.
+  function displayCharacter(value) {
+    if (value === " ") return "␣";
+    return value;
+  }
+
+  function describeCharacter(value) {
+    if (value === " ") return "пробіл";
+    return value;
   }
 
   function isTextAttempt(event) {
@@ -76,6 +95,9 @@
 
   return {
     normalizeCharacter,
+    displayCharacter,
+    describeCharacter,
+    isAltGraph,
     isSystemCombination,
     isTextAttempt,
     matchesCharacter,

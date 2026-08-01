@@ -79,7 +79,7 @@
       { code: "ControlLeft", label: "Ctrl", width: "medium", muted: true },
       { code: "MetaLeft", label: "Win", width: "medium", muted: true },
       { code: "AltLeft", label: "Alt", width: "medium", muted: true },
-      { code: "Space", label: "Пробіл", width: "space" },
+      { code: "Space", label: "Пробіл", width: "space", value: " " },
       { code: "AltRight", label: "Alt", width: "medium", muted: true },
       { code: "ControlRight", label: "Ctrl", width: "medium", muted: true }
     ]
@@ -149,6 +149,11 @@
     return /[А-ЯІЇЄҐ]/.test(value);
   }
 
+  // «Ґ» набирається комбінацією AltGr (Ctrl+Alt), а не однією клавішею.
+  function requiresAltGraph(value) {
+    return value === "ґ" || value === "Ґ";
+  }
+
   function fingerForCode(code) {
     if (code === "Space") return { hand: "both", finger: "thumb", name: "великі пальці", code: "Space" };
     const value = FINGER_BY_CODE[code];
@@ -176,6 +181,28 @@
     return hints.filter(Boolean);
   }
 
+  // Клавіші-модифікатори, які треба підсвітити разом із основною.
+  function modifierCodesForCharacter(value) {
+    const codes = [];
+    if (requiresAltGraph(value)) codes.push("ControlRight", "AltRight");
+
+    if (requiresShift(value)) {
+      const mainFinger = fingerForCode(codesForTarget({ value })[0]);
+      codes.push(mainFinger && mainFinger.hand === "left" ? "ShiftRight" : "ShiftLeft");
+    }
+
+    return codes;
+  }
+
+  // Коротка підказка «як натиснути», якщо однієї клавіші замало.
+  function comboHintForCharacter(value) {
+    if (requiresAltGraph(value)) {
+      return value === "Ґ" ? "Утримуй Ctrl + Alt + Shift" : "Утримуй Ctrl + Alt";
+    }
+
+    return requiresShift(value) ? "Утримуй Shift" : "";
+  }
+
   function renderKeycap(element, definition) {
     element.textContent = "";
     if (definition.secondary) {
@@ -199,6 +226,9 @@
     ukrainianRows: UKRAINIAN_ROWS,
     codesForTarget,
     requiresShift,
+    requiresAltGraph,
+    modifierCodesForCharacter,
+    comboHintForCharacter,
     fingerForCode,
     hintsForCharacter,
     renderKeycap

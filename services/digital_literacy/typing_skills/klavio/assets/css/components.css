@@ -78,6 +78,121 @@
   content: "";
 }
 
+/* ---- Перемикачі режимів ----------------------------------------
+   Спільний вигляд для «Уроків», «Слів» і «Спринту»: однакова
+   кнопка означає однакову дію в усіх модулях.
+   ---------------------------------------------------------------- */
+.segmented {
+  --segmented-color: var(--color-primary);
+  --segmented-soft: var(--color-primary-soft);
+
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 3px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 11px;
+  background: var(--color-surface);
+}
+
+.segmented button {
+  min-height: 36px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.segmented button:hover:not([aria-pressed="true"]) {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--segmented-soft);
+  color: var(--segmented-color);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--segmented-color) 38%, transparent);
+}
+
+.segmented button:disabled { cursor: default; opacity: .55; }
+
+.segmented--start { --segmented-color: var(--color-start); --segmented-soft: var(--color-start-soft); }
+.segmented--lessons { --segmented-color: var(--color-lessons); --segmented-soft: var(--color-lessons-soft); }
+.segmented--words { --segmented-color: var(--color-words); --segmented-soft: var(--color-words-soft); }
+.segmented--sprint { --segmented-color: var(--color-sprint); --segmented-soft: var(--color-sprint-soft); }
+
+/* ---- Смуга прогресу --------------------------------------------- */
+.progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+}
+
+.progress-track__fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-strong));
+  transition: width 200ms ease;
+}
+
+/* ---- Попередження про розкладку ---------------------------------
+   Завжди займає своє місце в потоці, щоб поява повідомлення не
+   зсувала клавіатуру та інші важливі елементи.
+   ---------------------------------------------------------------- */
+.message-slot {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 6px;
+  min-height: 62px;
+}
+
+.layout-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--color-words) 60%, var(--color-border));
+  border-radius: 9px;
+  background: var(--color-words-soft);
+  color: var(--color-text);
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.layout-warning[hidden] {
+  display: inline-flex;
+  visibility: hidden;
+}
+
+/* ---- Підсумковий екран ------------------------------------------ */
+.summary-badge {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 10px;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 1.7rem;
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
 .section-heading {
   max-width: 720px;
   margin: 0 auto 36px;

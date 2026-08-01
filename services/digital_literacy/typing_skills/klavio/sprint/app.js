@@ -21,6 +21,7 @@
     mode: document.getElementById("mode-control"),
     difficulty: document.getElementById("difficulty-control"),
     speed: document.getElementById("speed-control"),
+    direction: document.getElementById("direction-control"),
     start: document.getElementById("start-button"),
     field: document.getElementById("game-field"),
     idle: document.getElementById("game-idle"),
@@ -53,6 +54,7 @@
     mode: "keys",
     difficulty: "easy",
     speed: "normal",
+    direction: "ltr",
     running: false,
     targetText: "",
     charIndex: 0,
@@ -99,8 +101,15 @@
     });
   }
 
+  const controlGroups = [
+    [elements.mode, "mode"],
+    [elements.difficulty, "difficulty"],
+    [elements.speed, "speed"],
+    [elements.direction, "direction"]
+  ];
+
   function updateControls() {
-    [[elements.mode, "mode"], [elements.difficulty, "difficulty"], [elements.speed, "speed"]].forEach(function (pair) {
+    controlGroups.forEach(function (pair) {
       pair[0].querySelectorAll("button").forEach(function (button) {
         button.setAttribute("aria-pressed", String(button.dataset[pair[1]] === state[pair[1]]));
       });
@@ -108,8 +117,8 @@
   }
 
   function setControlsDisabled(disabled) {
-    [elements.mode, elements.difficulty, elements.speed].forEach(function (container) {
-      container.querySelectorAll("button").forEach(function (button) { button.disabled = disabled; });
+    controlGroups.forEach(function (pair) {
+      pair[0].querySelectorAll("button").forEach(function (button) { button.disabled = disabled; });
     });
   }
 
@@ -138,11 +147,14 @@
 
   function updateTargetText() {
     elements.done.textContent = state.targetText.slice(0, state.charIndex);
-    elements.current.textContent = expected() === " " ? "\u00a0" : expected();
+    elements.current.textContent = input.displayCharacter(expected());
     elements.todo.textContent = state.targetText.slice(state.charIndex + 1);
     elements.keyboard.classList.add("has-hint");
-    keyboard.setHint(expected(), true);
-    elements.field.setAttribute("aria-label", "Введіть: " + (expected() === " " ? "пробіл" : expected()));
+
+    const combo = keyboard.setHint(expected(), true);
+    if (combo) feedback(combo, "hint");
+
+    elements.field.setAttribute("aria-label", "Введіть: " + input.describeCharacter(expected()));
   }
 
   function source() {
@@ -171,6 +183,13 @@
     return next;
   }
 
+  // Ціль завжди стартує від безпечного краю й рухається до небезпечного.
+  function targetOffset(progress) {
+    const maxLeft = Math.max(0, elements.field.clientWidth - elements.target.offsetWidth - 34);
+    const travelled = Math.min(1, Math.max(0, progress)) * maxLeft;
+    return 18 + (state.direction === "rtl" ? maxLeft - travelled : travelled);
+  }
+
   function spawnTarget(now) {
     if (!state.running) return;
     state.targetText = chooseTarget();
@@ -180,10 +199,10 @@
     state.targetLive = true;
     elements.target.hidden = false;
     elements.target.className = "sprint-target" + (state.mode === "combos" ? " is-combo" : state.mode === "words" ? " is-word" : "");
-    elements.target.style.left = "18px";
     elements.target.style.top = (42 + Math.random() * 65) + "px";
     elements.warning.hidden = true;
     updateTargetText();
+    elements.target.style.left = targetOffset(0) + "px";
   }
 
   function markMiss() {
@@ -227,8 +246,7 @@
     }
     if (state.targetLive) {
       const progress = (now - state.targetStarted) / state.targetDuration;
-      const maxLeft = Math.max(0, elements.field.clientWidth - elements.target.offsetWidth - 34);
-      elements.target.style.left = (18 + Math.min(1, progress) * maxLeft) + "px";
+      elements.target.style.left = targetOffset(progress) + "px";
       if (progress >= 1) markMiss();
     }
     state.frameId = requestAnimationFrame(frame);
@@ -261,6 +279,7 @@
     setControlsDisabled(false);
     elements.gameView.hidden = false;
     elements.summary.hidden = true;
+    elements.field.classList.toggle("is-rtl", state.direction === "rtl");
     keyboard.clearHint();
   }
 
@@ -349,6 +368,7 @@
   addButtons(elements.mode, data.modes, "mode");
   addButtons(elements.difficulty, data.difficulties, "difficulty");
   addButtons(elements.speed, data.speeds, "speed");
+  addButtons(elements.direction, data.directions, "direction");
   updateControls();
   prepareIdle();
 })();

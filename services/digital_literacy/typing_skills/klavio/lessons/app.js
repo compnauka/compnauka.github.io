@@ -36,6 +36,7 @@
     layoutWarning: document.getElementById("layout-warning"),
     fingerSection: document.getElementById("finger-section"),
     fingerLabel: document.getElementById("finger-label"),
+    comboHint: document.getElementById("combo-hint"),
     handsGuide: document.getElementById("hands-guide"),
     keyboard: document.getElementById("virtual-keyboard"),
     soundToggle: document.getElementById("sound-toggle"),
@@ -153,10 +154,10 @@
 
     elements.textDone.textContent = view.done;
     elements.textTodo.textContent = view.todo;
-    elements.textCurrent.textContent = current === " " ? "\u00a0" : current;
+    elements.textCurrent.textContent = input.displayCharacter(current);
     elements.textCurrent.classList.toggle("is-space", current === " ");
 
-    const accessibleCharacter = current === " " ? "пробіл" : current;
+    const accessibleCharacter = input.describeCharacter(current);
     elements.lessonStage.setAttribute("aria-label", "Введіть символ: " + accessibleCharacter);
   }
 
@@ -206,7 +207,13 @@
     const hints = layouts.hintsForCharacter(character);
 
     elements.keyboard.classList.toggle("has-hint", config.keyboardHint);
-    keyboard.setHint(character, config.keyboardHint);
+    const combo = keyboard.setHint(character, config.keyboardHint);
+
+    // Комбінацію (Shift або Ctrl+Alt для «ґ») показуємо навіть тоді,
+    // коли підсвічування клавіатури вимкнене: інакше «ґ» не набрати.
+    const comboHint = combo || layouts.comboHintForCharacter(character);
+    elements.comboHint.textContent = comboHint;
+    elements.comboHint.hidden = !comboHint;
 
     elements.fingerSection.classList.toggle("is-hidden", !config.fingerHint);
     if (config.fingerHint) updateFingerGuide(hints);

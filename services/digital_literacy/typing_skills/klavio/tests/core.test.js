@@ -83,11 +83,11 @@ test("Shift не вважається помилкою перед великою
   assert.equal(input.isTargetAttempt(shift, { key: "Shift", code: "ShiftLeft" }, layouts), true);
 });
 
-test("курс містить усі 34 вправи без пропусків у нумерації", function () {
-  assert.equal(lessonData.lessons.length, 34);
+test("курс містить усі 35 вправ без пропусків у нумерації", function () {
+  assert.equal(lessonData.lessons.length, 35);
   assert.deepEqual(
     lessonData.lessons.map(function (lesson) { return lesson.id; }),
-    Array.from({ length: 34 }, function (_, index) { return index + 1; })
+    Array.from({ length: 35 }, function (_, index) { return index + 1; })
   );
   assert.ok(lessonData.lessons.every(function (lesson) { return lesson.text.trim().length > 0; }));
 });
@@ -165,4 +165,48 @@ test("Спринт містить клавіші, сполучення та сл
 test("довша ціль Спринту отримує більше часу й швидка відповідь більше балів", function () {
   assert.ok(sprintCore.targetDuration(6000, "words", 1) > sprintCore.targetDuration(6000, "keys", 1));
   assert.ok(sprintCore.scoreFor(4, 0.2, 5) > sprintCore.scoreFor(4, 0.9, 5));
+});
+
+test("пробіл має власну клавішу на віртуальній клавіатурі", function () {
+  assert.deepEqual(layouts.codesForTarget({ value: " " }), ["Space"]);
+  assert.equal(input.displayCharacter(" "), "␣");
+  assert.equal(input.describeCharacter(" "), "пробіл");
+});
+
+test("AltGr не вважається системною комбінацією, бо ним набирають «ґ»", function () {
+  const altGraph = { key: "ґ", code: "Backslash", ctrlKey: true, altKey: true };
+
+  assert.equal(input.isSystemCombination(altGraph), false);
+  assert.equal(input.isTextAttempt(altGraph), true);
+  assert.equal(input.matchesCharacter("ґ", altGraph), true);
+  assert.equal(input.isSystemCombination({ key: "с", code: "KeyC", ctrlKey: true }), true);
+});
+
+test("«ґ» просить утримати Ctrl+Alt і підсвічує саме ці клавіші", function () {
+  assert.equal(layouts.requiresAltGraph("ґ"), true);
+  assert.equal(layouts.requiresAltGraph("г"), false);
+  assert.deepEqual(layouts.modifierCodesForCharacter("ґ"), ["ControlRight", "AltRight"]);
+  assert.equal(layouts.comboHintForCharacter("ґ"), "Утримуй Ctrl + Alt");
+  assert.equal(layouts.comboHintForCharacter("А"), "Утримуй Shift");
+  assert.equal(layouts.comboHintForCharacter("а"), "");
+});
+
+test("у «Старті» немає «ґ», бо там тренують одну клавішу без модифікаторів", function () {
+  const startData = require("../start/data.js");
+  const everyTarget = Object.keys(startData.sets).flatMap(function (id) {
+    return startData.sets[id].targets.map(function (target) { return target.value; });
+  });
+
+  assert.equal(everyTarget.includes("ґ"), false);
+  assert.equal(everyTarget.includes("а"), true);
+});
+
+test("«ґ» доступна в Уроках, Словах і Спринті", function () {
+  assert.ok(lessonData.lessons.some(function (lesson) { return lesson.text.includes("ґ"); }));
+  assert.ok(wordsData.words.some(function (word) { return word.includes("ґ"); }));
+  assert.ok(sprintData.targets.keys.hard.includes("ґ"));
+});
+
+test("Спринт дозволяє обрати бік, з якого летять цілі", function () {
+  assert.deepEqual(sprintData.directions.map(function (item) { return item.id; }), ["ltr", "rtl"]);
 });

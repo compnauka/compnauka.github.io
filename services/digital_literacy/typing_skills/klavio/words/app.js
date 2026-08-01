@@ -29,6 +29,7 @@
     target: document.getElementById("word-target"),
     next: document.getElementById("next-items"),
     feedback: document.getElementById("word-feedback"),
+    combo: document.getElementById("word-combo"),
     warning: document.getElementById("layout-warning"),
     progressLabel: document.getElementById("progress-label"),
     progressFill: document.getElementById("progress-fill"),
@@ -116,7 +117,7 @@
   function updateTarget() {
     const parts = core.targetParts(currentTask(), state.charIndex);
     elements.done.textContent = parts.done;
-    elements.current.textContent = parts.current === " " ? "\u00a0" : parts.current;
+    elements.current.textContent = input.displayCharacter(parts.current);
     elements.todo.textContent = parts.todo;
     elements.target.classList.toggle("is-sentence", state.mode === "sentences");
     elements.stageLabel.textContent = state.mode === "sentences" ? "Друкуй речення" : "Друкуй слово";
@@ -129,8 +130,12 @@
     });
 
     elements.keyboard.classList.add("has-hint");
-    keyboard.setHint(currentCharacter(), true);
-    elements.stage.setAttribute("aria-label", "Введіть символ: " + (parts.current === " " ? "пробіл" : parts.current));
+
+    const combo = keyboard.setHint(currentCharacter(), true);
+    elements.combo.textContent = combo;
+    elements.combo.hidden = !combo;
+
+    elements.stage.setAttribute("aria-label", "Введіть символ: " + input.describeCharacter(parts.current));
   }
 
   function updateProgress() {

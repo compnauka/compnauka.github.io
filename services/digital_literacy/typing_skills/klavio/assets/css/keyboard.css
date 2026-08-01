@@ -1,73 +1,198 @@
-.device-keyboard {
-  position: relative;
+/* ================================================================
+   Клавіо — віртуальна клавіатура.
+   Єдине джерело геометрії, кольорів пальців і станів для всіх
+   чотирьох модулів: учень має бачити той самий пристрій усюди.
+   ================================================================ */
+
+.virtual-keyboard {
+  /* Верхня межа підібрана під найвужчий випадок — «Уроки», де обабіч
+     клавіатури стоять долоні. Так пристрій однаковий в усіх модулях. */
+  --key-width: clamp(30px, 3.9vw, 52px);
+  --key-height: clamp(34px, 3.5vw, 48px);
+  --key-gap: 5px;
+  --key-radius: 8px;
+  --finger-color: var(--color-border-strong);
+
+  display: flex;
   width: fit-content;
   max-width: 100%;
-  padding: 9px 10px 13px;
-  border: 1px solid color-mix(in srgb, var(--color-border-strong) 80%, var(--color-text));
-  border-radius: 14px;
-  background: linear-gradient(155deg, color-mix(in srgb, var(--color-surface-soft) 82%, #ffffff), color-mix(in srgb, var(--color-surface-soft) 86%, var(--color-border)));
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--color-border-strong) 68%, var(--color-text-muted)), 0 12px 22px rgba(15, 23, 42, .15), inset 0 1px 0 rgba(255,255,255,.72);
+  margin-inline: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--key-gap);
 }
 
-html[data-theme="dark"] .device-keyboard {
-  background: linear-gradient(155deg, #26354a, #172338);
-  box-shadow: 0 6px 0 #08111f, 0 12px 22px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--key-gap);
 }
 
-.device-keyboard .keyboard-row { gap: 4px; }
-
-.device-keyboard .keyboard-key {
+.keyboard-key {
   position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-border-strong) 85%, var(--color-text-muted));
-  border-bottom: 0;
-  border-radius: 6px;
-  background: linear-gradient(150deg, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 88%, var(--color-border)) 100%);
-  box-shadow: 0 3px 0 var(--finger-color, var(--color-border-strong)), inset 0 1px 0 rgba(255,255,255,.7);
-  opacity: 1;
-}
-
-.device-keyboard .keyboard-key--muted { opacity: .62; }
-
-.device-keyboard .key-legend {
-  position: absolute;
-  pointer-events: none;
-  line-height: 1;
-}
-
-.device-keyboard .key-legend--secondary {
-  top: 4px;
-  left: 5px;
-  color: var(--color-text-muted);
-  font-size: .52rem;
-  font-weight: 650;
-}
-
-.device-keyboard .key-legend--primary {
-  right: 5px;
-  bottom: 4px;
+  display: grid;
+  width: var(--key-width);
+  height: var(--key-height);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 4px solid var(--finger-color);
+  border-radius: var(--key-radius);
+  background: var(--color-surface);
   color: var(--color-text);
-  font-size: .68rem;
+  font-family: var(--font-heading);
+  font-weight: 850;
+  user-select: none;
+  transition: transform var(--transition-fast), background-color var(--transition-fast),
+    border-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.keyboard-key--medium { width: calc(var(--key-width) * 1.35); }
+.keyboard-key--wide { width: calc(var(--key-width) * 1.7); }
+.keyboard-key--xwide { width: calc(var(--key-width) * 2.1); }
+.keyboard-key--space { width: calc(var(--key-width) * 6.6); }
+
+/* Клавіші, яких немає в поточному наборі, приглушені, але читабельні. */
+.keyboard-key--muted { opacity: .58; }
+.keyboard-key.is-unavailable { opacity: .34; }
+
+/* ---- Кольори пальців ------------------------------------------- */
+.keyboard-key[data-finger="pinky"] { --finger-color: #e11d63; }
+.keyboard-key[data-finger="ring"] { --finger-color: #7c3aed; }
+.keyboard-key[data-finger="middle"] { --finger-color: #d97706; }
+.keyboard-key[data-finger="index"] { --finger-color: #2563eb; }
+.keyboard-key[data-finger="thumb"] { --finger-color: #0d9488; }
+
+html[data-theme="dark"] .keyboard-key[data-finger="pinky"] { --finger-color: #fb7185; }
+html[data-theme="dark"] .keyboard-key[data-finger="ring"] { --finger-color: #c4b5fd; }
+html[data-theme="dark"] .keyboard-key[data-finger="middle"] { --finger-color: #fbbf24; }
+html[data-theme="dark"] .keyboard-key[data-finger="index"] { --finger-color: #60a5fa; }
+html[data-theme="dark"] .keyboard-key[data-finger="thumb"] { --finger-color: #5eead4; }
+
+/* ---- Написи на ковпачках --------------------------------------- */
+.key-legend {
+  position: absolute;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.key-legend--secondary {
+  top: 5px;
+  left: 6px;
+  color: var(--color-text-muted);
+  font-size: .62rem;
+  font-weight: 700;
+}
+
+.key-legend--primary {
+  right: 6px;
+  bottom: 5px;
+  color: var(--color-text);
+  font-size: .92rem;
   font-weight: 900;
 }
 
-.device-keyboard .key-legend--single {
+.key-legend--single {
   inset: 50% auto auto 50%;
   transform: translate(-50%, -50%);
   color: var(--color-text-muted);
-  font-size: .56rem;
+  font-size: .66rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.device-keyboard .keyboard-key.is-target {
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--color-words) 72%, #8a6500), 0 0 0 2px color-mix(in srgb, var(--color-words) 35%, transparent);
+/* ---- Стани ------------------------------------------------------ */
+.virtual-keyboard.has-hint .keyboard-key.is-target {
+  z-index: 2;
+  transform: translateY(-3px) scale(1.06);
+  border-color: var(--color-words);
+  background: var(--color-words-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-words) 32%, transparent);
+  opacity: 1;
 }
 
-.device-keyboard .keyboard-key.is-pressed-correct { box-shadow: 0 3px 0 var(--color-start); }
-.device-keyboard .keyboard-key.is-pressed-error { box-shadow: 0 3px 0 var(--color-sprint); }
+.virtual-keyboard.has-hint .keyboard-key.is-target .key-legend--primary,
+.virtual-keyboard.has-hint .keyboard-key.is-target .key-legend--single {
+  color: color-mix(in srgb, var(--color-words) 72%, var(--color-text));
+}
+
+/* Додаткова клавіша комбінації — Shift або AltGr для «ґ». */
+.virtual-keyboard.has-hint .keyboard-key.is-modifier-target {
+  border-color: var(--color-lessons);
+  background: var(--color-lessons-soft);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lessons) 28%, transparent);
+  opacity: 1;
+}
+
+.keyboard-key.is-pressed-correct {
+  border-color: var(--color-start);
+  background: var(--color-start-soft);
+  color: var(--color-start);
+  opacity: 1;
+}
+
+.keyboard-key.is-pressed-error {
+  border-color: var(--color-sprint);
+  background: var(--color-sprint-soft);
+  color: var(--color-sprint);
+  opacity: 1;
+}
+
+/* ---- Корпус пристрою -------------------------------------------- */
+.device-keyboard {
+  position: relative;
+  padding: 11px 12px 15px;
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 80%, var(--color-text));
+  border-radius: 16px;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--color-surface-soft) 82%, #ffffff), color-mix(in srgb, var(--color-surface-soft) 86%, var(--color-border)));
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--color-border-strong) 68%, var(--color-text-muted)), 0 12px 22px rgba(15, 23, 42, .15), inset 0 1px 0 rgba(255, 255, 255, .72);
+}
+
+html[data-theme="dark"] .device-keyboard {
+  background: linear-gradient(155deg, #26354a, #172338);
+  box-shadow: 0 6px 0 #08111f, 0 12px 22px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+html[data-theme="dark"] .keyboard-key {
+  background: var(--color-surface-raised);
+}
+
+/* ---- Обгортка клавіатури в модулях ------------------------------ */
+.keyboard-wrap {
+  display: grid;
+  padding: 10px 12px 14px;
+  place-items: center;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+}
+
+.keyboard-label {
+  margin-bottom: 7px;
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+@media (max-width: 1000px) {
+  .virtual-keyboard { --key-gap: 4px; }
+}
+
+@media (max-width: 860px) {
+  .keyboard-wrap {
+    justify-content: start;
+    overflow-x: auto;
+  }
+
+  .virtual-keyboard {
+    --key-width: 40px;
+    --key-height: 40px;
+    margin-inline: 0;
+  }
+}
 
 @media (max-width: 680px) {
-  .device-keyboard { padding: 7px 8px 11px; border-radius: 12px; }
-  .device-keyboard .keyboard-row { gap: 3px; }
+  .device-keyboard { padding: 8px 9px 12px; border-radius: 13px; }
+  .virtual-keyboard { --key-width: 36px; --key-height: 38px; --key-gap: 3px; }
+  .key-legend--primary { font-size: .82rem; }
 }
