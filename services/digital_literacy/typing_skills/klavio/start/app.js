@@ -212,8 +212,9 @@
 
     if (input.issue(state.currentTarget.value, event) === "layout") {
       elements.layoutWarning.hidden = false;
-      setFeedback("Зараз увімкнено іншу розкладку", "error");
+      setFeedback("");
     } else {
+      elements.layoutWarning.hidden = true;
       setFeedback(randomItem(data.retry), "error");
     }
   }

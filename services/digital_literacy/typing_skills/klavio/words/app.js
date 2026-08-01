@@ -242,7 +242,7 @@
     elements.warning.hidden = problem !== "layout";
     feedback(
       problem === "case" ? "Зверни увагу на велику літеру" :
-        problem === "layout" ? "Зараз увімкнено іншу розкладку" : "Спробуй ще раз",
+        problem === "layout" ? "" : "Спробуй ще раз",
       "error"
     );
   }

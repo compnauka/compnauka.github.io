@@ -44,7 +44,7 @@
       { code: "KeyP", label: "З", secondary: "P", value: "з" },
       { code: "BracketLeft", label: "Х", secondary: "[", value: "х" },
       { code: "BracketRight", label: "Ї", secondary: "]", value: "ї" },
-      { code: "Backslash", label: "Ґ", secondary: "\\", value: "ґ" }
+      { code: "Backslash", label: "\\", muted: true }
     ],
     [
       { code: "CapsLock", label: "Caps", width: "wide", muted: true },
@@ -80,7 +80,7 @@
       { code: "MetaLeft", label: "Win", width: "medium", muted: true },
       { code: "AltLeft", label: "Alt", width: "medium", muted: true },
       { code: "Space", label: "Пробіл", width: "space", value: " " },
-      { code: "AltRight", label: "Alt", width: "medium", muted: true },
+      { code: "AltRight", label: "AltGr", width: "medium", muted: true },
       { code: "ControlRight", label: "Ctrl", width: "medium", muted: true }
     ]
   ];
@@ -124,6 +124,9 @@
     if (target.code) return [target.code];
 
     const normalized = normalize(target.value);
+    // На шкільних Windows-комп’ютерах «ґ» вводиться як Ctrl+Alt+Г.
+    // Тому основною ціллю є фізична клавіша Г (KeyU), а не Backslash.
+    if (normalized === "ґ") return ["KeyU"];
     const matches = [];
 
     UKRAINIAN_ROWS.forEach(function (row) {
@@ -197,7 +200,9 @@
   // Коротка підказка «як натиснути», якщо однієї клавіші замало.
   function comboHintForCharacter(value) {
     if (requiresAltGraph(value)) {
-      return value === "Ґ" ? "Утримуй Ctrl + Alt + Shift" : "Утримуй Ctrl + Alt";
+      return value === "Ґ"
+        ? "Утримуй Ctrl + Alt + Shift і натисни Г"
+        : "Утримуй Ctrl + Alt і натисни Г";
     }
 
     return requiresShift(value) ? "Утримуй Shift" : "";

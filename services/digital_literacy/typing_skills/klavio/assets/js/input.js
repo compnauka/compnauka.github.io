@@ -50,7 +50,17 @@
 
   function matchesCharacter(expected, event) {
     if (expected === " ") return event.code === "Space";
-    return normalizeCharacter(expected) === normalizeCharacter(event.key);
+    const wanted = normalizeCharacter(expected);
+    const actual = normalizeCharacter(event.key);
+
+    // У цій шкільній схемі «ґ» — це саме Ctrl+Alt+Г. Перевіряємо
+    // і символ, і фізичну клавішу, щоб випадкова інша схема не
+    // навчала дитину неправильного руху.
+    if (wanted.toLocaleLowerCase("uk-UA") === "ґ") {
+      return actual === wanted && isAltGraph(event) && event.code === "KeyU";
+    }
+
+    return wanted === actual;
   }
 
   function issue(expected, event) {

@@ -340,7 +340,7 @@
     const problem = input.issue(expected, event);
     if (problem === "layout") {
       elements.layoutWarning.hidden = false;
-      setFeedback("Зараз увімкнено іншу розкладку", "error");
+      setFeedback("");
     } else if (problem === "case") {
       elements.layoutWarning.hidden = true;
       setFeedback("Зверни увагу на велику або малу літеру", "error");

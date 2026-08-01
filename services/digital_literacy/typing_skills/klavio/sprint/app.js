@@ -350,7 +350,7 @@
       adapt(false);
       const problem = input.issue(wanted, event);
       elements.warning.hidden = problem !== "layout";
-      feedback(problem === "layout" ? "Перемкни розкладку" : "Інша клавіша", "error");
+      feedback(problem === "layout" ? "" : "Інша клавіша", "error");
       updateStats();
     }
   }

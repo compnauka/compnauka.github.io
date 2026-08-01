@@ -118,7 +118,7 @@ test("у вправах великі й малі літери розрізняю
 
 test("апостроф, ґ і кома відповідають шкільній українській розкладці", function () {
   assert.deepEqual(layouts.codesForTarget({ value: "'" }), ["Backquote"]);
-  assert.deepEqual(layouts.codesForTarget({ value: "ґ" }), ["Backslash"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "ґ" }), ["KeyU"]);
   assert.deepEqual(layouts.codesForTarget({ value: "," }), ["Slash"]);
   assert.equal(layouts.requiresShift(","), true);
 });
@@ -171,14 +171,19 @@ test("пробіл має власну клавішу на віртуальні�
   assert.deepEqual(layouts.codesForTarget({ value: " " }), ["Space"]);
   assert.equal(input.displayCharacter(" "), "␣");
   assert.equal(input.describeCharacter(" "), "пробіл");
+  assert.deepEqual(layouts.hintsForCharacter(" "), [
+    { hand: "both", finger: "thumb", name: "великі пальці", code: "Space" }
+  ]);
 });
 
 test("AltGr не вважається системною комбінацією, бо ним набирають «ґ»", function () {
-  const altGraph = { key: "ґ", code: "Backslash", ctrlKey: true, altKey: true };
+  const altGraph = { key: "ґ", code: "KeyU", ctrlKey: true, altKey: true };
 
   assert.equal(input.isSystemCombination(altGraph), false);
   assert.equal(input.isTextAttempt(altGraph), true);
   assert.equal(input.matchesCharacter("ґ", altGraph), true);
+  assert.equal(input.matchesCharacter("ґ", { key: "ґ", code: "KeyU" }), false);
+  assert.equal(input.matchesCharacter("ґ", { key: "ґ", code: "Backslash", ctrlKey: true, altKey: true }), false);
   assert.equal(input.isSystemCombination({ key: "с", code: "KeyC", ctrlKey: true }), true);
 });
 
@@ -186,7 +191,9 @@ test("«ґ» просить утримати Ctrl+Alt і підсвічує са
   assert.equal(layouts.requiresAltGraph("ґ"), true);
   assert.equal(layouts.requiresAltGraph("г"), false);
   assert.deepEqual(layouts.modifierCodesForCharacter("ґ"), ["ControlRight", "AltRight"]);
-  assert.equal(layouts.comboHintForCharacter("ґ"), "Утримуй Ctrl + Alt");
+  assert.deepEqual(layouts.codesForTarget({ value: "ґ" }), ["KeyU"]);
+  assert.equal(layouts.comboHintForCharacter("ґ"), "Утримуй Ctrl + Alt і натисни Г");
+  assert.equal(layouts.comboHintForCharacter("Ґ"), "Утримуй Ctrl + Alt + Shift і натисни Г");
   assert.equal(layouts.comboHintForCharacter("А"), "Утримуй Shift");
   assert.equal(layouts.comboHintForCharacter("а"), "");
 });
