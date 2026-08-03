@@ -83,6 +83,97 @@ test("Shift не вважається помилкою перед великою
   assert.equal(input.isTargetAttempt(shift, { key: "Shift", code: "ShiftLeft" }, layouts), true);
 });
 
+test("Ctrl і Alt, натиснуті окремо, доходять до вправи як звичайні цілі", function () {
+  const ctrl = { key: "Control", code: "ControlLeft", ctrlKey: true };
+  const alt = { key: "Alt", code: "AltLeft", altKey: true };
+  const ctrlTarget = { kind: "control", value: "Ctrl", codes: ["ControlLeft", "ControlRight"] };
+  const altTarget = { kind: "control", value: "Alt", code: "AltLeft" };
+
+  assert.equal(input.isSystemCombination(ctrl), false);
+  assert.equal(input.isSystemCombination(alt), false);
+  assert.equal(input.isTargetAttempt(ctrlTarget, ctrl, layouts), true);
+  assert.equal(input.matchesTarget(ctrlTarget, ctrl, layouts), true);
+  assert.equal(input.matchesTarget(ctrlTarget, { key: "Control", code: "ControlRight", ctrlKey: true }, layouts), true);
+  assert.equal(input.isTargetAttempt(altTarget, alt, layouts), true);
+  assert.equal(input.matchesTarget(altTarget, alt, layouts), true);
+});
+
+test("модифікатор не рахується помилкою, коли просять іншу клавішу", function () {
+  const letter = { kind: "letter", value: "а" };
+  const altTarget = { kind: "control", value: "Alt", code: "AltLeft" };
+
+  assert.equal(input.isTargetAttempt(letter, { key: "Control", code: "ControlLeft", ctrlKey: true }, layouts), false);
+  assert.equal(input.isTargetAttempt(letter, { key: "Alt", code: "AltLeft", altKey: true }, layouts), false);
+  // AltGr спершу надсилає службовий ControlLeft — його теж треба пропустити.
+  assert.equal(input.isTargetAttempt(altTarget, { key: "Control", code: "ControlLeft", ctrlKey: true }, layouts), false);
+  assert.equal(input.isTargetAttempt(altTarget, { key: "Alt", code: "AltRight", ctrlKey: true, altKey: true }, layouts), false);
+});
+
+test("справжня системна комбінація лишається поза вправою", function () {
+  assert.equal(input.isSystemCombination({ key: "Alt", code: "AltLeft", ctrlKey: true, altKey: true }), false);
+  assert.equal(input.isSystemCombination({ key: "Control", code: "ControlLeft", ctrlKey: true, repeat: true }), true);
+  assert.equal(input.isSystemCombination({ key: "Control", code: "ControlLeft", ctrlKey: true, shiftKey: true }), true);
+  assert.equal(input.isTextAttempt({ key: "Control", code: "ControlLeft", ctrlKey: true }), false);
+});
+
+test("«Старт» має набір з усіма літерами, цифрами та важливими клавішами", function () {
+  const startData = require("../start/data.js");
+  const everything = startData.sets.everything.targets;
+  const kinds = new Set(everything.map(function (target) { return target.kind; }));
+
+  assert.deepEqual([...kinds].sort(), ["control", "digit", "letter"]);
+  assert.equal(everything.length, 32 + 10 + 6);
+  assert.equal(new Set(everything.map(function (target) { return target.id; })).size, everything.length);
+  assert.ok(startData.sets.controls.targets.some(function (target) { return target.value === "Ctrl"; }));
+  assert.ok(startData.sets.controls.targets.some(function (target) { return target.value === "Alt"; }));
+});
+
+test("мішок видає весь набір, перш ніж повторити елемент", function () {
+  const bag = runtime.createBag(["а", "б", "в", "г"]);
+  const firstPass = [bag.next(), bag.next(), bag.next(), bag.next()];
+
+  assert.equal(new Set(firstPass).size, 4);
+  assert.notEqual(bag.next(), firstPass[3]);
+  assert.equal(runtime.createBag([]).next(), null);
+});
+
+test("наборів Спринту вистачає на раунд без нав'язливих повторів", function () {
+  sprintData.modes.forEach(function (mode) {
+    sprintData.difficulties.forEach(function (difficulty) {
+      const items = sprintData.targets[mode.id][difficulty.id];
+      // Режим «Клавіші» обмежений абеткою — там достатньо десятка перших літер.
+      const minimum = mode.id === "keys" ? 10 : 20;
+      assert.ok(items.length >= minimum, mode.id + "/" + difficulty.id + ": " + items.length);
+      assert.equal(new Set(items).size, items.length, "повтори у " + mode.id + "/" + difficulty.id);
+    });
+  });
+});
+
+test("у Словах кожен рівень покриває цілий раунд без повторів", function () {
+  assert.ok(wordsData.pools.hard.length >= 18);
+  wordsData.difficulties.forEach(function (level) {
+    assert.ok(wordsData.sentences[level.id].length >= 10, level.id);
+    assert.equal(new Set(wordsData.sentences[level.id]).size, wordsData.sentences[level.id].length);
+  });
+});
+
+test("у завданнях для друку немає латиниці — її не набрати українською розкладкою", function () {
+  const latin = /[A-Za-z]/;
+  const sentences = Object.keys(wordsData.sentences).flatMap(function (id) {
+    return wordsData.sentences[id];
+  });
+
+  assert.deepEqual(sentences.filter(function (item) { return latin.test(item); }), []);
+
+  const sprintTargets = Object.keys(sprintData.targets).flatMap(function (mode) {
+    return Object.keys(sprintData.targets[mode]).flatMap(function (level) {
+      return sprintData.targets[mode][level];
+    });
+  });
+
+  assert.deepEqual(sprintTargets.filter(function (item) { return latin.test(item); }), []);
+});
+
 test("курс містить усі 35 вправ без пропусків у нумерації", function () {
   assert.equal(lessonData.lessons.length, 35);
   assert.deepEqual(

@@ -50,6 +50,36 @@
     return result;
   }
 
+  // Нескінченна черга без повторів: набір видається перемішаним і
+  // тасується наново лише тоді, коли вичерпався. Так учень бачить усі
+  // слова набору, а не два-три випадкових по колу.
+  function createBag(items, random) {
+    const source = Array.isArray(items) ? items.slice() : [];
+    let pool = [];
+    let last = null;
+
+    return {
+      size: source.length,
+      next: function () {
+        if (source.length === 0) return null;
+
+        if (pool.length === 0) {
+          pool = shuffled(source, random);
+
+          if (pool.length > 1 && identity(pool[0]) === last) {
+            const first = pool[0];
+            pool[0] = pool[1];
+            pool[1] = first;
+          }
+        }
+
+        const item = pool.shift();
+        last = identity(item);
+        return item;
+      }
+    };
+  }
+
   function identity(item) {
     return item && typeof item === "object" && Object.prototype.hasOwnProperty.call(item, "id") ? item.id : item;
   }
@@ -114,6 +144,7 @@
   return {
     shuffled,
     buildRound,
+    createBag,
     createTonePlayer
   };
 });

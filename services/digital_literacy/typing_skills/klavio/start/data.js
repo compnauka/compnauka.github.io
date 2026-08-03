@@ -35,6 +35,20 @@
     });
   }
 
+  // «Ґ» свідомо немає в жодному наборі: вона набирається комбінацією
+  // Ctrl+Alt, а «Старт» вчить знаходити одну клавішу без модифікаторів.
+  const ALPHABET = "абвгдеєжзиіїйклмнопрстуфхцчшщьюя";
+
+  const CONTROL_TARGETS = [
+    { id: "control-space", kind: "control", value: " ", label: "Пробіл", code: "Space" },
+    { id: "control-enter", kind: "control", value: "Enter", label: "Enter", code: "Enter" },
+    { id: "control-backspace", kind: "control", value: "Backspace", label: "Backspace", code: "Backspace" },
+    { id: "control-shift", kind: "control", value: "Shift", label: "Shift", codes: ["ShiftLeft", "ShiftRight"] },
+    { id: "control-ctrl", kind: "control", value: "Ctrl", label: "Ctrl", codes: ["ControlLeft", "ControlRight"] },
+    // Тільки лівий Alt: правий на українській розкладці працює як AltGr для «ґ».
+    { id: "control-alt", kind: "control", value: "Alt", label: "Alt", code: "AltLeft" }
+  ];
+
   return {
     roundLength: 12,
     sets: {
@@ -42,15 +56,14 @@
         id: "starter",
         label: "Перші літери",
         description: "10 частих українських літер",
-        targets: letters("аоієнтсрвл")
+        // Той самий десяток, що й у «Спринті» на рівні «Легко».
+        targets: letters("аоіентсрвл")
       },
       alphabet: {
         id: "alphabet",
         label: "Усі літери",
-        // «Ґ» тут свідомо немає: вона набирається комбінацією Ctrl+Alt,
-        // а «Старт» вчить знаходити одну клавішу без модифікаторів.
         description: "Абетка без «ґ» — вона потребує комбінації клавіш",
-        targets: letters("абвгдеєжзиіїйклмнопрстуфхцчшщьюя")
+        targets: letters(ALPHABET)
       },
       digits: {
         id: "digits",
@@ -61,13 +74,14 @@
       controls: {
         id: "controls",
         label: "Важливі клавіші",
-        description: "Пробіл, Enter, Backspace і Shift",
-        targets: [
-          { id: "control-space", kind: "control", value: " ", label: "Пробіл", code: "Space" },
-          { id: "control-enter", kind: "control", value: "Enter", label: "Enter", code: "Enter" },
-          { id: "control-backspace", kind: "control", value: "Backspace", label: "Backspace", code: "Backspace" },
-          { id: "control-shift", kind: "control", value: "Shift", label: "Shift", codes: ["ShiftLeft", "ShiftRight"] }
-        ]
+        description: "Пробіл, Enter, Backspace, Shift, Ctrl і Alt",
+        targets: CONTROL_TARGETS
+      },
+      everything: {
+        id: "everything",
+        label: "Усе разом",
+        description: "Літери, цифри та важливі клавіші",
+        targets: letters(ALPHABET).concat(digits(), CONTROL_TARGETS)
       }
     },
     encouragement: ["Чудово!", "Саме так!", "Правильно!", "Молодець!", "Влучно!"],

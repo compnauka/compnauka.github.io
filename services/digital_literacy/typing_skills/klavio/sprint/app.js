@@ -70,9 +70,10 @@
     pace: 1,
     results: [],
     frameId: 0,
-    lastSecond: 60,
-    lastTarget: ""
+    lastSecond: 60
   };
+
+  const bags = {};
 
   const keyboard = keyboardApi.create(elements.keyboard, layouts);
   const sound = soundApi.create({
@@ -174,13 +175,12 @@
     else if (rate <= 0.58) state.pace = Math.min(1.25, state.pace + 0.06);
   }
 
+  // Кожна пара «режим + складність» має власну чергу, яка живе між раундами:
+  // набір встигає пройти повністю, перш ніж ціль повториться.
   function chooseTarget() {
-    let next = core.randomItem(source());
-    if (source().length > 1 && next === state.lastTarget) {
-      next = source()[(source().indexOf(next) + 1) % source().length];
-    }
-    state.lastTarget = next;
-    return next;
+    const key = state.mode + ":" + state.difficulty;
+    if (!bags[key]) bags[key] = runtime.createBag(source());
+    return bags[key].next() || "";
   }
 
   // Ціль завжди стартує від безпечного краю й рухається до небезпечного.
@@ -261,7 +261,6 @@
     state.pace = 1;
     state.results = [];
     state.lastSecond = data.durationSeconds;
-    state.lastTarget = "";
     updateStats();
   }
 

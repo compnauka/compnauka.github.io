@@ -16,8 +16,21 @@
   const APOSTROPHES = /['ʼ’]/g;
   const UKRAINIAN_CHARACTER = /[а-яіїєґА-ЯІЇЄҐ]/;
 
+  const MODIFIER_CODES = ["ShiftLeft", "ShiftRight", "ControlLeft", "ControlRight", "AltLeft", "AltRight"];
+
+  // Модифікатор натиснуто окремо, якщо жодного іншого не утримують.
+  const LONE_MODIFIER_FLAGS = {
+    Control: ["altKey", "shiftKey", "metaKey"],
+    Alt: ["ctrlKey", "shiftKey", "metaKey"],
+    Shift: ["ctrlKey", "altKey", "metaKey"]
+  };
+
   function normalizeCharacter(value) {
     return typeof value === "string" ? value.replace(APOSTROPHES, "'") : "";
+  }
+
+  function isModifierCode(code) {
+    return MODIFIER_CODES.indexOf(code) !== -1;
   }
 
   // AltGr на Windows приходить як Ctrl+Alt. Це звичайне введення «ґ»,
@@ -26,8 +39,17 @@
     return Boolean(event.ctrlKey && event.altKey);
   }
 
+  // Ctrl, Alt і Shift самі бувають завданням у «Старті». Натиснуті поодинці,
+  // вони ще нічого не запускають, тому подію треба пропустити далі.
+  function isLoneModifier(event) {
+    const flags = LONE_MODIFIER_FLAGS[event.key];
+    if (!flags) return false;
+    return flags.every(function (flag) { return !event[flag]; });
+  }
+
   function isSystemCombination(event) {
     if (event.repeat || event.metaKey) return true;
+    if (isLoneModifier(event)) return false;
     if (isAltGraph(event)) return false;
     return Boolean(event.ctrlKey || event.altKey);
   }
@@ -83,9 +105,9 @@
     if (isSystemCombination(event)) return false;
 
     const codes = targetCodes(target, layouts);
-    if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
-      return codes.includes(event.code);
-    }
+    // Модифікатор рахуємо спробою лише тоді, коли його й просять натиснути.
+    // Інакше Shift перед великою літерою чи Ctrl від AltGr стали б помилкою.
+    if (isModifierCode(event.code)) return codes.includes(event.code);
 
     if (typeof event.key === "string" && event.key.length === 1) return true;
     return codes.includes(event.code);
@@ -95,7 +117,7 @@
     if (!target) return false;
     const codes = targetCodes(target, layouts);
 
-    if (target.kind === "control" || event.code === "ShiftLeft" || event.code === "ShiftRight") {
+    if (target.kind === "control" || isModifierCode(event.code)) {
       return codes.includes(event.code);
     }
 
@@ -104,10 +126,13 @@
   }
 
   return {
+    modifierCodes: MODIFIER_CODES,
     normalizeCharacter,
     displayCharacter,
     describeCharacter,
+    isModifierCode,
     isAltGraph,
+    isLoneModifier,
     isSystemCombination,
     isTextAttempt,
     matchesCharacter,

@@ -14,6 +14,8 @@
     throw new Error("Не вдалося завантажити спільне ядро Клавіо");
   }
 
+  const BROWSER_KEYS = ["Space", "Backspace", "Enter", "AltLeft", "AltRight"];
+
   const elements = {
     setupView: document.getElementById("setup-view"),
     practiceView: document.getElementById("practice-view"),
@@ -221,14 +223,15 @@
 
   function handleTrainingKey(event) {
     if (!state.running || state.inputLocked || !state.currentTarget) return;
-    if (!input.isTargetAttempt(state.currentTarget, event, layouts)) return;
 
     const activeElement = document.activeElement;
     if (activeElement && activeElement.closest("button, a, input, label")) return;
 
-    if (["Space", "Backspace", "Enter", "ShiftLeft", "ShiftRight"].includes(event.code)) {
-      event.preventDefault();
-    }
+    // Ці клавіші браузер перехоплює сам: Alt відкриває меню, Backspace —
+    // крок назад, Enter і Пробіл «клацають» елемент у фокусі.
+    if (BROWSER_KEYS.includes(event.code)) event.preventDefault();
+
+    if (!input.isTargetAttempt(state.currentTarget, event, layouts)) return;
 
     if (input.matchesTarget(state.currentTarget, event, layouts)) {
       handleCorrect(event);
