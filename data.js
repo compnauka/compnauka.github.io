@@ -693,7 +693,61 @@ const SUPPORT_PROJECT_CARD = {
   tags: []
 };
 
+// Сервіси з власною навігацією назад на головну відкриваємо в поточній вкладці.
+// Зовнішні ресурси, PDF-файли та сторінки без такого переходу й надалі
+// використовують стандартний для карток target="_blank".
+const SAME_TAB_SERVICE_LINKS = new Set([
+  "aimarathon/aim26/",
+  "apps/",
+  "edexpo/",
+  "edinfo/",
+  "games/fact-or-opinion/index.html",
+  "games/magic_square/index.html",
+  "games/math_quiz/index.html",
+  "games/seabattle.html",
+  "games/tangram/index.html",
+  "microbit/",
+  "outer/",
+  "services/ai/eliza/",
+  "services/assembly/hardware.html",
+  "services/assembly/software.html",
+  "services/coding/farmbot/index.html",
+  "services/coding/farmbot_plus/index.html",
+  "services/coding/python/index.html",
+  "services/computational_thinking/index.html",
+  "services/digital_literacy/data-and-information/index.html",
+  "services/digital_literacy/mouse_skills/fireflies/index.html",
+  "services/digital_literacy/mouse_skills/jailfish/index.html",
+  "services/digital_literacy/mouse_skills/maze/index.html",
+  "services/digital_literacy/mouse_skills/mouse103/index.html",
+  "services/digital_literacy/mouse_skills/mouse_keys/index.html",
+  "services/digital_literacy/mouse_skills/svitlo/index.html",
+  "services/digital_literacy/mouse_skills/windows/index.html",
+  "services/digital_literacy/typing_skills/key_ppo/index.html",
+  "services/digital_literacy/typing_skills/key_puzzle/index.html",
+  "services/digital_literacy/typing_skills/keymaster/index.html",
+  "services/digital_literacy/typing_skills/klavio/index.html",
+  "services/digital_literacy/typing_skills/typing_lesson/index.html",
+  "services/digital_literacy/typing_skills/tyts/index.html",
+  "services/digital_literacy/typing_skills/urls_typing/index.html",
+  "services/quizes/ct_quiz/index.html",
+  "services/quizes/save_server/index.html",
+  "services/quizes/sorting_hub.html",
+  "services/security_and_safety/caesar_cipher/caesar_decrypt.html",
+  "services/security_and_safety/caesar_cipher/caesar_encrypt.html",
+  "services/security_and_safety/critical_thinking_for_kids/index.html",
+  "services/security_and_safety/cryptography_for_kids/index.html",
+  "services/security_and_safety/cybersecurity_for_kids/index.html",
+  "tools/bit_converter/index.html"
+]);
+
 
 CATEGORIES.forEach(category => {
-  category.services = [{ ...SUPPORT_PROJECT_CARD }, ...category.services];
+  const services = category.services.map(service => (
+    SAME_TAB_SERVICE_LINKS.has(service.link)
+      ? { ...service, linkTarget: "_self" }
+      : service
+  ));
+
+  category.services = [{ ...SUPPORT_PROJECT_CARD }, ...services];
 });
