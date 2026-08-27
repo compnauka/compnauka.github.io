@@ -12,12 +12,12 @@
     --accent-color: #4285f4; /* Яскравий синій для акцентів */
     --shadow-color: rgba(0, 0, 0, 0.08);
     --border-radius: 12px;
-    --color-online-bg: #e0f2f1;
-    --color-online-text: #00796b;
-    --color-install-bg: #fff3e0;
-    --color-install-text: #f57c00;
-    --color-ai-bg: #e8eaf6; /* Коригуємо колір фону для ШІ */
-    --color-ai-text: #3f51b5; /* Коригуємо колір тексту для ШІ */
+    --color-online-bg: #dcedc8;   /* Онлайн / Web */
+    --color-online-text: #33691e;
+    --color-install-bg: #ffe0b2;  /* Офлайн / PDF */
+    --color-install-text: #e65100;
+    --color-ai-bg: #e1f5fe;       /* ШІ */
+    --color-ai-text: #01579b;
 }
 
 body {
@@ -32,7 +32,7 @@ body {
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.25rem 2rem 2rem;
 }
 
 /* --- Темна тема (узгоджено зі спільним site-shell) --- */
@@ -67,6 +67,9 @@ body.dark-mode .software-list li a:focus-visible {
     color: #bfdbfe;
 }
 
+/* Правила нижче виглядають як дубль базових, але потрібні: селектор
+   body.dark-mode .tool-type має вищу специфічність за .tool-type.online
+   і без них перекрив би кольорові бейджі нейтральним тлом. */
 body.dark-mode .tool-type {
     background: #334155;
     border-color: rgba(255, 255, 255, 0.12);
@@ -89,13 +92,14 @@ body.dark-mode .tool-type.ai {
 
 header {
     text-align: center;
-    margin-bottom: 3.5rem; /* Збільшуємо відступ знизу */
+    margin-bottom: 1.25rem;
 }
 
 header h1 {
     color: var(--header-color);
-    font-size: 2.5rem; /* Трохи збільшуємо розмір заголовка */
-    margin-bottom: 1.2rem;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,42 +108,43 @@ header h1 {
 
 .subtitle {
     color: #555; /* Трохи темніший колір для підзаголовка */
-    font-size: 1.15rem; /* Трохи збільшуємо розмір шрифту */
-    margin-bottom: 2.5rem; /* Збільшуємо відступ знизу */
+    font-size: 1.05rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
 }
 
 .stats {
     display: flex;
     justify-content: center;
-    gap: 2.5rem; /* Збільшуємо проміжок між статистичними картками */
-    margin-bottom: 2.5rem; /* Збільшуємо відступ знизу */
+    gap: 1rem;
+    margin-bottom: 0;
     flex-wrap: wrap;
 }
 
 .stat-item {
     background: var(--card-bg-color);
-    padding: 1rem 1.5rem;
+    padding: 0.6rem 1.2rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--shadow-color);
     text-align: center;
-    min-width: 160px; /* Трохи збільшуємо мінімальну ширину */
+    min-width: 130px;
 }
 
 .stat-number {
-    font-size: 1.8rem; /* Збільшуємо розмір цифр лічильника */
+    font-size: 1.45rem;
     font-weight: 700;
     color: var(--accent-color);
 }
 
 .stat-label {
-    font-size: 1rem; /* Трохи збільшуємо розмір підпису */
+    font-size: 0.85rem;
     color: #666;
 }
 
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem; /* Збільшуємо проміжок між картками категорій */
+    gap: 1.5rem;
 }
 
 .category-card {
@@ -221,18 +226,18 @@ header h1 {
 }
 
 .tool-type.online {
-    background-color: #dcedc8; /* Світло-зелений для онлайн */
-    color: #33691e; /* Темно-зелений для онлайн */
+    background-color: var(--color-online-bg);
+    color: var(--color-online-text);
 }
 
 .tool-type.install {
-    background-color: #ffe0b2; /* Світло-помаранчевий для офлайн */
-    color: #e65100; /* Темно-помаранчевий для офлайн */
+    background-color: var(--color-install-bg);
+    color: var(--color-install-text);
 }
 
 .tool-type.ai {
-    background-color: #e1f5fe; /* Світло-блакитний для ШІ */
-    color: #01579b; /* Темно-блакитний для ШІ */
+    background-color: var(--color-ai-bg);
+    color: var(--color-ai-text);
 }
 
 footer {
@@ -247,33 +252,32 @@ footer {
         grid-template-columns: 1fr;
     }
     .container {
-        padding: 1rem;
+        padding: 0.75rem 1rem 1.5rem;
     }
     header {
-        margin-bottom: 2rem; /* Менший відступ під hero на мобільному */
+        margin-bottom: 1rem;
     }
     header h1 {
-        font-size: 1.5rem; /* Зменшуємо розмір заголовка на мобільних */
-        margin-bottom: 0.8rem;
-        align-items: center; /* Центруємо елементи заголовка */
-        flex-direction: column; /* Розташовуємо іконку та текст вертикально */
-        text-align: center; /* Центруємо текст */
+        font-size: 1.35rem;
+        margin-bottom: 0.5rem;
+        align-items: center;
+        gap: 0.5rem; /* іконка поруч із текстом, а не над ним — економить висоту */
+        text-align: center;
     }
     header h1 .fas {
-        font-size: 1.4rem; /* Зменшуємо розмір іконки */
-        margin-bottom: 0.4rem; /* Додаємо відступ знизу для іконки */
+        font-size: 1.2rem;
     }
     .subtitle {
-        font-size: 0.95rem; /* Зменшуємо розмір підзаголовка */
-        margin-bottom: 1.5rem; /* Зменшуємо відступ */
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
     }
     .stats {
-        gap: 1rem; /* Зменшуємо проміжок між статистичними картками */
-        margin-bottom: 1.5rem; /* Зменшуємо відступ */
+        gap: 0.75rem;
+        margin-bottom: 0;
     }
     .stat-item {
-        padding: 0.8rem 1rem; /* Зменшуємо відступи в картках статистики */
-        min-width: 120px; /* Зменшуємо мінімальну ширину */
+        padding: 0.5rem 0.9rem;
+        min-width: 110px;
     }
     .stat-item:nth-child(3) { /* Приховуємо блок 'Free & Freemium' */
         display: none;
@@ -284,6 +288,18 @@ footer {
     .stat-label {
         font-size: 0.85rem; /* Зменшуємо розмір підпису */
     }
+    .filter-bar {
+        gap: 0.5rem;
+        margin: 0 -1rem 0.75rem;
+        padding: 0.6rem 1rem;
+    }
+    .search-wrap {
+        flex: 1 1 100%;
+    }
+    .chip {
+        font-size: 0.85rem;
+        padding: 0.45rem 0.9rem;
+    }
 }
 
 /* General focus visible style for better accessibility */
@@ -292,21 +308,224 @@ footer {
   color: gold;
   margin-left: 5px; /* Додає невеликий відступ ліворуч від зірки */
 }
+/* Разом із елементами, які зроблені фокусованими через tabindex */
 a:focus-visible,
 button:focus-visible,
 input[type="text"]:focus-visible,
 input[type="button"]:focus-visible,
 input[type="submit"]:focus-visible,
+input[type="search"]:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+[tabindex]:not([tabindex^="-"]):focus-visible {
     outline: 2px dashed var(--accent-color);
     outline-offset: 2px;
     border-radius: 2px;
 }
 
-/* Ensure interactive elements that are not standard HTML controls also get focus styling if they are made focusable with tabindex */
-[tabindex]:not([tabindex^="-"]):focus-visible {
-    outline: 2px dashed var(--accent-color);
-    outline-offset: 2px;
-    border-radius: 2px;
+/* =========================================================================
+   Пошук і фільтри каталогу (панель вставляє script.js)
+   ========================================================================= */
+[hidden] {
+    display: none !important;
+}
+
+.filter-bar {
+    position: sticky;
+    top: 64px; /* висота хедера site-shell */
+    z-index: 900;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem 0.9rem;
+    /* На всю ширину контейнера, щоб картки не прозирали під панеллю */
+    margin: 0 -2rem 1rem;
+    padding: 0.7rem 2rem;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.search-wrap {
+    position: relative;
+    flex: 0 1 440px;
+    min-width: 220px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-color);
+    pointer-events: none;
+    font-size: 0.95rem;
+}
+
+.search-input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background: var(--card-bg-color);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 999px;
+    padding: 0.6rem 2.6rem;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+}
+
+/* Прибираємо власний «хрестик» браузера — маємо свою кнопку */
+.search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.search-clear:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-color);
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.chip {
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-color);
+    background: var(--card-bg-color);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 999px;
+    padding: 0.42rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent-color);
+}
+
+.chip.is-active {
+    border-color: transparent;
+}
+
+.chip--all.is-active {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.chip--online.is-active {
+    background-color: var(--color-online-bg);
+    color: var(--color-online-text);
+}
+
+.chip--install.is-active {
+    background-color: var(--color-install-bg);
+    color: var(--color-install-text);
+}
+
+.chip--ai.is-active {
+    background-color: var(--color-ai-bg);
+    color: var(--color-ai-text);
+}
+
+.filter-status {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+}
+
+.no-results {
+    text-align: center;
+    color: #64748b;
+    background: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 15px var(--shadow-color);
+    padding: 2.5rem 1.5rem;
+    margin-top: 1rem;
+}
+
+.no-results i {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.no-results p {
+    margin: 0 0 1.25rem;
+}
+
+.reset-btn {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    filter: brightness(1.08);
+}
+
+/* --- Темна тема --- */
+body.dark-mode .search-input,
+body.dark-mode .chip {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+body.dark-mode .filter-bar {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .search-input::placeholder,
+body.dark-mode .filter-status,
+body.dark-mode .no-results,
+body.dark-mode .search-clear {
+    color: #94a3b8;
+}
+
+body.dark-mode .search-clear:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
 }

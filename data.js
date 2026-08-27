@@ -359,13 +359,7 @@ const CATEGORIES = [
         image: "images/12.webp",
         tags: ["3-4 класи"]
       },
-      {
-        name: "Конструктор блок-схем",
-        description: "Простий редактор для створення блок-схем.",
-        link: "tools/block_diagram_designer/index.html",
-        image: "images/37.webp",
-        tags: ["3-4 класи", "5-7 класи"]
-      },
+    
       {
         name: "Програмування з Равликом",
         description: "Онлайн редактор для текстової мови програмування РАВЛИК",
