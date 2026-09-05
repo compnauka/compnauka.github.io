@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { computeVersion, readVersion } from './stamp-cache-version.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -59,6 +60,18 @@ const sw = fs.readFileSync(path.join(root, 'service-worker.js'), 'utf8');
 if (!sw.includes("CACHE_PREFIX = 'divo-puzzle-'")) errors.push('Service Worker cache prefix missing');
 if (/\bself\.skipWaiting\s*\(/.test(sw)) errors.push('Service Worker uses skipWaiting()');
 if (/\bself\.clients\.claim\s*\(/.test(sw)) errors.push('Service Worker uses clients.claim()');
+
+// CACHE_VERSION має відповідати фактичному вмісту APP_SHELL, інакше браузер не
+// побачить оновлення гри й постійні гравці лишаться на старих JS/CSS.
+try {
+  const expected = computeVersion().version;
+  const actual = readVersion(sw);
+  if (actual !== expected) {
+    errors.push(`CACHE_VERSION застаріла (${actual}, має бути ${expected}) — запусти tools/stamp-cache-version.mjs`);
+  }
+} catch (error) {
+  errors.push(`Не вдалося перевірити CACHE_VERSION: ${error.message}`);
+}
 
 const allSourceFiles = ['styles.css','service-worker.js', ...fs.readdirSync(path.join(root,'js')).map((f)=>`js/${f}`)];
 for (const file of allSourceFiles) {

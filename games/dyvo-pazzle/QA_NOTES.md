@@ -3,6 +3,11 @@
 ## Закриті P0/P1 проблеми з аудиту
 
 1. **Service Worker cache isolation** — видаляються лише кеші `divo-puzzle-*`.
+1a. **Оновлення кешу** — `CACHE_VERSION` = хеш вмісту `APP_SHELL`
+    (`tools/stamp-cache-version.mjs`, звіряється в `qa-check.mjs`), а стратегія
+    для ассетів — stale-while-revalidate. Раніше був `cacheFirst` із вручну
+    закріпленою версією: якщо її забували підняти, постійні гравці діставали
+    свіжий `index.html` зі старими JS/CSS і залишалися так назавжди.
 2. **Camera async race** — кожний camera request має token; застарілий stream зупиняється.
 3. **Capture processing race** — фото, яке завершило обробку після виходу користувача, не може самовільно відкрити crop.
 4. **Win timer race** — timer зберігається та скасовується при destroy/leave.

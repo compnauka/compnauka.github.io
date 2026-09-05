@@ -1,5 +1,10 @@
 const CACHE_PREFIX = 'divo-puzzle-';
-const CACHE_NAME = `${CACHE_PREFIX}v2.0.0`;
+// Генерується автоматично: node tools/stamp-cache-version.mjs
+// Це хеш вмісту всіх файлів APP_SHELL, тому будь-яка зміна гри змінює і сам
+// цей файл — браузер бачить новий Service Worker і перевстановлює кеш.
+// Руками не редагувати: qa-check.mjs звіряє значення з фактичним вмістом.
+const CACHE_VERSION = 'v4bdb983d8f14';
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -59,25 +64,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(cacheFirst(request));
+  event.respondWith(staleWhileRevalidate(event, request));
 });
 
 async function networkFirstNavigation(request) {
   try {
-    return await fetch(request);
+    const response = await fetch(request);
+    if (response.ok && response.type === 'basic') {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put('./index.html', response.clone());
+    }
+    return response;
   } catch (_) {
     return (await caches.match('./index.html')) || Response.error();
   }
 }
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+// Stale-while-revalidate: віддаємо кеш одразу (миттєво й офлайн), а паралельно
+// тягнемо свіжу версію у фон і кладемо в кеш — наступне завантаження вже нове.
+// Саме це рятує, якщо CACHE_VERSION забули оновити: старий воркер сам
+// підтягне нові файли, замість того щоб віддавати старі назавжди.
+function staleWhileRevalidate(event, request) {
+  if (request.url.endsWith('/service-worker.js')) return fetch(request);
 
-  const response = await fetch(request);
-  if (response.ok && response.type === 'basic' && !request.url.endsWith('/service-worker.js')) {
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
-  }
-  return response;
+  return caches.open(CACHE_NAME).then(async (cache) => {
+    const cached = await cache.match(request);
+
+    const fromNetwork = fetch(request)
+      .then((response) => {
+        if (response.ok && response.type === 'basic') cache.put(request, response.clone());
+        return response;
+      })
+      .catch(() => null);
+
+    // Без waitUntil браузер може вбити воркер до завершення фонового запиту.
+    if (cached) {
+      event.waitUntil(fromNetwork);
+      return cached;
+    }
+
+    return (await fromNetwork) || Response.error();
+  });
 }
