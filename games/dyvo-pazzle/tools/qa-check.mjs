@@ -39,7 +39,15 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
 const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
 if (duplicateIds.length) errors.push(`Duplicate IDs: ${duplicateIds.join(', ')}`);
-if (/https?:\/\//i.test(html)) errors.push('index.html contains an external http(s) URL');
+// Єдиний дозволений зовнішній хост — beacon Cloudflare Web Analytics у CSP.
+// Перевіряємо решту розмітки: там зовнішніх URL бути не повинно.
+const ALLOWED_EXTERNAL = 'https://static.cloudflareinsights.com';
+const htmlWithoutCsp = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/i, '');
+if (/https?:\/\//i.test(htmlWithoutCsp)) errors.push('index.html contains an external http(s) URL');
+const cspMeta = html.match(/<meta http-equiv="Content-Security-Policy"[^>]*>/i)?.[0] ?? '';
+for (const url of cspMeta.match(/https?:\/\/[^\s;"']+/gi) ?? []) {
+  if (url !== ALLOWED_EXTERNAL) errors.push(`CSP meta дозволяє неочікуваний хост: ${url}`);
+}
 if (!html.includes('Content-Security-Policy')) errors.push('Missing CSP meta tag');
 if (!html.includes('type="module" src="./js/app.js"')) errors.push('Missing module entry script');
 

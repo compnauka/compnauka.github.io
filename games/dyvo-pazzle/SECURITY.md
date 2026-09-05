@@ -19,7 +19,9 @@
 - Service Worker видаляє тільки кеші з префіксом `divo-puzzle-`;
 - немає `skipWaiting()` та `clients.claim()`;
 - same-origin fetch у Service Worker;
-- CSP: strict script origin, no object, no form submit, no external connect;
+- CSP: `script-src` — тільки `'self'` плюс `static.cloudflareinsights.com`
+  (cookieless-лічильник Cloudflare, який платформа вставляє сама); no object,
+  no form submit, `connect-src 'self'` — жодного зовнішнього передавання даних;
 - кореневий `_headers` сайту, блок `/games/dyvo-pazzle/*`: CSP із `frame-ancestors 'none'`, `Permissions-Policy` (камера — тільки self), `Cross-Origin-Opener-Policy`; `nosniff` і `Referrer-Policy` приходять із загальносайтового блоку `/*`.
 
 ## Важливе обмеження
