@@ -11,6 +11,36 @@
        data-title  — назва сервісу (показується як хлібна крихта: Бренд › Назва)
        data-no-footer — наявність атрибута вимикає вставку футера (напр. для повноекранних ігор)
    ========================================================================= */
+
+/* Прибирання застарілих cookie Google Analytics.
+   GA4 і Plausible прибрані з сайту, але кукі _ga / _ga_* лишилися в браузерах
+   постійних відвідувачів і живуть до двох років. Вони вже мертві — читати їх
+   нема кому, — та для дитячого сайту зайвих слідів Google краще не лишати.
+   Кукі виставлені на весь домен, тож достатньо одного спрацювання на будь-якій
+   сторінці. Той самий блок продубльовано в /script.js (головна), бо спільного
+   скрипта на всіх сторінках сайту немає. */
+(function dropLegacyAnalyticsCookies() {
+    'use strict';
+
+    var stale = document.cookie.split(';')
+        .map(function (pair) { return pair.split('=')[0].trim(); })
+        .filter(function (name) { return /^_ga(_|$)/.test(name) || name === '_gid' || /^_gat/.test(name); });
+    if (!stale.length) return;
+
+    // GA пише кукі на батьківський домен, тому пробуємо всі варіанти Domain:
+    // без атрибута, поточний хост і кожен його батьківський домен із крапкою.
+    var host = location.hostname;
+    var parts = host.split('.');
+    var domains = [null, host];
+    for (var i = 0; i < parts.length - 1; i++) domains.push('.' + parts.slice(i).join('.'));
+
+    stale.forEach(function (name) {
+        domains.forEach(function (domain) {
+            document.cookie = name + '=; Max-Age=0; Path=/' + (domain ? '; Domain=' + domain : '');
+        });
+    });
+})();
+
 (function () {
     'use strict';
 
