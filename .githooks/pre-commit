@@ -1,0 +1,51 @@
+#!/bin/sh
+# Тримає CACHE_VERSION у service-worker.js Диво-Пазла в актуальному стані.
+#
+# Браузер помічає оновлення PWA лише коли змінюється сам файл воркера, тому
+# після правки styles.css чи js/*.js версію треба перештампувати. Цей хук
+# робить це сам і докладає воркер у той самий коміт.
+#
+# Вмикається один раз:  git config core.hooksPath .githooks
+# Вимикається:          git config --unset core.hooksPath
+# Разово обійти:        git commit --no-verify
+
+GAME_DIR="games/dyvo-pazzle"
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Нічого з гри не комітиться — хук не втручається.
+staged=$(git diff --cached --name-only --diff-filter=ACMRD -- "$GAME_DIR")
+[ -z "$staged" ] && exit 0
+
+# Версія — це хеш вмісту файлів на диску. Якщо в грі є незастейджені правки,
+# хеш описав би те, що в коміт не потрапить. Краще зупинитись, ніж записати
+# версію, яка нічому не відповідає.
+dirty=$(git diff --name-only -- "$GAME_DIR")
+if [ -n "$dirty" ]; then
+    echo "pre-commit: у грі є незастейджені зміни, версію кешу не проставлено." >&2
+    echo "" >&2
+    echo "$dirty" | sed 's/^/  /' >&2
+    echo "" >&2
+    echo "Додайте їх до коміту (git add) або приберіть, і повторіть." >&2
+    echo "Обійти перевірку: git commit --no-verify" >&2
+    exit 1
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+    echo "pre-commit: node не знайдено, версію кешу не проставлено." >&2
+    echo "Обійти перевірку: git commit --no-verify" >&2
+    exit 1
+fi
+
+if ! node "$GAME_DIR/tools/stamp-cache-version.mjs"; then
+    echo "pre-commit: не вдалося проставити CACHE_VERSION." >&2
+    exit 1
+fi
+
+# Якщо хеш змінився — воркер треба доклеїти до цього ж коміту.
+if ! git diff --quiet -- "$GAME_DIR/service-worker.js"; then
+    git add "$GAME_DIR/service-worker.js" || exit 1
+    echo "pre-commit: CACHE_VERSION оновлено, service-worker.js додано до коміту."
+fi
+
+exit 0
