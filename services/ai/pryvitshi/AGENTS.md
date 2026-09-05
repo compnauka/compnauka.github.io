@@ -12,7 +12,7 @@
 |---|---|
 | Tailwind CDN | ❌ Не підключено. Усі стилі власні в `style.css` |
 | Plausible | ❌ Не підключено |
-| Google Analytics | ✅ Підключено (`G-N8T05K3NGT`) — залишити |
+| Google Analytics | ❌ Не підключено (прибрано разом із Plausible з усього сайту) |
 | Google Fonts | ✅ Підключено через CDN |
 | `innerHTML` для контенту | ❌ Не використовується. Весь контент — DOM API |
 | HTML-рядки в `bookSections.js` | ❌ Не використовуються. Тільки структуровані блоки |
@@ -24,7 +24,7 @@
 ## 3. Категорично заборонено
 
 - Повертати Tailwind CDN або будь-який CSS-фреймворк через CDN
-- Повертати Plausible або інші трекери
+- Повертати Plausible, Google Analytics або будь-які інші трекери. Єдина аналітика сайту — Cloudflare Web Analytics, який платформа вставляє сама
 - Повертати HTML-рядки в контент `bookSections.js` (`content: '<p>...'`)
 - Повертати стару модель де контент рендерився через `innerHTML`
 - Блокувати zoom (`user-scalable=no`, `maximum-scale`)

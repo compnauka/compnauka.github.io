@@ -27,7 +27,7 @@ Acceptance criteria:
 - на мобільному можна збільшити сторінку;
 - при zoom 200% сайт залишається читабельним.
 
-### P0.2. Прибрати аналітику
+### P0.2. Прибрати аналітику — ✅ зроблено
 
 Файл: `index.html`
 
@@ -39,8 +39,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- у Network немає запитів до `googletagmanager.com`, `google-analytics.com`, `plausible.io`;
-- у коді немає `gtag` і `plausible`.
+- у Network немає запитів до `googletagmanager.com`, `google-analytics.com`, `plausible.io`; ✅
+- у коді немає `gtag` і `plausible`. ✅
+
+Лишився тільки Cloudflare Web Analytics (вставляється платформою, без cookies).
 
 ### P0.3. Виправити зовнішні посилання
 

@@ -8,15 +8,11 @@
 
 ## 2. Поточні ризики
 
-### 2.1. Google Analytics
+### 2.1. Аналітика — закрито
 
-У `index.html` підключено Google Analytics (`G-N8T05K3NGT`). Для дитячого продукту це небажано без явної згоди.
+Google Analytics (`G-N8T05K3NGT`) і Plausible прибрано з усього сайту за рішенням власника: для дитячого продукту трекінг із cookies небажаний.
 
-**Статус:** залишено за рішенням власника продукту.
-
-**Якщо прибирати:**
-- видалити блок `gtag` з `index.html`
-- альтернатива: агреговані server logs без cookies або self-hosted аналітика
+Єдина аналітика — Cloudflare Web Analytics, який платформа вставляє в HTML сама: без cookies і фінгерпринтингу, дані йдуть на власний домен сайту (`/cdn-cgi/rum`).
 
 ### 2.2. Google Fonts через CDN
 
@@ -46,6 +42,7 @@
 |---|---|
 | Tailwind CDN | ✅ Видалено, стилі власні |
 | Plausible | ✅ Не підключено |
+| Google Analytics | ✅ Видалено з усього сайту |
 | `user-scalable=no` | ✅ Виправлено, zoom не заблоковано |
 | `innerHTML` для контенту | ✅ Весь контент через DOM API |
 | HTML-рядки в `bookSections.js` | ✅ Замінено структурованими блоками |
@@ -102,7 +99,7 @@ Content-Security-Policy:
 - [x] Немає збору персональних даних
 - [x] Усі `target="_blank"` мають `rel="noopener noreferrer"`
 - [x] Немає синтаксичних помилок у JS
-- [ ] Google Analytics — рішення власника
+- [x] Google Analytics видалено; лишився тільки Cloudflare Web Analytics
 - [ ] Google Fonts локально — рекомендовано
 - [x] `sessionStorage` замість `localStorage` ✅
 - [ ] PWA кешування для офлайн-роботи
