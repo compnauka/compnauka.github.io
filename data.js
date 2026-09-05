@@ -504,6 +504,13 @@ const CATEGORIES = [
     color: "#14b8a6",
     services: [
       {
+        name: "Диво-Пазл",
+        description: "Зроби фото або обери картинку і склади власний пазл на 4, 9 чи 16 деталей.",
+        link: "games/dyvo-pazzle/index.html",
+        image: "images/102.webp",
+        tags: ["1-2 класи", "3-4 класи"]
+      },
+      {
         name: "Магічний квадрат",
         description: "Математична головоломка, що розвиває логічне мислення додавання, пошук закономірностей.",
         link: "games/magic_square/index.html",

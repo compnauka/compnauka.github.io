@@ -1,0 +1,33 @@
+# Cloudflare Workers Static Assets читає ЛИШЕ цей кореневий _headers
+# (wrangler.toml -> [assets] directory = "./"). Вкладені _headers у підпапках
+# не застосовуються, а роздаються як звичайні файли.
+#
+# Якщо одне й те саме ім'я заголовка задати у двох правилах, які збігаються,
+# Cloudflare склеїть значення через кому. Тому кожен заголовок нижче
+# зустрічається рівно один раз на кожному шляху.
+
+# --- Загальносайтові заголовки ---
+# Свідомо БЕЗ Content-Security-Policy: сторінки сайту тягнуть Tailwind CDN,
+# Google Fonts, cdnjs, jsDelivr, unpkg, GTM, Plausible, YouTube та Unsplash —
+# суворий default-src 'self' поламав би їх.
+# SAMEORIGIN, а не DENY: уроки в course/new_lessons вбудовують власні
+# інструменти (./tools/*-studio/index.html) через iframe.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+
+# --- Диво-Пазл ---
+# Гра самодостатня: жодних зовнішніх скриптів, шрифтів, CDN чи аналітики,
+# тож їй можна дати жорсткий CSP.
+# frame-ancestors працює тільки в HTTP-заголовку (у <meta> браузери його
+# ігнорують) і має пріоритет над X-Frame-Options вище.
+# Permissions-Policy потрібен, щоб камера лишалася дозволеною саме тут.
+/games/dyvo-pazzle/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Permissions-Policy: camera=(self), microphone=(), geolocation=()
+  Cross-Origin-Opener-Policy: same-origin
+
+# Оновлення гри не повинно чекати на кеш Service Worker.
+/games/dyvo-pazzle/service-worker.js
+  Cache-Control: no-cache
