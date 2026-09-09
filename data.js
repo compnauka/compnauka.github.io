@@ -614,6 +614,13 @@ const CATEGORIES = [
     color: "#64748b",
     services: [
       {
+        name: "School Screen Tools — розширення для браузера",
+        description: "Малювання, підсвічування та вказівник просто поверх будь-якої вебсторінки під час уроку.",
+        link: "https://chromewebstore.google.com/detail/school-screen-tools-by-pa/gjlokkjhboadojgjjmiolpafbjejomcc",
+        image: "images/103.webp",
+        tags: []
+      },
+      {
         name: "Авторські інновації від вчителів",
         description: "Освітні інструменти, створені українськими ентузіастами та перевірені реальною практикою.",
         link: "edexpo/",
