@@ -31,11 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── CANVAS ────────────────────────────────────────
   const canvas = document.getElementById('drawing-canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) { showAlert('Помилка', 'Ваш браузер не підтримує canvas.', '⚠️'); return; }
+  if (!ctx) { canvas.replaceWith(document.createTextNode('Ваш браузер не підтримує canvas.')); return; }
 
   // ── STATE ─────────────────────────────────────────
   const state = {
     isDrawing: false,
+    pointerId: null,
     lastX: 0, lastY: 0,
     startX: 0, startY: 0,
     currentTool: 'pencil',
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── TOOL METADATA ─────────────────────────────────
   const TOOL_INFO = {
-    pencil: { icon: 'fa-pencil', label: 'Олівець' },
+    pencil: { icon: 'fa-paintbrush', label: 'Пензлик' },
     eraser: { icon: 'fa-eraser', label: 'Гумка' },
     fill: { icon: 'fa-fill-drip', label: 'Заливка' },
     spray: { icon: 'fa-spray-can-sparkles', label: 'Аерозоль' },
@@ -157,57 +158,62 @@ document.addEventListener('DOMContentLoaded', () => {
   //  CANVAS INIT & RESIZE
   // ══════════════════════════════════════════════════
   function resizeCanvas() {
-    const rect = el.canvasContainer.getBoundingClientRect();
-    // Preserve drawing
-    let dataURL = null;
-    if (canvas.width > 0 && canvas.height > 0) dataURL = canvas.toDataURL();
-
-    canvas.width = Math.floor(rect.width);
-    canvas.height = Math.floor(rect.height);
+    const width = Math.max(1, el.canvasContainer.clientWidth);
+    const height = Math.max(1, el.canvasContainer.clientHeight);
+    if (canvas.width === width && canvas.height === height) return;
+    finishStroke();
+    const snapshot = copyCanvas();
+    canvas.width = width;
+    canvas.height = height;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (dataURL) {
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      img.src = dataURL;
-    }
+    ctx.drawImage(snapshot, 0, 0, width, height);
+    state.canvasSnapshot = null;
+  }
+  // Canvas copies restore synchronously, so rapid undo cannot erase newer strokes.
+  function copyCanvas() {
+    const copy = document.createElement('canvas');
+    copy.width = canvas.width; copy.height = canvas.height;
+    copy.getContext('2d').drawImage(canvas, 0, 0);
+    return copy;
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resizeCanvas).observe(el.canvasContainer);
 
   // ══════════════════════════════════════════════════
   //  UNDO / REDO
   // ══════════════════════════════════════════════════
   function pushUndo() {
+    finishStroke();
     if (undoStack.length >= MAX_UNDO) undoStack.shift();
-    undoStack.push(canvas.toDataURL());
+    undoStack.push(copyCanvas());
     redoStack.length = 0;
     state.unsavedChanges = true;
     syncHistoryBtns();
   }
 
   function undo() {
+    finishStroke();
     if (!undoStack.length) return;
-    redoStack.push(canvas.toDataURL());
+    redoStack.push(copyCanvas());
     restoreCanvas(undoStack.pop());
     syncHistoryBtns();
   }
 
   function redo() {
+    finishStroke();
     if (!redoStack.length) return;
-    undoStack.push(canvas.toDataURL());
+    undoStack.push(copyCanvas());
     restoreCanvas(redoStack.pop());
     syncHistoryBtns();
   }
 
-  function restoreCanvas(dataURL) {
-    const img = new Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    };
-    img.src = dataURL;
+  function restoreCanvas(snapshot) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(snapshot, 0, 0, canvas.width, canvas.height);
+    state.unsavedChanges = true;
   }
 
   function syncHistoryBtns() {
@@ -229,9 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   canvas.addEventListener('pointerdown', (e) => {
+    if (state.pointerId !== null || e.isPrimary === false || e.button !== 0) return;
+    if (state.currentTool === 'stamps' && !state.currentStamp) return;
     e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
     const p = getPos(e);
+    pushUndo();
+    canvas.setPointerCapture(e.pointerId);
+    state.pointerId = e.pointerId;
     state.lastX = p.x; state.lastY = p.y;
     state.startX = p.x; state.startY = p.y;
     state.isDrawing = true;
@@ -239,21 +249,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const t = state.currentTool;
     if (t === 'stamps') {
       if (!state.currentStamp) return;
-      pushUndo(); placeStamp(p.x, p.y); state.isDrawing = false;
+      placeStamp(p.x, p.y); finishStroke();
     } else if (t === 'fill') {
-      pushUndo();
       if (inBounds(p.x, p.y)) floodFill(Math.floor(p.x), Math.floor(p.y));
-      state.isDrawing = false;
+      finishStroke();
     } else if (t === 'shapes') {
-      pushUndo();
       state.canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
     } else {
-      pushUndo();
+      if (t === 'spray') spray(p.x, p.y);
+      else {
+        ctx.save();
+        setCtxStyle();
+        if (t === 'eraser') { ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, state.currentSize / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
     }
   });
 
-  canvas.addEventListener('pointermove', (e) => {
-    if (!state.isDrawing) return;
+  function moveStroke(e) {
+    if (!state.isDrawing || e.pointerId !== state.pointerId) return;
     const p = getPos(e);
     const t = state.currentTool;
     if (t === 'pencil') drawFreehand(p.x, p.y);
@@ -264,15 +279,26 @@ document.addEventListener('DOMContentLoaded', () => {
       drawShape(p.x, p.y);
     }
     state.lastX = p.x; state.lastY = p.y;
-  });
+  }
+  canvas.addEventListener('pointermove', moveStroke);
 
   canvas.addEventListener('pointerup', (e) => {
-    state.isDrawing = false;
-    if (state.currentTool === 'shapes') state.canvasSnapshot = null;
-    canvas.releasePointerCapture(e.pointerId);
+    if (e.pointerId !== state.pointerId) return;
+    moveStroke(e);
+    finishStroke();
   });
 
-  canvas.addEventListener('pointercancel', () => { state.isDrawing = false; });
+  function finishStroke() {
+    const id = state.pointerId;
+    state.isDrawing = false;
+    state.pointerId = null;
+    state.canvasSnapshot = null;
+    if (id !== null && canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+  }
+  for (const type of ['pointercancel', 'lostpointercapture']) {
+    canvas.addEventListener(type, e => { if (e.pointerId === state.pointerId) finishStroke(); });
+  }
+  window.addEventListener('blur', finishStroke);
 
   // ══════════════════════════════════════════════════
   //  DRAWING FUNCTIONS
@@ -436,24 +462,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let lx = x;
         while (lx > 0) {
           const ni = (y * W + (lx - 1)) * 4;
-          if (!colorMatch(data, ni, tR, tG, tB, tA)) break;
+          if (visited[y * W + lx - 1] || !colorMatch(data, ni, tR, tG, tB, tA)) break;
           lx--;
         }
         // Scan right
         let rx = x;
         while (rx < W - 1) {
           const ni = (y * W + (rx + 1)) * 4;
-          if (!colorMatch(data, ni, tR, tG, tB, tA)) break;
+          if (visited[y * W + rx + 1] || !colorMatch(data, ni, tR, tG, tB, tA)) break;
           rx++;
         }
 
         // Fill scanline & check rows above/below
         for (let fx = lx; fx <= rx; fx++) {
           const fi = (y * W + fx) * 4;
-          data[fi] = fR;
-          data[fi + 1] = fG;
-          data[fi + 2] = fB;
-          data[fi + 3] = 255;
+          const alpha = state.currentOpacity;
+          const originalAlpha = data[fi + 3] / 255;
+          const resultAlpha = alpha + originalAlpha * (1 - alpha);
+          data[fi] = Math.round((fR * alpha + data[fi] * originalAlpha * (1 - alpha)) / resultAlpha);
+          data[fi + 1] = Math.round((fG * alpha + data[fi + 1] * originalAlpha * (1 - alpha)) / resultAlpha);
+          data[fi + 2] = Math.round((fB * alpha + data[fi + 2] * originalAlpha * (1 - alpha)) / resultAlpha);
+          data[fi + 3] = Math.round(resultAlpha * 255);
           visited[y * W + fx] = 1;
 
           // Above
@@ -555,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function setTool(tool) {
+    finishStroke();
     state.currentTool = tool;
     // Close panels
     el.shapesSection.style.display = 'none';
@@ -568,25 +598,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function togglePanel(section, btn, tool) {
     const open = section.style.display === 'block';
-    // Close all panels
-    el.shapesSection.style.display = 'none';
-    el.stampsSection.style.display = 'none';
-    el.shapesBtn.classList.remove('active');
-    el.stampsBtn.classList.remove('active');
-    if (!open) {
-      section.style.display = 'block';
-      btn.classList.add('active');
-      state.currentTool = tool;
-      canvas.style.cursor = CURSORS[tool];
-      updateIndicator();
-    } else {
-      if (state.currentTool === tool) {
-        state.currentTool = 'pencil';
-        el.pencilBtn.classList.add('active');
-        canvas.style.cursor = 'crosshair';
-        updateIndicator();
-      }
-    }
+    setTool(open ? 'pencil' : tool);
+    if (!open) section.style.display = 'block';
   }
 
   function updateIndicator() {
@@ -616,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
   el.clearBtn.addEventListener('click', async () => {
     const ok = await showConfirm(
       'Очистити полотно?',
-      'Всі малюнки буде видалено. Цю дію не можна скасувати.',
+      'Полотно буде очищено. Малюнок можна повернути кнопкою «Назад».',
       '🗑️', 'Очистити', true
     );
     if (!ok) return;
@@ -624,10 +637,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    state.unsavedChanges = false;
   });
 
   el.saveBtn.addEventListener('click', () => {
+    finishStroke();
     try {
       const link = document.createElement('a');
       link.download = 'my-drawing.png';
@@ -647,8 +660,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = this.files[0];
     if (!file) return;
     const reader = new FileReader();
+    reader.onerror = () => showAlert('Помилка імпорту', 'Не вдалося прочитати файл.', '⚠️');
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = () => showAlert('Помилка імпорту', 'Не вдалося прочитати зображення.', '⚠️');
       img.onload = () => {
         pushUndo();
         // Fill white background first
@@ -676,6 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════════════
   function applyColor(hex) {
     state.currentColor = hex;
+    el.nativePicker.value = hex;
     // Update active dot
     el.colors.forEach(c => c.classList.toggle('active', c.dataset.hex === hex));
     // Sync mixer sliders if mixer is open
@@ -742,8 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   el.useColorBtn.addEventListener('click', () => {
     const hex = el.hexVal.textContent;
-    state.currentColor = hex;
-    el.colors.forEach(c => c.classList.remove('active'));
+    applyColor(hex);
     // Close mixer
     el.colorMixer.style.display = 'none';
     el.toggleMixer.classList.remove('active');
@@ -769,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
-        case 'z': e.preventDefault(); undo(); break;
+        case 'z': e.preventDefault(); e.shiftKey ? redo() : undo(); break;
         case 'y': e.preventDefault(); redo(); break;
         case 's': e.preventDefault(); el.saveBtn.click(); break;
       }

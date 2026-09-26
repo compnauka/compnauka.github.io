@@ -1,0 +1,120 @@
+// Run with Playwright installed: node tools/penslyk_plus/tests/editor.cjs
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const { pathToFileURL } = require('node:url');
+const path = require('node:path');
+
+(async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route(/^https?:/, route => route.abort());
+    await page.goto(pathToFileURL(path.join(__dirname, '../index.html')).href);
+    const pixel = (x, y) => page.evaluate(([x, y]) => Array.from(document.querySelector('canvas').getContext('2d').getImageData(x, y, 1, 1).data), [x, y]);
+    const event = (type, x, y, id = 1, extra = {}) => page.evaluate(({ type, x, y, id, extra }) => {
+      const canvas = document.querySelector('canvas');
+      const rect = canvas.getBoundingClientRect();
+      canvas.dispatchEvent(new PointerEvent(type, { bubbles: true, clientX: rect.left + x * rect.width / canvas.width, clientY: rect.top + y * rect.height / canvas.height, pointerId: id, button: 0, isPrimary: true, ...extra }));
+    }, { type, x, y, id, extra });
+    // Synthetic events have no native capture; real mouse and touch are tested below.
+    await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      canvas.setPointerCapture = () => {};
+      canvas.hasPointerCapture = () => false;
+    });
+    await event('pointerdown', 50, 50);
+    assert.notDeepEqual(await pixel(50, 50), [255, 255, 255, 255], 'click draws a dot');
+    await event('pointermove', 100, 50);
+    await event('pointerdown', 200, 200, 2, { isPrimary: false });
+    await event('pointerup', 200, 200, 2);
+    await event('pointermove', 150, 50);
+    await event('pointerup', 180, 50);
+    assert.notDeepEqual(await pixel(170, 50), [255, 255, 255, 255], 'secondary touch does not end stroke; pointerup draws endpoint');
+    await page.click('#undo');
+    assert.deepEqual(await pixel(100, 50), [255, 255, 255, 255]);
+    await page.click('#redo');
+    assert.notDeepEqual(await pixel(100, 50), [255, 255, 255, 255]);
+    await page.click('#undo');
+    await page.click('#fill');
+    await page.locator('#opacity-slider').evaluate(el => { el.value = 50; el.dispatchEvent(new Event('input')); });
+    await event('pointerdown', 300, 300);
+    assert.deepEqual(await pixel(300, 300), [141, 141, 141, 255], 'fill blends at selected opacity');
+    await page.click('#undo');
+    await page.locator('#opacity-slider').evaluate(el => { el.value = 100; el.dispatchEvent(new Event('input')); });
+    await page.click('#shapes');
+    assert.equal(await page.locator('.tool-btn.active').count(), 1);
+    for (const shape of ['line', 'rect', 'rect-filled', 'circle', 'circle-filled', 'triangle', 'star', 'heart', 'arrow']) {
+      await page.click(`[data-shape="${shape}"]`);
+      await event('pointerdown', 100, 100);
+      await event('pointermove', 160, 160);
+      await event('pointerup', 180, 180);
+      await page.click('#undo');
+    }
+    await page.click('#stamps');
+    await page.locator('.stamp').first().click();
+    await event('pointerdown', 100, 100);
+    assert.equal(await page.locator('#undo').isEnabled(), true);
+    await page.click('#undo');
+    await page.click('#pencil');
+    await event('pointerdown', 60, 60);
+    await event('pointercancel', 60, 60);
+    await event('pointermove', 100, 60);
+    assert.deepEqual(await pixel(90, 60), [255, 255, 255, 255], 'cancel ends stroke');
+    await page.click('#eraser');
+    await event('pointerdown', 60, 60);
+    await event('pointerup', 60, 60);
+    assert.deepEqual(await pixel(60, 60), [255, 255, 255, 255]);
+    await page.click('#spray');
+    await event('pointerdown', 100, 100);
+    await event('pointerup', 110, 110);
+    await page.click('#clear');
+    await page.click('#modal-confirm');
+    await page.click('#undo');
+    assert.equal(await page.locator('#redo').isEnabled(), true);
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 20; c.height = 10; const ctx = c.getContext('2d'); ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, 20, 10); return c.toDataURL().split(',')[1]; });
+    await page.locator('#import-file').setInputFiles({ name: 'image.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+    await page.waitForFunction(() => { const c = document.querySelector('canvas'); return c.getContext('2d').getImageData(c.width / 2, c.height / 2, 1, 1).data[1] === 0; });
+    await page.setViewportSize({ width: 1000, height: 700 });
+    await page.waitForTimeout(100);
+    assert.deepEqual(await pixel(300, 300), [255, 0, 0, 255], 'resize preserves imported image');
+    const download = page.waitForEvent('download');
+    await page.click('#save');
+    assert.equal((await download).suggestedFilename(), 'my-drawing.png');
+    await page.locator('#import-file').setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('broken image') });
+    await page.waitForFunction(() => document.querySelector('#modal-overlay').style.display === 'flex');
+    assert.equal(await page.locator('#modal-title').textContent(), 'Помилка імпорту');
+    await page.click('#modal-confirm');
+    await page.click('.color[data-hex="#22c55e"]');
+    assert.equal(await page.locator('#native-color-picker').inputValue(), '#22c55e');
+    await page.keyboard.press('Control+z');
+    await page.keyboard.press('Control+Shift+z');
+    assert.equal(await page.locator('#redo').isEnabled(), false);
+    assert.deepEqual(errors, []);
+    // Reload to exercise unmodified native pointer capture with a real mouse.
+    await page.goto(pathToFileURL(path.join(__dirname, '../index.html')).href);
+    const mouseBox = await page.locator('canvas').boundingBox();
+    await page.mouse.move(mouseBox.x + 50, mouseBox.y + 50);
+    await page.mouse.down();
+    await page.mouse.move(mouseBox.x + 200, mouseBox.y + 50, { steps: 15 });
+    await page.mouse.move(mouseBox.x - 10, mouseBox.y + 50);
+    await page.mouse.up();
+    assert.notDeepEqual(await pixel(100, 50), [255, 255, 255, 255], 'native mouse draws and releases outside canvas');
+    assert.deepEqual(errors, []);
+    await page.close();
+    const touch = await browser.newPage({ viewport: { width: 600, height: 900 }, hasTouch: true, isMobile: true });
+    await touch.route(/^https?:/, route => route.abort());
+    await touch.goto(pathToFileURL(path.join(__dirname, '../index.html')).href);
+    await touch.locator('canvas').scrollIntoViewIfNeeded();
+    assert.equal(await touch.locator('canvas').evaluate(c => getComputedStyle(c).touchAction), 'none');
+    const box = await touch.locator('canvas').boundingBox();
+    const session = await touch.context().newCDPSession(touch);
+    const sendTouch = (type, x, y) => session.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    await sendTouch('touchStart', box.x + 50, box.y + 80);
+    for (let offset = 10; offset <= 150; offset += 10) await sendTouch('touchMove', box.x + 50 + offset, box.y + 80);
+    await sendTouch('touchEnd');
+    assert.equal(await touch.locator('canvas').evaluate(c => c.getContext('2d').getImageData(180, 80, 1, 1).data[0] < 100), true, 'native touch draws a long stroke');
+    console.log('PASS: strokes, multitouch, cancellation, undo/redo, fill opacity, nine shapes, stamps, eraser, spray, clear, import, resize, save, native mobile touch.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
