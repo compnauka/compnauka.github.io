@@ -1,8 +1,9 @@
-const CACHE = 'digital-superpowers-shell-v10-850fecb82920';
+const CACHE = 'digital-superpowers-shell-v10-cbcb44abe2e7';
 const CORE = [
   "./",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
+  "./assets/video/motion.webm",
   "./adults.html",
   "./assets/optimized/animals/bear.webp",
   "./assets/optimized/animals/cat.webp",
@@ -152,11 +153,13 @@ const CORE = [
   "./js/components/search-sim.js",
   "./js/components/sequence.js",
   "./js/components/simulation.js",
+  "./js/components/skill-tasks.js",
   "./js/components/sort.js",
   "./js/components/storyboard.js",
   "./js/components/tap.js",
   "./js/components/virtual-keyboard.js",
   "./js/components/word-search.js",
+  "./js/course-lessons.js",
   "./js/data.js",
   "./js/icons.js",
   "./js/lesson-media.js",
@@ -186,6 +189,8 @@ const CORE = [
   "./lesson-14.html",
   "./lesson-15.html",
   "./lesson-16.html",
+  "./lesson-17.html",
+  "./lesson-18.html",
   "./skill.html"
 ];
 const corePaths = new Set(CORE.map(p => new URL(p, self.location.href).pathname));

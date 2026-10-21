@@ -16,7 +16,8 @@
   const catalog = $('skills');
   const categoryCopy = {
     devices: { title: 'Користуватися пристроями', text: 'Натискати, писати й дбати про себе.' },
-    info: { title: 'Працювати з інформацією', text: 'Розрізняти, сортувати, створювати й зберігати роботи.' },
+    info: { title: 'Працювати з інформацією', text: 'Розрізняти, групувати й перевіряти.' },
+    create: { title: 'Створювати власні роботи', text: 'Додавати малюнки, підписи й зберігати.' },
     online: { title: 'Безпечно користуватися інтернетом', text: 'Шукати потрібне й берегти особисте.' },
     algo: { title: 'Складати команди й маршрути', text: 'Допомагати Юджі дістатися цілі та виправляти помилки.' }
   };
@@ -76,12 +77,12 @@
   function renderSkills() {
     const items = AppData.skills.filter(skill => activeCategory === 'all' || skill.category === activeCategory);
     grid.innerHTML = items.map(skill => {
-      const status = ProgressStore.get(skill.id);
+      const status = ProgressStore.get(skill.skillKey, skill.assessmentVersion);
       const info = statusInfo(status);
       const category = categoryById(skill.category);
       return `
         <li>
-          <a class="skill-card" data-category="${skill.category}" href="skill.html?id=${skill.id}"
+          <a class="skill-card" data-category="${skill.category}" href="${AppData.href(skill)}"
              aria-label="${skill.title}. ${info.label}.">
             <div class="skill-art" aria-hidden="true">${AppIcons.svg(skill.icon)}</div>
             <div class="skill-body">
@@ -98,14 +99,14 @@
     }).join('');
 
     visibleSkillsPill.textContent = countLabel(items.length);
-    $('skillsTitle').textContent = activeCategory === 'all' ? 'Усі 16 уроків' : `${categoryById(activeCategory).label}: ${countLabel(items.length)}`;
+    $('skillsTitle').textContent = activeCategory === 'all' ? 'Усі 18 уроків' : `${categoryById(activeCategory).label}: ${countLabel(items.length)}`;
     filterAnnouncement.textContent = activeCategory === 'all'
       ? `Показано ${countLabel(items.length)}.`
       : `Показано ${countLabel(items.length)}: ${categoryById(activeCategory)?.shortLabel}.`;
   }
 
   function renderProgress() {
-    const statuses = AppData.skills.map(skill => ProgressStore.get(skill.id));
+    const statuses = AppData.skills.map(skill => ProgressStore.get(skill.skillKey, skill.assessmentVersion));
     const mastered = statuses.filter(s => s === 'mastered').length;
     const almost = statuses.filter(s => s === 'almost').length;
     const training = statuses.filter(s => s === 'training').length;
@@ -114,6 +115,7 @@
     $('progress').hidden = fresh === AppData.skills.length;
 
     progressText.textContent = `${mastered} / ${AppData.skills.length}`;
+    progressBar.setAttribute('aria-valuemax', String(AppData.skills.length));
     progressBar.setAttribute('aria-valuenow', String(mastered));
     progressBar.setAttribute('aria-valuetext', `${mastered} з ${AppData.skills.length} умінь уже виходять`);
     progressFill.style.width = `${percent}%`;
@@ -124,15 +126,15 @@
   }
 
   function renderContinue() {
-    const inProgress = AppData.skills.find(skill => ['training', 'almost'].includes(ProgressStore.get(skill.id)));
-    const fresh = AppData.skills.find(skill => ProgressStore.get(skill.id) === 'new');
+    const inProgress = AppData.skills.find(skill => ['training', 'almost'].includes(ProgressStore.get(skill.skillKey, skill.assessmentVersion)));
+    const fresh = AppData.skills.find(skill => ProgressStore.get(skill.skillKey, skill.assessmentVersion) === 'new');
     const nextSkill = inProgress || fresh || AppData.skills[0];
-    const allDone = AppData.skills.every(skill => ProgressStore.get(skill.id) === 'mastered');
+    const allDone = AppData.skills.every(skill => ProgressStore.get(skill.skillKey, skill.assessmentVersion) === 'mastered');
 
-    continueLink.href = allDone ? '#skills' : `skill.html?id=${nextSkill.id}`;
-    const started = AppData.skills.some(skill => ProgressStore.get(skill.id) !== 'new');
+    continueLink.href = allDone ? '#skills' : AppData.href(nextSkill);
+    const started = AppData.skills.some(skill => ProgressStore.get(skill.skillKey, skill.assessmentVersion) !== 'new');
     continueLink.innerHTML = allDone ? 'Повторити уроки <span aria-hidden="true">↻</span>' : `${inProgress ? 'Повернутися до уроку' : started ? 'Наступний урок' : 'Почати навчання'} <span aria-hidden="true">→</span>`;
-    startNote.textContent = allDone ? 'Усі 16 умінь уже виходять. Можна повторити будь-який урок.' : !started ? 'Почнемо з уроку про вибір пристрою для потрібної справи.' : `${inProgress ? 'Потренуймося ще' : 'Далі спробуємо'}: «${nextSkill.title}».`;
+    startNote.textContent = allDone ? 'Усі 18 умінь уже виходять. Можна повторити будь-який урок.' : !started ? 'Почнемо з уроку про вибір пристрою для потрібної справи.' : `${inProgress ? 'Потренуймося ще' : 'Далі спробуємо'}: «${nextSkill.title}».`;
   }
 
   document.querySelectorAll('a[href="#skills"]').forEach(link => link.addEventListener('click', () => { catalog.open = true; }));

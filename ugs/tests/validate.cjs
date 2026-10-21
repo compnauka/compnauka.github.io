@@ -57,7 +57,7 @@ for(const file of files.filter(f=>/\.(?:js|css|webp)$/.test(f) && f !== path.joi
 const a=[1,2,3,4],b=w.LessonUI.shuffle(a); assert.equal(a.join(), '1,2,3,4');assert.equal([...b].sort().join(),'1,2,3,4');
 assert.equal(w.LessonUI.status(3,4),'almost');assert.equal(w.LessonUI.status(2,4),'training');assert.equal(w.LessonUI.status(4,4),'mastered');
 // A storage quota failure after initial availability must retain the current progress in memory.
-const storage={window:{},localStorage:{getItem:()=>null,removeItem(){},setItem(k){if(k!=='__dm_test__')throw Error('quota');}}};
+const storage={window:{AppData:w.AppData},localStorage:{getItem:()=>null,removeItem(){},setItem(k){if(k!=='__dm_test__')throw Error('quota');}}};
 vm.createContext(storage);vm.runInContext(fs.readFileSync(path.join(root,'js/storage.js'),'utf8'),storage);
-storage.window.ProgressStore.set(1,'mastered');assert.equal(storage.window.ProgressStore.get(1),'mastered');assert.equal(storage.window.ProgressStore.isPersistent,false);
+storage.window.ProgressStore.set('device-choice','mastered');assert.equal(storage.window.ProgressStore.get('device-choice'),'mastered');assert.equal(storage.window.ProgressStore.isPersistent,false);
 console.log(`PASS: syntax, HTML references, 16 lesson contracts, image mappings, ${sw.testCore.length} precache resources, scoring, shuffle and storage fallback.`);
