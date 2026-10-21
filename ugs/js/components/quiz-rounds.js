@@ -1,7 +1,7 @@
 window.ComponentRegistry = window.ComponentRegistry || {};
 
 window.ComponentRegistry.quizRounds = function mountQuizRounds(container, config = {}, ctx = {}) {
-  const rounds = config.rounds || [];
+  const rounds = (config.rounds || []).map(round => ({ ...round, options: LessonUI.shuffle(round.options || []) }));
   let index = 0;
   let totalPoints = 0;
   let mistakesThisRound = 0;

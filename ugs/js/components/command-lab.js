@@ -50,7 +50,7 @@ window.ComponentRegistry.commandLab = function mountCommandLab(container, config
         board.innerHTML = RobotUI.gridHtml({ size, start: round.start, goal: round.goal, robot: result.position, obstacles: round.obstacles || [], trail: [round.start, result.position] });
         button.classList.add('correct');
         buttons.forEach(b => b.disabled = true);
-        feedback.textContent = config.assessment ? 'Так! Робі біля зірки.' : 'Так! Робі біля зірки.';
+        feedback.textContent = config.assessment ? 'Так! Юджі біля зірки.' : 'Так! Юджі біля зірки.';
         next.hidden = false;
         next.focus({ preventScroll: true });
       } else {
@@ -58,7 +58,7 @@ window.ComponentRegistry.commandLab = function mountCommandLab(container, config
         button.classList.remove('wrong');
         void button.offsetWidth;
         button.classList.add('wrong');
-        feedback.textContent = result.valid ? 'Ця команда веде в інший бік. Спробуй ще.' : 'Так робот не може рухатися. Обери інший напрям.';
+        feedback.textContent = result.valid ? 'Ця команда веде в інший бік. Спробуй ще.' : 'Так Юджі не може рухатися. Обери інший напрям.';
       }
     }));
 

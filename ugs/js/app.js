@@ -11,12 +11,15 @@
   const filterAnnouncement = $('filterAnnouncement');
   const visibleSkillsPill = $('visibleSkillsPill');
   const filterReset = $('filterReset');
-  const continueTitle = $('continueTitle');
-  const continueDescription = $('continueDescription');
-  const continueIcon = $('continueIcon');
   const continueLink = $('continueLink');
-  const audioToggle = $('audioToggle');
-  const audioIcon = $('audioIcon');
+  const startNote = $('startNote');
+  const catalog = $('skills');
+  const categoryCopy = {
+    devices: { title: 'Користуватися пристроями', text: 'Натискати, писати й дбати про себе.' },
+    info: { title: 'Працювати з інформацією', text: 'Розрізняти, сортувати, створювати й зберігати роботи.' },
+    online: { title: 'Безпечно користуватися інтернетом', text: 'Шукати потрібне й берегти особисте.' },
+    algo: { title: 'Складати команди й маршрути', text: 'Допомагати Юджі дістатися цілі та виправляти помилки.' }
+  };
 
   let activeCategory = 'all';
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,9 +34,9 @@
   function categoryById(id) { return AppData.categories.find(c => c.id === id); }
   function statusInfo(status) { return statusMap[status] || statusMap.new; }
   function countLabel(n) {
-    if (n === 1) return '1 завдання';
-    if (n >= 2 && n <= 4) return `${n} завдання`;
-    return `${n} завдань`;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} урок`;
+    if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return `${n} уроки`;
+    return `${n} уроків`;
   }
 
   function setCategory(categoryId, { scroll = false } = {}) {
@@ -41,17 +44,21 @@
     renderCategoryCards();
     renderSkills();
     syncFilterReset();
-    if (scroll) $('skills')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    if (scroll) {
+      catalog.open = true;
+      requestAnimationFrame(() => catalog.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }));
+    }
   }
 
   function renderCategoryCards() {
     categoryCards.innerHTML = AppData.categories.map(category => `
       <button class="category-card" type="button" data-category="${category.id}" data-theme="${category.id}"
-        aria-pressed="${activeCategory === category.id}" aria-label="${category.shortLabel}: ${category.description}. ${countLabel(category.count)}">
+        aria-pressed="${activeCategory === category.id}" aria-controls="skills" aria-label="${categoryCopy[category.id].title}. ${categoryCopy[category.id].text} ${countLabel(category.count)}">
         <span class="category-icon" aria-hidden="true">${AppIcons.svg(category.icon)}</span>
         <span>
-          <strong>${category.shortLabel}</strong>
-          <small>${category.description}</small>
+          <strong>${categoryCopy[category.id].title}</strong>
+          <small>${categoryCopy[category.id].text}</small>
+          <span class="category-lesson-count">${countLabel(category.count)} <span aria-hidden="true">→</span></span>
         </span>
       </button>`).join('');
 
@@ -63,7 +70,7 @@
   function syncFilterReset() {
     const isAll = activeCategory === 'all';
     filterReset.setAttribute('aria-pressed', String(isAll));
-    filterReset.textContent = isAll ? 'Усі' : 'Показати всі';
+    filterReset.textContent = isAll ? 'Усі теми' : 'Показати всі теми';
   }
 
   function renderSkills() {
@@ -82,7 +89,7 @@
               <h3>${skill.title}</h3>
               <p>${skill.short}</p>
               <div class="skill-footer">
-                <span class="skill-action" aria-hidden="true">${status === 'new' ? 'Почати' : 'Продовжити'} <span class="skill-action-arrow">→</span></span>
+                <span class="skill-action" aria-hidden="true">${status === 'new' ? 'Відкрити' : 'Повторити'} <span class="skill-action-arrow">→</span></span>
                 <span class="status-badge ${status}"><span aria-hidden="true">${info.symbol}</span>${info.label}</span>
               </div>
             </div>
@@ -91,6 +98,7 @@
     }).join('');
 
     visibleSkillsPill.textContent = countLabel(items.length);
+    $('skillsTitle').textContent = activeCategory === 'all' ? 'Усі 16 уроків' : `${categoryById(activeCategory).label}: ${countLabel(items.length)}`;
     filterAnnouncement.textContent = activeCategory === 'all'
       ? `Показано ${countLabel(items.length)}.`
       : `Показано ${countLabel(items.length)}: ${categoryById(activeCategory)?.shortLabel}.`;
@@ -103,16 +111,16 @@
     const training = statuses.filter(s => s === 'training').length;
     const fresh = statuses.filter(s => s === 'new').length;
     const percent = Math.round((mastered / AppData.skills.length) * 100);
+    $('progress').hidden = fresh === AppData.skills.length;
 
     progressText.textContent = `${mastered} / ${AppData.skills.length}`;
     progressBar.setAttribute('aria-valuenow', String(mastered));
-    progressBar.setAttribute('aria-valuetext', `${mastered} з ${AppData.skills.length} завдань завершено`);
+    progressBar.setAttribute('aria-valuetext', `${mastered} з ${AppData.skills.length} умінь уже виходять`);
     progressFill.style.width = `${percent}%`;
     progressMeta.innerHTML = `
       <span>✓ ${mastered} вмію</span>
       <span>◒ ${almost} майже</span>
-      <span>◐ ${training} тренуюсь</span>
-      <span>○ ${fresh} нові</span>`;
+      <span>◐ ${training} тренуюсь</span>`;
   }
 
   function renderContinue() {
@@ -121,34 +129,20 @@
     const nextSkill = inProgress || fresh || AppData.skills[0];
     const allDone = AppData.skills.every(skill => ProgressStore.get(skill.id) === 'mastered');
 
-    continueTitle.textContent = allDone ? 'Усе пройдено!' : nextSkill.title;
-    continueDescription.textContent = allDone ? 'Можеш повторити будь-яке завдання.' : nextSkill.short;
-    continueIcon.innerHTML = AppIcons.svg(allDone ? 'repeat' : nextSkill.icon);
     continueLink.href = allDone ? '#skills' : `skill.html?id=${nextSkill.id}`;
-    continueLink.innerHTML = allDone ? 'Повторити <span aria-hidden="true">↻</span>' : `${inProgress ? 'Продовжити' : 'Почати'} <span aria-hidden="true">→</span>`;
+    const started = AppData.skills.some(skill => ProgressStore.get(skill.id) !== 'new');
+    continueLink.innerHTML = allDone ? 'Повторити уроки <span aria-hidden="true">↻</span>' : `${inProgress ? 'Повернутися до уроку' : started ? 'Наступний урок' : 'Почати навчання'} <span aria-hidden="true">→</span>`;
+    startNote.textContent = allDone ? 'Усі 16 умінь уже виходять. Можна повторити будь-який урок.' : !started ? 'Почнемо з уроку про вибір пристрою для потрібної справи.' : `${inProgress ? 'Потренуймося ще' : 'Далі спробуємо'}: «${nextSkill.title}».`;
   }
 
-  function setupAudioPreference() {
-    const key = 'digital-minimum-audio-enabled';
-    let enabled = true;
-    try {
-      const stored = localStorage.getItem(key);
-      enabled = stored === null ? true : stored === 'true';
-    } catch { enabled = true; }
+  document.querySelectorAll('a[href="#skills"]').forEach(link => link.addEventListener('click', () => { catalog.open = true; }));
+  continueLink.addEventListener('click', () => { if (continueLink.getAttribute('href') === '#skills') catalog.open = true; });
+  if (location.hash === '#skills') catalog.open = true;
+  document.querySelectorAll('.bottom-nav .nav-icon').forEach((element, index) => {
+    element.innerHTML = AppIcons.symbol(['home', 'textinfo', 'adult'][index]);
+  });
 
-    const sync = () => {
-      audioToggle.setAttribute('aria-pressed', String(enabled));
-      audioToggle.setAttribute('aria-label', enabled ? 'Озвучення увімкнено. Вимкнути' : 'Озвучення вимкнено. Увімкнути');
-      audioIcon.textContent = enabled ? '🔊' : '🔇';
-    };
-
-    audioToggle.addEventListener('click', () => {
-      enabled = !enabled;
-      try { localStorage.setItem(key, String(enabled)); } catch { /* ignore */ }
-      sync();
-    });
-    sync();
-  }
+  window.addEventListener('ugs-progress-reset', () => { renderSkills(); renderProgress(); renderContinue(); });
 
   filterReset.addEventListener('click', () => setCategory('all'));
   renderCategoryCards();
@@ -156,7 +150,7 @@
   renderProgress();
   renderContinue();
   syncFilterReset();
-  setupAudioPreference();
+
 
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname))) {
     addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

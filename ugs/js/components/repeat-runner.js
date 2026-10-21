@@ -52,7 +52,7 @@ window.ComponentRegistry.repeatRunner = function mountRepeatRunner(container, co
         </div>
         <div class="repeat-block" data-block aria-live="polite"><span>Повтори</span><strong>?</strong><span>разів</span><b>?</b></div>
         <div class="program-tools">
-          <button class="primary-btn compact-btn" type="button" data-run disabled>${AppIcons.svg('play')}<span>Запустити</span></button>
+          <button class="primary-btn compact-btn" type="button" data-run disabled>${AppIcons.svg('play')}<span>Йти</span></button>
         </div>
         <div class="feedback" data-feedback role="status" aria-live="polite">Спочатку обери команду і кількість повторів.</div>
         <div class="stage-actions">
@@ -116,7 +116,7 @@ window.ComponentRegistry.repeatRunner = function mountRepeatRunner(container, co
         sync();
         next.focus({ preventScroll: true });
       } else {
-        feedback.textContent = collision ? 'Робі йде не туди. Перевір стрілку й число.' : 'Робі не біля зірки. Перевір стрілку й число.';
+        feedback.textContent = collision ? 'Юджі йде не туди. Перевір стрілку й число.' : 'Юджі не біля зірки. Перевір стрілку й число.';
         robot = [...round.start];
         trail = [[...round.start]];
         sync();

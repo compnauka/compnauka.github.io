@@ -37,12 +37,13 @@ window.ComponentRegistry.mediaLab = function mountMediaLab(container, config = {
       return `<div class="media-stimulus text-stimulus" aria-label="Приклад інформації"><strong>${stimulus.text || 'КІТ'}</strong></div>`;
     }
     if (stimulus.kind === 'image') {
-      return `<div class="media-stimulus image-stimulus" aria-label="Приклад інформації"><span aria-hidden="true">${AppIcons.svg(stimulus.icon || 'photo')}</span><small>${stimulus.label || ''}</small></div>`;
+      return `<div class="media-stimulus image-stimulus" aria-label="${LessonUI.escape((stimulus.label || 'Предмет').replace('Малюнок ', ''))}"><span aria-hidden="true">${AppIcons.svg(stimulus.icon || 'photo')}</span></div>`;
     }
     if (stimulus.kind === 'sound') {
       return `<div class="media-stimulus playable-stimulus" aria-label="Приклад інформації">
         <button class="play-sample" type="button" data-play-sound aria-label="Відтворити приклад">${AppIcons.svg('play')}<span>Відтворити</span></button>
         <div class="sound-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="secondary-btn" type="button" data-sound-description>Не чую приклад</button><p data-sound-text hidden>У прикладі лунає короткий сигнал, без слів і зображення.</p>
       </div>`;
     }
     return `<div class="media-stimulus playable-stimulus video-stimulus" aria-label="Приклад інформації">
@@ -85,6 +86,10 @@ window.ComponentRegistry.mediaLab = function mountMediaLab(container, config = {
     const next = container.querySelector('[data-next]');
     const choices = [...container.querySelectorAll('[data-type]')];
     const videoWindow = container.querySelector('.video-window');
+    container.querySelector('[data-sound-description]')?.addEventListener('click', event => {
+      container.querySelector('[data-sound-text]').hidden = false;
+      event.currentTarget.hidden = true;
+    });
 
     container.querySelector('[data-play-sound]')?.addEventListener('click', () => {
       playTone(round.stimulus?.tone || 523);

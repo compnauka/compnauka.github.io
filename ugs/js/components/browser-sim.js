@@ -2,13 +2,15 @@ window.ComponentRegistry = window.ComponentRegistry || {};
 window.ComponentRegistry.browserSim = (root, config, ctx) => {
   let roundIndex = 0;
   let points = 0;
-  let attempts = 0;
+
 
   const rounds = config.rounds || [];
   const total = rounds.length;
 
   function renderRound() {
     const round = rounds[roundIndex];
+    let attempts = 0;
+    const visited = new Set();
     let current = round.start || 'home';
     let history = [current];
     let done = false;
@@ -18,8 +20,7 @@ window.ComponentRegistry.browserSim = (root, config, ctx) => {
         <div class="stage-heading centered-heading">
           <div>
             <span class="eyebrow">${config.instruction || 'СПРОБУЙ'}</span>
-            <h2>${config.title || 'Користуйся сторінками'}</h2>
-            <p>${round.task}</p>
+            <h2>${round.task}</h2>
           </div>
           ${ctx.listenButton?.(`${config.title}. ${round.task}`) || ''}
         </div>
@@ -51,6 +52,7 @@ window.ComponentRegistry.browserSim = (root, config, ctx) => {
       } else {
         current = id;
       }
+      visited.add(current);
       const page = pageData(current);
       addressEl.textContent = page.address || `navchannia.local/${current}`;
       backBtn.disabled = history.length <= 1;
@@ -82,7 +84,7 @@ window.ComponentRegistry.browserSim = (root, config, ctx) => {
     function checkGoal(action) {
       const goal = round.goal || {};
       const reachedPage = !goal.page || current === goal.page;
-      const usedBack = !goal.requireBack || action === 'back';
+      const usedBack = !goal.requireBack || (action === 'back' && (!goal.visit || visited.has(goal.visit)));
       if (reachedPage && usedBack) finish();
       else if (goal.page && current === goal.page && goal.requireBack) {
         feedback.textContent = 'Добре! Тепер повернися кнопкою «Назад».';
@@ -95,11 +97,11 @@ window.ComponentRegistry.browserSim = (root, config, ctx) => {
       const ideal = round.idealAttempts || 1;
       points += attempts <= ideal ? 2 : 1;
       feedback.textContent = round.success || 'Так! Вийшло.';
-      setTimeout(() => {
-        roundIndex++;
+      LessonUI.nextButton(root, () => {
+            roundIndex++;
         if (roundIndex < total) renderRound();
         else ctx.onComplete?.({ points, max: total * 2 });
-      }, 650);
+      });
     }
 
     backBtn.addEventListener('click', () => {

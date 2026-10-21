@@ -2,7 +2,7 @@ window.ComponentRegistry = window.ComponentRegistry || {};
 window.ComponentRegistry.safetyScenarios = (root, config, ctx) => {
   let roundIndex = 0;
   let points = 0;
-  const rounds = config.rounds || [];
+  const rounds = (config.rounds || []).map(round => ({ ...round, options: LessonUI.shuffle(round.options || []) }));
 
   function renderRound() {
     const round = rounds[roundIndex];
@@ -45,11 +45,11 @@ window.ComponentRegistry.safetyScenarios = (root, config, ctx) => {
           button.classList.add('correct');
           points += tries === 1 ? 2 : 1;
           feedback.textContent = option.feedback || round.success || 'Так, це безпечна дія.';
-          setTimeout(() => {
+          LessonUI.nextButton(root, () => {
             roundIndex++;
             if (roundIndex < rounds.length) renderRound();
             else ctx.onComplete?.({ points, max: rounds.length * 2 });
-          }, 900);
+          });
         } else {
           button.classList.add('wrong');
           feedback.textContent = option.feedback || 'Спробуй іншу дію.';

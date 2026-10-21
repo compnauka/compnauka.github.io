@@ -1,155 +1,45 @@
 window.ComponentRegistry = window.ComponentRegistry || {};
-
-window.ComponentRegistry.saveFind = function mountSaveFind(container, config = {}, ctx = {}) {
+window.ComponentRegistry.saveFind = (root, config = {}, ctx = {}) => {
   const rounds = config.rounds || [];
-  let roundIndex = 0;
-  let totalPoints = 0;
-
-  function renderRound() {
-    const round = rounds[roundIndex];
-    if (!round) {
-      ctx.onComplete?.({ points: totalPoints, max: rounds.length * 2 });
-      return;
-    }
-
-    let phase = 'create';
-    let created = null;
-    let saved = false;
-    let mistakes = 0;
-
-    function finishRound() {
-      totalPoints += mistakes === 0 ? 2 : 1;
-      phase = 'done';
-      render();
-    }
-
-    function renderCreate() {
-      return `
-        <div class="workspace-window" aria-label="Редактор роботи">
-          <div class="workspace-toolbar"><span class="workspace-tab active">Редактор</span><span class="workspace-tab">Мої роботи</span></div>
-          <div class="workspace-canvas">
-            <p class="workspace-task">Створи роботу: <strong>${round.target.label}</strong></p>
-            <div class="creation-grid" role="group" aria-label="Що додати до роботи">
-              ${round.choices.map(choice => `<button class="creation-choice" type="button" data-create="${choice.id}"><span aria-hidden="true">${AppIcons.svg(choice.icon)}</span><strong>${choice.label}</strong></button>`).join('')}
-            </div>
-          </div>
-        </div>`;
-    }
-
-    function renderSave() {
-      const auto = round.saveMode === 'auto';
-      return `
-        <div class="workspace-window" aria-label="Редактор роботи">
-          <div class="workspace-toolbar"><span class="workspace-tab active">Редактор</span><button class="workspace-tab" type="button" data-open-gallery>Мої роботи</button></div>
-          <div class="workspace-canvas saved-preview">
-            <span class="work-preview" aria-hidden="true">${AppIcons.svg(round.target.icon)}</span>
-            <h3>${round.target.label}</h3>
-            ${auto
-              ? `<div class="autosave-note">${AppIcons.svg('cloudsave')}<strong>Збережено</strong></div><p>Програма зберегла роботу сама.</p>`
-              : `<p>Робота готова. Що треба зробити, щоб не загубити її?</p><button class="primary-btn" type="button" data-save>${AppIcons.svg('save')}<span>Зберегти</span></button>`}
-          </div>
-        </div>`;
-    }
-
-    function renderGallery() {
-      const galleryChoices = [round.target, ...round.choices.filter(c => c.id !== round.target.id).slice(0, 2)];
-      return `
-        <div class="workspace-window" aria-label="Мої роботи">
-          <div class="workspace-toolbar"><span class="workspace-tab">Редактор</span><span class="workspace-tab active">Мої роботи</span></div>
-          <div class="workspace-canvas">
-            <p class="workspace-task">Знайди роботу: <strong>${round.target.label}</strong></p>
-            <div class="gallery-grid" role="group" aria-label="Збережені роботи">
-              ${galleryChoices.map(choice => `<button class="gallery-work" type="button" data-find="${choice.id}"><span aria-hidden="true">${AppIcons.svg(choice.icon)}</span><strong>${choice.label}</strong></button>`).join('')}
-            </div>
-          </div>
-        </div>`;
-    }
-
-    function renderDone() {
-      return `
-        <div class="workspace-window success-workspace">
-          <div class="workspace-success" aria-hidden="true">${AppIcons.svg('check')}</div>
-          <h3>Роботу знайдено!</h3>
-          <p>${round.saveMode === 'auto' ? 'Ти знайшов збережену роботу.' : 'Ти зберіг і знайшов роботу.'}</p>
-        </div>`;
-    }
-
+  let index = 0, points = 0;
+  function round() {
+    const task = rounds[index];
+    if (!task) return ctx.onComplete?.({points,max:rounds.length*2});
+    let phase='create', name='', caption='', icon=task.target.icon, color='#e2f5ff', saved=null, mistakes=0;
+    const esc=LessonUI.escape;
+    function card(work) { return `<div class="made-card" style="--card-color:${work.color}"><div aria-hidden="true">${AppIcons.svg(work.icon)}</div><strong>${esc(work.name)}</strong><span>${esc(work.caption)}</span></div>`; }
+    function draft() { return {name,caption,icon,color}; }
     function render() {
-      container.innerHTML = `
-        <div class="lesson-content stage-box save-find-stage" data-component="save-find">
-          <div class="stage-heading centered-heading">
-            <div>
-              <span class="eyebrow">${config.instruction || 'СТВОРИ → ЗБЕРЕЖИ → ЗНАЙДИ'}</span>
-              <div class="task-progress" aria-label="Завдання ${roundIndex + 1} з ${rounds.length}">${roundIndex + 1} / ${rounds.length}</div>
-              <h2>${config.title || 'Створи й знайди роботу'}</h2>
-            </div>
-            ${ctx.listenButton ? ctx.listenButton(`Створи ${round.target.label}, збережи й знайди у «Моїх роботах».`) : ''}
-          </div>
-          ${phase === 'create' ? renderCreate() : phase === 'save' ? renderSave() : phase === 'gallery' ? renderGallery() : renderDone()}
-          <div class="feedback" data-feedback role="status" aria-live="polite">${phase === 'create' ? `Обери ${round.target.label}.` : phase === 'save' ? (round.saveMode === 'auto' ? 'Робота вже збережена.' : 'Збережи роботу, а потім відкрий «Мої роботи».') : phase === 'gallery' ? 'Знайди створену роботу.' : 'Готово.'}</div>
-          <div class="stage-actions">
-            ${ctx.allowBack !== false && roundIndex === 0 && phase === 'create' ? '<button class="secondary-btn" type="button" data-prev>Назад</button>' : ''}
-            ${phase === 'done' ? `<button class="primary-btn" type="button" data-next>${roundIndex === rounds.length - 1 ? (config.finishLabel || 'Готово') : 'Наступне'}</button>` : ''}
-          </div>
-        </div>`;
-
-      const feedback = container.querySelector('[data-feedback]');
-
-      container.querySelectorAll('[data-create]').forEach(button => button.addEventListener('click', () => {
-        if (button.dataset.create !== round.target.id) {
-          mistakes += 1;
-          button.classList.remove('wrong');
-          void button.offsetWidth;
-          button.classList.add('wrong');
-          feedback.textContent = `Потрібна робота «${round.target.label}». Спробуй ще.`;
-          return;
-        }
-        created = round.target.id;
-        saved = round.saveMode === 'auto';
-        phase = 'save';
-        render();
-      }));
-
-      container.querySelector('[data-save]')?.addEventListener('click', () => {
-        saved = true;
-        feedback.textContent = 'Збережено. Тепер відкрий «Мої роботи».';
-        const button = container.querySelector('[data-save]');
-        if (button) {
-          button.disabled = true;
-          button.innerHTML = `${AppIcons.svg('check')}<span>Збережено</span>`;
-        }
+      let body='';
+      if(phase==='create') body=`<p>Створи листівку про пристрій «${esc(task.target.label)}».</p><div class="product-workspace"><div>${card(draft())}</div><div class="product-controls"><label>Назва роботи<input data-name maxlength="24" autocomplete="off" value="${esc(name)}" placeholder="Наприклад: Мій помічник"></label><label>Короткий підпис<input data-caption maxlength="45" autocomplete="off" value="${esc(caption)}" placeholder="Що вміє цей пристрій?"></label><fieldset><legend>Колір листівки</legend>${['#e2f5ff','#eef8d4','#efeaff'].map((c,i)=>`<button type="button" class="color-choice" data-color="${c}" aria-pressed="${color===c}">Колір ${i+1}</button>`).join('')}</fieldset></div></div><button class="primary-btn" type="button" data-create>Листівка готова</button>`;
+      if(phase==='save') body=`${card(draft())}<p>${saved?'Роботу збережено в «Моїх роботах».':'Робота ще не збережена. Як відкрити її пізніше?'}</p><div class="stage-actions">${!saved?'<button class="primary-btn" type="button" data-save>Зберегти в «Мої роботи»</button>':''}<button class="secondary-btn" type="button" data-close>Закрити редактор</button></div>`;
+      if(phase==='lost') body='<h3>Незбережена робота зникла</h3><p>Після створення збережи її, перш ніж закривати редактор.</p><button class="primary-btn" type="button" data-retry>Створити ще раз</button>';
+      if(phase==='closed') body='<div class="closed-editor"><span aria-hidden="true">'+AppIcons.svg('folder')+'</span><h3>Редактор закрито</h3><p>Де знайти збережену листівку?</p><button class="primary-btn" type="button" data-gallery>Відкрити «Мої роботи»</button></div>';
+      const works=saved?LessonUI.shuffle([{...saved,id:'mine'},{name:'Шкільна афіша',caption:'Наш клас',icon:'printer',color:'#efeaff',id:'other1'},{name:'План на день',caption:'Навчання й відпочинок',icon:'keyboard',color:'#eef8d4',id:'other2'}]):[];
+      if(phase==='gallery')body=`<h3>Мої роботи</h3><p>Знайди листівку за своєю назвою.</p><div class="gallery-grid">${works.map(w=>`<button class="gallery-work" type="button" data-find="${w.id}">${card(w)}</button>`).join('')}</div>`;
+      if(phase==='opened')body=`<h3>Твоя листівка знову відкрита!</h3>${card(saved)}<p>Назва, підпис і колір збереглися.</p>`;
+      root.innerHTML=`<div class="lesson-content stage-box save-find-stage" data-component="save-find"><div class="stage-heading centered-heading"><div><span class="eyebrow">СТВОРИ → ЗБЕРЕЖИ → ВІДКРИЙ</span><div class="task-progress">${index+1} / ${rounds.length}</div><h2>${config.title||'Майстерня листівок'}</h2></div></div>${body}<p class="feedback" data-feedback role="status" aria-live="polite"></p><div class="stage-actions">${ctx.allowBack&&phase==='create'?'<button class="secondary-btn" type="button" data-back>Назад</button>':''}${phase==='opened'?'<button class="primary-btn" type="button" data-next>Далі</button>':''}</div></div>`;
+      const feedback=root.querySelector('[data-feedback]');
+      root.querySelector('[data-name]')?.addEventListener('input',event=>{name=event.target.value;root.querySelector('.made-card strong').textContent=name;});
+      root.querySelector('[data-caption]')?.addEventListener('input',event=>{caption=event.target.value;root.querySelector('.made-card span').textContent=caption;});
+      root.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>{color=b.dataset.color;render();}));
+      root.querySelector('[data-create]')?.addEventListener('click',()=>{
+        if(!name.trim()||!caption.trim()){feedback.textContent='Додай назву й короткий підпис.';return;}
+        name=name.trim();caption=caption.trim();
+        if(task.saveMode==='auto')saved={...draft()};
+        phase='save';render();
+        if(saved)root.querySelector('[data-feedback]').textContent='Ця майстерня зберегла роботу автоматично.';
       });
-
-      container.querySelector('[data-open-gallery]')?.addEventListener('click', () => {
-        if (!created) return;
-        if (!saved) {
-          mistakes += 1;
-          feedback.textContent = 'Спочатку збережи роботу.';
-          return;
-        }
-        phase = 'gallery';
-        render();
-      });
-
-      container.querySelectorAll('[data-find]').forEach(button => button.addEventListener('click', () => {
-        if (button.dataset.find !== round.target.id) {
-          mistakes += 1;
-          button.classList.remove('wrong');
-          void button.offsetWidth;
-          button.classList.add('wrong');
-          feedback.textContent = 'Це інша робота. Подивись уважніше.';
-          return;
-        }
-        finishRound();
-      }));
-
-      container.querySelector('[data-prev]')?.addEventListener('click', () => ctx.onBack?.());
-      container.querySelector('[data-next]')?.addEventListener('click', () => { roundIndex += 1; renderRound(); ctx.focusHeading?.(); });
-      ctx.bindListenButtons?.(container);
+      root.querySelector('[data-save]')?.addEventListener('click',()=>{saved={...draft()};render();});
+      root.querySelector('[data-close]')?.addEventListener('click',()=>{if(!saved){mistakes++;phase='lost';name='';caption='';}else phase='closed';render();});
+      root.querySelector('[data-retry]')?.addEventListener('click',()=>{phase='create';render();});
+      root.querySelector('[data-gallery]')?.addEventListener('click',()=>{phase='gallery';render();});
+      root.querySelectorAll('[data-find]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.find!=='mine'){mistakes++;feedback.textContent='Це інша робота. Знайди свою назву.';return;}points+=mistakes===0?2:1;phase='opened';render();}));
+      root.querySelector('[data-next]')?.addEventListener('click',()=>{index++;round();ctx.focusHeading?.();});
+      root.querySelector('[data-back]')?.addEventListener('click',ctx.onBack);
+      ctx.bindListenButtons?.(root);
     }
-
     render();
   }
-
-  renderRound();
+  round();
 };

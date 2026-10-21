@@ -1,196 +1,83 @@
 window.ComponentRegistry = window.ComponentRegistry || {};
-
-window.ComponentRegistry.virtualKeyboard = function mountVirtualKeyboard(container, config = {}, ctx = {}) {
+window.ComponentRegistry.virtualKeyboard = (root, config = {}, ctx = {}) => {
+  const instance = window.ugsKeyboardId = (window.ugsKeyboardId || 0) + 1;
   const tasks = config.tasks || [];
-  const isAssessment = config.assessment === true;
-  let index = 0;
-  let totalPoints = 0;
-  let currentValue = '';
-  let mistakes = 0;
-  let finished = false;
-
-  function normalize(value) { return String(value ?? '').replace(/\r/g, ''); }
-  function visibleValue(value) { return value || ' '; }
-
-  function taskInstruction(task) {
-    if (task.type === 'backspace') return `Є зайва літера. Натисни Backspace, щоб отримати ${task.target}.`;
-    if (task.type === 'enter') return `Натисни Enter, щоб продовження почалося з нового рядка.`;
-    return `Набери: ${task.target.replace(/\n/g, ' / ')}`;
-  }
-
-  function keyboardMarkup(task) {
-    const keys = task.keys || [];
-    const special = task.special || [];
-    return `
-      <div class="training-keyboard" role="group" aria-label="Навчальна клавіатура">
-        ${keys.map(key => `<button class="key-button" type="button" data-key="${key}" aria-label="Клавіша ${key}">${key}</button>`).join('')}
-        ${special.includes('space') ? `<button class="key-button special space" type="button" data-special="space">${AppIcons.svg('spacekey')}<span>Пробіл</span></button>` : ''}
-        ${special.includes('backspace') ? `<button class="key-button special" type="button" data-special="backspace">${AppIcons.svg('backspace')}<span>Backspace</span></button>` : ''}
-        ${special.includes('enter') ? `<button class="key-button special" type="button" data-special="enter">${AppIcons.svg('enterkey')}<span>Enter</span></button>` : ''}
-      </div>`;
-  }
-
-  function updateDisplay() {
-    const output = container.querySelector('[data-typing-output]');
-    if (output) output.textContent = visibleValue(currentValue);
-  }
-
-  function completeTask() {
-    if (finished) return;
-    finished = true;
-    totalPoints += mistakes === 0 ? 2 : 1;
-    const feedback = container.querySelector('[data-feedback]');
-    if (feedback) feedback.textContent = isAssessment ? 'Так! Далі.' : 'Вийшло!';
-    const next = container.querySelector('[data-next]');
-    if (next) {
-      next.hidden = false;
-      next.focus({ preventScroll: true });
-    }
-  }
-
-  function handleCharacter(task, key) {
-    if (finished) return;
-    if (task.type === 'backspace' || task.type === 'enter') {
-      mistakes += 1;
-      container.querySelector('[data-feedback]').textContent = task.type === 'backspace' ? 'Тут потрібна клавіша Backspace.' : 'Тут потрібна клавіша Enter.';
-      return;
-    }
-    const expected = normalize(task.target).charAt(currentValue.length);
-    if (key === expected) {
-      currentValue += key;
-      updateDisplay();
-      if (currentValue === normalize(task.target)) completeTask();
-    } else {
-      mistakes += 1;
-      container.querySelector('[data-feedback]').textContent = 'Подивись на зразок і спробуй іншу клавішу.';
-    }
-  }
-
-  function handleSpecial(task, special) {
-    if (finished) return;
-    if (special === 'space') {
-      const expected = normalize(task.target).charAt(currentValue.length);
-      if (expected === ' ') {
-        currentValue += ' ';
-        updateDisplay();
-        if (currentValue === normalize(task.target)) completeTask();
-      } else {
-        mistakes += 1;
-        container.querySelector('[data-feedback]').textContent = 'Пробіл потрібен між словами.';
-      }
-      return;
-    }
-
-    if (special === 'backspace') {
-      currentValue = currentValue.slice(0, -1);
-      updateDisplay();
-      if (currentValue === normalize(task.target)) completeTask();
-      else if (task.type !== 'backspace') {
-        mistakes += 1;
-        container.querySelector('[data-feedback]').textContent = 'Стерто.';
-      }
-      return;
-    }
-
-    if (special === 'enter') {
-      if (task.type === 'enter') {
-        currentValue = normalize(task.target);
-        updateDisplay();
-        completeTask();
-      } else {
-        const expected = normalize(task.target).charAt(currentValue.length);
-        if (expected === '\n') {
-          currentValue += '\n';
-          updateDisplay();
-          if (currentValue === normalize(task.target)) completeTask();
-        } else {
-          mistakes += 1;
-          container.querySelector('[data-feedback]').textContent = 'Enter потрібен для нового рядка.';
-        }
-      }
-    }
-  }
-
-  function renderOptionalRealKeyboard() {
-    container.innerHTML = `
-      <div class="lesson-content stage-box keyboard-stage">
-        <div class="stage-heading centered-heading">
-          <div>
-            <span class="eyebrow">ДОДАТКОВО</span>
-            <h2>Спробуй клавіатуру пристрою</h2>
-            <p>Хочеш? Натисни поле й напиши коротке слово.</p>
-          </div>
-          ${ctx.listenButton ? ctx.listenButton('Спробуй клавіатуру пристрою.') : ''}
-        </div>
-        <label class="real-keyboard-card">
-          <span>Напиши коротке слово</span>
-          <input type="text" inputmode="text" autocomplete="off" maxlength="12" placeholder="Наприклад: КІТ" aria-describedby="realKeyboardHint">
-        </label>
-        <p class="micro-hint" id="realKeyboardHint">Натисни поле, щоб відкрити клавіатуру.</p>
-        <div class="stage-actions">
-          <button class="primary-btn" type="button" data-finish-practice>Далі</button>
-        </div>
-      </div>`;
-    container.querySelector('[data-finish-practice]')?.addEventListener('click', () => ctx.onComplete?.({ points: totalPoints, max: tasks.length * 2 }));
-    ctx.bindListenButtons?.(container);
-  }
-
+  let index = 0, points = 0;
+  const rows = ['1234567890', 'йцукенгшщзхї', 'фівапролджє', 'ячсмитьбюґ'];
   function render() {
     const task = tasks[index];
-    if (!task) {
-      if (config.optionalRealKeyboard && !isAssessment) {
-        renderOptionalRealKeyboard();
-      } else {
-        ctx.onComplete?.({ points: totalPoints, max: tasks.length * 2 });
-      }
-      return;
+    if (!task) return ctx.onComplete?.({ points, max: tasks.length * 2 });
+    let checks = 0, done = false, upper = true;
+    const instruction = task.type === 'backspace' ? 'Прибери зайву літеру.' : task.type === 'enter' ? 'Додай новий рядок і допиши текст.' : 'Введи текст за зразком.';
+    root.innerHTML = `<div class="lesson-content stage-box keyboard-stage" data-component="virtual-keyboard">
+      <div class="stage-heading centered-heading"><div><span class="eyebrow">${config.instruction || 'ВВОДЬ ТЕКСТ'}</span><div class="task-progress">${index + 1} / ${tasks.length}</div><h2>${instruction}</h2></div>${ctx.listenButton?.(instruction) || ''}</div>
+      <div class="typing-sample"><span>Зразок</span><strong data-sample></strong></div>
+      <label class="typing-field"><span>Твій текст</span><textarea data-input rows="2" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="keyboardHint-${instance}"></textarea></label>
+      <p id="keyboardHint-${instance}" class="micro-hint">Торкнися поля й пиши. Зайве можна стерти.</p>
+      <button class="secondary-btn keyboard-toggle" type="button" data-show-keys aria-expanded="true" aria-controls="lessonKeyboard-${instance}">Сховати клавіші</button>
+      <div class="full-keyboard" id="lessonKeyboard-${instance}" role="group" aria-label="Українська клавіатура">
+        ${rows.map(row => `<div class="keyboard-row">${[...row].map(key => `<button type="button" class="key-button" data-char="${key}">${key}</button>`).join('')}</div>`).join('')}
+        <div class="keyboard-row keyboard-specials"><button type="button" class="key-button" data-shift aria-pressed="true">Великі літери</button><button type="button" class="key-button" data-char="'">Апостроф</button><button type="button" class="key-button" data-char=" ">Пробіл</button><button type="button" class="key-button" data-delete>Стерти</button><button type="button" class="key-button" data-enter>Новий рядок</button></div>
+      </div>
+      <p class="feedback" data-feedback role="status" aria-live="polite"></p>
+      <div class="stage-actions">${ctx.allowBack ? '<button class="secondary-btn" data-back type="button">Назад</button>' : ''}<button class="primary-btn" data-check type="button">Перевірити</button><button class="primary-btn" data-next type="button" hidden>Далі</button></div>
+    </div>`;
+    const input = root.querySelector('[data-input]');
+    const keys = root.querySelector('.full-keyboard');
+    const toggle = root.querySelector('[data-show-keys]');
+    function showKeys(show) {
+      keys.hidden = !show;
+      toggle.setAttribute('aria-expanded', String(show));
+      toggle.textContent = show ? 'Сховати клавіші' : 'Показати клавіші';
     }
-
-    mistakes = 0;
-    finished = false;
-    currentValue = normalize(task.start || '');
-    const instruction = taskInstruction(task);
-
-    container.innerHTML = `
-      <div class="lesson-content stage-box keyboard-stage" data-component="virtual-keyboard">
-        <div class="stage-heading centered-heading">
-          <div>
-            <span class="eyebrow">${config.instruction || 'НАТИСКАЙ КЛАВІШІ'}</span>
-            <div class="task-progress" aria-label="Завдання ${index + 1} з ${tasks.length}">${index + 1} / ${tasks.length}</div>
-            <h2>${instruction}</h2>
-          </div>
-          ${ctx.listenButton ? ctx.listenButton(instruction) : ''}
-        </div>
-
-        <div class="typing-sample" aria-label="Зразок">
-          <span>Зразок</span>
-          <strong>${normalize(task.target).replace(/\n/g, '<br>')}</strong>
-        </div>
-
-        <div class="typing-output-wrap">
-          <span class="typing-label">На екрані</span>
-          <pre class="typing-output" data-typing-output aria-live="polite">${visibleValue(currentValue)}</pre>
-        </div>
-
-        ${keyboardMarkup(task)}
-
-        <div class="feedback" data-feedback role="status" aria-live="polite"></div>
-        <div class="stage-actions">
-          ${ctx.allowBack !== false ? '<button class="secondary-btn" type="button" data-prev>Назад</button>' : ''}
-          <button class="primary-btn" type="button" data-next hidden>${index === tasks.length - 1 ? 'Готово' : 'Наступне'}</button>
-        </div>
-      </div>`;
-
-    container.querySelectorAll('[data-key]').forEach(button => button.addEventListener('click', () => handleCharacter(task, button.dataset.key)));
-    container.querySelectorAll('[data-special]').forEach(button => button.addEventListener('click', () => handleSpecial(task, button.dataset.special)));
-    container.querySelector('[data-prev]')?.addEventListener('click', () => ctx.onBack?.());
-    container.querySelector('[data-next]')?.addEventListener('click', () => {
-      index += 1;
-      render();
-      ctx.focusHeading?.();
+    showKeys(!matchMedia('(pointer: coarse)').matches);
+    toggle.addEventListener('click', () => showKeys(keys.hidden));
+    input.value = task.start || '';
+    root.querySelector('[data-sample]').textContent = task.target;
+    function insert(text) {
+      if (done) return;
+      input.setRangeText(text, input.selectionStart, input.selectionEnd, 'end');
+      input.focus({ preventScroll: true });
+    }
+    function syncCase() {
+      root.querySelectorAll('[data-char]').forEach(b => {
+        if (/^[а-яіїєґ]$/u.test(b.dataset.char)) b.textContent = upper ? b.dataset.char.toUpperCase() : b.dataset.char;
+      });
+    }
+    root.querySelectorAll('[data-char]').forEach(b => b.addEventListener('click', () => insert(upper ? b.dataset.char.toUpperCase() : b.dataset.char)));
+    root.querySelector('[data-enter]').addEventListener('click', () => insert('\n'));
+    root.querySelector('[data-delete]').addEventListener('click', () => {
+      if (done) return;
+      const start = input.selectionStart, end = input.selectionEnd;
+      input.setRangeText('', start === end ? Math.max(0, start - 1) : start, end, 'end');
+      input.focus({ preventScroll: true });
     });
-    ctx.bindListenButtons?.(container);
+    root.querySelector('[data-shift]').addEventListener('click', event => {
+      upper = !upper;
+      event.currentTarget.setAttribute('aria-pressed', String(upper));
+      event.currentTarget.textContent = upper ? 'Великі літери' : 'Малі літери';
+      syncCase();
+    });
+    root.querySelector('[data-check]').addEventListener('click', event => {
+      if (done) return;
+      checks++;
+      if (input.value.replace(/\r/g, '') !== task.target) {
+        root.querySelector('[data-feedback]').textContent = 'Порівняй зі зразком: перевір літери, пробіли й новий рядок.';
+        input.focus({ preventScroll: true });
+        return;
+      }
+      done = true;
+      points += checks === 1 ? 2 : 1;
+      input.readOnly = true;
+      event.currentTarget.hidden = true;
+      root.querySelector('[data-feedback]').textContent = 'Вийшло! Текст збігається.';
+      root.querySelector('[data-next]').hidden = false;
+      root.querySelector('[data-next]').focus({ preventScroll: true });
+    });
+    root.querySelector('[data-back]')?.addEventListener('click', ctx.onBack);
+    root.querySelector('[data-next]').addEventListener('click', () => { index++; render(); ctx.focusHeading?.(); });
+    syncCase();
+    ctx.bindListenButtons?.(root);
   }
-
   render();
 };

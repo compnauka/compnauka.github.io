@@ -12,28 +12,26 @@
       return true;
     } catch { return false; }
   }
-  const persistent = storageAvailable();
+  let persistent = storageAvailable();
 
   function read() {
     if (!persistent) return { ...memory };
     try {
       const parsed = JSON.parse(localStorage.getItem(key) || '{}');
       return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch { return {}; }
+    } catch { return { ...memory }; }
   }
 
   function write(data) {
-    if (!persistent) {
-      Object.keys(memory).forEach(k => delete memory[k]);
-      Object.assign(memory, data);
-      return;
-    }
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* graceful fallback */ }
+    Object.keys(memory).forEach(k => delete memory[k]);
+    Object.assign(memory, data);
+    if (!persistent) return;
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch { persistent = false; }
   }
 
   window.ProgressStore = {
     key,
-    isPersistent: persistent,
+    get isPersistent() { return persistent; },
     read,
     get(id) {
       const value = read()[id];

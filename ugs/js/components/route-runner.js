@@ -28,10 +28,10 @@ window.ComponentRegistry.routeRunner = function mountRouteRunner(container, conf
           <div>
             <span class="eyebrow">${config.instruction || 'СКЛАДИ МАРШРУТ'}</span>
             <div class="task-progress" aria-label="Завдання ${roundIndex + 1} з ${rounds.length}">${roundIndex + 1} / ${rounds.length}</div>
-            <h2>${round.question || 'Допоможи Робі дістатися зірки'}</h2>
+            <h2>${round.question || 'Допоможи Юджі дістатися зірки'}</h2>
             <p>${round.hint || `Додай стрілки по черзі.`}</p>
           </div>
-          ${ctx.listenButton ? ctx.listenButton(`${round.question || 'Допоможи Робі дістатися зірки'}. ${round.hint || 'Додай команди по черзі та запусти.'}`) : ''}
+          ${ctx.listenButton ? ctx.listenButton(`${round.question || 'Допоможи Юджі дістатися зірки'}. ${round.hint || 'Додай команди по черзі та запусти.'}`) : ''}
         </div>
         <div class="robot-board-wrap" data-board></div>
         <div class="program-panel">
@@ -40,9 +40,9 @@ window.ComponentRegistry.routeRunner = function mountRouteRunner(container, conf
         </div>
         <div class="robot-command-pad" role="group" aria-label="Додати команду">${RobotUI.commandButtons()}</div>
         <div class="program-tools">
-          <button class="secondary-btn compact-btn" type="button" data-undo disabled>Прибрати останню</button>
-          <button class="secondary-btn compact-btn" type="button" data-clear disabled>Очистити</button>
-          <button class="primary-btn compact-btn" type="button" data-run disabled>${AppIcons.svg('play')}<span>Запустити</span></button>
+          <button class="secondary-btn compact-btn" type="button" data-undo disabled>Стерти крок</button>
+          <button class="secondary-btn compact-btn" type="button" data-clear disabled>Заново</button>
+          <button class="primary-btn compact-btn" type="button" data-run disabled>${AppIcons.svg('play')}<span>Йти</span></button>
         </div>
         <div class="feedback" data-feedback role="status" aria-live="polite">Додай першу команду.</div>
         <div class="stage-actions">
@@ -77,7 +77,7 @@ window.ComponentRegistry.routeRunner = function mountRouteRunner(container, conf
       checks += 1;
       robot = [...round.start];
       trail = [[...round.start]];
-      feedback.textContent = 'Робі йде…';
+      feedback.textContent = 'Юджі йде…';
       sync();
       const delay = RobotUI.prefersReducedMotion() ? 0 : 240;
       let collision = '';
@@ -93,14 +93,14 @@ window.ComponentRegistry.routeRunner = function mountRouteRunner(container, conf
       if (!collision && RobotUI.same(robot, round.goal)) {
         solved = true;
         totalPoints += checks === 1 ? 2 : 1;
-        feedback.textContent = config.assessment ? 'Так! Робі біля зірки.' : 'Супер! Робі дістався зірки.';
+        feedback.textContent = config.assessment ? 'Так! Юджі біля зірки.' : 'Супер! Юджі дістався зірки.';
         next.hidden = false;
         sync();
         next.focus({ preventScroll: true });
       } else {
-        if (collision === 'edge') feedback.textContent = 'Робі вперся в край. Зміни команди.';
+        if (collision === 'edge') feedback.textContent = 'Юджі вперся в край. Зміни команди.';
         else if (collision === 'obstacle') feedback.textContent = 'На шляху перешкода. Знайди інший маршрут.';
-        else feedback.textContent = 'Робі зупинився не біля зірки. Зміни команди й запусти ще раз.';
+        else feedback.textContent = 'Юджі зупинився не біля зірки. Зміни команди й запусти ще раз.';
         robot = [...round.start];
         trail = [[...round.start]];
         sync();

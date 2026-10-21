@@ -38,7 +38,7 @@ window.ComponentRegistry.debugRunner = function mountDebugRunner(container, conf
         <div class="robot-board-wrap" data-board></div>
         <div class="program-panel">
           <div class="program-label"><strong>Готові команди</strong><span>Обери крок</span></div>
-          <div class="robot-program editable-program" data-program aria-label="Команди Робі"></div>
+          <div class="robot-program editable-program" data-program aria-label="Команди Юджі"></div>
         </div>
         <div class="debug-replace" data-replace hidden>
           <strong>Заміни вибраний крок:</strong>
@@ -46,9 +46,9 @@ window.ComponentRegistry.debugRunner = function mountDebugRunner(container, conf
         </div>
         <div class="program-tools">
           <button class="secondary-btn compact-btn" type="button" data-reset>Повернути початковий</button>
-          <button class="primary-btn compact-btn" type="button" data-run>${AppIcons.svg('play')}<span>Запустити</span></button>
+          <button class="primary-btn compact-btn" type="button" data-run>${AppIcons.svg('play')}<span>Йти</span></button>
         </div>
-        <div class="feedback" data-feedback role="status" aria-live="polite">Спочатку запусти й подивись, куди піде Робі.</div>
+        <div class="feedback" data-feedback role="status" aria-live="polite">Спочатку запусти й подивись, куди піде Юджі.</div>
         <div class="stage-actions">
           ${ctx.allowBack !== false ? '<button class="secondary-btn" type="button" data-prev>Назад</button>' : ''}
           <button class="primary-btn" type="button" data-next hidden>${roundIndex === rounds.length - 1 ? (config.finishLabel || 'Готово') : 'Наступне'}</button>
@@ -107,7 +107,7 @@ window.ComponentRegistry.debugRunner = function mountDebugRunner(container, conf
         sync();
         next.focus({ preventScroll: true });
       } else {
-        feedback.textContent = collision ? 'Робі ще йде не туди. Зміни один крок.' : 'Робі ще не біля зірки. Зміни один крок.';
+        feedback.textContent = collision ? 'Юджі ще йде не туди. Зміни один крок.' : 'Юджі ще не біля зірки. Зміни один крок.';
         robot = [...round.start];
         trail = [[...round.start]];
         selectedIndex = -1;

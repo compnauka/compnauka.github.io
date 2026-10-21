@@ -1,6 +1,7 @@
 window.ComponentRegistry = window.ComponentRegistry || {};
 
 window.ComponentRegistry.sort = function mountSort(container, config = {}, ctx = {}) {
+  const helpId = `sortHelp-${window.ugsSortId = (window.ugsSortId || 0) + 1}`;
   const rounds = config.rounds || [];
   let roundIndex = 0;
   let totalPoints = 0;
@@ -24,16 +25,17 @@ window.ComponentRegistry.sort = function mountSort(container, config = {}, ctx =
             <span class="eyebrow">${config.instruction || 'РОЗКЛАДИ'}</span>
             <div class="task-progress" aria-label="Завдання ${roundIndex + 1} з ${rounds.length}">${roundIndex + 1} / ${rounds.length}</div>
             <h2>${round.question}</h2>
-            <p>Обери картку, потім групу.</p>
+            <p>Перетягни або обери картку.</p>
           </div>
           ${ctx.listenButton ? ctx.listenButton(`${round.question}. Обери картку, потім групу.`) : ''}
         </div>
         <div class="sort-pool" role="group" aria-label="Картки для сортування">
-          ${round.items.map(item => `<button class="sort-item" type="button" data-item="${item.id}" aria-pressed="false"><span aria-hidden="true">${AppIcons.svg(item.icon || 'info')}</span><strong>${item.label}</strong></button>`).join('')}
+          ${LessonUI.shuffle(round.items).map(item => `<button class="sort-item" type="button" data-item="${item.id}" aria-pressed="false" aria-describedby="${helpId}"><span aria-hidden="true">${AppIcons.svg(item.icon || 'info')}</span><strong>${item.label}</strong></button>`).join('')}
         </div>
         <div class="sort-bins" role="group" aria-label="Групи">
           ${round.bins.map(bin => `<button class="sort-bin" type="button" data-bin="${bin.id}"><span class="sort-bin-icon" aria-hidden="true">${AppIcons.svg(bin.icon || 'sort')}</span><strong>${bin.label}</strong><span class="sort-bin-count" data-count="${bin.id}">0</span><span class="sort-bin-items" data-bin-items="${bin.id}" aria-hidden="true"></span></button>`).join('')}
         </div>
+        <p class="micro-hint" id="${helpId}">Клавіатура: обери картку клавішею Enter, потім перейди до групи й натисни Enter.</p>
         <div class="feedback" data-feedback role="status" aria-live="polite">Обери першу картку.</div>
         <div class="stage-actions">
           ${ctx.allowBack !== false ? '<button class="secondary-btn" type="button" data-prev>Назад</button>' : ''}
@@ -62,7 +64,7 @@ window.ComponentRegistry.sort = function mountSort(container, config = {}, ctx =
       feedback.textContent = `${item.label}: тепер обери групу.`;
     }));
 
-    binButtons.forEach(binButton => binButton.addEventListener('click', () => {
+    function place(binButton) {
       if (!selectedId) {
         feedback.textContent = 'Спочатку обери картку.';
         return;
@@ -100,7 +102,54 @@ window.ComponentRegistry.sort = function mountSort(container, config = {}, ctx =
       } else {
         feedback.textContent = 'Добре. Обери наступну картку.';
       }
-    }));
+    }
+
+    binButtons.forEach(button => button.addEventListener('click', () => place(button)));
+    itemButtons.forEach(button => {
+      let drag = null;
+      let suppressClick = false;
+      button.addEventListener('click', event => {
+        if (suppressClick) { event.stopImmediatePropagation(); suppressClick = false; }
+      }, true);
+      button.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || placed.has(button.dataset.item)) return;
+        drag = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+        button.setPointerCapture(event.pointerId);
+      });
+      button.addEventListener('pointermove', event => {
+        if (!drag || drag.id !== event.pointerId) return;
+        const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+        if (Math.hypot(dx, dy) > 8) drag.moved = true;
+        if (!drag.moved) return;
+        button.classList.add('dragging');
+        button.style.transform = `translate(${dx}px, ${dy}px)`;
+        binButtons.forEach(bin => {
+          const r = bin.getBoundingClientRect();
+          bin.classList.toggle('drop-active', event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom);
+        });
+      });
+      function endDrag(event, cancelled = false) {
+        if (!drag) return;
+        suppressClick = drag.moved;
+        if (drag.moved && !cancelled) {
+          const target = binButtons.find(bin => {
+            const r = bin.getBoundingClientRect();
+            return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+          });
+          selectedId = button.dataset.item;
+          updateSelection();
+          if (target) place(target);
+          else feedback.textContent = 'Перемісти картку в групу або натисни групу.';
+        }
+        button.style.transform = '';
+        button.classList.remove('dragging');
+        binButtons.forEach(bin => bin.classList.remove('drop-active'));
+        if (button.hasPointerCapture(event.pointerId)) button.releasePointerCapture(event.pointerId);
+        drag = null;
+      }
+      button.addEventListener('pointerup', event => endDrag(event));
+      button.addEventListener('pointercancel', event => endDrag(event, true));
+    });
 
     container.querySelector('[data-prev]')?.addEventListener('click', () => ctx.onBack?.());
     next?.addEventListener('click', () => { roundIndex += 1; renderRound(); ctx.focusHeading?.(); });

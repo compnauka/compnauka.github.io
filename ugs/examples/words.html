@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Склади слово — 1–2 клас</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;min-height:100vh;color:#24324a;
+background:linear-gradient(135deg,#b8e8ff 0%,#d8c8ff 45%,#ffd5df 100%);
+overflow-x:hidden}
+body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(2px);opacity:.45;z-index:-1}
+body:before{width:280px;height:280px;background:#fff59d;left:-80px;top:40px}
+body:after{width:340px;height:340px;background:#a9f0c5;right:-120px;bottom:20px}
+.app{max-width:900px;margin:auto;padding:24px 16px}
+.header{background:#ffffffdd;border:2px solid #fff;border-radius:28px;padding:18px 22px;box-shadow:0 12px 35px #59608025;margin-bottom:18px}
+h1{margin:0;font-size:clamp(28px,5vw,44px);text-align:center}
+.sub{text-align:center;margin:7px 0 0;font-size:17px}
+.levels{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.level{border:0;border-radius:16px;padding:11px 17px;font-weight:800;cursor:pointer;background:#fff;color:#45536b;box-shadow:0 5px 14px #59608020}
+.level.active{background:#6c63ff;color:white}
+.card{background:#ffffffed;border-radius:30px;padding:24px;box-shadow:0 16px 45px #5960802c;text-align:center}
+.progress{display:flex;justify-content:space-between;font-weight:800;margin-bottom:12px}
+.pic{font-size:88px;line-height:1.05}
+.hint{font-size:18px;margin:7px auto 18px;max-width:650px}
+.answer{min-height:64px;border:3px dashed #a9b5ce;border-radius:20px;background:#f8fbff;display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;padding:8px;margin:0 auto 18px}
+.answer .letter{background:#fff;border:2px solid #6c63ff;color:#4c45c7}
+.letters{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.letter{width:58px;height:58px;border-radius:17px;border:2px solid #b8c3d9;background:white;font-size:27px;font-weight:900;cursor:pointer;box-shadow:0 5px 12px #59608020}
+.letter:hover{transform:translateY(-3px);border-color:#6c63ff}
+.letter.used{opacity:.28;cursor:default;transform:none}
+.buttons{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+button.action{border:0;border-radius:16px;padding:13px 22px;font-size:17px;font-weight:800;cursor:pointer}
+.check{background:#ff9f43;color:#fff}.clear{background:#e9eef8;color:#45536b}.next{background:#39b87f;color:#fff}
+.feedback{min-height:35px;margin-top:14px;font-size:19px;font-weight:800}
+.stars{font-size:26px;margin-top:4px}
+.hidden{display:none!important}
+.result{padding:25px}.result h2{font-size:30px}
+.score{font-size:48px;font-weight:900;color:#6c63ff}
+.small{font-size:15px;color:#66738a}
+@media(max-width:600px){.app{padding:12px}.card{padding:17px}.letter{width:50px;height:50px}.pic{font-size:72px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<h1>🔤 Склади слово</h1>
+<p class="sub">Натискай на букви у правильному порядку!</p>
+<div class="levels">
+<button class="level active" data-level="0">🌱 Рівень 1</button>
+<button class="level" data-level="1">🌿 Рівень 2</button>
+<button class="level" data-level="2">🌳 Рівень 3</button>
+</div>
+</header>
+<main class="card">
+<div id="game">
+<div class="progress"><span id="progress"></span><span id="score"></span></div>
+<div id="pic" class="pic"></div>
+<div id="hint" class="hint"></div>
+<div id="answer" class="answer"></div>
+<div id="letters" class="letters"></div>
+<div class="buttons">
+<button id="check" class="action check">✅ Перевірити</button>
+<button id="clear" class="action clear">↩ Очистити</button>
+<button id="next" class="action next hidden">Наступне →</button>
+</div>
+<div id="feedback" class="feedback"></div>
+</div>
+<div id="result" class="result hidden">
+<div class="stars">🌟 🌟 🌟</div>
+<h2>Чудова робота!</h2>
+<div class="score" id="finalScore"></div>
+<p id="finalText"></p>
+<button class="action next" id="restart">🔄 Спробувати ще раз</button>
+</div>
+</main>
+</div>
+<script>
+const levels=[
+[
+['🐱','Домашня тварина, яка каже «няв».','КІТ'],
+['🐶','Домашня тварина, яка гавкає.','ПЕС'],
+['🏠','Місце, де ми живемо.','ДІМ'],
+['🌳','Велика рослина зі стовбуром.','ДЕРЕВО'],
+['☀️','Світить і зігріває нас.','СОНЦЕ'],
+['🐟','Живе у воді.','РИБА'],
+['🍎','Червоний або зелений фрукт.','ЯБЛУКО'],
+['🌸','Росте в саду або на галявині.','КВІТКА'],
+['📚','Їх читають.','КНИГИ'],
+['🎒','У ньому школяр носить речі.','РЮКЗАК']
+],
+[
+['🦋','Комаха з красивими крильцями.','МЕТЕЛИК'],
+['🍂','Жовтий або червоний листок восени.','ЛИСТОК'],
+['🌙','Світить уночі на небі.','МІСЯЦЬ'],
+['☁️','Пливе небом.','ХМАРА'],
+['🐰','Має довгі вуха.','ЗАЙЧИК'],
+['🍐','Соковитий зелений або жовтий фрукт.','ГРУША'],
+['🧢','Головний убір.','КАПЕЛЮХ'],
+['✏️','Ним пишуть або малюють.','ОЛІВЕЦЬ'],
+['🚌','Везе дітей до школи.','АВТОБУС'],
+['🌻','Жовта квітка, що любить сонце.','СОНЯШНИК']
+],
+[
+['🦊','Руда лісова тварина.','ЛИСИЦЯ'],
+['🐿️','Запасає горішки на зиму.','БІЛКА'],
+['🌈','З’являється на небі після дощу.','ВЕСЕЛКА'],
+['🏫','Тут навчаються діти.','ШКОЛА'],
+['🎁','Його дарують на свято.','ПОДАРУНОК'],
+['👨‍🚀','Людина, яка літає в космос.','КОСМОНАВТ'],
+['🧸','М’яка іграшка.','ВЕДМЕДИК'],
+['🚲','На ньому їздять, крутячи педалі.','ВЕЛОСИПЕД'],
+['🌍','Планета, на якій ми живемо.','ЗЕМЛЯ'],
+['🇺🇦','Наша рідна країна.','УКРАЇНА']
+]
+];
+let level=0,index=0,selected=[],correctCount=0,answered=false;
+const $=id=>document.getElementById(id);
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function render(){
+ answered=false;selected=[];
+ const t=levels[level][index];
+ $('progress').textContent=`${index+1} / ${levels[level].length}`;
+ $('score').textContent=`⭐ ${correctCount}`;
+ $('pic').textContent=t[0];$('hint').textContent=t[1];
+ $('answer').innerHTML='';$('feedback').textContent='';
+ $('check').disabled=false;$('next').classList.add('hidden');
+ const box=$('letters');box.innerHTML='';
+ shuffle([...t[2]]).forEach((ch,n)=>{
+  const b=document.createElement('button');b.className='letter';b.textContent=ch;b.type='button';
+  b.onclick=()=>{if(answered||b.classList.contains('used'))return;b.classList.add('used');selected.push({ch,n});const x=b.cloneNode(true);x.classList.remove('used');x.onclick=()=>{};$('answer').appendChild(x)};
+  box.appendChild(b);
+ });
+}
+function check(){
+ if(answered)return;
+ const word=selected.map(x=>x.ch).join('');
+ if(word===levels[level][index][2]){
+  answered=true;correctCount++;$('score').textContent=`⭐ ${correctCount}`;
+  $('feedback').textContent='🎉 Правильно! Молодець!';
+  $('next').classList.remove('hidden');$('check').disabled=true;
+ }else $('feedback').textContent='💡 Спробуй ще раз. Подумай про порядок букв.';
+}
+$('check').onclick=check;
+$('clear').onclick=()=>{if(answered)return;selected=[];$('answer').innerHTML='';$('feedback').textContent='';document.querySelectorAll('#letters .letter').forEach(x=>x.classList.remove('used'))};
+$('next').onclick=()=>{if(index<levels[level].length-1){index++;render()}else finish()};
+function finish(){
+ $('game').classList.add('hidden');$('result').classList.remove('hidden');
+ $('finalScore').textContent=`${correctCount} / 10`;
+ $('finalText').textContent=correctCount===10?'Усі слова складено правильно! 🏆':`Правильних відповідей: ${correctCount}. Спробуй ще раз і побий свій результат!`;
+}
+$('restart').onclick=()=>{index=0;correctCount=0;$('result').classList.add('hidden');$('game').classList.remove('hidden');render()};
+document.querySelectorAll('.level').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.level').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+ level=+b.dataset.level;index=0;correctCount=0;$('result').classList.add('hidden');$('game').classList.remove('hidden');render();
+});
+render();
+</script>
+</body>
+</html>

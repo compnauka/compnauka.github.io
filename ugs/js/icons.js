@@ -95,8 +95,35 @@ window.AppIcons = (() => {
     repeat: '<path d="M18 8a7 7 0 00-12-2L4 8M6 16a7 7 0 0012 2l2-2"/><path d="M4 4v4h4M20 20v-4h-4"/>'
   };
   function svg(name, className = '') {
-    const body = icons[name] || icons.devices;
+    const asset = assets[name];
+    if (asset) return `<img class="asset-image ${className}" src="assets/optimized/${asset}.webp" alt="" aria-hidden="true" draggable="false" decoding="async">`;
+    return symbol(name, className);
+  }
+  function symbol(name, className = '') {
+    const body = name === 'settings' ? '<path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z"/><circle cx="12" cy="12" r="3"/>' : name === 'home' ? '<path d="M3 11l9-8 9 8M5 10v11h14V10M9 21v-8h6v8"/>' : icons[name] || icons.devices;
     return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
   }
-  return { svg };
+  const assets = {
+    devices: 'devices/desktop_computer', camera: 'devices/camera', cameraopen: 'devices/camera',
+    printer: 'devices/printer', headphones: 'devices/headphones', tablet: 'devices/tablet',
+    phone: 'devices/smartphone', smartphone: 'devices/smartphone', mouse: 'devices/mouse', pointer: 'devices/mouse', browser: 'devices/laptop',
+    keyboard: 'devices/keyboard', letterkey: 'devices/keyboard', game: 'devices/game_controller',
+    microphone: 'devices/microphone', speaker: 'devices/speakers', laptop: 'devices/laptop',
+    webcam: 'devices/webcam', router: 'devices/router', flash: 'devices/flash_drive',
+    info: 'files/catalog', media: 'files/image_file', photo: 'files/image_file',
+    textinfo: 'files/text_file', video: 'files/video_file', gallery: 'files/catalog',
+    folder: 'files/catalog', save: 'files/hdd', cloudsave: 'files/hdd',
+    online: 'devices/router', algo: 'ugi/3', robot: 'ugi/1', think: 'una/19',
+    posture: 'una/12', break: 'ugi/4', privacy: 'una/14', danger: 'ugi/8',
+    sort: 'files/catalog', sequence: 'ugi/3', search: 'devices/laptop',
+    cat: 'animals/cat', dog: 'animals/dog', lion: 'animals/lion', panda: 'animals/panda', giraffe: 'animals/jeraf',
+    bear: 'animals/bear', fox: 'animals/fox', rabbit: 'animals/rabbit',
+    bus: 'transport/bus', bicycle: 'transport/bicycle', car: 'transport/car',
+    sun: 'weather/sun', rain: 'weather/rain', cloud: 'weather/cloud',
+    key: 'security/key', lock: 'security/lock', password: 'security/password',
+    shield: 'security/shield', message: 'security/phishing_letter',
+    photoScene: 'ugi_takes_photo', voiceScene: 'ugi_voice_record', printScene: 'uni_prints', workScene: 'uni_works',
+    command: 'ugi/3', route: 'ugi/5', debug: 'una/19', repeat: 'ugi/10'
+  };
+  return { svg, symbol, assets };
 })();
