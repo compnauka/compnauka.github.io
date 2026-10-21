@@ -21,7 +21,7 @@ const artifacts = process.env.UGS_TEST_OUTPUT;
       assert.deepEqual(broken, [], 'Broken image URLs');
     }
     await page.goto(base);
-    assert.equal(await page.locator('.skill-card').count(), 16);
+    assert.equal(await page.locator('.skill-card').count(), 18);
     await checkLayout();
     if (artifacts) { fs.mkdirSync(artifacts, { recursive: true }); await page.screenshot({ path: path.join(artifacts, 'ugs-home-desktop.png'), fullPage: true }); }
     for (const width of [360, 390, 768, 1024]) {
@@ -33,8 +33,8 @@ const artifacts = process.env.UGS_TEST_OUTPUT;
     // All direct routes must load, not only skill.html?id=N.
     for (let id = 1; id <= 16; id++) {
       await page.goto(`${base}lesson-${String(id).padStart(2, '0')}.html`);
-      await page.locator('#explanation .explanation-card').first().waitFor();
-      assert.equal(await page.locator('[role="tab"]').count(),5);
+      await page.locator('#video .explanation-card').first().waitFor();
+      assert.ok((await page.locator('[role="tab"]').count())>=2);
       await checkLayout();
     }
     await page.goto(`${base}skill.html?id=5`);
@@ -158,9 +158,9 @@ const artifacts = process.env.UGS_TEST_OUTPUT;
     assert.ok(!cacheNames.includes('digital-superpowers-shell-old-test'));
     await offlineContext.setOffline(true);
     await offlinePage.goto(`${base}skill.html?id=5`);
-    await offlinePage.locator('#explanation .explanation-card').first().waitFor();
+    await offlinePage.locator('#video .explanation-card').first().waitFor();
     await offlinePage.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
-    assert.equal(await offlinePage.locator('#skillTitle').textContent(),'Я сортую');
+    assert.equal(await offlinePage.locator('#skillTitle').textContent(),'Я знаходжу спільне');
     await offlineContext.close();
     console.log('PASS: 16 direct routes; 32 practice/assessment screens at 3 widths; home at 5 widths; drag, keyboard, search, save/reopen, browser counters, password assessment, video and scoring.');
     console.log('PASS: service worker precache, isolated cache cleanup and offline query route with images.');

@@ -14,34 +14,34 @@ const output=process.env.UGS_TEST_OUTPUT;
       assert.match(await page.locator('.welcome-kicker').first().textContent(),/7–10/);
       assert.equal(await page.locator('#progress').isVisible(),false,'Empty progress must not dominate a first visit');
       assert.equal(await page.locator('#skills').evaluate(e=>e.open),false,'Catalog must start collapsed');
-      assert.equal(await page.locator('.skill-card').count(),16);
-      assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?id=1');
+      assert.equal(await page.locator('.skill-card').count(),18);
+      assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?skill=device-choice');
       const action=await page.locator('#continueLink').boundingBox(),nav=await page.locator('.bottom-nav').boundingBox();
       assert.ok(action.y+action.height<=nav.y,`Start action below the first screen at ${width}`);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
       await page.evaluate(()=>Promise.all([...document.images].map(image=>image.decode().catch(()=>{}))));
       assert.deepEqual(await page.locator('img').evaluateAll(images=>images.filter(image=>!image.naturalWidth).map(image=>image.src)),[],'Broken illustration');
       if(output&&[360,1280].includes(width))await page.screenshot({path:path.join(output,`home-purpose-${width}.png`),fullPage:true});
-      for(const [theme,count]of [['devices',3],['info',4],['online',5],['algo',4]]){
+      for(const [theme,count]of [['devices',3],['info',5],['create',2],['online',5],['algo',3]]){
         await page.locator(`[data-category="${theme}"].category-card`).click();
         assert.equal(await page.locator('#skills').evaluate(e=>e.open),true);
         assert.equal(await page.locator('.skill-card').count(),count);
         assert.equal(await page.locator(`[data-category="${theme}"].category-card`).getAttribute('aria-pressed'),'true');
       }
-      await page.locator('#filterReset').click();assert.equal(await page.locator('.skill-card').count(),16);
+      await page.locator('#filterReset').click();assert.equal(await page.locator('.skill-card').count(),18);
     }
     // The recommendation must explain that a returning learner reopens a lesson, not a saved step.
-    await page.evaluate(()=>ProgressStore.set(9,'training'));await page.reload();
-    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?id=9');
+    await page.evaluate(()=>ProgressStore.set('online-search','training'));await page.reload();
+    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?skill=online-search');
     assert.match(await page.locator('#continueLink').textContent(),/Повернутися до уроку/);
     assert.equal(await page.locator('#progress').isVisible(),true);
-    await page.evaluate(()=>{ProgressStore.reset();ProgressStore.set(1,'mastered');});await page.reload();
-    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?id=2');
-    await page.evaluate(()=>AppData.skills.forEach(s=>ProgressStore.set(s.id,'mastered')));await page.reload();
+    await page.evaluate(()=>{ProgressStore.reset();ProgressStore.set('device-choice','mastered');});await page.reload();
+    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?skill=device-control');
+    await page.evaluate(()=>AppData.skills.forEach(s=>ProgressStore.set(s.skillKey,'mastered')));await page.reload();
     await page.locator('#continueLink').click();assert.equal(await page.locator('#skills').evaluate(e=>e.open),true);
     await page.evaluate(()=>{ProgressStore.reset();dispatchEvent(new Event('ugs-progress-reset'));});
     assert.equal(await page.locator('#progress').isVisible(),false);
-    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?id=1');
+    assert.equal(await page.locator('#continueLink').getAttribute('href'),'skill.html?skill=device-choice');
     await page.goto(base+'#skills');assert.equal(await page.locator('#skills').evaluate(e=>e.open),true);
     await page.goto(base);await page.locator('#skills > summary').focus();await page.keyboard.press('Enter');
     assert.equal(await page.locator('#skills').evaluate(e=>e.open),true);

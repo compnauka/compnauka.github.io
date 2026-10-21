@@ -38,9 +38,9 @@
       else if(previous?.history)state.skills[skillKey].history=previous.history;
       persist();
     },
-    reset(){state={schemaVersion:3,skills:{},legacy:{},migrated:true};persist();},
+    reset(){state={schemaVersion:3,skills:{},legacy:{},migrated:true};this.works={};for(const workKey of ['postcard','pixel-code']){try{localStorage.removeItem('digital-superpowers-work-'+workKey);}catch{persistent=false;}}persist();},
     getWork(workKey){if(this.works?.[workKey])return JSON.parse(JSON.stringify(this.works[workKey]));try{return parse(localStorage.getItem('digital-superpowers-work-'+workKey));}catch{return {};}},
-    saveWork(workKey,value){this.works=this.works || {};this.works[workKey]=value;try{localStorage.setItem('digital-superpowers-work-'+workKey,JSON.stringify(value));}catch{persistent=false;}},
+    saveWork(workKey,value){this.works=this.works || {};this.works[workKey]=JSON.parse(JSON.stringify(value));try{localStorage.setItem('digital-superpowers-work-'+workKey,JSON.stringify(value));}catch{persistent=false;}},
     works:{}
   };
 })();

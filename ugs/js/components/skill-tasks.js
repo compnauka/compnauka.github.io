@@ -25,7 +25,7 @@ window.SkillTasks = (() => {
   });}
   function pairs(root,task){
     const answers={};let selected=null;
-    root.innerHTML='<p>Обери картку, потім пару або групу.</p><div class="task-pairs"><div>'+task.items.map(i=>button('<span aria-hidden="true">'+art(i.icon)+'</span>'+esc(i.label), 'data-source="'+esc(i.id)+'" aria-pressed="false"')).join('')+'</div><div>'+LessonUI.shuffle(task.targets).map(t=>button(esc(t.label),'data-target="'+esc(t.id)+'"')).join('')+'</div></div><p data-mapping role="status"></p>';
+    root.innerHTML=(task.stimulus?stimulus(task.stimulus):'')+'<p>Обери картку, потім пару або групу.</p><div class="task-pairs"><div>'+task.items.map(i=>button('<span aria-hidden="true">'+art(i.icon)+'</span>'+esc(i.label), 'data-source="'+esc(i.id)+'" aria-pressed="false"')).join('')+'</div><div>'+LessonUI.shuffle(task.targets).map(t=>button(esc(t.label),'data-target="'+esc(t.id)+'"')).join('')+'</div></div><p data-mapping role="status"></p>';
     root.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{selected=b.dataset.source;root.querySelectorAll('[data-source]').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));});
     root.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{if(!selected)return;answers[selected]=b.dataset.target;root.querySelector('[data-mapping]').textContent=task.items.filter(i=>answers[i.id]).map(i=>i.label+' → '+task.targets.find(t=>t.id===answers[i.id]).label).join('; ');selected=null;root.querySelectorAll('[data-source]').forEach(o=>o.setAttribute('aria-pressed','false'));});
     return {ready:()=>task.items.every(i=>answers[i.id]),check:()=>task.items.every(i=>answers[i.id]===i.target)};
@@ -67,13 +67,13 @@ window.SkillTasks = (() => {
     return {ready:()=>!!result,check:()=>!!result && !result.collision && RobotUI.same(result.position,task.goal) && (!task.debug || (task.correctInitially?!edited:originalRun && edited && runCount>=2))};
   }
   function repeat(root,task){
-    let direction='right',count=1,result=null;
+    let direction='right',count=1,result=null,running=false;
     root.innerHTML='<p class="task-stimulus">'+esc(task.sequence)+'</p><div data-field></div><div class="robot-command-pad">'+RobotUI.commandButtons({selected:direction})+'</div><label>Кількість повторів<select data-times>'+[1,2,3,4,5].map(n=>'<option>'+n+'</option>').join('')+'</select></label>'+button('Запустити','data-execute')+'<p role="status" data-steps></p>';
     function sync(){root.querySelector('[data-field]').innerHTML=RobotUI.gridHtml({size:task.size,start:task.start,goal:task.goal,robot:result?.position || task.start,trail:result?.trail || []});}
     root.querySelectorAll('[data-command]').forEach(b=>b.onclick=()=>{direction=b.dataset.command;result=null;root.querySelectorAll('[data-command]').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));sync();});
     root.querySelector('[data-times]').onchange=e=>{count=Number(e.target.value);result=null;sync();};
-    root.querySelector('[data-execute]').onclick=()=>{result=RobotUI.simulate(task.start,Array(count).fill(direction),task.size);root.querySelector('[data-steps]').textContent='Кроки: '+Array.from({length:result.trail.length-1},(_,i)=>i+1).join(' → ');sync();};sync();
-    return {ready:()=>!!result,check:()=>!!result && !result.collision && direction===task.direction && count===task.count && RobotUI.same(result.position,task.goal)};
+    root.querySelector('[data-execute]').onclick=async()=>{if(running)return;running=true;const full=RobotUI.simulate(task.start,Array(count).fill(direction),task.size);root.querySelectorAll('button,select').forEach(b=>b.disabled=true);for(let i=1;i<full.trail.length;i++){if(!root.isConnected)return;result={...full,position:full.trail[i],trail:full.trail.slice(0,i+1)};root.querySelector('[data-steps]').textContent='Кроки: '+Array.from({length:i},(_,n)=>n+1).join(' → ');sync();if(!RobotUI.prefersReducedMotion())await new Promise(resolve=>setTimeout(resolve,240));}result=full;running=false;root.querySelectorAll('button,select').forEach(b=>b.disabled=false);sync();};sync();
+    return {ready:()=>!!result && !running,check:()=>!!result && !result.collision && direction===task.direction && count===task.count && RobotUI.same(result.position,task.goal)};
   }
   function browser(root,task){
     let page=task.start,history=[];const visited=[];
@@ -85,10 +85,10 @@ window.SkillTasks = (() => {
     let done=false,selected=false,attempted=false;
     if(task.action==='scroll'){
       root.innerHTML='<div class="task-scroll" tabindex="0" role="region" aria-label="Прокрути список">'+['Кіт','Дім','Ліс','Квітка','Сонце'].map((label,i)=>'<div>'+button(label,'data-scroll-item="'+i+'"')+'</div>').join('')+'</div>';
-      root.querySelectorAll('[data-scroll-item]').forEach(b=>b.onclick=()=>{done=b.dataset.scrollItem==='4';});
+      root.querySelectorAll('[data-scroll-item]').forEach(b=>b.onclick=()=>{attempted=true;done=b.dataset.scrollItem==='4';});
     }else if(task.action==='move'){
       root.innerHTML=button('Куб','data-cube aria-pressed="false"')+button('Коробка','data-box')+'<p data-moved role="status"></p>';
-      root.querySelector('[data-cube]').onclick=e=>{selected=true;e.currentTarget.setAttribute('aria-pressed','true');};root.querySelector('[data-box]').onclick=()=>{if(selected){done=true;root.querySelector('[data-moved]').textContent='Куб у коробці.';}};
+      root.querySelector('[data-cube]').onclick=e=>{attempted=true;selected=true;e.currentTarget.setAttribute('aria-pressed','true');};root.querySelector('[data-box]').onclick=()=>{if(selected){done=true;root.querySelector('[data-moved]').textContent='Куб у коробці.';}};
     }else{
       root.innerHTML='<div class="stage-actions">'+['Коло','Квадрат','Трикутник','Зірка'].map(label=>button(label,'data-shape="'+label+'" aria-pressed="false"')).join('')+'</div>';
       root.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{attempted=true;done=b.dataset.shape==='Квадрат';root.querySelectorAll('[data-shape]').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));});
@@ -118,7 +118,7 @@ window.SkillTasks = (() => {
       root.querySelector('[data-save]')?.addEventListener('click',()=>{if(!work.elements.length || !work.caption.trim()){root.querySelector('[data-editor-status]').textContent='Додай малюнок і підпис.';return;}ProgressStore.saveWork('postcard',work);saved=true;actions.add('save');root.querySelector('[data-editor-status]').textContent='Збережено в «Моїх роботах».';});
       root.querySelector('[data-close]')?.addEventListener('click',()=>{if(!saved){root.querySelector('[data-editor-status]').textContent='Спочатку збережи роботу.';return;}phase='closed';render();});
     }render();
-    return {ready:()=>task.save?opened:!!work.caption.trim() && work.elements.length>0,check:()=>!task.assessment?(!task.removeExtra || !work.elements.includes('extra')):task.save?[actions.has('image') || task.useSaved,saved,actions.has('gallery'),opened]:[actions.has('background'),work.elements.includes('star'),!!work.caption.trim(),task.removeExtra?actions.has('remove') && !work.elements.includes('extra'):true],save:()=>ProgressStore.saveWork('postcard',work)};
+    return {ready:()=>task.assessment?actions.size>0:task.save?opened:!!work.caption.trim() && work.elements.length>0,check:()=>!task.assessment?(!task.removeExtra || !work.elements.includes('extra')):task.save?[actions.has('image') || task.useSaved,saved,actions.has('gallery'),opened]:[actions.has('background'),work.elements.includes('star'),!!work.caption.trim(),task.removeExtra?actions.has('remove') && !work.elements.includes('extra'):true],save:()=>ProgressStore.saveWork('postcard',work)};
   }
   const builders={choice,pairs,pixels,plan,typing,route,repeat,browser,control,editor};
   return {builders};

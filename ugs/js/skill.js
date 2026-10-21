@@ -1,6 +1,7 @@
 // One vertical lesson, stable skill routes and a separate independent assessment.
 (() => {
   'use strict';
+  if('serviceWorker' in navigator && (location.protocol==='https:' || ['localhost','127.0.0.1'].includes(location.hostname)))navigator.serviceWorker.register('./sw.js').catch(()=>{});
   const skill=AppData.resolve(new URLSearchParams(location.search),document.body.dataset);
   const stage=document.getElementById('lessonStage'),esc=LessonUI.escape;
   document.body.classList.add('lesson-document');

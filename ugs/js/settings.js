@@ -19,7 +19,7 @@ window.AppSettings = (() => {
   dialog.innerHTML = `<div class="settings-heading"><h2 id="settingsTitle">Налаштування</h2><button class="icon-button" data-close-settings type="button" aria-label="Закрити налаштування">${AppIcons.symbol('close')}</button></div>
     <label class="settings-toggle"><span><strong>Озвучення</strong><small>Кнопка з динаміком читає пояснення вголос.</small></span><input id="audioPreference" type="checkbox" ${audio ? 'checked' : ''}></label>
     <a class="settings-adults" href="adults.html">Для батьків і вчителів ↗</a>
-    <details class="adult-settings"><summary>Спільний пристрій</summary><p>Перед початком роботи іншої дитини можна очистити попередній прогрес.</p><button class="secondary-btn" data-reset-progress type="button">Почати для нового учня</button></details>`;
+    <details class="adult-settings"><summary>Спільний пристрій</summary><p>Перед початком роботи іншої дитини можна очистити попередній прогрес і навчальні роботи.</p><button class="secondary-btn" data-reset-progress type="button">Почати для нового учня</button></details>`;
   document.body.append(dialog);
   function sync() {
     document.body.dataset.audio = audio ? 'on' : 'off';
@@ -34,7 +34,7 @@ window.AppSettings = (() => {
     sync();
   });
   dialog.querySelector('[data-reset-progress]').addEventListener('click', () => {
-    if (!confirm('Очистити прогрес на цьому пристрої для іншого учня?')) return;
+    if (!confirm('Очистити прогрес, листівку та піксельний код на цьому пристрої для іншого учня?')) return;
     ProgressStore.reset();
     dialog.close();
     if (isLesson) location.href = 'index.html';

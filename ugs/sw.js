@@ -1,4 +1,4 @@
-const CACHE = 'digital-superpowers-shell-v10-cbcb44abe2e7';
+const CACHE = 'digital-superpowers-shell-v10-8aca958ef697';
 const CORE = [
   "./",
   "./manifest.webmanifest",
@@ -131,6 +131,7 @@ const CORE = [
   "./css/tokens.css",
   "./css/welcome.css",
   "./index.html",
+  "./js/adult-info.js",
   "./js/app.js",
   "./js/components/browser-sim.js",
   "./js/components/choice.js",

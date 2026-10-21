@@ -96,7 +96,7 @@ window.CourseLessons = (() => {
   const lessons={};
   for(const skill of AppData.skills){
     const old=legacy[skill.legacyId];
-    lessons[skill.skillKey]={...(old || {}),skillKey:skill.skillKey,assessmentVersion:1,
+    lessons[skill.skillKey]={...(old || {}),skillKey:skill.skillKey,assessmentVersion:skill.assessmentVersion,
       watch:old?.watch || {title:skill.title,intro:skill.question,frames:remember[skill.order-1].map((text,i)=>({icon:skill.icon,title:['Поглянь','Спробуй','Перевір'][i],text}))},
       remember:remember[skill.order-1].map(text=>({icon:skill.icon,text})),
       demo:old?.try,
@@ -150,5 +150,10 @@ window.CourseLessons = (() => {
   lessons['personal-privacy'].create={kind:'privacyStudio'};
   const scenes={"models-schemes":[["globe","Земля й глобус","Глобус — модель Землі. На ньому видно материки й океани."],["room","Кімната","У кімнаті є стіл, двері та шафа. Подивись, де вони стоять."],["roomPlan","Кімната згори","На плані ті самі речі показані простими знаками."],["stairs","Знак на плані","Сходинки позначають сходи. Книжка може позначати бібліотеку."],["route","Знайди шлях","План допомагає дійти до потрібного місця. Не всі дрібниці треба малювати."]],"coding-symbols":[["star","Домовимось про знаки","Зірка означає «іди», а коло — «стій»."],["robot","Прочитай знак","Побачивши зірку, Юджі робить крок. Побачивши коло — зупиняється."],["square","Правило кольорів","Домовимось: 1 — синій, 2 — жовтий."],["sequence","Читаємо код","Код 1 2 1 означає: синій, жовтий, синій."],["think","Інше правило","За іншою домовленістю знаки можуть означати щось інше. Спочатку прочитай правило."]],"verify-information":[["apple","Це можна перевірити","На малюнку яблуко. Підпис «Це яблуко» підтверджує зображення."],["think","Це думка","«Яблука найсмачніші» — думка Юни. Комусь смакують інші фрукти."],["message","Чи знаємо напевно?","Невідомий пише: «Завтра уроків немає». Самого повідомлення недостатньо."],["school","Перевір з дорослим","Запитай учителя або звір з офіційним повідомленням школи."],["search","Перевір перед пересиланням","Красива картинка й багато пересилань не доводять правдивості."]],"create-product":[["photo","Власна листівка","Обери фон для своєї листівки."],["star","Додай малюнок","Додай зірку, квітку або серце."],["keyboard","Додай слова","Напиши короткий підпис або обери готове «ВІТАЮ»."],["backspace","Виправ зайве","Зайву наліпку можна прибрати. Підпис теж можна змінити."],["save","Збережи роботу","У «Створи сам» збережи листівку. Вона буде в наступному уроці."]]};
   for(const [key,frames] of Object.entries(scenes))lessons[key].watch.frames=frames.map(([icon,title,text])=>({icon,title,text}));
+  lessons['verify-information'].activities[0].config.tasks[0].stimulus={kind:'count',count:2,icon:'cat',label:'Два коти на зображенні'};
+  const ordered=(question,steps)=>({kind:'sequence',rounds:[{question,items:steps.map(([label,icon],i)=>({id:'step'+i,label,icon})).reverse(),correct:steps.map((_,i)=>'step'+i)}]});
+  add('save-find','order','По порядку',ordered('Як повернутися до своєї роботи?',[['Створи','photo'],['Збережи','save'],['Знайди','folder'],['Відкрий','browser']]));
+  lessons['online-response'].activities.find(a=>a.id==='order').config=ordered('Онлайн щось не так. Що спочатку?',[['СТОП','stop'],['ЗАКРИЙ','close'],['СКАЖИ','adult']]);
+  add('algorithm-debugging','order','По порядку',ordered('Як перевірити й виправити команди?',[['Запусти','play'],['Знайди помилку','search'],['Зміни команду','debug'],['Перевір знову','check']]));
   return lessons;
 })();
