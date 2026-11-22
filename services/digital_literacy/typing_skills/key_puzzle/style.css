@@ -144,10 +144,17 @@ body::before {
 
 /* =========================================================
    KEYBOARD BOARD
+   Розміри залежать від --u (ширина 1 звичайної клавіші) та --g (проміжок).
+   Ширина клавіші = w·(u+g) − g, тож усі ряди (по 15u) мають однакову довжину.
    ========================================================= */
+:root {
+    --u: 52px;
+    --g: 6px;
+}
+
 #main {
     position: fixed;
-    top: 64px; left: 0; right: 0; bottom: 0; /* центруємо клавіатуру в зоні під хедером сайту */
+    top: 132px; left: 0; right: 0; bottom: 64px; /* уточнюється з JS під реальні хедер і підказку */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -160,30 +167,35 @@ body::before {
     pointer-events: all;
     background-color: var(--board-bg);
     border: 3px solid var(--board-border);
-    border-radius: 2rem;
-    padding: 12px 20px;
-    box-shadow: 0 8px 35px rgba(0,0,0,0.11), 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: calc(var(--u) * 0.42);
+    padding: calc(var(--g) * 1.6);
+    box-shadow: 0 calc(var(--u) * 0.14) 0 var(--board-border), 0 12px 35px rgba(0,0,0,0.12);
     transition: background-color 0.5s, border-color 0.5s, box-shadow 0.5s;
 }
 
 .keyboard-inner {
     background: rgba(255,255,255,0.32);
-    border-radius: 14px;
-    padding: 10px;
+    border-radius: calc(var(--u) * 0.26);
+    padding: var(--g) var(--g) calc(var(--g) * 1.6);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--g);
 }
 
-.key-row { display: flex; gap: 5px; justify-content: center; }
+.key-row { display: flex; gap: var(--g); }
 
-/* Base key */
+/* Спільна геометрія клавіші на полі та фішки */
+.key-cap,
+.puzzle-piece {
+    width: calc(var(--w, 1) * (var(--u) + var(--g)) - var(--g));
+    height: var(--u);
+    border-radius: calc(var(--u) * 0.17);
+}
+
 .key-cap {
     background: var(--key-bg);
     border: 2px solid var(--board-border);
-    box-shadow: 0 4px 0 var(--accent-shadow);
-    border-radius: 8px;
-    height: 52px;
+    box-shadow: 0 calc(var(--u) * 0.07) 0 var(--accent-shadow);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -192,102 +204,112 @@ body::before {
     transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
-/* Functional keys (Tab, Shift, etc.) */
+/* Спеціальні клавіші (Tab, Shift…) */
 .key-cap.func-key {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-sub);
-    background: #f8fafc;
+    background: #f1f5f9;
     border-color: #cbd5e1;
-    box-shadow: 0 4px 0 #94a3b8;
+    box-shadow: 0 calc(var(--u) * 0.07) 0 #94a3b8;
 }
 
-/* Key label positioning */
-.key-label-top {
-    font-size: 0.62rem;
-    color: var(--text-sub);
-    position: absolute; top: 3px; left: 5px;
-    line-height: 1;
-}
-.key-label-bottom {
-    font-size: 1.05rem;
+/* Мітки на клавіші */
+.cap-letter {
+    font-size: calc(var(--u) * 0.44);
     font-weight: 700;
     color: var(--accent);
-    position: absolute; bottom: 3px; right: 5px;
+    line-height: 1;
+}
+.cap-shift,
+.cap-main {
+    position: absolute;
+    left: 18%;
+    line-height: 1;
+}
+.cap-shift {
+    top: 10%;
+    font-size: calc(var(--u) * 0.27);
+    color: var(--text-sub);
+}
+.cap-main {
+    bottom: 12%;
+    font-size: calc(var(--u) * 0.36);
+    font-weight: 700;
+    color: var(--accent);
+}
+.cap-func {
+    font-size: calc(var(--u) * 0.24);
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
     line-height: 1;
 }
 
 /* =========================================================
    EMPTY SLOT
    ========================================================= */
-.key-slot {
-    background: transparent;
-    border: 2.5px dashed rgba(0,0,0,0.16);
+.key-cap.key-slot {
+    background: rgba(0,0,0,0.035);
+    border: 2.5px dashed rgba(0,0,0,0.2);
     box-shadow: none;
-    position: relative;
 }
-
-/* Easy — always visible ghost hint */
-body.diff-easy .key-slot::before {
-    content: attr(data-hint-bottom);
-    position: absolute; bottom: 3px; right: 5px;
-    font-size: 1.05rem; font-weight: 700;
-    color: rgba(0,0,0,0.09); line-height: 1;
-}
-body.diff-easy .key-slot::after {
-    content: attr(data-hint-top);
-    position: absolute; top: 3px; left: 5px;
-    font-size: 0.62rem; color: rgba(0,0,0,0.07); line-height: 1;
-}
-
-/* Medium — hint appears only on drag-over */
-body.diff-medium .key-slot::before {
-    content: attr(data-hint-bottom);
-    position: absolute; bottom: 3px; right: 5px;
-    font-size: 1.05rem; font-weight: 700;
-    color: rgba(0,0,0,0); line-height: 1;
+.key-slot::before {
+    content: attr(data-hint);
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    font-size: calc(var(--u) * 0.36);
+    color: transparent;
     transition: color 0.2s;
 }
-body.diff-medium .key-slot::after {
-    content: attr(data-hint-top);
-    position: absolute; top: 3px; left: 5px;
-    font-size: 0.62rem; color: rgba(0,0,0,0); line-height: 1;
-    transition: color 0.2s;
+.key-slot.func-key::before { font-size: calc(var(--u) * 0.22); font-weight: 600; }
+
+/* Легко — підказка видно завжди */
+body.diff-easy .key-slot::before { color: rgba(0,0,0,0.16); }
+
+/* Середньо — підказка лише під час наведення клавіші */
+body.diff-medium .key-slot.drag-over::before,
+body.diff-medium.has-selection .key-slot:hover::before { color: rgba(0,0,0,0.3); }
+
+/* Складно — без підказок */
+body.diff-hard .key-slot::before { content: none; }
+
+body.has-selection .key-slot { cursor: pointer; }
+body.has-selection .key-slot:hover {
+    border-color: var(--accent);
+    background: rgba(8,145,178,0.08);
 }
-body.diff-medium .key-slot.drag-over::before { color: rgba(0,0,0,0.22); }
-body.diff-medium .key-slot.drag-over::after  { color: rgba(0,0,0,0.13); }
 
-/* Hard — no hints */
-body.diff-hard .key-slot::before,
-body.diff-hard .key-slot::after { content: none; }
-
-/* Drag-over highlight */
-.key-slot.drag-over {
-    background: rgba(8,145,178,0.1);
+/* Наведення фішки на місце */
+.key-cap.key-slot.drag-over {
+    background: rgba(8,145,178,0.12);
     border-style: solid;
     border-color: var(--accent);
-    transform: scale(1.07);
+    transform: scale(1.06);
     box-shadow: 0 0 0 3px rgba(8,145,178,0.2);
 }
 
-/* Placement animations */
-.key-slot.correct-anim {
-    animation: correctPop 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+/* Анімації розміщення */
+.key-cap.correct-anim {
+    animation: correctPop 0.45s cubic-bezier(0.175,0.885,0.32,1.275);
 }
 @keyframes correctPop {
-    0%   { transform: scale(1.28); background: #bbf7d0; border-color: #4ade80; box-shadow: 0 4px 0 #22c55e; }
-    60%  { transform: scale(1.05); }
-    100% { transform: scale(1); background: var(--key-bg); border-color: var(--board-border); box-shadow: 0 4px 0 var(--accent-shadow); }
+    0%   { transform: scale(1.22); background: #bbf7d0; border-color: #4ade80; }
+    60%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
 }
-.key-slot.wrong-anim {
-    animation: wrongShake 0.38s ease;
-}
+.key-slot.wrong-anim { animation: wrongShake 0.38s ease; }
 @keyframes wrongShake {
     0%,100% { transform: translateX(0); }
     20%  { transform: translateX(-6px); background: #fee2e2; border-color: #fca5a5; }
     40%  { transform: translateX(6px); }
     60%  { transform: translateX(-4px); }
     80%  { transform: translateX(3px); }
+}
+
+/* Підказка-кнопка: підсвічує фішку і її місце */
+.hint-glow { animation: hintGlow 0.6s ease-in-out 3; }
+@keyframes hintGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); }
+    50%      { box-shadow: 0 0 0 calc(var(--u) * 0.12) rgba(250,204,21,0.85); }
 }
 
 /* =========================================================
@@ -300,30 +322,35 @@ body.diff-hard .key-slot::after { content: none; }
 }
 
 .puzzle-piece {
+    --rot: 0deg;
     position: absolute;
     pointer-events: all;
-    width: 52px; height: 52px;
     background: var(--key-bg);
     border: 2.5px solid var(--accent);
-    box-shadow: 0 5px 0 var(--accent-shadow), 0 8px 20px rgba(0,0,0,0.13);
-    border-radius: 10px;
+    box-shadow: 0 calc(var(--u) * 0.09) 0 var(--accent-shadow), 0 8px 18px rgba(0,0,0,0.13);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: grab;
     touch-action: none;
-    z-index: 25;
+    transform: rotate(var(--rot));
     transition: transform 0.12s, box-shadow 0.12s;
 }
+.puzzle-piece.func-key { background: #f1f5f9; }
 .puzzle-piece:hover {
-    transform: translateY(-3px) rotate(-2deg) scale(1.08);
-    box-shadow: 0 8px 0 var(--accent-shadow), 0 12px 25px rgba(0,0,0,0.18);
+    transform: translateY(-3px) rotate(var(--rot)) scale(1.06);
+    box-shadow: 0 calc(var(--u) * 0.13) 0 var(--accent-shadow), 0 12px 25px rgba(0,0,0,0.18);
+}
+.puzzle-piece.selected {
+    transform: translateY(-4px) rotate(0deg) scale(1.08);
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+    z-index: 2;
 }
 .puzzle-piece.dragging {
     cursor: grabbing;
-    transform: scale(1.13) rotate(3deg) !important;
-    box-shadow: 0 14px 35px rgba(0,0,0,0.28) !important;
+    transform: scale(1.1) rotate(3deg);
+    box-shadow: 0 14px 35px rgba(0,0,0,0.28);
     z-index: 1000;
     transition: none;
 }
@@ -332,18 +359,9 @@ body.diff-hard .key-slot::after { content: none; }
                 top  0.35s cubic-bezier(0.175,0.885,0.32,1.275),
                 transform 0.35s ease;
 }
-
-.piece-top {
-    font-size: 0.58rem; color: var(--text-sub);
-    line-height: 1;
-    align-self: flex-start;
-    margin-left: 5px; margin-top: 3px;
-}
-.piece-bottom {
-    font-size: 1.1rem; font-weight: 700; color: var(--accent);
-    line-height: 1;
-    align-self: flex-end;
-    margin-right: 5px; margin-bottom: 3px;
+.puzzle-piece.placing {
+    pointer-events: none;
+    transition: left 0.2s ease, top 0.2s ease, transform 0.2s ease;
 }
 
 /* =========================================================
@@ -371,6 +389,8 @@ body.diff-hard .key-slot::after { content: none; }
    ========================================================= */
 #diff-screen {
     position: fixed; inset: 0;
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    backdrop-filter: blur(5px);
     display: flex; align-items: center; justify-content: center;
     z-index: 300;
     transition: opacity 0.3s ease;
@@ -556,4 +576,121 @@ body.diff-hard .key-slot::after { content: none; }
     20%,80% { transform: translateX(5px); }
     30%,50%,70% { transform: translateX(-7px); }
     40%,60% { transform: translateX(7px); }
+}
+
+/* =========================================================
+   HEADER ADDITIONS
+   ========================================================= */
+.header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mode-pill {
+    background: rgba(255,255,255,0.88);
+    border: 2px solid rgba(255,255,255,0.95);
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text-muted);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    white-space: nowrap;
+}
+.mode-pill:empty { display: none; }
+.menu-btn[aria-pressed="false"] { color: var(--text-sub); }
+#hint-btn:hover { color: #ca8a04; }
+
+/* =========================================================
+   MENU ADDITIONS
+   ========================================================= */
+.diff-card { max-height: calc(100vh - 80px); overflow-y: auto; }
+.diff-sub { margin-bottom: 20px; }
+.menu-label {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--text-muted);
+    text-align: left;
+    margin: 0 2px 8px;
+}
+.lang-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.lang-btn {
+    font-family: 'Fredoka', sans-serif;
+    border: 2.5px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    color: var(--text-main);
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.lang-btn b { font-size: 1.35rem; color: #0891b2; }
+.lang-btn span { font-size: 1rem; font-weight: 600; }
+.lang-btn:hover { transform: translateY(-2px); }
+.lang-btn.active { border-color: #0891b2; background: #ecfeff; box-shadow: 0 0 0 3px rgba(8,145,178,0.15); }
+
+/* =========================================================
+   VICTORY ADDITIONS
+   ========================================================= */
+.victory-sub { margin-bottom: 14px; }
+.victory-stats {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 16px;
+    font-size: 1rem; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 18px;
+}
+.victory-stats i { color: var(--accent); margin-right: 4px; }
+.victory-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.menu-link-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 2.5px solid #e2e8f0;
+    border-radius: 50px;
+    padding: 11px 26px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.15rem; font-weight: 700;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.menu-link-btn:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--accent); }
+
+/* =========================================================
+   DARK MODE (після базових правил, щоб перебивати їх)
+   ========================================================= */
+body.dark-mode .key-cap.func-key,
+body.dark-mode .puzzle-piece.func-key {
+    background: #475569;
+    border-color: #64748b;
+    box-shadow: 0 calc(var(--u) * 0.07) 0 #1e293b;
+}
+body.dark-mode .cap-func { color: #e2e8f0; }
+body.dark-mode .key-cap.key-slot { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.25); }
+body.dark-mode.diff-easy .key-slot::before { color: rgba(255,255,255,0.2); }
+body.dark-mode.diff-medium .key-slot.drag-over::before,
+body.dark-mode.diff-medium.has-selection .key-slot:hover::before { color: rgba(255,255,255,0.4); }
+body.dark-mode .mode-pill { background: rgba(30,41,59,0.92); border-color: #334155; }
+body.dark-mode .lang-btn { background: #0f172a; border-color: #334155; color: var(--text-main); }
+body.dark-mode .lang-btn.active { background: #164e63; border-color: #22d3ee; }
+body.dark-mode .diff-btn { background: #0f172a; }
+
+/* =========================================================
+   SMALL SCREENS
+   ========================================================= */
+@media (max-width: 900px) {
+    .hint-extra { display: none; }
+}
+@media (max-width: 600px) {
+    #header { padding: 8px 10px; }
+    .mode-pill { display: none; }
+    .menu-btn { width: 38px; height: 38px; }
+    .progress-badge { padding: 6px 12px; }
+    .diff-card { padding: 24px 18px; }
+}
+@media (max-height: 520px) {
+    #header { padding: 4px 12px; }
+    .logo { display: none; }
+    .menu-btn { width: 34px; height: 34px; font-size: 0.9rem; }
+    .progress-badge { padding: 4px 12px; font-size: 0.95rem; }
+    .mode-pill { padding: 5px 12px; font-size: 0.85rem; }
+    .hint-pill { display: none; }
 }

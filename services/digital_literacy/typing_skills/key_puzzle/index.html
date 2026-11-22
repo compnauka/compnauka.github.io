@@ -63,6 +63,18 @@
             <h1 class="diff-title">Клавіатурний Пазл</h1>
             <div class="diff-sub">Збери клавіатуру!</div>
 
+            <div class="menu-label">Літери на клавішах</div>
+            <div class="lang-switch" role="radiogroup" aria-label="Мова літер">
+                <button class="lang-btn" data-lang="uk" role="radio" aria-checked="true">
+                    <b>АБВ</b><span>Українські</span>
+                </button>
+                <button class="lang-btn" data-lang="en" role="radio" aria-checked="false">
+                    <b>ABC</b><span>Англійські</span>
+                </button>
+            </div>
+
+            <div class="menu-label">Рівень</div>
+
             <div class="diff-options">
 
                 <button class="diff-btn easy" onclick="chooseDifficulty('easy')">
@@ -71,7 +83,7 @@
                     </div>
                     <div class="diff-text">
                         <div class="diff-name">Легко</div>
-                        <div class="diff-desc">На порожніх місцях видно підказку — яка клавіша туди йде</div>
+                        <div class="diff-desc">Збираємо лише літери. На порожніх місцях видно підказку</div>
                     </div>
                     <span class="diff-badge">Початківець</span>
                 </button>
@@ -82,7 +94,7 @@
                     </div>
                     <div class="diff-text">
                         <div class="diff-name">Середньо</div>
-                        <div class="diff-desc">Підказка з'являється тільки коли наводиш клавішу на місце</div>
+                        <div class="diff-desc">Літери, цифри й спеціальні клавіші. Підказка — коли наводиш клавішу на місце</div>
                     </div>
                     <span class="diff-badge">Гравець</span>
                 </button>
@@ -93,7 +105,7 @@
                     </div>
                     <div class="diff-text">
                         <div class="diff-name">Складно</div>
-                        <div class="diff-desc">Жодних підказок! Треба знати клавіатуру або підглядати на справжню</div>
+                        <div class="diff-desc">Майже вся клавіатура: літери, цифри, спецклавіші — і жодних підказок</div>
                     </div>
                     <span class="diff-badge">Чемпіон</span>
                 </button>
@@ -106,11 +118,18 @@
      HEADER
      ===================================================== -->
     <div id="header">
-        <div class="logo" role="banner">
-            <i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i>
+        <div class="header-left">
+            <div class="logo" role="banner">
+                <i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i>
+            </div>
+            <div class="mode-pill" id="mode-pill"></div>
         </div>
 
         <div class="header-right">
+            <button class="menu-btn" id="hint-btn" title="Підказка: показати, куди йде клавіша">
+                <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+            </button>
+            <button class="menu-btn" id="sound-btn" title="Звук"></button>
             <!-- Back to menu -->
             <button class="menu-btn" onclick="goToMenu()" title="Повернутись до меню">
                 <i class="fa-solid fa-house"></i>
@@ -140,9 +159,9 @@
     <div id="pieces-layer" aria-live="polite"></div>
 
     <!-- Bottom hint -->
-    <div class="hint-pill" role="status">
+    <div class="hint-pill" id="hint-pill" role="status">
         <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
-        Перетягни клавіші на їхні місця!
+        <span>Перетягни клавішу на її місце<span class="hint-extra"> — або натисни на клавішу, а потім на місце</span></span>
     </div>
 
     <!-- =====================================================
@@ -156,7 +175,8 @@
             </div>
 
             <h2 class="victory-title" id="victory-title">Молодець!</h2>
-            <div class="victory-sub">Клавіатуру зібрано!<br>Ти справжній чемпіон!</div>
+            <div class="victory-sub">Клавіатуру зібрано!</div>
+            <div class="victory-stats" id="victory-stats"></div>
 
             <div class="stars">
                 <i class="fa-solid fa-star star-icon"></i>
@@ -164,10 +184,16 @@
                 <i class="fa-solid fa-star star-icon"></i>
             </div>
 
-            <button class="play-again-btn" onclick="goToMenu()">
-                <i class="fa-solid fa-rotate-right"></i>
-                Грати ще раз!
-            </button>
+            <div class="victory-actions">
+                <button class="play-again-btn" id="again-btn">
+                    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                    Ще раз
+                </button>
+                <button class="menu-link-btn" onclick="goToMenu()">
+                    <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    Меню
+                </button>
+            </div>
 
         </div>
     </div>
