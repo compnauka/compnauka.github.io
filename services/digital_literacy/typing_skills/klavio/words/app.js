@@ -3,6 +3,7 @@
 
   const data = window.KlavioWordsData;
   const core = window.KlavioWordCore;
+  const speedApi = window.KlavioSpeedTest;
   const layouts = window.KlavioLayouts;
   const metricsApi = window.KlavioMetrics;
   const runtime = window.KlavioRuntime;
@@ -15,11 +16,12 @@
   const handsApi = window.KlavioHands;
   const hintModes = window.KlavioHintModes;
   const weakApi = window.KlavioWeakKeys;
+  const customTextApi = window.KlavioCustomText;
   const lessonsUk = window.KlavioLessonsData;
   const lessonsEn = window.KlavioLessonsDataEn;
 
-  if (!fitApi || !data || !core || !layouts || !metricsApi || !runtime || !settings || !input || !keyboardApi || !soundApi ||
-    !textFieldApi || !handsApi || !hintModes || !weakApi || !lessonsUk || !lessonsEn) {
+  if (!fitApi || !data || !core || !speedApi || !layouts || !metricsApi || !runtime || !settings || !input || !keyboardApi || !soundApi ||
+    !textFieldApi || !handsApi || !hintModes || !weakApi || !customTextApi || !lessonsUk || !lessonsEn) {
     throw new Error("Не вдалося завантажити Клавіо — Слова");
   }
 
@@ -29,11 +31,16 @@
     mode: document.getElementById("mode-control"),
     difficulty: document.getElementById("difficulty-control"),
     scope: document.getElementById("scope-select"),
+    customEditor: document.getElementById("custom-text-editor"),
+    customEdit: document.getElementById("custom-edit"),
+    customSummaryEdit: document.getElementById("custom-summary-edit"),
     hint: document.getElementById("hint-control"),
     restart: document.getElementById("restart-button"),
     stage: document.getElementById("word-stage"),
     text: document.getElementById("word-text"),
     feedback: document.getElementById("word-feedback"),
+    speedInstructions: document.getElementById("speed-instructions"),
+    help: document.getElementById("words-help"),
     combo: document.getElementById("word-combo"),
     warning: document.getElementById("layout-warning"),
     progressLabel: document.getElementById("progress-label"),
@@ -52,6 +59,10 @@
     summaryCpm: document.getElementById("summary-cpm"),
     summaryErrors: document.getElementById("summary-errors"),
     summaryWeak: document.getElementById("summary-weak"),
+    summaryNote: document.getElementById("summary-note"),
+    summaryTitle: document.getElementById("summary-title"),
+    summaryComparison: document.getElementById("summary-comparison"),
+    summaryRetest: document.getElementById("summary-retest"),
     summaryDrill: document.getElementById("summary-drill"),
     repeat: document.getElementById("summary-repeat")
   };
@@ -59,9 +70,12 @@
   // Скільки завдань у раунді та мінімум завдань, щоб вправа не повторювалась надто швидко.
   const ROUND_SIZE = { words: 18, sentences: 5 };
   const MIN_ITEMS = { words: 6, sentences: 3 };
+  const testRuns = { uk: 0, en: 0 };
+  const previousTests = {};
 
   const state = {
-    mode: "words",
+    mode: new URLSearchParams(window.location.search).get("mode") === "test" ? "test" : "words",
+    test: null,
     difficulty: "easy",
     // "all" — усі літери, або номер уроку, до якого літери вже вивчено.
     scope: "all",
@@ -74,13 +88,19 @@
     errorCounts: {},
     pendingWeak: [],
     drillWeak: null,
+    testDrillText: "",
     running: false,
     locked: false,
-    interval: null
+    interval: null,
+    advanceTimer: null
   };
 
+  const customText = customTextApi.create(elements.customEditor, {
+    inspect: function (value) { return customTextApi.inspect(value, layouts, input, core, learned()); },
+    start: function (text) { begin([text], null); }
+  });
   const keyboard = keyboardApi.create(elements.keyboard, layouts);
-  const field = textFieldApi.create({ box: elements.text, minLines: 2, maxLines: 4 });
+  const field = textFieldApi.create({ box: elements.text, feedback: elements.feedback, minLines: 2, maxLines: 4 });
   const sound = soundApi.create({
     button: elements.sound,
     glyph: elements.soundGlyph,
@@ -117,7 +137,7 @@
   // ---- Добір завдань ----------------------------------------------------
 
   function learned() {
-    return state.scope === "all" ? null : core.learnedCharacters(course().lessons, Number(state.scope));
+    return state.mode === "test" || state.scope === "all" ? null : core.learnedCharacters(course().lessons, Number(state.scope));
   }
 
   function levelItems() {
@@ -163,13 +183,15 @@
     elements.mode.querySelectorAll("button").forEach(function (button) {
       button.addEventListener("click", function () {
         state.mode = button.dataset.mode;
-        restart();
+        if (state.mode === "custom") editCustomText();
+        else restart();
       });
     });
 
     elements.scope.addEventListener("change", function () {
       state.scope = elements.scope.value;
-      restart();
+      if (state.mode === "custom") editCustomText(customText.isVisible() === false);
+      else restart();
     });
 
     hintModes.createControl(elements.hint, {
@@ -192,12 +214,20 @@
       button.setAttribute("aria-pressed", String(button.dataset.difficulty === state.difficulty));
     });
     elements.scope.value = state.scope;
+    elements.difficulty.hidden = state.mode === "custom";
+    elements.customEdit.hidden = state.mode !== "custom" || customText.isVisible();
+    elements.customSummaryEdit.hidden = state.mode !== "custom";
+    const testing = state.mode === "test";
+    elements.practice.classList.toggle("is-speed-test", testing);
+    elements.help.hidden = testing;
+    elements.speedInstructions.hidden = !testing;
+    elements.progressLabel.setAttribute("aria-label", testing ? "Час до кінця тесту" : "Прогрес");
   }
 
   // ---- Показ ------------------------------------------------------------
 
   function layoutExercise(scroll) {
-    if (elements.practice.hidden) return;
+    if (elements.practice.hidden || customText.isVisible()) return;
     fitter.fit();
     if (scroll) fitter.reveal();
   }
@@ -221,6 +251,7 @@
 
   function updateText() {
     field.setPosition(state.position);
+    if (state.test) return;
     elements.stage.setAttribute("aria-label", "Введіть символ: " + input.describeCharacter(currentCharacter()));
   }
 
@@ -251,10 +282,32 @@
     state.interval = null;
   }
 
+  function cancelAdvance() {
+    window.clearTimeout(state.advanceTimer);
+    state.advanceTimer = null;
+  }
+
   // ---- Початок вправи ---------------------------------------------------
 
-  function begin(tasks, note) {
+  function editCustomText(focus) {
     stopTimer();
+    cancelAdvance();
+    state.running = false;
+    state.drillWeak = null;
+    state.testDrillText = "";
+    elements.practice.hidden = false;
+    elements.summary.hidden = true;
+    elements.practice.classList.add("is-editing-custom");
+    customText.show(focus);
+    updateControls();
+  }
+
+  function begin(tasks, note, test = null) {
+    stopTimer();
+    cancelAdvance();
+    customText.hide();
+    elements.practice.classList.remove("is-editing-custom");
+    state.test = test;
     state.text = core.joinTasks(tasks);
     state.position = 0;
     state.metrics = metricsApi.create();
@@ -265,12 +318,26 @@
     state.locked = false;
 
     updateControls();
+    field.setKeyAnnouncements(!test);
+    elements.text.setAttribute("aria-hidden", String(!test));
+    elements.text.lang = layouts.getLanguage();
     field.setText(state.text);
     updateText();
-    updateProgress();
-    updateMetrics();
-    updateHints();
-    feedback(note ? note.message : "Починай, коли готовий", note ? note.kind : "");
+    if (test) {
+      elements.stage.setAttribute("aria-label", "Поле введення тесту");
+      elements.stage.setAttribute("aria-describedby", "speed-instructions");
+      elements.fingerSection.classList.add("is-hidden");
+      elements.fingerTitle.hidden = true;
+      elements.combo.hidden = true;
+      feedback("");
+      refreshTest(performance.now());
+    } else {
+      elements.stage.removeAttribute("aria-describedby");
+      updateProgress();
+      updateMetrics();
+      updateHints();
+      feedback(note ? note.message : "Починай, коли готовий", note ? note.kind : "");
+    }
     elements.warning.hidden = true;
     elements.stage.classList.remove("is-error");
     keyboard.clearPressed();
@@ -282,6 +349,17 @@
 
   function restart() {
     state.drillWeak = null;
+    state.testDrillText = "";
+    if (state.mode === "test") {
+      runTest();
+      return;
+    }
+    if (state.mode === "custom") {
+      const exercise = customText.getExercise();
+      if (exercise) begin([exercise], null);
+      else editCustomText();
+      return;
+    }
     const items = levelItems();
     const kind = state.mode;
     if (items.length === 0) {
@@ -295,6 +373,11 @@
   }
 
   function startDrill(weak) {
+    if (state.mode === "test") {
+      state.testDrillText = state.test.passage;
+      state.mode = "words";
+      state.scope = "all";
+    }
     state.drillWeak = weak;
     const tasks = weakWords(weak);
     if (tasks.length === 0) {
@@ -305,20 +388,104 @@
   }
 
   function weakWords(weak) {
-    return core.weakWords(weak, allWords(), ROUND_SIZE.words, Math.random);
+    const testText = state.test?.passage || state.testDrillText;
+    const source = testText ? testText.trim().split(/\s+/) : allWords();
+    return core.weakWords(weak, source, ROUND_SIZE.words, Math.random);
   }
 
-  function showSummary() {
+  function runTest() {
+    const language = layouts.getLanguage();
+    const test = speedApi.create(language, testRuns[language]++ % speedApi.variants);
+    begin([test.passage], null, test);
+  }
+
+  function refreshTest(now) {
+    const remaining = speedApi.timeLeft(state.test, now);
+    elements.progressLabel.textContent = Math.ceil(remaining / 1000) + " с";
+    elements.progressFill.style.width = (100 * remaining / speedApi.DURATION) + "%";
+    if (remaining === 0) showSummary(now);
+  }
+
+  function handleTestKey(event) {
+    const test = state.test;
+    const now = performance.now();
+    if (speedApi.timeLeft(test, now) === 0) {
+      refreshTest(now);
+      return;
+    }
+
+    if (event.key === "Backspace" && !input.isSystemCombination(event)) {
+      event.preventDefault();
+      if (state.position === 0) return;
+      speedApi.backspace(test);
+      state.position -= 1;
+      field.clearMistake(state.position);
+      updateText();
+      return;
+    }
+    if (event.repeat || event.isComposing || !input.isTextAttempt(event)) return;
+    event.preventDefault();
+
+    const wrongLayout = speedApi.layoutMismatch(test.language, event.key);
+    elements.warning.hidden = !wrongLayout;
+    if (test.deadline === null) {
+      // Першу літеру зараховуємо навіть тоді, коли вона не збігається з текстом.
+      if (wrongLayout || !/\p{Letter}/u.test(event.key)) return;
+      state.interval = window.setInterval(function () { refreshTest(performance.now()); }, 100);
+    }
+    if (state.position === state.text.length) {
+      speedApi.nextBlock(test);
+      field.setText(state.text);
+      state.position = 0;
+    }
+
+    const correct = input.matchesCharacter(currentCharacter(), event);
+    speedApi.enter(test, correct, now);
+    if (!correct) field.markMistake(state.position);
+    state.position += 1;
+    updateText();
+    refreshTest(now);
+  }
+
+  function renderTestSummary(now) {
+    const test = state.test;
+    const result = speedApi.result(test, now);
+    const previous = previousTests[test.language];
+    elements.summaryComparison.hidden = !previous;
+    if (previous) {
+      const difference = result.cpm - previous.cpm;
+      const change = difference > 0 ? "+" + difference : String(difference);
+      elements.summaryComparison.textContent = "До попередньої спроби: " + change +
+        " симв/хв · точність " + previous.accuracy + "% → " + result.accuracy + "%";
+    }
+    previousTests[test.language] = result;
+    elements.summaryAccuracy.textContent = result.accuracy + "%";
+    elements.summaryCpm.textContent = String(result.cpm);
+    elements.summaryErrors.textContent = String(result.errors);
+    return weakApi.weakKeys(test.errorCounts, test.passage, 3);
+  }
+
+
+  function showSummary(now) {
     state.running = false;
     state.locked = true;
     stopTimer();
-    metricsApi.finish(state.metrics);
-    elements.summaryAccuracy.textContent = metricsApi.accuracy(state.metrics) + "%";
-    elements.summaryCpm.textContent = String(metricsApi.cpm(state.metrics));
-    elements.summaryErrors.textContent = String(state.metrics.errors);
-
-    // Слабкі клавіші пропонуємо лише після звичайної вправи, не після вправи на них самих.
-    state.pendingWeak = state.drillWeak ? [] : weakApi.weakKeys(state.errorCounts, state.text, 3);
+    elements.summaryTitle.textContent = state.test ? "Тест швидкості завершено" : "Вправу завершено";
+    elements.summaryNote.textContent = state.test
+      ? "Швидкість — кількість правильно введених символів за хвилину. Точність враховує всі спроби введення."
+      : "Рівний і точний друк важливіший за поспіх.";
+    elements.repeat.textContent = state.test ? "Повторити тест" : "Заново";
+    elements.summaryRetest.hidden = !state.testDrillText;
+    if (state.test) {
+      state.pendingWeak = renderTestSummary(now);
+    } else {
+      elements.summaryComparison.hidden = true;
+      metricsApi.finish(state.metrics);
+      elements.summaryAccuracy.textContent = metricsApi.accuracy(state.metrics) + "%";
+      elements.summaryCpm.textContent = String(metricsApi.cpm(state.metrics));
+      elements.summaryErrors.textContent = String(state.metrics.errors);
+      state.pendingWeak = state.drillWeak ? [] : weakApi.weakKeys(state.errorCounts, state.text, 3);
+    }
     const hasWeak = state.pendingWeak.length > 0 && weakWords(state.pendingWeak).length > 0;
     elements.summaryWeak.hidden = state.pendingWeak.length === 0;
     elements.summaryWeak.textContent = "Найчастіше помилявся: " + state.pendingWeak.join(", ");
@@ -346,11 +513,11 @@
     tones.correct();
 
     if (state.position >= state.text.length) {
-      window.setTimeout(showSummary, 300);
+      state.advanceTimer = window.setTimeout(showSummary, 300);
       return;
     }
 
-    window.setTimeout(function () {
+    state.advanceTimer = window.setTimeout(function () {
       state.locked = false;
       updateText();
       updateHints();
@@ -381,9 +548,14 @@
   }
 
   function handleKey(event) {
-    if (!state.running || state.locked || !input.isTextAttempt(event)) return;
+    if (!state.running || state.locked) return;
     const active = document.activeElement;
-    if (active && active.closest("button,a,select,input")) return;
+    if (active && active.closest("button,a,select,input,textarea")) return;
+    if (state.test) {
+      handleTestKey(event);
+      return;
+    }
+    if (!input.isTextAttempt(event)) return;
     if (event.code === "Space") event.preventDefault();
 
     if (!state.metrics.startedAt) {
@@ -401,8 +573,17 @@
     else restart();
   });
   elements.repeat.addEventListener("click", restart);
+  elements.summaryRetest.addEventListener("click", function () {
+    state.mode = "test";
+    restart();
+  });
+  elements.customEdit.addEventListener("click", function () { editCustomText(); });
+  elements.customSummaryEdit.addEventListener("click", function () { editCustomText(); });
   elements.summaryDrill.addEventListener("click", function () { startDrill(state.pendingWeak); });
   document.addEventListener("keydown", handleKey);
+  elements.stage.addEventListener("paste", function (event) {
+    if (state.test) event.preventDefault();
+  });
   window.addEventListener("beforeunload", stopTimer);
 
   // Зміна мови друку без перезавантаження: нова розкладка, курс і слова нової мови;
@@ -412,7 +593,8 @@
     elements.warning.textContent = layouts.layoutWarningText();
     state.scope = "all";
     buildScope();
-    restart();
+    if (state.mode === "custom") editCustomText();
+    else restart();
   }
 
   window.addEventListener("klavio:lang-change", applyLanguage);

@@ -321,11 +321,28 @@ function chooseDifficulty(diff) {
     startNewGame();
 }
 
+// Підганяє картку вибору мови/рівня під екран без прокрутки
+function fitDiffCard() {
+    const el = $('diff-screen');
+    const card = el && el.querySelector('.diff-card');
+    if (!card || el.style.display === 'none') return;
+    card.style.setProperty('--fit', '1');
+    const margin = 16;
+    const k = Math.min(
+        1,
+        (window.innerHeight - margin * 2) / card.offsetHeight,
+        (window.innerWidth - margin * 2) / card.offsetWidth
+    );
+    card.style.setProperty('--fit', String(Math.max(0.4, k)));
+}
+
 function showDiffScreen() {
     const el = $('diff-screen');
     el.style.display = 'flex';
-    requestAnimationFrame(() => el.classList.remove('hide'));
+    fitDiffCard();
+    requestAnimationFrame(() => { el.classList.remove('hide'); fitDiffCard(); });
 }
+window.addEventListener('resize', fitDiffCard);
 
 function hideDiffScreen() {
     const el = $('diff-screen');

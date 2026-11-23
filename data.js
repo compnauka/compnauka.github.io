@@ -73,7 +73,7 @@ const CATEGORIES = [
         name: "Клавіо",
         description: "Система тренажерів: пошук клавіш, уроки сліпого друку, слова та швидкісний спринт.",
         link: "services/digital_literacy/typing_skills/klavio/index.html",
-        image: "images/11.webp",
+        image: "images/klavio.webp",
         tags: ["3-4 класи", "Клавіатура"]
       },
       {

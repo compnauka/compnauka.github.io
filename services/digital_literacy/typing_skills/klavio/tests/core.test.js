@@ -463,10 +463,12 @@ test("lessonIntro: палець і положення клавіші берут�
   assert.match(lessonCore.lessonIntro(lessonData.lessons[1], layouts, special).title, /правий середній палець/);
   assert.match(lessonCore.lessonIntro(lessonData.lessons[30], layouts, special).lines[0], /лівий Shift/);
   assert.deepEqual(lessonCore.lessonIntro(lessonData.lessons[32], layouts, special).lines, ["Утримуй Ctrl + Alt і натисни Г."]);
-  assert.match(lessonCore.lessonIntro(lessonData.lessons[0], layouts, special).title, /А та О/);
+  const home = lessonCore.lessonIntro(lessonData.lessons[0], layouts, special);
+  assert.match(home.title, /А, О та В/);
+  assert.match(home.lines.join(" "), /вказівний на А.*на О/);
 });
 
-test("settings: великий текст і контраст мають типові значення та зберігаються", function () {
+test("settings: параметри читання мають типові значення та зберігаються", function () {
   const store = new Map();
   const previous = globalThis.localStorage;
   globalThis.localStorage = {
@@ -480,19 +482,27 @@ test("settings: великий текст і контраст мають тип�
 
     assert.equal(settings.isLargeText(), false);
     assert.equal(settings.isHighContrast(), false);
+    assert.equal(settings.isWideSpacing(), false);
+    assert.equal(settings.isKeyAnnouncementEnabled(), false);
     settings.applyPreferences(element);
     assert.deepEqual(element.dataset, {});
 
     settings.setLargeText(true);
     settings.setHighContrast(true);
+    settings.setWideSpacing(true);
+    settings.setKeyAnnouncementEnabled(true);
     assert.equal(store.get("klavio.text"), "large");
     assert.equal(store.get("klavio.contrast"), "high");
+    assert.equal(store.get("klavio.spacing"), "wide");
+    assert.equal(store.get("klavio.announce-keys"), "on");
+    assert.equal(settings.isKeyAnnouncementEnabled(), true);
     assert.equal(settings.isLargeText(), true);
     assert.equal(settings.isHighContrast(), true);
     settings.applyPreferences(element);
-    assert.deepEqual(element.dataset, { text: "large", contrast: "high" });
+    assert.deepEqual(element.dataset, { text: "large", contrast: "high", spacing: "wide" });
 
     settings.setLargeText(false);
+    settings.setWideSpacing(false);
     settings.applyPreferences(element);
     assert.deepEqual(element.dataset, { contrast: "high" });
     // Звук і тема не зачеплені новими ключами.
@@ -501,6 +511,50 @@ test("settings: великий текст і контраст мають тип�
     if (previous === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = previous;
   }
+});
+
+test("хвилинний тест рахує виправлений символ один раз і пам’ятає помилку", function () {
+  const speed = require("../words/speed-test.js");
+  const attempt = speed.create("uk", 0);
+  assert.equal(speed.timeLeft(attempt, 10000), 60000);
+  assert.equal(speed.layoutMismatch("uk", "q"), true);
+  assert.equal(speed.layoutMismatch("en", "і"), true);
+  assert.equal(speed.layoutMismatch("uk", "У"), false);
+  assert.equal(speed.enter(attempt, false, 10000), true);
+  assert.equal(speed.timeLeft(attempt, 10001), 59999);
+  speed.backspace(attempt);
+  assert.equal(speed.enter(attempt, true, 10400), true);
+  assert.equal(speed.enter(attempt, true, 70000), false);
+  assert.deepEqual(speed.result(attempt, 70000), { accuracy: 50, cpm: 1, errors: 1 });
+  assert.equal(attempt.errorCounts[attempt.passage[0]], 1);
+});
+
+test("хвилинний тест чергує тексти, усі їхні символи доступні у вибраній розкладці", function () {
+  const speed = require("../words/speed-test.js");
+  for (const lang of ["uk", "en"]) {
+    const first = speed.create(lang, 0).passage;
+    const second = speed.create(lang, 1).passage;
+    assert.notEqual(first, second);
+    assert.equal(first.length, second.length);
+    for (const character of new Set(first)) {
+      assert.ok(layouts.codesForTarget({ value: character }, lang).length > 0, `${lang}: ${character}`);
+    }
+  }
+});
+
+test("власний текст нормалізує пробіли та відрізняє сторонні символи від невивчених", function () {
+  const custom = require("../words/custom-text.js");
+  const core = require("../words/word-core.js");
+  const input = require("../assets/js/input.js");
+  const localLayouts = {
+    codesForTarget: function (target) { return layouts.codesForTarget(target, "uk"); }
+  };
+  const learned = core.learnedCharacters([{ id: 1, text: "А" }], 1);
+  const inspected = custom.inspect("  А\n\tБ🙂  ", localLayouts, input, core, learned);
+  assert.equal(inspected.text, "А Б🙂");
+  assert.deepEqual([...inspected.unsupported], ["🙂"]);
+  assert.deepEqual([...inspected.unlearned], ["Б"]);
+  assert.equal(custom.inspect("а".repeat(1001), localLayouts, input, core).tooLong, true);
 });
 
 test("кожен ряд клавіатури має рівно 15u, а спецклавіші мають ширини ANSI", function () {

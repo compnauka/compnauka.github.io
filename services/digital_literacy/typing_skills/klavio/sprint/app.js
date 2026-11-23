@@ -29,6 +29,9 @@
     extra: document.getElementById("sprint-extra"),
     summaryWeak: document.getElementById("summary-weak"),
     start: document.getElementById("start-button"),
+    pause: document.getElementById("pause-button"),
+    pauseStatus: document.getElementById("pause-status"),
+    focusRound: document.getElementById("focus-round"),
     field: document.getElementById("game-field"),
     idle: document.getElementById("game-idle"),
     target: document.getElementById("sprint-target"),
@@ -53,6 +56,7 @@
     summaryMissed: document.getElementById("summary-missed"),
     summaryMessage: document.getElementById("summary-message"),
     repeat: document.getElementById("summary-repeat"),
+    weakPractice: document.getElementById("summary-weak-practice"),
     settings: document.getElementById("summary-settings")
   };
 
@@ -66,6 +70,13 @@
     misses: 0,
     errorCounts: {},
     running: false,
+    pausedAt: null,
+    pausedDuration: 0,
+    pausedAnimations: [],
+    nextTargetAt: 0,
+    weakKeys: [],
+    practiceKeys: null,
+    practiceBag: null,
     targetText: "",
     charIndex: 0,
     targetStarted: 0,
@@ -98,7 +109,7 @@
     glyph: elements.soundGlyph,
     settings,
     onChange: function () {
-      if (state.running) elements.field.focus({ preventScroll: true });
+      if (state.running && state.pausedAt === null) elements.field.focus({ preventScroll: true });
     }
   });
   const tones = runtime.createTonePlayer(sound.isEnabled);
@@ -149,9 +160,13 @@
     elements.time.textContent = String(Math.max(0, state.lastSecond));
     elements.streak.textContent = String(state.streak);
     elements.accuracy.textContent = accuracy() + "%";
-    elements.cpm.textContent = String(metricsApi.cpm(state.metrics));
+    elements.cpm.textContent = String(metricsApi.cpm(state.metrics, activeTime()));
     const percent = Math.round((1.25 - state.pace) / 0.5 * 100);
     elements.pace.style.width = Math.max(0, Math.min(100, percent)) + "%";
+  }
+
+  function activeTime(now = performance.now()) {
+    return performance.timeOrigin + (state.pausedAt ?? now) - state.pausedDuration;
   }
 
   function feedback(message, kind) {
@@ -196,6 +211,7 @@
   // Кожна пара «режим + складність» має власну чергу, яка живе між раундами:
   // набір встигає пройти повністю, перш ніж ціль повториться.
   function chooseTarget() {
+    if (state.practiceBag) return state.practiceBag.next();
     const key = layouts.getLanguage() + ":" + state.mode + ":" + state.difficulty;
     if (!bags[key]) bags[key] = runtime.createBag(source());
     return bags[key].next() || "";
@@ -213,18 +229,20 @@
     state.targetText = chooseTarget();
     state.charIndex = 0;
     state.misses = 0;
-    state.targetStarted = now || performance.now();
-    state.targetDuration = core.targetDuration(speedConfig().duration, state.mode, state.pace);
+    state.nextTargetAt = 0;
+    state.targetStarted = now;
+    const mode = state.practiceBag ? "keys" : state.mode;
+    state.targetDuration = core.targetDuration(speedConfig().duration, mode, state.pace);
     state.targetLive = true;
     elements.target.hidden = false;
-    elements.target.className = "sprint-target" + (state.mode === "combos" ? " is-combo" : state.mode === "words" ? " is-word" : "");
+    elements.target.className = "sprint-target" + (mode === "combos" ? " is-combo" : mode === "words" ? " is-word" : "");
     elements.target.style.top = (42 + Math.random() * 65) + "px";
     elements.warning.hidden = true;
     updateTargetText();
     elements.target.style.left = targetOffset(0) + "px";
   }
 
-  function markMiss() {
+  function markMiss(now) {
     if (!state.targetLive) return;
     const missedCharacters = Math.max(1, state.targetText.length - state.charIndex);
     state.targetLive = false;
@@ -238,37 +256,41 @@
     feedback("Не встиг — наступна ціль", "error");
     tones.error();
     updateStats();
-    window.setTimeout(function () { spawnTarget(performance.now()); }, 230);
+    state.nextTargetAt = now + 230;
   }
 
-  function hitTarget(progress) {
+  function hitTarget(now) {
     state.targetLive = false;
     state.streak += 1;
     state.maxStreak = Math.max(state.maxStreak, state.streak);
+    const progress = (now - state.targetStarted) / state.targetDuration;
     state.score += core.scoreFor(state.targetText.length, progress, state.streak);
     adapt(true);
     elements.target.classList.add("is-hit");
     feedback(state.streak >= 5 ? "Серія " + state.streak + "!" : "Влучно", "good");
     tones.correct();
     updateStats();
-    window.setTimeout(function () { spawnTarget(performance.now()); }, 150);
+    state.nextTargetAt = now + 150;
   }
 
-  function frame(now) {
-    if (!state.running) return;
+  function frame(timestamp) {
+    if (!state.running || state.pausedAt !== null) return;
+    const now = activeTime(timestamp);
     const remaining = Math.max(0, Math.ceil((state.endAt - now) / 1000));
     if (remaining !== state.lastSecond) {
       state.lastSecond = remaining;
       updateStats();
     }
     if (now >= state.endAt) {
-      finish();
+      finish(state.endAt);
       return;
     }
-    if (state.targetLive) {
+    if (state.nextTargetAt && now >= state.nextTargetAt) {
+      spawnTarget(now);
+    } else if (state.targetLive) {
       const progress = (now - state.targetStarted) / state.targetDuration;
       elements.target.style.left = targetOffset(progress) + "px";
-      if (progress >= 1) markMiss();
+      if (progress >= 1) markMiss(now);
     }
     state.frameId = requestAnimationFrame(frame);
   }
@@ -291,6 +313,9 @@
     cancelAnimationFrame(state.frameId);
     state.running = false;
     state.targetLive = false;
+    state.practiceKeys = null;
+    state.practiceBag = null;
+    resetPause();
     resetStats();
     elements.target.hidden = true;
     elements.idle.hidden = false;
@@ -306,28 +331,81 @@
     fitter.reveal();
   }
 
-  function start() {
-    if (state.running) {
-      finish();
+  function updatePauseControls() {
+    const paused = state.pausedAt !== null;
+    elements.pause.hidden = !state.running;
+    elements.pause.textContent = paused ? "Продовжити" : "Пауза";
+    elements.pauseStatus.textContent = paused ? "Раунд призупинено" : "";
+    elements.pauseStatus.classList.toggle("is-visible", paused);
+    fitter.schedule();
+  }
+
+  function resetPause() {
+    state.pausedAt = null;
+    state.pausedDuration = 0;
+    state.pausedAnimations.forEach(function (animation) { animation.cancel(); });
+    state.pausedAnimations = [];
+    updatePauseControls();
+    elements.focusRound.hidden = true;
+  }
+
+  function pause(moveFocus) {
+    if (!state.running || state.pausedAt !== null) return;
+    state.pausedAt = performance.now();
+    cancelAnimationFrame(state.frameId);
+    state.pausedAnimations = elements.target.getAnimations().filter(function (animation) {
+      return animation.playState === "running";
+    });
+    state.pausedAnimations.forEach(function (animation) { animation.pause(); });
+    updatePauseControls();
+    updateStats();
+    if (moveFocus) elements.pause.focus({ preventScroll: true });
+  }
+
+  function togglePause() {
+    if (!state.running || document.hidden) return;
+    if (state.pausedAt === null) {
+      pause(true);
       return;
     }
-    resetStats();
-    metricsApi.start(state.metrics);
-    state.running = true;
-    state.endAt = performance.now() + data.durationSeconds * 1000;
-    elements.idle.hidden = true;
-    elements.start.textContent = "Зупинити";
-    setControlsDisabled(true);
-    spawnTarget(performance.now());
+    state.pausedDuration += performance.now() - state.pausedAt;
+    state.pausedAt = null;
+    state.pausedAnimations.forEach(function (animation) { animation.play(); });
+    state.pausedAnimations = [];
+    updatePauseControls();
     elements.field.focus({ preventScroll: true });
     state.frameId = requestAnimationFrame(frame);
   }
 
-  function finish() {
+  function start(practiceKeys = null) {
+    if (state.running) {
+      finish();
+      return;
+    }
+    state.practiceKeys = practiceKeys;
+    state.practiceBag = practiceKeys ? runtime.createBag(practiceKeys) : null;
+    resetStats();
+    state.running = true;
+    updatePauseControls();
+    const now = activeTime();
+    metricsApi.start(state.metrics, now);
+    state.endAt = now + data.durationSeconds * 1000;
+    elements.focusRound.hidden = !practiceKeys;
+    elements.focusRound.textContent = practiceKeys ? "Тренування клавіш: " + practiceKeys.join(", ") : "";
+    elements.idle.hidden = true;
+    elements.start.textContent = "Зупинити";
+    setControlsDisabled(true);
+    spawnTarget(now);
+    elements.field.focus({ preventScroll: true });
+    state.frameId = requestAnimationFrame(frame);
+  }
+
+  function finish(now = activeTime()) {
     if (!state.running) return;
     state.running = false;
     state.targetLive = false;
-    metricsApi.finish(state.metrics);
+    metricsApi.finish(state.metrics, now);
+    resetPause();
     cancelAnimationFrame(state.frameId);
     setControlsDisabled(false);
     elements.summaryScore.textContent = String(state.score);
@@ -341,7 +419,9 @@
         ? "Гарний темп. Наступного разу спробуй друкувати трохи точніше."
         : "Зменш швидкість і спочатку поверни точність.";
     const weak = weakApi.weakKeys(state.errorCounts, "", 3);
+    state.weakKeys = weak;
     elements.summaryWeak.hidden = weak.length === 0;
+    elements.weakPractice.hidden = weak.length === 0;
     elements.summaryWeak.textContent = "Найчастіше помилявся: " + weak.join(", ");
     elements.gameView.hidden = true;
     elements.summary.hidden = false;
@@ -350,10 +430,13 @@
   }
 
   function handleKey(event) {
-    if (!state.running || !state.targetLive || !input.isTextAttempt(event)) return;
+    if (!state.running || state.pausedAt !== null || !state.targetLive || !input.isTextAttempt(event)) return;
     const active = document.activeElement;
     if (active && active.closest("button,a,input,select")) return;
     if (event.code === "Space") event.preventDefault();
+    const now = activeTime();
+    if (now >= state.endAt) return finish(state.endAt);
+    if (now >= state.targetStarted + state.targetDuration) return markMiss(now);
 
     const wanted = expected();
     if (input.matchesCharacter(wanted, event)) {
@@ -363,8 +446,7 @@
       elements.warning.hidden = true;
       keyboard.flash(event.code, "is-pressed-correct", 170);
       if (state.charIndex >= state.targetText.length) {
-        const progress = (performance.now() - state.targetStarted) / state.targetDuration;
-        hitTarget(progress);
+        hitTarget(now);
       } else {
         updateTargetText();
         updateStats();
@@ -385,14 +467,29 @@
     }
   }
 
-  elements.start.addEventListener("click", start);
+  elements.start.addEventListener("click", function () { start(); });
+  elements.pause.addEventListener("click", togglePause);
   elements.repeat.addEventListener("click", function () {
     elements.gameView.hidden = false;
     elements.summary.hidden = true;
-    start();
+    start(state.practiceKeys);
+  });
+  elements.weakPractice.addEventListener("click", function () {
+    elements.gameView.hidden = false;
+    elements.summary.hidden = true;
+    start(state.weakKeys);
   });
   elements.settings.addEventListener("click", prepareIdle);
   document.addEventListener("keydown", handleKey);
+  window.addEventListener("keydown", function (event) {
+    if (!state.running || event.key !== "Escape" || event.defaultPrevented || event.repeat) return;
+    event.preventDefault();
+    togglePause();
+  });
+  window.addEventListener("blur", function () { pause(false); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) pause(false);
+  });
   window.addEventListener("beforeunload", function () { cancelAnimationFrame(state.frameId); });
 
   // Зміна мови друку без перезавантаження: нова розкладка, нові цілі; триваючий раунд
@@ -412,7 +509,7 @@
 
   window.addEventListener("klavio:lang-change", applyLanguage);
   window.addEventListener("klavio:prefs-close", function () {
-    if (state.running) elements.field.focus({ preventScroll: true });
+    if (state.running && state.pausedAt === null) elements.field.focus({ preventScroll: true });
   });
   elements.warning.textContent = layouts.layoutWarningText();
 
@@ -424,7 +521,7 @@
       state.hintTouched = true;
       state.misses = 0;
       if (state.running && state.targetLive) updateTargetText();
-      if (state.running) elements.field.focus({ preventScroll: true });
+      if (state.running && state.pausedAt === null) elements.field.focus({ preventScroll: true });
     }
   });
 

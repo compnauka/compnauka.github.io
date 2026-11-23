@@ -85,7 +85,6 @@
     drillWeak: null,
     pendingWeak: [],
     introVisible: false,
-    introTimer: 0,
     running: false,
     inputLocked: false,
     // Позначки «✓» в межах сесії — окремо для кожної мови друку.
@@ -199,7 +198,13 @@
   }
 
   // Поле з усім текстом уроку — спільний модуль KlavioTextField (його використовують і «Слова»).
-  const field = textFieldApi.create({ box: elements.lessonText, minLines: MIN_TEXT_LINES, maxLines: MAX_TEXT_LINES });
+  const field = textFieldApi.create({
+    box: elements.lessonText,
+    feedback: elements.feedback,
+    minLines: MIN_TEXT_LINES,
+    maxLines: MAX_TEXT_LINES
+  });
+  field.setKeyAnnouncements(true);
 
   function buildText() {
     field.setText(state.lesson.text);
@@ -240,43 +245,23 @@
 
   const scheduleLayout = fitter.schedule;
 
-  // Картка вступу накладається на клавіатуру, а коли її не видно — стоїть під полем тексту.
-  function placeIntro() {
-    const overlay = !elements.fingerSection.classList.contains("is-hidden") && window.innerWidth > MOBILE_WIDTH;
-    const target = overlay ? elements.keyboard : elements.lessonStage;
-    if (elements.introCard.parentNode !== target) target.appendChild(elements.introCard);
-    elements.introCard.classList.toggle("is-overlay", overlay);
-    elements.introCard.classList.toggle("is-inline", !overlay);
-  }
-
   function showIntro() {
     const intro = core.lessonIntro(state.lesson, layouts, course().intros, layouts.getLanguage());
-    window.clearTimeout(state.introTimer);
     if (!intro || state.drillWeak) {
-      hideIntro(true);
+      hideIntro();
       return;
     }
     elements.introTitle.textContent = intro.title;
-    elements.introText.textContent = " " + intro.lines.join(" ");
+    elements.introText.textContent = intro.lines.join(" ");
     elements.introCard.hidden = false;
-    placeIntro();
     state.introVisible = true;
     elements.introButton.setAttribute("aria-expanded", "true");
-    void elements.introCard.offsetWidth;
-    elements.introCard.classList.add("is-visible");
   }
 
-  function hideIntro(immediate) {
+  function hideIntro() {
     state.introVisible = false;
     elements.introButton.setAttribute("aria-expanded", "false");
-    elements.introCard.classList.remove("is-visible");
-    window.clearTimeout(state.introTimer);
-    // На клавіатурі картка зникає одразу (без згасання), інакше крізь неї проглядає ряд цифр.
-    if (immediate || elements.introCard.classList.contains("is-overlay")) {
-      elements.introCard.hidden = true;
-      return;
-    }
-    state.introTimer = window.setTimeout(function () { elements.introCard.hidden = true; }, 220);
+    elements.introCard.hidden = true;
   }
 
   function updateProgress() {
@@ -316,7 +301,6 @@
     if (visible.finger) updateFingerGuide(hints);
     // Поле тексту стоїть над клавіатурою, тож не зсувається; підганяємо лише клавіатуру.
     if (wasHidden === visible.finger) layoutLesson(false);
-    if (state.introVisible) placeIntro();
     return visible;
   }
 
@@ -381,9 +365,9 @@
     updateLessonSelect();
     elements.lessonView.hidden = false;
     elements.summaryView.hidden = true;
-    layoutLesson(true);
     elements.introButton.hidden = Boolean(drillWeak);
     showIntro();
+    layoutLesson(true);
     elements.lessonStage.focus({ preventScroll: true });
   }
 
@@ -410,23 +394,33 @@
     elements.summaryErrors.textContent = String(state.metrics.errors);
     elements.summaryTime.textContent = core.formatTime(metricsApi.durationMs(state.metrics));
 
-    if (accuracy >= 98) {
+    const hasNext = state.lessonId < course().lessons.length;
+    let recommended = elements.summaryNext;
+    if (isDrill) {
+      elements.summaryTitle.textContent = "Тренування завершено";
+      elements.summaryMessage.textContent = "Повернися до уроку й спробуй ті самі клавіші в тексті.";
+    } else if (accuracy >= 98) {
       elements.summaryTitle.textContent = "Дуже точно!";
-      elements.summaryMessage.textContent = "Чудова техніка. Можна переходити до наступного уроку.";
-    } else if (accuracy >= 85) {
-      elements.summaryTitle.textContent = "Гарна робота!";
-      elements.summaryMessage.textContent = "Повтори урок, якщо хочеш закріпити нові клавіші.";
+      elements.summaryMessage.textContent = hasNext ? "Переходь до наступного уроку." : "Курс завершено. Можеш обрати урок для повторення.";
     } else {
-      elements.summaryTitle.textContent = "Перш за все — точність";
-      elements.summaryMessage.textContent = "Спробуй ще раз повільніше й уважно стеж за підказками.";
+      elements.summaryTitle.textContent = accuracy >= 85 ? "Гарна робота!" : "Перш за все — точність";
+      const hasWeak = state.pendingWeak.length > 0;
+      recommended = hasWeak ? elements.summaryDrill : elements.summaryRetry;
+      elements.summaryMessage.textContent = hasWeak
+        ? "Потренуй клавіші, які далися найважче."
+        : "Повтори урок у повільнішому темпі, щоб закріпити нові клавіші.";
     }
 
     elements.summaryNext.textContent = isDrill ? "Повернутися до уроку " + state.lessonId :
-      state.lessonId < course().lessons.length ? "Наступний урок →" : "Обрати урок";
+      hasNext ? "Наступний урок →" : "Обрати урок";
+    [elements.summaryRetry, elements.summaryDrill, elements.summaryNext].forEach(function (button) {
+      button.classList.toggle("button--primary", button === recommended);
+      button.classList.toggle("button--secondary", button !== recommended);
+    });
     elements.lessonView.hidden = true;
     elements.summaryView.hidden = false;
     tones.complete();
-    elements.summaryRetry.focus();
+    recommended.focus();
   }
 
   function handleCorrect(event) {
@@ -489,7 +483,11 @@
   }
 
   function handleKeydown(event) {
-    if (event.key === "Escape" && state.introVisible) hideIntro(false);
+    if (event.defaultPrevented) return;
+    if (event.key === "Escape" && state.introVisible) {
+      hideIntro();
+      layoutLesson(false);
+    }
     if (!state.running || state.inputLocked || !input.isTextAttempt(event)) return;
 
     const activeElement = document.activeElement;
@@ -497,7 +495,10 @@
 
     if (event.code === "Space") event.preventDefault();
     // Перше натискання ховає вступ і водночас зараховується як звичайна спроба.
-    if (state.introVisible) hideIntro(false);
+    if (state.introVisible) {
+      hideIntro();
+      layoutLesson(false);
+    }
 
     if (!state.metrics.startedAt) {
       metricsApi.start(state.metrics);
@@ -519,8 +520,9 @@
     else loadLesson(state.lessonId);
   });
   elements.introButton.addEventListener("click", function () {
-    if (state.introVisible) hideIntro(false);
+    if (state.introVisible) hideIntro();
     else showIntro();
+    layoutLesson(false);
     if (state.running) elements.lessonStage.focus({ preventScroll: true });
   });
   elements.summaryDrill.addEventListener("click", function () { startDrill(state.pendingWeak); });

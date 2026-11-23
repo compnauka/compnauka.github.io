@@ -8,6 +8,7 @@ const PTS_FAST = 3, PTS_MED = 2, PTS_DEF = 1;
 const T_FAST = 1000, T_MED = 2000;
 const STREAK_DIV = 5;
 const INIT_DELAY = 900;
+const TICK_MS = 40;
 const REMOVE_DELAY = 340;
 const LOW_TIME = 10;
 const MISSED_AT = 0.93;   // fraction of journey when letter freezes as missed
@@ -64,9 +65,9 @@ const gs = {
     anim: 6000, spawn: 1500,
     adaptMult: 1.0, results: [], lastAdapt: 0,
     letters: new Map(),
-    timerID: null, spawnID: null,
+    timerID: null, nextSpawn: 0, pausedAt: null, pausedDuration: 0,
     sound: true, colorIdx: 0, themeIdx: 0,
-    correct: 0, missed: 0,
+    correct: 0, wrong: 0, missed: 0,
     missedMap: {},
     startTime: 0
 };
@@ -113,32 +114,31 @@ function snd(t) {
 function toggleSound() {
     gs.sound = !gs.sound; updateSoundIcon();
     if (gs.sound && actx && actx.state === 'suspended') actx.resume();
+    if (gs.running && gs.pausedAt === null) document.getElementById('gf').focus({ preventScroll: true });
 }
 function updateSoundIcon() {
     const i = document.getElementById('sndico');
     if (i) i.className = gs.sound ? 'fas fa-volume-high' : 'fas fa-volume-xmark';
+    const button = document.getElementById('sndbtn');
+    button.setAttribute('aria-pressed', String(gs.sound));
 }
 
 /* ═══════════════════════════════════════════
    KEY MAP
 ═══════════════════════════════════════════ */
-const KMAP = new Map();
-function initKMap() {
-    const sp = { "!": "1", '"': "2", "№": "3", ";": "4", "%": "5", ":": "6", "?": "7", "*": "8", "(": "9", ")": "0", "_": "-", "+": "=" };
-    for (const [c, k] of Object.entries(sp)) KMAP.set(c, k);
-}
-function match(pressed, expected) {
-    if (expected.toLowerCase() !== expected.toUpperCase()) return pressed === expected;
-    return pressed === (KMAP.get(expected) || expected) || pressed === expected;
+function isOtherLayout(key) {
+    return gs.lang === 'ua' ? /^[a-z]$/i.test(key) : /^[а-яіїєґ]$/i.test(key);
 }
 
 /* ═══════════════════════════════════════════
    LANGUAGE
 ═══════════════════════════════════════════ */
 function toggleLang() {
+    if (gs.running) return;
     gs.lang = gs.lang === 'ua' ? 'en' : 'ua';
     const btn = document.getElementById('langbtn');
     const lbl = document.getElementById('langlbl');
+    btn.setAttribute('aria-label', gs.lang === 'ua' ? 'Мова гри: українська. Змінити мову' : 'Мова гри: англійська. Змінити мову');
     if (gs.lang === 'ua') { btn.className = 'ibtn ua'; lbl.textContent = 'UA'; showFB('Режим: Українська', true, 'neu'); }
     else { btn.className = 'ibtn en'; lbl.textContent = 'EN'; showFB('Mode: English', true, 'neu'); }
 }
@@ -152,6 +152,7 @@ function cycleTheme() {
     document.documentElement.setAttribute('data-theme', t);
     showFB('Тема: ' + THEME_N[t], true, 'neu');
     try { localStorage.setItem('kt-theme', t); } catch (e) { }
+    if (gs.running && gs.pausedAt === null) document.getElementById('gf').focus({ preventScroll: true });
 }
 function loadTheme() {
     try {
@@ -164,17 +165,24 @@ function loadTheme() {
    LEVEL / SPEED SELECTION
 ═══════════════════════════════════════════ */
 function selectLevel(lv) {
+    if (gs.running) return;
     gs.level = lv;
-    document.querySelectorAll('#levels .btn').forEach(b => b.classList.remove('sel'));
-    document.getElementById(lv).classList.add('sel');
+    markSelection('#levels .btn', lv);
     applySpeed();
 }
 function selectSpeed(sp) {
+    if (gs.running) return;
     gs.speed = sp;
     const ids = { slow: 'slow', medium: 'medium-speed', fast: 'fast' };
-    document.querySelectorAll('#speed-control .btn').forEach(b => b.classList.remove('sel'));
-    document.getElementById(ids[sp]).classList.add('sel');
+    markSelection('#speed-control .btn', ids[sp]);
     applySpeed();
+}
+function markSelection(selector, id) {
+    document.querySelectorAll(selector).forEach(button => {
+        const selected = button.id === id;
+        button.classList.toggle('sel', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
 }
 function applySpeed() {
     const b = SPEEDS[gs.speed], m = LV_MOD[gs.level], a = gs.adaptMult;
@@ -189,7 +197,7 @@ function pushResult(ok) {
     gs.results.push(ok);
     if (gs.results.length > AD_WINDOW) gs.results.shift();
     if (gs.results.length < AD_MIN_DATA) return;
-    const now = Date.now();
+    const now = roundNow();
     if (now - gs.lastAdapt < AD_COOLDOWN) return;
     const hit = gs.results.filter(r => r).length / gs.results.length;
     const old = gs.adaptMult;
@@ -226,9 +234,10 @@ function randChar() {
 /* ═══════════════════════════════════════════
    SPAWN LETTER — FIXED animation/positioning
 ═══════════════════════════════════════════ */
-function spawn() {
-    if (!gs.running) return;
-    if (gs.letters.size >= MAX_LETTERS) { gs.spawnID = setTimeout(spawn, gs.spawn / 2); return; }
+function spawn(now) {
+    const full = gs.letters.size >= MAX_LETTERS;
+    gs.nextSpawn = now + gs.spawn / (full ? 2 : 1);
+    if (full) return;
     const field = document.getElementById('gf');
     if (!field) return;
     const el = document.createElement('div');
@@ -245,60 +254,50 @@ function spawn() {
     const letterH = el.offsetHeight || parseFloat(getComputedStyle(el).height) || 60;
     const maxTop = Math.max(0, fieldH - letterH);
     el.style.top = (Math.random() * maxTop) + 'px';
-    const data = { ch, el, t0: Date.now(), id };
-    gs.letters.set(id, data);
+    gs.letters.set(id, { ch, el, t0: now, duration: gs.anim });
+}
 
-    // Urgent: turn on warning glow (without restarting the movement animation)
-    data.urgTO = setTimeout(() => {
-        if (!el.parentNode || el.classList.contains('ok')) return;
-        el.classList.add('urgent');
-    }, gs.anim * URGENT_AT);
-
-    // Missed: pause animation at ~93% so letter is still visible near right edge
-    data.remTO = setTimeout(() => {
-        if (!el.parentNode || !gs.letters.has(id)) return;
-        // Pause animation — letter freezes near the right edge (not at start!)
-        el.style.animationPlayState = 'paused';
-        // Apply missed styles via inline (overrides any class cascade cleanly)
-        el.style.background = '#E53935';
-        el.style.color = '#fff';
-        el.style.borderColor = '#B71C1C';
-        el.style.opacity = '.75';
-        el.classList.remove('urgent');
-        snd('miss');
-        gs.streak = 0; updateStreak();
-        pushResult(false);
-        gs.missedMap[ch] = (gs.missedMap[ch] || 0) + 1;
-        gs.missed++;
-        showFB(MISS_MSG[Math.floor(Math.random() * MISS_MSG.length)], false);
-        setTimeout(() => { if (el.parentNode) el.remove(); }, 500);
-        gs.letters.delete(id);
-    }, gs.anim * MISSED_AT);
-
-    if (gs.running) gs.spawnID = setTimeout(spawn, gs.spawn);
+function missLetter(id, { ch, el }) {
+    el.classList.remove('urgent');
+    el.classList.add('missed');
+    snd('miss');
+    gs.streak = 0; updateStreak();
+    pushResult(false);
+    gs.missedMap[ch] = (gs.missedMap[ch] || 0) + 1;
+    gs.missed++;
+    showFB(MISS_MSG[Math.floor(Math.random() * MISS_MSG.length)], false);
+    setTimeout(() => el.remove(), 500);
+    gs.letters.delete(id);
 }
 
 /* ═══════════════════════════════════════════
    KEY HANDLER
 ═══════════════════════════════════════════ */
 function onKey(e) {
-    if (!gs.running) return;
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
-    const pr = e.key; let found = false;
+    if (!gs.running || gs.pausedAt !== null || e.repeat || e.isComposing || e.metaKey) return;
+    const pr = e.key;
+    const altGraph = gs.lang === 'ua' && /^[ґҐ]$/.test(pr)
+        && (e.getModifierState?.('AltGraph') || (e.ctrlKey && e.altKey));
+    if ((e.ctrlKey || e.altKey) && !altGraph) return;
+    if (!/^\S$/u.test(pr)) return;
+
+    const now = roundNow();
+    updateRound(now);
+    if (!gs.running || gs.letters.size === 0) return;
+    if (isOtherLayout(pr)) {
+        showFB(gs.lang === 'ua' ? 'Перемкни на українську розкладку' : 'Перемкни на англійську розкладку', true, 'neu');
+        return;
+    }
+
     for (const [id, d] of gs.letters.entries()) {
-        if (!d || !d.el) continue;
-        if (!match(pr, d.ch)) continue;
-        found = true;
-        if (d.urgTO) clearTimeout(d.urgTO);
-        if (d.remTO) clearTimeout(d.remTO);
-        const dt = Date.now() - d.t0;
+        if (pr !== d.ch) continue;
+        const dt = now - d.t0;
         let pts = PTS_DEF;
         if (dt < T_FAST) pts = PTS_FAST; else if (dt < T_MED) pts = PTS_MED;
         gs.streak++; if (gs.streak > gs.maxStreak) gs.maxStreak = gs.streak;
         if (gs.streak % STREAK_DIV === 0) pts += Math.floor(gs.streak / STREAK_DIV);
         gs.score += pts; gs.correct++;
         // freeze then animate out
-        d.el.style.animationPlayState = 'paused';
         d.el.classList.remove('urgent');
         d.el.classList.add('ok');
         snd('ok'); pushResult(true);
@@ -313,28 +312,54 @@ function onKey(e) {
         }
         setTimeout(() => { if (d.el && d.el.parentNode) d.el.remove(); }, REMOVE_DELAY);
         gs.letters.delete(id); updateScore(); updateStreak();
-        break;
+        return;
     }
-    if (!found && /^\S$/u.test(pr)) {
-        gs.streak = 0; updateStreak();
-        showFB(MISS_MSG[Math.floor(Math.random() * MISS_MSG.length)], false); snd('miss');
-    }
+    gs.wrong++;
+    gs.streak = 0; updateStreak();
+    showFB(MISS_MSG[Math.floor(Math.random() * MISS_MSG.length)], false); snd('miss');
 }
 
 /* ═══════════════════════════════════════════
    GAME FLOW
 ═══════════════════════════════════════════ */
 function clearAll() {
-    gs.letters.forEach(d => {
-        if (d.urgTO) clearTimeout(d.urgTO); if (d.remTO) clearTimeout(d.remTO);
-        if (d.el && d.el.parentNode) d.el.remove();
-    }); gs.letters.clear();
+    document.querySelectorAll('#gf .lt').forEach(letter => letter.remove());
+    gs.letters.clear();
 }
 function stopProcs() {
     gs.running = false;
-    if (gs.timerID) { clearInterval(gs.timerID); gs.timerID = null; }
-    if (gs.spawnID) { clearTimeout(gs.spawnID); gs.spawnID = null; }
+    clearInterval(gs.timerID);
+    gs.timerID = null;
+    gs.pausedAt = null;
+    gs.pausedDuration = 0;
+    document.getElementById('gc').classList.remove('is-paused');
     clearAll();
+}
+function roundNow() {
+    return (gs.pausedAt ?? performance.now()) - gs.pausedDuration;
+}
+function updateRound(now = roundNow()) {
+    if (!gs.running || gs.pausedAt !== null) return;
+    const remaining = Math.max(0, Math.ceil(GAME_SEC - (now - gs.startTime) / 1000));
+    if (remaining !== gs.timer) { gs.timer = remaining; updateTimer(); }
+    if (remaining === 0) { endGame(); return; }
+
+    for (const [id, letter] of gs.letters) {
+        const progress = (now - letter.t0) / letter.duration;
+        if (progress >= MISSED_AT) missLetter(id, letter);
+        else if (progress >= URGENT_AT) letter.el.classList.add('urgent');
+    }
+    if (now >= gs.nextSpawn) spawn(now);
+}
+
+function updateGameControls() {
+    document.querySelectorAll('#levels button, #speed-control button, #langbtn').forEach(button => {
+        button.disabled = gs.running;
+    });
+    document.getElementById('sbtn').style.display = gs.running ? 'none' : 'inline-flex';
+    document.getElementById('rbtn').style.display = gs.running ? 'inline-flex' : 'none';
+    document.getElementById('idle-hint').hidden = gs.running;
+    updateAdaptBar();
 }
 function anyModalOpen() {
     return MODAL_IDS.some(id => {
@@ -383,45 +408,60 @@ function trapFocus(modal, e) {
 }
 function resetSess() {
     gs.score = 0; gs.timer = GAME_SEC; gs.streak = 0; gs.maxStreak = 0;
-    gs.adaptMult = 1.0; gs.results = []; gs.lastAdapt = 0; gs.colorIdx = 0;
-    gs.correct = 0; gs.missed = 0; gs.missedMap = {}; gs.startTime = Date.now();
-    updateScore(); updateTimer(); updateStreak(); updateAdaptBar();
+    gs.adaptMult = 1.0; gs.results = []; gs.lastAdapt = -Infinity; gs.colorIdx = 0;
+    gs.correct = 0; gs.wrong = 0; gs.missed = 0; gs.missedMap = {};
+    document.getElementById('fb').classList.remove('vis');
+    updateScore(false); updateTimer(); updateStreak(); updateAdaptBar();
 }
 function startGame() {
     if (gs.running) return; stopProcs();
     if (actx && actx.state === 'suspended') actx.resume();
     resetSess(); applySpeed();
-    document.getElementById('go').style.display = 'none';
-    document.getElementById('sbtn').style.display = 'none';
-    document.getElementById('rbtn').style.display = 'inline-flex';
-    gs.running = true; updateAdaptBar();
-    gs.timerID = setInterval(() => { gs.timer--; updateTimer(); if (gs.timer <= 0) endGame(); }, 1000);
-    gs.spawnID = setTimeout(spawn, INIT_DELAY);
+    gs.startTime = roundNow();
+    gs.nextSpawn = gs.startTime + INIT_DELAY;
+    gs.running = true; updateGameControls();
+    document.getElementById('gf').focus({ preventScroll: true });
+    gs.timerID = setInterval(updateRound, TICK_MS);
 }
 function endGame() {
     stopProcs(); buildResults(); snd('end'); confetti(50);
+    updateGameControls();
     openModal('go');
-    document.getElementById('sbtn').style.display = 'inline-flex';
-    document.getElementById('rbtn').style.display = 'none';
-    updateAdaptBar();
 }
-function closeGO() { closeModal('go'); }
-function askStop() { if (!gs.running) return; openModal('cmod'); }
-function closeConfirm() { closeModal('cmod'); }
+function closeGO() {
+    closeModal('go');
+    document.getElementById('sbtn').focus({ preventScroll: true });
+}
+function askStop() {
+    if (!gs.running || gs.pausedAt !== null) return;
+    updateRound();
+    if (!gs.running) return;
+    gs.pausedAt = performance.now();
+    document.getElementById('gc').classList.add('is-paused');
+    openModal('cmod');
+}
+function closeConfirm() {
+    if (gs.pausedAt === null) return;
+    gs.pausedDuration += performance.now() - gs.pausedAt;
+    gs.pausedAt = null;
+    document.getElementById('gc').classList.remove('is-paused');
+    closeModal('cmod');
+    document.getElementById('gf').focus({ preventScroll: true });
+}
 function confirmStop() {
-    closeConfirm(); stopProcs(); resetSess();
-    document.getElementById('sbtn').style.display = 'inline-flex';
-    document.getElementById('rbtn').style.display = 'none';
-    updateAdaptBar();
+    closeModal('cmod'); stopProcs(); resetSess(); applySpeed(); updateGameControls();
+    document.getElementById('sbtn').focus({ preventScroll: true });
 }
 function startFromGO() { closeModal('go'); startGame(); }
 
 /* ═══════════════════════════════════════════
    UI
 ═══════════════════════════════════════════ */
-function updateScore() {
+function updateScore(animate = true) {
     document.getElementById('sval').textContent = gs.score;
-    const el = document.getElementById('score'); el.classList.add('pop');
+    const el = document.getElementById('score');
+    if (!animate) { el.classList.remove('pop'); return; }
+    el.classList.add('pop');
     setTimeout(() => el.classList.remove('pop'), 220);
 }
 function updateTimer() {
@@ -445,10 +485,9 @@ function showFB(msg, pos = true, variant = '') {
    GAME OVER — full stats + tips
 ═══════════════════════════════════════════ */
 function buildResults() {
-    const total = gs.correct + gs.missed;
+    const total = gs.correct + gs.wrong + gs.missed;
     const acc = total > 0 ? Math.round(gs.correct / total * 100) : 0;
-    const sec = Math.max(1, (Date.now() - gs.startTime) / 1000);
-    const cpm = Math.round(gs.correct / sec * 60);
+    const cpm = Math.round(gs.correct * 60 / GAME_SEC);
     document.getElementById('goscore').textContent = gs.score;
     document.getElementById('goacc').textContent = acc + '%';
     document.getElementById('gocpm').textContent = cpm;
@@ -496,7 +535,7 @@ function buildResults() {
     if (acc >= 85 && gs.score < 30) tips.push('Ти точний, але повільний. Спробуй підвищити швидкість або рівень!');
     if (missed.length > 0) {
         const hardest = missed[0][0];
-        tips.push(`Найважча літера для тебе сьогодні: "${hardest}". Зверни увагу на її розташування на клавіатурі.`);
+        tips.push(`Найчастіше ти пропускав «${hardest}». Зверни увагу на розташування цієї клавіші.`);
     }
     if (gs.maxStreak < 5 && total > 5) tips.push('Намагайся утримати серію правильних відповідей — не квапся, краще точно!');
     if (gs.maxStreak >= 10) tips.push('Відмінна серія ' + gs.maxStreak + '! Спробуй наступний рівень складності.');
@@ -518,6 +557,7 @@ function showBurst(txt) {
    CONFETTI
 ═══════════════════════════════════════════ */
 function confetti(n) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const field = document.getElementById('gf');
     const w = field.offsetWidth, h = field.offsetHeight;
     const cols = ['#FFE500', '#E53935', '#0097A7', '#388E3C', '#6A1B9A', '#FF7043', '#C62A47', '#FFFFFF'];
@@ -543,7 +583,7 @@ function confetti(n) {
    INIT
 ═══════════════════════════════════════════ */
 function initGame() {
-    initAudio(); initKMap(); loadTheme(); applySpeed(); resetSess();
+    initAudio(); updateSoundIcon(); loadTheme(); applySpeed(); resetSess();
     document.getElementById('gdursec').textContent = GAME_SEC;
     document.addEventListener('keydown', e => {
         if (activeModal) {
@@ -557,10 +597,15 @@ function initGame() {
                 trapFocus(activeModal, e);
                 return;
             }
-            e.preventDefault();
             return;
         }
-        if (gs.running && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+        if (gs.running && e.key === 'Escape' && !e.repeat) {
+            e.preventDefault();
+            askStop();
+            return;
+        }
+        if (!gs.running || e.target !== document.getElementById('gf')) return;
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
         onKey(e);
     });
     window.addEventListener('beforeunload', () => { if (gs.running) stopProcs(); });

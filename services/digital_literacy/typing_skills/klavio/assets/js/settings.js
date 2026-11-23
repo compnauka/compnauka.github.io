@@ -18,6 +18,8 @@
   const SOUND_KEY = "klavio.sound";
   const TEXT_KEY = "klavio.text";
   const CONTRAST_KEY = "klavio.contrast";
+  const SPACING_KEY = "klavio.spacing";
+  const KEY_ANNOUNCEMENTS_KEY = "klavio.announce-keys";
   const LANG_KEY = "klavio.lang";
 
   function read(key, fallback) {
@@ -66,6 +68,24 @@
     return Boolean(enabled);
   }
 
+  function isWideSpacing() {
+    return read(SPACING_KEY, "normal") === "wide";
+  }
+
+  function setWideSpacing(enabled) {
+    write(SPACING_KEY, enabled ? "wide" : "normal");
+    return Boolean(enabled);
+  }
+
+  function isKeyAnnouncementEnabled() {
+    return read(KEY_ANNOUNCEMENTS_KEY, "off") === "on";
+  }
+
+  function setKeyAnnouncementEnabled(enabled) {
+    write(KEY_ANNOUNCEMENTS_KEY, enabled ? "on" : "off");
+    return Boolean(enabled);
+  }
+
   // Мова друку (розкладка й тексти вправ): "uk" за замовчуванням або "en".
   // Мова інтерфейсу завжди українська.
   function getLanguage() {
@@ -78,13 +98,16 @@
     return value;
   }
 
-  // Виставляє data-text і data-contrast на елементі (зазвичай <html>), за потреби прибирає їх.
+  // Виставляє налаштування читання на <html>, за потреби прибирає їх.
   function applyPreferences(element) {
     if (isLargeText()) element.dataset.text = "large";
     else delete element.dataset.text;
 
     if (isHighContrast()) element.dataset.contrast = "high";
     else delete element.dataset.contrast;
+
+    if (isWideSpacing()) element.dataset.spacing = "wide";
+    else delete element.dataset.spacing;
   }
 
   return {
@@ -96,6 +119,10 @@
     setLanguage,
     isHighContrast,
     setHighContrast,
+    isWideSpacing,
+    setWideSpacing,
+    isKeyAnnouncementEnabled,
+    setKeyAnnouncementEnabled,
     applyPreferences
   };
 });

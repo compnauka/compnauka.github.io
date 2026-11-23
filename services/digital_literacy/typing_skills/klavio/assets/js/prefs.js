@@ -1,4 +1,4 @@
-/* Кнопка «Aa» у шапці з меню двох перемикачів: великий текст і високий контраст.
+/* Кнопка «Aa» у шапці з налаштуваннями читання.
    Кнопку й меню створює скрипт, тож усі сторінки Клавіо підключають лише цей файл. */
 (function () {
   "use strict";
@@ -11,6 +11,12 @@
     { label: "Великий текст", get: settings.isLargeText, set: settings.setLargeText },
     { label: "Високий контраст", get: settings.isHighContrast, set: settings.setHighContrast }
   ];
+  if (document.querySelector(".lesson-text")) {
+    switches.push(
+      { label: "Більші інтервали", get: settings.isWideSpacing, set: settings.setWideSpacing },
+      { label: "Озвучувати клавіші у вправах", get: settings.isKeyAnnouncementEnabled, set: settings.setKeyAnnouncementEnabled }
+    );
+  }
 
   const wrap = document.createElement("div");
   wrap.className = "a11y-menu";
@@ -18,7 +24,7 @@
   const toggle = document.createElement("button");
   toggle.className = "a11y-toggle";
   toggle.type = "button";
-  toggle.setAttribute("aria-label", "Зручність читання: розмір тексту й контраст");
+  toggle.setAttribute("aria-label", "Налаштування читання");
   toggle.setAttribute("aria-expanded", "false");
   toggle.setAttribute("aria-controls", "a11y-panel");
   toggle.innerHTML = '<span aria-hidden="true">Aa</span>';
@@ -73,7 +79,10 @@
     else close(false, true);
   });
   document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && !panel.hidden) close(true, true);
+    if (event.key === "Escape" && !panel.hidden) {
+      event.preventDefault();
+      close(true, true);
+    }
   });
   document.addEventListener("click", function (event) {
     if (!panel.hidden && !wrap.contains(event.target)) close(false, false);
