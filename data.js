@@ -353,6 +353,13 @@ const CATEGORIES = [
     color: "#10b981",
     services: [
       {
+        name: "Перші алгоритми з Равликом",
+        description: "Знайомство з алгоритмами для дошкільнят і учнів 1–2 класів.",
+        link: "https://ravlyk.org/go/",
+        image: "images/ravlyk-go.webp",
+        tags: ["Дошкілля", "1-2 класи"]
+      },
+      {
         name: "Алгоритми для дітей",
         description: "Як програмувати роботів та комп'ютери.",
         link: "services/computational_thinking/algorithm/index.html",
@@ -503,6 +510,13 @@ const CATEGORIES = [
     iconClass: "fas fa-gamepad",
     color: "#14b8a6",
     services: [
+      {
+        name: "Гра з Равликом",
+        description: "Грай та експериментуй разом із Равликом.",
+        link: "https://ravlyk.org/game/",
+        image: "images/2.webp",
+        tags: []
+      },
       {
         name: "Диво-Пазл",
         description: "Зроби фото або обери картинку і склади власний пазл на 4, 9 чи 16 деталей.",

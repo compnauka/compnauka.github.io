@@ -441,11 +441,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#btn-qr').addEventListener('click', () => {
         $('#qr-input').value = window.location.href;
+        $('#qr-input').dataset.example = 'true';
         $('#qr-output').innerHTML = '<span class="text-gray-500 text-sm md:text-base text-center">Натисніть "Згенерувати"</span>';
         $('#qr-output').dataset.val = "";
         $('#qr-output').classList.remove('cursor-pointer', 'hover:bg-gray-200');
         $('#qr-output').title = "";
         toggleModal('#dlg-qr', true);
+    });
+
+    $('#qr-input').addEventListener('focus', () => {
+        if ($('#qr-input').dataset.example === 'true') {
+            $('#qr-input').value = '';
+            delete $('#qr-input').dataset.example;
+        }
+    });
+    $('#qr-input').addEventListener('input', () => {
+        delete $('#qr-input').dataset.example;
     });
 
     $('#qr-gen-btn').addEventListener('click', () => {

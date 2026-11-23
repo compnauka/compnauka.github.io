@@ -31,10 +31,17 @@ function openQrModal(title, url) {
     const canvas = document.getElementById("qrModalCanvas");
     const titleEl = document.getElementById("qrModalTitle");
     const urlEl = document.getElementById("qrModalUrl");
+    const preview = document.getElementById("qrModalPreview");
+
+    document.getElementById("qrGeneratorForm").hidden = true;
+    overlay.classList.remove("is-generator");
+    preview.hidden = true;
+    document.getElementById("qrModalHint").hidden = true;
 
     canvas.innerHTML = "";
     titleEl.textContent = title;
     urlEl.textContent = url;
+    urlEl.hidden = false;
 
     new QRCode(canvas, {
         text: url,
@@ -45,6 +52,11 @@ function openQrModal(title, url) {
         correctLevel: QRCode.CorrectLevel.M
     });
 
+    canvas.dataset.value = url;
+    preview.hidden = false;
+    document.getElementById("qrModalHint").hidden = false;
+    document.getElementById("qrModalHint").textContent = "Натисніть на QR-код, щоб збільшити";
+    document.body.classList.add("qr-modal-open");
     overlay.classList.add("open");
 }
 
@@ -63,6 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Track active category to return to it after clearing filter
     let currentActiveCategory = CATEGORIES[0].id;
+    const selectedGrades = new Map();
+    const categoryViews = new Map();
+    const isGradeTag = tag => tag === "Дошкілля" || /^\d+\s*[-–]\s*\d+\s+класи$/.test(tag);
 
     // --- THEME LOGIC ---
     // Check for saved theme
@@ -113,26 +128,99 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // --- CONTENT RENDERING ---
+    const applyGradeFilter = (view, grade) => {
+        const animate = view.grid.isConnected && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const previousPositions = new Map();
+        if (animate) {
+            view.items.forEach(({ element }) => {
+                element.getAnimations().forEach(animation => animation.cancel());
+                if (!element.hidden) previousPositions.set(element, element.getBoundingClientRect());
+            });
+        }
+        view.items.forEach(({ service, element }) => {
+            element.hidden = Boolean(grade && !service.tags?.includes(grade));
+        });
+        view.header.querySelectorAll('.grade-filter').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.grade === grade));
+        });
+        if (animate) {
+            view.items.forEach(({ element }) => {
+                if (element.hidden) return;
+                const before = previousPositions.get(element);
+                const after = element.getBoundingClientRect();
+                let x = before ? before.left - after.left : 0;
+                let y = before ? before.top - after.top : 6;
+                // Cards from lower rows should appear here, not travel through an empty viewport.
+                if (Math.abs(x) > 80 || Math.abs(y) > 80) { x = 0; y = 6; }
+                if (!before || x || y) {
+                    element.animate([
+                        { transform: `translate(${x}px, ${y}px)`, opacity: before ? 1 : .85 },
+                        { transform: 'translate(0, 0)', opacity: 1 }
+                    ], { duration: 200, easing: 'ease-out' });
+                }
+            });
+        }
+    };
+
     const renderCategory = (categoryId) => {
         const category = CATEGORIES.find(c => c.id === categoryId);
         if (!category) return;
+        const selectedGrade = selectedGrades.get(categoryId) || "";
+        const existingView = categoryViews.get(categoryId);
+        if (existingView) {
+            applyGradeFilter(existingView, selectedGrade);
+            updateContentArea(existingView.header, existingView.grid);
+            return;
+        }
 
         // Create Header
         const header = document.createElement("div");
         header.className = "category-header";
-        header.innerHTML = `<i class="${category.iconClass}" style="color: ${category.color}"></i> ${category.name}`;
+        const heading = document.createElement("h2");
+        heading.className = "category-title";
+        heading.innerHTML = `<i class="${category.iconClass}" style="color: ${category.color}"></i> ${category.name}`;
+        header.appendChild(heading);
+
+        const grades = [...new Set(category.services.flatMap(service => service.tags || []).filter(isGradeTag))]
+            .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0) || a.localeCompare(b, "uk"));
+        if (grades.length) {
+            const filters = document.createElement("div");
+            filters.className = "grade-filters";
+            filters.setAttribute("role", "group");
+            filters.setAttribute("aria-label", "Фільтр за класами");
+            ["", ...grades].forEach(grade => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "grade-filter";
+                button.dataset.grade = grade;
+                button.textContent = grade || "Усі класи";
+                button.setAttribute("aria-pressed", String(grade === selectedGrade));
+                button.addEventListener("click", () => {
+                    if ((selectedGrades.get(categoryId) || "") === grade) return;
+                    selectedGrades.set(categoryId, grade);
+                    renderCategory(categoryId);
+                });
+                filters.appendChild(button);
+            });
+            header.appendChild(filters);
+        }
 
         // Create Grid
         const grid = document.createElement("div");
         grid.className = "services-grid";
 
+        const items = [];
         if (category.services.length === 0) {
             grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--text-secondary);">Сервіси в цій категорії скоро з\'являться.</p>';
         } else {
-            category.services.forEach(service => createServiceCard(service, grid));
+            category.services.forEach(service => {
+                items.push({ service, element: createServiceCard(service, grid) });
+            });
         }
 
-        // Render to DOM with fade effect
+        const view = { header, grid, items };
+        categoryViews.set(categoryId, view);
+        applyGradeFilter(view, selectedGrade);
         updateContentArea(header, grid);
     };
 
@@ -272,9 +360,15 @@ document.addEventListener("DOMContentLoaded", () => {
         card.appendChild(imgWrapper);
         card.appendChild(body);
         container.appendChild(card);
+        return card;
     };
 
     const filterByTag = (tagName) => {
+        if (isGradeTag(tagName)) {
+            selectedGrades.set(currentActiveCategory, tagName);
+            setActiveCategory(currentActiveCategory);
+            return;
+        }
          // Close mobile menu if needed
          closeMobileMenu();
 
@@ -322,17 +416,10 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateContentArea = (header, grid) => {
-        contentArea.style.opacity = '0';
-        
-        // Scroll to top
+        // Grade filters reuse the mounted cards and leave the controls and scroll position intact.
+        if (contentArea.firstElementChild === header) return;
+        contentArea.replaceChildren(header, grid);
         window.scrollTo({ top: 0, behavior: 'auto' });
-        
-        setTimeout(() => {
-            contentArea.innerHTML = '';
-            contentArea.appendChild(header);
-            contentArea.appendChild(grid);
-            contentArea.style.opacity = '1';
-        }, 200);
     };
 
     const setActiveCategory = (id) => {
@@ -407,9 +494,99 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- QR MODAL CLOSE ---
     const qrOverlay = document.getElementById("qrModalOverlay");
-    document.getElementById("qrModalClose").addEventListener("click", () => qrOverlay.classList.remove("open"));
-    qrOverlay.addEventListener("click", (e) => { if (e.target === qrOverlay) qrOverlay.classList.remove("open"); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") qrOverlay.classList.remove("open"); });
+    const qrForm = document.getElementById("qrGeneratorForm");
+    const qrInput = document.getElementById("qrGeneratorInput");
+    const qrPreview = document.getElementById("qrModalPreview");
+    const qrZoom = document.getElementById("qrZoomOverlay");
+    const qrZoomClose = document.getElementById("qrZoomClose");
+    let qrTrigger;
+    const closeQrZoom = () => {
+        qrZoom.hidden = true;
+        qrOverlay.removeAttribute("inert");
+        qrPreview.focus();
+    };
+    const closeQrModal = () => {
+        qrZoom.hidden = true;
+        qrOverlay.removeAttribute("inert");
+        qrOverlay.classList.remove("open");
+        document.body.classList.remove("qr-modal-open");
+        qrTrigger?.focus();
+    };
+    document.getElementById("qrGeneratorToggle").addEventListener("click", () => {
+        document.getElementById("qrModalTitle").textContent = "Генератор QR-кодів";
+        document.getElementById("qrModalCanvas").innerHTML = "";
+        qrPreview.hidden = true;
+        document.getElementById("qrModalHint").hidden = true;
+        document.getElementById("qrModalUrl").textContent = "";
+        qrForm.hidden = false;
+        qrOverlay.classList.add("is-generator");
+        document.body.classList.add("qr-modal-open");
+        qrOverlay.classList.add("open");
+        qrInput.focus();
+    });
+    qrForm.addEventListener("submit", e => {
+        e.preventDefault();
+        const value = qrInput.value.trim();
+        if (!value) {
+            qrInput.setCustomValidity("Введіть посилання або текст");
+            qrInput.reportValidity();
+            return;
+        }
+        try {
+            openQrModal("Генератор QR-кодів", value);
+        } catch (error) {
+            const hint = document.getElementById("qrModalHint");
+            hint.textContent = "Не вдалося створити QR-код. Спробуйте скоротити текст або перезавантажити сторінку.";
+            hint.hidden = false;
+        }
+        qrForm.hidden = false;
+        qrOverlay.classList.add("is-generator");
+        document.getElementById("qrModalUrl").hidden = true;
+        if (!qrPreview.hidden) qrPreview.focus();
+        else qrInput.focus();
+    });
+    qrInput.addEventListener("input", () => qrInput.setCustomValidity(""));
+    qrPreview.addEventListener("click", () => {
+        const value = document.getElementById("qrModalCanvas").dataset.value;
+        if (!value) return;
+        const zoomCanvas = document.getElementById("qrZoomCanvas");
+        zoomCanvas.innerHTML = "";
+        new QRCode(zoomCanvas, {
+            text: value, width: 1024, height: 1024,
+            colorDark: "#1e293b", colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        qrZoom.hidden = false;
+        qrOverlay.setAttribute("inert", "");
+        qrZoomClose.focus();
+    });
+    qrZoomClose.addEventListener("click", closeQrZoom);
+    qrZoom.addEventListener("click", e => {
+        if (!document.getElementById("qrZoomCanvas").contains(e.target)) closeQrZoom();
+    });
+    document.addEventListener("click", e => {
+        if (qrOverlay.classList.contains("open") && !qrOverlay.contains(e.target) && !qrZoom.contains(e.target)) {
+            qrTrigger = e.target.closest("button");
+            if (qrForm.hidden) document.getElementById("qrModalClose").focus();
+        }
+    });
+    document.getElementById("qrModalClose").addEventListener("click", closeQrModal);
+    qrOverlay.addEventListener("click", e => { if (e.target === qrOverlay) closeQrModal(); });
+    document.addEventListener("keydown", e => {
+        if (!qrOverlay.classList.contains("open")) return;
+        if (!qrZoom.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); closeQrZoom(); }
+            if (e.key === "Tab") { e.preventDefault(); qrZoomClose.focus(); }
+            return;
+        }
+        if (e.key === "Escape") { e.preventDefault(); closeQrModal(); }
+        if (e.key === "Tab") {
+            const controls = [...qrOverlay.querySelectorAll("button, input")].filter(el => el.getClientRects().length);
+            const first = controls[0], last = controls[controls.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
 
     // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {

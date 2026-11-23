@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=20261123-1" />
 </head>
 
 <body>
@@ -90,6 +90,9 @@
             </div>
 
             <div class="header-right">
+                <button class="theme-toggle-btn" id="qrGeneratorToggle" aria-label="Генератор QR-кодів" title="Генератор QR-кодів">
+                    <i class="fas fa-qrcode"></i>
+                </button>
                 <button class="theme-toggle-btn" id="themeToggle" aria-label="Змінити тему">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -164,18 +167,32 @@
 
     <!-- QR Modal -->
     <div class="qr-modal-overlay" id="qrModalOverlay">
-        <div class="qr-modal">
+        <div class="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
             <button class="qr-modal-close" id="qrModalClose" aria-label="Закрити"><i class="fas fa-times"></i></button>
             <p class="qr-modal-title" id="qrModalTitle"></p>
-            <div id="qrModalCanvas"></div>
+            <form id="qrGeneratorForm" hidden>
+                <label for="qrGeneratorInput">Посилання або текст</label>
+                <input id="qrGeneratorInput" type="text" placeholder="https://example.com" required autocomplete="off" />
+                <button class="btn btn-primary" type="submit">Згенерувати</button>
+            </form>
+            <button type="button" id="qrModalPreview" aria-label="Збільшити QR-код на весь екран" hidden>
+                <span id="qrModalCanvas"></span>
+            </button>
+            <p class="qr-modal-hint" id="qrModalHint" hidden>Натисніть на QR-код, щоб збільшити</p>
             <p class="qr-modal-url" id="qrModalUrl"></p>
         </div>
     </div>
 
+    <div class="qr-zoom-overlay" id="qrZoomOverlay" role="dialog" aria-modal="true" aria-label="QR-код на весь екран" hidden>
+        <button type="button" class="qr-zoom-close" id="qrZoomClose" aria-label="Закрити великий QR-код"><i class="fas fa-times"></i></button>
+        <div class="qr-zoom-frame" id="qrZoomCanvas"></div>
+        <p>Натисніть поза кодом або Esc, щоб повернутися</p>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="data.js"></script>
-    <script src="script.js"></script>
+    <script src="data.js?v=20261123-1"></script>
+    <script src="script.js?v=20261123-1"></script>
 </body>
 
 </html>
