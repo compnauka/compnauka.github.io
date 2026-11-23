@@ -13,23 +13,11 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
-  function textWindow(text, position, visible, caretAt) {
-    const size = Number.isFinite(visible) ? visible : 86;
-    const anchor = Number.isFinite(caretAt) ? caretAt : 30;
-    const safePosition = Math.max(0, Math.min(position, text.length));
-    const maxStart = Math.max(0, text.length - size);
-    const start = Math.min(maxStart, Math.max(0, safePosition - anchor));
-    const end = Math.min(text.length, start + size);
-    const localPosition = safePosition - start;
-    const fragment = text.slice(start, end);
-
-    return {
-      start,
-      end,
-      done: fragment.slice(0, localPosition),
-      current: fragment[localPosition] || "",
-      todo: fragment.slice(localPosition + 1)
-    };
+  // Ділить текст уроку на слова для показу в полі. Пробіл після слова
+  // належить цьому слову: так рядок переноситься лише між словами,
+  // а пробіл ніколи не опиняється на початку нового рядка.
+  function splitWords(text) {
+    return String(text).match(/\S+\s*|\s+/g) || [];
   }
 
   function formatTime(milliseconds) {
@@ -39,5 +27,251 @@
     return minutes + ":" + seconds;
   }
 
-  return { textWindow, formatTime };
+  // Після стількох помилок поспіль на одному символі режим тимчасово показує вимкнені підказки.
+  const HINT_AFTER_MISSES = 2;
+
+  // Що показувати для режиму config { keyboardHint, fingerHint } після missesOnChar помилок
+  // на поточному символі. revealed — підказку показано лише завдяки помилкам.
+  function hintVisibility(config, missesOnChar) {
+    const stuck = missesOnChar >= HINT_AFTER_MISSES;
+    const keyboard = Boolean(config.keyboardHint) || stuck;
+    const finger = Boolean(config.fingerHint) || stuck;
+    return {
+      keyboard,
+      finger,
+      revealed: keyboard !== Boolean(config.keyboardHint) || finger !== Boolean(config.fingerHint)
+    };
+  }
+
+  // Символи, на яких учень помилявся щонайменше minMisses разів: до n штук,
+  // за кількістю помилок, а за рівності — за порядком у тексті. Пробіли не рахуємо.
+  // Помилки на «Ж» і «ж» складаються разом, а символ повертається в тому регістрі,
+  // у якому помилок було більше (за рівності — малою).
+  function weakKeys(errorCounts, text, n, minMisses) {
+    const limit = typeof n === "number" ? n : 3;
+    const threshold = typeof minMisses === "number" ? minMisses : 2;
+    const source = String(text).toLocaleLowerCase("uk-UA");
+    const totals = {};
+    const upper = {};
+
+    Object.keys(errorCounts || {}).forEach(function (key) {
+      if (!key.trim()) return;
+      const lower = key.toLocaleLowerCase("uk-UA");
+      totals[lower] = (totals[lower] || 0) + errorCounts[key];
+      if (key !== lower) upper[lower] = (upper[lower] || 0) + errorCounts[key];
+    });
+
+    return Object.keys(totals)
+      .filter(function (character) { return totals[character] >= threshold; })
+      .sort(function (a, b) {
+        if (totals[b] !== totals[a]) return totals[b] - totals[a];
+        const first = source.indexOf(a);
+        const second = source.indexOf(b);
+        return (first === -1 ? Infinity : first) - (second === -1 ? Infinity : second);
+      })
+      .slice(0, limit)
+      .map(function (character) {
+        const capitals = upper[character] || 0;
+        return capitals > totals[character] - capitals ? character.toLocaleUpperCase("uk-UA") : character;
+      });
+  }
+
+  // Найчастіші літери: лише вони правлять за партнерів у сполученнях, щоб склади були вимовними.
+  const FREQUENT_LETTERS = Array.from("аоиіентрвслкдмпу");
+  const VOWELS = Array.from("аеєиіїоуюя");
+  const LETTER = /^\p{L}+$/u;
+
+  function lowerCase(value) { return value.toLocaleLowerCase("uk-UA"); }
+  function isLetter(value) { return lowerCase(value) !== value.toLocaleUpperCase("uk-UA"); }
+  function capitalize(word) { return word.charAt(0).toLocaleUpperCase("uk-UA") + word.slice(1); }
+
+  // Схоже на справжнє слово: ≥3 літер, є голосна, немає трьох приголосних поспіль, а літера
+  // не повторюється впритул, через одну чи через дві. Так відсіюються штучні «слова» на кшталт «фофоф»,
+  // «ададд», «джєдє», якими починаються тексти уроків.
+  function isWordLike(word) {
+    const letters = Array.from(lowerCase(word));
+    if (letters.length < 3 || !letters.some(function (c) { return VOWELS.indexOf(c) !== -1; })) return false;
+    for (let i = 1; i < letters.length; i += 1) {
+      if (letters[i] === letters[i - 1] || (i >= 2 && letters[i] === letters[i - 2]) || (i >= 3 && letters[i] === letters[i - 3])) return false;
+      if (i >= 2 && [i, i - 1, i - 2].every(function (k) { return VOWELS.indexOf(letters[k]) === -1; })) return false;
+    }
+    return true;
+  }
+
+  // Коротка вправа (70–90 символів) на слабкі символи. Використовує лише літери з allowedText
+  // (текст уроків до поточного включно), тож нових літер не з'являється. Складається зі
+  // складів із частих літер, справжніх слів із текстів і, для знаків, слів із комою чи крапкою.
+  // Велика слабка літера тренується у складах і словах з великої. random повертає число з [0, 1).
+  function buildDrill(weakChars, allowedText, sourceTexts, random) {
+    const MIN_LENGTH = 70;
+    const MAX_LENGTH = 90;
+    const weak = Array.from(weakChars || []);
+    if (weak.length === 0) return "";
+
+    const weakLower = weak.map(lowerCase);
+    const learned = new Set(Array.from(lowerCase(String(allowedText))).filter(isLetter));
+
+    function pick(list) { return list[Math.floor(random() * list.length)]; }
+    function shuffle(list) {
+      const copy = list.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(random() * (i + 1));
+        const tmp = copy[i]; copy[i] = copy[j]; copy[j] = tmp;
+      }
+      return copy;
+    }
+
+    // Партнери: часті літери серед вивчених; якщо їх замало — усі вивчені, які є.
+    let partners = FREQUENT_LETTERS.filter(function (c) { return learned.has(c) && weakLower.indexOf(c) === -1; });
+    if (partners.length < 2) {
+      partners = Array.from(learned).filter(function (c) { return weakLower.indexOf(c) === -1 && "ьй".indexOf(c) === -1; });
+    }
+    const vowels = partners.filter(function (c) { return VOWELS.indexOf(c) !== -1; });
+    const consonants = partners.filter(function (c) { return VOWELS.indexOf(c) === -1; });
+
+    function vowel() { return pick(vowels.length ? vowels : consonants.length ? consonants : weakLower); }
+    function consonant() { return pick(consonants.length ? consonants : vowels.length ? vowels : weakLower); }
+
+    // Склад із літерою c: «жа», «ож», «жо», «Та». Подвоєння — найбільше «жжа», як у самих уроках.
+    function syllable(c) {
+      // Партнерів немає (вивчені лише слабкі літери): комбінуємо самі слабкі, не більше подвоєння.
+      if (partners.length === 0) return c + pick(weak.filter(function (x) { return x !== c; }).concat([c]));
+      const lower = lowerCase(c);
+      const capital = c !== lower;
+      const k = consonant();
+      const v = vowel();
+
+      if (lower === "ь") return pick([k + c, v + k + c, k + c + v]);
+      if (lower === "й") return pick([v + c, k + v + c, v + c + v]);
+      if (VOWELS.indexOf(lower) !== -1) {
+        return capital ? c + pick([k, k + v, k + v + k]) : pick([k + c, c + k, k + c + k, c + k + c]);
+      }
+      if (capital) return c + pick([v, v + k, v + k + v]);
+      return pick([c + v, v + c, c + v + k, k + v + c, c + c + v, v + c + v]);
+    }
+
+    // Слова з текстів, придатні для вправи: чисті літери без розділових знаків.
+    const learnedWords = [];
+    const seenWords = new Set();
+    (sourceTexts || []).forEach(function (text) {
+      String(text).split(/\s+/).forEach(function (raw) {
+        const word = raw.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "");
+        if (!word || seenWords.has(word) || !LETTER.test(word) || !isWordLike(word)) return;
+        // Скорочення з крапкою («укр.», «лат.», «мед.») — не слова.
+        if (/\.$/.test(raw) && word.length <= 4) return;
+        if (Array.from(word.slice(1)).some(function (ch) { return ch !== lowerCase(ch); })) return;
+        if (!Array.from(lowerCase(word)).every(function (ch) { return learned.has(ch); })) return;
+        seenWords.add(word);
+        learnedWords.push(word);
+      });
+    });
+
+    function wordsFor(c) {
+      const lower = lowerCase(c);
+      const capital = c !== lower;
+      const found = learnedWords.filter(function (word) {
+        const letters = Array.from(lowerCase(word));
+        if (capital) return letters[0] === lower;
+        // Для малої літери беремо слова лише з частих літер і самих слабких.
+        return word === lowerCase(word) && letters.indexOf(lower) !== -1 &&
+          letters.every(function (ch) { return FREQUENT_LETTERS.indexOf(ch) !== -1 || weakLower.indexOf(ch) !== -1; });
+      });
+      return shuffle(found).map(function (word) { return capital ? capitalize(word) : word; });
+    }
+
+    // Слово для знака: справжнє, а за браком — вимовне з двох складів.
+    function plainWord() {
+      return consonant() + vowel() + consonant() + vowel();
+    }
+
+    const queues = {};
+    weak.forEach(function (c) {
+      queues[c] = isLetter(c) ? wordsFor(c) : shuffle(learnedWords.filter(function (word) { return word === lowerCase(word); }));
+    });
+
+    const used = new Set();
+    function next(c, preferWord) {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        let token;
+        if (!isLetter(c)) token = (queues[c].shift() || plainWord()) + c;
+        else if (preferWord && queues[c].length) token = queues[c].shift();
+        else token = syllable(c);
+        // Коли унікальних складів не лишилось (найперші уроки), повторюємо останній варіант.
+        if (!used.has(token) || attempt === 7) { used.add(token); return token; }
+      }
+      return null;
+    }
+
+    const tokens = [];
+    let length = 0;
+    function add(token) {
+      if (!token) return;
+      const extra = (tokens.length ? 1 : 0) + token.length;
+      if (tokens.length && length + extra > MAX_LENGTH) return;
+      tokens.push(token);
+      length += extra;
+    }
+
+    // Перший круг гарантує, що кожен слабкий символ є у вправі.
+    weak.forEach(function (c) { add(next(c, !isLetter(c))); });
+    for (let round = 0; length < MIN_LENGTH && round < 80; round += 1) {
+      const c = weak[round % weak.length];
+      // Слова й склади чергуються кожен повний круг по слабких символах.
+      add(next(c, Math.floor(round / weak.length) % 2 === 0));
+    }
+    return tokens.join(" ");
+  }
+
+  const SIDE = { left: "лівий", right: "правий" };
+  const ROW_NAMES = { 1: "у верхньому ряду", 2: "на домашньому ряду", 3: "у нижньому ряду" };
+
+  // «правий мізинець», «лівий вказівний палець».
+  function fingerPhrase(hint) {
+    const side = SIDE[hint.hand] || "";
+    return side + " " + hint.name + (hint.name === "мізинець" ? "" : " палець");
+  }
+
+  // Де клавіша: рядок і сусід у тому ж рядку («на домашньому ряду, праворуч від Д»).
+  function positionTip(character, layouts) {
+    const wanted = lowerCase(character);
+    for (let r = 1; r <= 3; r += 1) {
+      const row = layouts.ukrainianRows[r];
+      const index = row.findIndex(function (key) { return key.value && lowerCase(key.value) === wanted; });
+      if (index === -1) continue;
+
+      const before = row[index - 1];
+      const after = row[index + 1];
+      const hasLetter = function (key) { return key && key.value && isLetter(key.value); };
+      if (hasLetter(before)) return "Вона " + ROW_NAMES[r] + ", праворуч від " + before.label + ".";
+      if (hasLetter(after)) return "Вона " + ROW_NAMES[r] + ", ліворуч від " + after.label + ".";
+    }
+    return "";
+  }
+
+  // Вступ до уроку: { title, lines } або null. Палець беремо з розкладки, а не дублюємо в даних.
+  function lessonIntro(lesson, layouts, intros) {
+    const spec = (intros && intros[lesson.id]) || {};
+    if (spec.title) return { title: spec.title, lines: (spec.lines || []).slice() };
+
+    const focus = String(lesson.focus || "");
+    const character = spec.char || (Array.from(focus).length === 1 ? lowerCase(focus) : "");
+    if (!character) return null;
+
+    const hints = layouts.hintsForCharacter(character);
+    if (!hints.length) return null;
+
+    const shiftHand = hints[1] ? SIDE[hints[1].hand] : "";
+    const lines = [];
+    if (spec.note) lines.push(spec.note.replace("{shift}", shiftHand));
+    else lines.push(positionTip(character, layouts));
+    const combo = layouts.comboHintForCharacter(character);
+    if (combo.indexOf("Ctrl") !== -1) lines.push(combo + ".");
+
+    return {
+      title: "Нова клавіша: " + (spec.label || focus) + " — " + fingerPhrase(hints[0]),
+      lines: lines.filter(Boolean)
+    };
+  }
+
+  return { splitWords, formatTime, hintVisibility, HINT_AFTER_MISSES, weakKeys, buildDrill, lessonIntro };
 });

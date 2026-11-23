@@ -191,14 +191,17 @@ test("навчальні тексти не містять випадкових �
   assert.deepEqual(contaminated, []);
 });
 
-test("вікно тексту тримає поточний символ біля сталої позиції", function () {
-  const text = "0123456789".repeat(12);
-  const view = lessonCore.textWindow(text, 65, 40, 15);
+test("текст уроку ділиться на слова з пробілом у кінці слова", function () {
+  assert.deepEqual(lessonCore.splitWords("ао ва  ов"), ["ао ", "ва  ", "ов"]);
+  assert.deepEqual(lessonCore.splitWords(""), []);
 
-  assert.equal(view.start, 50);
-  assert.equal(view.current, text[65]);
-  assert.equal(view.done.length, 15);
-  assert.equal(view.done + view.current + view.todo, text.slice(view.start, view.end));
+  lessonData.lessons.forEach(function (lesson) {
+    const words = lessonCore.splitWords(lesson.text);
+    assert.equal(words.join(""), lesson.text, "урок " + lesson.id);
+    words.slice(1).forEach(function (word) {
+      assert.match(word, /^\S/,"урок " + lesson.id + ": рядок не починається з пробілу");
+    });
+  });
 });
 
 test("у вправах великі й малі літери розрізняються", function () {
@@ -307,4 +310,195 @@ test("«ґ» доступна в Уроках, Словах і Спринті", 
 
 test("Спринт дозволяє обрати бік, з якого летять цілі", function () {
   assert.deepEqual(sprintData.directions.map(function (item) { return item.id; }), ["ltr", "rtl"]);
+});
+
+test("errorHint: Caps Lock і регістр", function () {
+  const caps = function (on) { return { getModifierState: function (name) { return name === "CapsLock" && on; } }; };
+  const upper = Object.assign({ key: "О" }, caps(true));
+  assert.equal(input.errorHint("о", upper, layouts).message, "Увімкнено Caps Lock — натисни його, щоб друкувати малими літерами");
+  assert.equal(input.errorHint("о", Object.assign({ key: "О" }, caps(false)), layouts).message, "Тут мала літера — без Shift");
+  assert.equal(input.errorHint("о", { key: "О" }, layouts).message, "Тут мала літера — без Shift");
+  // Із увімкненим Caps Lock Shift дає малу літеру: підказка не має радити лише Shift.
+  assert.match(input.errorHint("О", Object.assign({ key: "о" }, caps(true)), layouts).message, /Caps Lock/);
+});
+
+test("errorHint: велика літера називає протилежний Shift і не суперечить comboHint", function () {
+  // А — на KeyF (ліва рука) → правий Shift; О — на KeyJ (права рука) → лівий Shift.
+  assert.equal(input.errorHint("А", { key: "а" }, layouts).message, "Тут велика літера: утримуй правий Shift (мізинцем іншої руки)");
+  assert.equal(input.errorHint("О", { key: "о" }, layouts).message, "Тут велика літера: утримуй лівий Shift (мізинцем іншої руки)");
+  assert.equal(input.errorHint("А", { key: "а" }).message, "Тут велика літера: утримуй Shift мізинцем іншої руки");
+  assert.equal(layouts.comboHintForCharacter("А"), "Утримуй Shift");
+  assert.equal(input.errorHint("Ґ", { key: "ґ" }, layouts).message, layouts.comboHintForCharacter("Ґ"));
+});
+
+test("errorHint: інший символ, пробіл і розкладка", function () {
+  assert.deepEqual(input.errorHint("о", { key: "л" }, layouts), { kind: "wrong", message: "Потрібно: о" });
+  assert.equal(input.errorHint(" ", { key: "а" }, layouts).message, "Потрібно: пробіл");
+  assert.equal(input.errorHint("о", { key: "j" }, layouts).kind, "layout");
+  // issue() лишається без змін для Слів і Спринту.
+  assert.equal(input.issue("о", { key: "л" }), "wrong");
+});
+
+test("hintVisibility: підказка з'являється після двох помилок на символі", function () {
+  const guided = { keyboardHint: true, fingerHint: true };
+  const finger = { keyboardHint: false, fingerHint: true };
+  const independent = { keyboardHint: false, fingerHint: false };
+
+  assert.deepEqual(lessonCore.hintVisibility(guided, 5), { keyboard: true, finger: true, revealed: false });
+  assert.deepEqual(lessonCore.hintVisibility(finger, 0), { keyboard: false, finger: true, revealed: false });
+  assert.deepEqual(lessonCore.hintVisibility(finger, 1), { keyboard: false, finger: true, revealed: false });
+  assert.deepEqual(lessonCore.hintVisibility(finger, 2), { keyboard: true, finger: true, revealed: true });
+  assert.deepEqual(lessonCore.hintVisibility(independent, 1), { keyboard: false, finger: false, revealed: false });
+  assert.deepEqual(lessonCore.hintVisibility(independent, 2), { keyboard: true, finger: true, revealed: true });
+  assert.equal(lessonCore.HINT_AFTER_MISSES, 2);
+});
+
+test("weakKeys: поріг, порядок, пробіли й регістр", function () {
+  const text = "аж жа жжо ев є";
+  // Поріг ≥2; Ж і ж рахуються разом; пробіл ігнорується.
+  assert.deepEqual(lessonCore.weakKeys({ "ж": 1, "Ж": 1, " ": 9, "а": 1 }, text, 3), ["ж"]);
+  // За кількістю помилок, а за рівності — за першою появою в тексті.
+  assert.deepEqual(lessonCore.weakKeys({ "є": 2, "ж": 2, "е": 5, "о": 1 }, text, 3), ["е", "ж", "є"]);
+  // Ліміт n.
+  assert.deepEqual(lessonCore.weakKeys({ "є": 2, "ж": 2, "е": 5 }, text, 2), ["е", "ж"]);
+  assert.deepEqual(lessonCore.weakKeys({ "ж": 1 }, text, 3), []);
+  assert.deepEqual(lessonCore.weakKeys({}, text, 3), []);
+});
+
+test("buildDrill: лише дозволені символи, є кожен слабкий, довжина й детермінізм", function () {
+  const texts = lessonData.lessons.slice(0, 6).map(function (item) { return item.text; });
+  const allowedText = texts.join(" ");
+  const allowed = new Set(Array.from(allowedText));
+  function makeRandom() {
+    let seed = 42;
+    return function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  }
+
+  [["ж", "д"], ["ж"], ["а", "о", "в"]].forEach(function (weak) {
+    const drill = lessonCore.buildDrill(weak, allowedText, texts, makeRandom());
+    assert.ok(drill.length >= 60 && drill.length <= 90, "довжина " + drill.length);
+    weak.forEach(function (character) { assert.ok(drill.includes(character), character); });
+    Array.from(drill).forEach(function (character) { assert.ok(allowed.has(character), "зайвий символ " + character); });
+    assert.equal(drill, lessonCore.buildDrill(weak, allowedText, texts, makeRandom()));
+  });
+
+  const later = lessonData.lessons.slice(0, 30).map(function (item) { return item.text; });
+  const punctuation = lessonCore.buildDrill(["."], later.join(" "), later, makeRandom());
+  assert.ok(punctuation.includes("."));
+  assert.equal(lessonCore.buildDrill([], allowedText, texts, makeRandom()), "");
+});
+
+test("weakKeys: регістр, у якому помилявся учень", function () {
+  const text = "Токмак тут";
+  assert.deepEqual(lessonCore.weakKeys({ "Т": 3, "т": 1, "к": 2 }, text, 3), ["Т", "к"]);
+  assert.deepEqual(lessonCore.weakKeys({ "Т": 1, "т": 2 }, text, 3), ["т"]);
+});
+
+test("buildDrill: якість тексту — партнери, подвоєння, знаки, велика літера", function () {
+  const FREQUENT = Array.from("аоиіентрвслкдмпу");
+  function makeRandom(start) {
+    let seed = start;
+    return function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  }
+  function sources(count) { return lessonData.lessons.slice(0, count).map(function (item) { return item.text; }); }
+  function drill(count, weak, seed) {
+    const texts = sources(count);
+    return lessonCore.buildDrill(weak, texts.join(" "), texts, makeRandom(seed));
+  }
+
+  for (let seed = 1; seed <= 20; seed += 1) {
+    [[6, ["ж", "д"]], [30, ["."]], [31, [",", "."]], [34, ["Т", "к"]], [3, ["д"]], [1, ["а"]]].forEach(function (item) {
+      const text = drill(item[0], item[1], seed);
+      assert.ok(text.length >= 60 && text.length <= 90, item[0] + ": довжина " + text.length);
+      assert.ok(!/(.)\1\1/u.test(text), "три однакові поспіль: " + text);
+      item[1].forEach(function (weak) { assert.ok(text.includes(weak), weak + " у «" + text + "»"); });
+    });
+  }
+
+  // Слабкі «ж», «д» на уроці 6: літери з частих (вивчених) або самі слабкі, без ф, є, ї тощо.
+  for (let seed = 1; seed <= 20; seed += 1) {
+    const text = drill(6, ["ж", "д"], seed);
+    Array.from(text.replace(/ /g, "")).forEach(function (ch) {
+      assert.ok(FREQUENT.includes(ch) || "жд".includes(ch), "рідкісна літера " + ch + " у «" + text + "»");
+    });
+  }
+
+  // Знаки стоять лише одразу після слова з ≥2 літер, не подвоєні й не «...».
+  for (let seed = 1; seed <= 20; seed += 1) {
+    const text = drill(31, [",", "."], seed);
+    assert.ok(!/[.,]{2}/.test(text), text);
+    assert.ok(!/(^|\s)[.,]/.test(text), text);
+    assert.ok(!/(^|[^\p{L}])\p{L}[.,]/u.test(text), "одна літера перед знаком: " + text);
+    text.split(/\s+/).forEach(function (token) { assert.match(token, /^\p{L}{2,}[.,]$/u); });
+  }
+
+  // Велика слабка літера дає слова й склади з великої, а не лише малі.
+  for (let seed = 1; seed <= 10; seed += 1) {
+    const text = drill(34, ["Т"], seed);
+    const capitals = text.split(/\s+/).filter(function (token) { return token.startsWith("Т"); });
+    assert.ok(capitals.length >= 3, text);
+    assert.ok(text.split(/\s+/).every(function (token) { return token.startsWith("Т"); }), text);
+  }
+});
+
+test("lessonIntro: палець і положення клавіші беруться з розкладки", function () {
+  const special = lessonData.intros;
+  lessonData.lessons.forEach(function (lesson) {
+    const intro = lessonCore.lessonIntro(lesson, layouts, special);
+    assert.ok(intro && intro.title, "урок " + lesson.id + " без вступу");
+    assert.ok(Array.isArray(intro.lines));
+    assert.ok(intro.title.length + intro.lines.join(" ").length <= 150, "завдовгий вступ уроку " + lesson.id);
+
+    const character = (special[lesson.id] && special[lesson.id].char) ||
+      (Array.from(lesson.focus).length === 1 ? lesson.focus.toLocaleLowerCase("uk-UA") : "");
+    if (!character) return;
+
+    const main = layouts.hintsForCharacter(character)[0];
+    assert.ok(intro.title.includes(main.name), "урок " + lesson.id + ": немає пальця «" + main.name + "» у «" + intro.title + "»");
+    assert.ok(intro.title.includes(main.hand === "left" ? "лівий" : "правий"), "урок " + lesson.id + ": не та рука");
+  });
+
+  assert.equal(lessonCore.lessonIntro(lessonData.lessons[5], layouts, special).title, "Нова клавіша: Ж — правий мізинець");
+  assert.deepEqual(lessonCore.lessonIntro(lessonData.lessons[5], layouts, special).lines, ["Вона на домашньому ряду, праворуч від Д."]);
+  assert.match(lessonCore.lessonIntro(lessonData.lessons[1], layouts, special).title, /правий середній палець/);
+  assert.match(lessonCore.lessonIntro(lessonData.lessons[30], layouts, special).lines[0], /лівий Shift/);
+  assert.deepEqual(lessonCore.lessonIntro(lessonData.lessons[32], layouts, special).lines, ["Утримуй Ctrl + Alt і натисни Г."]);
+  assert.match(lessonCore.lessonIntro(lessonData.lessons[0], layouts, special).title, /А та О/);
+});
+
+test("settings: великий текст і контраст мають типові значення та зберігаються", function () {
+  const store = new Map();
+  const previous = globalThis.localStorage;
+  globalThis.localStorage = {
+    getItem: function (key) { return store.has(key) ? store.get(key) : null; },
+    setItem: function (key, value) { store.set(key, String(value)); }
+  };
+
+  try {
+    const settings = require("../assets/js/settings.js");
+    const element = { dataset: {} };
+
+    assert.equal(settings.isLargeText(), false);
+    assert.equal(settings.isHighContrast(), false);
+    settings.applyPreferences(element);
+    assert.deepEqual(element.dataset, {});
+
+    settings.setLargeText(true);
+    settings.setHighContrast(true);
+    assert.equal(store.get("klavio.text"), "large");
+    assert.equal(store.get("klavio.contrast"), "high");
+    assert.equal(settings.isLargeText(), true);
+    assert.equal(settings.isHighContrast(), true);
+    settings.applyPreferences(element);
+    assert.deepEqual(element.dataset, { text: "large", contrast: "high" });
+
+    settings.setLargeText(false);
+    settings.applyPreferences(element);
+    assert.deepEqual(element.dataset, { contrast: "high" });
+    // Звук і тема не зачеплені новими ключами.
+    assert.equal(settings.isSoundEnabled(), true);
+  } finally {
+    if (previous === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = previous;
+  }
 });

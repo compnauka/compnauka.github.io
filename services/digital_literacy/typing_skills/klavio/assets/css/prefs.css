@@ -1,0 +1,167 @@
+/* ================================================================
+   Клавіо — налаштування робочого місця: кнопка «Aa», великий текст
+   і високий контраст. Підключається останнім на всіх сторінках Клавіо.
+   Атрибути data-text і data-contrast ставить prefs-init.js / prefs.js.
+   ================================================================ */
+
+/* ---- Кнопка «Aa» і меню ----------------------------------------- */
+.a11y-menu { position: relative; }
+
+.a11y-toggle {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: 850 .95rem/1 var(--font-heading);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.a11y-toggle:hover,
+.a11y-toggle[aria-expanded="true"] { background: var(--color-primary-soft); color: var(--color-primary-ink); }
+
+.a11y-panel {
+  position: absolute;
+  z-index: 300;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  width: 250px;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.a11y-panel[hidden] { display: none; }
+
+.a11y-switch {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  cursor: pointer;
+  font: 750 .86rem var(--font-body);
+  text-align: left;
+}
+
+.a11y-switch:hover { background: var(--color-primary-soft); }
+
+.a11y-switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 22px;
+  border: 2px solid var(--color-text-muted);
+  border-radius: 999px;
+  background: transparent;
+}
+
+.a11y-switch__track::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  content: "";
+  transition: transform var(--transition-fast);
+}
+
+.a11y-switch[aria-checked="true"] .a11y-switch__track { border-color: var(--color-primary-strong); background: var(--color-primary-strong); }
+.a11y-switch[aria-checked="true"] .a11y-switch__track::after { background: #fff; transform: translateX(16px); }
+
+@media (max-width: 420px) {
+  .a11y-panel { position: fixed; top: 76px; right: 10px; left: 10px; width: auto; }
+}
+
+/* ---- Великий текст ------------------------------------------------
+   Коренем масштабуємо всі розміри в rem (+20%). Клавіатура задана в px і не росте,
+   а написи на клавішах повертаємо до звичайного розміру. */
+html[data-text="large"] { --text-scale: 1.2; font-size: 120%; }
+
+html[data-text="large"] .key-legend--primary { font-size: .77rem; }
+html[data-text="large"] .key-legend--secondary { font-size: .52rem; }
+html[data-text="large"] .key-legend--single { font-size: .55rem; }
+html[data-text="large"] .lesson-keyboard .key-legend--primary { font-size: calc(.77rem * max(var(--key-scale, 1), .72)); }
+html[data-text="large"] .lesson-keyboard .key-legend--secondary { font-size: calc(.52rem * max(var(--key-scale, 1), .72)); }
+html[data-text="large"] .lesson-keyboard .key-legend--single { font-size: calc(.55rem * max(var(--key-scale, 1), .72)); }
+
+/* ---- Високий контраст ------------------------------------------- */
+html[data-contrast="high"]:not([data-theme="dark"]) {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-soft: #eef2f7;
+  --color-text: #000000;
+  --color-text-muted: #374151;
+  --color-border: #1f2937;
+  --color-border-strong: #000000;
+  --color-primary: #1d4ed8;
+  --color-primary-strong: #1e40af;
+  --color-primary-ink: #1e3a8a;
+  --color-start: #0f766e;
+  --color-lessons: #6d28d9;
+  --color-words: #b45309;
+  --color-sprint: #be123c;
+  --color-start-ink: #065f46;
+  --color-lessons-ink: #5b21b6;
+  --color-words-ink: #7c2d12;
+  --color-sprint-ink: #9f1239;
+}
+
+html[data-theme="dark"][data-contrast="high"] {
+  --color-bg: #000000;
+  --color-surface: #0b0f19;
+  --color-surface-raised: #111827;
+  --color-surface-soft: #1a2233;
+  --color-text: #ffffff;
+  --color-text-muted: #e5e7eb;
+  --color-border: #ffffff;
+  --color-border-strong: #ffffff;
+  --color-sprint-ink: #fda4af;
+  --color-sprint: #fda4af;
+}
+
+/* Чіткі рамки 2px, товстий фокус. */
+html[data-contrast="high"] :is(.trainer-panel, .metric-card, .button, .difficulty-control, .segmented, .lesson-text,
+  .lesson-intro, .layout-warning, .combo-hint, .a11y-panel, .keyboard-key, .device-keyboard, select) {
+  border-width: 2px;
+}
+
+html[data-contrast="high"] .keyboard-key { border-bottom-width: 4px; }
+
+html[data-contrast="high"] :is(a, button, select, input, [tabindex]):focus-visible {
+  outline: 4px solid var(--color-text) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 7px var(--color-bg) !important;
+}
+
+/* Приглушені символи лишаються читабельними, а помилку видно й без кольору: хвиляста лінія товща. */
+html[data-contrast="high"] .lesson-char { opacity: 1; }
+html[data-contrast="high"] .lesson-char.is-done { color: var(--color-text-muted); opacity: 1; }
+html[data-contrast="high"] .lesson-char.is-mistake { text-decoration-thickness: 3px; font-weight: 900; }
+html[data-contrast="high"] .keyboard-key.is-unavailable { opacity: .55; }
+html[data-contrast="high"] .key-legend { color: var(--color-text); }
+html[data-contrast="high"] .keyboard-key--muted .key-legend,
+html[data-contrast="high"] .key-legend--secondary { color: var(--color-text-muted); }
+html[data-contrast="high"] .hand-image { opacity: .9; }
+
+/* «Уроки», великий текст: у тулбарі не вистачає місця, тож назва уроку (вона є й у списку)
+   ховається, а кнопки рівня підказок не стискаються. */
+@media (min-width: 1201px) {
+  html[data-text="large"] .lesson-toolbar { grid-template-columns: minmax(200px, 1fr) minmax(300px, 1.1fr) auto auto; }
+  html[data-text="large"] .lesson-identity { display: none; }
+}

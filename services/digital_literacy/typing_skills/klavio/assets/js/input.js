@@ -94,6 +94,50 @@
     return "wrong";
   }
 
+  function capsLockOn(event) {
+    return typeof event.getModifierState === "function" && event.getModifierState("CapsLock") === true;
+  }
+
+  // Конкретна підказка після помилки. Повертає { kind, message }:
+  // kind "layout" — не та розкладка (текст показує окреме попередження),
+  // "case" — помилка регістру, "wrong" — інший символ.
+  // layouts необов'язковий: з ним підказка називає потрібний Shift.
+  function errorHint(expected, event, layouts) {
+    const kind = issue(expected, event);
+    if (kind === "layout") return { kind, message: "" };
+
+    if (kind === "case") {
+      const wanted = normalizeCharacter(expected);
+      const needsUpper = wanted !== wanted.toLocaleLowerCase("uk-UA");
+      const caps = capsLockOn(event);
+
+      if (!needsUpper) {
+        return {
+          kind,
+          message: caps
+            ? "Увімкнено Caps Lock — натисни його, щоб друкувати малими літерами"
+            : "Тут мала літера — без Shift"
+        };
+      }
+      if (caps) return { kind, message: "Увімкнено Caps Lock — вимкни його й утримуй Shift" };
+
+      const combo = layouts && typeof layouts.comboHintForCharacter === "function" ? layouts.comboHintForCharacter(wanted) : "";
+      if (combo.indexOf("Ctrl") !== -1) return { kind, message: combo };
+
+      const hints = layouts && typeof layouts.hintsForCharacter === "function" ? layouts.hintsForCharacter(wanted) : [];
+      const shift = hints[1];
+      const side = shift && shift.hand === "right" ? "правий" : shift && shift.hand === "left" ? "лівий" : "";
+      return {
+        kind,
+        message: side
+          ? "Тут велика літера: утримуй " + side + " Shift (мізинцем іншої руки)"
+          : "Тут велика літера: утримуй Shift мізинцем іншої руки"
+      };
+    }
+
+    return { kind, message: "Потрібно: " + describeCharacter(normalizeCharacter(expected)) };
+  }
+
   function targetCodes(target, layouts) {
     if (!target) return [];
     if (Array.isArray(target.codes)) return target.codes;
@@ -137,6 +181,7 @@
     isTextAttempt,
     matchesCharacter,
     issue,
+    errorHint,
     isTargetAttempt,
     matchesTarget
   };
