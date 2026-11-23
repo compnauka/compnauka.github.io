@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <title>Друкарик | Текстовий редактор для дітей</title>
     <meta name="description"
         content="Друкарик — яскравий та безпечний онлайн-текстовий редактор для дітей. Допомагає малечі вчитися друкувати, створювати історії та розвивати творчість у зручній ігровій формі." />
@@ -69,7 +69,7 @@
     class="bg-neo-yellow dark:bg-dark-bg flex flex-col selection:bg-neo-purple selection:text-white transition-colors duration-300">
 
     <!-- HEADER -->
-    <header
+    <header id="app-header"
         class="sticky top-0 flex-none bg-neo-yellow dark:bg-dark-card border-b-4 border-black p-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-4 select-none">
             <div
@@ -91,11 +91,11 @@
                 <i class="fas fa-trash-alt text-lg sm:text-xl"></i>
             </button>
 
-            <label class="neo-btn bg-orange-400 text-black w-12 h-12 sm:w-14 sm:h-14 cursor-pointer" title="Відкрити"
+            <button type="button" onclick="document.getElementById('file-input').click()" class="neo-btn bg-orange-400 text-black w-12 h-12 sm:w-14 sm:h-14 cursor-pointer" title="Відкрити"
                 aria-label="Відкрити файл">
                 <i class="fas fa-folder-open text-lg sm:text-xl"></i>
-                <input id="file-input" type="file" accept=".txt,.html" class="hidden" />
-            </label>
+            </button>
+            <input id="file-input" type="file" accept=".txt,.html" class="hidden" />
 
             <!-- FIX #8: підказка Ctrl+S у title -->
             <button onmousedown="event.preventDefault()" onclick="App.askSave()"
@@ -108,7 +108,7 @@
     </header>
 
     <!-- TOOLS TOOLBAR -->
-    <div
+    <div id="format-toolbar" role="group" aria-label="Форматування тексту"
         class="sticky top-[76px] sm:top-[84px] flex-none bg-neo-purple border-b-4 border-black p-2 overflow-x-auto no-scrollbar z-40">
         <div class="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3 justify-center min-w-max px-2">
 
@@ -155,7 +155,7 @@
     </div>
 
     <!-- EMOJI TOOLBAR -->
-    <div
+    <div id="emoji-toolbar"
         class="sticky top-[148px] sm:top-[160px] flex-none bg-teal-300 dark:bg-gray-800 border-b-4 border-black p-2 z-40">
         <div
             class="max-w-4xl mx-auto flex gap-3 justify-center items-center overflow-x-auto overflow-y-visible no-scrollbar py-1 px-2">
@@ -167,25 +167,24 @@
     </div>
 
     <!-- EDITOR AREA -->
-    <main class="flex-grow p-4 sm:p-8 flex flex-col bg-neo-yellow/10 dark:bg-dark-bg">
+    <main id="editor-area" class="flex-grow p-4 sm:p-8 flex flex-col bg-neo-yellow/10 dark:bg-dark-bg">
         <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col">
-            <div
+            <div id="editor-shell"
                 class="flex-grow bg-white dark:bg-dark-card border-4 border-black shadow-neo-lg rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col">
+                <div class="editor-caption">
+                    <button id="editor-focus" type="button" onclick="Editor.restoreSelectionSafe()" aria-controls="editor">
+                        <i class="fas fa-hand-pointer" aria-hidden="true"></i>
+                        <span id="editor-focus-text">Натисни тут, щоб друкувати</span>
+                    </button>
+                    <span class="word-counter"><span id="word-count">0</span> слів</span>
+                </div>
                 <div id="editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true"
-                    aria-label="Поле для написання" data-placeholder="Почни писати тут свою неймовірну історію..."
+                    aria-label="Поле для написання" aria-describedby="editor-focus-text" data-placeholder="Натисни на поле й почни свою історію…"
                     class="flex-grow p-6 sm:p-14 outline-none text-2xl sm:text-4xl leading-relaxed font-bold text-neo-dark dark:text-white min-h-[400px]">
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- STATUS BAR -->
-    <div class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40">
-        <div class="bg-white dark:bg-dark-card border-4 border-black px-4 py-2 sm:px-6 sm:py-3 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl shadow-neo dark:text-white"
-            aria-live="polite" aria-atomic="true">
-            <span id="word-count">0</span> СЛІВ
-        </div>
-    </div>
 
     <!-- TOASTS -->
     <div id="toasts"

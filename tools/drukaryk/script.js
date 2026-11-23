@@ -42,11 +42,11 @@ function shuffleArray(arr) {
 // ─────────────────────────────────────────────
 const Sanitizer = {
     PURIFY_CFG: {
-        ALLOWED_TAGS: ['div', 'p', 'br', 'span', 'b', 'i', 'u', 'font'],
+        ALLOWED_TAGS: ['div', 'p', 'br', 'span', 'b', 'strong', 'i', 'em', 'u', 'font'],
         ALLOWED_ATTR: ['style', 'color', 'size', 'face', 'align'],
         KEEP_CONTENT: true
     },
-    STYLE_WHITELIST: new Set(['color', 'font-size', 'font-weight', 'font-style', 'text-decoration', 'text-align']),
+    STYLE_WHITELIST: new Set(['color', 'font-size', 'font-weight', 'font-style', 'text-decoration', 'text-decoration-line', 'text-align']),
 
     sanitize(html) {
         const clean = DOMPurify.sanitize(String(html || ''), this.PURIFY_CFG);
@@ -87,6 +87,7 @@ const Sanitizer = {
     _normalizeFontNodes(root) {
         root.querySelectorAll('font').forEach(f => {
             const span = document.createElement('span');
+            span.style.cssText = f.style.cssText;
             const color = f.getAttribute('color');
             const size = f.getAttribute('size');
 
@@ -120,7 +121,7 @@ const Editor = {
         // CSS-стилі для execCommand (якщо браузер підтримує)
         try { document.execCommand('styleWithCSS', false, true); } catch (_) { }
 
-        const capture = () => this.captureSelection();
+        const capture = () => { this.captureSelection(); this.updateActiveStates(); };
         ['mouseup', 'keyup', 'touchend'].forEach(ev => this.el.addEventListener(ev, capture));
 
         this.el.addEventListener('input', () => {
@@ -131,28 +132,24 @@ const Editor = {
             this.captureSelection();
         });
 
-        this.el.addEventListener('focus', () => this.updatePlaceholderState());
-        this.el.addEventListener('blur',  () => this.updatePlaceholderState());
+        this.el.addEventListener('focus', () => this.updateFocusState());
+        this.el.addEventListener('blur', () => { this.captureSelection(); this.updateFocusState(); });
+        this.updateFocusState();
 
         // ліміт символів + throttle-toast
-        this.el.addEventListener('keydown', e => {
-            const nav = [
-                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
-                'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'
-            ];
-            const len = (this.el.textContent || '').length;
-
-            if (len >= Config.maxChars && !nav.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+        this.el.addEventListener('beforeinput', e => {
+            if (!e.inputType.startsWith('insert') || e.inputType === 'insertFromPaste' || e.isComposing) return;
+            const added = e.data || (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak' ? '\n' : '');
+            if (!this.canInsert(added)) {
                 e.preventDefault();
-                if (!this._limitToastShown) {
-                    this._limitToastShown = true;
-                    App.toast('Ого! Ти написав забагато!', 'warning');
-                    setTimeout(() => { this._limitToastShown = false; }, 3000);
-                }
+                this.showLimitHint();
             }
         });
 
-        document.addEventListener('selectionchange', () => this.updateActiveStates());
+        document.addEventListener('selectionchange', () => {
+            this.captureSelection();
+            this.updateActiveStates();
+        });
 
         this.el.addEventListener('paste', e => {
             e.preventDefault();
@@ -160,14 +157,41 @@ const Editor = {
             if (!text) return;
 
             const len = (this.el.textContent || '').length;
-            const allowed = Config.maxChars - len;
+            const allowed = Math.max(0, Config.maxChars - len + this.selectedLength());
             if (allowed <= 0) { App.toast('Ого! Ти написав забагато!', 'warning'); return; }
 
             document.execCommand('insertText', false, text.slice(0, allowed));
+            if (text.length > allowed) this.showLimitHint();
+            this.updatePlaceholderState();
             this.captureSelection();
             App.updateWordCount();
             App.saveToLocalDebounced();
         });
+    },
+
+    updateFocusState() {
+        const active = document.activeElement === this.el;
+        document.getElementById('editor-shell').classList.toggle('is-focused', active);
+        document.getElementById('editor-focus-text').textContent = active
+            ? 'Можна друкувати' : 'Натисни тут, щоб друкувати';
+        this.el.dataset.placeholder = active ? 'Почни свою історію…' : 'Натисни на поле й почни свою історію…';
+        this.updatePlaceholderState();
+    },
+
+    selectedLength() {
+        const sel = window.getSelection();
+        return sel?.rangeCount && this._rangeInsideEditor(sel.getRangeAt(0)) ? sel.toString().length : 0;
+    },
+
+    canInsert(text) {
+        return (this.el.textContent || '').length - this.selectedLength() + text.length <= Config.maxChars;
+    },
+
+    showLimitHint() {
+        if (this._limitToastShown) return;
+        this._limitToastShown = true;
+        App.toast('Місце закінчилося. Видали частину тексту або збережи історію.', 'warning');
+        setTimeout(() => { this._limitToastShown = false; }, 3000);
     },
 
     updatePlaceholderState() {
@@ -194,9 +218,13 @@ const Editor = {
     },
 
     restoreSelectionSafe() {
+        const current = window.getSelection();
+        const keepCurrent = current?.rangeCount && this._rangeInsideEditor(current.getRangeAt(0));
         this.el.focus();
         const sel = window.getSelection();
         if (!sel) return;
+        // Re-adding a collapsed range discards the browser's pending typing styles.
+        if (keepCurrent) { this.captureSelection(); return; }
 
         if (this.lastRange) {
             const host = this.lastRange.commonAncestorContainer.nodeType === 1
@@ -234,54 +262,6 @@ const Editor = {
         return true;
     },
 
-    /** Окрема перевірка — потрібна тільки там де виділення справді обов'язкове (колір) */
-    requireSelectionOrHint() {
-        if (!this.requireFocusOrHint()) return false;
-        const sel = window.getSelection();
-        if (sel.isCollapsed) { App.toast('Спочатку виділи слово 😊', 'info'); return false; }
-        return true;
-    },
-
-    // ─── selection markers (ZWSP) ────────────
-    withSelectionMarkers(fn) {
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount) return fn();
-
-        const range = sel.getRangeAt(0);
-        if (!this._rangeInsideEditor(range)) return fn();
-
-        const start = document.createElement('span');
-        const end   = document.createElement('span');
-        start.setAttribute('data-sel', 'start');
-        end.setAttribute('data-sel', 'end');
-        start.style.cssText = end.style.cssText =
-            'display:inline-block;width:0;height:0;overflow:hidden;line-height:0;';
-        start.appendChild(document.createTextNode('\u200B'));
-        end.appendChild(document.createTextNode('\u200B'));
-
-        const rEnd   = range.cloneRange(); rEnd.collapse(false);   rEnd.insertNode(end);
-        const rStart = range.cloneRange(); rStart.collapse(true);  rStart.insertNode(start);
-
-        const between = document.createRange();
-        between.setStartAfter(start);
-        between.setEndBefore(end);
-        sel.removeAllRanges();
-        sel.addRange(between);
-
-        try {
-            fn();
-        } finally {
-            const restored = document.createRange();
-            restored.setStartAfter(start);
-            restored.setEndBefore(end);
-            sel.removeAllRanges();
-            sel.addRange(restored);
-            this.lastRange = restored.cloneRange();
-            start.remove();
-            end.remove();
-        }
-    },
-
     // ─── commands ────────────────────────────
 
     exec(cmd, val = null) {
@@ -289,6 +269,8 @@ const Editor = {
             this.el.focus();
             document.execCommand(cmd, false, null);
             this.updateActiveStates();
+            this.updatePlaceholderState();
+            App.updateWordCount();
             App.saveToLocalDebounced();
             this.captureSelection();
             return;
@@ -303,15 +285,10 @@ const Editor = {
             // FIX #2: дозволяємо без виділення — toggle на collapsed cursor
             if (!this.requireFocusOrHint()) return;
 
-            if (sel.isCollapsed) {
-                // просто перемикаємо стан — наступний текст буде відформатований
-                document.execCommand(cmd, false, val);
-            } else {
-                this.withSelectionMarkers(() => document.execCommand(cmd, false, val));
-            }
+            document.execCommand(cmd, false, val);
         } else if (['foreColor', 'fontSize'].includes(cmd)) {
-            if (!this.requireSelectionOrHint()) return;
-            this.withSelectionMarkers(() => document.execCommand(cmd, false, val));
+            if (!this.requireFocusOrHint()) return;
+            document.execCommand(cmd, false, val);
         } else {
             if (!sel.rangeCount || !this._rangeInsideEditor(sel.getRangeAt(0))) {
                 App.toast('Клікни в поле тексту 😊', 'info');
@@ -322,6 +299,7 @@ const Editor = {
         }
 
         this.updateActiveStates();
+        this.captureSelection();
         App.saveToLocalDebounced();
     },
 
@@ -333,16 +311,9 @@ const Editor = {
 
         if (!this.requireFocusOrHint()) return;
 
-        if (sel.isCollapsed) {
-            // FIX #2: без виділення — встановлюємо розмір для нового тексту
-            document.execCommand('fontSize', false, size);
-            this.normalizeFonts();
-        } else {
-            this.withSelectionMarkers(() => {
-                document.execCommand('fontSize', false, size);
-                this.normalizeFonts();
-            });
-        }
+        // Keep the live DOM under the browser's editing engine so undo and the caret survive.
+        document.execCommand('fontSize', false, size);
+        this.captureSelection();
 
         this.updateActiveStates();
         App.saveToLocalDebounced();
@@ -357,12 +328,14 @@ const Editor = {
 
     insertEmoji(emoji) {
         this.restoreSelectionSafe();
+        if (!this.canInsert(emoji)) { this.showLimitHint(); return; }
         const sel = window.getSelection();
         if (!sel || !sel.rangeCount || !this._rangeInsideEditor(sel.getRangeAt(0))) {
             App.toast('Клікни в поле тексту 😊', 'info');
             return;
         }
         document.execCommand('insertText', false, emoji);
+        this.updatePlaceholderState();
         this.captureSelection();
         App.updateWordCount();
         App.saveToLocalDebounced();
@@ -379,13 +352,21 @@ const Editor = {
 
         ['bold', 'italic', 'underline'].forEach(cmd => {
             const btn = document.getElementById(`cmd-${cmd}`);
-            if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+            if (btn) {
+                const active = document.queryCommandState(cmd);
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-pressed', String(active));
+            }
         });
 
         const currentSize = document.queryCommandValue('fontSize');
         ['3', '5', '7'].forEach(s => {
             const btn = document.getElementById(`sz-${s}`);
-            if (btn) btn.classList.toggle('active', String(currentSize) === s);
+            if (btn) {
+                const active = String(currentSize) === s;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-pressed', String(active));
+            }
         });
 
         // FIX #7: оновлюємо активний swatch кольору
@@ -395,7 +376,9 @@ const Editor = {
             if (hex) {
                 const palette = document.getElementById('palette');
                 palette && palette.querySelectorAll('.color-swatch').forEach(b => {
-                    b.classList.toggle('active', b.dataset.hex.toLowerCase() === hex.toLowerCase());
+                    const active = b.dataset.hex.toLowerCase() === hex.toLowerCase();
+                    b.classList.toggle('active', active);
+                    b.setAttribute('aria-pressed', String(active));
                 });
             }
         }
@@ -426,13 +409,11 @@ const Editor = {
             btn.dataset.hex = color.hex;
             btn.title = color.name;
             btn.setAttribute('aria-label', `Колір: ${color.name}`);
+            btn.setAttribute('aria-pressed', String(idx === 0));
 
             btn.onmousedown = e => e.preventDefault();
             btn.onclick = () => {
-                this.restoreSelectionSafe();
-                if (!this.requireSelectionOrHint()) return;
-
-                this.withSelectionMarkers(() => document.execCommand('foreColor', false, color.hex));
+                this.exec('foreColor', color.hex);
 
                 palette.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -479,16 +460,38 @@ const App = {
         Editor.init();
         this.loadFromLocal();
         this.updateWordCount();
+        this.bindViewport();
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') this.saveToLocal();
+        });
+        window.addEventListener('pagehide', () => this.saveToLocal());
 
         window.addEventListener('keydown', e => {
-            if (e.key === 'Escape') this.hideModal();
+            const modal = document.getElementById('modal');
+            const modalOpen = modal.getAttribute('aria-hidden') === 'false';
+            if (e.key === 'Escape' && modalOpen) { e.preventDefault(); this.hideModal(); }
+            if (e.key === 'Tab' && modalOpen) {
+                const buttons = [...modal.querySelectorAll('button')];
+                const first = buttons[0], last = buttons[buttons.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
 
             // FIX #8: Ctrl+S / Cmd+S — швидке збереження
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+            if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyS' || e.key.toLowerCase() === 's')) {
                 e.preventDefault();
-                this.askSave();
+                if (!modalOpen) this.askSave();
             }
         });
+    },
+
+    bindViewport() {
+        const resize = () => {
+            document.documentElement.style.setProperty('--app-height', `${Math.round(window.visualViewport?.height || window.innerHeight)}px`);
+        };
+        window.visualViewport?.addEventListener('resize', resize);
+        window.addEventListener('resize', resize);
+        resize();
     },
 
     bindFileInput() {
@@ -527,17 +530,19 @@ const App = {
 
     saveToLocalDebounced() {
         clearTimeout(this._saveTimer);
-        this._saveTimer = setTimeout(() => {
-            const raw  = Editor.el.innerHTML;
-            const safe = Sanitizer.sanitize(raw);
+        this._saveTimer = setTimeout(() => this.saveToLocal(), 700);
+    },
+
+    saveToLocal() {
+        clearTimeout(this._saveTimer);
+        try {
+            const safe = Sanitizer.sanitize(Editor.el.innerHTML);
             if (safe === this._lastSaved) return;
+            localStorage.setItem(Config.storageKey, safe);
             this._lastSaved = safe;
-            try {
-                localStorage.setItem(Config.storageKey, safe);
-            } catch (_) {
-                App.toast('Не вдалось зберегти автоматично', 'warning');
-            }
-        }, 700);
+        } catch (_) {
+            this.toast('Не вдалось зберегти автоматично', 'warning');
+        }
     },
 
     loadFromLocal() {
@@ -545,6 +550,7 @@ const App = {
         try { saved = localStorage.getItem(Config.storageKey); } catch (_) { saved = null; }
         if (saved) {
             Editor.el.innerHTML = Sanitizer.sanitize(saved);
+            this._lastSaved = Editor.el.innerHTML;
             Editor.normalizeFonts();
             this.updateWordCount();
         }
@@ -580,35 +586,55 @@ const App = {
             input.value = '';
             return;
         }
+        if (!/\.(txt|html)$/i.test(file.name)) {
+            this.toast('Обери файл TXT або HTML', 'error');
+            input.value = '';
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = e => {
             try {
                 let content = String(e.target.result || '');
 
+                const draft = document.createElement('div');
                 if (file.name.toLowerCase().endsWith('.html')) {
                     const doc = new DOMParser().parseFromString(content, 'text/html');
                     content = doc.getElementById('exported-content')?.innerHTML
                         || doc.body?.innerHTML
                         || content;
-                    Editor.el.innerHTML = Sanitizer.sanitize(content);
+                    draft.innerHTML = Sanitizer.sanitize(content);
                 } else {
-                    Editor.el.innerText = content;
+                    draft.innerText = content;
                 }
-
-                Editor.normalizeFonts();
-                Editor.lastRange = null;
-                Editor.updatePlaceholderState();
-                this.updateWordCount();
-                this.saveToLocalDebounced();
-                this.toast('Відкрито!', 'success');
+                if ((draft.textContent || '').length > Config.maxChars) {
+                    this.toast(`У файлі забагато тексту (максимум ${Config.maxChars} символів)`, 'warning');
+                    input.value = '';
+                    return;
+                }
+                const apply = () => {
+                    Editor.el.innerHTML = draft.innerHTML;
+                    Editor.lastRange = null;
+                    Editor.updatePlaceholderState();
+                    this.updateWordCount();
+                    this.saveToLocalDebounced();
+                    this.toast('Відкрито!', 'success');
+                    input.value = '';
+                    Editor.el.focus();
+                };
                 input.value = '';
-                Editor.el.focus();
+                if ((Editor.el.innerText || '').trim()) {
+                    this.showModal('Відкрити іншу історію?', 'Новий файл замінить текст у полі. Збережи поточну історію, якщо хочеш її залишити.', [
+                        { text: 'ВІДКРИТИ ФАЙЛ', class: 'bg-neo-blue text-white py-4', action: apply },
+                        { text: 'СКАСУВАТИ', class: 'bg-gray-100 py-3', action: () => {} }
+                    ]);
+                } else apply();
             } catch (_) {
                 this.toast('Помилка файлу', 'error');
                 input.value = '';
             }
         };
+        reader.onerror = () => { this.toast('Не вдалося прочитати файл', 'error'); input.value = ''; };
         reader.readAsText(file);
     },
 
@@ -652,11 +678,11 @@ const App = {
 
     getHtmlTemplate(html) {
         return `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Моя історія</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 body{background:#FFDE00;font-family:'Nunito',sans-serif;padding:20px;display:flex;justify-content:center;min-height:100vh;align-items:flex-start;background-image:radial-gradient(#000 8%, transparent 8%);background-size:24px 24px;margin:0}
 .card{background:white;border:4px solid #000;box-shadow:10px 10px 0 #000;border-radius:30px;padding:40px;max-width:900px;width:100%}
-.content{font-size:26px;line-height:1.6;font-weight:700;color:#1a1a1a;word-wrap:break-word}
+.content{font-size:26px;line-height:1.5;font-weight:400;color:#1a1a1a;word-wrap:break-word}
 .content b{font-weight:900}
 .footer{margin-top:30px;text-align:right;font-weight:900;opacity:0.35}
 </style></head><body><div class="card"><div id="exported-content" class="content">${html}</div><div class="footer">ДРУКАРИК</div></div></body></html>`;
@@ -666,6 +692,8 @@ body{background:#FFDE00;font-family:'Nunito',sans-serif;padding:20px;display:fle
 
     showModal(title, msg, actions) {
         const m = document.getElementById('modal');
+        if (m.getAttribute('aria-hidden') !== 'false') this._modalTrigger = document.activeElement;
+        Editor.captureSelection();
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-msg').textContent   = msg;
 
@@ -677,7 +705,7 @@ body{background:#FFDE00;font-family:'Nunito',sans-serif;padding:20px;display:fle
             b.type      = 'button';
             b.className = `neo-btn uppercase font-black text-base sm:text-lg ${a.class}`;
             b.textContent = a.text;
-            b.onclick = () => { a.action(); this.hideModal(); };
+            b.onclick = () => { this.hideModal(); a.action(); };
             container.appendChild(b);
         });
 
@@ -692,10 +720,12 @@ body{background:#FFDE00;font-family:'Nunito',sans-serif;padding:20px;display:fle
 
     hideModal() {
         const m = document.getElementById('modal');
+        if (m.getAttribute('aria-hidden') !== 'false') return;
         m.classList.add('hidden');
         m.classList.remove('flex');
         m.setAttribute('aria-hidden', 'true');
-        Editor.el.focus();
+        if (this._modalTrigger === Editor.el) Editor.restoreSelectionSafe();
+        else this._modalTrigger?.focus();
     },
 
     // ─── toast ───────────────────────────────
