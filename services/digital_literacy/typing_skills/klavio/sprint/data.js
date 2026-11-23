@@ -5,6 +5,47 @@
   if (root) root.KlavioSprintData = api;
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
+  // Англійські цілі: найчастіші літери, часті біграми й триграми, прості шкільні слова (A1–A2) без власних назв.
+  const englishTargets = {
+    keys: {
+      easy: Array.from("etaoinsrhl"),
+      medium: Array.from("abcdefghijklmnopqrstuvwxyz"),
+      hard: Array.from("abcdefghijklmnopqrstuvwxyz1234567890")
+    },
+    combos: {
+      easy: [
+        "th", "he", "in", "er", "an", "re", "on", "at", "en", "nd", "ti", "es",
+        "or", "te", "of", "ed", "is", "it", "al", "ar", "st", "to", "nt", "ng"
+      ],
+      medium: [
+        "the", "ing", "and", "ion", "ent", "for", "her", "ter", "est", "ere", "ver", "tio",
+        "con", "res", "ive", "ous", "ant", "you", "was", "one", "our", "out", "ate", "all"
+      ],
+      hard: [
+        "tion", "ight", "ough", "ould", "ment", "ness", "able", "ally", "ever", "ture", "ther", "with",
+        "that", "this", "they", "have", "from", "what", "when", "were", "your", "thro", "ship", "sion"
+      ]
+    },
+    words: {
+      easy: [
+        "cat", "dog", "sun", "book", "tree", "fish", "milk", "bird", "home", "door",
+        "hand", "star", "moon", "rain", "game", "ball", "cake", "road", "rice", "song",
+        "snow", "frog", "hat", "pen", "cup", "bus", "map", "egg", "box", "leg"
+      ],
+      medium: [
+        "school", "teacher", "pencil", "window", "garden", "family", "friend", "flower",
+        "yellow", "orange", "summer", "winter", "morning", "evening", "kitchen", "animal",
+        "button", "basket", "bridge", "candle", "doctor", "farmer", "pocket", "rabbit",
+        "planet", "jacket", "market", "monkey"
+      ],
+      hard: [
+        "keyboard", "computer", "homework", "yesterday", "beautiful", "favourite", "important",
+        "adventure", "vegetable", "chocolate", "dangerous", "elephant", "different", "together",
+        "question", "mountain", "umbrella", "breakfast", "neighbour", "holiday"
+      ]
+    }
+  };
+
   return {
     durationSeconds: 60,
     modes: [
@@ -26,6 +67,7 @@
       { id: "ltr", label: "Зліва" },
       { id: "rtl", label: "Справа" }
     ],
+    getTargets: function (language) { return language === "en" ? englishTargets : this.targets; },
     // Набори навмисно широкі: за 60 секунд встигає пролетіти до 30 цілей,
     // а гра видає їх чергою без повторів, доки набір не вичерпається.
     targets: {
@@ -41,7 +83,7 @@
         ],
         medium: [
           "про", "при", "ний", "ого", "ати", "ення", "ість", "ува", "ере", "ово", "вся", "ться",
-          "ити", "іль", "ань", "ове", "ста", "три", "між", "обі", "іка", "ель", "юва", "ерж"
+          "ити", "іль", "ань", "ове", "ста", "три", "між", "ові", "іка", "ель", "ють", "ент"
         ],
         hard: [
           "під", "над", "роз", "без", "ств", "ння", "зап", "ком", "швид", "клав", "трен", "друк",

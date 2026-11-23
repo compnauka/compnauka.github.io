@@ -79,8 +79,52 @@
     if (!panel.hidden && !wrap.contains(event.target)) close(false, false);
   });
 
+  // ---- Перемикач мови друку «УКР | ENG» ------------------------------
+  const languages = [
+    { id: "uk", text: "УКР", label: "Друкувати українською" },
+    { id: "en", text: "ENG", label: "Друкувати англійською" }
+  ];
+  const langGroup = document.createElement("div");
+  langGroup.className = "lang-switch";
+  langGroup.setAttribute("role", "group");
+  langGroup.setAttribute("aria-label", "Мова друку");
+
+  const langButtons = languages.map(function (item) {
+    const button = document.createElement("button");
+    button.className = "lang-switch__button";
+    button.type = "button";
+    button.dataset.lang = item.id;
+    button.textContent = item.text;
+    button.setAttribute("aria-label", item.label);
+    button.addEventListener("click", function () {
+      if (settings.getLanguage() === item.id) return;
+      settings.setLanguage(item.id);
+      refreshLanguage();
+      window.dispatchEvent(new CustomEvent("klavio:lang-change", { detail: { lang: item.id } }));
+    });
+    // Стрілки переходять між кнопками (як у групі перемикачів).
+    button.addEventListener("keydown", function (event) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const other = langButtons[langButtons.indexOf(button) === 0 ? 1 : 0];
+      other.focus();
+    });
+    langGroup.appendChild(button);
+    return button;
+  });
+
+  function refreshLanguage() {
+    const current = settings.getLanguage();
+    document.documentElement.dataset.langTyping = current;
+    langButtons.forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.lang === current));
+    });
+  }
+
   wrap.append(toggle, panel);
   const theme = document.getElementById("theme-toggle");
   actions.insertBefore(wrap, theme && theme.parentNode === actions ? theme : null);
+  actions.insertBefore(langGroup, wrap);
   refresh();
+  refreshLanguage();
 })();

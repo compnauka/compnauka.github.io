@@ -13,6 +13,11 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
+  // Геометрія ANSI-клавіатури 60%: кожен ряд рівно 15u (u — ширина звичайної клавіші).
+  // w — ширина в u (за замовчуванням 1); func — службова клавіша з дрібним підписом
+  // ліворуч-внизу; muted — приглушена заливка.
+  const ROW_UNITS = 15;
+
   const UKRAINIAN_ROWS = [
     [
       { code: "Backquote", label: "ʼ", secondary: "~", value: "'" },
@@ -28,10 +33,10 @@
       { code: "Digit0", label: "0", secondary: ")", value: "0" },
       { code: "Minus", label: "−", secondary: "_", muted: true },
       { code: "Equal", label: "=", secondary: "+", muted: true },
-      { code: "Backspace", label: "⌫", width: "wide" }
+      { code: "Backspace", label: "← Backspace", w: 2, func: true }
     ],
     [
-      { code: "Tab", label: "Tab", width: "medium", muted: true },
+      { code: "Tab", label: "Tab ↹", w: 1.5, func: true, muted: true },
       { code: "KeyQ", label: "Й", secondary: "Q", value: "й" },
       { code: "KeyW", label: "Ц", secondary: "W", value: "ц" },
       { code: "KeyE", label: "У", secondary: "E", value: "у" },
@@ -44,10 +49,10 @@
       { code: "KeyP", label: "З", secondary: "P", value: "з" },
       { code: "BracketLeft", label: "Х", secondary: "[", value: "х" },
       { code: "BracketRight", label: "Ї", secondary: "]", value: "ї" },
-      { code: "Backslash", label: "\\", muted: true }
+      { code: "Backslash", label: "\\", w: 1.5, muted: true }
     ],
     [
-      { code: "CapsLock", label: "Caps", width: "wide", muted: true },
+      { code: "CapsLock", label: "Caps Lock", w: 1.75, func: true, muted: true },
       { code: "KeyA", label: "Ф", secondary: "A", value: "ф" },
       { code: "KeyS", label: "І", secondary: "S", value: "і" },
       { code: "KeyD", label: "В", secondary: "D", value: "в" },
@@ -59,10 +64,10 @@
       { code: "KeyL", label: "Д", secondary: "L", value: "д" },
       { code: "Semicolon", label: "Ж", secondary: ";", value: "ж" },
       { code: "Quote", label: "Є", secondary: "'", value: "є" },
-      { code: "Enter", label: "Enter", width: "wide" }
+      { code: "Enter", label: "Enter ↵", w: 2.25, func: true }
     ],
     [
-      { code: "ShiftLeft", label: "Shift", width: "xwide" },
+      { code: "ShiftLeft", label: "⇧ Shift", w: 2.25, func: true },
       { code: "KeyZ", label: "Я", secondary: "Z", value: "я" },
       { code: "KeyX", label: "Ч", secondary: "X", value: "ч" },
       { code: "KeyC", label: "С", secondary: "C", value: "с" },
@@ -73,17 +78,94 @@
       { code: "Comma", label: "Б", secondary: "<", value: "б" },
       { code: "Period", label: "Ю", secondary: ">", value: "ю" },
       { code: "Slash", label: ".", secondary: ",", value: ".", shiftValue: "," },
-      { code: "ShiftRight", label: "Shift", width: "xwide" }
+      { code: "ShiftRight", label: "⇧ Shift", w: 2.75, func: true }
     ],
     [
-      { code: "ControlLeft", label: "Ctrl", width: "medium", muted: true },
-      { code: "MetaLeft", label: "Win", width: "medium", muted: true },
-      { code: "AltLeft", label: "Alt", width: "medium", muted: true },
-      { code: "Space", label: "Пробіл", width: "space", value: " " },
-      { code: "AltRight", label: "AltGr", width: "medium", muted: true },
-      { code: "ControlRight", label: "Ctrl", width: "medium", muted: true }
+      { code: "ControlLeft", label: "Ctrl", w: 1.25, func: true, muted: true },
+      { code: "MetaLeft", label: "Win", w: 1.25, func: true, muted: true },
+      { code: "AltLeft", label: "Alt", w: 1.25, func: true, muted: true },
+      { code: "Space", label: "Пробіл", w: 6.25, func: true, value: " " },
+      { code: "AltRight", label: "Alt Gr", w: 1.25, func: true, muted: true },
+      { code: "MetaRight", label: "Win", w: 1.25, func: true, muted: true },
+      { code: "ContextMenu", label: "☰", w: 1.25, func: true, muted: true },
+      { code: "ControlRight", label: "Ctrl", w: 1.25, func: true, muted: true }
     ]
   ];
+
+  // ---- Мова друку ---------------------------------------------------
+  const UK = "uk";
+  const EN = "en";
+  let activeLanguage = UK;
+
+  function normalizeLanguage(language) {
+    return language === EN ? EN : UK;
+  }
+
+  function resolve(language) {
+    return language === undefined || language === null ? activeLanguage : normalizeLanguage(language);
+  }
+
+  // Мову друку ставить prefs-init.js / settings.js на <html> ще до запуску скриптів.
+  if (typeof document !== "undefined" && document.documentElement && document.documentElement.dataset) {
+    activeLanguage = normalizeLanguage(document.documentElement.dataset.langTyping);
+  }
+
+  // US ANSI: ті самі коди клавіш і геометрія 15u, що й в українській. Основна (велика) легенда —
+  // латинська, дрібна — українська літера, як на двомовних клавіатурах. Для клавіш без
+  // української літери дрібний напис — символ із Shift. Рядок: [значення, значення із Shift, дрібний напис].
+  const EN_SYMBOLS = {
+    Backquote: ["`", "~"], Minus: ["-", "_"], Equal: ["=", "+"],
+    Digit1: ["1", "!"], Digit2: ["2", "@"], Digit3: ["3", "#"], Digit4: ["4", "$"], Digit5: ["5", "%"],
+    Digit6: ["6", "^"], Digit7: ["7", "&"], Digit8: ["8", "*"], Digit9: ["9", "("], Digit0: ["0", ")"],
+    BracketLeft: ["[", "{"], BracketRight: ["]", "}"], Backslash: ["\\", "|"],
+    Semicolon: [";", ":"], Quote: ["'", "\""], Comma: [",", "<"], Period: [".", ">"], Slash: ["/", "?"]
+  };
+
+  function englishKey(key) {
+    if (key.func || key.code === "Space") return key;
+    const copy = Object.assign({}, key);
+    const symbol = EN_SYMBOLS[key.code];
+
+    if (symbol) {
+      copy.label = symbol[0];
+      copy.value = symbol[0];
+      copy.shiftValue = symbol[1];
+      // Українська літера (Х, Ж, Б ...) дрібно; інакше — символ із Shift.
+      copy.secondary = /[А-ЯІЇЄҐ]/.test(key.label) ? key.label : symbol[1];
+      // У англійській мові всі ці клавіші можна друкувати, тож «приглушені» лише службові.
+      if (key.code === "Backquote" || key.code === "Minus" || key.code === "Equal" || key.code === "Backslash") copy.muted = true;
+      else delete copy.muted;
+      return copy;
+    }
+
+    // Літерна клавіша: латинська велика основна, українська дрібна.
+    copy.label = key.secondary;
+    copy.secondary = key.label;
+    copy.value = key.secondary.toLowerCase();
+    return copy;
+  }
+
+  const ENGLISH_ROWS = UKRAINIAN_ROWS.map(function (row) { return row.map(englishKey); });
+
+  function rowsFor(language) {
+    return resolve(language) === EN ? ENGLISH_ROWS : UKRAINIAN_ROWS;
+  }
+
+  function setLanguage(language) {
+    activeLanguage = normalizeLanguage(language);
+    return activeLanguage;
+  }
+
+  function getLanguage() {
+    return activeLanguage;
+  }
+
+  // Назва мови для підписів і підказок.
+  function layoutWarningText(language) {
+    return resolve(language) === EN
+      ? "Перемкни на англійську: Alt + Shift або Win + Пробіл"
+      : "Перемкни клавіатуру на українську розкладку";
+  }
 
   const FINGER_BY_CODE = {
     Backquote: ["left", "pinky", "мізинець"], Digit1: ["left", "pinky", "мізинець"],
@@ -119,17 +201,18 @@
     return typeof value === "string" ? value.toLocaleLowerCase("uk-UA") : "";
   }
 
-  function codesForTarget(target) {
+  function codesForTarget(target, language) {
+    const lang = resolve(language);
     if (Array.isArray(target.codes)) return target.codes;
     if (target.code) return [target.code];
 
     const normalized = normalize(target.value);
     // На шкільних Windows-комп’ютерах «ґ» вводиться як Ctrl+Alt+Г.
     // Тому основною ціллю є фізична клавіша Г (KeyU), а не Backslash.
-    if (normalized === "ґ") return ["KeyU"];
+    if (lang === UK && normalized === "ґ") return ["KeyU"];
     const matches = [];
 
-    UKRAINIAN_ROWS.forEach(function (row) {
+    rowsFor(lang).forEach(function (row) {
       row.forEach(function (key) {
         if (normalize(key.value) === normalized || normalize(key.shiftValue) === normalized) matches.push(key.code);
       });
@@ -138,23 +221,24 @@
     return matches;
   }
 
-  function requiresShift(value) {
+  function requiresShift(value, language) {
     if (typeof value !== "string" || value.length !== 1) return false;
+    const lang = resolve(language);
 
     let shifted = false;
-    UKRAINIAN_ROWS.forEach(function (row) {
+    rowsFor(lang).forEach(function (row) {
       row.forEach(function (key) {
         if (key.shiftValue === value) shifted = true;
       });
     });
 
     if (shifted) return true;
-    return /[А-ЯІЇЄҐ]/.test(value);
+    return lang === EN ? /[A-Z]/.test(value) : /[А-ЯІЇЄҐ]/.test(value);
   }
 
   // «Ґ» набирається комбінацією AltGr (Ctrl+Alt), а не однією клавішею.
-  function requiresAltGraph(value) {
-    return value === "ґ" || value === "Ґ";
+  function requiresAltGraph(value, language) {
+    return resolve(language) === UK && (value === "ґ" || value === "Ґ");
   }
 
   function fingerForCode(code) {
@@ -163,8 +247,9 @@
     return value ? { hand: value[0], finger: value[1], name: value[2], code } : null;
   }
 
-  function hintsForCharacter(value) {
-    const codes = codesForTarget({ value });
+  function hintsForCharacter(value, language) {
+    const lang = resolve(language);
+    const codes = codesForTarget({ value }, lang);
     const mainCode = codes[0] || null;
     const hints = [];
 
@@ -176,7 +261,7 @@
     const mainFinger = fingerForCode(mainCode);
     if (mainFinger) hints.push(mainFinger);
 
-    if (requiresShift(value) && mainFinger) {
+    if (requiresShift(value, lang) && mainFinger) {
       const shiftCode = mainFinger.hand === "left" ? "ShiftRight" : "ShiftLeft";
       hints.push(fingerForCode(shiftCode));
     }
@@ -185,12 +270,13 @@
   }
 
   // Клавіші-модифікатори, які треба підсвітити разом із основною.
-  function modifierCodesForCharacter(value) {
+  function modifierCodesForCharacter(value, language) {
+    const lang = resolve(language);
     const codes = [];
-    if (requiresAltGraph(value)) codes.push("ControlRight", "AltRight");
+    if (requiresAltGraph(value, lang)) codes.push("ControlRight", "AltRight");
 
-    if (requiresShift(value)) {
-      const mainFinger = fingerForCode(codesForTarget({ value })[0]);
+    if (requiresShift(value, lang)) {
+      const mainFinger = fingerForCode(codesForTarget({ value }, lang)[0]);
       codes.push(mainFinger && mainFinger.hand === "left" ? "ShiftRight" : "ShiftLeft");
     }
 
@@ -198,19 +284,27 @@
   }
 
   // Коротка підказка «як натиснути», якщо однієї клавіші замало.
-  function comboHintForCharacter(value) {
-    if (requiresAltGraph(value)) {
+  function comboHintForCharacter(value, language) {
+    const lang = resolve(language);
+    if (requiresAltGraph(value, lang)) {
       return value === "Ґ"
         ? "Утримуй Ctrl + Alt + Shift і натисни Г"
         : "Утримуй Ctrl + Alt і натисни Г";
     }
 
-    return requiresShift(value) ? "Утримуй Shift" : "";
+    return requiresShift(value, lang) ? "Утримуй Shift" : "";
   }
 
   function renderKeycap(element, definition) {
     element.textContent = "";
-    if (definition.secondary) {
+    if (definition.func) {
+      // Службова клавіша: дрібний підпис ліворуч-внизу, як на справжній клавіатурі.
+      const legend = document.createElement("span");
+      legend.className = "key-legend key-legend--func";
+      legend.textContent = definition.label;
+      element.classList.add("keyboard-key--func");
+      element.appendChild(legend);
+    } else if (definition.secondary) {
       const secondary = document.createElement("span");
       secondary.className = "key-legend key-legend--secondary";
       secondary.textContent = definition.secondary;
@@ -227,8 +321,22 @@
     }
   }
 
+  // Перемикач мови (prefs.js) сповіщає подією; layouts.js підключається раніше за модулі,
+  // тож його слухач спрацьовує першим і модулі вже бачать нову мову.
+  if (typeof window !== "undefined" && window.addEventListener) {
+    window.addEventListener("klavio:lang-change", function (event) {
+      activeLanguage = normalizeLanguage(event.detail && event.detail.lang);
+    });
+  }
+
   return {
     ukrainianRows: UKRAINIAN_ROWS,
+    englishRows: ENGLISH_ROWS,
+    rowsFor,
+    setLanguage,
+    getLanguage,
+    layoutWarningText,
+    rowUnits: ROW_UNITS,
     codesForTarget,
     requiresShift,
     requiresAltGraph,

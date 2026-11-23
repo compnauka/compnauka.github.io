@@ -1,0 +1,265 @@
+/* ================================================================
+   Клавіо — спільні стилі вправи: поле тексту, рядок повідомлень, долоні,
+   показники-чипи, назва модуля в тулбарі. Підключається в Уроках і Словах
+   (поле й долоні), а чипи та тулбар — у всіх модулях.
+   Колір модуля задає --module-color / --module-ink на панелі.
+   Класи lesson-* історично названі за «Уроками», але ними користується й «Слова».
+   ================================================================ */
+
+.k-brand { color: var(--module-ink, var(--color-primary-ink)); font: 850 .66rem/1 var(--font-heading); letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+
+/* Тулбар модуля: назва, вибір вправи, головна дія справа. */
+.k-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+}
+.k-toolbar__identity { display: grid; min-width: 96px; gap: 3px; }
+.k-toolbar__identity h1 { margin: 0; font-size: 1.1rem; white-space: nowrap; }
+.k-toolbar__spacer { flex: 1 1 0; }
+.k-toolbar .segmented button { min-height: 32px; }
+.k-field { display: grid; gap: 3px; color: var(--color-text-muted); font-size: .66rem; font-weight: 800; text-transform: uppercase; }
+.k-field select { height: 34px; max-width: 220px; padding: 0 30px 0 10px; border: 1px solid var(--color-border-strong); border-radius: 9px; background: var(--color-surface); color: var(--color-text); font: 750 .82rem var(--font-body); cursor: pointer; }
+.k-actions { display: flex; gap: 6px; }
+.k-restart { min-height: 34px; padding-inline: 12px; white-space: nowrap; }
+
+/* Показники — компактні «чипи» в рядку тулбара: значення й підпис поруч. */
+.k-metrics { grid-template-columns: repeat(3, auto); gap: 6px; }
+.k-metrics .metric-card { display: flex; align-items: baseline; gap: 5px; padding: 5px 9px; border-radius: 10px; }
+.k-metrics .metric-card__value { font-size: 1.02rem; }
+.k-metrics .metric-card__label { margin: 0; font-size: .62rem; }
+
+.lesson-stage { padding: 8px 14px 0; outline: none; text-align: center; }
+
+/* Тонка смужка прогресу під полем тексту. */
+.lesson-progress { height: 4px; margin-top: 5px; }
+.lesson-progress .progress-track__fill { background: linear-gradient(90deg, var(--module-color, var(--color-lessons)), var(--color-primary)); }
+
+/* Велике поле з усім текстом уроку: обсяг роботи видно одразу.
+   Висоту виставляє app.js (2–4 рядки за обсягом тексту); довший текст прокручується
+   так, щоб поточний рядок був видимим. Значення нижче — запасне, до запуску скрипта. */
+.lesson-text {
+  --lesson-line: 1.8em;
+  position: relative;
+  height: calc(4 * var(--lesson-line) + 36px);
+  padding: 12px 20px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: 650 calc(clamp(1.1rem, min(2.2vw, 3.8vh), 1.85rem) * var(--text-scale, 1))/var(--lesson-line) Consolas, "Courier New", monospace;
+  letter-spacing: .02em;
+  text-align: left;
+  scroll-behavior: smooth;
+}
+
+/* Слово — неподільний блок: рядок переноситься лише між словами. */
+.lesson-word { display: inline-block; white-space: pre; }
+
+.lesson-char { display: inline-block; border-radius: 4px; opacity: .78; }
+.lesson-char.is-done { color: var(--color-text-muted); opacity: .7; }
+
+/* Курсор малюємо тінню, а не рамкою, щоб ширина символу не змінювалась і текст не стрибав. */
+.lesson-char.is-current {
+  background: var(--color-lessons-soft);
+  box-shadow: 0 0 0 2px var(--color-lessons);
+  color: var(--color-lessons-ink);
+  opacity: 1;
+}
+
+/* Пробіл під курсором позначаємо рискою знизу. */
+.lesson-char.is-current.is-space {
+  background: linear-gradient(var(--color-lessons), var(--color-lessons)) center bottom 6px / 70% 3px no-repeat, var(--color-lessons-soft);
+}
+
+/* Символи, на яких була помилка, лишаються позначеними до кінця уроку. */
+.lesson-char.is-mistake {
+  color: var(--color-sprint-ink);
+  text-decoration: underline wavy var(--color-sprint);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+  opacity: 1;
+}
+.lesson-char.is-mistake.is-current { color: var(--color-sprint-ink); }
+.lesson-char.is-mistake-flash { animation: lesson-mistake .26s ease-out; }
+
+@keyframes lesson-mistake {
+  0%, 100% { transform: none; }
+  30% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-text { scroll-behavior: auto; }
+  .lesson-char.is-mistake-flash { animation: none; }
+  .finger-section.is-revealed { animation: none; }
+}
+
+.lesson-stage.is-error .lesson-text {
+  border-color: var(--color-sprint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-sprint) 13%, transparent);
+}
+
+/* Один рядок над клавіатурою: палець ліворуч, підказки й фідбек посередині, прогрес праворуч. */
+.lesson-message-row {
+  display: grid;
+  min-height: 28px;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.lesson-messages { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.lesson-progress-label { justify-self: end; color: var(--color-text-muted); font-size: .72rem; font-weight: 750; }
+
+/* У цьому рядку попередження не резервує місце, коли приховане, і не переноситься. */
+.lesson-messages { white-space: nowrap; }
+.lesson-messages .layout-warning { display: block; padding: 2px 9px; font-size: .78rem; }
+.lesson-messages .layout-warning[hidden] { display: none !important; }
+.layout-warning kbd {
+  padding: 0 5px;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--color-surface);
+  font: 800 .74rem var(--font-body);
+}
+
+.lesson-feedback { margin: 0; color: var(--color-text-muted); font-size: .82rem; font-weight: 750; }
+.lesson-feedback.is-success { color: var(--color-start-ink); }
+.lesson-feedback.is-error { color: var(--color-sprint-ink); }
+
+.combo-hint {
+  margin: 0;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, var(--color-lessons) 55%, var(--color-border));
+  border-radius: 8px;
+  background: var(--color-lessons-soft);
+  color: var(--color-lessons-ink);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.finger-section {
+  padding: 6px 10px 8px;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-lessons-soft) 28%, var(--color-surface));
+}
+
+.finger-section.is-hidden { display: none; }
+/* Підказка після помилок з'являється плавно, а не різко. */
+.finger-section.is-revealed { animation: hint-reveal .25s ease-out; }
+@keyframes hint-reveal { from { opacity: 0; } to { opacity: 1; } }
+/* Крайній випадок: клавіатура не вміщається навіть з мінімальними клавішами — ховаємо долоні. */
+.finger-section.is-compact .calibrated-hand { display: none; }
+
+/* Написи на ковпачках стискаються разом із клавішами (--key-scale виставляє app.js). */
+.lesson-keyboard { --key-scale: 1; }
+.lesson-keyboard .key-legend--primary { right: 5px; bottom: 4px; font-size: calc(.92rem * max(var(--key-scale), .72)); }
+.lesson-keyboard .key-legend--secondary { top: 3px; left: 5px; font-size: calc(.62rem * max(var(--key-scale), .72)); }
+.lesson-keyboard .key-legend--func { font-size: calc(.66rem * max(var(--key-scale), .72)); }
+.lesson-keyboard .key-legend--single { font-size: calc(.66rem * max(var(--key-scale), .72)); }
+.finger-section__title { margin: 0; color: var(--color-text-muted); font-size: .76rem; text-align: left; white-space: nowrap; }
+.finger-section__title strong { color: var(--module-ink, var(--color-lessons-ink)); }
+
+/* Долоні симетричні: однакові колонки й однакова відстань до клавіатури. */
+.typing-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.calibrated-hand {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hand-label {
+  margin-bottom: 3px;
+  color: var(--color-text-muted);
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.hand-visual { position: relative; width: 120px; height: 120px; }
+.hand-image { width: 100%; height: 100%; object-fit: contain; opacity: .68; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .22)); }
+.calibrated-hand--left .hand-image { transform: scaleX(-1); }
+html[data-theme="dark"] .hand-image { filter: invert(1) drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); opacity: .75; }
+
+/* Клавіатура всередині підказки не має власної рамки й фону. */
+.lesson-keyboard-wrap {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+}
+
+.finger-marker {
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  opacity: .22;
+  transition: opacity .14s, filter .14s, transform .14s;
+}
+
+.calibrated-hand--right .marker-index { left: 33.13%; top: 9.54%; width: 14%; height: 35%; }
+.calibrated-hand--right .marker-middle { left: 48.13%; top: 3.71%; width: 14%; height: 41%; }
+.calibrated-hand--right .marker-ring { left: 63.13%; top: 10.13%; width: 14%; height: 35%; }
+.calibrated-hand--right .marker-pinky { left: 77%; top: 22.29%; width: 14%; height: 31%; }
+.calibrated-hand--right .marker-thumb { left: 2.27%; top: 32.98%; width: 26%; height: 26%; transform: rotate(-34deg); }
+.calibrated-hand--left .marker-index { left: 53.13%; top: 10.13%; width: 14%; height: 35%; }
+.calibrated-hand--left .marker-middle { left: 38.13%; top: 4.13%; width: 14%; height: 41%; }
+.calibrated-hand--left .marker-ring { left: 22.54%; top: 8.86%; width: 14%; height: 35%; }
+.calibrated-hand--left .marker-pinky { left: 8%; top: 23.86%; width: 14%; height: 31%; }
+.calibrated-hand--left .marker-thumb { left: 71.43%; top: 33%; width: 26%; height: 26%; transform: rotate(34deg); }
+
+/* Ті самі кольори пальців, що й на клавіатурі. */
+.marker-pinky { background: rgba(225, 29, 99, .38); border-color: rgba(225, 29, 99, .78); color: #e11d63; }
+.marker-ring { background: rgba(124, 58, 237, .36); border-color: rgba(124, 58, 237, .78); color: #7c3aed; }
+.marker-middle { background: rgba(217, 119, 6, .38); border-color: rgba(217, 119, 6, .8); color: #d97706; }
+.marker-index { background: rgba(37, 99, 235, .36); border-color: rgba(37, 99, 235, .78); color: #2563eb; }
+.marker-thumb { background: rgba(13, 148, 136, .36); border-color: rgba(13, 148, 136, .78); color: #0d9488; }
+
+.finger-marker.is-active { opacity: .98; filter: drop-shadow(0 0 7px currentColor); transform: scale(1.07); }
+.calibrated-hand--right .marker-thumb.is-active { transform: rotate(-34deg) scale(1.07); }
+.calibrated-hand--left .marker-thumb.is-active { transform: rotate(34deg) scale(1.07); }
+
+
+/* Рядок слабких клавіш у підсумках. */
+.k-weak { margin: 10px 0 0; color: var(--module-ink, var(--color-primary-ink)); font-weight: 800; }
+
+@media (max-width: 1180px) {
+  .typing-guide { gap: 12px; }
+  .hand-visual { width: 112px; height: 112px; }
+}
+
+@media (max-width: 1050px) {
+  .hand-visual { width: 96px; height: 96px; }
+}
+
+@media (max-width: 860px) {
+  .typing-guide { overflow-x: auto; justify-content: flex-start; }
+  .calibrated-hand { display: none; }
+}
+
+@media (max-width: 680px) {
+  .lesson-message-row { grid-template-columns: 1fr auto; }
+  .lesson-messages { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; white-space: normal; }
+  .k-metrics { grid-template-columns: repeat(3, 1fr); }
+  .k-metrics .metric-card { flex-direction: column; align-items: center; gap: 0; padding: 4px 6px; }
+  .lesson-stage { padding-inline: 8px; }
+  .lesson-text { height: calc(4 * var(--lesson-line) + 24px); padding: 12px; font-size: 1.05rem; }
+}
+
+.k-toolbar .k-metrics { margin-left: auto; }

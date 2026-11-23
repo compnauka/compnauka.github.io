@@ -22,16 +22,19 @@
   gap: var(--key-gap);
 }
 
+/* Кожен ряд — рівно 15u, тож правий край спільний, а корпус прямокутний. */
 .keyboard-row {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--key-gap);
 }
 
 .keyboard-key {
   position: relative;
   display: grid;
-  width: var(--key-width);
+  /* --w — ширина в одиницях u (виставляє keyboard.js); проміжки всередині широкої
+     клавіші додаються, тож край клавіші збігається з краєм сусіднього ряду. */
+  width: calc(var(--w, 1) * (var(--key-width) + var(--key-gap)) - var(--key-gap));
   height: var(--key-height);
   flex: 0 0 auto;
   place-items: center;
@@ -46,11 +49,6 @@
   transition: transform var(--transition-fast), background-color var(--transition-fast),
     border-color var(--transition-fast), opacity var(--transition-fast);
 }
-
-.keyboard-key--medium { width: calc(var(--key-width) * 1.35); }
-.keyboard-key--wide { width: calc(var(--key-width) * 1.7); }
-.keyboard-key--xwide { width: calc(var(--key-width) * 2.1); }
-.keyboard-key--space { width: calc(var(--key-width) * 6.6); }
 
 /* Тактильні риски домашньої позиції: А (F) та О (J). */
 .keyboard-key[data-code="KeyF"]::after,
@@ -118,6 +116,17 @@ html[data-theme="dark"] .keyboard-key[data-finger="thumb"] { --finger-color: #5e
   white-space: nowrap;
 }
 
+/* Службові клавіші: дрібний підпис ліворуч-внизу, як на справжній клавіатурі. */
+.key-legend--func {
+  bottom: 5px;
+  left: 6px;
+  color: var(--color-text-muted);
+  font-size: clamp(.5rem, calc(var(--key-height) * .25), .66rem);
+  font-weight: 800;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
 /* ---- Стани ------------------------------------------------------ */
 .virtual-keyboard.has-hint .keyboard-key.is-target {
   z-index: 2;
@@ -128,6 +137,7 @@ html[data-theme="dark"] .keyboard-key[data-finger="thumb"] { --finger-color: #5e
   opacity: 1;
 }
 
+.virtual-keyboard.has-hint .keyboard-key.is-target .key-legend--func,
 .virtual-keyboard.has-hint .keyboard-key.is-target .key-legend--primary,
 .virtual-keyboard.has-hint .keyboard-key.is-target .key-legend--single {
   color: color-mix(in srgb, var(--color-words) 72%, var(--color-text));

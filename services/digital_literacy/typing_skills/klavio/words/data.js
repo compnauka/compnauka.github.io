@@ -58,10 +58,127 @@
     hard: words.filter(function (word) { return word.replace(/'/g, "").length >= 9; })
   };
 
+  // Англійські слова (A1–A2, без власних назв): easy ≤5 літер, medium 6–8, hard ≥9.
+  const englishWords = [
+    "cat", "dog", "sun", "book", "tree", "fish", "milk", "bird", "home", "door", "hand", "star", "moon", "rain", "game", "ball",
+    "cake", "road", "rice", "song", "snow", "frog", "hat", "pen", "cup", "bus", "map", "egg", "box", "leg", "red", "blue",
+    "green", "pink", "gold", "gray", "black", "white", "day", "night", "year", "week", "time", "life", "work", "play", "read",
+    "write", "walk", "run", "jump", "swim", "sing", "dance", "help", "love", "like", "want", "need", "make", "take", "give",
+    "find", "look", "come", "see", "say", "ask", "tell", "know", "think", "feel", "hear", "live", "stay", "wait", "open",
+    "close", "put", "get", "let", "try", "use", "eat", "drink", "sleep", "wake", "sit", "stand", "fall", "rise", "ride", "drive",
+    "fly", "cook", "wash", "clean", "paint", "draw", "cut", "tie", "push", "pull", "catch", "throw", "hold", "keep", "lose",
+    "win", "lost", "boy", "girl", "man", "woman", "baby", "kid", "mom", "dad", "son", "aunt", "uncle", "king", "queen", "farm",
+    "barn", "pond", "lake", "sea", "hill", "rock", "sand", "wind", "fire", "ice", "cold", "hot", "warm", "cool", "wet", "dry",
+    "soft", "hard", "loud", "quiet", "fast", "slow", "big", "small", "tall", "short", "long", "wide", "thin", "old", "new",
+    "young", "good", "bad", "nice", "kind", "fun", "sad", "glad", "happy", "angry", "busy", "free", "full", "empty", "dirty",
+    "near", "far", "high", "low", "top", "side", "back", "front", "left", "right", "down", "out", "off", "over", "under", "here",
+    "there", "now", "then", "soon", "late", "early", "today", "often", "never", "always", "every", "each", "some", "many",
+    "much", "more", "most", "few", "all", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "has",
+    "had", "flag", "half", "glass", "shall", "flash", "flask", "salad", "add", "quit", "quite", "quote", "equal", "square",
+    "zip", "zoo", "size", "lazy", "crazy", "puzzle", "prize", "jazz", "quiz", "maze", "gaze", "glaze", "dizzy", "mix", "fix",
+    "tax", "fox", "wax", "exit", "text", "taxi", "exam", "extra", "relax", "explore", "expert", "excuse", "example", "very",
+    "have", "river", "vase", "vest", "visit", "wall", "wish", "way", "with", "word", "world", "who", "toy", "yet", "wood",
+    "yellow", "hair", "kiss", "kite", "jeep", "jelly", "jet", "just", "jar", "jam", "joke", "juice", "key", "knee", "silk",
+    "skirt", "school", "teacher", "pencil", "window", "garden", "family", "friend", "flower", "orange", "purple", "summer",
+    "winter", "autumn", "spring", "morning", "evening", "kitchen", "animal", "button", "basket", "bridge", "candle", "doctor",
+    "farmer", "pocket", "rabbit", "planet", "jacket", "market", "monkey", "turtle", "spider", "insect", "forest", "island",
+    "desert", "valley", "ocean", "beach", "cloud", "storm", "thunder", "rainbow", "sunshine", "weather", "season", "holiday",
+    "picture", "story", "letter", "number", "answer", "lesson", "subject", "science", "history", "music", "sport", "player",
+    "winner", "ticket", "station", "airport", "hotel", "street", "city", "village", "country", "church", "castle", "tower",
+    "garage", "shop", "store", "bakery", "pizza", "bread", "butter", "cheese", "sugar", "honey", "cookie", "banana", "apple",
+    "lemon", "tomato", "potato", "carrot", "onion", "soup", "coffee", "dinner", "lunch", "supper", "chicken", "turkey", "tiger",
+    "lion", "zebra", "horse", "sheep", "goat", "mouse", "pigeon", "parrot", "dolphin", "whale", "shark", "bottle", "plate",
+    "spoon", "fork", "knife", "table", "chair", "sofa", "carpet", "mirror", "clock", "shirt", "shoes", "socks", "dress", "scarf",
+    "gloves", "helmet", "mother", "father", "sister", "brother", "cousin", "parent", "child", "people", "person", "police",
+    "pilot", "driver", "nurse", "dentist", "artist", "singer", "writer", "cooker", "camera", "phone", "radio", "laptop",
+    "screen", "printer", "paper", "eraser", "ruler", "marker", "crayon", "scissors", "bedroom", "bathroom", "hallway", "balcony",
+    "beautiful", "important", "different", "difficult", "favourite", "breakfast", "adventure", "vegetable", "chocolate",
+    "dangerous", "question", "wonderful", "afternoon", "classroom", "homework", "grandmother", "grandfather", "playground",
+    "basketball", "football", "birthday", "sandwich", "newspaper", "telephone", "television", "computer", "keyboard", "hospital",
+    "restaurant", "dictionary", "strawberry", "blueberry", "butterfly", "dinosaur", "crocodile", "kangaroo", "pineapple",
+    "bicycle", "swimming", "dancing", "running", "reading", "writing", "painting", "cooking", "shopping", "climbing", "walking",
+    "talking", "listening", "visiting", "travelling", "friendly", "careful", "careless", "powerful", "peaceful", "colourful",
+    "helpful", "hopeful", "thankful", "beautifully", "carefully", "quickly", "quietly", "slowly", "happily", "luckily",
+    "tomorrow", "yesterday", "weekend", "vacation", "something", "everything", "everyone", "everybody", "anything", "nothing",
+    "sometimes", "together", "another", "whatever", "education", "information", "imagination", "celebration", "decoration",
+    "invitation", "collection", "temperature", "experiment", "mathematics", "geography", "literature", "chemistry", "biology",
+    "discovery", "explorer", "scientist", "engineer", "musician", "magician", "electric", "electronic", "underwater",
+    "underground", "horizontal", "classmates", "timetable", "scoreboard", "blackboard", "whiteboard", "lunchtime", "playtime",
+    "sunflower", "watermelon", "grapefruit", "raspberry", "cranberry", "cauliflower", "cucumber", "marshmallow", "spaghetti",
+    "hamburger", "lemonade", "sunglasses", "headphones", "microphone", "microwave", "dishwasher", "refrigerator", "furniture",
+    "staircase", "neighbourhood", "supermarket", "motorcycle", "helicopter", "passenger", "adventurous", "interesting",
+    "surprising", "celebrate", "understand", "beginning", "language", "vocabulary", "paragraph", "knowledge"
+  ];
+
+  const englishSentences = {
+      "easy": [
+          "I like my cat.",
+          "The sun is hot.",
+          "We play in the park.",
+          "She has a red bag.",
+          "My dad reads a book.",
+          "The dog runs fast.",
+          "It is a nice day.",
+          "He drinks cold milk.",
+          "We eat lunch at school.",
+          "The bird sings a song.",
+          "Mom cooks rice today.",
+          "I can see a big tree.",
+          "They swim in the lake.",
+          "Open the door, please.",
+          "The moon is bright."
+      ],
+      "medium": [
+          "My sister walks to school every morning.",
+          "The teacher writes a new word on the board.",
+          "After dinner we watch a funny film.",
+          "There is a small garden behind our house.",
+          "I always brush my teeth before bed.",
+          "The children are playing football in the yard.",
+          "My brother can ride a bicycle very fast.",
+          "Please put your books on the table.",
+          "It is raining, so we stay at home.",
+          "She wants a glass of orange juice.",
+          "Our family goes to the sea in summer.",
+          "He is learning to play the piano.",
+          "Do you like to read stories at night?",
+          "What time does the train arrive?",
+          "I don't know the answer to this question."
+      ],
+      "hard": [
+          "Typing without looking at the keys is a useful skill.",
+          "Every morning my grandmother makes a delicious breakfast for us.",
+          "If you practise every day, your fingers will remember the keys.",
+          "Remember to keep your wrists straight and your back relaxed.",
+          "The library is open until six o'clock on weekdays.",
+          "My favourite subject is science because we do experiments.",
+          "We couldn't go to the beach because the weather was terrible.",
+          "Please don't forget to bring your homework tomorrow!",
+          "Can you tell me how to get to the train station?",
+          "The new computer in our classroom is very fast and quiet.",
+          "Learning a new language takes time, patience and plenty of practice.",
+          "Yesterday we visited the museum and saw a huge dinosaur.",
+          "It's important to drink water and to sleep well.",
+          "Accuracy is more important than speed at the beginning.",
+          "Press the space bar with your thumb after every word."
+      ]
+  };
+
+  const englishPools = {
+    easy: englishWords.filter(function (word) { return word.length <= 5; }),
+    medium: englishWords.filter(function (word) { return word.length >= 6 && word.length <= 8; }),
+    hard: englishWords.filter(function (word) { return word.length >= 9; })
+  };
+
   return {
     words,
     pools,
     sentences,
+    english: { words: englishWords, pools: englishPools, sentences: englishSentences },
+    // Слова й речення потрібної мови друку ("uk" за замовчуванням).
+    getContent: function (language) {
+      return language === "en" ? this.english : { words: words, pools: pools, sentences: sentences };
+    },
     difficulties: [
       { id: "easy", label: "Короткі" },
       { id: "medium", label: "Середні" },

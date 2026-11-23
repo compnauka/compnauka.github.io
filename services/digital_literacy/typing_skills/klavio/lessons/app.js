@@ -10,8 +10,12 @@
   const soundApi = window.KlavioSound;
   const runtime = window.KlavioRuntime;
   const settings = window.KlavioSettings;
+  const fitApi = window.KlavioFit;
+  const dataEn = window.KlavioLessonsDataEn;
+  const textFieldApi = window.KlavioTextField;
+  const handsApi = window.KlavioHands;
 
-  if (!data || !core || !metricsApi || !layouts || !input || !keyboardApi || !soundApi || !runtime || !settings) {
+  if (!fitApi || !textFieldApi || !handsApi || !dataEn || !data || !core || !metricsApi || !layouts || !input || !keyboardApi || !soundApi || !runtime || !settings) {
     throw new Error("Не вдалося завантажити спільне ядро Клавіо");
   }
 
@@ -68,7 +72,7 @@
 
   const state = {
     lessonId: 1,
-    lesson: data.lessons[0],
+    lesson: course().lessons[0],
     difficultyId: "guided",
     position: 0,
     metrics: metricsApi.create(),
@@ -84,7 +88,8 @@
     introTimer: 0,
     running: false,
     inputLocked: false,
-    completedInSession: new Set(),
+    // Позначки «✓» в межах сесії — окремо для кожної мови друку.
+    completedInSession: { uk: new Set(), en: new Set() },
     statsInterval: null,
     // Span для кожного символу уроку та позиція, яку зараз показано курсором.
     charElements: [],
@@ -101,6 +106,11 @@
     }
   });
   const tones = runtime.createTonePlayer(sound.isEnabled);
+
+  // Курс залежить від мови друку: groups, lessons і intros беремо з поточного курсу.
+  function course() {
+    return layouts.getLanguage() === "en" ? dataEn : data;
+  }
 
   function difficulty() {
     return data.difficulties.find(function (item) {
@@ -121,11 +131,11 @@
   function buildLessonSelect() {
     elements.lessonSelect.textContent = "";
 
-    data.groups.forEach(function (group) {
+    course().groups.forEach(function (group) {
       const optionGroup = document.createElement("optgroup");
       optionGroup.label = group.title;
 
-      data.lessons.filter(function (lesson) {
+      course().lessons.filter(function (lesson) {
         return lesson.groupId === group.id;
       }).forEach(function (lesson) {
         const option = document.createElement("option");
@@ -154,8 +164,8 @@
     }
     elements.lessonSelect.querySelectorAll("option:not([data-drill])").forEach(function (option) {
       const lessonId = Number(option.value);
-      const lesson = data.lessons[lessonId - 1];
-      const marker = state.completedInSession.has(lessonId) ? " ✓" : "";
+      const lesson = course().lessons[lessonId - 1];
+      const marker = state.completedInSession[layouts.getLanguage()].has(lessonId) ? " ✓" : "";
       option.textContent = lessonId + ". " + lesson.focus + marker;
     });
   }
@@ -188,156 +198,47 @@
     });
   }
 
-  // Увесь текст уроку видно одразу: учень бачить обсяг роботи,
-  // а курсор рухається по нерухомому тексту.
+  // Поле з усім текстом уроку — спільний модуль KlavioTextField (його використовують і «Слова»).
+  const field = textFieldApi.create({ box: elements.lessonText, minLines: MIN_TEXT_LINES, maxLines: MAX_TEXT_LINES });
+
   function buildText() {
-    const fragment = document.createDocumentFragment();
-    state.charElements = [];
+    field.setText(state.lesson.text);
     state.shownPosition = -1;
-
-    core.splitWords(state.lesson.text).forEach(function (word) {
-      const wordElement = document.createElement("span");
-      wordElement.className = "lesson-word";
-      Array.from(word).forEach(function (character) {
-        const charElement = document.createElement("span");
-        charElement.className = "lesson-char";
-        charElement.textContent = character;
-        wordElement.appendChild(charElement);
-        state.charElements.push(charElement);
-      });
-      fragment.appendChild(wordElement);
-    });
-
-    elements.lessonText.textContent = "";
-    elements.lessonText.appendChild(fragment);
-    elements.lessonText.scrollTop = 0;
-  }
-
-  function keepCurrentVisible(charElement) {
-    const box = elements.lessonText;
-    // .lesson-text має position: relative, тож offsetTop рахується від нього.
-    // Поточний рядок тримаємо другим, щоб попередній рядок лишався видимим.
-    // Якщо весь текст уміщається, браузер обмежить прокручування нулем.
-    const paddingTop = parseFloat(getComputedStyle(box).paddingTop) || 0;
-    const target = Math.max(0, charElement.offsetTop - paddingTop - charElement.offsetHeight);
-    if (Math.abs(box.scrollTop - target) > 1) box.scrollTop = target;
   }
 
   function updateText() {
-    const previous = state.charElements[state.shownPosition];
-
-    if (previous) {
-      previous.classList.remove("is-current", "is-space");
-    }
-    for (let index = Math.max(0, state.shownPosition); index < state.position; index += 1) {
-      state.charElements[index].classList.add("is-done");
-    }
-
-    const current = currentCharacter();
-    const currentElement = state.charElements[state.position];
-    if (currentElement) {
-      currentElement.classList.add("is-current");
-      currentElement.classList.toggle("is-space", current === " ");
-      keepCurrentVisible(currentElement);
-    }
+    field.setPosition(state.position);
     state.shownPosition = state.position;
-
-    const accessibleCharacter = input.describeCharacter(current);
-    elements.lessonStage.setAttribute("aria-label", "Введіть символ: " + accessibleCharacter);
+    elements.lessonStage.setAttribute("aria-label", "Введіть символ: " + input.describeCharacter(currentCharacter()));
   }
 
-  // Символ, на якому була помилка, лишається позначеним до кінця уроку.
   function markMistake() {
-    const currentElement = state.charElements[state.position];
-    if (!currentElement) return;
-    currentElement.classList.remove("is-mistake-flash");
-    void currentElement.offsetWidth;
-    currentElement.classList.add("is-mistake", "is-mistake-flash");
+    field.markMistake(state.position);
   }
 
-  // Висота поля підлаштовується під текст: стільки рядків, скільки він займає, від 2 до 4.
-  function fitTextHeight() {
-    const box = elements.lessonText;
-    const style = getComputedStyle(box);
-    const line = parseFloat(style.lineHeight);
-    if (!line) return;
-
-    box.style.height = "auto";
-    const pads = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-    const content = box.clientHeight - pads;
-    const lines = Math.min(MAX_TEXT_LINES, Math.max(MIN_TEXT_LINES, Math.round(content / line)));
-    const frame = box.offsetHeight - content;
-    box.style.height = (style.boxSizing === "border-box" ? lines * line + frame : lines * line) + "px";
-  }
-
-  // Клавіатура важливіша за долоні: зменшуємо клавіші пропорційно (висота панелі лінійно
-  // залежить від масштабу, тож досить двох вимірів), а якщо й мінімальний розмір
-  // не вміщається, ховаємо долоні.
-  function fitKeyboard() {
-    const target = elements.keyboard;
-    ["--key-width", "--key-height", "--key-gap", "--key-scale"].forEach(function (name) {
-      target.style.removeProperty(name);
-    });
-    elements.fingerSection.classList.remove("is-compact");
-    if (window.innerWidth <= MOBILE_WIDTH || elements.fingerSection.classList.contains("is-hidden")) return;
-
-    const probe = target.querySelector('[data-code="KeyF"]');
-    if (!probe) return;
-    const natural = {
-      width: probe.offsetWidth,
-      height: probe.offsetHeight,
-      gap: parseFloat(getComputedStyle(probe.parentElement).columnGap) || 0
-    };
-    const header = document.querySelector(".site-header");
-    const available = window.innerHeight - (header ? header.offsetHeight : 0) - 2 * VIEW_MARGIN;
-
-    function apply(scale) {
-      target.style.setProperty("--key-width", natural.width * scale + "px");
-      target.style.setProperty("--key-height", natural.height * scale + "px");
-      target.style.setProperty("--key-gap", Math.max(2, natural.gap * scale) + "px");
-      target.style.setProperty("--key-scale", String(scale));
-      return elements.lessonPanel.offsetHeight;
-    }
-
-    const full = elements.lessonPanel.offsetHeight;
-    if (full <= available) return;
-
-    const slope = (full - apply(0.5)) / 0.5;
-    const minScale = Math.min(1, MIN_KEY_SIZE / Math.min(natural.width, natural.height));
-    let scale = slope > 1 ? Math.min(1, Math.max(minScale, 1 + (available - full) / slope)) : 1;
-    let height = apply(scale);
-    // Поля й рамки не масштабуються лінійно: добираємо запас кроками.
-    for (let guard = 0; guard < 8 && height > available && scale > minScale; guard += 1) {
-      scale = Math.max(minScale, scale - 0.02);
-      height = apply(scale);
-    }
-    if (height > available) elements.fingerSection.classList.add("is-compact");
-  }
+  // Підгонку клавіш під висоту вікна виконує спільний модуль KlavioFit. Клавіатура важливіша
+  // за долоні: якщо й мінімальні клавіші не вміщаються, долоні ховаються (is-compact).
+  const fitter = fitApi.create({
+    panel: elements.lessonPanel,
+    keyboard: elements.keyboard,
+    minKeySize: MIN_KEY_SIZE,
+    margin: VIEW_MARGIN,
+    mobileWidth: MOBILE_WIDTH,
+    isActive: function () { return !elements.fingerSection.classList.contains("is-hidden"); },
+    compact: function (on) { elements.fingerSection.classList.toggle("is-compact", on); },
+    beforeFit: field.fitHeight,
+    afterFit: field.keepVisible
+  });
 
   // Підлаштовуємо поле й клавіатуру, а за потреби прокручуємо сторінку так,
   // щоб панель уроку стала одразу під шапкою.
   function layoutLesson(scroll) {
     if (elements.lessonView.hidden) return;
-    fitTextHeight();
-    fitKeyboard();
-    const current = state.charElements[state.position];
-    if (current) keepCurrentVisible(current);
-
-    if (!scroll) return;
-    const header = document.querySelector(".site-header");
-    const rect = elements.lessonPanel.getBoundingClientRect();
-    const top = rect.top - (header ? header.offsetHeight : 0) - VIEW_MARGIN;
-    if (rect.bottom > window.innerHeight || top < 0) window.scrollBy({ top: top, behavior: "instant" });
+    fitter.fit();
+    if (scroll) fitter.reveal();
   }
 
-  let layoutFrame = 0;
-  function scheduleLayout() {
-    if (layoutFrame) return;
-    layoutFrame = window.requestAnimationFrame(function () {
-      layoutFrame = 0;
-      layoutLesson(false);
-    });
-  }
+  const scheduleLayout = fitter.schedule;
 
   // Картка вступу накладається на клавіатуру, а коли її не видно — стоїть під полем тексту.
   function placeIntro() {
@@ -349,7 +250,7 @@
   }
 
   function showIntro() {
-    const intro = core.lessonIntro(state.lesson, layouts, data.intros);
+    const intro = core.lessonIntro(state.lesson, layouts, course().intros, layouts.getLanguage());
     window.clearTimeout(state.introTimer);
     if (!intro || state.drillWeak) {
       hideIntro(true);
@@ -370,7 +271,8 @@
     elements.introButton.setAttribute("aria-expanded", "false");
     elements.introCard.classList.remove("is-visible");
     window.clearTimeout(state.introTimer);
-    if (immediate) {
+    // На клавіатурі картка зникає одразу (без згасання), інакше крізь неї проглядає ряд цифр.
+    if (immediate || elements.introCard.classList.contains("is-overlay")) {
       elements.introCard.hidden = true;
       return;
     }
@@ -390,31 +292,7 @@
   }
 
   function updateFingerGuide(hints) {
-    elements.handsGuide.querySelectorAll(".is-active").forEach(function (finger) {
-      finger.classList.remove("is-active");
-    });
-
-    if (hints.length === 0) {
-      elements.fingerLabel.textContent = "—";
-      return;
-    }
-
-    hints.forEach(function (hint) {
-      if (hint.hand === "both") {
-        elements.handsGuide.querySelectorAll('[data-finger="thumb"]').forEach(function (finger) {
-          finger.classList.add("is-active");
-        });
-      } else {
-        const finger = elements.handsGuide.querySelector('.hand-visual[data-hand="' + hint.hand + '"] [data-finger="' + hint.finger + '"]');
-        if (finger) finger.classList.add("is-active");
-      }
-    });
-
-    if (hints.length === 1) {
-      elements.fingerLabel.textContent = handLabel(hints[0].hand) + " · " + hints[0].name;
-    } else {
-      elements.fingerLabel.textContent = handLabel(hints[0].hand) + " · " + hints[0].name + " + Shift";
-    }
+    elements.fingerLabel.textContent = handsApi.update(elements.handsGuide, hints);
   }
 
   function updateHints() {
@@ -460,17 +338,17 @@
   }
 
   function loadLesson(lessonId) {
-    const lesson = data.lessons.find(function (item) { return item.id === Number(lessonId); });
+    const lesson = course().lessons.find(function (item) { return item.id === Number(lessonId); });
     if (lesson) startLesson(lesson, null);
   }
 
   // Додаткова вправа на слабкі символи: складається з літер уроків до поточного включно.
   function startDrill(weak) {
-    const texts = data.lessons.slice(0, state.lessonId).map(function (item) { return item.text; });
+    const texts = course().lessons.slice(0, state.lessonId).map(function (item) { return item.text; });
     startLesson({
       id: state.lessonId,
       focus: "Тренування: " + weak.join(" "),
-      text: core.buildDrill(weak, texts.join(" "), texts, Math.random)
+      text: core.buildDrill(weak, texts.join(" "), texts, Math.random, layouts.getLanguage())
     }, weak);
   }
 
@@ -489,7 +367,7 @@
     state.running = true;
     state.inputLocked = false;
 
-    elements.lessonNumber.textContent = drillWeak ? "Додаткова вправа" : lesson.id + " із " + data.lessons.length;
+    elements.lessonNumber.textContent = drillWeak ? "Додаткова вправа" : lesson.id + " із " + course().lessons.length;
     elements.lessonTitle.textContent = lesson.focus;
     elements.layoutWarning.hidden = true;
     elements.lessonStage.classList.remove("is-error");
@@ -515,7 +393,7 @@
     stopStatsInterval();
     metricsApi.finish(state.metrics);
     const isDrill = Boolean(state.drillWeak);
-    if (!isDrill) state.completedInSession.add(state.lessonId);
+    if (!isDrill) state.completedInSession[layouts.getLanguage()].add(state.lessonId);
     updateLessonSelect();
 
     const accuracy = metricsApi.accuracy(state.metrics);
@@ -526,7 +404,7 @@
     elements.summaryWeak.hidden = state.pendingWeak.length === 0;
     elements.summaryDrill.hidden = state.pendingWeak.length === 0;
     elements.summaryWeak.textContent = "Найчастіше помилявся: " + state.pendingWeak.join(", ");
-    elements.summaryRetry.textContent = isDrill ? "Ще раз" : "Повторити";
+    elements.summaryRetry.textContent = "Заново";
     elements.summaryAccuracy.textContent = accuracy + "%";
     elements.summaryCpm.textContent = String(metricsApi.cpm(state.metrics));
     elements.summaryErrors.textContent = String(state.metrics.errors);
@@ -544,7 +422,7 @@
     }
 
     elements.summaryNext.textContent = isDrill ? "Повернутися до уроку " + state.lessonId :
-      state.lessonId < data.lessons.length ? "Наступний урок →" : "Обрати урок";
+      state.lessonId < course().lessons.length ? "Наступний урок →" : "Обрати урок";
     elements.lessonView.hidden = true;
     elements.summaryView.hidden = false;
     tones.complete();
@@ -648,19 +526,17 @@
   elements.summaryDrill.addEventListener("click", function () { startDrill(state.pendingWeak); });
   elements.summaryNext.addEventListener("click", function () {
     if (state.drillWeak) loadLesson(state.lessonId);
-    else if (state.lessonId < data.lessons.length) loadLesson(state.lessonId + 1);
+    else if (state.lessonId < course().lessons.length) loadLesson(state.lessonId + 1);
     else elements.lessonSelect.focus();
   });
   document.addEventListener("keydown", handleKeydown);
   // Великий текст і контраст змінюють розміри: підганяємо поле й клавіатуру. Після закриття
   // меню «Aa» повертаємо фокус у вправу, щоб друкувати можна було одразу.
-  window.addEventListener("klavio:prefs-change", scheduleLayout);
+  // (fit.js сам слухає resize і зміну налаштувань.)
   window.addEventListener("klavio:prefs-close", function () {
-    scheduleLayout();
     if (state.running) elements.lessonStage.focus({ preventScroll: true });
   });
   window.addEventListener("beforeunload", stopStatsInterval);
-  window.addEventListener("resize", scheduleLayout);
   // Після зміни ширини рядки переносяться інакше: перераховуємо висоту й повертаємо курсор у видиму зону.
   if (window.ResizeObserver) {
     let lastWidth = elements.lessonText.clientWidth;
@@ -670,6 +546,19 @@
       scheduleLayout();
     }).observe(elements.lessonText);
   }
+
+  // Зміна мови друку без перезавантаження: новий курс, нова клавіатура, урок 1 нової мови.
+  // Фокус повертаємо у вправу, щоб друкувати можна було одразу.
+  function applyLanguage() {
+    keyboard.setLanguage();
+    state.drillWeak = null;
+    state.lessonId = 1;
+    state.lesson = course().lessons[0];
+    buildLessonSelect();
+    loadLesson(1);
+  }
+
+  window.addEventListener("klavio:lang-change", applyLanguage);
 
   buildLessonSelect();
   buildDifficultyControl();

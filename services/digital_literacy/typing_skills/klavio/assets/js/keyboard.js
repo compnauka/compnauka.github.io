@@ -17,29 +17,44 @@
     if (!container || !layouts) throw new Error("KlavioKeyboard requires a container and layouts.");
 
     const keys = new Map();
-    container.textContent = "";
+    let language = null;
 
-    layouts.ukrainianRows.forEach(function (rowDefinition) {
-      const row = document.createElement("div");
-      row.className = "keyboard-row";
+    // Будує ряди розкладки потрібної мови. Сторонні діти контейнера (напр. картка вступу
+    // в «Уроках») лишаються на місці — прибираємо лише ряди.
+    function build(requested) {
+      language = requested === "en" || requested === "uk" ? requested :
+        (typeof layouts.getLanguage === "function" ? layouts.getLanguage() : "uk");
+      const rows = typeof layouts.rowsFor === "function" ? layouts.rowsFor(language) : layouts.ukrainianRows;
 
-      rowDefinition.forEach(function (definition) {
-        const key = document.createElement("span");
-        key.className = "keyboard-key";
-        key.dataset.code = definition.code;
+      keys.clear();
+      Array.from(container.querySelectorAll(".keyboard-row")).forEach(function (row) { row.remove(); });
+      container.dataset.layout = language;
 
-        const finger = layouts.fingerForCode(definition.code);
-        if (finger) key.dataset.finger = finger.finger;
-        if (definition.width) key.classList.add("keyboard-key--" + definition.width);
-        if (definition.muted) key.classList.add("keyboard-key--muted");
+      rows.forEach(function (rowDefinition) {
+        const row = document.createElement("div");
+        row.className = "keyboard-row";
 
-        layouts.renderKeycap(key, definition);
-        row.appendChild(key);
-        keys.set(definition.code, key);
+        rowDefinition.forEach(function (definition) {
+          const key = document.createElement("span");
+          key.className = "keyboard-key";
+          key.dataset.code = definition.code;
+
+          const finger = layouts.fingerForCode(definition.code);
+          if (finger) key.dataset.finger = finger.finger;
+          // Ширина в одиницях u: CSS рахує її через --w (див. keyboard.css).
+          if (definition.w) key.style.setProperty("--w", String(definition.w));
+          if (definition.muted) key.classList.add("keyboard-key--muted");
+
+          layouts.renderKeycap(key, definition);
+          row.appendChild(key);
+          keys.set(definition.code, key);
+        });
+
+        container.appendChild(row);
       });
+    }
 
-      container.appendChild(row);
-    });
+    build();
 
     function clearClass(className) {
       keys.forEach(function (key) { key.classList.remove(className); });
@@ -90,6 +105,10 @@
       keys,
       setHint,
       setAllowedTargets,
+      // Перебудовує клавіатуру в іншій мові. Підсвічування та приглушення
+      // треба виставити знову (setHint / setAllowedTargets).
+      setLanguage: build,
+      get language() { return language; },
       flash,
       clearHint: function () {
         clearClass("is-target");

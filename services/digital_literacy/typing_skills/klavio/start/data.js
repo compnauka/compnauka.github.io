@@ -49,9 +49,11 @@
     { id: "control-alt", kind: "control", value: "Alt", label: "Alt", code: "AltLeft" }
   ];
 
-  return {
-    roundLength: 12,
-    sets: {
+  // Англійська (US ANSI). Перший десяток — найчастіші літери англійської мови,
+  // як і в «Спринті» на рівні «Легко»: учень знайомиться з клавішами, які знадобляться найчастіше.
+  const ENGLISH_ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+
+  const ukrainianSets = {
       starter: {
         id: "starter",
         label: "Перші літери",
@@ -83,7 +85,43 @@
         description: "Літери, цифри та важливі клавіші",
         targets: letters(ALPHABET).concat(digits(), CONTROL_TARGETS)
       }
+  };
+
+  const englishSets = {
+    starter: {
+      id: "starter",
+      label: "Перші літери",
+      description: "10 частих англійських літер",
+      targets: letters("etaoinsrhl")
     },
+    alphabet: {
+      id: "alphabet",
+      label: "Усі літери",
+      description: "Англійська абетка, 26 літер",
+      targets: letters(ENGLISH_ALPHABET)
+    },
+    digits: ukrainianSets.digits,
+    controls: ukrainianSets.controls,
+    everything: {
+      id: "everything",
+      label: "Усе разом",
+      description: "Літери, цифри та важливі клавіші",
+      targets: letters(ENGLISH_ALPHABET).concat(digits(), CONTROL_TARGETS)
+    }
+  };
+
+  // Підписи для карток вибору набору (значок у крузі) залежать від мови.
+  const icons = {
+    uk: { starter: "А", alphabet: "А–Я", digits: "123", controls: "↵", everything: "★" },
+    en: { starter: "A", alphabet: "A–Z", digits: "123", controls: "↵", everything: "★" }
+  };
+
+  return {
+    roundLength: 12,
+    sets: ukrainianSets,
+    setsByLanguage: { uk: ukrainianSets, en: englishSets },
+    getSets: function (language) { return language === "en" ? englishSets : ukrainianSets; },
+    icons: icons,
     encouragement: ["Чудово!", "Саме так!", "Правильно!", "Молодець!", "Влучно!"],
     retry: ["Спробуй ще раз", "Поглянь уважніше", "Майже! Шукай далі"]
   };

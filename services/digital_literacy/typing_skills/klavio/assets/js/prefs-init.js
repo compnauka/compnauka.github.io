@@ -8,7 +8,10 @@
     const root = document.documentElement;
     if (localStorage.getItem("klavio.text") === "large") root.dataset.text = "large";
     if (localStorage.getItem("klavio.contrast") === "high") root.dataset.contrast = "high";
+    // Мова друку: data-lang-typing="uk" | "en" (за замовчуванням "uk").
+    root.dataset.langTyping = localStorage.getItem("klavio.lang") === "en" ? "en" : "uk";
   } catch (error) {
     // Сховище недоступне — лишаються стандартні налаштування.
+    document.documentElement.dataset.langTyping = "uk";
   }
 })();

@@ -18,6 +18,7 @@
   const SOUND_KEY = "klavio.sound";
   const TEXT_KEY = "klavio.text";
   const CONTRAST_KEY = "klavio.contrast";
+  const LANG_KEY = "klavio.lang";
 
   function read(key, fallback) {
     try {
@@ -65,6 +66,18 @@
     return Boolean(enabled);
   }
 
+  // Мова друку (розкладка й тексти вправ): "uk" за замовчуванням або "en".
+  // Мова інтерфейсу завжди українська.
+  function getLanguage() {
+    return read(LANG_KEY, "uk") === "en" ? "en" : "uk";
+  }
+
+  function setLanguage(language) {
+    const value = language === "en" ? "en" : "uk";
+    write(LANG_KEY, value);
+    return value;
+  }
+
   // Виставляє data-text і data-contrast на елементі (зазвичай <html>), за потреби прибирає їх.
   function applyPreferences(element) {
     if (isLargeText()) element.dataset.text = "large";
@@ -79,6 +92,8 @@
     setSoundEnabled,
     isLargeText,
     setLargeText,
+    getLanguage,
+    setLanguage,
     isHighContrast,
     setHighContrast,
     applyPreferences

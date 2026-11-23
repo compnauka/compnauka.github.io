@@ -85,11 +85,15 @@
     return wanted === actual;
   }
 
-  function issue(expected, event) {
+  // language — мова друку ("uk" за замовчуванням або "en"): "layout" означає, що в системі
+  // ввімкнено не ту розкладку (кирилиця замість латиниці й навпаки).
+  function issue(expected, event, language) {
     const wanted = normalizeCharacter(expected);
     const actual = normalizeCharacter(event.key || "");
 
-    if (UKRAINIAN_CHARACTER.test(wanted) && /^[a-z]$/i.test(actual)) return "layout";
+    if (language === "en") {
+      if (UKRAINIAN_CHARACTER.test(actual) && !UKRAINIAN_CHARACTER.test(wanted)) return "layout";
+    } else if (UKRAINIAN_CHARACTER.test(wanted) && /^[a-z]$/i.test(actual)) return "layout";
     if (wanted !== actual && wanted.toLocaleLowerCase("uk-UA") === actual.toLocaleLowerCase("uk-UA")) return "case";
     return "wrong";
   }
@@ -102,8 +106,13 @@
   // kind "layout" — не та розкладка (текст показує окреме попередження),
   // "case" — помилка регістру, "wrong" — інший символ.
   // layouts необов'язковий: з ним підказка називає потрібний Shift.
+  function languageOf(layouts) {
+    return layouts && typeof layouts.getLanguage === "function" ? layouts.getLanguage() : "uk";
+  }
+
   function errorHint(expected, event, layouts) {
-    const kind = issue(expected, event);
+    const language = languageOf(layouts);
+    const kind = issue(expected, event, language);
     if (kind === "layout") return { kind, message: "" };
 
     if (kind === "case") {
@@ -121,10 +130,10 @@
       }
       if (caps) return { kind, message: "Увімкнено Caps Lock — вимкни його й утримуй Shift" };
 
-      const combo = layouts && typeof layouts.comboHintForCharacter === "function" ? layouts.comboHintForCharacter(wanted) : "";
+      const combo = layouts && typeof layouts.comboHintForCharacter === "function" ? layouts.comboHintForCharacter(wanted, language) : "";
       if (combo.indexOf("Ctrl") !== -1) return { kind, message: combo };
 
-      const hints = layouts && typeof layouts.hintsForCharacter === "function" ? layouts.hintsForCharacter(wanted) : [];
+      const hints = layouts && typeof layouts.hintsForCharacter === "function" ? layouts.hintsForCharacter(wanted, language) : [];
       const shift = hints[1];
       const side = shift && shift.hand === "right" ? "правий" : shift && shift.hand === "left" ? "лівий" : "";
       return {

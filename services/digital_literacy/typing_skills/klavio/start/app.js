@@ -9,8 +9,10 @@
   const keyboardApi = window.KlavioKeyboard;
   const soundApi = window.KlavioSound;
   const settings = window.KlavioSettings;
+  const fitApi = window.KlavioFit;
+  const weakApi = window.KlavioWeakKeys;
 
-  if (!data || !metricsApi || !runtime || !layouts || !input || !keyboardApi || !soundApi || !settings) {
+  if (!fitApi || !weakApi || !data || !metricsApi || !runtime || !layouts || !input || !keyboardApi || !soundApi || !settings) {
     throw new Error("Не вдалося завантажити спільне ядро Клавіо");
   }
 
@@ -24,6 +26,9 @@
     hintToggle: document.getElementById("hint-toggle"),
     startButton: document.getElementById("start-button"),
     stopButton: document.getElementById("stop-button"),
+    restartButton: document.getElementById("restart-button"),
+    cpmValue: document.getElementById("cpm-value"),
+    summaryWeak: document.getElementById("summary-weak"),
     repeatButton: document.getElementById("repeat-button"),
     settingsButton: document.getElementById("settings-button"),
     soundToggle: document.getElementById("sound-toggle"),
@@ -52,10 +57,14 @@
     streak: 0,
     maxStreak: 0,
     running: false,
-    inputLocked: false
+    inputLocked: false,
+    // Помилки за підписами цілей (лише в пам'яті сторінки) для рядка «Найчастіше помилявся».
+    errorCounts: {}
   };
 
   const keyboard = keyboardApi.create(elements.keyboard, layouts);
+  // Підгонка працює лише на екрані вправи (на інших панель прихована).
+  const fitter = fitApi.create({ panel: elements.practiceView, keyboard: elements.keyboard });
   const sound = soundApi.create({
     button: elements.soundToggle,
     glyph: elements.soundGlyph,
@@ -76,8 +85,13 @@
     elements.summaryView.hidden = name !== "summary";
   }
 
+  // Набори залежать від мови друку (УКР / ENG).
+  function currentSets() {
+    return data.getSets(layouts.getLanguage());
+  }
+
   function selectSet(setId) {
-    if (!data.sets[setId]) return;
+    if (!currentSets()[setId]) return;
     state.selectedSet = setId;
 
     elements.setChoices.forEach(function (button) {
@@ -86,7 +100,7 @@
   }
 
   function updateKeyboardAvailability() {
-    keyboard.setAllowedTargets(data.sets[state.selectedSet].targets);
+    keyboard.setAllowedTargets(currentSets()[state.selectedSet].targets);
   }
 
   function updateTargetHighlight() {
@@ -97,6 +111,7 @@
   function updateMetrics() {
     elements.accuracyValue.textContent = metricsApi.accuracy(state.metrics) + "%";
     elements.streakValue.textContent = String(state.streak);
+    elements.cpmValue.textContent = String(metricsApi.cpm(state.metrics));
   }
 
   function updateProgress(completed) {
@@ -128,13 +143,14 @@
   }
 
   function startRound() {
-    const selected = data.sets[state.selectedSet];
+    const selected = currentSets()[state.selectedSet];
     state.sequence = runtime.buildRound(selected.targets, data.roundLength);
     state.position = 0;
     state.currentTarget = null;
     state.metrics = metricsApi.start(metricsApi.create());
     state.streak = 0;
     state.maxStreak = 0;
+    state.errorCounts = {};
     state.running = true;
     state.inputLocked = false;
 
@@ -143,6 +159,8 @@
     updateMetrics();
     updateProgress(0);
     setView("practice");
+    fitter.fit();
+    fitter.reveal();
     renderTarget();
   }
 
@@ -163,6 +181,15 @@
     elements.summaryCorrect.textContent = String(state.metrics.correct);
     elements.summaryErrors.textContent = String(state.metrics.errors);
     elements.summaryAccuracy.textContent = metricsApi.accuracy(state.metrics) + "%";
+
+    // Слабкі клавіші: повертаємо підписи цілей (а не рядки в іншому регістрі).
+    const labels = {};
+    Object.keys(state.errorCounts).forEach(function (label) { labels[label.toLocaleLowerCase("uk-UA")] = label; });
+    const weak = weakApi.weakKeys(state.errorCounts, "", 3).map(function (key) {
+      return labels[key.toLocaleLowerCase("uk-UA")] || key;
+    });
+    elements.summaryWeak.hidden = weak.length === 0;
+    elements.summaryWeak.textContent = "Найчастіше помилявся: " + weak.join(", ");
 
     if (state.metrics.errors === 0) {
       elements.summaryMessage.textContent = "Усі клавіші знайдено без помилок. Чудова уважність!";
@@ -205,6 +232,7 @@
   function handleError(event) {
     metricsApi.recordError(state.metrics);
     state.streak = 0;
+    state.errorCounts[state.currentTarget.label] = (state.errorCounts[state.currentTarget.label] || 0) + 1;
     elements.targetKey.classList.remove("is-error");
     void elements.targetKey.offsetWidth;
     elements.targetKey.classList.add("is-error");
@@ -212,7 +240,7 @@
     updateMetrics();
     tones.error();
 
-    if (input.issue(state.currentTarget.value, event) === "layout") {
+    if (input.issue(state.currentTarget.value, event, layouts.getLanguage()) === "layout") {
       elements.layoutWarning.hidden = false;
       setFeedback("");
     } else {
@@ -250,6 +278,7 @@
   elements.repeatButton.addEventListener("click", startRound);
   elements.settingsButton.addEventListener("click", showSetup);
   elements.stopButton.addEventListener("click", showSetup);
+  elements.restartButton.addEventListener("click", startRound);
   elements.hintToggle.addEventListener("change", updateTargetHighlight);
 
   document.addEventListener("keydown", handleTrainingKey);
@@ -257,6 +286,50 @@
     state.running = false;
   });
 
+  // Підписи карток наборів. Українські беремо з розмітки (запам'ятовуємо при запуску),
+  // англійські — з data.js.
+  const originalChoices = new Map();
+  elements.setChoices.forEach(function (button) {
+    originalChoices.set(button, {
+      icon: button.querySelector(".choice__icon").textContent,
+      label: button.querySelector("strong").textContent,
+      description: button.querySelector("small").textContent
+    });
+  });
+
+  function renderChoices() {
+    const language = layouts.getLanguage();
+    elements.setChoices.forEach(function (button) {
+      const id = button.dataset.set;
+      const original = originalChoices.get(button);
+      const english = language === "en" ? data.getSets("en")[id] : null;
+      button.querySelector(".choice__icon").textContent = data.icons[language][id] || original.icon;
+      button.querySelector("strong").textContent = english ? english.label : original.label;
+      button.querySelector("small").textContent = english && id !== "controls" && id !== "digits" ? english.description : original.description;
+    });
+    elements.layoutWarning.textContent = layouts.layoutWarningText();
+  }
+
+  // Зміна мови друку без перезавантаження: перебудовуємо клавіатуру й набори,
+  // а поточну вправу починаємо заново вже в новій мові.
+  function applyLanguage() {
+    keyboard.setLanguage();
+    renderChoices();
+    updateKeyboardAvailability();
+    if (state.running) {
+      startRound();
+    } else {
+      updateTargetHighlight();
+    }
+    fitter.schedule();
+  }
+
+  window.addEventListener("klavio:lang-change", applyLanguage);
+  window.addEventListener("klavio:prefs-close", function () {
+    if (state.running) elements.practiceStage.focus({ preventScroll: true });
+  });
+
+  renderChoices();
   selectSet(state.selectedSet);
   setView("setup");
 })();

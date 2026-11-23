@@ -502,3 +502,356 @@ test("settings: великий текст і контраст мають тип�
     else globalThis.localStorage = previous;
   }
 });
+
+test("кожен ряд клавіатури має рівно 15u, а спецклавіші мають ширини ANSI", function () {
+  layouts.ukrainianRows.forEach(function (row) {
+    const units = row.reduce(function (sum, key) { return sum + (key.w || 1); }, 0);
+    assert.equal(units, layouts.rowUnits);
+  });
+
+  const byCode = {};
+  layouts.ukrainianRows.forEach(function (row) { row.forEach(function (key) { byCode[key.code] = key; }); });
+  assert.equal(byCode.Backspace.w, 2);
+  assert.equal(byCode.Tab.w, 1.5);
+  assert.equal(byCode.Backslash.w, 1.5);
+  assert.equal(byCode.CapsLock.w, 1.75);
+  assert.equal(byCode.Enter.w, 2.25);
+  assert.equal(byCode.ShiftLeft.w, 2.25);
+  assert.equal(byCode.ShiftRight.w, 2.75);
+  assert.equal(byCode.Space.w, 6.25);
+  assert.deepEqual(layouts.ukrainianRows[4].map(function (key) { return key.code; }),
+    ["ControlLeft", "MetaLeft", "AltLeft", "Space", "AltRight", "MetaRight", "ContextMenu", "ControlRight"]);
+  // «ґ» і далі виконується через фізичну клавішу Г, а Backslash лишається «\».
+  assert.equal(byCode.Backslash.label, "\\");
+});
+
+test("англійська розкладка: 15u у кожному ряду, ті самі коди, пальці й цілі", function () {
+  assert.equal(layouts.englishRows.length, 5);
+  layouts.englishRows.forEach(function (row, index) {
+    assert.equal(row.reduce(function (sum, key) { return sum + (key.w || 1); }, 0), layouts.rowUnits);
+    assert.deepEqual(row.map(function (key) { return key.code; }), layouts.ukrainianRows[index].map(function (key) { return key.code; }));
+  });
+
+  const q = layouts.englishRows[1].find(function (key) { return key.code === "KeyQ"; });
+  assert.equal(q.label, "Q");
+  assert.equal(q.secondary, "Й");
+
+  assert.deepEqual(layouts.codesForTarget({ value: "a" }, "en"), ["KeyA"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "A" }, "en"), ["KeyA"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "!" }, "en"), ["Digit1"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "'" }, "en"), ["Quote"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "?" }, "en"), ["Slash"]);
+  assert.deepEqual(layouts.codesForTarget({ value: "'" }, "uk"), ["Backquote"]);
+  assert.equal(layouts.requiresShift("A", "en"), true);
+  assert.equal(layouts.requiresShift("a", "en"), false);
+  assert.equal(layouts.requiresShift(",", "en"), false);
+  assert.equal(layouts.requiresShift("@", "en"), true);
+  assert.equal(layouts.requiresAltGraph("ґ", "en"), false);
+  assert.deepEqual(layouts.modifierCodesForCharacter("A", "en"), ["ShiftRight"]);
+  assert.equal(layouts.comboHintForCharacter("A", "en"), "Утримуй Shift");
+  assert.deepEqual(layouts.hintsForCharacter("A", "en").map(function (hint) { return hint.code; }), ["KeyA", "ShiftRight"]);
+  assert.equal(layouts.hintsForCharacter("j", "en")[0].finger, "index");
+});
+
+test("активна мова змінює поведінку функцій без параметра", function () {
+  try {
+    layouts.setLanguage("en");
+    assert.deepEqual(layouts.codesForTarget({ value: "a" }), ["KeyA"]);
+    assert.equal(layouts.rowsFor(), layouts.englishRows);
+  } finally {
+    layouts.setLanguage("uk");
+  }
+  assert.deepEqual(layouts.codesForTarget({ value: "а" }), ["KeyF"]);
+  assert.equal(layouts.rowsFor(), layouts.ukrainianRows);
+});
+
+test("input: перевірка розкладки й підказки для англійської", function () {
+  assert.equal(input.issue("a", { key: "ф" }, "en"), "layout");
+  assert.equal(input.issue("a", { key: "s" }, "en"), "wrong");
+  assert.equal(input.issue("A", { key: "a" }, "en"), "case");
+  assert.equal(input.issue("а", { key: "a" }), "layout");
+  assert.equal(input.issue("а", { key: "a" }, "uk"), "layout");
+  assert.equal(input.issue("а", { key: "ф" }, "en"), "wrong");
+
+  try {
+    layouts.setLanguage("en");
+    assert.equal(input.errorHint("a", { key: "ф" }, layouts).kind, "layout");
+    assert.equal(input.errorHint("a", { key: "s" }, layouts).message, "Потрібно: a");
+    assert.equal(input.errorHint(" ", { key: "s" }, layouts).message, "Потрібно: пробіл");
+    assert.equal(input.errorHint("a", { key: "A" }, layouts).message, "Тут мала літера — без Shift");
+    assert.equal(input.errorHint("A", { key: "a" }, layouts).message, "Тут велика літера: утримуй правий Shift (мізинцем іншої руки)");
+    assert.match(input.errorHint("a", Object.assign({ key: "A" }, { getModifierState: function () { return true; } }), layouts).message, /Caps Lock/);
+  } finally {
+    layouts.setLanguage("uk");
+  }
+  assert.equal(layouts.layoutWarningText("en"), "Перемкни на англійську: Alt + Shift або Win + Пробіл");
+});
+
+test("англійські набори «Старту» та цілі «Спринту»", function () {
+  const startData = require("../start/data.js");
+  const english = startData.getSets("en");
+  assert.equal(english.starter.targets.length, 10);
+  assert.equal(english.alphabet.targets.length, 26);
+  assert.equal(startData.getSets("uk"), startData.sets);
+  Object.keys(english).forEach(function (id) {
+    english[id].targets.forEach(function (target) {
+      if (target.kind === "letter") assert.match(target.value, /^[a-z]$/);
+    });
+  });
+
+  const targets = sprintData.getTargets("en");
+  assert.equal(sprintData.getTargets("uk"), sprintData.targets);
+  sprintData.modes.forEach(function (mode) {
+    sprintData.difficulties.forEach(function (difficulty) {
+      const items = targets[mode.id][difficulty.id];
+      assert.ok(items.length >= 10);
+      assert.equal(new Set(items).size, items.length);
+      items.forEach(function (item) { assert.match(item, /^[a-z0-9]+$/); });
+    });
+  });
+});
+
+test("settings: мова друку за замовчуванням uk і зберігається", function () {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  const store = new Map();
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: { getItem: function (k) { return store.has(k) ? store.get(k) : null; }, setItem: function (k, v) { store.set(k, String(v)); } }
+  });
+  try {
+    const settings = require("../assets/js/settings.js");
+    assert.equal(settings.getLanguage(), "uk");
+    settings.setLanguage("en");
+    assert.equal(settings.getLanguage(), "en");
+    assert.equal(store.get("klavio.lang"), "en");
+    settings.setLanguage("xx");
+    assert.equal(settings.getLanguage(), "uk");
+  } finally {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});
+
+// ---- Англійський курс уроків, слова й речення ---------------------------------
+const lessonDataEn = require("../lessons/data-en.js");
+
+function seeded(seed) {
+  let state = seed;
+  return function () {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
+function learnedBefore(lessonId) {
+  const letters = new Set();
+  const marks = new Set();
+  lessonDataEn.lessons.filter(function (lesson) { return lesson.id <= lessonId; }).forEach(function (lesson) {
+    (lesson.keys || []).forEach(function (key) {
+      if (/[a-z]/.test(key)) letters.add(key); else marks.add(key);
+    });
+  });
+  return { letters, marks };
+}
+
+test("EN-курс: ідентифікатори, групи, довжини й дозволені символи", function () {
+  const lessons = lessonDataEn.lessons;
+  assert.ok(lessons.length >= 24 && lessons.length <= 30);
+  assert.deepEqual(lessons.map(function (lesson) { return lesson.id; }), lessons.map(function (lesson, index) { return index + 1; }));
+
+  // Групи покривають усі уроки без пропусків.
+  let expected = 1;
+  lessonDataEn.groups.forEach(function (group) {
+    assert.equal(group.range[0], expected);
+    expected = group.range[1] + 1;
+    lessons.filter(function (lesson) { return lesson.groupId === group.id; }).forEach(function (lesson) {
+      assert.ok(lesson.id >= group.range[0] && lesson.id <= group.range[1]);
+    });
+  });
+  assert.equal(expected - 1, lessons.length);
+
+  lessons.forEach(function (lesson) {
+    assert.ok(lesson.text.length >= 80 && lesson.text.length <= 170, "довжина уроку " + lesson.id);
+    assert.equal(lesson.text, lesson.text.trim());
+    assert.ok(!/ {2}/.test(lesson.text));
+
+    const learned = learnedBefore(lesson.id);
+    // Великі літери дозволені з уроку 16; усі літери вивчено вже до нього.
+    const allowed = function (char) {
+      if (char === " ") return true;
+      if (/[a-z]/.test(char)) return learned.letters.has(char);
+      if (/[A-Z]/.test(char)) return lesson.id >= 16 && learned.letters.has(char.toLowerCase());
+      return learned.marks.has(char);
+    };
+    Array.from(lesson.text).forEach(function (char) {
+      assert.ok(allowed(char), "урок " + lesson.id + ": недозволений символ «" + char + "»");
+    });
+
+    // Фокус-клавіша присутня в тексті.
+    (lesson.keys || []).forEach(function (key) {
+      assert.ok(lesson.text.includes(key), "урок " + lesson.id + " без " + key);
+    });
+  });
+
+  assert.ok(/[A-Z]/.test(lessons[15].text) && /[A-Z]/.test(lessons[16].text));
+  assert.deepEqual(lessons.slice(0, 15).map(function (lesson) { return lesson.keys.join(""); }),
+    ["fj", "dk", "sl", "a;", "gh", "ei", "ru", "ty", "wo", "qp", "c,", "vm", "x.", "z/", "bn"]);
+});
+
+test("EN-вступи: палець беруться з розкладки для кожного уроку", function () {
+  lessonDataEn.lessons.forEach(function (lesson) {
+    const intro = lessonCore.lessonIntro(lesson, layouts, lessonDataEn.intros, "en");
+    assert.ok(intro && intro.title, "вступ уроку " + lesson.id);
+    (lesson.keys || []).forEach(function (key) {
+      const hints = layouts.hintsForCharacter(key, "en");
+      assert.ok(hints.length > 0, "палець для " + key);
+    });
+  });
+
+  const intros = lessonDataEn.lessons.map(function (lesson) { return lessonCore.lessonIntro(lesson, layouts, lessonDataEn.intros, "en"); });
+  assert.match(intros[0].title, /F та J/);
+  assert.match(intros[1].title, /D — лівий середній палець, K — правий середній палець/);
+  assert.match(intros[5].title, /E — лівий середній палець, I — правий середній палець/);
+  assert.match(intros[5].lines.join(" "), /E: у верхньому ряду, праворуч від W/);
+  assert.match(intros[3].title, /A — лівий мізинець, крапка з комою \(;\) — правий мізинець/);
+  assert.match(intros[18].lines[0], /лівий Shift/);
+  assert.match(intros[19].lines[0], /правий Shift/);
+  // Українські вступи не змінились.
+  assert.match(lessonCore.lessonIntro(lessonData.lessons[5], layouts, lessonData.intros).title, /Ж — правий мізинець/);
+});
+
+test("EN: weakKeys і buildDrill використовують лише вивчені літери", function () {
+  const texts = lessonDataEn.lessons.slice(0, 9).map(function (lesson) { return lesson.text; });
+  const allowedText = texts.join(" ");
+  const learned = new Set(Array.from(allowedText));
+
+  [["e"], ["w", "o"], ["t", "y", "r"], ["T"]].forEach(function (weak) {
+    const drill = lessonCore.buildDrill(weak, allowedText, texts, seeded(7), "en");
+    assert.ok(drill.length >= 70 && drill.length <= 90, "довжина " + drill.length);
+    Array.from(drill).forEach(function (char) {
+      assert.ok(char === " " || learned.has(char) || learned.has(char.toLowerCase()), "символ «" + char + "» у вправі " + weak.join(""));
+    });
+    weak.forEach(function (key) { assert.ok(drill.toLowerCase().includes(key.toLowerCase())); });
+  });
+
+  const text = "the quick";
+  assert.deepEqual(lessonCore.weakKeys({ "e": 3, "t": 2, "q": 1, " ": 5 }, text, 3), ["e", "t"]);
+});
+
+test("EN: слова й речення — лише латиниця, апостроф і базова пунктуація", function () {
+  const english = wordsData.getContent("en");
+  ["easy", "medium", "hard"].forEach(function (level) {
+    assert.ok(english.pools[level].length >= 80, "слів у рівні " + level);
+    assert.ok(english.sentences[level].length >= 14, "речень у рівні " + level);
+    english.pools[level].forEach(function (word) { assert.match(word, /^[a-z]+$/); });
+    english.sentences[level].forEach(function (sentence) {
+      assert.match(sentence, /^[A-Z][A-Za-z' ,.?!]+[.?!]$/);
+    });
+    assert.equal(new Set(english.pools[level]).size, english.pools[level].length);
+  });
+  english.pools.easy.forEach(function (word) { assert.ok(word.length <= 5); });
+  english.pools.medium.forEach(function (word) { assert.ok(word.length >= 6 && word.length <= 8); });
+  english.pools.hard.forEach(function (word) { assert.ok(word.length >= 9); });
+  assert.equal(wordsData.getContent("uk").pools, wordsData.pools);
+});
+
+test("EN: у уроках і словах немає небажаних для дітей слів", function () {
+  const banned = ["gash", "hag", "gag", "slash", "sag", "hash", "dash", "lass", "alas", "fad", "fads", "lad", "lads", "adds", "gas"];
+  const lessonWords = lessonDataEn.lessons.flatMap(function (lesson) { return lesson.text.toLowerCase().match(/[a-z]+/g) || []; });
+  const english = wordsData.getContent("en");
+  const poolWords = Object.keys(english.pools).flatMap(function (level) { return english.pools[level]; });
+  const sentenceWords = Object.keys(english.sentences).flatMap(function (level) {
+    return english.sentences[level].flatMap(function (sentence) { return sentence.toLowerCase().match(/[a-z]+/g) || []; });
+  });
+  banned.forEach(function (word) {
+    assert.ok(!lessonWords.includes(word), "урок містить " + word);
+    assert.ok(!poolWords.includes(word), "слова містять " + word);
+    assert.ok(!sentenceWords.includes(word), "речення містять " + word);
+  });
+});
+
+test("EN: «;» і «/» стоять лише у справжніх прикладах", function () {
+  const lessons = lessonDataEn.lessons;
+  assert.ok(!/b(sad|dad|fall|add|all|ask|flask|salad);/.test(lessons[3].text), "«;» не після слів");
+  assert.ok(!/(zoo|glaze|pizza)\//.test(lessons[13].text));
+  assert.ok(/he\/she|his\/her|him\/her/.test(lessons[13].text));
+});
+
+// ---- Крок D: спільні модулі, фільтр слів за уроком ------------------------------
+const weakKeysApi = require("../assets/js/weak-keys.js");
+const hintModesApi = require("../assets/js/hint-modes.js");
+const textFieldApi = require("../assets/js/text-field.js");
+
+test("фільтр слів за вивченими уроками: українські слова й речення", function () {
+  const content = wordsData.getContent("uk");
+  const learned5 = wordCore.learnedCharacters(lessonData.lessons, 5);
+  const filtered5 = wordCore.filterByLearned(content.pools.easy, learned5);
+  assert.ok(filtered5.length >= 1);
+  filtered5.forEach(function (word) {
+    Array.from(word).forEach(function (character) { assert.ok(learned5.exact.has(character), word); });
+  });
+
+  // «Усі літери» (null) нічого не відфільтровує, а пізніший урок дає більше слів.
+  assert.equal(wordCore.filterByLearned(content.pools.easy, null).length, content.pools.easy.length);
+  const counts = [5, 10, 20, 29, 35].map(function (n) {
+    return wordCore.filterByLearned(content.pools.easy, wordCore.learnedCharacters(lessonData.lessons, n)).length;
+  });
+  assert.deepEqual(counts.slice().sort(function (a, b) { return a - b; }), counts);
+  assert.ok(counts[4] >= 40);
+
+  // Речення з крапкою й великою літерою з'являються лише після відповідних уроків.
+  const early = wordCore.learnedCharacters(lessonData.lessons, 20);
+  assert.equal(wordCore.filterByLearned(content.sentences.easy, early).length, 0);
+  const late = wordCore.learnedCharacters(lessonData.lessons, 35);
+  assert.ok(wordCore.filterByLearned(content.sentences.easy, late).length >= 3);
+});
+
+test("фільтр слів за вивченими уроками: англійська", function () {
+  const content = wordsData.getContent("en");
+  const learned = wordCore.learnedCharacters(lessonDataEn.lessons, 10);
+  const words = wordCore.filterByLearned(content.pools.easy, learned);
+  assert.ok(words.length >= 30);
+  words.forEach(function (word) {
+    Array.from(word).forEach(function (character) { assert.ok("fjdksla;ghe irutywoqp".includes(character), word); });
+  });
+  assert.ok(!words.some(function (word) { return /[cvmxzbn]/.test(word); }));
+
+  // Великі літери дозволені лише після уроків про них.
+  assert.equal(wordCore.isAllowed("A", wordCore.learnedCharacters(lessonDataEn.lessons, 15)), false);
+  assert.equal(wordCore.isAllowed("A", wordCore.learnedCharacters(lessonDataEn.lessons, 16)), true);
+  const sentences = wordCore.filterByLearned(content.sentences.medium, wordCore.learnedCharacters(lessonDataEn.lessons, 24));
+  assert.equal(sentences.length, content.sentences.medium.length);
+});
+
+test("weakWords: слова зі слабкою літерою, повтор до потрібної кількості", function () {
+  const words = ["вода", "мама", "тато", "ліс"];
+  const result = wordCore.weakWords(["В"], words, 5, seeded(3));
+  assert.equal(result.length, 5);
+  result.forEach(function (word) { assert.equal(word, "вода"); });
+  assert.deepEqual(wordCore.weakWords(["ж"], words, 5, seeded(3)), []);
+});
+
+test("спільні модулі: weakKeys, режими підказок, поділ тексту на слова", function () {
+  // Той самий weakKeys, що й в «Уроках».
+  assert.deepEqual(weakKeysApi.weakKeys({ "є": 2, "ж": 2, "е": 5 }, "ежє", 3), lessonCore.weakKeys({ "є": 2, "ж": 2, "е": 5 }, "ежє", 3));
+  assert.deepEqual(weakKeysApi.weakKeys({ "a": 1 }, "a", 3), []);
+
+  assert.deepEqual(hintModesApi.MODES.map(function (mode) { return mode.id; }), ["guided", "finger", "independent"]);
+  const independent = hintModesApi.find("independent");
+  assert.deepEqual(hintModesApi.visibility(independent, 0), { keyboard: false, finger: false, revealed: false });
+  assert.deepEqual(hintModesApi.visibility(independent, hintModesApi.HINT_AFTER_MISSES), { keyboard: true, finger: true, revealed: true });
+  assert.equal(hintModesApi.visibility(hintModesApi.find("guided"), 0).revealed, false);
+  assert.equal(hintModesApi.find("невідомий").id, "guided");
+
+  assert.deepEqual(textFieldApi.splitWords("раз два  три"), ["раз ", "два  ", "три"]);
+  assert.deepEqual(textFieldApi.splitWords(""), []);
+});
+
+test("Спринт UK: немає нетипових сполучень, англійські цілі є", function () {
+  const all = Object.keys(sprintData.targets.combos).flatMap(function (level) { return sprintData.targets.combos[level]; });
+  ["ерж", "юва", "обі"].forEach(function (combo) { assert.ok(!all.includes(combo), combo); });
+  Object.keys(sprintData.targets.combos).forEach(function (level) {
+    const items = sprintData.targets.combos[level];
+    assert.equal(new Set(items).size, items.length);
+  });
+});

@@ -22,25 +22,27 @@
     }
   </script>
 
-  <script src="../assets/js/prefs-init.js?v=20261123-9"></script>
+  <script src="../assets/js/prefs-init.js?v=20261124-2"></script>
   <link rel="stylesheet" href="../assets/css/tokens.css?v=20260803-1">
   <link rel="stylesheet" href="../assets/css/site-shell.css?v=20260803-1">
   <link rel="stylesheet" href="../assets/css/components.css?v=20260803-1">
   <link rel="stylesheet" href="../assets/css/trainer-shell.css?v=20260803-1">
-  <link rel="stylesheet" href="style.css?v=20260803-1">
-  <link rel="stylesheet" href="../assets/css/keyboard.css?v=20260803-1">
+  <link rel="stylesheet" href="../assets/css/exercise.css?v=20261124-4">
+  <link rel="stylesheet" href="style.css?v=20261124-4">
+  <link rel="stylesheet" href="../assets/css/keyboard.css?v=20261124-1">
 
   <script src="../assets/js/site.js?v=20260803-1" defer></script>
-  <script src="../assets/js/settings.js?v=20261123-9" defer></script><script src="../assets/js/prefs.js?v=20261123-9" defer></script>
+  <script src="../assets/js/settings.js?v=20261124-2" defer></script><script src="../assets/js/prefs.js?v=20261124-4" defer></script>
   <script src="../assets/js/metrics.js?v=20260803-1" defer></script>
   <script src="../assets/js/runtime.js?v=20260803-1" defer></script>
-  <script src="../assets/js/layouts.js?v=20260803-1" defer></script>
-  <script src="../assets/js/input.js?v=20261123-4" defer></script>
-  <script src="../assets/js/keyboard.js?v=20260803-1" defer></script>
+  <script src="../assets/js/layouts.js?v=20261124-2" defer></script>
+  <script src="../assets/js/input.js?v=20261124-2" defer></script>
+  <script src="../assets/js/keyboard.js?v=20261124-2" defer></script><script src="../assets/js/fit.js?v=20261124-1" defer></script>
   <script src="../assets/js/sound.js?v=20260803-1" defer></script>
-  <script src="data.js?v=20260803-1" defer></script>
-  <script src="app.js?v=20260803-1" defer></script>
-<link rel="stylesheet" href="../assets/css/prefs.css?v=20261123-9">
+  <script src="../assets/js/weak-keys.js?v=20261124-4" defer></script>
+  <script src="data.js?v=20261124-2" defer></script>
+  <script src="app.js?v=20261124-4" defer></script>
+<link rel="stylesheet" href="../assets/css/prefs.css?v=20261124-4">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Перейти до вправи</a>
@@ -128,21 +130,21 @@
 
           <section class="trainer-panel practice-panel trainer-view" id="practice-view" aria-labelledby="practice-title" hidden>
             <h2 id="practice-title" class="visually-hidden">Вправа «Знайди клавішу»</h2>
-            <div class="practice-topbar">
-              <div class="practice-progress">
-                <div class="practice-progress__labels"><span>Прогрес</span><span id="progress-label">0 / 12</span></div>
-                <div class="progress-track" aria-hidden="true"><div class="progress-track__fill" id="progress-fill"></div></div>
-              </div>
-              <div class="metric-grid" aria-label="Поточний результат">
+            <div class="k-toolbar start-toolbar">
+              <div class="k-toolbar__identity"><span class="k-title">Клавіо · Старт</span></div>
+              <span class="k-toolbar__spacer"></span>
+              <div class="metric-grid k-metrics" aria-label="Поточні показники">
                 <div class="metric-card"><span class="metric-card__value" id="accuracy-value">100%</span><span class="metric-card__label">Точність</span></div>
+                <div class="metric-card"><span class="metric-card__value" id="cpm-value">0</span><span class="metric-card__label">Симв/хв</span></div>
                 <div class="metric-card"><span class="metric-card__value" id="streak-value">0</span><span class="metric-card__label">Серія</span></div>
               </div>
-              <button class="button button--secondary practice-stop" id="stop-button" type="button">Завершити</button>
+              <div class="k-actions"><button class="button button--secondary k-restart" id="restart-button" type="button">Заново</button><button class="button button--secondary k-restart" id="stop-button" type="button">Обрати набір</button></div>
             </div>
 
             <div class="practice-stage" id="practice-stage" tabindex="-1">
               <p class="practice-stage__prompt">Знайди та натисни</p>
               <div class="target-key" id="target-key" aria-live="polite">А</div>
+              <div class="start-progress"><div class="progress-track lesson-progress" aria-hidden="true"><div class="progress-track__fill" id="progress-fill"></div></div><span class="lesson-progress-label" id="progress-label">0 / 12</span></div>
               <div class="message-slot">
                 <p class="practice-feedback" id="practice-feedback" aria-live="polite">Поглянь на клавіатуру нижче</p>
                 <p class="layout-warning" id="layout-warning" role="alert" hidden>Перемкни клавіатуру на українську розкладку</p>
@@ -159,6 +161,7 @@
             <div class="trainer-panel__body">
               <span class="summary-celebration" aria-hidden="true">★</span>
               <h2 id="summary-title">Вправу завершено!</h2>
+              <p class="k-weak" id="summary-weak" hidden></p>
               <p id="summary-message">Чудовий початок. Тепер клавіатура вже трохи знайоміша.</p>
               <div class="metric-grid" aria-label="Підсумок вправи">
                 <div class="metric-card"><span class="metric-card__value" id="summary-correct">12</span><span class="metric-card__label">Правильно</span></div>
@@ -166,7 +169,7 @@
                 <div class="metric-card"><span class="metric-card__value" id="summary-accuracy">100%</span><span class="metric-card__label">Точність</span></div>
               </div>
               <div class="summary-actions">
-                <button class="button button--primary" id="repeat-button" type="button">Повторити вправу</button>
+                <button class="button button--primary" id="repeat-button" type="button">Заново</button>
                 <button class="button button--secondary" id="settings-button" type="button">Обрати інший набір</button>
               </div>
             </div>

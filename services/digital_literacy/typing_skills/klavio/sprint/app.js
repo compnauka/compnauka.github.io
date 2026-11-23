@@ -10,8 +10,11 @@
   const keyboardApi = window.KlavioKeyboard;
   const soundApi = window.KlavioSound;
   const settings = window.KlavioSettings;
+  const fitApi = window.KlavioFit;
+  const hintModes = window.KlavioHintModes;
+  const weakApi = window.KlavioWeakKeys;
 
-  if (!data || !core || !layouts || !input || !metricsApi || !runtime || !keyboardApi || !soundApi || !settings) {
+  if (!fitApi || !hintModes || !weakApi || !data || !core || !layouts || !input || !metricsApi || !runtime || !keyboardApi || !soundApi || !settings) {
     throw new Error("Не вдалося завантажити Клавіо — Спринт");
   }
 
@@ -21,7 +24,10 @@
     mode: document.getElementById("mode-control"),
     difficulty: document.getElementById("difficulty-control"),
     speed: document.getElementById("speed-control"),
-    direction: document.getElementById("direction-control"),
+    hint: document.getElementById("hint-control"),
+    extraToggle: document.getElementById("extra-toggle"),
+    extra: document.getElementById("sprint-extra"),
+    summaryWeak: document.getElementById("summary-weak"),
     start: document.getElementById("start-button"),
     field: document.getElementById("game-field"),
     idle: document.getElementById("game-idle"),
@@ -54,7 +60,11 @@
     mode: "keys",
     difficulty: "easy",
     speed: "normal",
-    direction: "ltr",
+    // Режим підказок: за замовчуванням залежить від рівня, поки учень не обрав свій.
+    hintMode: "guided",
+    hintTouched: false,
+    misses: 0,
+    errorCounts: {},
     running: false,
     targetText: "",
     charIndex: 0,
@@ -76,6 +86,13 @@
   const bags = {};
 
   const keyboard = keyboardApi.create(elements.keyboard, layouts);
+  // Поле гри, панелі й клавіатура мають вміщатися у вікно без прокручування.
+  // Крайній захід — нижче поле гри (клас is-compact).
+  const fitter = fitApi.create({
+    panel: elements.gameView,
+    keyboard: elements.keyboard,
+    compact: function (on) { elements.field.classList.toggle("is-compact", on); }
+  });
   const sound = soundApi.create({
     button: elements.sound,
     glyph: elements.soundGlyph,
@@ -95,6 +112,7 @@
       button.addEventListener("click", function () {
         if (state.running) return;
         state[key] = item.id;
+        if (key === "difficulty") autoHintMode();
         updateControls();
         prepareIdle();
       });
@@ -105,8 +123,7 @@
   const controlGroups = [
     [elements.mode, "mode"],
     [elements.difficulty, "difficulty"],
-    [elements.speed, "speed"],
-    [elements.direction, "direction"]
+    [elements.speed, "speed"]
   ];
 
   function updateControls() {
@@ -150,16 +167,17 @@
     elements.done.textContent = state.targetText.slice(0, state.charIndex);
     elements.current.textContent = input.displayCharacter(expected());
     elements.todo.textContent = state.targetText.slice(state.charIndex + 1);
-    elements.keyboard.classList.add("has-hint");
-
-    const combo = keyboard.setHint(expected(), true);
+    // Підсвічування клавіші залежить від режиму підказок; після двох помилок на символі вона з'являється.
+    const visible = hintModes.visibility(hintModes.find(state.hintMode), state.misses);
+    elements.keyboard.classList.toggle("has-hint", visible.keyboard);
+    const combo = keyboard.setHint(expected(), visible.keyboard) || layouts.comboHintForCharacter(expected());
     if (combo) feedback(combo, "hint");
 
     elements.field.setAttribute("aria-label", "Введіть: " + input.describeCharacter(expected()));
   }
 
   function source() {
-    return data.targets[state.mode][state.difficulty];
+    return data.getTargets(layouts.getLanguage())[state.mode][state.difficulty];
   }
 
   function speedConfig() {
@@ -178,7 +196,7 @@
   // Кожна пара «режим + складність» має власну чергу, яка живе між раундами:
   // набір встигає пройти повністю, перш ніж ціль повториться.
   function chooseTarget() {
-    const key = state.mode + ":" + state.difficulty;
+    const key = layouts.getLanguage() + ":" + state.mode + ":" + state.difficulty;
     if (!bags[key]) bags[key] = runtime.createBag(source());
     return bags[key].next() || "";
   }
@@ -187,13 +205,14 @@
   function targetOffset(progress) {
     const maxLeft = Math.max(0, elements.field.clientWidth - elements.target.offsetWidth - 34);
     const travelled = Math.min(1, Math.max(0, progress)) * maxLeft;
-    return 18 + (state.direction === "rtl" ? maxLeft - travelled : travelled);
+    return 18 + travelled;
   }
 
   function spawnTarget(now) {
     if (!state.running) return;
     state.targetText = chooseTarget();
     state.charIndex = 0;
+    state.misses = 0;
     state.targetStarted = now || performance.now();
     state.targetDuration = core.targetDuration(speedConfig().duration, state.mode, state.pace);
     state.targetLive = true;
@@ -210,6 +229,8 @@
     const missedCharacters = Math.max(1, state.targetText.length - state.charIndex);
     state.targetLive = false;
     state.missed += missedCharacters;
+    const missedChar = state.targetText[state.charIndex];
+    if (missedChar && missedChar.trim()) state.errorCounts[missedChar] = (state.errorCounts[missedChar] || 0) + 1;
     metricsApi.recordError(state.metrics, missedCharacters);
     state.streak = 0;
     adapt(false);
@@ -260,6 +281,8 @@
     state.maxStreak = 0;
     state.pace = 1;
     state.results = [];
+    state.misses = 0;
+    state.errorCounts = {};
     state.lastSecond = data.durationSeconds;
     updateStats();
   }
@@ -278,8 +301,9 @@
     setControlsDisabled(false);
     elements.gameView.hidden = false;
     elements.summary.hidden = true;
-    elements.field.classList.toggle("is-rtl", state.direction === "rtl");
     keyboard.clearHint();
+    fitter.fit();
+    fitter.reveal();
   }
 
   function start() {
@@ -316,6 +340,9 @@
       : accuracy() >= 70
         ? "Гарний темп. Наступного разу спробуй друкувати трохи точніше."
         : "Зменш швидкість і спочатку поверни точність.";
+    const weak = weakApi.weakKeys(state.errorCounts, "", 3);
+    elements.summaryWeak.hidden = weak.length === 0;
+    elements.summaryWeak.textContent = "Найчастіше помилявся: " + weak.join(", ");
     elements.gameView.hidden = true;
     elements.summary.hidden = false;
     tones.complete();
@@ -332,6 +359,7 @@
     if (input.matchesCharacter(wanted, event)) {
       metricsApi.recordCorrect(state.metrics);
       state.charIndex += 1;
+      state.misses = 0;
       elements.warning.hidden = true;
       keyboard.flash(event.code, "is-pressed-correct", 170);
       if (state.charIndex >= state.targetText.length) {
@@ -344,10 +372,13 @@
     } else {
       metricsApi.recordError(state.metrics);
       state.streak = 0;
+      state.misses += 1;
+      if (wanted.trim()) state.errorCounts[wanted] = (state.errorCounts[wanted] || 0) + 1;
       keyboard.flash(event.code, "is-pressed-error", 170);
+      if (state.misses === hintModes.HINT_AFTER_MISSES) updateTargetText();
       tones.error();
       adapt(false);
-      const problem = input.issue(wanted, event);
+      const problem = input.issue(wanted, event, layouts.getLanguage());
       elements.warning.hidden = problem !== "layout";
       feedback(problem === "layout" ? "" : "Інша клавіша", "error");
       updateStats();
@@ -364,10 +395,57 @@
   document.addEventListener("keydown", handleKey);
   window.addEventListener("beforeunload", function () { cancelAnimationFrame(state.frameId); });
 
+  // Зміна мови друку без перезавантаження: нова розкладка, нові цілі; триваючий раунд
+  // починається заново (черга цілей у bags залежить від мови).
+  function applyLanguage() {
+    const wasRunning = state.running;
+    keyboard.setLanguage();
+    elements.warning.textContent = layouts.layoutWarningText();
+    if (wasRunning) {
+      prepareIdle();
+      start();
+    } else {
+      prepareIdle();
+    }
+    fitter.schedule();
+  }
+
+  window.addEventListener("klavio:lang-change", applyLanguage);
+  window.addEventListener("klavio:prefs-close", function () {
+    if (state.running) elements.field.focus({ preventScroll: true });
+  });
+  elements.warning.textContent = layouts.layoutWarningText();
+
+  const hintControl = hintModes.createControl(elements.hint, {
+    modes: [hintModes.MODES[0], hintModes.MODES[2]],
+    value: state.hintMode,
+    onChange: function (id) {
+      state.hintMode = id;
+      state.hintTouched = true;
+      state.misses = 0;
+      if (state.running && state.targetLive) updateTargetText();
+      if (state.running) elements.field.focus({ preventScroll: true });
+    }
+  });
+
+  // На «Складно» гра без підсвічування, на решті — з підсвічуванням (поки учень не обрав своє).
+  function autoHintMode() {
+    if (state.hintTouched) return;
+    state.hintMode = state.difficulty === "hard" ? "independent" : "guided";
+    hintControl.set(state.hintMode);
+  }
+
+  elements.extraToggle.addEventListener("click", function () {
+    const open = elements.extra.hidden;
+    elements.extra.hidden = !open;
+    elements.extraToggle.setAttribute("aria-expanded", String(open));
+    fitter.fit();
+    fitter.reveal();
+  });
+
   addButtons(elements.mode, data.modes, "mode");
   addButtons(elements.difficulty, data.difficulties, "difficulty");
   addButtons(elements.speed, data.speeds, "speed");
-  addButtons(elements.direction, data.directions, "direction");
   updateControls();
   prepareIdle();
 })();
