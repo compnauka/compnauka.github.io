@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta name="robots" content="noindex, nofollow, noarchive"><meta name="googlebot" content="noindex, nofollow, noarchive">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Обійди камінь — мікрогра, 2 клас</title>
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#F2F5FA;color:#1A1A1A;line-height:1.5;font-size:20px}
+header{background:#0033A0;color:#FFFFFF;padding:18px 16px;border-bottom:5px solid #FFD700}
+header .sub{margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#D6E0F5}
+header h1{margin:0;font-size:22px;line-height:1.25;font-weight:800}
+main{max-width:640px;margin:0 auto;padding:16px 14px 32px}
+.card{background:#FFFFFF;border:1px solid #D9E2F0;border-radius:14px;padding:18px;margin:14px 0}
+.concept{background:#FFF9DB;border-left:5px solid #FFD700;border-radius:10px;padding:14px 16px;margin:14px 0}
+.concept p{margin:0 0 8px}.concept p:last-child{margin:0}
+h2{margin:0 0 10px;font-size:23px;color:#0033A0}
+.progress{margin:6px 0 12px;font-size:15px;color:#3D4757}
+.bar{height:8px;background:#D9E2F0;border-radius:6px;overflow:hidden;margin-top:6px}
+.bar>div{height:100%;background:#0033A0;transition:width .3s ease}
+button{font-family:inherit;font-size:21px;line-height:1.3;cursor:pointer;min-height:60px;border-radius:12px;padding:14px 18px;border:2px solid #0033A0;background:#FFFFFF;color:#0033A0;font-weight:700;text-align:left;width:100%}
+button.primary{background:#0033A0;color:#FFFFFF;text-align:center}
+button.ghost{background:#F0F4F8;text-align:center}
+button:hover:not(:disabled){filter:brightness(.96)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,a:focus-visible{outline:3px solid #FFD700;outline-offset:2px}
+.choices{display:grid;gap:10px;margin-top:12px}
+.big-item{background:#EAF0FC;border:2px solid #0033A0;border-radius:12px;padding:22px 16px;text-align:center;font-size:32px;font-weight:800;margin:6px 0 4px;word-break:break-word}
+.mono{font-family:'Courier New',monospace;letter-spacing:2px}
+.fb{border-radius:10px;padding:14px 16px;margin:14px 0;font-size:19px}
+.fb-ok{background:#E9F4ED;border-left:5px solid #1B6B3A}
+.fb-bad{background:#FFF2F2;border-left:5px solid #C0392B}
+.fb p{margin:0 0 8px}.fb p:last-child{margin:0}
+.slots{display:flex;gap:10px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+.slot{width:48px;height:56px;border:2px solid #0033A0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;font-family:'Courier New',monospace;background:#FFFFFF}
+.slot.cur{background:#FFF9DB;border-color:#B38600}
+.slot.done{background:#E9F4ED;border-color:#1B6B3A}
+.alpha{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px;margin-top:12px}
+.alpha button{min-height:48px;padding:6px 4px;text-align:center;font-size:18px}
+.steps{display:grid;gap:10px;margin-top:12px}
+.steps button{display:flex;align-items:center;gap:10px}
+.badge{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#EAF0FC;border:2px solid #0033A0;display:flex;align-items:center;justify-content:center;font-weight:800}
+.assigned .badge{background:#0033A0;color:#FFFFFF}
+.codebox{background:#F0F4F8;border:2px dashed #0033A0;border-radius:10px;padding:14px 16px;text-align:center;font-family:'Courier New',monospace;font-size:22px;font-weight:800;letter-spacing:1px;margin:12px 0}
+.result{font-size:26px;font-weight:800;color:#0033A0;text-align:center;margin:8px 0}
+.center{text-align:center}
+.muted{color:#3D4757;font-size:16px}
+.artbox{margin:14px 0 4px;text-align:center}
+.artbox svg,.artbig svg{max-width:100%;height:auto;display:inline-block}
+.artbig{text-align:center;margin:2px 0 10px}
+.home{display:inline-block;margin:0 0 6px;color:#0033A0;font-weight:700;text-decoration:none;font-size:15px;min-height:44px;padding:10px 0}
+details{background:#F0F4F8;border-radius:10px;padding:12px 14px;margin:12px 0}
+summary{font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.tbl{font-family:'Courier New',monospace;font-size:14px;line-height:1.7;word-break:break-all;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+<p class="sub">Клас 2 • Модуль 4 • Урок 30</p>
+<h1>🪨 Обійди камінь</h1>
+</header>
+<main>
+<a class="home" href="../index.html">← Усі ігри</a>
+
+<section id="scr-start" class="card" aria-labelledby="h-start">
+<h2 id="h-start">Про що ця гра</h2>
+<div class="concept" id="concept"></div>
+<div class="artbox" id="artbox"></div>
+<p class="muted" id="best"></p>
+<button class="primary" id="btn-start">Почати гру</button>
+</section>
+
+<section id="scr-game" hidden>
+<p class="progress" id="prog"></p>
+<div class="bar" aria-hidden="true"><div id="barfill" style="width:0%"></div></div>
+<div id="stage"></div>
+<div id="fb" class="fb" hidden aria-live="polite"></div>
+<div id="nav" style="margin-top:6px" hidden><button class="primary" id="btn-next">Далі</button></div>
+</section>
+
+<section id="scr-end" class="card" hidden aria-labelledby="h-end">
+<h2 id="h-end">🏁 Гру завершено!</h2>
+<p class="result" id="scoreline"></p>
+<div class="fb fb-ok" style="margin:12px 0"><p id="skill"></p></div>
+<p class="muted">Вправу завершено. Практичну роботу з уроку покажи вчителю окремо.</p><p><b>Код результату вправи.</b> Покажи або надиктуй його вчителю:</p>
+<div class="codebox" id="code"></div>
+<p class="muted">Порада: якщо хочеш кращий результат, спочатку перечитай підказку на початку гри.</p>
+<button class="primary" id="btn-again">Грати ще</button>
+</section>
+</main>
+
+<script>
+const GAME = {"id": "g2g30b", "lesson": 30, "tag": "ПЕРЕШКОДА", "icon": "🪨", "type": "quiz", "title": "Обійди камінь", "file": "К2_М4_Урок30_Гра2_Обійди-камінь.html", "conceptName": "перешкода", "concept": "Якщо на шляху перешкода — обійди її: поверни, проїдь збоку, поверни назад.", "skill": "будувати маршрут навколо перешкоди", "art": "<svg viewBox=\"0 0 340 150\" width=\"340\" role=\"img\" aria-label=\"Обійди перешкоду\"><rect x=\"30\" y=\"8\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"74\" y=\"8\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"118\" y=\"8\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"162\" y=\"8\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"30\" y=\"52\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"74\" y=\"52\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"118\" y=\"52\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"162\" y=\"52\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"30\" y=\"96\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"74\" y=\"96\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"118\" y=\"96\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><rect x=\"162\" y=\"96\" width=\"44\" height=\"44\" fill=\"#FFFFFF\" stroke=\"#B9C6DA\" stroke-width=\"1.5\"/><text x=\"52\" y=\"130\" text-anchor=\"middle\" font-size=\"26\">🐝</text><text x=\"96\" y=\"130\" text-anchor=\"middle\" font-size=\"26\">🪨</text><text x=\"140\" y=\"130\" text-anchor=\"middle\" font-size=\"26\">🌻</text><path d=\"M 52 125 v -44 h 44 v 44 h 44\" stroke=\"#2F855A\" stroke-width=\"4\" fill=\"none\" stroke-dasharray=\"7 5\"/><text x=\"250\" y=\"60\" font-size=\"15\" font-weight=\"700\" fill=\"#2F855A\">обхід!</text><text x=\"250\" y=\"85\" font-size=\"14\" fill=\"#52606D\">не їдь у камінь</text></svg>", "data": {"questions": [{"q": "🪨 Перед роботом камінь. Що буде, якщо натиснути Forward, Forward, GO?", "options": ["Робот упреться в камінь", "Робот обійде камінь", "Камінь зникне", "Робот полетить"], "correct": 0, "explain": "Прямо — у перешкоду! Треба обходити збоку."}, {"q": "🐝 Робот дивиться праворуч, попереду камінь. Яка програма безпечна?", "options": ["Ліворуч, уперед, праворуч, уперед", "Уперед, уперед", "Назад, назад, назад", "GO, GO, GO"], "correct": 0, "explain": "Повернули, об'їхали збоку, повернули назад — і жодного каменя!"}, {"q": "🗺️ Перед програмою треба…", "options": ["подивитися на сітку й знайти перешкоди", "заплющити очі", "натиснути всі кнопки", "здогадатися"], "correct": 0, "explain": "Спочатку вивчаємо шлях: де перешкоди і де мета?"}, {"q": "🤖 Робот доїхав не туди. Що робити?", "options": ["Очистити пам'ять і спробувати новий маршрут", "Кинути робота", "Натиснути GO ще 5 разів", "Нічого"], "correct": 0, "explain": "Clear — і програмуємо наново, маленькими частинами."}, {"q": "🧱 Перешкода (obstacle) — це…", "options": ["те, що стоїть на шляху", "ціль робота", "кнопка", "друг"], "correct": 0, "explain": "Перешкода заважає їхати прямо. Обходимо!"}, {"q": "🏁 Мета (destination) — це…", "options": ["куди робот має приїхати", "звідки він стартував", "камінь", "кнопка GO"], "correct": 0, "explain": "Мета — фініш маршруту. Їдемо до неї!"}]}};
+
+const $ = id => document.getElementById(id);
+let order = [], idx = 0, score = 0, firstTry = true;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function show(id){['scr-start','scr-game','scr-end'].forEach(s=>$(s).hidden=(s!==id));}
+function setProgress(){$('prog').textContent='Завдання '+(idx+1)+' з '+order.length;$('barfill').style.width=Math.round(idx/order.length*100)+'%';}
+function feedback(ok,html){const f=$('fb');f.hidden=false;f.className='fb '+(ok?'fb-ok':'fb-bad');f.innerHTML=html;}
+function hideFeedback(){$('fb').hidden=true;$('nav').hidden=true;}
+function showNext(){ $('stage').querySelectorAll('button').forEach(b=>b.disabled=true); $('nav').hidden=false;$('btn-next').focus();}
+function letters(n){const L='АБВГДЕЖЗИКЛМНОПРСТУФ';return L[n%20]+L[(n*7+3)%20];}
+function makeCode(){return GAME.tag+'-'+score+'З'+order.length+'-'+letters(score*13+order.length*7+GAME.tag.length);}
+
+/* ---------- двигуни ---------- */
+
+function runSort(){
+  const it = order[idx];
+  setProgress();
+  const cats = GAME.data.categories.map(c=>'<button data-cat="'+c.id+'">'+c.label+'</button>').join('');
+  $('stage').innerHTML = '<div class="card"><h2>Куди це покласти?</h2>'+
+    '<div class="big-item">'+it.text+'</div>'+
+    '<div class="choices">'+cats+'</div></div>';
+  $('stage').querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(b.dataset.cat===it.cat){
+        score += firstTry?1:0;
+        feedback(true,'<p><b>Правильно!</b></p><p>'+it.explain+'</p>');
+        showNext();
+      }else{
+        b.disabled=true; firstTry=false;
+        feedback(false,'<p><b>Не зовсім.</b> Подумай ще раз.</p><p>Підказка: '+(it.hint||GAME.data.categories.find(c=>c.id===it.cat).hint)+'</p>');
+      }
+    });
+  });
+}
+
+let chosen=[];
+function runOrder(){
+  const r = order[idx];
+  setProgress(); chosen=[];
+  const steps = shuffle(r.steps.map((t,i)=>({t:t,i:i})));
+  let html='<div class="card"><h2>'+r.title+'</h2><p class="muted">Натискай кроки по порядку: від першого до останнього.</p><div class="steps">';
+  steps.forEach((s,k)=>{html+='<button data-i="'+s.i+'" data-k="'+k+'"><span class="badge">?</span><span>'+s.t+'</span></button>';});
+  html+='</div><div class="choices" style="grid-template-columns:1fr 1fr"><button class="ghost" id="btn-reset" disabled>Скинути</button><button class="primary" id="btn-check" disabled>Перевірити</button></div></div>';
+  $('stage').innerHTML=html;
+  const btns=[...$('stage').querySelectorAll('button[data-i]')];
+  btns.forEach(b=>b.addEventListener('click',()=>{
+    if(b.classList.contains('assigned'))return;
+    b.classList.add('assigned');b.disabled=true;
+    chosen.push(+b.dataset.i);
+    b.querySelector('.badge').textContent=chosen.length;
+    $('btn-reset').disabled=false;
+    if(chosen.length===r.steps.length)$('btn-check').disabled=false;
+  }));
+  $('btn-reset').addEventListener('click',()=>{hideFeedback();runOrder();});
+  $('btn-check').addEventListener('click',()=>{
+    const good = chosen.every((v,i)=>r.steps[v]===r.steps[i]);
+    if(good){
+      score+=firstTry?1:0;
+      feedback(true,'<p><b>Правильний порядок!</b></p><p>'+r.explain+'</p>');
+      showNext();
+    }else{
+      firstTry=false;
+      feedback(false,'<p><b>Порядок не той.</b></p><p>Підказка: '+r.hint+'</p><p>Натисни «Скинути» і спробуй ще раз.</p>');
+    }
+  });
+}
+
+function runQuiz(){
+  const q = order[idx];
+  setProgress();
+  const opts = shuffle(q.options.map((t,i)=>({t:t,ok:i===q.correct})));
+  let html='<div class="card"><h2>'+q.q+'</h2>'+(q.art?'<div class="artbig">'+q.art+'</div>':'')+'<div class="choices">';
+  opts.forEach(o=>{html+='<button data-ok="'+(o.ok?1:0)+'">'+o.t+'</button>';});
+  html+='</div></div>';
+  $('stage').innerHTML=html;
+  $('stage').querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(b.dataset.ok==='1'){
+        score+=firstTry?1:0;
+        feedback(true,'<p><b>Правильно!</b></p><p>'+q.explain+'</p>');
+        showNext();
+      }else{
+        b.disabled=true;firstTry=false;
+        feedback(false,'<p><b>Не зовсім.</b></p><p>'+(q.wrong||'Перечитай підказку на початку гри й спробуй ще.')+'</p>');
+      }
+    });
+  });
+}
+
+let curSlot=0,targetWord='';
+function runCipher(){
+  const t=order[idx];
+  setProgress();curSlot=0;
+  const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const k=t.key;
+  const mv=(ch,d)=>A[(A.indexOf(ch)+d+26)%26];
+  const fwd=t.mode==='encrypt';
+  const given=fwd?t.word:t.word.split('').map(ch=>mv(ch,k)).join('');
+  targetWord=fwd?t.word.split('').map(ch=>mv(ch,k)).join(''):t.word;
+  const dir=fwd?'уперед':'назад';
+  const act=fwd?'Зашифруй':'Розшифруй';
+  let html='<div class="card"><h2>'+act+' слово ключем '+k+'</h2>'+
+    '<p class="muted">Кожну літеру зсуваємо алфавітом на '+k+' '+dir+'. Натискай літери по черзі.</p>'+
+    '<div class="big-item mono" aria-label="Слово '+given+'">'+given.split('').join(' ')+'</div>'+
+    '<p class="center muted">↓ стає ↓</p><div class="slots" id="slots">';
+  for(let i=0;i<t.word.length;i++)html+='<div class="slot" id="slot'+i+'">·</div>';
+  html+='</div><details><summary>Показати таблицю зсуву</summary><div class="tbl">';
+  html+=A.split('').join(' ')+'<br>'+A.split('').map(ch=>mv(ch,fwd?k:-k)).join(' ');
+  html+='</div></details><div class="alpha">';
+  for(const ch of A)html+='<button data-ch="'+ch+'" aria-label="Літера '+ch+'">'+ch+'</button>';
+  html+='</div></div>';
+  $('stage').innerHTML=html;
+  $('slot0').classList.add('cur');
+  $('stage').querySelectorAll('.alpha button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const need=targetWord[curSlot];
+      if(b.dataset.ch===need){
+        const s=$('slot'+curSlot);s.textContent=need;s.classList.remove('cur');s.classList.add('done');
+        curSlot++;
+        if(curSlot<targetWord.length){$('slot'+curSlot).classList.add('cur');}
+        else{
+          score+=firstTry?1:0;
+          feedback(true,'<p><b>Усе слово правильно!</b></p><p class="mono">'+given.split('').join(' ')+'  →  '+targetWord.split('').join(' ')+'</p>');
+          showNext();
+        }
+      }else{
+        firstTry=false;
+        const src=given[curSlot];
+        feedback(false,'<p><b>Не та літера.</b></p><p>Порахуй у таблиці: '+src+' зсуваємо на '+k+' '+dir+'. Спробуй ще.</p>');
+      }
+    });
+  });
+}
+
+const ENGINES={sort:runSort,order:runOrder,quiz:runQuiz,cipher:runCipher};
+
+/* ---------- потік гри ---------- */
+
+function start(){
+  order=shuffle(GAME.data.items||GAME.data.rounds||GAME.data.questions||GAME.data.tasks);
+  idx=0;score=0;firstTry=true;
+  show('scr-game');hideFeedback();
+  ENGINES[GAME.type]();
+}
+function next(){
+  idx++;firstTry=true;hideFeedback();
+  if(idx<order.length){ENGINES[GAME.type]();}
+  else{finish();}
+}
+function finish(){
+  show('scr-end');
+  $('scoreline').textContent='Пройдено '+score+' з '+order.length;
+  $('skill').textContent='Тема вправи: '+(GAME.conceptName||GAME.title);
+  $('code').textContent=makeCode();
+  try{
+    const k='microgame_'+GAME.id,prev=JSON.parse(localStorage.getItem(k)||'null');
+    if(!prev||score>prev.score)localStorage.setItem(k,JSON.stringify({score:score,total:order.length}));
+  }catch(e){}
+  $('h-end').focus?$('h-end').focus():null;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  $('concept').innerHTML='<p><b>Ключове поняття: '+GAME.conceptName+'.</b></p><p>'+GAME.concept+'</p>';
+  $('artbox').innerHTML=GAME.art||'';
+  try{
+    const prev=JSON.parse(localStorage.getItem('microgame_'+GAME.id)||'null');
+    if(prev)$('best').textContent='Найкращий результат у цьому браузері: '+prev.score+' з '+prev.total;
+  }catch(e){}
+  $('btn-start').addEventListener('click',start);
+  $('btn-next').addEventListener('click',next);
+  $('btn-again').addEventListener('click',start);
+});
+</script>
+</body>
+</html>
