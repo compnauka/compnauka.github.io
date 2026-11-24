@@ -210,19 +210,26 @@
     ctx.stroke();
   }
 
-  function drawLinks(ctx, graph, color, preview) {
+  function drawLinks(ctx, graph, color, preview, look = {}) {
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.strokeStyle = ctx.fillStyle = color;
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     const blocks = new Map(graph.blocks.map((block) => [block.id, block]));
-    const heads = new Set();
+    const heads = new Set(), labels = [];
     for (const link of graph.links) {
       const to = blocks.get(link.to);
-      roundedLine(ctx, route(blocks.get(link.from), link.branch, to), 9);
+      const path = route(blocks.get(link.from), link.branch, to);
+      const lit = look.lit && look.lit.from === link.from && look.lit.branch === link.branch;
+      ctx.lineWidth = lit ? 4 : 2.2;
+      ctx.strokeStyle = lit ? look.mark : color;
+      roundedLine(ctx, path, 9);
       heads.add(to);
+      if (link.branch !== 'next') labels.push({ path, branch: link.branch });
     }
+    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = color;
     // Одна стрілка-вістря на блок, навіть якщо до нього веде кілька ліній.
     for (const to of heads) {
       const x = to.x + dims(to).w / 2, y = to.y;
@@ -233,6 +240,27 @@
       ctx.closePath();
       ctx.fill();
     }
+    // «Так»/«Ні» — позначки просто на стрілці, тому видно завжди.
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '800 12px ' + (family || 'sans-serif');
+    for (const { path, branch } of labels) {
+      const dx = Math.sign(path[1].x - path[0].x);
+      const x = path[0].x + dx * Math.min(32, Math.max(Math.abs(path[1].x - path[0].x) / 2, 14)), y = path[0].y;
+      const tone = branch === 'no' ? (look.no || '#a83e66') : (look.yes || '#047857');
+      const w = ctx.measureText(LABELS[branch]).width + 14;
+      ctx.fillStyle = look.bg || '#ffffff';
+      ctx.strokeStyle = tone;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x - w / 2, y - 9, w, 18, 9);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = tone;
+      ctx.fillText(LABELS[branch], x, y + 0.5);
+    }
+    ctx.strokeStyle = ctx.fillStyle = color;
+    ctx.lineWidth = 2.2;
     if (preview?.point) {
       ctx.setLineDash([5, 4]);
       const from = blocks.get(preview.from), to = blocks.get(preview.to);
@@ -315,7 +343,7 @@
       ctx.font = '800 ' + FONT_PX + 'px ' + (family || 'sans-serif');
       lines.forEach((text, i) => ctx.fillText(text, block.x + w / 2, block.y + h / 2 + (i - (lines.length - 1) / 2) * LINE));
       for (const branch of branches(block.type)) {
-        if (branch === 'next') continue;
+        if (branch === 'next' || graph.links.some((link) => link.from === block.id && link.branch === branch)) continue;
         const o = outlet(block, branch);
         ctx.fillStyle = branch === 'no' ? '#a83e66' : '#047857';
         ctx.font = '800 12px ' + (family || 'sans-serif');
@@ -700,7 +728,13 @@
 
     function repaint() {
       const css = getComputedStyle(root);
-      drawLinks(canvas.getContext('2d'), graph, css.getPropertyValue('--fc-ink'), linking);
+      const here = getBlock(walking);
+      const way = here && !run.waiting ? verdict(here, run.vars) : null;
+      const dark = !!root.closest('.theme-dark');
+      drawLinks(canvas.getContext('2d'), graph, css.getPropertyValue('--fc-ink'), linking, {
+        bg: css.getPropertyValue('--fc-paper'), mark: css.getPropertyValue('--fc-mark'), yes: css.getPropertyValue('--fc-mark'),
+        no: dark ? '#f4a6c2' : '#a83e66', lit: way ? { from: here.id, branch: way } : null,
+      });
     }
 
     function positionBlock(element, block) {
@@ -752,7 +786,7 @@
                   ]);
                 },
               },
-            }, branch === 'next' ? null : el('span', LABELS[branch]));
+            }, branch === 'next' || linkFor(block.id, branch) ? null : el('span', LABELS[branch]));
             shell.append(port);
           }
         }
