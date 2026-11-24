@@ -16,6 +16,8 @@
     'file-plus': '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/>',
     image: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9.5 9"/>',
     monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5.5 6.5h13M5.5 17.5h13"/>',
+    home: '<path d="M3 10.5 12 3l9 7.5M5 9v11h14V9M10 20v-6h4v6"/>',
     books: '<rect x="4" y="4" width="5" height="16" rx="1"/><rect x="9" y="6" width="5" height="14" rx="1"/><path d="M15.2 6.6l3-.8 3.3 12.8-3 .8z"/>',
     trash: '<path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12M9 7V4.5A.5.5 0 0 1 9.5 4h5a.5.5 0 0 1 .5.5V7"/>',
     'trash-x': '<path d="M4 7h16M5.5 7l1 12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12M9 7V4.5A.5.5 0 0 1 9.5 4h5a.5.5 0 0 1 .5.5V7M10 12l4 4M14 12l-4 4"/>',
@@ -157,6 +159,8 @@
     txt: PAGE + '<path d="M14 22h20M14 28h20M14 34h13" stroke="#4dabf7" stroke-width="2.6" stroke-linecap="round"/>',
     img: PAGE + '<rect x="13" y="19" width="22" height="18" rx="2.5" fill="#c5f6fa"/><circle cx="19" cy="24.5" r="2.6" fill="#ffd43b"/><path d="M13 34.5l7-7 5 5 4-3 6 5v.5a2.5 2.5 0 0 1-2.5 2.5h-17A2.5 2.5 0 0 1 13 35z" fill="#51cf66"/>',
     'file-unknown': PAGE + '<path d="M20.5 24a3.6 3.6 0 0 1 7 1c0 2.6-3.5 3-3.5 5.5" stroke="#94a3b8" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="24" cy="35" r="1.6" fill="#94a3b8"/>',
+    csv: PAGE + '<rect x="13" y="20" width="22" height="16" rx="2" fill="#d3f9d8" stroke="#40c057" stroke-width="1.6"/><path d="M13 25.5h22M13 31h22M20.5 20v16M28 20v16" stroke="#40c057" stroke-width="1.6" fill="none"/>',
+    html: PAGE + '<circle cx="24" cy="29" r="8.5" fill="#e7f5ff" stroke="#4dabf7" stroke-width="1.6"/><ellipse cx="24" cy="29" rx="3.6" ry="8.5" fill="none" stroke="#4dabf7" stroke-width="1.4"/><path d="M15.5 29h17" stroke="#4dabf7" stroke-width="1.4"/>',
     zip: PAGE + '<path d="M22 6v4h4V6M22 10v4h4M26 14v4h-4M22 18v4h4" stroke="#868e96" stroke-width="2" fill="none"/><rect x="20.5" y="24" width="7" height="8" rx="1.5" fill="#868e96"/>',
 
     /* Наліпки для «Малюнка» й конфеті */

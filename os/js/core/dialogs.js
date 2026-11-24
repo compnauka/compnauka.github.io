@@ -3,6 +3,7 @@
   'use strict';
   const VOS = window.VOS;
   const { el, fs, bus } = VOS;
+  const modals = [];
 
   function modal(buildFn, { title = 'Віконце', icon = 'info', wide = false, className = '' } = {}) {
     return new Promise((resolve) => {
@@ -10,6 +11,8 @@
       const overlay = el('div.modal-overlay');
       const box = el('div.dialog' + (wide ? '.dialog-wide' : '') + (className ? '.' + className : ''), { role: 'alertdialog', 'aria-modal': 'true', 'aria-label': title });
       const close = (val) => {
+        if (modals.at(-1) !== overlay) return;
+        modals.pop();
         overlay.remove();
         document.removeEventListener('keydown', onKey, true);
         if (prevFocus && prevFocus.focus) try { prevFocus.focus(); } catch (e) { /* */ }
@@ -29,15 +32,28 @@
       });
       const api = { close, content, foot, box };
       const onKey = (e) => {
-        if (e.key === 'Escape') { e.stopPropagation(); close(undefined); }
-        else if (e.key === 'Enter' && api.onEnter && !(e.target && e.target.tagName === 'TEXTAREA')) { e.preventDefault(); e.stopPropagation(); api.onEnter(); }
+        if (modals.at(-1) !== overlay) return;
+        if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(undefined); }
+        else if (e.key === 'Tab') {
+          const controls = [...box.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]')].filter((node) => node.getClientRects().length);
+          const edge = e.shiftKey ? controls[0] : controls.at(-1);
+          if (!box.contains(e.target) || e.target === edge) {
+            e.preventDefault();
+            (e.shiftKey ? controls.at(-1) : controls[0])?.focus();
+          }
+        }
+        else if (e.key === 'Enter' && api.onEnter && !e.target.closest?.('button, textarea, a, select, [contenteditable]')) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          if (box.contains(e.target)) api.onEnter();
+        }
       };
       document.addEventListener('keydown', onKey, true);
       buildFn(api);
+      modals.push(overlay);
       document.body.append(overlay);
       box.animate([{ opacity: 0, transform: 'translateY(10px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 160, easing: 'ease-out' });
-      const f = box.querySelector('[autofocus]') || foot.querySelector('.btn-primary') || foot.querySelector('button');
-      if (f) setTimeout(() => f.focus(), 30);
+      const f = box.querySelector('[autofocus]') || foot.querySelector('.btn-primary') || foot.querySelector('button:not(.btn-danger)') || head.querySelector('button');
+      if (f) setTimeout(() => { if (modals.at(-1) === overlay) f.focus(); }, 30);
     });
   }
 
@@ -97,7 +113,8 @@
 
   function filePicker(mode, opts) {
     const exts = opts.exts || (opts.ext ? [opts.ext] : null);
-    let folder = opts.folder && fs.get(opts.folder) && !fs.isInTrash(opts.folder) ? opts.folder : (opts.defaultFolder || 'docs');
+    const available = (id) => fs.get(id)?.type === 'folder' && id !== 'trash' && !fs.isInTrash(id);
+    let folder = available(opts.folder) ? opts.folder : (opts.defaultFolder || 'docs');
     let selected = null;
     return modal((d) => {
       const places = el('div.fp-places');
@@ -116,6 +133,7 @@
       PLACES.forEach((p) => places.append(el('button.fp-place', { type: 'button', dataset: { id: p.id }, on: { click: () => { folder = p.id; render(); } } }, VOS.icon(p.icon), ' ', p.label)));
 
       function render() {
+        selected = null;
         crumbs.innerHTML = '';
         fs.ancestors(folder).forEach((n, i, a) => {
           crumbs.append(el('button.crumb', { type: 'button', on: { click: () => { folder = n.id; render(); } } }, n.name));
@@ -141,19 +159,24 @@
       }
 
       async function ok() {
+        if (!available(folder)) { folder = 'docs'; render(); error('Ця папка більше недоступна. Обери іншу.'); return; }
         if (mode === 'open') {
-          if (!selected) { error('Спочатку вибери файл у списку.'); return; }
+          const file = fs.get(selected);
+          if (!file || file.parent !== folder || (exts && !exts.includes(fs.ext(file.name)))) { error('Спочатку вибери файл у списку.'); return; }
           d.close(selected);
           return;
         }
         let name = nameInput.value.trim();
-        try { name = fs.validateName(name); } catch (e) { error(e.message); return; }
-        if (opts.ext && fs.ext(name) !== opts.ext) name += '.' + opts.ext;
+        try {
+          name = fs.validateName(name);
+          if (opts.ext && fs.ext(name) !== opts.ext) name = fs.validateName(name + '.' + opts.ext);
+        } catch (e) { error(e.message); return; }
         const existing = fs.findByName(folder, name);
         if (existing) {
           if (existing.type !== 'file') { error('Тут уже є папка з такою назвою.'); return; }
           const yes = await confirm('Файл «' + name + '» уже є. Замінити його?', { title: 'Заміна файлу', okText: 'Замінити', danger: true, icon: 'alert' });
           if (!yes) return;
+          if (!available(folder) || fs.findByName(folder, name)?.id !== existing.id) { error('Файл для заміни змінився. Вибери його знову.'); return; }
           d.close({ folder, name, replaceId: existing.id });
           return;
         }

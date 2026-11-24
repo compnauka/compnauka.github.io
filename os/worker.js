@@ -4,7 +4,7 @@
    /services/…, /games/…, /kids/… — їх пропускаємо як є, щоб вони були на тому самому домені
    (X-Frame-Options: SAMEORIGIN дозволяє iframe лише зі свого домену). Усе інше — файли з /os/. */
 
-const SITE_PREFIXES = ['/tools/', '/services/digital_literacy/', '/games/', '/kids/', '/_shell/', '/images/', '/fonts/'];
+const SITE_PREFIXES = ['/tools/', '/services/digital_literacy/', '/services/security_and_safety/search_engine/', '/games/', '/kids/', '/_shell/', '/images/', '/fonts/'];
 
 export default {
   async fetch(request, env) {

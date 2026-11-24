@@ -366,10 +366,11 @@
       id: 'web-source', icon: 'books', title: 'Малюнок із бібліотеки', desc: 'Переходимо за посиланням, зберігаємо ілюстрацію та підписуємо джерело.',
       steps: [
         { text: 'Через «Меню» відкрий «Навчальний браузер».', hint: startApp('browser'), check: newWindow('browser') },
-        { text: 'На сторінці школи натисни посилання «Шкільна бібліотека».', hint: winOf('browser', '[data-hint="browser-library"]'), check: (t, d, ctx) => t === 'browser:navigate' && d.fromPageId === 'home' && d.pageId === 'library' && d.via === 'link' && d.winId === ctx.state.win },
+        { text: 'На початковій сторінці знайди школу «Стежинка» і відкрий «Шкільна бібліотека».', hint: winOf('browser', '[data-hint="browser-library"]'), check: (t, d, ctx) => t === 'browser:navigate' && d.fromPageId === 'home' && d.pageId === 'library' && d.via === 'link' && d.winId === ctx.state.win },
         { text: 'У бібліотеці перейди за посиланням до галереї.', hint: winOf('browser', '[data-hint="browser-gallery"]'), check: (t, d, ctx) => t === 'browser:navigate' && d.fromPageId === 'library' && d.pageId === 'gallery' && d.via === 'link' && d.winId === ctx.state.win },
         {
           text: 'Збережи ілюстрацію «Паперовий змій» у папку «Малюнки».',
+          tip: 'Поки ти дивишся на малюнок у галереї, він є частиною сторінки. Кнопка «Зберегти малюнок» створює окремий файл у твоїй папці.',
           hint: ['.file-picker .btn-primary', winOf('browser', '[data-hint="browser-save"]')],
           check: (t, d, ctx) => {
             if (t !== 'browser:save' || d.node.parent !== 'pics' || d.assetId !== 'paper-kite' || d.winId !== ctx.state.win) return false;

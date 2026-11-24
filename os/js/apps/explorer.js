@@ -104,6 +104,7 @@
       requestAnimationFrame(() => { crumbs.scrollLeft = crumbs.scrollWidth; });
 
       const sel = VOS.ui.selectedId(items);
+      const focus = !!document.activeElement?.closest('.item') && items.contains(document.activeElement);
       items.innerHTML = '';
       items.classList.toggle('view-list', view === 'list');
       const list = fs.children(folder);
@@ -123,7 +124,9 @@
         items.append(it);
       });
       renderSearch();
-      if (!items.hidden && sel && fs.get(sel) && fs.get(sel).parent === folder) VOS.ui.select(items, sel);
+      const selected = !items.hidden && fs.get(sel)?.parent === folder ? sel : null;
+      VOS.ui.select(items, selected, { focus, announce: false });
+      if (focus && !selected && !items.hidden) items.focus();
     }
 
     searchInput.addEventListener('input', () => {

@@ -45,11 +45,14 @@
   /* ---------- Робочий стіл ---------- */
   function renderDesktop() {
     const sel = VOS.ui.selectedId(deskIcons);
+    const focus = !!document.activeElement?.closest('.item') && deskIcons.contains(document.activeElement);
     const actions = deskIcons.querySelector('.bg-actions');
     deskIcons.innerHTML = '';
     fs.children('desktop').forEach((n) => deskIcons.append(VOS.ui.renderItem(n)));
     if (actions) deskIcons.append(actions);
-    if (sel && fs.get(sel) && fs.get(sel).parent === 'desktop') VOS.ui.select(deskIcons, sel);
+    const selected = fs.get(sel)?.parent === 'desktop' ? sel : null;
+    VOS.ui.select(deskIcons, selected, { focus, announce: false });
+    if (focus && !selected) deskIcons.focus();
   }
 
   /* ---------- Панель задач ---------- */
@@ -143,7 +146,7 @@
   }
 
   /* ---------- Кишеня (буфер обміну) ---------- */
-  let pocketBtn, pocketSlot, pocketOp, pocketPop = null, pocketShown = null; // pocketShown: { op, id }
+  let pocketBtn, pocketSlot, pocketOp, pocketPop = null, pocketThumbShown = null;
   const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function pocketThumb(n) {
@@ -180,32 +183,32 @@
     anim.onfinish = anim.oncancel = () => { fly.remove(); reveal(); };
   }
 
-  const pocketLabel = (n) => (n ? n.name : '');
   const opText = (op) => (op === 'cut' ? 'Вирізано' : 'Скопійовано');
 
   /** Оновлює вигляд кишені. animate=true — коли щойно скопіювали щось нове. */
   function updatePocket(animate) {
     const clip = VOS.ui.clipboard;
     const n = clip ? fs.get(clip.id) : null;
-    const old = pocketSlot.firstElementChild;
+    const old = pocketThumbShown;
     pocketBtn.classList.toggle('full', !!n);
     pocketBtn.dataset.op = n ? clip.op : '';
     pocketOp.hidden = !n;
     pocketOp.replaceChildren(n ? VOS.icon(clip.op === 'cut' ? 'scissors' : 'copy') : '');
     pocketBtn.title = n ? 'Кишеня: ' + n.name + ' (' + opText(clip.op).toLowerCase() + ')' : 'Кишеня порожня';
     pocketBtn.setAttribute('aria-label', n ? 'Кишеня: ' + n.name + ', ' + opText(clip.op).toLowerCase() : 'Кишеня порожня');
-    if (!n) { if (old) animate ? popOut(old) : old.remove(); }
+    if (!n) { old?.remove(); pocketThumbShown = null; }
     else if (animate) {
       if (old) popOut(old);
       const t = pocketThumb(n);
+      pocketThumbShown = t;
       t.classList.add('pk-wait');
       pocketSlot.append(t);
       flyToPocket(clip.id, t);
-    } else if (!old || pocketShown.id !== clip.id || !pocketShown.sameName) {
-      if (old) old.remove();
-      pocketSlot.append(pocketThumb(n));
+    } else {
+      pocketThumbShown = pocketThumb(n);
+      if (old) old.replaceWith(pocketThumbShown);
+      else pocketSlot.append(pocketThumbShown);
     }
-    pocketShown = n ? { op: clip.op, id: clip.id, sameName: true } : null;
     if (pocketPop) renderPocketPop();
   }
 
@@ -220,7 +223,7 @@
     pocketPop.append(
       el('div.pocket-now', el('span.pocket-big', VOS.ui.renderIcon(n, 'pk-ico')),
         el('div.pocket-info', el('b', 'У кишені: ' + n.name), el('span.pocket-op-text', VOS.icon(clip.op === 'cut' ? 'scissors' : 'copy'), ' ' + opText(clip.op)))),
-      el('p.pocket-note', 'Кишеня (буфер обміну) пам\'ятає лише останнє, що ти скопіював. Щоб вставити — клацни правою кнопкою в папці й вибери «Вставити» або натисни Ctrl+V.'),
+      el('p.pocket-note', 'Кишеня показує останній файл, папку чи ярлик, які ти скопіював або вирізав у Віконці. Відкрий потрібну папку і вибери «Дії» → «Вставити» або натисни Ctrl+V.'),
       el('button.btn.pocket-clear', { type: 'button', on: { click: () => VOS.ui.clearClipboard() } }, VOS.icon('x'), ' Очистити кишеню'));
   }
 
@@ -264,14 +267,10 @@
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pocketPop) { closePocketPop(); pocketBtn.focus(); } });
     bus.on('clipboard:change', (d) => updatePocket(!!(d && d.op)));
-    // видалили назавжди — у кишені порожньо; перейменували — оновити підпис
     bus.on('fs:change', () => {
       const clip = VOS.ui.clipboard;
-      if (clip && !fs.get(clip.id)) VOS.ui.clearClipboard();
-      else {
-        if (pocketShown) pocketShown.sameName = false;
-        updatePocket(false);
-      }
+      if (clip && (!fs.get(clip.id) || fs.isInTrash(clip.id))) VOS.ui.clearClipboard();
+      else if (clip) updatePocket(false);
     });
   }
 
@@ -281,6 +280,20 @@
   function appButton(a, cls = 'start-app') {
     return el('button.' + cls, { type: 'button', dataset: { app: a.id, hint: 'start-' + a.id }, title: a.desc || a.name, on: { click: () => { closeStart(); VOS.apps.launch(a.id); } } },
       el('span.app-tile.sm', { style: { '--tile': a.color || '#64748b' } }, VOS.icon(a.icon)), el('span.start-app-name', a.name));
+  }
+
+  function appRow(app) {
+    const shortcut = el('button.start-shortcut', {
+      type: 'button', title: 'Створити ярлик на робочому столі',
+      'aria-label': 'Створити ярлик на робочому столі: ' + app.name,
+      on: { click: () => {
+        const link = fs.ensureDesktopAppLink(app.id);
+        closeStart();
+        startBtn.focus();
+        toast('Ярлик «' + link.name + '» на робочому столі.', 'link');
+      } },
+    }, VOS.icon('link'), el('span', 'Ярлик'));
+    return el('div.start-app-row', appButton(app), shortcut);
   }
 
   function openStart() {
@@ -298,7 +311,7 @@
         const apps = VOS.apps.list(c.id);
         if (!apps.length) return;
         const det = el('details.start-cat', { open: c.id === 'standard' }, el('summary', c.name, el('span.cnt', String(apps.length))));
-        apps.forEach((a) => det.append(appButton(a)));
+        apps.forEach((a) => det.append(appRow(a)));
         body.append(det);
       });
     };
@@ -308,7 +321,7 @@
       const res = VOS.apps.list().filter((a) => (a.name + ' ' + (a.desc || '')).toLocaleLowerCase('uk').includes(low));
       body.append(el('h3.start-h', 'Знайдено: ' + res.length));
       if (!res.length) body.append(el('p.start-empty', 'Нічого не знайдено. Спробуй інше слово.'));
-      res.forEach((a) => body.append(appButton(a)));
+      res.forEach((a) => body.append(appRow(a)));
     };
     search.addEventListener('input', VOS.debounce(() => {
       const q = search.value.trim();

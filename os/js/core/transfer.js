@@ -9,8 +9,10 @@
   const MAX_FILE = 8 * 1024 * 1024; // 8 МБ на один файл
   const MAX_ARCHIVE_CONTENT = 24 * 1024 * 1024;
   const MAX_ARCHIVE_ENTRIES = 1000;
+  const MAX_ARCHIVE_FILE = MAX_ARCHIVE_CONTENT + 1024 * 1024;
+  const BACKUP_ROOTS = new Map([['робочий стіл', 'desktop'], ['документи', 'docs'], ['малюнки', 'pics'], ["комп'ютер", 'root']]);
   const MAX_IMG_SIDE = 1600; // великі фото зменшуємо, щоб не забивати пам'ять
-  const TEXT_EXT = ['txt'];
+  const TEXT_EXT = ['txt', 'csv', 'html'];
   const IMG_EXT = ['png', 'jpg', 'jpeg'];
   const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
 
@@ -115,7 +117,9 @@
   async function readZip(buf) {
     const b = new Uint8Array(buf), dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
     let eocd = -1;
-    for (let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    for (let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50 && i + 22 + dv.getUint16(i + 20, true) === b.length) { eocd = i; break; }
+    }
     if (eocd < 0) throw new Error('Цей архів пошкоджений або це не .zip.');
     const count = dv.getUint16(eocd + 10, true);
     if (count > MAX_ARCHIVE_ENTRIES) throw new Error('У цьому архіві забагато файлів.');
@@ -181,7 +185,7 @@
         const k = Math.min(1, MAX_IMG_SIDE / Math.max(img.width, img.height));
         if (k >= 1) { resolve(dataUrl); return; }
         const c = document.createElement('canvas');
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         resolve(c.toDataURL(ext === 'png' ? 'image/png' : 'image/jpeg', 0.88));
       };
@@ -193,7 +197,10 @@
   function safeName(name) {
     let n = String(name).replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
     if (!n || /^\.+$/.test(n)) n = 'Файл';
-    if (n.length > 60) { const e = fs.ext(n); n = n.slice(0, 55 - e.length).trim() + (e ? '.' + e : ''); }
+    if (n.length > 60) {
+      const e = fs.ext(n);
+      n = e && e.length < 58 ? fs.baseName(n).slice(0, 59 - e.length).trimEnd() + '.' + e : n.slice(0, 60).trimEnd();
+    }
     return n;
   }
 
@@ -209,17 +216,17 @@
 
   function fileBytes(n) {
     const c = n.content || '';
-    return c.startsWith('data:') ? dataUrlToBytes(c) : new TextEncoder().encode(c);
+    return !TEXT_EXT.includes(fs.ext(n.name)) && c.startsWith('data:') ? dataUrlToBytes(c) : new TextEncoder().encode(c);
   }
   function fileMime(n) {
     const e = fs.ext(n.name);
-    return IMG_MIME[e] || (e === 'zip' ? 'application/zip' : 'text/plain;charset=utf-8');
+    return IMG_MIME[e] || (e === 'zip' ? 'application/zip' : e === 'csv' ? 'text/csv;charset=utf-8' : e === 'html' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8');
   }
 
   /** Збирає вміст папки для архіву. Ярлики пропускаємо, їхні цілі лишаються окремими об’єктами. */
-  function collect(id, prefix, out) {
+  function collect(id, prefix, out, skipSpecial = false) {
     for (const c of fs.children(id)) {
-      if (c.type === 'link') continue;
+      if (c.type === 'link' || (skipSpecial && fs.isSpecialFolder(c.id))) continue;
       const path = prefix + c.name;
       if (c.type === 'folder') { out.push({ path: path + '/', data: null, date: new Date(c.modified || Date.now()) }); collect(c.id, path + '/', out); }
       else out.push({ path, data: fileBytes(c), date: new Date(c.modified || Date.now()) });
@@ -234,7 +241,7 @@
     if (n.type === 'link') { VOS.dialog.alert('Ярлик веде до оригіналу. Щоб забрати роботу, завантаж сам файл або папку.', { title: 'Ярлик', icon: 'link' }); return; }
     if (n.type === 'file') {
       // Текст зберігаємо з BOM, щоб Блокнот Windows точно показав кирилицю
-      const blob = fs.ext(n.name) === 'txt' ? new Blob(['﻿', n.content || ''], { type: 'text/plain;charset=utf-8' }) : new Blob([fileBytes(n)], { type: fileMime(n) });
+      const blob = TEXT_EXT.includes(fs.ext(n.name)) ? new Blob(['﻿', n.content || ''], { type: 'text/plain;charset=utf-8' }) : new Blob([fileBytes(n)], { type: fileMime(n) });
       downloadBlob(blob, n.name);
     } else {
       const entries = collect(id, '', []);
@@ -253,6 +260,7 @@
       entries.push({ path: f.name + '/', data: null });
       collect(id, f.name + '/', entries);
     }
+    collect('root', fs.get('root').name + '/', entries, true);
     const p = VOS.session.profile;
     const d = new Date();
     const stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -311,6 +319,7 @@
       if (segs.some((s) => !s || s === '.' || s === '..') || /^(__MACOSX|\.)/.test(segs[0])) continue;
       if (segs.length > 30) { skipped.push(entry.path); continue; }
       let parent = roots ? roots.get(segs[0].toLocaleLowerCase('uk')) : base;
+      if (!parent || (roots && segs.length === 1)) continue;
       const last = entry.dir ? segs.length : segs.length - 1;
       for (let i = roots ? 1 : 0; i < last; i++) {
         const name = safeName(segs[i]);
@@ -358,18 +367,18 @@
     const profileRoot = fs.get('root');
     const created = [], skipped = [], tooBig = [];
     for (const f of Array.from(files)) {
-      if (f.size > MAX_FILE) { tooBig.push(f.name); continue; }
       const e = fs.ext(f.name);
+      const limit = e === 'zip' && !keepArchive ? MAX_ARCHIVE_FILE : MAX_FILE;
+      if (f.size > limit) { tooBig.push(f.name + ' (ліміт ' + (limit / 1024 / 1024) + ' МБ)'); continue; }
       try {
         const bytes = new Uint8Array(await f.arrayBuffer());
         if (e === 'zip' && !keepArchive) {
           // Архів розпаковуємо в папку з його назвою. Резервна копія Віконця (Робочий стіл/Документи/Малюнки)
           // у «Моєму комп'ютері» відновлюється в системні папки.
           const entries = await readZip(bytes);
-          const roots = new Map([['робочий стіл', 'desktop'], ['документи', 'docs'], ['малюнки', 'pics']]);
-          const isBackup = restore && target === 'docs' && entries.length && entries.every((x) => roots.has(x.path.split('/')[0].toLocaleLowerCase('uk')));
+          const isBackup = restore && target === 'docs' && entries.length && entries.every((x) => BACKUP_ROOTS.has(x.path.split('/')[0].toLocaleLowerCase('uk')));
           const base = isBackup ? null : folderFor(target, safeName(fs.baseName(f.name)), created);
-          await appendArchiveEntries(entries, base, created, skipped, isBackup ? roots : null);
+          await appendArchiveEntries(entries, base, created, skipped, isBackup ? BACKUP_ROOTS : null);
         } else {
           await fileNode(target, f.name, bytes, created, skipped, restore);
         }
@@ -396,7 +405,7 @@
       bus.emit('fs:import', { count: added, folder: target });
     }
     const notes = [];
-    if (tooBig.length) notes.push('Завеликі (більше 8 МБ): ' + tooBig.join(', '));
+    if (tooBig.length) notes.push('Завеликі файли: ' + tooBig.join(', '));
     if (skipped.length) notes.push('Віконце відкриває тексти (.txt), малюнки (.png, .jpg) й архіви (.zip). Пропущено: ' + skipped.slice(0, 8).join(', ') + (skipped.length > 8 ? ' та ще ' + (skipped.length - 8) : ''));
     if (notes.length) VOS.dialog.alert(notes.join('\n\n'), { title: added ? 'Додано не все' : 'Нічого не додано', icon: 'upload' });
     return added;

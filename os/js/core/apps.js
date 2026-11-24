@@ -16,11 +16,15 @@
   function register(def) {
     registry[def.id] = def;
     if (!def.launch && def.url) {
-      def.launch = () => VOS.wm.open({
-        app: def.id, title: def.name, icon: def.icon, url: def.url,
-        width: def.width || 960, height: def.height || 640, minWidth: 320, minHeight: 240,
-        singleton: def.singleton === false ? null : def.id,
-      });
+      def.launch = (args) => {
+        const win = VOS.wm.open({
+          app: def.id, title: def.name, icon: def.icon, url: def.url,
+          width: def.width || 960, height: def.height || 640, minWidth: 320, minHeight: 240,
+          singleton: def.singleton === false ? null : def.id,
+        });
+        if (args && args.file && VOS.bridge) VOS.bridge.feed(win, args.file); // файл з Віконця → у програму сайту
+        return win;
+      };
     }
     return def;
   }
@@ -45,7 +49,7 @@
     }
   }
 
-  const ASSOC = { txt: 'notepad', png: 'photos', jpg: 'photos', jpeg: 'photos' };
+  const ASSOC = { txt: 'notepad', png: 'photos', jpg: 'photos', jpeg: 'photos', csv: 'komirnyk', html: 'drukaryk' };
 
   function openNode(id) {
     const n = VOS.fs.get(id);

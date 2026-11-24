@@ -150,6 +150,7 @@
             st.textContent = '.ss-header,.ss-footer{display:none!important}body{padding-top:0!important}';
             d.head && d.head.append(st);
             d.addEventListener('pointerdown', () => focus(id, true), true);
+            if (VOS.bridge) VOS.bridge.install(frame, win);
           }
         } catch (e) { /* інший домен — без інʼєкції */ }
       });

@@ -6,8 +6,8 @@
   const { el, fs, bus } = VOS;
 
   /* ---------- Значки ---------- */
-  const EXT_ICONS = { txt: 'txt', png: 'img', jpg: 'img', jpeg: 'img', zip: 'zip' };
-  const EXT_TYPES = { txt: 'Текстовий документ', png: 'Малюнок', jpg: 'Малюнок', jpeg: 'Малюнок', zip: 'Архів' };
+  const EXT_ICONS = { txt: 'txt', png: 'img', jpg: 'img', jpeg: 'img', zip: 'zip', csv: 'csv', html: 'html' };
+  const EXT_TYPES = { txt: 'Текстовий документ', png: 'Малюнок', jpg: 'Малюнок', jpeg: 'Малюнок', zip: 'Архів', csv: 'Таблиця', html: 'Вебсторінка' };
   const trashIcon = () => (fs.children('trash').length ? 'trash-full' : 'trash');
 
   /** Назва кольорового значка (ART) для об'єкта файлової системи. Для ярлика — значок програми. */
@@ -42,7 +42,7 @@
   }
 
   /** Вид файла за розширенням: txt / img / zip / other (від нього залежить колір позначки). */
-  const EXT_KIND = { txt: 'txt', png: 'img', jpg: 'img', jpeg: 'img', zip: 'zip' };
+  const EXT_KIND = { txt: 'txt', png: 'img', jpg: 'img', jpeg: 'img', zip: 'zip', csv: 'csv', html: 'html' };
   const extKind = (name) => EXT_KIND[fs.ext(name)] || 'other';
 
   /** Маленька кольорова позначка з розширенням (лише для файлів і лише якщо увімкнено в налаштуваннях). */
@@ -80,6 +80,7 @@
     const item = el('div.item', {
       tabindex: '-1',
       role: 'option',
+      'aria-selected': 'false',
       'aria-label': n.name + (n.type === 'folder' ? ', папка' : n.type === 'link' ? ', ярлик' : ''),
       dataset: { id: n.id },
       title: opts.title || n.name,
@@ -93,9 +94,11 @@
   /* ---------- Буфер обміну ---------- */
   let clipboard = null;
   function setClipboard(op, id) {
+    const node = fs.get(id);
+    if (!node || fs.isProtected(id) || fs.isInTrash(id)) return;
     clipboard = { op, id };
     bus.emit('clipboard:change', { op, id });
-    bus.emit('clipboard:' + op, { node: fs.get(id) });
+    bus.emit('clipboard:' + op, { node });
   }
   /** Спорожнити кишеню. Подія має форму { op: null, id: null }, щоб підписники могли безпечно читати поля. */
   function clearClipboard() {
@@ -106,7 +109,8 @@
   function paste(folder) {
     if (!clipboard) return null;
     const src = fs.get(clipboard.id);
-    if (!src) { clearClipboard(); return null; }
+    if (!src || fs.isInTrash(src.id)) { clearClipboard(); return null; }
+    if (fs.get(folder)?.type !== 'folder' || folder === 'root' || folder === 'trash' || fs.isInTrash(folder)) return null;
     try {
       let res;
       if (clipboard.op === 'copy') res = fs.copy(src.id, folder);
@@ -350,16 +354,20 @@
   }
 
   /* ---------- Виділення ---------- */
-  function select(container, id) {
-    container.querySelectorAll('.item.selected').forEach((i) => i.classList.remove('selected'));
+  function select(container, id, { focus = true, announce = true } = {}) {
+    container.querySelectorAll('.item.selected').forEach((i) => {
+      i.classList.remove('selected');
+      i.setAttribute('aria-selected', 'false');
+    });
     container.dataset.selected = id || '';
     if (!id) return;
     const it = container.querySelector('.item[data-id="' + id + '"]');
     if (it) {
       it.classList.add('selected');
-      it.focus({ preventScroll: false });
-      bus.emit('ui:select', { node: fs.get(id) });
-    }
+      it.setAttribute('aria-selected', 'true');
+      if (focus) it.focus({ preventScroll: !announce });
+      if (announce) bus.emit('ui:select', { node: fs.get(id) });
+    } else container.dataset.selected = '';
   }
   const selectedId = (container) => container.dataset.selected || null;
 
@@ -432,6 +440,7 @@
     container.dataset.drop = folderOf();
     container.setAttribute('role', 'listbox');
     container.tabIndex = 0;
+    let renameCandidate = null;
 
     const actionButton = opts.backgroundButton || el('button.bg-actions', { type: 'button', 'aria-label': 'Дії', title: 'Дії', dataset: { hint: container.id === 'desk-icons' ? 'desktop-actions' : 'explorer-actions' } }, VOS.icon('list'), el('span', 'Дії'));
     if (!opts.backgroundButton) container.append(actionButton);
@@ -441,6 +450,16 @@
       backgroundMenu(container, folderOf(), r.left, r.bottom, opts.extraBgMenu ? opts.extraBgMenu() : []);
     });
     container.addEventListener('click', (e) => {
+      const candidate = renameCandidate;
+      renameCandidate = null;
+      // Окремий клік по виділеній назві. Швидке подвійне клацання обробить dblclick.
+      if (candidate && e.detail === 1 && e.target.closest('.item-label')?.closest('.item') === candidate) {
+        const id = candidate.dataset.id;
+        if (selectedId(container) === id && fs.get(id) && !fs.isProtected(id) && !fs.isInTrash(id)) {
+          startRename(container, id);
+          return;
+        }
+      }
       const b = e.target.closest('.item-actions');
       if (!b) return;
       e.preventDefault(); e.stopPropagation();
@@ -453,6 +472,7 @@
 
     let lastPointer = 'mouse';
     container.addEventListener('pointerdown', (e) => {
+      renameCandidate = null;
       lastPointer = e.pointerType;
       if (e.target.closest('.rename-input')) return;
       const item = e.target.closest('.item');
@@ -485,6 +505,8 @@
       if (e.button !== 0) return;
       const id = item.dataset.id;
       const touch = e.pointerType !== 'mouse';
+      const renameClick = !touch && selectedId(container) === id && e.target.closest('.item-label')
+        && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
       const state = { id, item, x: e.clientX, y: e.clientY, touch, lifted: false, dragging: false, pid: e.pointerId };
       drag = state;
       if (!touch) select(container, id);
@@ -526,6 +548,8 @@
           }
         } else if (VOS.settings.get('singleClick')) {
           openItem(id);
+        } else if (renameClick) {
+          renameCandidate = item;
         }
       };
       const cleanup = () => {
@@ -563,15 +587,16 @@
 
     container.addEventListener('keydown', (e) => {
       if (e.target.closest('button, .rename-input')) return;
-      const sel = selectedId(container);
+      const selected = selectedId(container);
+      const sel = fs.get(selected) ? selected : null;
       const items = [...container.querySelectorAll('.item')];
       const idx = items.findIndex((i) => i.dataset.id === sel);
       const ctrl = e.ctrlKey || e.metaKey;
       if (e.key === 'Enter' && sel) { e.preventDefault(); openItem(sel); }
       else if (e.key === 'Delete' && sel) { e.preventDefault(); askDelete(sel); }
       else if (e.key === 'F2' && sel) { e.preventDefault(); startRename(container, sel); }
-      else if (ctrl && e.code === 'KeyC' && sel) { e.preventDefault(); if (!fs.isSpecialFolder(sel) && !fs.get(sel).system) setClipboard('copy', sel); }
-      else if (ctrl && e.code === 'KeyX' && sel) { e.preventDefault(); if (!fs.isProtected(sel)) setClipboard('cut', sel); }
+      else if (ctrl && e.code === 'KeyC' && sel) { e.preventDefault(); setClipboard('copy', sel); }
+      else if (ctrl && e.code === 'KeyX' && sel) { e.preventDefault(); setClipboard('cut', sel); }
       else if (ctrl && e.code === 'KeyV') { e.preventDefault(); paste(folderOf()); }
       else if (e.key === 'Backspace' && opts.onBack) { e.preventDefault(); opts.onBack(); }
       else if (/^Arrow/.test(e.key) && items.length) {

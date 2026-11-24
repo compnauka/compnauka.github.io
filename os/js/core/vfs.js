@@ -149,7 +149,7 @@
     if (n.type === 'folder') return children(id).reduce((s, c) => s + sizeOf(c.id), 0);
     if (n.type === 'link') return 64;
     const c = n.content || '';
-    if (c.startsWith('data:')) return Math.round(((c.length - c.indexOf(',') - 1) * 3) / 4);
+    if (ext(n.name) !== 'txt' && c.startsWith('data:')) return Math.round(((c.length - c.indexOf(',') - 1) * 3) / 4);
     return new Blob([c]).size;
   }
 
@@ -179,11 +179,24 @@
     return n;
   }
 
-  function createLink(parent, name, app, args) {
-    const n = add({ id: uid('l'), type: 'link', name: uniqueName(parent, validateName(name)), parent, app, args: args || null, created: now(), modified: now() });
+  function createLink(parent, name, app, args, id = uid('l')) {
+    const n = add({ id, type: 'link', name: uniqueName(parent, validateName(name)), parent, app, args: args || null, created: now(), modified: now() });
     changed([parent]);
     bus.emit('fs:create', { node: n });
     return n;
+  }
+
+  function ensureDesktopAppLink(app, id) {
+    const existing = children('desktop').find((node) => node.type === 'link' && node.app === app && !node.args);
+    return existing || createLink('desktop', VOS.apps.name(app), app, null, id);
+  }
+
+  function addDefaultBrowserLink() {
+    if (nodes.desktop.browserShortcutAdded) return;
+    // Запам’ятовуємо міграцію, щоб не повертати ярлик, який учень прибрав.
+    nodes.desktop.browserShortcutAdded = true;
+    ensureDesktopAppLink('browser', 'link-browser');
+    save();
   }
 
   function createShortcut(targetId, parent = 'desktop') {
@@ -380,6 +393,8 @@
     link('desktop', 'Блокнот', 'notepad');
     link('desktop', 'Малюнок', 'paint');
     link('desktop', 'Калькулятор', 'calculator');
+    link('desktop', VOS.apps.name('browser'), 'browser', null, { id: 'link-browser' });
+    nodes.desktop.browserShortcutAdded = true;
     link('desktop', 'Друкарик', 'drukaryk');
     link('desktop', 'Пензлик', 'penslyk');
 
@@ -415,6 +430,7 @@
     }
     await loadRaw();
     migrateNames();
+    addDefaultBrowserLink();
   }
 
   /** Оновлення назв зі старих версій: «Мій комп'ютер» → «Комп'ютер». */
@@ -493,7 +509,7 @@
   VOS.fs = {
     SPECIAL, load, unload, discard, reset, flush: flushNow, addNodes, get backend() { return backend; }, get, children, ancestors, pathString, isDescendant, isSpecialFolder, isInTrash, isProtected,
     ext, baseName, uniqueName, validateName, sizeOf, nameExists, findByName, searchByName,
-    createFolder, createFile, createLink, createShortcut, write, rename, move, copy, trash, restore, deleteForever, emptyTrash,
+    createFolder, createFile, createLink, ensureDesktopAppLink, createShortcut, write, rename, move, copy, trash, restore, deleteForever, emptyTrash,
     all: () => Object.values(nodes),
   };
 })();

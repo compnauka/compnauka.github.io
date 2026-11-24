@@ -4,13 +4,25 @@
   const VOS = window.VOS;
   const { bus, el, fs } = VOS;
 
+  const TITLE = 'Навчальний браузер';
+  const ICON = 'globe';
+  const PORTAL = 'https://itnauka.org';
   const PAGES = {
-    home: { title: 'Сайт школи «Стежинка»', path: '/' },
+    home: { title: TITLE },
     library: { title: 'Шкільна бібліотека', path: '/library' },
     gallery: { title: 'Галерея шкільної бібліотеки', path: '/gallery' },
   };
+  const SITES = {
+    hotkeys: { title: 'Гарячі клавіші', path: '/services/digital_literacy/typing_skills/typing_lesson/', icon: 'keyboard', description: 'Інтерактивний урок про клавіатуру та сполучення клавіш.' },
+    data: { title: 'Дані та інформація', path: '/services/digital_literacy/data-and-information/', icon: 'table', description: 'Розпізнавай, групуй і читай дані в таблицях та діаграмах.' },
+    search: { title: 'Шукарик', path: '/services/security_and_safety/search_engine/', icon: 'search', description: 'Спробуй складати запити й обирати результати пошуку.' },
+    addresses: { title: 'Веселі адреси', path: '/services/digital_literacy/typing_skills/urls_typing/', icon: 'globe', description: 'Тренуйся вводити адреси вебсайтів.' },
+    klavio: { title: 'Клавіо', path: '/services/digital_literacy/typing_skills/klavio/', icon: 'keyboard', description: 'Уроки друку, вправи зі словами й спринт.' },
+    drukaryk: { title: 'Друкарик', path: '/tools/drukaryk/', icon: 'type', description: 'Напиши й оформи текст.' },
+  };
   const ASSET = { id: 'paper-kite', title: 'Паперовий змій', pageId: 'gallery' };
-  const addressOf = (pageId) => 'school.test' + PAGES[pageId].path;
+  const addressOf = (pageId) => SITES[pageId] ? PORTAL + SITES[pageId].path
+    : pageId === 'home' ? 'Початкова сторінка Віконця' : 'school.test' + PAGES[pageId].path;
   const source = '«' + ASSET.title + '» — ' + PAGES.gallery.title + '. Адреса: ' + addressOf('gallery');
 
   function makeIllustration() {
@@ -98,11 +110,11 @@
     }, VOS.icon(icon));
     const back = toolbarButton('chevron-left', 'Назад', () => travel(-1, 'back', back));
     const forward = toolbarButton('chevron-right', 'Уперед', () => travel(1, 'forward', forward));
-    const home = toolbarButton('monitor', 'Початкова сторінка', () => go('home', 'home'), 'browser-home');
+    const home = toolbarButton('home', 'Початкова сторінка', () => go('home', 'home'), 'browser-home');
     const toolbar = el('div.br-toolbar', { role: 'group', 'aria-label': 'Керування браузером' }, back, forward, home, address);
     const root = el('div.app-browser', toolbar, viewport);
     const win = VOS.wm.open({
-      app: 'browser', title: 'Навчальний браузер', icon: 'monitor', content: root,
+      app: 'browser', title: TITLE, icon: ICON, content: root,
       width: 760, height: 590, minWidth: 300, minHeight: 270, onClose: () => { closed = true; },
     });
 
@@ -121,23 +133,49 @@
     }
 
     function go(pageId, via) {
-      if (!Object.hasOwn(PAGES, pageId) || history[position] === pageId) return;
+      if ((!Object.hasOwn(PAGES, pageId) && !Object.hasOwn(SITES, pageId)) || history[position] === pageId) return;
       const previous = history[position];
       position++;
       history.splice(position, history.length - position, pageId);
       navigate(previous, via, true);
     }
 
-    function pageLink(pageId, label, icon) {
+    function pageLink(pageId, label, icon, description) {
       const link = el('a.br-link', {
-        href: '#' + pageId,
+        href: SITES[pageId] ? addressOf(pageId) : '#' + pageId,
         dataset: { hint: 'browser-' + pageId },
         on: {
           click: (event) => { event.preventDefault(); go(pageId, 'link'); },
           auxclick: (event) => event.preventDefault(),
         },
-      }, VOS.icon(icon), label, VOS.icon('arrow-right'));
+      }, VOS.icon(icon), description ? el('span.br-card-label', el('strong', label), el('small', description)) : label);
       return link;
+    }
+
+    const externalLink = (url, label) => el('a.br-link', {
+      href: url, target: '_blank', rel: 'noopener',
+    }, label);
+
+    function siteContent(site, heading) {
+      const frame = el('iframe.br-frame', { title: site.title, src: '..' + site.path, allow: 'fullscreen' });
+      frame.addEventListener('load', () => {
+        if (!frame.isConnected) return;
+        const doc = frame.contentDocument;
+        if (!doc) return;
+        // Посилання сервісів на головну ведуть до каталогу, а не до ще одного Віконця у фреймі.
+        const location = new URL(doc.URL, window.location.href);
+        const path = location.pathname;
+        if (location.origin === window.location.origin && path.startsWith(site.path)) {
+          address.value = PORTAL + path + location.search + location.hash;
+        }
+        for (const link of doc.links) {
+          if (link.origin !== window.location.origin || !['/', '/index.html'].includes(link.pathname)) continue;
+          link.href = PORTAL + '/' + link.search + link.hash;
+          link.target = '_blank';
+          link.rel = 'noopener';
+        }
+      });
+      return el('section.br-site', el('div.br-site-bar', heading, externalLink(PORTAL + site.path, 'Відкрити в новій вкладці')), frame);
     }
 
     async function saveIllustration(button) {
@@ -202,16 +240,19 @@
 
     function render(focusHeading) {
       const pageId = history[position];
-      const page = PAGES[pageId];
+      const site = SITES[pageId];
+      const page = site || PAGES[pageId];
       const heading = el('h2.br-heading', { tabindex: '-1' }, page.title);
-      const content = el('article.br-page.br-' + pageId, heading);
+      const content = site ? siteContent(site, heading) : el('article.br-page.br-' + pageId, heading);
       if (pageId === 'home') {
-        content.append(el('p', 'Це навчальний сайт вигаданої школи. У бібліотеці є матеріали про шкільні виставки.'),
-          pageLink('library', 'Шкільна бібліотека', 'books'));
+        const cards = Object.entries(SITES).map(([id, item]) => pageLink(id, item.title, item.icon, item.description));
+        content.append(el('h3.br-section-title', 'Уроки й сервіси itnauka.org'), el('div.br-cards', cards),
+          externalLink(PORTAL + '/', 'Усі сервіси itnauka.org (нова вкладка)'),
+          el('h3.br-section-title', 'Сайт школи «Стежинка»'), pageLink('library', 'Шкільна бібліотека', 'books'));
       } else if (pageId === 'library') {
-        content.append(el('p', 'Для виставки «Вітер і небо» ми зібрали малюнки про те, що можна побачити надворі.'),
-          pageLink('gallery', 'Галерея ілюстрацій', 'image'), pageLink('home', 'Сайт школи', 'monitor'));
-      } else {
+        content.append(el('p', 'У бібліотеці вигаданої школи «Стежинка» зібрали малюнки для виставки «Вітер і небо».'),
+          pageLink('gallery', 'Галерея ілюстрацій', 'image'), pageLink('home', 'Початкова сторінка', 'home'));
+      } else if (pageId === 'gallery') {
         content.append(galleryContent(), pageLink('library', 'Назад до бібліотеки', 'books'));
       }
       address.value = addressOf(pageId);
@@ -227,7 +268,7 @@
   }
 
   VOS.apps.register({
-    id: 'browser', name: 'Навчальний браузер', icon: 'monitor', color: '#0e7490',
-    category: 'standard', desc: 'Подорож шкільним сайтом і бібліотекою', launch,
+    id: 'browser', name: TITLE, icon: ICON, color: '#0e7490',
+    category: 'standard', desc: 'Уроки, тренажери й шкільна бібліотека', launch,
   });
 })();
