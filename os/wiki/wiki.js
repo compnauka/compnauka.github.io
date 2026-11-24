@@ -21,12 +21,29 @@
     description: phrase('Опис', 'Description'),
     how: phrase('Як користуватися', 'How to use it'),
     more: phrase('Дізнайся також', 'Related articles'),
+    why: 'Навіщо це потрібно',
+    steps: 'Як цим користуватися у Віконці',
+    files: 'З якими файлами працює',
+    other: 'На інших комп’ютерах',
+    fact: 'Цікаво знати',
+    tryIt: 'Спробуй сам',
+    system: 'Система',
+    called: 'Як це виглядає або називається',
+    sourceRich: 'Короткий опис — з довідки «Що це?» у навчальній системі Віконце. Докладні пояснення підготовлено для Віконця.',
     sources: phrase('Джерела', 'Sources'),
     source: phrase('Пояснення з довідки «Що це?» у навчальній системі Віконце.', 'Explanations from the “What is this?” help in the Vikontse learning system.'),
     sourceLabel: phrase('Джерело', 'Source'),
     back: phrase('Повернутися до всіх статей', 'Back to all articles'),
     pageTitle: phrase('Вікі Енциклопедія', 'Wiki Encyclopedia'),
   };
+  /* Розгорнуті статті (wiki/articles.js) — лише українською; решта мов і статті без запису показують короткий текст. */
+  const rich = lang === 'en' ? {} : (window.VOS.wikiArticles || {});
+  const richOf = (article) => rich[article.id] || null;
+  function richText(article) {
+    const r = richOf(article);
+    if (!r) return '';
+    return [r.lead, ...(r.why || []), ...(r.steps || []), r.files, ...(r.other || []).flat(), r.fact, r.tryIt].filter(Boolean).join(' ');
+  }
   const main = $('#wiki-main');
   const headerSearch = $('#wiki-search');
   let searchPreview = null;
@@ -103,7 +120,7 @@
     const words = normalizedQuery.split(/\s+/).filter(Boolean);
     if (!words.length) return articles;
     return articles.map((article) => {
-      const value = normalize([article.title, ...article.lines, ...(topicWords[article.id.replace(/^app-/, '')] || [])].join(' '));
+      const value = normalize([article.title, ...article.lines, richText(article), ...(topicWords[article.id.replace(/^app-/, '')] || [])].join(' '));
       const normalizedTitle = normalize(article.title);
       if (!words.every((word) => value.includes(word))) return null;
       const score = normalizedTitle === normalizedQuery ? 100
@@ -115,44 +132,50 @@
       || a.article.title.localeCompare(b.article.title, locale)).map((item) => item.article);
   }
 
-  function sourceSection() {
+  function sourceSection(isRich) {
     return el('section.wiki-source#sources',
       el('h2', text.sources),
-      el('ol', el('li#source-note', text.source)));
+      el('ol', el('li#source-note', isRich ? text.sourceRich : text.source)));
   }
 
   function relatedArticles(article) {
-    const topics = new Set(topicWords[article.id.replace(/^app-/, '')] || []);
-    const articleWords = new Set(normalize([article.title, ...article.lines].join(' ')).split(' '));
-    const related = articles.filter((candidate) => candidate.id !== article.id).map((candidate) => {
-      const candidateTopics = new Set(topicWords[candidate.id.replace(/^app-/, '')] || []);
-      let score = 0;
-      for (const topic of candidateTopics) if (topics.has(topic)) score += 3;
-      for (const topic of topics) if (normalize(candidate.title + ' ' + candidate.lines.join(' ')).includes(normalize(topic))) score += 1;
-      const titleWords = normalize(candidate.title).split(' ');
-      for (const word of titleWords) if (word.length > 3 && articleWords.has(word)) score += 1;
-      if (candidate.group === article.group) score += 1;
-      return { article: candidate, score };
-    }).sort((a, b) => b.score - a.score || a.article.title.localeCompare(b.article.title, locale));
-    return related.slice(0, 5).filter((item) => item.score > 0).map((item) => item.article);
+    const ids = richOf(article)?.related || [];
+    return ids.map(articleById).filter((item) => item && item.id !== article.id);
+  }
+
+  function richSections(r) {
+    const list = [];
+    const add = (id, title, ...content) => list.push({ id, title, node: el('section#' + id, el('h2', title), ...content) });
+    if (r.why?.length) add('why', text.why, ...r.why.map((line) => el('p', line)));
+    if (r.steps?.length) add('how-to-use', text.steps, el('ol.mw-steps', r.steps.map((line) => el('li', line))));
+    if (r.files) add('files', text.files, el('p', r.files));
+    if (r.other?.length) {
+      add('other-systems', text.other, el('table.mw-table',
+        el('thead', el('tr', el('th', text.system), el('th', text.called))),
+        el('tbody', r.other.map(([system, what]) => el('tr', el('th', { scope: 'row' }, system), el('td', what))))));
+    }
+    if (r.fact) add('fun-fact', text.fact, el('p', r.fact));
+    if (r.tryIt) add('try-it', text.tryIt, el('p', r.tryIt));
+    return list;
   }
 
   function renderArticle(article) {
     const heading = el('h1#firstHeading', { tabindex: '-1' }, article.title);
-    const intro = article.lines[0] || '';
+    const r = richOf(article);
+    const intro = r ? r.lead : article.lines[0] || '';
     const body = article.lines.slice(1);
-    const contents = el('ol',
-      el('li', el('a', { href: '#description' }, text.description)),
-      body.length > 1 ? el('li', el('a', { href: '#how-to-use' }, text.how)) : null,
-      el('li', el('a', { href: '#sources' }, text.sources)));
-    const sections = [
-      el('nav.mw-toc', { 'aria-label': text.contents }, el('h2', text.contents), contents),
-      el('section#description', el('h2', text.description), body[0] ? el('p', body[0]) : null),
-    ];
-    if (body.length > 1) {
-      sections.push(el('section#how-to-use', el('h2', text.how), ...body.slice(1).map((line) => el('p', line))));
+    let blocks;
+    if (r) {
+      blocks = richSections(r);
+    } else {
+      blocks = [{ id: 'description', title: text.description, node: el('section#description', el('h2', text.description), body[0] ? el('p', body[0]) : null) }];
+      if (body.length > 1) blocks.push({ id: 'how-to-use', title: text.how, node: el('section#how-to-use', el('h2', text.how), ...body.slice(1).map((line) => el('p', line))) });
     }
-    sections.push(sourceSection());
+    const contents = el('ol',
+      ...blocks.map((block) => el('li', el('a', { href: '#' + block.id }, block.title))),
+      el('li', el('a', { href: '#sources' }, text.sources)));
+    const sections = [el('nav.mw-toc', { 'aria-label': text.contents }, el('h2', text.contents), contents), ...blocks.map((block) => block.node)];
+    sections.push(sourceSection(!!r));
     const related = relatedArticles(article);
     const relatedList = related.length ? el('ul', related.map((item) => el('li', link(item)))) : el('p', text.noResults);
     const citation = el('sup.wiki-citation', el('a', { href: '#source-note', 'aria-label': text.sourceLabel + ' 1' }, '[1]'));
