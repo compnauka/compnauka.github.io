@@ -184,12 +184,12 @@
       }
 
       d.onEnter = ok;
-      d.content.append(
+      d.content.append(...[
         el('div.fp-top', upBtn, crumbs, newFolderBtn),
         el('div.fp-main', places, list),
         mode === 'save' ? el('label.fp-name-row', el('span', 'Назва файлу:'), nameInput) : null,
-        typeHint
-      );
+        typeHint,
+      ].filter(Boolean)); // append() перетворює null на текст «null»
       d.foot.append(btn(mode === 'save' ? 'Зберегти' : 'Відкрити', 'btn-primary', ok), btn('Скасувати', '', () => d.close(null)));
       render();
       if (mode === 'save') setTimeout(() => { nameInput.focus(); const b = fs.baseName(nameInput.value); nameInput.setSelectionRange(0, b.length); }, 40);
