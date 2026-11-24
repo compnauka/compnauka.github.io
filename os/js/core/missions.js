@@ -329,7 +329,7 @@
           el('div', el('b', 'Завдання від Совеня'), el('p', 'Виконуй завдання й збирай зірочки. Якщо щось не виходить — натисни «Підказка».'),
             el('div.meter', el('span', { style: { width: Math.round((d / all.length) * 100) + '%' } })),
             el('small', 'Зірочок: ' + d + ' з ' + all.length))),
-        d === all.length ? el('button.btn.btn-primary.ms-cert', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), ' Отримати грамоту') : null);
+        d === all.length ? el('button.btn.btn-primary.ms-cert', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), ' Отримати грамоту') : '');
       const grid = el('div.ms-grid');
       all.forEach((m, i) => grid.append(el('button.ms-card' + (isDone(m.id) ? '.done' : ''), { type: 'button', on: { click: () => { start(m.id); win.close(); } } },
         el('span.ms-num', String(i + 1)), el('span.ms-ico', VOS.icon(m.icon)), el('b', m.title), el('small', m.desc), el('span.ms-star', isDone(m.id) ? [VOS.icon('st-star'), ' Виконано'] : [VOS.icon('star'), ' Почати']))));

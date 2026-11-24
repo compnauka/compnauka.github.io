@@ -260,7 +260,9 @@
     // Розміри беремо з offsetWidth/Height: getBoundingClientRect бреше, поки триває анімація появи (scale)
     function fit(wrap) {
       if (!menuEl) return;
-      const vw = window.innerWidth, vh = window.innerHeight;
+      // Меню не лізе під панель задач, якщо його відкрито над нею
+      const tbTop = document.getElementById('taskbar')?.getBoundingClientRect().top || window.innerHeight;
+      const vw = window.innerWidth, vh = y < tbTop ? tbTop : window.innerHeight;
       const w = menuEl.offsetWidth, h = menuEl.offsetHeight;
       menuEl.style.left = Math.max(4, Math.min(x, vw - w - 4)) + 'px';
       menuEl.style.top = Math.max(4, Math.min(y, vh - h - 4)) + 'px';
