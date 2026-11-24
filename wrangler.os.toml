@@ -1,0 +1,20 @@
+# Віконце — навчальна ОС на os.itnauka.org. Окремий Worker; основний сайт (wrangler.toml) не змінюється.
+# Розгортання: npx wrangler deploy --config wrangler.os.toml   (див. os/OS-DEPLOYMENT.md)
+name = "itnauka-os"
+account_id = "dc40dc2121808269f34e642f1ad10ee1"
+compatibility_date = "2026-10-30"
+main = "os/worker.js"
+workers_dev = false
+preview_urls = false
+
+[[routes]]
+pattern = "os.itnauka.org"
+custom_domain = true
+
+# Файли — увесь репозиторій: Віконцю потрібні програми сайту з /tools, /services, /games, /kids.
+# Worker віддає лише /os та ці папки (див. os/worker.js). Виключення — у кореневому .assetsignore.
+[assets]
+directory = "./"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "none"
