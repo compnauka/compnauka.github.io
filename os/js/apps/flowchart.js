@@ -4,7 +4,7 @@
   const VOS = window.VOS;
   const { tr } = VOS.i18n;
   const { el, fs } = VOS;
-  const WIDTH = 920, HEIGHT = 620, BLOCK_W = 164, BLOCK_H = 68;
+  const WIDTH = 920, HEIGHT = 620;
   const MAX_BLOCKS = 30, MAX_TEXT = 64;
   const TYPES = {
     start: tr('Початок'), action: tr('Дія'), decision: tr('Умова'), io: tr('Ввід / вивід'), end: tr('Кінець'),
@@ -15,8 +15,71 @@
   const portLabel = (block, branch) => tr('З’єднати') + ': ' + block.text
     + (branch === 'next' ? '' : ' · ' + LABELS[branch]);
   const empty = () => ({ version: 1, blocks: [], links: [] });
-  const limitX = (x) => VOS.clamp(x, 10, WIDTH - BLOCK_W - 10);
-  const limitY = (y) => VOS.clamp(y, 10, HEIGHT - BLOCK_H - 10);
+  const limitX = (x, block) => VOS.clamp(x, 10, WIDTH - dims(block).w - 10);
+  const limitY = (y, block) => VOS.clamp(y, 30, HEIGHT - dims(block).h - 10);
+
+  // ---------- розмір блока залежить від тексту ----------
+  const FONT_PX = 15.4, LINE = 17.7, SKEW = 18;
+  const CONFIG = {
+    action: { minW: 150, minH: 62, padX: 32, padY: 12, inner: 210 },
+    start: { minW: 150, minH: 58, padX: 58, padY: 12, inner: 190 },
+    end: { minW: 150, minH: 58, padX: 58, padY: 12, inner: 190 },
+    io: { minW: 164, minH: 64, padX: 2 * SKEW + 26, padY: 12, inner: 180 },
+  };
+  let measure = null, family = '';
+  function textWidth(text) {
+    if (!measure) {
+      measure = document.createElement('canvas').getContext('2d');
+      family = getComputedStyle(document.body).fontFamily;
+    }
+    measure.font = '800 ' + FONT_PX + 'px ' + family;
+    return measure.measureText(text).width * 1.05;
+  }
+  function wrap(text, limit) {
+    const lines = [];
+    let row = '';
+    for (const word of text.split(/\s+/).filter(Boolean)) {
+      let rest = word;
+      while (textWidth(rest) > limit && rest.length > 1) {
+        let n = rest.length;
+        while (n > 1 && textWidth(rest.slice(0, n)) > limit) n--;
+        if (row) { lines.push(row); row = ''; }
+        lines.push(rest.slice(0, n));
+        rest = rest.slice(n);
+      }
+      const next = row ? row + ' ' + rest : rest;
+      if (row && textWidth(next) > limit) { lines.push(row); row = rest; } else row = next;
+    }
+    if (row || !lines.length) lines.push(row);
+    return lines;
+  }
+  const dimCache = new Map();
+  function dims(block) {
+    const key = block.type + '|' + block.text;
+    if (dimCache.has(key)) return dimCache.get(key);
+    let result;
+    const widest = (lines) => Math.max(...lines.map(textWidth));
+    if (block.type === 'decision') {
+      // У ромба корисна площа менша: потрібно tw / w + th / h <= 0.82.
+      for (let w = 184; ; w += 8) {
+        const lines = wrap(block.text, w * 0.55);
+        const tw = widest(lines), th = lines.length * LINE;
+        const room = 0.82 - tw / w;
+        const h = Math.max(88, Math.ceil(room > 0.1 ? th / room : 1e4));
+        if (h <= w * 0.62 || w >= 320) { result = { w, h: Math.min(h, 200), lines }; break; }
+      }
+    } else {
+      const cfg = CONFIG[block.type];
+      const lines = wrap(block.text, cfg.inner);
+      result = {
+        w: Math.max(cfg.minW, Math.ceil((widest(lines) + cfg.padX) / 2) * 2),
+        h: Math.max(cfg.minH, Math.ceil(lines.length * LINE + cfg.padY * 2)),
+        lines,
+      };
+    }
+    dimCache.set(key, result);
+    return result;
+  }
 
   function read(content) {
     const graph = JSON.parse(content);
@@ -28,7 +91,8 @@
       if (!Number.isSafeInteger(id) || id < 1 || id > 1e9 || blocks.has(id) || !Object.hasOwn(TYPES, type)
         || typeof text !== 'string' || text.length > MAX_TEXT || !Number.isFinite(x) || !Number.isFinite(y)) throw Error();
       if (type === 'start' && ++starts > 1) throw Error();
-      blocks.set(id, { id, type, text, x: limitX(x), y: limitY(y) });
+      const probe = { type, text };
+      blocks.set(id, { id, type, text, x: limitX(x, probe), y: limitY(y, probe) });
     }
     const outlets = new Set();
     const links = graph.links.map(({ from, to, branch }) => {
@@ -44,27 +108,30 @@
   function build(blocks, links) {
     return {
       version: 1,
-      blocks: blocks.map(([id, type, text, x, y]) => ({ id, type, text: text || TYPES[type], x, y })),
+      blocks: blocks.map(([id, type, label, cx, y]) => {
+        const text = label || TYPES[type];
+        return { id, type, text, x: Math.max(10, Math.round(cx - dims({ type, text }).w / 2)), y };
+      }),
       links: links.map(([from, to, branch]) => ({ from, to, branch })),
     };
   }
 
   const EXAMPLES = () => [
     [tr('Бібліотека'), () => build([
-      [1, 'start', '', 110, 22], [2, 'decision', tr('Є книжка на полиці?'), 110, 132], [3, 'action', tr('Візьми книжку'), 220, 252],
-      [4, 'io', tr('Запитай бібліотекаря'), 18, 252], [5, 'end', '', 110, 378],
+      [1, 'start', '', 300, 30], [2, 'decision', tr('Є книжка на полиці?'), 300, 130], [3, 'action', tr('Візьми книжку'), 520, 290],
+      [4, 'io', tr('Запитай бібліотекаря'), 110, 290], [5, 'end', '', 300, 420],
     ], [[1, 2, 'next'], [2, 3, 'yes'], [2, 4, 'no'], [3, 5, 'next'], [4, 5, 'next']])],
     [tr('Чи іде дощ?'), () => build([
-      [1, 'start', '', 110, 22], [2, 'decision', tr('Іде дощ?'), 110, 122], [3, 'action', tr('Візьми парасольку'), 220, 242],
-      [4, 'action', tr('Одягни кепку'), 18, 242], [5, 'action', tr('Виходь з дому'), 110, 360], [6, 'end', '', 110, 460],
+      [1, 'start', '', 300, 30], [2, 'decision', tr('Іде дощ?'), 300, 130], [3, 'action', tr('Візьми парасольку'), 520, 270],
+      [4, 'action', tr('Одягни кепку'), 110, 270], [5, 'action', tr('Виходь з дому'), 300, 390], [6, 'end', '', 300, 500],
     ], [[1, 2, 'next'], [2, 3, 'yes'], [2, 4, 'no'], [3, 5, 'next'], [4, 5, 'next'], [5, 6, 'next']])],
     [tr('Число більше за 5?'), () => build([
-      [1, 'start', '', 110, 22], [2, 'io', tr('Введи число'), 110, 112], [3, 'decision', tr('число > 5'), 110, 212],
-      [4, 'io', tr('число більше за 5'), 220, 332], [5, 'io', tr('число не більше за 5'), 18, 332], [6, 'end', '', 110, 450],
+      [1, 'start', '', 300, 30], [2, 'io', tr('Введи число'), 300, 130], [3, 'decision', tr('число > 5'), 300, 250],
+      [4, 'io', tr('число більше за 5'), 540, 390], [5, 'io', tr('число не більше за 5'), 90, 390], [6, 'end', '', 300, 510],
     ], [[1, 2, 'next'], [2, 3, 'next'], [3, 4, 'yes'], [3, 5, 'no'], [4, 6, 'next'], [5, 6, 'next']])],
   ];
 
-  // Запуск схеми: блок «Введи число» питає значення, інший блок вводу/виводу показує свій текст,
+    // Запуск схеми: блок «Введи число» питає значення, інший блок вводу/виводу показує свій текст,
   // умова на кшталт «число > 5» перевіряється сама.
   const WORD = /[\p{L}\p{N}_]+/gu;
   const inputName = (block) => block.type === 'io' && /^(введи|запитай|ввід)/i.test(block.text.trim())
@@ -99,45 +166,48 @@
     return found;
   }
 
-  function anchor(node, dx, dy) {
-    const halfW = BLOCK_W / 2, halfH = BLOCK_H / 2;
-    const x = Math.abs(dx) / halfW, y = Math.abs(dy) / halfH;
-    const scale = node.type === 'decision' ? x + y : Math.max(x, y);
-    let factor = 1 / (scale || 1);
-    const flat = halfW - halfH;
-    if ((node.type === 'start' || node.type === 'end') && Math.abs(dx * factor) > flat) {
-      // У заокругленого блока стрілка має торкатися дуги, а не кута прямокутника.
-      const length = dx * dx + dy * dy;
-      factor = (flat * Math.abs(dx) + Math.sqrt(halfH * halfH * length - flat * flat * dy * dy)) / length;
-    }
-    return { x: node.x + halfW + dx * factor, y: node.y + halfH + dy * factor };
-  }
-
   function outlet(node, branch) {
-    const [x, y, dx, dy] = OUTLETS[branch];
-    return { x: node.x + BLOCK_W * x, y: node.y + BLOCK_H * y, dx, dy };
+    const { w, h } = dims(node);
+    if (branch === 'yes') return { x: node.x + w, y: node.y + h / 2, dx: 1 };
+    if (branch === 'no') return { x: node.x, y: node.y + h / 2, dx: -1 };
+    return { x: node.x + w / 2, y: node.y + h, dx: 0 };
   }
 
-  function arrow(ctx, from, branch, to, pointer) {
-    const a = outlet(from, branch);
-    const b = to ? anchor(to, a.x - to.x - BLOCK_W / 2, a.y - to.y - BLOCK_H / 2) : pointer;
-    const distance = Math.hypot(b.x - a.x, b.y - a.y);
-    if (distance < 8) return;
-    const bend = Math.min(44, distance / 2);
-    const x1 = a.x + a.dx * bend, y1 = a.y + a.dy * bend;
-    const dx = to ? b.x - to.x - BLOCK_W / 2 : a.x - b.x;
-    const dy = to ? b.y - to.y - BLOCK_H / 2 : a.y - b.y;
-    const norm = Math.hypot(dx, dy) || 1;
-    const x2 = b.x + dx * bend / norm, y2 = b.y + dy * bend / norm;
-    const angle = Math.atan2(b.y - y2, b.x - x2);
+  // Прямокутні стрілки: від виходу вниз (або вбік для «Так»/«Ні»), горизонтальний відрізок, донизу в центр верху блока.
+  // Усі стрілки до одного блока зливаються на спільній лінії над ним.
+  function route(from, branch, to) {
+    const a = outlet(from, branch), df = dims(from), dt = dims(to);
+    const tx = to.x + dt.w / 2, ty = to.y, room = ty - a.y;
+    const bus = room >= 12 ? ty - Math.min(22, room / 2) : ty - 22;
+    const end = { x: tx, y: ty };
+    const right = Math.max(from.x + df.w, to.x + dt.w) + 26, left = Math.min(from.x, to.x) - 26;
+    if (branch === 'next') {
+      if (a.y + 5 <= bus) return [a, { x: a.x, y: bus }, { x: tx, y: bus }, end];
+      const side = tx >= a.x ? right : left, low = a.y + 16;
+      return [a, { x: a.x, y: low }, { x: side, y: low }, { x: side, y: bus }, { x: tx, y: bus }, end];
+    }
+    if (a.dx * (tx - a.x) > 12 && a.y + 12 <= bus) return [a, { x: tx, y: a.y }, end];
+    if (a.y + 5 <= bus) {
+      const x = a.x + a.dx * 26;
+      return [a, { x, y: a.y }, { x, y: bus }, { x: tx, y: bus }, end];
+    }
+    const side = a.dx > 0 ? right : left;
+    return [a, { x: side, y: a.y }, { x: side, y: bus }, { x: tx, y: bus }, end];
+  }
+
+  function roundedLine(ctx, points, radius) {
+    const pts = points.filter((pt, i) => !i || pt.x !== points[i - 1].x || pt.y !== points[i - 1].y)
+      .filter((pt, i, all) => !i || i === all.length - 1
+        || !((all[i - 1].x === pt.x && pt.x === all[i + 1].x) || (all[i - 1].y === pt.y && pt.y === all[i + 1].y)));
     ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.bezierCurveTo(x1, y1, x2, y2, b.x, b.y);
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const r = Math.min(radius, Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) / 2,
+        Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y) / 2);
+      ctx.arcTo(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, r);
+    }
+    ctx.lineTo(pts.at(-1).x, pts.at(-1).y);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y);
-    for (const side of [-1, 1]) ctx.lineTo(b.x - 11 * Math.cos(angle + side * .48), b.y - 11 * Math.sin(angle + side * .48));
-    ctx.fill();
   }
 
   function drawLinks(ctx, graph, color, preview) {
@@ -145,34 +215,78 @@
     ctx.strokeStyle = ctx.fillStyle = color;
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     const blocks = new Map(graph.blocks.map((block) => [block.id, block]));
+    const heads = new Set();
     for (const link of graph.links) {
-      arrow(ctx, blocks.get(link.from), link.branch, blocks.get(link.to));
+      const to = blocks.get(link.to);
+      roundedLine(ctx, route(blocks.get(link.from), link.branch, to), 9);
+      heads.add(to);
+    }
+    // Одна стрілка-вістря на блок, навіть якщо до нього веде кілька ліній.
+    for (const to of heads) {
+      const x = to.x + dims(to).w / 2, y = to.y;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 7, y - 12);
+      ctx.lineTo(x + 7, y - 12);
+      ctx.closePath();
+      ctx.fill();
     }
     if (preview?.point) {
       ctx.setLineDash([5, 4]);
-      arrow(ctx, blocks.get(preview.from), preview.branch, blocks.get(preview.to), preview.point);
+      const from = blocks.get(preview.from), to = blocks.get(preview.to);
+      if (to) roundedLine(ctx, route(from, preview.branch, to), 9);
+      else {
+        const a = outlet(from, preview.branch);
+        roundedLine(ctx, [a, preview.point], 0);
+      }
       ctx.setLineDash([]);
     }
   }
 
+  const NS = 'http://www.w3.org/2000/svg';
+  // Фігура блока як SVG: контур видно з усіх боків, кути паралелограма гострі й цілі.
+  function shapeSvg(type, w, h, skew = SKEW) {
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'fc-shape');
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    let shape;
+    if (type === 'decision' || type === 'io') {
+      shape = document.createElementNS(NS, 'polygon');
+      shape.setAttribute('points', type === 'decision'
+        ? [w / 2, 1, w - 1, h / 2, w / 2, h - 1, 1, h / 2].join(' ')
+        : [skew, 1, w - 1, 1, w - skew, h - 1, 1, h - 1].join(' '));
+    } else {
+      shape = document.createElementNS(NS, 'rect');
+      for (const [name, value] of Object.entries({ x: 1, y: 1, width: w - 2, height: h - 2, rx: type === 'action' ? 8 : (h - 2) / 2 })) shape.setAttribute(name, value);
+    }
+    svg.append(shape);
+    return svg;
+  }
+
   function shapePath(ctx, block) {
-    const { x, y } = block, w = BLOCK_W, h = BLOCK_H;
+    const { x, y } = block, { w, h } = dims(block);
     ctx.beginPath();
     const poly = (points) => points.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
-    if (block.type === 'decision') poly([[x + w / 2, y], [x + w, y + h / 2], [x + w / 2, y + h], [x, y + h / 2]]);
-    else if (block.type === 'io') poly([[x + w * .12, y], [x + w, y], [x + w * .88, y + h], [x, y + h]]);
-    else ctx.roundRect(x, y, w, h, block.type === 'action' ? 8 : h / 2);
+    if (block.type === 'decision') poly([[x + w / 2, y + 1], [x + w - 1, y + h / 2], [x + w / 2, y + h - 1], [x + 1, y + h / 2]]);
+    else if (block.type === 'io') poly([[x + SKEW, y + 1], [x + w - 1, y + 1], [x + w - SKEW, y + h - 1], [x + 1, y + h - 1]]);
+    else ctx.roundRect(x + 1, y + 1, w - 2, h - 2, block.type === 'action' ? 8 : (h - 2) / 2);
     ctx.closePath();
   }
 
-  // Малює схему у PNG: білий фон, ті самі форми й кольори, що на полі.
+  // Малює схему у PNG: білий фон, ті самі форми, розміри, кольори й стрілки, що на полі.
   function picture(graph) {
     const colors = { start: ['#d2f5e7', '#24755e'], end: ['#ede3ff', '#7756a8'], decision: ['#fff0c3', '#91600d'],
       io: ['#ecddf9', '#875498'], action: ['#dbeafe', '#4378bf'] };
     const pad = 24, side = 44;
-    const left = Math.min(...graph.blocks.map((b) => b.x)) - side, top = Math.min(...graph.blocks.map((b) => b.y)) - pad;
-    const right = Math.max(...graph.blocks.map((b) => b.x + BLOCK_W)) + side, bottom = Math.max(...graph.blocks.map((b) => b.y + BLOCK_H)) + pad;
+    const boxes = graph.blocks.map((b) => ({ x: b.x, y: b.y, ...dims(b) }));
+    const left = Math.min(...boxes.map((b) => b.x)) - side, top = Math.min(...boxes.map((b) => b.y)) - pad - 12;
+    const right = Math.max(...boxes.map((b) => b.x + b.w)) + side, bottom = Math.max(...boxes.map((b) => b.y + b.h)) + pad;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(right - left);
     canvas.height = Math.round(bottom - top);
@@ -187,32 +301,25 @@
     ctx.translate(-left, -top);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'miter';
     ctx.lineWidth = 2;
     for (const block of graph.blocks) {
       const [fill, line] = colors[block.type];
+      const { w, h, lines } = dims(block);
       shapePath(ctx, block);
       ctx.fillStyle = fill;
       ctx.strokeStyle = line;
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = '#122943';
-      ctx.font = '800 14px sans-serif';
-      const inner = BLOCK_W - (block.type === 'action' ? 26 : 56);
-      const lines = [];
-      let row = '';
-      for (const word of block.text.split(/\s+/)) {
-        const next = row ? row + ' ' + word : word;
-        if (row && ctx.measureText(next).width > inner) { lines.push(row); row = word; } else row = next;
-      }
-      lines.push(row);
-      const shown = lines.slice(0, block.type === 'decision' ? 2 : 3);
-      shown.forEach((text, i) => ctx.fillText(text, block.x + BLOCK_W / 2, block.y + BLOCK_H / 2 + (i - (shown.length - 1) / 2) * 17, inner));
+      ctx.font = '800 ' + FONT_PX + 'px ' + (family || 'sans-serif');
+      lines.forEach((text, i) => ctx.fillText(text, block.x + w / 2, block.y + h / 2 + (i - (lines.length - 1) / 2) * LINE));
       for (const branch of branches(block.type)) {
         if (branch === 'next') continue;
         const o = outlet(block, branch);
         ctx.fillStyle = branch === 'no' ? '#a83e66' : '#047857';
-        ctx.font = '800 12px sans-serif';
-        ctx.fillText(LABELS[branch], o.x + (branch === 'yes' ? 20 : -20), o.y - 10);
+        ctx.font = '800 12px ' + (family || 'sans-serif');
+        ctx.fillText(LABELS[branch], o.x + o.dx * 22, o.y - 12);
       }
     }
     return canvas.toDataURL('image/png');
@@ -277,7 +384,7 @@
         pointerdown: (event) => dragFromPalette(event, type),
         click: (event) => { if (!event.detail) add(type); },
       },
-    }, el('span.fc-mini.fc-' + type, { 'aria-hidden': 'true' }), el('span.fc-tile-label', label)));
+    }, el('span.fc-mini.fc-' + type, { 'aria-hidden': 'true' }, shapeSvg(type, 50, 24, 8)), el('span.fc-tile-label', label)));
     const palette = el('div.fc-palette', { role: 'group', 'aria-label': tr('Додати блок') },
       el('span.fc-palette-title', tr('Блоки')), paletteItems);
     const zoomLabel = el('span.fc-zoom-label');
@@ -299,7 +406,7 @@
       const list = nodes();
       const box = list.length
         ? { l: Math.min(...list.map((b) => b.x)) - 24, t: Math.min(...list.map((b) => b.y)) - 24,
-          r: Math.max(...list.map((b) => b.x + BLOCK_W)) + 24, b: Math.max(...list.map((b) => b.y + BLOCK_H)) + 24 }
+          r: Math.max(...list.map((b) => b.x + dims(b).w)) + 24, b: Math.max(...list.map((b) => b.y + dims(b).h)) + 24 }
         : { l: 0, t: 0, r: WIDTH, b: HEIGHT };
       setScale(Math.min(viewport.clientWidth / (box.r - box.l), viewport.clientHeight / (box.b - box.t), 1.3));
       viewport.scrollTo(box.l * scale, box.t * scale);
@@ -421,16 +528,25 @@
       snapshot();
       const id = Array.from({ length: MAX_BLOCKS }, (_, index) => index + 1).find((candidate) => !getBlock(candidate));
       const i = nodes().length;
-      const spot = Array.from({ length: 30 }, (_, j) => ({ x: 24 + ((i + j) % 4) * 212, y: 25 + (Math.floor((i + j) / 4) % 6) * 100 }))
-        .find(({ x, y }) => !nodes().some((block) => Math.abs(block.x - x) < BLOCK_W && Math.abs(block.y - y) < BLOCK_H));
+      const fresh = { type, text: TYPES[type] }, size = dims(fresh);
+      const clash = (x, y) => nodes().some((block) => {
+        const d = dims(block);
+        return x < block.x + d.w + 16 && block.x < x + size.w + 16 && y < block.y + d.h + 16 && block.y < y + size.h + 16;
+      });
+      const spot = Array.from({ length: 30 }, (_, j) => ({ x: 24 + ((i + j) % 4) * 220, y: 36 + (Math.floor((i + j) / 4) % 6) * 100 }))
+        .find(({ x, y }) => !clash(x, y));
       // Клац по палітрі при вибраному блоці: новий блок стає під ним і одразу з’єднується стрілкою.
       const parent = !point && type !== 'start' ? getBlock(selected) : null;
       const branch = parent && branches(parent.type).find((name) => !linkFor(parent.id, name));
-      const [sx, sy] = { next: [0, 1], yes: [1, 1], no: [-1, 1] }[branch] || [];
-      const near = branch && { x: limitX(parent.x + sx * 110), y: limitY(parent.y + sy * 106) };
-      const free = near && !nodes().some((block) => Math.abs(block.x - near.x) < BLOCK_W && Math.abs(block.y - near.y) < BLOCK_H);
-      const x = point ? limitX(point.x - BLOCK_W / 2) : free ? near.x : spot?.x ?? 24;
-      const y = point ? limitY(point.y - BLOCK_H / 2) : free ? near.y : spot?.y ?? 25;
+      let near = null;
+      if (branch) {
+        const pd = dims(parent), o = outlet(parent, branch);
+        const cx = branch === 'next' ? parent.x + pd.w / 2 : o.x + o.dx * (28 + size.w / 2);
+        near = { x: limitX(cx - size.w / 2, fresh), y: limitY(parent.y + pd.h + 46, fresh) };
+      }
+      const free = near && !clash(near.x, near.y);
+      const x = point ? limitX(point.x - size.w / 2, fresh) : free ? near.x : spot?.x ?? 24;
+      const y = point ? limitY(point.y - size.h / 2, fresh) : free ? near.y : spot?.y ?? 36;
       nodes().push({ id, type, text: TYPES[type], x, y });
       if (free) graph.links.push({ from: parent.id, branch, to: id });
       linking = null;
@@ -514,7 +630,7 @@
       let ghost;
       trackPointer(event, (next) => {
         if (!ghost) {
-          ghost = el('div.fc-ghost.fc-' + type, { 'aria-hidden': 'true' }, el('span', TYPES[type]));
+          ghost = el('div.fc-ghost.fc-' + type, { 'aria-hidden': 'true' }, shapeSvg(type, 142, 56, 14), el('span', TYPES[type]));
           document.body.append(ghost);
         }
         ghost.style.left = next.clientX + 'px';
@@ -594,7 +710,8 @@
 
     function renderBlocks() {
       layer.replaceChildren(...nodes().map((block) => {
-        const shell = el('div.fc-block.fc-' + block.type, { dataset: { block: block.id } });
+        const size = dims(block);
+        const shell = el('div.fc-block.fc-' + block.type, { dataset: { block: block.id }, style: { width: size.w + 'px', height: size.h + 'px' } });
         const item = el('button.fc-node', {
           type: 'button',
           'aria-label': TYPES[block.type] + ': ' + block.text, 'aria-pressed': String(selected === block.id),
@@ -602,7 +719,7 @@
             click: (event) => { if (!event.detail) choose(block.id); },
             pointerdown: (event) => beginDrag(event, block, shell),
           },
-        }, el('span', block.text));
+        }, shapeSvg(block.type, size.w, size.h), el('span', size.lines.join('\n')));
         item.classList.toggle('fc-current', walking === block.id);
         shell.append(item);
         if (!walking) {
@@ -652,8 +769,8 @@
       trackPointer(event, (next) => {
         if (linking) { updatePreview(next); return; }
         const point = boardPoint(next);
-        block.x = limitX(x + point.x - origin.x);
-        block.y = limitY(y + point.y - origin.y);
+        block.x = limitX(x + point.x - origin.x, block);
+        block.y = limitY(y + point.y - origin.y, block);
         shell.classList.add('fc-moving');
         positionBlock(shell, block);
         repaint();
@@ -696,11 +813,10 @@
         if (commit && text !== block.text) {
           snapshot();
           block.text = text;
-          item.firstChild.textContent = text;
-          item.setAttribute('aria-label', TYPES[block.type] + ': ' + text);
-          shell.querySelectorAll('[data-port]').forEach((port) => port.setAttribute('aria-label', portLabel(block, port.dataset.port)));
-          updateTitle();
-          undoBtn.disabled = false;
+          block.x = limitX(block.x, block);
+          block.y = limitY(block.y, block);
+          render();
+          return;
         }
         field.remove();
         item.removeAttribute('aria-hidden');
@@ -711,7 +827,7 @@
         event.preventDefault();
         event.stopPropagation();
         finish(event.key === 'Enter');
-        item.focus();
+        reveal(id);
       });
       item.setAttribute('aria-hidden', 'true');
       shell.append(field);
@@ -822,6 +938,7 @@
       onClose: () => { gesture?.(); offTheme(); },
     });
     render();
+    document.fonts?.ready.then(() => { dimCache.clear(); render(); });
     if (args.file) load(args.file);
     return win;
   }

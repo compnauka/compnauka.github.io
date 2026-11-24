@@ -73,11 +73,7 @@
   --node-bg: #dbeafe;
   --node-line: #4378bf;
 }
-.fc-block {
-  position: absolute;
-  width: 164px;
-  height: 68px;
-}
+.fc-block { position: absolute; }
 .fc-node, .fc-ghost {
   position: relative;
   width: 100%;
@@ -87,8 +83,8 @@
   color: #122943;
   background: transparent;
   border: 0;
-  padding: 6px 13px;
-  font: 800 .96rem/1.15 var(--font);
+  padding: 0;
+  font: 800 15.4px/17.7px var(--font);
   cursor: grab;
   touch-action: none;
 }
@@ -101,46 +97,31 @@
   transform: translate(-50%, -50%);
   opacity: .85;
 }
-.fc-node::before, .fc-mini::before, .fc-ghost::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--node-bg);
-  border: 2px solid var(--node-line);
-  border-radius: 8px;
+.fc-shape { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.fc-shape :is(rect, polygon) {
+  fill: var(--node-bg);
+  stroke: var(--node-line);
+  stroke-width: 2;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 10;
+  vector-effect: non-scaling-stroke;
 }
 .fc-node span, .fc-ghost span {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-  overflow-wrap: anywhere;
   position: relative;
+  white-space: pre-line;
+  text-align: center;
 }
+.fc-ghost span { font-size: .9rem; }
+.fc-mini .fc-shape { position: static; display: block; }
 .fc-start { --node-bg: #d2f5e7; --node-line: #24755e; }
 .fc-end { --node-bg: #ede3ff; --node-line: #7756a8; }
-.fc-start::before, .fc-end::before, .fc-start .fc-node::before, .fc-end .fc-node::before { border-radius: 40px; }
-.fc-decision { --node-bg: #fff0c3; --node-line: #91600d; --shape: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-.fc-io { --node-bg: #ecddf9; --node-line: #875498; --shape: polygon(12% 0, 100% 0, 88% 100%, 0 100%); }
-.fc-decision .fc-node, .fc-io .fc-node, .fc-ghost.fc-decision, .fc-ghost.fc-io { padding-inline: 24px; }
-:is(.fc-decision, .fc-io):is(.fc-mini, .fc-ghost)::before,
-:is(.fc-decision, .fc-io) .fc-node::before {
-  background: var(--node-line);
-  border: 0;
-  clip-path: var(--shape);
-}
-:is(.fc-decision, .fc-io):is(.fc-mini, .fc-ghost)::after,
-:is(.fc-decision, .fc-io) .fc-node::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  background: var(--node-bg);
-  clip-path: var(--shape);
-}
-.fc-io .fc-node span, .fc-ghost.fc-io span { z-index: 1; }
-.fc-decision span { z-index: 1; -webkit-line-clamp: 2; }
-.fc-node[aria-pressed="true"], .fc-node.fc-current { outline: 2px solid var(--fc-mark); outline-offset: 3px; border-radius: 8px; }
-.fc-node.fc-current { outline-width: 4px; }
+.fc-decision { --node-bg: #fff0c3; --node-line: #91600d; }
+.fc-io { --node-bg: #ecddf9; --node-line: #875498; }
+.fc-node[aria-pressed="true"] .fc-shape :is(rect, polygon) { stroke: var(--fc-mark); stroke-width: 4; }
+.fc-node.fc-current .fc-shape { filter: drop-shadow(0 0 6px var(--fc-mark)); }
+.fc-node.fc-current .fc-shape :is(rect, polygon) { stroke: var(--fc-mark); stroke-width: 5; }
+.fc-node:focus-visible { outline: none; }
+.fc-node:focus-visible .fc-shape :is(rect, polygon) { stroke: var(--fc-mark); stroke-width: 4; stroke-dasharray: 7 4; }
 .fc-connecting .fc-node { cursor: crosshair; }
 .fc-moving { z-index: 4; }
 .fc-drop-target { z-index: 3; filter: drop-shadow(0 0 6px var(--fc-mark)); }
@@ -191,7 +172,7 @@
   display: flex;
   position: absolute;
   z-index: 3;
-  bottom: -31px;
+  top: -33px;
   right: -8px;
   gap: 3px;
 }
@@ -208,7 +189,8 @@
   cursor: pointer;
 }
 .fc-quick .ic { width: 16px; height: 16px; }
-.fc-inline.input { position: absolute; z-index: 4; inset: 17px 9px; width: calc(100% - 18px); padding: 4px; text-align: center; }
+.fc-inline.input { position: absolute; z-index: 4; left: 9px; top: 50%; transform: translateY(-50%); width: calc(100% - 18px); padding: 4px; text-align: center; }
+.fc-decision .fc-inline.input { left: 20%; width: 60%; }
 .fc-trace, .fc-status { padding: 5px 10px; border-top: 1px solid var(--line); color: var(--fc-ink); font-size: .86rem; }
 .fc-trace p { margin: 0; }
 .fc-trace[hidden] { display: none; }
