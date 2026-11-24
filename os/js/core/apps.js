@@ -6,11 +6,13 @@
   const registry = {};
 
   const CATEGORIES = [
-    { id: 'standard', name: tr('Стандартні') },
-    { id: 'creative', name: tr('Творчість') },
-    { id: 'trainers', name: tr('Тренажери') },
-    { id: 'games', name: tr('Ігри') },
-    { id: 'system', name: tr('Система') },
+    { id: 'write', name: tr('Пишу') },
+    { id: 'draw', name: tr('Малюю') },
+    { id: 'think', name: tr('Рахую й планую') },
+    { id: 'mouse', name: tr('Тренуюся з мишкою') },
+    { id: 'typing', name: tr('Вчуся друкувати') },
+    { id: 'games', name: tr('Граю й міркую') },
+    { id: 'computer', name: tr("Мій комп'ютер") },
   ];
 
   /** def: {id, name, icon, color, category, desc, launch(args), url, width, height, exts, hidden} */

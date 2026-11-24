@@ -316,7 +316,7 @@
       VOS.apps.CATEGORIES.forEach((c) => {
         const apps = VOS.apps.list(c.id);
         if (!apps.length) return;
-        const det = el('details.start-cat', { open: c.id === 'standard' }, el('summary', c.name, el('span.cnt', String(apps.length))));
+        const det = el('details.start-cat', { open: c.id === 'write' }, el('summary', c.name, el('span.cnt', String(apps.length))));
         apps.forEach((a) => det.append(appRow(a)));
         body.append(det);
       });

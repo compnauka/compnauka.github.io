@@ -34,5 +34,5 @@
     return VOS.wm.open({ app: 'help', singleton: 'help', title: tr('Довідка'), icon: 'help', content: root, width: 620, height: 520, minWidth: 300, minHeight: 260 });
   }
 
-  VOS.apps.register({ id: 'help', name: 'Довідка', icon: 'help', color: '#3bc9db', category: 'system', desc: tr('Що таке вікно, файл, папка, кошик'), launch });
+  VOS.apps.register({ id: 'help', name: 'Довідка', icon: 'help', color: '#3bc9db', category: 'computer', desc: tr('Що таке вікно, файл, папка, кошик'), launch });
 })();

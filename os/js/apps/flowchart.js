@@ -978,5 +978,5 @@
   }
 
   VOS.apps.register({ id: 'flowchart', name: 'Блок-схема', icon: 'layout', color: '#0f766e',
-    category: 'creative', desc: tr('Малюй алгоритми, додавай стрілки й перевіряй маршрути'), launch });
+    category: 'think', desc: tr('Малюй алгоритми, додавай стрілки й перевіряй маршрути'), launch });
 })();

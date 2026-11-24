@@ -176,7 +176,7 @@
     return win;
   }
 
-  const def = VOS.apps.register({ id: 'settings', name: 'Налаштування', icon: 'settings', color: '#868e96', category: 'system', desc: tr('Шпалери, тема, значки, профіль'), launch });
+  const def = VOS.apps.register({ id: 'settings', name: 'Налаштування', icon: 'settings', color: '#868e96', category: 'computer', desc: tr('Шпалери, тема, значки, профіль'), launch });
   // singleton-вікно отримує нову сторінку через onReopen
   const orig = def.launch;
   def.launch = (args) => {

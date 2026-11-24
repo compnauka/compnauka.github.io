@@ -176,5 +176,5 @@
     return win;
   }
 
-  VOS.apps.register({ id: 'photos', name: 'Фото', icon: 'image', color: '#12b886', category: 'standard', desc: tr('Перегляд та редагування малюнків'), exts: ['png', 'jpg', 'jpeg'], launch });
+  VOS.apps.register({ id: 'photos', name: 'Фото', icon: 'image', color: '#12b886', category: 'computer', desc: tr('Перегляд та редагування малюнків'), exts: ['png', 'jpg', 'jpeg'], launch });
 })();

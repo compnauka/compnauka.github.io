@@ -189,5 +189,5 @@
 
   const request = read(new URL(window.location.href));
   VOS.lessons = { request, openBuilder };
-  VOS.apps.register({ id: 'lessons', name: 'Створити урок', icon: 'books', color: '#0e7490', category: 'system', desc: tr('Для вчителя: добірка завдань і посилання для учнів'), launch });
+  VOS.apps.register({ id: 'lessons', name: 'Створити урок', icon: 'books', color: '#0e7490', category: 'computer', desc: tr('Для вчителя: добірка завдань і посилання для учнів'), launch });
 })();

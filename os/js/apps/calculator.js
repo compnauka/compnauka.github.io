@@ -81,5 +81,5 @@
     return win;
   }
 
-  VOS.apps.register({ id: 'calculator', name: 'Калькулятор', icon: 'calculator', color: '#495057', category: 'standard', desc: tr('Додавай, віднімай, множ і діли'), launch });
+  VOS.apps.register({ id: 'calculator', name: 'Калькулятор', icon: 'calculator', color: '#495057', category: 'think', desc: tr('Додавай, віднімай, множ і діли'), launch });
 })();

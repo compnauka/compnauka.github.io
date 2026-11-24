@@ -289,5 +289,5 @@
     return win;
   }
 
-  VOS.apps.register({ id: 'paint', name: 'Малюнок', icon: 'palette', color: '#f06595', category: 'standard', desc: tr('Малюй і зберігай малюнки'), exts: ['png'], launch });
+  VOS.apps.register({ id: 'paint', name: 'Малюнок', icon: 'palette', color: '#f06595', category: 'draw', desc: tr('Малюй і зберігай малюнки'), exts: ['png'], launch });
 })();

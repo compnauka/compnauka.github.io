@@ -180,5 +180,5 @@
     return win;
   }
 
-  VOS.apps.register({ id: 'explorer', name: 'Файли', icon: 'folder', color: '#f59f00', category: 'standard', desc: tr('Папки й файли: Комп\'ютер, Документи, Малюнки, Кошик'), launch });
+  VOS.apps.register({ id: 'explorer', name: 'Файли', icon: 'folder', color: '#f59f00', category: 'computer', desc: tr('Папки й файли: Комп\'ютер, Документи, Малюнки, Кошик'), launch });
 })();

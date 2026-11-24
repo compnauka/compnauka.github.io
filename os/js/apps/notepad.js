@@ -170,5 +170,5 @@
     return win;
   }
 
-  VOS.apps.register({ id: 'notepad', name: 'Блокнот', icon: 'notebook', color: '#4dabf7', category: 'standard', desc: tr('Простий текстовий редактор'), exts: ['txt'], launch });
+  VOS.apps.register({ id: 'notepad', name: 'Блокнот', icon: 'notebook', color: '#4dabf7', category: 'write', desc: tr('Простий текстовий редактор'), exts: ['txt'], launch });
 })();

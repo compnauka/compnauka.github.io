@@ -413,6 +413,6 @@
     }
   }
 
-  VOS.apps.register({ id: 'missions', name: 'Завдання', icon: 'star', color: '#fab005', category: 'system', desc: tr('Навчальні завдання від Совеня'), launch: launchApp });
+  VOS.apps.register({ id: 'missions', name: 'Завдання', icon: 'star', color: '#fab005', category: 'computer', desc: tr('Навчальні завдання від Совеня'), launch: launchApp });
   VOS.missions = { init, onLogin, start, stop, showHint, certificate, get active() { return active; }, lastCompleted: null, doneCount, available };
 })();

@@ -270,6 +270,6 @@
 
   VOS.apps.register({
     id: 'browser', name: 'Навчальний браузер', icon: ICON, color: '#0e7490',
-    category: 'standard', desc: tr('Уроки, тренажери й шкільна бібліотека'), launch,
+    category: 'computer', desc: tr('Уроки, тренажери й шкільна бібліотека'), launch,
   });
 })();
