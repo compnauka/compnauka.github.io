@@ -26,36 +26,43 @@
 })();
 
 // --- QR MODAL ---
-function openQrModal(title, url) {
+function openQrModal(title, url, { generator = false } = {}) {
     const overlay = document.getElementById("qrModalOverlay");
     const canvas = document.getElementById("qrModalCanvas");
     const titleEl = document.getElementById("qrModalTitle");
     const urlEl = document.getElementById("qrModalUrl");
     const preview = document.getElementById("qrModalPreview");
+    const hint = document.getElementById("qrModalHint");
 
-    document.getElementById("qrGeneratorForm").hidden = true;
-    overlay.classList.remove("is-generator");
+    document.getElementById("qrGeneratorForm").hidden = !generator;
+    overlay.classList.toggle("is-generator", generator);
     preview.hidden = true;
-    document.getElementById("qrModalHint").hidden = true;
 
     canvas.innerHTML = "";
+    delete canvas.dataset.value;
     titleEl.textContent = title;
     urlEl.textContent = url;
-    urlEl.hidden = false;
+    urlEl.hidden = generator;
 
-    new QRCode(canvas, {
-        text: url,
-        width: 512,
-        height: 512,
-        colorDark: "#1e293b",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-    });
+    try {
+        new QRCode(canvas, {
+            text: url,
+            width: 512,
+            height: 512,
+            colorDark: "#1e293b",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        canvas.dataset.value = url;
+        preview.hidden = false;
+        hint.textContent = "Натисніть на QR-код, щоб збільшити";
+    } catch (error) {
+        hint.textContent = generator
+            ? "Не вдалося створити QR-код. Спробуйте скоротити текст або перезавантажити сторінку."
+            : "Не вдалося створити QR-код. Посилання можна скопіювати нижче.";
+    }
 
-    canvas.dataset.value = url;
-    preview.hidden = false;
-    document.getElementById("qrModalHint").hidden = false;
-    document.getElementById("qrModalHint").textContent = "Натисніть на QR-код, щоб збільшити";
+    hint.hidden = false;
     document.body.classList.add("qr-modal-open");
     overlay.classList.add("open");
 }
@@ -338,7 +345,9 @@ document.addEventListener("DOMContentLoaded", () => {
             qrBtn.innerHTML = '<i class="fas fa-qrcode"></i>';
             qrBtn.addEventListener("click", (e) => {
                 e.preventDefault();
+                qrTrigger = qrBtn;
                 openQrModal(service.name, fullUrl);
+                qrClose.focus();
             });
             actions.appendChild(qrBtn);
         }
@@ -364,7 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const filterByTag = (tagName) => {
-        if (isGradeTag(tagName)) {
+        if (isGradeTag(tagName) && contentArea.firstElementChild === categoryViews.get(currentActiveCategory)?.header) {
             selectedGrades.set(currentActiveCategory, tagName);
             setActiveCategory(currentActiveCategory);
             return;
@@ -436,7 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCategory(id);
 
         // Update URL Hash
-        if(history.pushState) {
+        if (window.location.hash === `#${id}`) return;
+        if (history.pushState) {
             history.pushState(null, null, `#${id}`);
         } else {
             window.location.hash = id;
@@ -497,6 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const qrForm = document.getElementById("qrGeneratorForm");
     const qrInput = document.getElementById("qrGeneratorInput");
     const qrPreview = document.getElementById("qrModalPreview");
+    const qrClose = document.getElementById("qrModalClose");
     const qrZoom = document.getElementById("qrZoomOverlay");
     const qrZoomClose = document.getElementById("qrZoomClose");
     let qrTrigger;
@@ -512,7 +523,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.remove("qr-modal-open");
         qrTrigger?.focus();
     };
-    document.getElementById("qrGeneratorToggle").addEventListener("click", () => {
+    document.getElementById("qrGeneratorToggle").addEventListener("click", (e) => {
+        qrTrigger = e.currentTarget;
         document.getElementById("qrModalTitle").textContent = "Генератор QR-кодів";
         document.getElementById("qrModalCanvas").innerHTML = "";
         qrPreview.hidden = true;
@@ -532,16 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
             qrInput.reportValidity();
             return;
         }
-        try {
-            openQrModal("Генератор QR-кодів", value);
-        } catch (error) {
-            const hint = document.getElementById("qrModalHint");
-            hint.textContent = "Не вдалося створити QR-код. Спробуйте скоротити текст або перезавантажити сторінку.";
-            hint.hidden = false;
-        }
-        qrForm.hidden = false;
-        qrOverlay.classList.add("is-generator");
-        document.getElementById("qrModalUrl").hidden = true;
+        openQrModal("Генератор QR-кодів", value, { generator: true });
         if (!qrPreview.hidden) qrPreview.focus();
         else qrInput.focus();
     });
@@ -564,13 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
     qrZoom.addEventListener("click", e => {
         if (!document.getElementById("qrZoomCanvas").contains(e.target)) closeQrZoom();
     });
-    document.addEventListener("click", e => {
-        if (qrOverlay.classList.contains("open") && !qrOverlay.contains(e.target) && !qrZoom.contains(e.target)) {
-            qrTrigger = e.target.closest("button");
-            if (qrForm.hidden) document.getElementById("qrModalClose").focus();
-        }
-    });
-    document.getElementById("qrModalClose").addEventListener("click", closeQrModal);
+    qrClose.addEventListener("click", closeQrModal);
     qrOverlay.addEventListener("click", e => { if (e.target === qrOverlay) closeQrModal(); });
     document.addEventListener("keydown", e => {
         if (!qrOverlay.classList.contains("open")) return;
