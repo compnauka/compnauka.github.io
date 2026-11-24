@@ -123,14 +123,24 @@
 
   const ART = {
     logo:
-      '<path d="M7 44V21a17 17 0 0 1 34 0v23z" fill="#ff9f43"/>' +
-      '<path d="M11 41V21.5a13 13 0 0 1 26 0V41z" fill="#9be1ff"/>' +
-      '<circle cx="29.5" cy="20" r="4" fill="#ffe066"/>' +
-      '<path d="M11 41l8-9 5 5 6-7 7 8v3z" fill="#69db7c"/>' +
-      '<path d="M11 21.5A13 13 0 0 1 18 10c-.6 10 .8 20-1.6 31H11z" fill="#ff7aa2"/>' +
-      '<path d="M37 21.5A13 13 0 0 0 30 10c.6 10-.8 20 1.6 31H37z" fill="#ff7aa2"/>' +
-      '<path d="M15 14.5c1 6 1.2 14 .2 24M33 14.5c-1 6-1.2 14-.2 24" stroke="#e8467c" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
-      '<rect x="4" y="41" width="40" height="5" rx="2.5" fill="#e8590c"/>',
+      '<path d="M6 43V22a18 18 0 0 1 36 0v21z" fill="#ffbb57"/>' +
+      '<path d="M10.5 42V22a13.5 13.5 0 0 1 27 0v20z" fill="#292369"/>' +
+      '<path d="M13 22a11 11 0 0 1 22 0" fill="none" stroke="#6156bb" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M24 11l1.4 3.6L29 16l-3.6 1.4L24 21l-1.4-3.6L19 16l3.6-1.4z" fill="#fff19b"/>' +
+      '<rect x="13.5" y="22" width="21" height="14" rx="2.5" fill="#87e8fb"/>' +
+      '<rect x="15.5" y="24" width="17" height="10" rx="1" fill="#124780"/>' +
+      '<path d="m19 26.5 3 2.5-3 2.5m6-1h4M24 36v3m-4 0h8" fill="none" stroke="#dafbff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M43 8l1.1 2.9L47 12l-2.9 1.1L43 16l-1.1-2.9L39 12l2.9-1.1zM5 13l.9 2.1L8 16l-2.1.9L5 19l-.9-2.1L2 16l2.1-.9z" fill="#ffedaf"/>' +
+      '<rect x="3" y="41" width="42" height="5" rx="2.5" fill="#ffd582"/>',
+    'flag-ukraine':
+      '<path d="M2 9h44v15H2z" fill="#0057b7"/><path d="M2 24h44v15H2z" fill="#ffd700"/>',
+    'flag-united-kingdom':
+      '<svg x="2" y="9" width="44" height="30" viewBox="0 0 60 40" preserveAspectRatio="none" overflow="hidden">' +
+      '<path d="M0 0h60v40H0z" fill="#012169"/>' +
+      '<path d="m0 0 60 40m0-40L0 40" fill="none" stroke="#fff" stroke-width="8"/>' +
+      '<path d="M0 0h4l26 17v3L0 1zM60 0v3L30 23v-3zM60 40h-4L30 23v-3l30 19zM0 40v-3l30-20v3z" fill="#c8102e"/>' +
+      '<path d="M30 0v40M0 20h60" fill="none" stroke="#fff" stroke-width="12"/>' +
+      '<path d="M30 0v40M0 20h60" fill="none" stroke="#c8102e" stroke-width="7"/></svg>',
     owl:
       '<path d="M10 17l3.5-9.5L20 13h8l6.5-5.5L38 17v15a14 14 0 0 1-28 0z" fill="#9a6440"/>' +
       '<path d="M10.5 26c-3 2-4 7-2 11 1.5-3 3-4 5-4.5zM37.5 26c3 2 4 7 2 11-1.5-3-3-4-5-4.5z" fill="#7a4b2e"/>' +

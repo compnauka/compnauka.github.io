@@ -325,6 +325,64 @@ function expandRange(c1, r1, c2, r2) {
   return list;
 }
 
+function getSortKey(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return { group: 2, value: '' };
+
+  if (String(raw).startsWith('=')) {
+    try {
+      calcDepth = 0;
+      return { group: 0, value: evaluateFormula(text.slice(1)) };
+    } catch {
+      return { group: 2, value: '' };
+    }
+  }
+
+  if (/^[+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:e[+-]?\d+)?$/i.test(text)) {
+    const number = Number(text.replace(',', '.'));
+    if (Number.isFinite(number)) return { group: 0, value: number };
+  }
+  return { group: 1, value: text };
+}
+
+function remapSortedFormula(raw, newRowByOldRow) {
+  if (typeof raw !== 'string' || !raw.startsWith('=')) return raw;
+
+  // Keep the same cells in the range even when they move into separate blocks.
+  return raw.replace(/\b([A-Z]+)(\d+)\b(?:(\s*:\s*)([A-Z]+)(\d+)\b)?/gi,
+    (reference, col, row, separator, endCol, endRow) => {
+      const start = Number(row);
+      if (!separator) {
+        const destination = newRowByOldRow.get(start);
+        return destination === undefined ? reference : col + destination;
+      }
+
+      const end = Number(endRow);
+      const first = Math.max(1, Math.min(start, end));
+      const last = Math.min(ROWS, Math.max(start, end));
+      const rows = [];
+      let changed = false;
+      for (let source = first; source <= last; source++) {
+        const destination = newRowByOldRow.get(source) ?? source;
+        rows.push(destination);
+        if (destination !== source) changed = true;
+      }
+      if (!changed) return reference;
+      rows.sort((a, b) => a - b);
+
+      const blocks = [];
+      let blockStart = rows[0];
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i + 1] === rows[i] + 1) continue;
+        blocks.push(col === endCol && blockStart === rows[i]
+          ? col + blockStart
+          : col + blockStart + separator + endCol + rows[i]);
+        blockStart = rows[i + 1];
+      }
+      return blocks.join(',');
+    });
+}
+
 // ---- Reference shifting for row/col inserts (used in app.js) ----
 function shiftFormulaRefs(formula, opts) {
   // opts: { rowAt: number|null, colAt: number|null, rowDelta: number, colDelta: number }

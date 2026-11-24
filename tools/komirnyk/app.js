@@ -124,7 +124,7 @@ function saveToHistory() {
   const state = snapshotState();
 
   // skip duplicates
-  const last = history[history.length - 1];
+  const last = history[historyIndex];
   if (statesEqual(last, state)) {
     updateUndoRedoButtons();
     return;
@@ -498,6 +498,82 @@ function recalculateAll() {
   // Keep formula bar in sync
   const fb = document.getElementById('formulaBar');
   if (fb && activeId) fb.value = cellData[activeId] || '';
+}
+
+// ---- Row sorting ----
+function openSortDialog() {
+  const column = document.getElementById('sortColumn');
+  column.replaceChildren(...COLS.map(label => new Option(label, label)));
+  column.value = COLS[active.c];
+  document.getElementById('sortDialog').showModal();
+}
+
+function sortRows(column, descending, keepHeader) {
+  const dataRows = new Set(Object.keys(cellData)
+    .filter(id => String(cellData[id] ?? '').trim())
+    .map(id => parseCellId(id)?.r)
+    .filter(row => row >= 1 && row <= ROWS));
+  const occupiedRows = new Set(dataRows);
+  for (const id of Object.keys(cellStyles)) {
+    const row = parseCellId(id)?.r;
+    if (row >= 1 && row <= ROWS) occupiedRows.add(row);
+  }
+  if (!occupiedRows.size) return false;
+
+  const headerRow = Math.min(...dataRows);
+  const firstRow = keepHeader ? headerRow + 1 : Math.min(...occupiedRows);
+  const lastRow = Math.max(...occupiedRows);
+  if (firstRow >= lastRow) return false;
+
+  const collator = new Intl.Collator('uk', { sensitivity: 'base' });
+  const records = [];
+  for (let row = firstRow; row <= lastRow; row++) {
+    const key = occupiedRows.has(row) ? getSortKey(cellData[column + row]) : { group: 3, value: '' };
+    records.push({ row, key });
+  }
+  records.sort((a, b) => {
+    // Keep numbers, text, and then blanks/errors grouped in either direction.
+    const groupOrder = a.key.group - b.key.group;
+    if (groupOrder) return groupOrder;
+    const comparison = a.key.group === 0
+      ? a.key.value - b.key.value
+      : collator.compare(a.key.value, b.key.value);
+    return (descending ? -comparison : comparison) || a.row - b.row;
+  });
+
+  const newRowByOldRow = new Map();
+  records.forEach(({ row }, index) => {
+    const destination = firstRow + index;
+    if (row !== destination) newRowByOldRow.set(row, destination);
+  });
+  if (!newRowByOldRow.size) return false;
+
+  const sortedData = {};
+  const sortedStyles = {};
+  for (const [id, value] of Object.entries(cellData)) {
+    const formula = remapSortedFormula(value, newRowByOldRow);
+    if (formula !== value && formula.length > MAX_CELL_LEN + 1) {
+      alertModal(`Сортування зупинено: після переміщення рядків формула в клітинці ${id} буде задовгою.`);
+      return false;
+    }
+    sortedData[sortedCellId(id, newRowByOldRow)] = formula;
+  }
+  for (const [id, style] of Object.entries(cellStyles)) {
+    sortedStyles[sortedCellId(id, newRowByOldRow)] = style;
+  }
+
+  saveToHistory();
+  cellData = sortedData;
+  cellStyles = sortedStyles;
+  rebuildGrid();
+  commitCell();
+  return true;
+}
+
+function sortedCellId(id, newRowByOldRow) {
+  const cell = parseCellId(id);
+  const row = newRowByOldRow.get(cell?.r);
+  return row === undefined ? id : cell.col + row;
 }
 
 // ---- Selection ----
@@ -1567,6 +1643,17 @@ function init() {
     });
   }
 
+  const sortDialog = document.getElementById('sortDialog');
+  document.getElementById('sortForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const column = document.getElementById('sortColumn').value;
+    const descending = document.getElementById('sortDirection').value === 'descending';
+    const keepHeader = document.getElementById('sortKeepHeader').checked;
+    sortDialog.close();
+    const changed = sortRows(column, descending, keepHeader);
+    announce(changed ? 'Рядки відсортовано' : 'Порядок рядків не змінився');
+  });
+
   // global mouse
   document.addEventListener('mouseup', () => {
     isSelecting = false;
@@ -1610,6 +1697,7 @@ function init() {
 
   // keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    if (sortDialog.open) return;
     // Undo/redo
     if (e.ctrlKey || e.metaKey) {
       if (e.key.toLowerCase() === 'z' && !e.shiftKey) {

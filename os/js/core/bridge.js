@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { fs, bus } = VOS;
 
   const TEXT = ['txt', 'csv', 'html'];
@@ -19,7 +20,7 @@
 
   function safeName(name) {
     let n = String(name || '').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
-    if (!n || /^\.+$/.test(n)) n = 'Мій файл';
+    if (!n || /^\.+$/.test(n)) n = tr('Мій файл');
     if (n.length > 60) {
       const e = fs.ext(n);
       n = e && e.length < 40 ? fs.baseName(n).slice(0, 59 - e.length).trimEnd() + '.' + e : n.slice(0, 60).trimEnd();
@@ -75,15 +76,15 @@
       const typed = mimeOf(blob.type) === MIME_BY_EXT[ext] ? blob : new Blob([blob], { type: MIME_BY_EXT[ext] });
       content = await blobToDataUrl(typed);
     }
-    const r = await VOS.dialog.saveAs({ ext, name, folder: isImgExt(ext) ? 'pics' : 'docs', title: 'Зберегти у Віконці' });
+    const r = await VOS.dialog.saveAs({ ext, name, folder: isImgExt(ext) ? 'pics' : 'docs', title: tr('Зберегти у Віконці') });
     if (!r) return false;
     let node;
     try {
       node = r.replaceId ? fs.write(r.replaceId, content) : fs.createFile(r.folder, r.name, content);
     } catch (e) { VOS.dialog.error(e.message); return false; }
     try { await fs.flush(); }
-    catch (e) { VOS.dialog.error('Не вдалося зберегти файл. Перевір вільне місце й спробуй ще раз.'); return false; }
-    VOS.toast('Збережено у Віконці: ' + node.name, 'save');
+    catch (e) { VOS.dialog.error(tr('Не вдалося зберегти файл. Перевір вільне місце й спробуй ще раз.')); return false; }
+    VOS.toast(tr('Збережено у Віконці: ') + node.name, 'save');
     bus.emit('app:save', { node, app: win.app });
     return true;
   }
@@ -101,7 +102,7 @@
       await saveToVos(win, blob, name, ext);
     } catch (e) {
       console.error(e);
-      VOS.dialog.error('Не вдалося зберегти файл. Спробуй ще раз.');
+      VOS.dialog.error(tr('Не вдалося зберегти файл. Спробуй ще раз.'));
     } finally { busy = false; }
   }
 
@@ -151,7 +152,7 @@
 
   function putFile(ctx, input, node) {
     const file = fileFromNode(ctx, node);
-    if (!file) { VOS.dialog.error('Цей малюнок не вдалося відкрити.'); return false; }
+    if (!file) { VOS.dialog.error(tr('Цей малюнок не вдалося відкрити.')); return false; }
     const dt = new ctx.win.DataTransfer();
     dt.items.add(file);
     input.files = dt.files;
@@ -164,13 +165,13 @@
     if (busy) return;
     busy = true;
     try {
-      const id = await VOS.dialog.openFile({ exts, folder: exts.every(isImgExt) ? 'pics' : 'docs', title: 'Відкрити з Віконця' });
+      const id = await VOS.dialog.openFile({ exts, folder: exts.every(isImgExt) ? 'pics' : 'docs', title: tr('Відкрити з Віконця') });
       if (!id) return;
       const node = fs.get(id);
       if (node && node.type === 'file') putFile(ctx, input, node);
     } catch (e) {
       console.error(e);
-      VOS.dialog.error('Не вдалося відкрити файл. Спробуй ще раз.');
+      VOS.dialog.error(tr('Не вдалося відкрити файл. Спробуй ще раз.'));
     } finally { busy = false; }
   }
 

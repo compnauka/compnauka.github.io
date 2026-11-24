@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { fs, bus, uid } = VOS;
 
   const MAX_FILE = 8 * 1024 * 1024; // 8 МБ на один файл
@@ -12,7 +13,7 @@
   const MAX_ARCHIVE_FILE = MAX_ARCHIVE_CONTENT + 1024 * 1024;
   const BACKUP_ROOTS = new Map([['робочий стіл', 'desktop'], ['документи', 'docs'], ['малюнки', 'pics'], ["комп'ютер", 'root']]);
   const MAX_IMG_SIDE = 1600; // великі фото зменшуємо, щоб не забивати пам'ять
-  const TEXT_EXT = ['txt', 'csv', 'html'];
+  const TEXT_EXT = ['txt', 'csv', 'html', 'flow'];
   const IMG_EXT = ['png', 'jpg', 'jpeg'];
   const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
 
@@ -91,7 +92,7 @@
 
   /* ---------- ZIP: читання ---------- */
   async function inflateRaw(bytes, limit) {
-    if (typeof DecompressionStream === 'undefined') throw new Error('Цей браузер не вміє розпаковувати архіви. Онови браузер або розпакуй архів на комп\'ютері.');
+    if (typeof DecompressionStream === 'undefined') throw new Error(tr('Цей браузер не вміє розпаковувати архіви. Онови браузер або розпакуй архів на комп\'ютері.'));
     const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
     const data = new Uint8Array(limit);
     let offset = 0;
@@ -101,7 +102,7 @@
         if (done) return data.subarray(0, offset);
         if (offset + value.byteLength > limit) {
           await reader.cancel();
-          throw new Error('Після розпакування архів завеликий або пошкоджений.');
+          throw new Error(tr('Після розпакування архів завеликий або пошкоджений.'));
         }
         data.set(value, offset);
         offset += value.byteLength;
@@ -120,36 +121,36 @@
     for (let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) {
       if (dv.getUint32(i, true) === 0x06054b50 && i + 22 + dv.getUint16(i + 20, true) === b.length) { eocd = i; break; }
     }
-    if (eocd < 0) throw new Error('Цей архів пошкоджений або це не .zip.');
+    if (eocd < 0) throw new Error(tr('Цей архів пошкоджений або це не .zip.'));
     const count = dv.getUint16(eocd + 10, true);
-    if (count > MAX_ARCHIVE_ENTRIES) throw new Error('У цьому архіві забагато файлів.');
+    if (count > MAX_ARCHIVE_ENTRIES) throw new Error(tr('У цьому архіві забагато файлів.'));
     let p = dv.getUint32(eocd + 16, true);
     let totalSize = 0;
     const out = [];
     for (let k = 0; k < count; k++) {
-      if (p + 46 > eocd || dv.getUint32(p, true) !== 0x02014b50) throw new Error('Цей архів пошкоджений.');
+      if (p + 46 > eocd || dv.getUint32(p, true) !== 0x02014b50) throw new Error(tr('Цей архів пошкоджений.'));
       const flags = dv.getUint16(p + 8, true), method = dv.getUint16(p + 10, true);
       const crc = dv.getUint32(p + 16, true), csize = dv.getUint32(p + 20, true), size = dv.getUint32(p + 24, true);
       const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
       const lho = dv.getUint32(p + 42, true);
-      if (p + 46 + nlen + elen + clen > eocd) throw new Error('Цей архів пошкоджений.');
+      if (p + 46 + nlen + elen + clen > eocd) throw new Error(tr('Цей архів пошкоджений.'));
       const path = decodeName(b.subarray(p + 46, p + 46 + nlen), flags & 0x0800).replace(/\\/g, '/');
       p += 46 + nlen + elen + clen;
-      if (flags & 1) throw new Error('Архів захищено паролем — Віконце не може його відкрити.');
+      if (flags & 1) throw new Error(tr('Архів захищено паролем — Віконце не може його відкрити.'));
       const dir = path.endsWith('/');
       if (dir) { out.push({ path, dir: true }); continue; }
       totalSize += size;
-      if (totalSize > MAX_ARCHIVE_CONTENT) throw new Error('Після розпакування архів займає більше 24 МБ.');
-      if (lho + 30 > b.length || dv.getUint32(lho, true) !== 0x04034b50) throw new Error('Цей архів пошкоджений.');
+      if (totalSize > MAX_ARCHIVE_CONTENT) throw new Error(tr('Після розпакування архів займає більше 24 МБ.'));
+      if (lho + 30 > b.length || dv.getUint32(lho, true) !== 0x04034b50) throw new Error(tr('Цей архів пошкоджений.'));
       const ln = dv.getUint16(lho + 26, true), le = dv.getUint16(lho + 28, true);
       const start = lho + 30 + ln + le;
-      if (start + csize > b.length) throw new Error('Цей архів пошкоджений.');
+      if (start + csize > b.length) throw new Error(tr('Цей архів пошкоджений.'));
       const raw = b.subarray(start, start + csize);
       let data;
       if (method === 0) data = raw;
       else if (method === 8) data = await inflateRaw(raw, size);
-      else throw new Error('Віконце не підтримує цей спосіб стиснення ZIP.');
-      if (data.byteLength !== size || crc32(data) !== crc) throw new Error('Деякі файли в архіві пошкоджено.');
+      else throw new Error(tr('Віконце не підтримує цей спосіб стиснення ZIP.'));
+      if (data.byteLength !== size || crc32(data) !== crc) throw new Error(tr('Деякі файли в архіві пошкоджено.'));
       out.push({ path, dir: false, data });
     }
     return out;
@@ -196,7 +197,7 @@
   /** Назва файлу з комп'ютера → дозволена у Віконці */
   function safeName(name) {
     let n = String(name).replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
-    if (!n || /^\.+$/.test(n)) n = 'Файл';
+    if (!n || /^\.+$/.test(n)) n = tr('Файл');
     if (n.length > 60) {
       const e = fs.ext(n);
       n = e && e.length < 58 ? fs.baseName(n).slice(0, 59 - e.length).trimEnd() + '.' + e : n.slice(0, 60).trimEnd();
@@ -238,17 +239,17 @@
   function exportNode(id) {
     const n = fs.get(id);
     if (!n) return;
-    if (n.type === 'link') { VOS.dialog.alert('Ярлик веде до оригіналу. Щоб забрати роботу, завантаж сам файл або папку.', { title: 'Ярлик', icon: 'link' }); return; }
+    if (n.type === 'link') { VOS.dialog.alert(tr('Ярлик веде до оригіналу. Щоб забрати роботу, завантаж сам файл або папку.'), { title: tr('Ярлик'), icon: 'link' }); return; }
     if (n.type === 'file') {
       // Текст зберігаємо з BOM, щоб Блокнот Windows точно показав кирилицю
       const blob = TEXT_EXT.includes(fs.ext(n.name)) ? new Blob(['﻿', n.content || ''], { type: 'text/plain;charset=utf-8' }) : new Blob([fileBytes(n)], { type: fileMime(n) });
       downloadBlob(blob, n.name);
     } else {
       const entries = collect(id, '', []);
-      if (!entries.length) { VOS.dialog.alert('Папка «' + n.name + '» порожня — завантажувати нічого.', { title: 'Порожня папка', icon: 'folder' }); return; }
+      if (!entries.length) { VOS.dialog.alert(tr('Папка «') + n.name + tr('» порожня — завантажувати нічого.'), { title: tr('Порожня папка'), icon: 'folder' }); return; }
       downloadBlob(makeZip(entries), n.name + '.zip');
     }
-    VOS.toast('Завантажено на комп\'ютер: ' + n.name + (n.type === 'folder' ? '.zip' : ''), 'download');
+    VOS.toast(tr('Завантажено на комп\'ютер: ') + n.name + (n.type === 'folder' ? '.zip' : ''), 'download');
     bus.emit('fs:export', { node: n });
   }
 
@@ -264,8 +265,8 @@
     const p = VOS.session.profile;
     const d = new Date();
     const stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    downloadBlob(makeZip(entries), safeName('Віконце — ' + p.name + ' — ' + stamp + '.zip'));
-    VOS.toast('Копію всіх робіт завантажено', 'save');
+    downloadBlob(makeZip(entries), safeName(tr('Віконце — ') + p.name + ' — ' + stamp + '.zip'));
+    VOS.toast(tr('Копію всіх робіт завантажено'), 'save');
     bus.emit('fs:export-all', {});
   }
 
@@ -297,7 +298,7 @@
     } else if (IMG_EXT.includes(e)) {
       const url = await bytesToDataUrl(bytes, IMG_MIME[e]);
       content = await shrinkImage(url, e);
-      if (!content) { skipped.push(name + ' (пошкоджене зображення)'); return; }
+      if (!content) { skipped.push(name + tr(' (пошкоджене зображення)')); return; }
     } else if (e === 'zip') {
       content = zipDataUrl(bytes);
     } else {
@@ -344,13 +345,13 @@
       await appendArchiveEntries(await readZip(bytes), folder.id, created, skipped, null);
       const latest = fs.get(fileId);
       if (latest !== archive || !fs.get(archive.parent) || fs.isInTrash(fileId)) return null;
-      if (!created.length && skipped.length) throw new Error('Немає файлів, які Віконце може відкрити: ' + skipped.slice(0, 4).join(', '));
+      if (!created.length && skipped.length) throw new Error(tr('Немає файлів, які Віконце може відкрити: ') + skipped.slice(0, 4).join(', '));
       folder.parent = archive.parent;
       folder.name = fs.uniqueName(folder.parent, name);
       fs.addNodes([folder, ...created]);
-      VOS.toast('Розпаковано в папку «' + folder.name + '».', 'archive');
+      VOS.toast(tr('Розпаковано в папку «') + folder.name + '».', 'archive');
       bus.emit('fs:extract', { fileId, folderId: folder.id });
-      if (skipped.length) VOS.dialog.alert('Пропущено: ' + skipped.slice(0, 8).join(', '), { title: 'Розпаковано частково', icon: 'archive' });
+      if (skipped.length) VOS.dialog.alert(tr('Пропущено: ') + skipped.slice(0, 8).join(', '), { title: tr('Розпаковано частково'), icon: 'archive' });
       return folder;
     } catch (error) {
       VOS.dialog.error(error.message);
@@ -369,7 +370,7 @@
     for (const f of Array.from(files)) {
       const e = fs.ext(f.name);
       const limit = e === 'zip' && !keepArchive ? MAX_ARCHIVE_FILE : MAX_FILE;
-      if (f.size > limit) { tooBig.push(f.name + ' (ліміт ' + (limit / 1024 / 1024) + ' МБ)'); continue; }
+      if (f.size > limit) { tooBig.push(f.name + tr(' (ліміт ') + (limit / 1024 / 1024) + tr(' МБ)')); continue; }
       try {
         const bytes = new Uint8Array(await f.arrayBuffer());
         if (e === 'zip' && !keepArchive) {
@@ -401,13 +402,13 @@
     }
     const added = ready.filter((n) => n.type === 'file').length;
     if (added) {
-      VOS.toast('Додано ' + added + ' ' + VOS.plural(added, 'файл', 'файли', 'файлів') + ' у «' + fs.get(target).name + '»', 'upload');
+      VOS.toast(tr('Додано ') + added + ' ' + VOS.plural(added, tr('файл'), tr('файли'), tr('файлів')) + tr(' у «') + fs.label(fs.get(target)) + '»', 'upload');
       bus.emit('fs:import', { count: added, folder: target });
     }
     const notes = [];
-    if (tooBig.length) notes.push('Завеликі файли: ' + tooBig.join(', '));
-    if (skipped.length) notes.push('Віконце відкриває тексти (.txt), малюнки (.png, .jpg) й архіви (.zip). Пропущено: ' + skipped.slice(0, 8).join(', ') + (skipped.length > 8 ? ' та ще ' + (skipped.length - 8) : ''));
-    if (notes.length) VOS.dialog.alert(notes.join('\n\n'), { title: added ? 'Додано не все' : 'Нічого не додано', icon: 'upload' });
+    if (tooBig.length) notes.push(tr('Завеликі файли: ') + tooBig.join(', '));
+    if (skipped.length) notes.push(tr('Пропущено файли: ') + skipped.slice(0, 8).join(', ') + (skipped.length > 8 ? tr(' та ще ') + (skipped.length - 8) : ''));
+    if (notes.length) VOS.dialog.alert(notes.join('\n\n'), { title: added ? tr('Додано не все') : tr('Нічого не додано'), icon: 'upload' });
     return added;
   }
   /** Відкриває вікно вибору файлів браузера. */
@@ -415,7 +416,7 @@
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = opts.accept || (opts.keepArchive ? '.zip,application/zip' : '.txt,.png,.jpg,.jpeg,.zip,text/plain,image/png,image/jpeg,application/zip');
+    input.accept = opts.accept || (opts.keepArchive ? '.zip,application/zip' : [...TEXT_EXT, ...IMG_EXT, 'zip'].map((ext) => '.' + ext).join(','));
     input.style.display = 'none';
     input.addEventListener('change', async () => {
       if (input.files && input.files.length) await importFiles(input.files, opts.restore ? 'docs' : target, opts);
@@ -429,9 +430,24 @@
   /** Перетягування файлів зі справжнього робочого столу у вікно Віконця. */
   function bindDrop(el, targetFn) {
     const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    const destination = (e) => {
+      const target = e.target.closest('[data-drop]')?.dataset.drop || targetFn();
+      return target === 'trash' || fs.isInTrash(target) ? null : target;
+    };
     let depth = 0;
-    el.addEventListener('dragenter', (e) => { if (!hasFiles(e)) return; e.preventDefault(); depth++; el.classList.add('file-drop'); });
-    el.addEventListener('dragover', (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    el.addEventListener('dragenter', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      el.classList.toggle('file-drop', !!destination(e));
+    });
+    el.addEventListener('dragover', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      const target = destination(e);
+      e.dataTransfer.dropEffect = target ? 'copy' : 'none';
+      el.classList.toggle('file-drop', !!target);
+    });
     el.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) el.classList.remove('file-drop'); });
     el.addEventListener('drop', (e) => {
       if (!hasFiles(e)) return;
@@ -439,10 +455,8 @@
       e.stopPropagation();
       depth = 0;
       el.classList.remove('file-drop');
-      // кинули на значок папки — туди, інакше в поточну папку
-      const it = e.target.closest && e.target.closest('.item[data-drop]');
-      const target = it && it.dataset.drop !== 'trash' ? it.dataset.drop : targetFn();
-      importFiles(e.dataTransfer.files, target);
+      const target = destination(e);
+      if (target) importFiles(e.dataTransfer.files, target);
     });
   }
   // Файл, кинутий повз вікна, не повинен відкриватися браузером замість Віконця

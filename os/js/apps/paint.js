@@ -2,19 +2,20 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { el, fs, bus } = VOS;
 
   const W = 800, H = 520;
   const COLORS = ['#000000', '#868e96', '#ffffff', '#e03131', '#f76707', '#ffd43b', '#2f9e44', '#94d82d', '#1971c2', '#4dabf7', '#7048e8', '#e64980', '#8d5524', '#ffc9a8'];
   const TOOLS = [
-    { id: 'pen', icon: 'pencil', name: 'Олівець' },
-    { id: 'brush', icon: 'brush', name: 'Пензель' },
-    { id: 'eraser', icon: 'eraser', name: 'Гумка' },
-    { id: 'fill', icon: 'bucket', name: 'Заливка' },
-    { id: 'line', icon: 'line', name: 'Лінія' },
-    { id: 'rect', icon: 'rect', name: 'Прямокутник' },
-    { id: 'ellipse', icon: 'circle', name: 'Овал' },
-    { id: 'stamp', icon: 'star', name: 'Наліпка' },
+    { id: 'pen', icon: 'pencil', name: tr('Олівець') },
+    { id: 'brush', icon: 'brush', name: tr('Пензель') },
+    { id: 'eraser', icon: 'eraser', name: tr('Гумка') },
+    { id: 'fill', icon: 'bucket', name: tr('Заливка') },
+    { id: 'line', icon: 'line', name: tr('Лінія') },
+    { id: 'rect', icon: 'rect', name: tr('Прямокутник') },
+    { id: 'ellipse', icon: 'circle', name: tr('Овал') },
+    { id: 'stamp', icon: 'star', name: tr('Наліпка') },
   ];
   // Наліпки — власні SVG-малюнки (однакові на всіх пристроях), на полотно ставляться як зображення
   const STAMPS = ['st-star', 'st-heart', 'st-flower', 'st-sun', 'st-rainbow', 'av-cat', 'av-dog', 'st-butterfly', 'st-apple', 'st-car', 'st-house', 'st-balloon'];
@@ -70,7 +71,7 @@
     let tool = 'brush', color = '#e03131', size = SIZES[1], stamp = STAMPS[0];
     const undo = [], redo = [];
 
-    const canvas = el('canvas.pt-canvas', { width: W, height: H, 'aria-label': 'Полотно для малювання' });
+    const canvas = el('canvas.pt-canvas', { width: W, height: H, 'aria-label': tr('Полотно для малювання') });
     const overlay = el('canvas.pt-overlay', { width: W, height: H, 'aria-hidden': 'true' });
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const octx = overlay.getContext('2d');
@@ -81,13 +82,13 @@
     const markDirty = () => { revision++; dirty = true; refreshTitle(); };
 
     // Панель інструментів
-    const toolsBox = el('div.pt-tools', { role: 'toolbar', 'aria-label': 'Інструменти' });
+    const toolsBox = el('div.pt-tools', { role: 'toolbar', 'aria-label': tr('Інструменти') });
     TOOLS.forEach((t) => toolsBox.append(el('button.pt-tool', { type: 'button', title: t.name, 'aria-label': t.name, dataset: { tool: t.id, hint: 'pt-' + t.id } }, VOS.icon(t.icon))));
-    const sizesBox = el('div.pt-sizes', { role: 'toolbar', 'aria-label': 'Товщина' });
-    SIZES.forEach((s) => sizesBox.append(el('button.pt-size', { type: 'button', title: 'Товщина ' + s, dataset: { size: s } }, el('span', { style: { width: Math.min(s, 22) + 'px', height: Math.min(s, 22) + 'px' } }))));
-    const palette = el('div.pt-palette', { role: 'toolbar', 'aria-label': 'Кольори' });
-    COLORS.forEach((c) => palette.append(el('button.pt-color', { type: 'button', title: c, 'aria-label': 'Колір ' + c, style: { background: c }, dataset: { color: c } })));
-    const custom = el('input.pt-custom', { type: 'color', value: color, title: 'Свій колір', 'aria-label': 'Свій колір' });
+    const sizesBox = el('div.pt-sizes', { role: 'toolbar', 'aria-label': tr('Товщина') });
+    SIZES.forEach((s) => sizesBox.append(el('button.pt-size', { type: 'button', title: tr('Товщина ') + s, dataset: { size: s } }, el('span', { style: { width: Math.min(s, 22) + 'px', height: Math.min(s, 22) + 'px' } }))));
+    const palette = el('div.pt-palette', { role: 'toolbar', 'aria-label': tr('Кольори') });
+    COLORS.forEach((c) => palette.append(el('button.pt-color', { type: 'button', title: c, 'aria-label': tr('Колір ') + c, style: { background: c }, dataset: { color: c } })));
+    const custom = el('input.pt-custom', { type: 'color', value: color, title: tr('Свій колір'), 'aria-label': tr('Свій колір') });
     palette.append(custom);
     STAMPS.forEach(stampImage);
     const stampsBox = el('div.pt-stamps', { hidden: true });
@@ -188,7 +189,7 @@
     // Файли
     const refreshTitle = () => {
       const n = fileId && fs.get(fileId);
-      win.setTitle((dirty ? '• ' : '') + (n ? n.name : 'Безіменний') + ' — Малюнок');
+      win.setTitle((dirty ? '• ' : '') + (n ? n.name : tr('Безіменний')) + tr(' — Малюнок'));
     };
     function loadImage(id) {
       const n = fs.get(id);
@@ -220,7 +221,7 @@
         catch (e) { VOS.dialog.error(e.message); return false; }
       }
       else {
-        const r = await VOS.dialog.saveAs({ ext: 'png', name: n ? n.name : 'Мій малюнок.png', folder: n ? n.parent : 'pics', defaultFolder: 'pics', title: 'Зберегти малюнок' });
+        const r = await VOS.dialog.saveAs({ ext: 'png', name: n ? n.name : tr('Мій малюнок.png'), folder: n ? n.parent : 'pics', defaultFolder: 'pics', title: tr('Зберегти малюнок') });
         if (!r) return false;
         try {
           if (r.replaceId) { fs.write(r.replaceId, data); fileId = r.replaceId; }
@@ -228,12 +229,12 @@
         } catch (e) { VOS.dialog.error(e.message); return false; }
       }
       try { await fs.flush(); }
-      catch (e) { dirty = true; refreshTitle(); VOS.dialog.error('Не вдалося зберегти малюнок. Перевір вільне місце й спробуй ще раз.'); return false; }
+      catch (e) { dirty = true; refreshTitle(); VOS.dialog.error(tr('Не вдалося зберегти малюнок. Перевір вільне місце й спробуй ще раз.')); return false; }
       const savedNode = fs.get(fileId);
-      if (!savedNode) { dirty = true; refreshTitle(); VOS.dialog.error('Файл зник під час збереження. Збережи малюнок як новий файл.'); return false; }
+      if (!savedNode) { dirty = true; refreshTitle(); VOS.dialog.error(tr('Файл зник під час збереження. Збережи малюнок як новий файл.')); return false; }
       dirty = revision !== saveVersion;
       refreshTitle();
-      VOS.toast('Малюнок збережено: ' + savedNode.name, 'save');
+      VOS.toast(tr('Малюнок збережено: ') + savedNode.name, 'save');
       bus.emit('paint:save', { node: savedNode, winId: win.id });
       return true;
     }
@@ -241,34 +242,34 @@
       while (true) {
         if (savePromise) await savePromise;
         if (!dirty) return true;
-        const r = await VOS.dialog.choice('Зберегти зміни в малюнку?', [
-          { label: 'Зберегти', value: 'save', primary: true }, { label: 'Не зберігати', value: 'no', danger: true }, { label: 'Скасувати', value: 'cancel' },
-        ], { title: 'Малюнок', icon: 'palette' });
+        const r = await VOS.dialog.choice(tr('Зберегти зміни в малюнку?'), [
+          { label: tr('Зберегти'), value: 'save', primary: true }, { label: tr('Не зберігати'), value: 'no', danger: true }, { label: tr('Скасувати'), value: 'cancel' },
+        ], { title: tr('Малюнок'), icon: 'palette' });
         if (r === 'save') { if (!(await save(false))) return false; continue; }
         return r === 'no';
       }
     }
 
     const bar = VOS.menubar([
-      { label: 'Файл', hint: 'pt-file', items: () => [
-        { label: 'Створити', icon: 'file-text', action: async () => { if (await confirmDiscard()) { snapshot(); clear(); fileId = null; dirty = false; refreshTitle(); } } },
-        { label: 'Відкрити…', icon: 'folder-open', action: async () => { if (!(await confirmDiscard())) return; const id = await VOS.dialog.openFile({ exts: ['png', 'jpg', 'jpeg'], folder: 'pics', title: 'Відкрити малюнок' }); if (id) loadImage(id); } },
-        { label: 'Зберегти', icon: 'save', hint: 'pt-save', action: () => save(false) },
-        { label: 'Зберегти як…', icon: 'save', action: () => save(true) },
+      { label: tr('Файл'), hint: 'pt-file', items: () => [
+        { label: tr('Створити'), icon: 'file-text', action: async () => { if (await confirmDiscard()) { snapshot(); clear(); fileId = null; dirty = false; refreshTitle(); } } },
+        { label: tr('Відкрити…'), icon: 'folder-open', action: async () => { if (!(await confirmDiscard())) return; const id = await VOS.dialog.openFile({ exts: ['png', 'jpg', 'jpeg'], folder: 'pics', title: tr('Відкрити малюнок') }); if (id) loadImage(id); } },
+        { label: tr('Зберегти'), icon: 'save', hint: 'pt-save', action: () => save(false) },
+        { label: tr('Зберегти як…'), icon: 'save', action: () => save(true) },
         { sep: true },
-        { label: 'Закрити', icon: 'x', action: () => win.close() },
+        { label: tr('Закрити'), icon: 'x', action: () => win.close() },
       ] },
-      { label: 'Правка', items: [
-        { label: 'Скасувати', icon: 'undo', action: doUndo },
-        { label: 'Повторити', icon: 'redo', action: doRedo },
+      { label: tr('Правка'), items: [
+        { label: tr('Скасувати'), icon: 'undo', action: doUndo },
+        { label: tr('Повторити'), icon: 'redo', action: doRedo },
         { sep: true },
-        { label: 'Очистити все', icon: 'trash-x', danger: true, action: () => { snapshot(); clear(); markDirty(); } },
+        { label: tr('Очистити все'), icon: 'trash-x', danger: true, action: () => { snapshot(); clear(); markDirty(); } },
       ] },
     ]);
     const quick = el('div.np-quick',
-      el('button.tb-btn.wide', { type: 'button', title: 'Зберегти (Ctrl+S)', dataset: { hint: 'pt-savebtn' }, on: { click: () => save(false) } }, VOS.icon('save'), el('span.tb-label', ' Зберегти')),
-      el('button.tb-btn', { type: 'button', title: 'Скасувати (Ctrl+Z)', 'aria-label': 'Скасувати', on: { click: doUndo } }, VOS.icon('undo')),
-      el('button.tb-btn', { type: 'button', title: 'Повторити (Ctrl+Y)', 'aria-label': 'Повторити', on: { click: doRedo } }, VOS.icon('redo')));
+      el('button.tb-btn.wide', { type: 'button', title: tr('Зберегти (Ctrl+S)'), dataset: { hint: 'pt-savebtn' }, on: { click: () => save(false) } }, VOS.icon('save'), el('span.tb-label', tr(' Зберегти'))),
+      el('button.tb-btn', { type: 'button', title: tr('Скасувати (Ctrl+Z)'), 'aria-label': tr('Скасувати'), on: { click: doUndo } }, VOS.icon('undo')),
+      el('button.tb-btn', { type: 'button', title: tr('Повторити (Ctrl+Y)'), 'aria-label': tr('Повторити'), on: { click: doRedo } }, VOS.icon('redo')));
 
     const root = el('div.app-paint', { tabindex: '0' },
       el('div.np-bars', bar, quick),
@@ -282,11 +283,11 @@
       if (c && e.code === 'KeyS') { e.preventDefault(); save(e.shiftKey); }
     });
 
-    const win = VOS.wm.open({ app: 'paint', title: 'Безіменний — Малюнок', icon: 'palette', content: root, width: 860, height: 620, minWidth: 340, minHeight: 300, beforeClose: () => confirmDiscard() });
+    const win = VOS.wm.open({ app: 'paint', title: tr('Безіменний — Малюнок'), icon: 'palette', content: root, width: 860, height: 620, minWidth: 340, minHeight: 300, beforeClose: () => confirmDiscard() });
     syncUI();
     if (args.file) loadImage(args.file); else refreshTitle();
     return win;
   }
 
-  VOS.apps.register({ id: 'paint', name: 'Малюнок', icon: 'palette', color: '#f06595', category: 'standard', desc: 'Малюй і зберігай малюнки', exts: ['png'], launch });
+  VOS.apps.register({ id: 'paint', name: 'Малюнок', icon: 'palette', color: '#f06595', category: 'standard', desc: tr('Малюй і зберігай малюнки'), exts: ['png'], launch });
 })();

@@ -2,13 +2,15 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { el } = VOS;
   const MAX_STAGES = 4;
   const TITLE_LIMIT = 60;
   const PRESETS = [
-    { title: 'Перші кроки', ids: ['start', 'buttons'] },
-    { title: 'Порядок у файлах', ids: ['folder', 'order', 'copy'] },
-    { title: 'Готуємо виставку', ids: ['exhibition'] },
+    { title: tr('Перші кроки'), ids: ['start', 'buttons'] },
+    { title: tr('Порядок у файлах'), ids: ['folder', 'order', 'copy'] },
+    { title: tr('Відкрий, упорядкуй і збережи'), ids: ['organize-and-save'] },
+    { title: tr('Готуємо виставку'), ids: ['exhibition'] },
   ];
 
   function validate(value) {
@@ -49,41 +51,41 @@
   function builder() {
     const ids = [];
     const root = el('div.lesson-builder');
-    const title = el('input.input', { type: 'text', maxlength: TITLE_LIMIT, autofocus: true, placeholder: 'Наприклад, Порядок у файлах' });
+    const title = el('input.input', { type: 'text', maxlength: TITLE_LIMIT, autofocus: true, placeholder: tr('Наприклад, Порядок у файлах') });
     const presets = el('div.lesson-presets');
-    const select = el('select.input', { 'aria-label': 'Доступне завдання' });
-    const add = button('Додати', () => {
+    const select = el('select.input', { 'aria-label': tr('Доступне завдання') });
+    const add = button(tr('Додати'), () => {
       if (!select.value || ids.includes(select.value) || ids.length >= MAX_STAGES) return;
       ids.push(select.value);
       render();
       if (add.disabled) list.lastElementChild?.querySelector('button:last-child')?.focus();
       else select.focus();
     });
-    const list = el('ol.lesson-stages', { 'aria-label': 'Порядок завдань' });
-    const empty = el('p.lesson-note', 'Додай від одного до чотирьох завдань.');
+    const list = el('ol.lesson-stages', { 'aria-label': tr('Порядок завдань') });
+    const empty = el('p.lesson-note', tr('Додай від одного до чотирьох завдань.'));
     const device = el('p.lesson-note');
-    const field = el('input.input.lesson-link', { type: 'url', readonly: true, 'aria-label': 'Посилання для учнів' });
-    const linkDetails = el('details.lesson-link-details', el('summary', 'Показати посилання'), field);
+    const field = el('input.input.lesson-link', { type: 'url', readonly: true, 'aria-label': tr('Посилання для учнів') });
+    const linkDetails = el('details.lesson-link-details', el('summary', tr('Показати посилання')), field);
     const note = el('p.lesson-note', { role: 'status' });
-    const preview = el('a.btn', { target: '_blank', rel: 'noopener', 'aria-disabled': 'true' }, VOS.icon('eye'), ' Переглянути як учень');
-    const copy = button('Копіювати посилання', async () => {
+    const preview = el('a.btn', { target: '_blank', rel: 'noopener', 'aria-disabled': 'true' }, VOS.icon('eye'), tr(' Переглянути як учень'));
+    const copy = button(tr('Копіювати посилання'), async () => {
       if (!field.value) return;
       const href = field.value;
       try {
         await navigator.clipboard.writeText(href);
-        if (field.value === href) note.textContent = 'Посилання скопійовано.';
+        if (field.value === href) note.textContent = tr('Посилання скопійовано.');
       } catch (e) {
         if (field.value !== href) return;
         linkDetails.open = true;
         field.focus();
         field.select();
-        note.textContent = 'Посилання виділено. Скопіюй його з поля.';
+        note.textContent = tr('Посилання виділено. Скопіюй його з поля.');
       }
     }, '.btn-primary');
     preview.addEventListener('click', (e) => { if (!preview.hasAttribute('href')) e.preventDefault(); });
     field.addEventListener('click', () => field.select());
-    const share = el('div.lesson-field', el('strong', 'Посилання для учнів'),
-      el('p.lesson-note', 'Перевірте урок у перегляді, потім надішліть учням скопійоване посилання. Завдання вони відкриють через Совеня.'),
+    const share = el('div.lesson-field', el('strong', tr('Посилання для учнів')),
+      el('p.lesson-note', tr('Перевірте урок у перегляді, потім надішліть учням скопійоване посилання. Завдання вони відкриють через Совеня.')),
       el('div.lesson-builder-actions', preview, copy), linkDetails);
 
     function updateLink() {
@@ -98,8 +100,8 @@
       preview.setAttribute('aria-disabled', String(!href));
       const desktop = VOS.MISSIONS.some((mission) => mission.desktopOnly && ids.includes(mission.id));
       device.hidden = !desktop;
-      device.textContent = desktop ? 'На малому екрані завдання для комп’ютера буде пропущено.' : '';
-      note.textContent = href ? '' : 'Для посилання потрібні назва уроку й хоча б одне завдання.';
+      device.textContent = desktop ? tr('На малому екрані завдання для комп’ютера буде пропущено.') : '';
+      note.textContent = href ? '' : tr('Для посилання потрібні назва уроку й хоча б одне завдання.');
     }
 
     function move(index, direction) {
@@ -114,10 +116,10 @@
 
     function render() {
       const selected = select.value;
-      select.replaceChildren(el('option', { value: '' }, 'Обери завдання'));
+      select.replaceChildren(el('option', { value: '' }, tr('Обери завдання')));
       for (const mission of VOS.MISSIONS) {
         if (!ids.includes(mission.id)) {
-          select.append(el('option', { value: mission.id }, mission.title + (mission.desktopOnly ? ' · комп’ютер' : '')));
+          select.append(el('option', { value: mission.id }, mission.title + (mission.desktopOnly ? tr(' · комп’ютер') : '')));
         }
       }
       if (!ids.includes(selected)) select.value = selected;
@@ -131,11 +133,11 @@
           type: 'button', disabled, 'aria-label': label + ': ' + mission.title, title: label, on: { click: action },
         }, VOS.icon(icon));
         list.append(el('li.lesson-stage', { tabindex: '-1' },
-          el('span.lesson-stage-title', mission.title, mission.desktopOnly ? el('small', 'Для комп’ютера') : null),
+          el('span.lesson-stage-title', mission.title, mission.desktopOnly ? el('small', tr('Для комп’ютера')) : null),
           el('div.lesson-controls',
-            control('arrow-up', 'Вище', () => move(i, -1), i === 0),
-            control('chevron-down', 'Нижче', () => move(i, 1), i + 1 === ids.length),
-            control('x', 'Прибрати з уроку', () => {
+            control('arrow-up', tr('Вище'), () => move(i, -1), i === 0),
+            control('chevron-down', tr('Нижче'), () => move(i, 1), i + 1 === ids.length),
+            control('x', tr('Прибрати з уроку'), () => {
               ids.splice(i, 1);
               render();
               if (list.children[i] || list.lastElementChild) {
@@ -158,9 +160,9 @@
     title.addEventListener('input', updateLink);
     select.addEventListener('change', () => { add.disabled = !select.value; });
     root.append(
-      el('div.lesson-field', 'Готові добірки', el('p.lesson-note', 'Оберіть добірку або створіть урок із власним порядком завдань.'), presets),
-      el('label.lesson-field', 'Назва уроку', title),
-      el('div.lesson-field', 'Завдання уроку', el('div.lesson-picker', select, add), empty, list, device),
+      el('div.lesson-field', tr('Готові добірки'), el('p.lesson-note', tr('Оберіть добірку або створіть урок із власним порядком завдань.')), presets),
+      el('label.lesson-field', tr('Назва уроку'), title),
+      el('div.lesson-field', tr('Завдання уроку'), el('div.lesson-picker', select, add), empty, list, device),
       share,
       note);
     render();
@@ -171,8 +173,8 @@
     return VOS.dialog.modal(({ box, content, foot, close }) => {
       box.parentElement.classList.add('lesson-builder-overlay');
       content.append(builder());
-      foot.append(button('Закрити', () => close()));
-    }, { title: 'Створити урок', icon: 'books', wide: true, className: 'lesson-builder-dialog' });
+      foot.append(button(tr('Закрити'), () => close()));
+    }, { title: tr('Створити урок'), icon: 'books', wide: true, className: 'lesson-builder-dialog' });
   }
 
   function launch() {
@@ -182,10 +184,10 @@
       else VOS.wm.focus(existing.id);
       return existing;
     }
-    return VOS.wm.open({ app: 'lessons', title: 'Створити урок', icon: 'books', content: builder(), width: 720, height: 640, minWidth: 320, minHeight: 265 });
+    return VOS.wm.open({ app: 'lessons', title: tr('Створити урок'), icon: 'books', content: builder(), width: 720, height: 640, minWidth: 320, minHeight: 265 });
   }
 
   const request = read(new URL(window.location.href));
   VOS.lessons = { request, openBuilder };
-  VOS.apps.register({ id: 'lessons', name: 'Створити урок', icon: 'books', color: '#0e7490', category: 'system', desc: 'Для вчителя: добірка завдань і посилання для учнів', launch });
+  VOS.apps.register({ id: 'lessons', name: 'Створити урок', icon: 'books', color: '#0e7490', category: 'system', desc: tr('Для вчителя: добірка завдань і посилання для учнів'), launch });
 })();

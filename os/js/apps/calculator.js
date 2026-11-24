@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { el, bus } = VOS;
 
   function launch() {
@@ -9,7 +10,7 @@
     const exprEl = el('div.calc-expr', ' ');
     const out = el('div.calc-out', { 'aria-live': 'polite' }, '0');
     const fmt = (s) => {
-      if (s === 'Помилка') return s;
+      if (s === tr('Помилка')) return s;
       const [i, f] = s.split('.');
       const neg = i.startsWith('-');
       const g = (neg ? i.slice(1) : i).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -26,10 +27,10 @@
       }
       return b;
     };
-    const norm = (v) => (isFinite(v) ? String(parseFloat(v.toPrecision(12))) : 'Помилка');
+    const norm = (v) => (isFinite(v) ? String(parseFloat(v.toPrecision(12))) : tr('Помилка'));
 
     function press(k) {
-      if (cur === 'Помилка' && k !== 'C') { cur = '0'; expr = ''; }
+      if (cur === tr('Помилка') && k !== 'C') { cur = '0'; expr = ''; }
       if (/^\d$/.test(k)) {
         if (fresh) { cur = k; fresh = false; } else if (cur.replace(/[-.]/g, '').length < 14) cur = cur === '0' ? k : cur + k;
       } else if (k === '.') {
@@ -75,10 +76,10 @@
         if (b) { b.classList.add('pressed'); setTimeout(() => b.classList.remove('pressed'), 100); }
       }
     });
-    const win = VOS.wm.open({ app: 'calculator', title: 'Калькулятор', icon: 'calculator', content: root, width: 320, height: 470, minWidth: 260, minHeight: 380 });
+    const win = VOS.wm.open({ app: 'calculator', title: tr('Калькулятор'), icon: 'calculator', content: root, width: 320, height: 470, minWidth: 260, minHeight: 380 });
     setTimeout(() => root.focus(), 50);
     return win;
   }
 
-  VOS.apps.register({ id: 'calculator', name: 'Калькулятор', icon: 'calculator', color: '#495057', category: 'standard', desc: 'Додавай, віднімай, множ і діли', launch });
+  VOS.apps.register({ id: 'calculator', name: 'Калькулятор', icon: 'calculator', color: '#495057', category: 'standard', desc: tr('Додавай, віднімай, множ і діли'), launch });
 })();

@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr, lang, locale } = VOS.i18n;
   const { el, $, bus, store } = VOS;
 
   let active = null; // { m, step, ctx }
@@ -58,7 +59,7 @@
     const step = active.m.steps[active.step];
     const target = resolve(step.hint, active.ctx);
     if (!target) {
-      VOS.toast(step.tip || 'Уважно прочитай завдання — у тебе все вийде!', 'bulb', 4500);
+      VOS.toast(step.tip || tr('Уважно прочитай завдання — у тебе все вийде!'), 'bulb', 4500);
       return;
     }
     if (!ring) { ring = el('div.hint-ring', { 'aria-hidden': 'true' }); document.body.append(ring); }
@@ -90,7 +91,7 @@
       if (m.setup) m.setup(ctx);
     } catch (e) {
       console.error(e);
-      VOS.dialog.error('Не вдалося підготувати завдання. Спробуй почати його ще раз.');
+      VOS.dialog.error(tr('Не вдалося підготувати завдання. Спробуй почати його ще раз.'));
       render();
       return false;
     }
@@ -154,7 +155,7 @@
     const b = $('#helper-btn');
     if (b) {
       b.classList.toggle('mission-on', !!active || !!lesson);
-      b.setAttribute('aria-label', lesson ? 'Совеня: урок від учителя' : 'Помічник і завдання');
+      b.setAttribute('aria-label', lesson ? tr('Совеня: урок від учителя') : tr('Помічник і завдання'));
     }
   }
 
@@ -192,39 +193,39 @@
   }
 
   function lessonContext() {
-    const title = VOS.lessons?.request?.preview ? 'Перегляд учня · ' + lesson.title : lesson.title;
+    const title = VOS.lessons?.request?.preview ? tr('Перегляд учня · ') + lesson.title : lesson.title;
     const skipped = lesson.results.filter((status) => status === 'skipped').length;
-    const status = 'Виконано ' + lessonDoneCount() + ' з ' + lesson.ids.length;
-    return el('div.lesson-context', el('b', title), el('small', status + (skipped ? ' · пропущено ' + skipped : '')));
+    const status = tr('Виконано ') + lessonDoneCount() + tr(' з ') + lesson.ids.length;
+    return el('div.lesson-context', el('b', title), el('small', status + (skipped ? tr(' · пропущено ') + skipped : '')));
   }
 
   function lessonSummary() {
     const titles = lesson.ids.map((id) => VOS.MISSIONS.find((mission) => mission.id === id).title);
-    const exitBtn = el('button.btn', { type: 'button', on: { click: exitLesson } }, 'Вийти з уроку');
+    const exitBtn = el('button.btn', { type: 'button', on: { click: exitLesson } }, tr('Вийти з уроку'));
     const current = lesson.index;
     if (current === lesson.ids.length) {
       const results = el('ol.lesson-result-list');
       const count = lessonDoneCount();
-      titles.forEach((title, i) => results.append(el('li', title, el('small', lesson.results[i] === 'done' ? 'Виконано' : 'Пропущено · потрібен великий екран'))));
+      titles.forEach((title, i) => results.append(el('li', title, el('small', lesson.results[i] === 'done' ? tr('Виконано') : tr('Пропущено · потрібен великий екран')))));
       return el('div.hp-body', lessonContext(),
-        el('p.hp-say.big', count ? 'Урок завершено!' : 'Для цього уроку потрібен великий екран.'),
+        el('p.hp-say.big', count ? tr('Урок завершено!') : tr('Для цього уроку потрібен великий екран.')),
         results,
         el('div.hp-actions',
           el('button.btn.btn-primary', { type: 'button', on: { click: () => {
             lesson = freshLesson(lesson);
             lessonRuns.set(store.profileId, lesson);
             showLessonStage();
-          } } }, 'Повторити урок'), exitBtn));
+          } } }, tr('Повторити урок')), exitBtn));
     }
 
     const done = lesson.results[current] === 'done';
     return el('div.hp-body', lessonContext(),
-      el('p.hp-say.big', done ? 'Завдання «' + titles[current] + '» виконано!' : 'Почнімо завдання «' + titles[current] + '».'),
+      el('p.hp-say.big', done ? tr('Завдання «') + titles[current] + tr('» виконано!') : tr('Почнімо завдання «') + titles[current] + '».'),
       el('div.hp-actions',
         el('button.btn.btn-primary', { type: 'button', on: { click: () => {
           if (done) lesson.index++;
           showLessonStage();
-        } } }, done ? 'Далі' : 'Почати завдання'), exitBtn));
+        } } }, done ? tr('Далі') : tr('Почати завдання')), exitBtn));
   }
 
   /* ---------- Панель помічника ---------- */
@@ -247,8 +248,8 @@
   function head(title) {
     return el('div.hp-head',
       el('span.hp-owl', VOS.icon('owl')), el('b.hp-title', title),
-      el('button.hp-x', { type: 'button', title: 'Згорнути помічника', 'aria-label': 'Згорнути помічника', on: { click: () => panel.classList.toggle('collapsed') } }, VOS.icon('chevron-down')),
-      el('button.hp-x', { type: 'button', title: active ? 'Сховати (завдання продовжиться)' : 'Сховати', 'aria-label': 'Сховати помічника', on: { click: closePanel } }, VOS.icon('x')));
+      el('button.hp-x', { type: 'button', title: tr('Згорнути помічника'), 'aria-label': tr('Згорнути помічника'), on: { click: () => panel.classList.toggle('collapsed') } }, VOS.icon('chevron-down')),
+      el('button.hp-x', { type: 'button', title: active ? tr('Сховати (завдання продовжиться)') : tr('Сховати'), 'aria-label': tr('Сховати помічника'), on: { click: closePanel } }, VOS.icon('x')));
   }
 
   const touchMQ = window.matchMedia('(pointer: coarse)');
@@ -262,15 +263,15 @@
     panel.innerHTML = '';
     if (!active) {
       if (lesson) {
-        panel.append(head('Урок'), lessonSummary());
+        panel.append(head(tr('Урок')), lessonSummary());
         return;
       }
       const list = el('div.hp-list');
       available().forEach((m) => list.append(el('button.hp-mission' + (isDone(m.id) ? '.done' : ''), { type: 'button', on: { click: () => start(m.id) } },
         el('span.hp-m-ico', VOS.icon(m.icon)), el('span.hp-m-title', m.title), el('span.hp-m-star', isDone(m.id) ? VOS.icon('st-star') : VOS.icon('star')))));
-      panel.append(head('Совеня'),
+      panel.append(head(tr('Совеня')),
         el('div.hp-body',
-          el('p.hp-say', doneCount() ? 'Обери наступне завдання. Ти вже маєш ' + doneCount() + ' ' + VOS.plural(doneCount(), 'зірочку', 'зірочки', 'зірочок') + '!' : 'Привіт, ' + VOS.session.profile.name + '! Я допоможу тобі навчитися працювати з комп\'ютером. Обери завдання:'),
+          el('p.hp-say', doneCount() ? tr('Обери наступне завдання. Ти вже маєш ') + doneCount() + ' ' + VOS.plural(doneCount(), tr('зірочку'), tr('зірочки'), tr('зірочок')) + '!' : tr('Привіт, ') + VOS.session.profile.name + tr('! Я допоможу тобі навчитися працювати з комп\'ютером. Обери завдання:')),
           list));
       return;
     }
@@ -289,27 +290,27 @@
       el('div.meter.small', el('span', { style: { width: Math.round((doneN / total) * 100) + '%' } })),
       el('p.hp-say.big' + (animate ? '.pop' : ''), stepText(cur, active.ctx)),
       el('div.hp-actions',
-        el('button.btn.btn-primary', { type: 'button', on: { click: showHint } }, VOS.icon('bulb'), ' Підказка'),
-        el('button.btn', { type: 'button', 'aria-label': 'Почати завдання спочатку', on: { click: () => start(m.id) } }, 'Спочатку'),
-        el('button.btn', { type: 'button', on: { click: lesson ? exitLesson : stop } }, lesson ? 'Вийти з уроку' : 'Припинити')),
-      lesson ? null : el('p.hp-free', 'Можна сховати Совеня й досліджувати самостійно — завдання зарахується, щойно ти все зробиш.'),
-      el('details.hp-all', el('summary', 'Усі кроки (' + doneN + ' з ' + total + ')'), steps));
-    panel.append(head('Завдання'), body);
+        el('button.btn.btn-primary', { type: 'button', on: { click: showHint } }, VOS.icon('bulb'), tr(' Підказка')),
+        el('button.btn', { type: 'button', 'aria-label': tr('Почати завдання спочатку'), on: { click: () => start(m.id) } }, tr('Спочатку')),
+        el('button.btn', { type: 'button', on: { click: lesson ? exitLesson : stop } }, lesson ? tr('Вийти з уроку') : tr('Припинити'))),
+      lesson ? null : el('p.hp-free', tr('Можна сховати Совеня й досліджувати самостійно — завдання зарахується, щойно ти все зробиш.')),
+      el('details.hp-all', el('summary', tr('Усі кроки (') + doneN + tr(' з ') + total + ')'), steps));
+    panel.append(head(tr('Завдання')), body);
   }
 
   function renderDone(m, first) {
     openPanel();
     panel.innerHTML = '';
     const next = nextMission(m.id);
-    panel.append(head('Молодець!'),
+    panel.append(head(tr('Молодець!')),
       el('div.hp-body.hp-done',
         el('div.hp-bigstar', VOS.icon('st-star', 72)),
-        el('p.hp-say.big', 'Завдання «' + m.title + '» виконано!'),
-        el('p.hp-say', first ? 'Ти отримуєш зірочку. Уже ' + doneCount() + ' з ' + available().length + '.' : 'Чудове повторення!'),
+        el('p.hp-say.big', tr('Завдання «') + m.title + tr('» виконано!')),
+        el('p.hp-say', first ? tr('Ти отримуєш зірочку. Уже ') + doneCount() + tr(' з ') + available().length + '.' : tr('Чудове повторення!')),
         el('div.hp-actions',
-          next ? el('button.btn.btn-primary', { type: 'button', on: { click: () => start(next.id) } }, VOS.icon(next.icon), ' Далі: ' + next.title) : null,
-          !next ? el('button.btn.btn-primary', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), ' Отримати грамоту') : null,
-          el('button.btn', { type: 'button', on: { click: () => render() } }, 'До списку'))));
+          next ? el('button.btn.btn-primary', { type: 'button', on: { click: () => start(next.id) } }, VOS.icon(next.icon), tr(' Далі: ') + next.title) : null,
+          !next ? el('button.btn.btn-primary', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), tr(' Отримати грамоту')) : null,
+          el('button.btn', { type: 'button', on: { click: () => render() } }, tr('До списку')))));
   }
 
   /* ---------- Програма «Завдання» ---------- */
@@ -326,18 +327,18 @@
       const d = doneCount();
       root.append(
         el('div.ms-hero', el('span.ms-owl', VOS.icon('owl', 64)),
-          el('div', el('b', 'Завдання від Совеня'), el('p', 'Виконуй завдання й збирай зірочки. Якщо щось не виходить — натисни «Підказка».'),
+          el('div', el('b', tr('Завдання від Совеня')), el('p', tr('Виконуй завдання й збирай зірочки. Якщо щось не виходить — натисни «Підказка».')),
             el('div.meter', el('span', { style: { width: Math.round((d / all.length) * 100) + '%' } })),
-            el('small', 'Зірочок: ' + d + ' з ' + all.length))),
-        d === all.length ? el('button.btn.btn-primary.ms-cert', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), ' Отримати грамоту') : '');
+            el('small', tr('Зірочок: ') + d + tr(' з ') + all.length))),
+        d === all.length ? el('button.btn.btn-primary.ms-cert', { type: 'button', on: { click: certificate } }, VOS.icon('trophy'), tr(' Отримати грамоту')) : '');
       const grid = el('div.ms-grid');
       all.forEach((m, i) => grid.append(el('button.ms-card' + (isDone(m.id) ? '.done' : ''), { type: 'button', on: { click: () => { start(m.id); win.close(); } } },
-        el('span.ms-num', String(i + 1)), el('span.ms-ico', VOS.icon(m.icon)), el('b', m.title), el('small', m.desc), el('span.ms-star', isDone(m.id) ? [VOS.icon('st-star'), ' Виконано'] : [VOS.icon('star'), ' Почати']))));
+        el('span.ms-num', String(i + 1)), el('span.ms-ico', VOS.icon(m.icon)), el('b', m.title), el('small', m.desc), el('span.ms-star', isDone(m.id) ? [VOS.icon('st-star'), tr(' Виконано')] : [VOS.icon('star'), tr(' Почати')]))));
       root.append(grid);
-      if (VOS.MISSIONS.some((m) => m.desktopOnly) && VOS.isCompact()) root.append(el('p.set-note', 'Деякі завдання з перетягуванням вікон доступні лише на великому екрані.'));
+      if (VOS.MISSIONS.some((m) => m.desktopOnly) && VOS.isCompact()) root.append(el('p.set-note', tr('Деякі завдання з перетягуванням вікон доступні лише на великому екрані.')));
     };
     const off = bus.on('mission:done', render);
-    const win = VOS.wm.open({ app: 'missions', singleton: 'missions', title: 'Завдання', icon: 'star', content: root, width: 760, height: 540, minWidth: 320, minHeight: 300, onClose: off });
+    const win = VOS.wm.open({ app: 'missions', singleton: 'missions', title: tr('Завдання'), icon: 'star', content: root, width: 760, height: 540, minWidth: 320, minHeight: 300, onClose: off });
     render();
     return win;
   }
@@ -345,27 +346,27 @@
   /* ---------- Грамота ---------- */
   function certificate() {
     const p = VOS.session.profile;
-    const date = new Date().toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+    const date = new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     const cert = el('div.certificate',
       el('div.cert-top', VOS.icon('trophy', 64)),
-      el('h1', 'ГРАМОТА'),
-      el('p', 'вручається'),
+      el('h1', tr('ГРАМОТА')),
+      el('p', tr('вручається')),
       el('h2.cert-name', VOS.icons.avatar(p.avatar), ' ', p.name),
-      el('p', 'за успішне виконання всіх завдань у навчальній операційній системі «Віконце»'),
+      el('p', tr('за успішне виконання всіх завдань у навчальній операційній системі «Віконце»')),
       el('ul.cert-list', available().map((m) => el('li', VOS.icon('st-star'), ' ', m.title))),
       el('p.cert-date', date),
-      el('p.cert-sign', VOS.icon('owl', 36), ' Совеня'));
-    const printBtn = el('button.btn.btn-primary', { type: 'button' }, VOS.icon('printer'), ' Надрукувати');
+      el('p.cert-sign', VOS.icon('owl', 36), tr(' Совеня')));
+    const printBtn = el('button.btn.btn-primary', { type: 'button' }, VOS.icon('printer'), tr(' Надрукувати'));
     printBtn.addEventListener('click', () => {
       const f = el('iframe', { style: { position: 'fixed', width: '0', height: '0', border: '0', right: '0', bottom: '0' } });
       document.body.append(f);
       const css = [...document.styleSheets].map((s) => { try { return [...s.cssRules].map((r) => r.cssText).join('\n'); } catch (e) { return ''; } }).join('\n');
-      f.contentDocument.write('<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Грамота</title><style>' + css + ' body{background:#fff;margin:0;padding:24px}</style></head><body>' + cert.outerHTML + '</body></html>');
+      f.contentDocument.write('<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><title>' + tr('Грамота') + '</title><style>' + css + ' body{background:#fff;margin:0;padding:24px}</style></head><body>' + cert.outerHTML + '</body></html>');
       f.contentDocument.close();
       setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 1000); }, 300);
     });
     const root = el('div.app-cert', cert, el('div.cert-actions', printBtn));
-    VOS.wm.open({ app: 'certificate', title: 'Грамота', icon: 'trophy', content: root, width: 640, height: 620, minWidth: 320 });
+    VOS.wm.open({ app: 'certificate', title: tr('Грамота'), icon: 'trophy', content: root, width: 640, height: 620, minWidth: 320 });
     bus.emit('mission:certificate', {});
   }
 
@@ -412,6 +413,6 @@
     }
   }
 
-  VOS.apps.register({ id: 'missions', name: 'Завдання', icon: 'star', color: '#fab005', category: 'system', desc: 'Навчальні завдання від Совеня', launch: launchApp });
+  VOS.apps.register({ id: 'missions', name: 'Завдання', icon: 'star', color: '#fab005', category: 'system', desc: tr('Навчальні завдання від Совеня'), launch: launchApp });
   VOS.missions = { init, onLogin, start, stop, showHint, certificate, get active() { return active; }, lastCompleted: null, doneCount, available };
 })();

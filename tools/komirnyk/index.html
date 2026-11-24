@@ -107,6 +107,11 @@
                     <i class="fa-solid fa-chart-pie"></i> Графік
                 </button>
 
+                <button type="button" onclick="openSortDialog()"
+                    class="px-3 h-9 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-sm transition">
+                    <i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i> Сортувати
+                </button>
+
                 <button onclick="exportCSV()"
                     class="px-3 h-9 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-sm ml-1"
                     title="Експорт у CSV">
@@ -153,6 +158,38 @@
 
     <!-- hidden input for CSV import -->
     <input id="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" />
+
+    <dialog id="sortDialog" aria-labelledby="sortTitle"
+        class="modal-content m-auto rounded-xl backdrop:bg-black/50">
+        <form id="sortForm" class="space-y-4 text-left">
+            <h2 id="sortTitle" class="text-xl font-bold">Сортувати рядки</h2>
+            <p class="text-sm text-slate-600">Сортування охоплює всю таблицю. Рядки переміщуються цілком.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="block text-sm font-bold">
+                    Стовпець
+                    <select id="sortColumn" class="mt-1 w-full rounded border border-slate-300 p-2 font-normal" autofocus></select>
+                </label>
+                <label class="block text-sm font-bold">
+                    Порядок
+                    <select id="sortDirection" class="mt-1 w-full rounded border border-slate-300 p-2 font-normal">
+                        <option value="ascending">За зростанням (А–Я)</option>
+                        <option value="descending">За спаданням (Я–А)</option>
+                    </select>
+                </label>
+            </div>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" id="sortKeepHeader" checked>
+                Залишити перший заповнений рядок як заголовок
+            </label>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="document.getElementById('sortDialog').close()"
+                    class="px-4 py-2 rounded bg-slate-100 hover:bg-slate-200 font-bold">Скасувати</button>
+                <button type="submit" class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                    Сортувати
+                </button>
+            </div>
+        </form>
+    </dialog>
 
     <!-- Modals -->
     <div id="msgModal" class="modal-overlay">

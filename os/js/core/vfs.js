@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { bus, store, uid } = VOS;
 
   const SPECIAL = {
@@ -30,11 +31,11 @@
     const task = flushing.then(async () => {
       if (!profile || backend === 'memory') return;
       do {
-        if (!store.canWriteProfile(profile)) throw new Error('Сеанс завершився.');
+        if (!store.canWriteProfile(profile)) throw new Error(tr('Сеанс завершився.'));
         const atRevision = revision;
         if (backend === 'ls') {
           if (!store.rawSet('p.' + profile + '.fs', { v: 1, nodes })) {
-            throw new Error('Не вдалося зберегти файлову систему.');
+            throw new Error(tr('Не вдалося зберегти файлову систему.'));
           }
         } else {
           const puts = [], removes = [], next = new Map();
@@ -82,6 +83,19 @@
 
   function get(id) { return nodes[id] || null; }
 
+  function label(node) {
+    if (Object.hasOwn(SPECIAL, node.id) || node.id === 'link-computer' || node.id === 'link-trash') return tr(node.name);
+    if (node.type === 'link' && !node.targetId) {
+      const app = VOS.apps.get(node.app);
+      if (app?.sourceName === node.name) return app.name;
+    }
+    if (node.type === 'folder' && node.parent === 'desktop') {
+      const starterApp = node.name === 'Ігри' ? 'tangram' : node.name === 'Тренажери' ? 'klavio' : null;
+      if (starterApp && (node.starterFolder || Object.values(nodes).some((child) => child.parent === node.id && child.app === starterApp))) return tr(node.name);
+    }
+    return node.name;
+  }
+
   function children(id) {
     return Object.values(nodes)
       .filter((n) => n.parent === id)
@@ -92,7 +106,7 @@
         if (id === 'desktop') return (a.placed || a.created || 0) - (b.placed || b.created || 0);
         const fa = a.type === 'folder' ? 0 : 1, fb = b.type === 'folder' ? 0 : 1;
         if (fa !== fb) return fa - fb;
-        return a.name.localeCompare(b.name, 'uk', { numeric: true });
+        return label(a).localeCompare(label(b), VOS.i18n.locale, { numeric: true });
       });
   }
 
@@ -105,7 +119,7 @@
     }
     return out;
   }
-  function pathString(id) { return ancestors(id).map((n) => n.name).join(' › '); }
+  function pathString(id) { return ancestors(id).map(label).join(' › '); }
 
   function isDescendant(id, ofId) {
     let n = get(id);
@@ -136,10 +150,10 @@
 
   function validateName(name) {
     name = (name || '').trim();
-    if (!name) throw new Error('Назва не може бути порожньою.');
-    if (BAD_CHARS.test(name)) throw new Error('У назві не можна писати символи  \\ / : * ? " < > |');
-    if (name.length > 60) throw new Error('Назва задовга. Спробуй коротше (до 60 символів).');
-    if (/^\.+$/.test(name)) throw new Error('Назва не може складатися лише з крапок.');
+    if (!name) throw new Error(tr('Назва не може бути порожньою.'));
+    if (BAD_CHARS.test(name)) throw new Error(tr('У назві не можна писати символи  \\ / : * ? " < > |'));
+    if (name.length > 60) throw new Error(tr('Назва задовга. Спробуй коротше (до 60 символів).'));
+    if (/^\.+$/.test(name)) throw new Error(tr('Назва не може складатися лише з крапок.'));
     return name;
   }
 
@@ -165,7 +179,7 @@
   }
 
   /* ---------- Операції ---------- */
-  function createFolder(parent, name = 'Нова папка') {
+  function createFolder(parent, name = tr('Нова папка')) {
     const n = add({ id: uid('f'), type: 'folder', name: uniqueName(parent, validateName(name)), parent, created: now(), modified: now() });
     changed([parent]);
     bus.emit('fs:create', { node: n });
@@ -188,7 +202,7 @@
 
   function ensureDesktopAppLink(app, id) {
     const existing = children('desktop').find((node) => node.type === 'link' && node.app === app && !node.args);
-    return existing || createLink('desktop', VOS.apps.name(app), app, null, id);
+    return existing || createLink('desktop', VOS.apps.get(app)?.sourceName || VOS.apps.name(app), app, null, id);
   }
 
   function addDefaultBrowserLink() {
@@ -201,9 +215,9 @@
 
   function createShortcut(targetId, parent = 'desktop') {
     const target = get(targetId);
-    if (!target || target.type === 'link' || isProtected(targetId) || isInTrash(targetId)) throw new Error('Для цього об’єкта не можна створити ярлик.');
-    if (get(parent)?.type !== 'folder' || parent === 'trash' || isInTrash(parent)) throw new Error('У цій папці не можна створити ярлик.');
-    const base = target.name.slice(0, 49).trimEnd() + ' — ярлик';
+    if (!target || target.type === 'link' || isProtected(targetId) || isInTrash(targetId)) throw new Error(tr('Для цього об’єкта не можна створити ярлик.'));
+    if (get(parent)?.type !== 'folder' || parent === 'trash' || isInTrash(parent)) throw new Error(tr('У цій папці не можна створити ярлик.'));
+    const base = target.name.slice(0, 49).trimEnd() + tr(' — ярлик');
     const n = add({ id: uid('l'), type: 'link', name: uniqueName(parent, base), parent, targetId, created: now(), modified: now() });
     changed([parent]);
     bus.emit('fs:create', { node: n });
@@ -213,7 +227,7 @@
 
   function write(id, content) {
     const n = get(id);
-    if (!n || n.type !== 'file') throw new Error('Файл не знайдено.');
+    if (!n || n.type !== 'file') throw new Error(tr('Файл не знайдено.'));
     n.content = content;
     n.modified = now();
     changed([n.parent]);
@@ -223,11 +237,11 @@
 
   function rename(id, newName) {
     const n = get(id);
-    if (!n) throw new Error('Об\'єкт не знайдено.');
-    if (isSpecialFolder(id)) throw new Error('Цю системну папку не можна перейменувати.');
+    if (!n) throw new Error(tr('Об\'єкт не знайдено.'));
+    if (isSpecialFolder(id)) throw new Error(tr('Цю системну папку не можна перейменувати.'));
     newName = validateName(newName);
     if (newName === n.name) return n;
-    if (nameExists(n.parent, newName, id)) throw new Error('Тут уже є об\'єкт з назвою «' + newName + '». Обери іншу назву.');
+    if (nameExists(n.parent, newName, id)) throw new Error(tr('Тут уже є об\'єкт з назвою «') + newName + tr('». Обери іншу назву.'));
     const oldName = n.name;
     n.name = newName;
     n.modified = now();
@@ -238,12 +252,12 @@
 
   function move(id, target) {
     const n = get(id);
-    if (!n) throw new Error('Об\'єкт не знайдено.');
-    if (isProtected(id)) throw new Error('Цей системний значок не можна переміщувати.');
+    if (!n) throw new Error(tr('Об\'єкт не знайдено.'));
+    if (isProtected(id)) throw new Error(tr('Цей системний значок не можна переміщувати.'));
     const t = get(target);
-    if (!t || t.type !== 'folder') throw new Error('Туди не можна перемістити.');
+    if (!t || t.type !== 'folder') throw new Error(tr('Туди не можна перемістити.'));
     if (target === n.parent) return n;
-    if (isDescendant(target, id)) throw new Error('Папку не можна покласти саму в себе.');
+    if (isDescendant(target, id)) throw new Error(tr('Папку не можна покласти саму в себе.'));
     if (target === 'trash') return trash(id);
     const from = n.parent;
     n.name = uniqueName(target, n.name, id);
@@ -267,13 +281,13 @@
 
   function copy(id, target) {
     const n = get(id);
-    if (!n) throw new Error('Об\'єкт не знайдено.');
-    if (isSpecialFolder(id)) throw new Error('Системну папку не можна копіювати.');
-    if (isDescendant(target, id)) throw new Error('Папку не можна скопіювати саму в себе.');
+    if (!n) throw new Error(tr('Об\'єкт не знайдено.'));
+    if (isSpecialFolder(id)) throw new Error(tr('Системну папку не можна копіювати.'));
+    if (isDescendant(target, id)) throw new Error(tr('Папку не можна скопіювати саму в себе.'));
     let name = n.name;
     if (nameExists(target, name)) {
       const e = ext(name);
-      name = uniqueName(target, baseName(name) + ' — копія' + (e ? '.' + e : ''));
+      name = uniqueName(target, baseName(name) + tr(' — копія') + (e ? '.' + e : ''));
     }
     const c = cloneTree(id, target, name);
     changed([target]);
@@ -283,8 +297,8 @@
 
   function trash(id) {
     const n = get(id);
-    if (!n) throw new Error('Об\'єкт не знайдено.');
-    if (isProtected(id)) throw new Error('Цей системний значок не можна видалити.');
+    if (!n) throw new Error(tr('Об\'єкт не знайдено.'));
+    if (isProtected(id)) throw new Error(tr('Цей системний значок не можна видалити.'));
     if (isInTrash(id)) return deleteForever(id);
     const from = n.parent;
     n.origParent = from;
@@ -299,7 +313,7 @@
 
   function restore(id) {
     const n = get(id);
-    if (!n || n.parent !== 'trash') throw new Error('Цього немає в кошику.');
+    if (!n || n.parent !== 'trash') throw new Error(tr('Цього немає в кошику.'));
     let to = n.origParent && get(n.origParent) && !isInTrash(n.origParent) ? n.origParent : 'desktop';
     n.parent = to;
     n.placed = now();
@@ -319,7 +333,7 @@
   function deleteForever(id) {
     const n = get(id);
     if (!n) return;
-    if (isProtected(id)) throw new Error('Цей системний значок не можна видалити.');
+    if (isProtected(id)) throw new Error(tr('Цей системний значок не можна видалити.'));
     const parent = n.parent;
     removeTree(id);
     changed([parent]);
@@ -345,8 +359,8 @@
     const text = normalize(query.trim());
     if (!text) return [];
     return Object.values(nodes)
-      .filter((n) => n.id !== folder && normalize(n.name).includes(text) && isDescendant(n.id, folder))
-      .sort((a, b) => a.name.localeCompare(b.name, 'uk', { numeric: true }));
+      .filter((n) => n.id !== folder && isDescendant(n.id, folder) && (normalize(n.name).includes(text) || normalize(label(n)).includes(text)))
+      .sort((a, b) => label(a).localeCompare(label(b), VOS.i18n.locale, { numeric: true }));
   }
 
   /* ---------- Початковий вміст ---------- */
@@ -393,26 +407,28 @@
     link('desktop', 'Блокнот', 'notepad');
     link('desktop', 'Малюнок', 'paint');
     link('desktop', 'Калькулятор', 'calculator');
-    link('desktop', VOS.apps.name('browser'), 'browser', null, { id: 'link-browser' });
+    link('desktop', VOS.apps.get('browser').sourceName, 'browser', null, { id: 'link-browser' });
     nodes.desktop.browserShortcutAdded = true;
     link('desktop', 'Друкарик', 'drukaryk');
     link('desktop', 'Пензлик', 'penslyk');
 
     const games = folder('desktop', 'Ігри');
-    ['tangram', 'magic_square', 'math_quiz', 'kids_games'].forEach((a) => link(games.id, VOS.apps.name(a), a));
+    games.starterFolder = true;
+    ['tangram', 'magic_square', 'math_quiz', 'kids_games'].forEach((a) => link(games.id, VOS.apps.get(a).sourceName, a));
     const trainers = folder('desktop', 'Тренажери');
+    trainers.starterFolder = true;
     ['mouse_click', 'fireflies', 'mouse_keys', 'maze', 'windows_trainer', 'tyts', 'key_puzzle', 'first_letters', 'klavio'].forEach((a) =>
-      link(trainers.id, VOS.apps.name(a), a)
+      link(trainers.id, VOS.apps.get(a).sourceName, a)
     );
 
-    file('docs', 'Привіт.txt',
-      'Привіт! Це твій перший документ у «Віконці».\n\n' +
-      'Тут можна писати тексти, а потім зберігати їх у папки.\n' +
-      'Спробуй щось дописати й натисни «Файл → Зберегти».\n');
-    file('docs', 'Загадка.txt', 'Сидить дівчина в коморі,\nа коса її на дворі.\n\nЩо це? (Відповідь: морква)\n');
-    folder('docs', 'Шкільні роботи');
+    file('docs', tr('Привіт.txt'),
+      tr('Привіт! Це твій перший документ у «Віконці».\n\n') +
+      tr('Тут можна писати тексти, а потім зберігати їх у папки.\n') +
+      tr('Спробуй щось дописати й натисни «Файл → Зберегти».\n'));
+    file('docs', tr('Загадка.txt'), tr('Сидить дівчина в коморі,\nа коса її на дворі.\n\nЩо це? (Відповідь: морква)\n'));
+    folder('docs', tr('Шкільні роботи'));
     const img = sampleDrawing();
-    if (img) file('pics', 'Будиночок.png', img);
+    if (img) file('pics', tr('Будиночок.png'), img);
     save();
   }
 
@@ -507,7 +523,7 @@
   }
 
   VOS.fs = {
-    SPECIAL, load, unload, discard, reset, flush: flushNow, addNodes, get backend() { return backend; }, get, children, ancestors, pathString, isDescendant, isSpecialFolder, isInTrash, isProtected,
+    SPECIAL, load, unload, discard, reset, flush: flushNow, addNodes, get backend() { return backend; }, get, label, children, ancestors, pathString, isDescendant, isSpecialFolder, isInTrash, isProtected,
     ext, baseName, uniqueName, validateName, sizeOf, nameExists, findByName, searchByName,
     createFolder, createFile, createLink, ensureDesktopAppLink, createShortcut, write, rename, move, copy, trash, restore, deleteForever, emptyTrash,
     all: () => Object.values(nodes),

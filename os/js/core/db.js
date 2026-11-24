@@ -4,12 +4,13 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const DB_NAME = 'vikontse';
   const STORE = 'nodes';
   let dbPromise = null;
 
   function open() {
-    if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB недоступна'));
+    if (!('indexedDB' in window)) return Promise.reject(new Error(tr('IndexedDB недоступна')));
     if (!dbPromise) {
       dbPromise = new Promise((resolve, reject) => {
         let req;
@@ -24,7 +25,7 @@
           resolve(db);
         };
         req.onerror = () => reject(req.error);
-        req.onblocked = () => reject(new Error('IndexedDB заблокована іншою вкладкою'));
+        req.onblocked = () => reject(new Error(tr('IndexedDB заблокована іншою вкладкою')));
       }).catch((e) => { dbPromise = null; throw e; });
     }
     return dbPromise;
@@ -33,7 +34,7 @@
   const done = (tx) => new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error || new Error('Транзакцію скасовано'));
+    tx.onabort = () => reject(tx.error || new Error(tr('Транзакцію скасовано')));
   });
 
   /** Усі вузли профілю (без службових полів key/profile). */
@@ -52,7 +53,7 @@
   async function saveNodes(profile, puts, removes) {
     if (!puts.length && !removes.length) return;
     const db = await open();
-    if (!VOS.store.canWriteProfile(profile)) throw new Error('Сеанс завершився.');
+    if (!VOS.store.canWriteProfile(profile)) throw new Error(tr('Сеанс завершився.'));
     const tx = db.transaction(STORE, 'readwrite');
     const s = tx.objectStore(STORE);
     for (const n of puts) s.put({ ...n, key: profile + '/' + n.id, profile });

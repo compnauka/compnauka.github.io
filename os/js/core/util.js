@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const VOS = (window.VOS = window.VOS || {});
+  const { tr, lang, locale } = VOS.i18n;
 
   /* ---------- DOM ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -61,18 +62,20 @@
   function fmtDate(ts) {
     if (!ts) return '—';
     const d = new Date(ts);
-    return d.toLocaleDateString('uk-UA') + ' ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(locale) + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   }
 
   function fmtSize(bytes) {
-    if (bytes < 1024) return bytes + ' Б';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace('.', ',') + ' КБ';
-    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' МБ';
-    return (bytes / 1024 / 1024 / 1024).toFixed(1).replace('.', ',') + ' ГБ';
+    const decimal = (value) => value.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+    if (bytes < 1024) return bytes + tr(' Б');
+    if (bytes < 1024 * 1024) return decimal(bytes / 1024) + tr(' КБ');
+    if (bytes < 1024 * 1024 * 1024) return decimal(bytes / 1024 / 1024) + tr(' МБ');
+    return decimal(bytes / 1024 / 1024 / 1024) + tr(' ГБ');
   }
 
-  /** Множина українською: plural(5, 'файл','файли','файлів') */
+  /** Множина залежить від мови інтерфейсу. */
   function plural(n, one, few, many) {
+    if (lang === 'en') return Math.abs(n) === 1 ? one : many;
     const a = Math.abs(n) % 100, b = a % 10;
     if (a > 10 && a < 20) return many;
     if (b === 1) return one;

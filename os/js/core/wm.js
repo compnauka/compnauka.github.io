@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { el, bus, clamp, isCompact } = VOS;
 
   const wins = new Map();
@@ -82,7 +83,7 @@
       id,
       app: opts.app || 'app',
       singleton: opts.singleton || null,
-      title: opts.title || 'Вікно',
+      title: opts.title || tr('Вікно'),
       icon: opts.icon || 'window',
       x: opts.x != null ? opts.x : Math.max(10, Math.round((dw - width) / 2) - 90 + step),
       y: opts.y != null ? opts.y : Math.max(8, Math.round((dh - height) / 2) - 50 + step),
@@ -106,9 +107,9 @@
     const titleEl = el('span.win-title', win.title);
     const appDef = VOS.apps && VOS.apps.get(win.app);
     const iconEl = el('span.win-icon', { style: { color: opts.color || (appDef && appDef.color) || '' } }, VOS.ico(win.icon));
-    const btnMin = el('button.win-btn.win-min', { type: 'button', title: 'Згорнути', 'aria-label': 'Згорнути', 'data-hint': 'win-min' }, VOS.icon('minus'));
-    const btnMax = el('button.win-btn.win-max', { type: 'button', title: 'Розгорнути', 'aria-label': 'Розгорнути', 'data-hint': 'win-max' }, VOS.icon('square'));
-    const btnClose = el('button.win-btn.win-close', { type: 'button', title: 'Закрити', 'aria-label': 'Закрити', 'data-hint': 'win-close' }, VOS.icon('x'));
+    const btnMin = el('button.win-btn.win-min', { type: 'button', title: tr('Згорнути'), 'aria-label': tr('Згорнути'), 'data-hint': 'win-min' }, VOS.icon('minus'));
+    const btnMax = el('button.win-btn.win-max', { type: 'button', title: tr('Розгорнути'), 'aria-label': tr('Розгорнути'), 'data-hint': 'win-max' }, VOS.icon('square'));
+    const btnClose = el('button.win-btn.win-close', { type: 'button', title: tr('Закрити'), 'aria-label': tr('Закрити'), 'data-hint': 'win-close' }, VOS.icon('x'));
     const titlebar = el('div.win-titlebar', iconEl, titleEl, el('div.win-btns', btnMin, win.resizable ? btnMax : null, btnClose));
     const body = el('div.win-body');
     const node = el('section.win' + (opts.className ? '.' + opts.className : ''), {
@@ -140,7 +141,7 @@
 
     if (opts.url) {
       const frame = el('iframe.win-frame', { src: opts.url, title: win.title, allow: 'fullscreen; autoplay', loading: 'eager' });
-      const loader = el('div.win-loading', el('div.spinner'), el('div', 'Завантаження…'));
+      const loader = el('div.win-loading', el('div.spinner'), el('div', tr('Завантаження…')));
       frame.addEventListener('load', () => {
         loader.remove();
         try {
@@ -172,10 +173,10 @@
       e.preventDefault();
       if (!VOS.ui || !VOS.explain) return;
       VOS.ui.menu(e.clientX, e.clientY, [
-        { label: 'Згорнути', icon: 'minus', action: () => minimize(id) },
-        win.resizable ? { label: 'Розгорнути / повернути', icon: 'square', action: () => toggleMax(id) } : null,
-        { label: 'Закрити вікно', icon: 'x', danger: true, action: () => close(id) },
-        ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('window'), ...(win.app ? { lines: VOS.explain.kind('window').lines.concat(['Це вікно програми «' + win.title + '».']) } : {}) })),
+        { label: tr('Згорнути'), icon: 'minus', action: () => minimize(id) },
+        win.resizable ? { label: tr('Розгорнути / повернути'), icon: 'square', action: () => toggleMax(id) } : null,
+        { label: tr('Закрити вікно'), icon: 'x', danger: true, action: () => close(id) },
+        ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('window'), ...(win.app ? { lines: VOS.explain.kind('window').lines.concat([tr('Це вікно програми «') + win.title + '».']) } : {}) })),
       ], { target: 'window-title', app: win.app });
     });
     node.querySelectorAll('.rs').forEach((h) => h.addEventListener('pointerdown', (e) => startResize(e, win, h.dataset.dir)));
@@ -289,7 +290,7 @@
     const b = win.el.querySelector('.win-max');
     if (!b) return;
     const max = win.maximized || win.snapped;
-    b.title = max ? 'Відновити' : 'Розгорнути';
+    b.title = max ? tr('Відновити') : tr('Розгорнути');
     b.setAttribute('aria-label', b.title);
     b.replaceChildren(VOS.icon(max ? 'squares' : 'square'));
   }

@@ -2,22 +2,23 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr, locale } = VOS.i18n;
   const { el, $, fs, bus, settings } = VOS;
 
   const WALLPAPERS = {
-    dawn: { name: 'Світанок', light: true, css: 'radial-gradient(55% 50% at 12% 18%, #ffd6a5 0, transparent 70%), radial-gradient(50% 45% at 88% 22%, #bde0fe 0, transparent 70%), radial-gradient(65% 55% at 70% 100%, #c3fae8 0, transparent 70%), radial-gradient(45% 40% at 20% 95%, #ffc9de 0, transparent 70%), linear-gradient(160deg, #fff4e6, #e7f5ff)' },
-    bubbles: { name: 'Бульбашки', css: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.35) 0 60px, transparent 61px), radial-gradient(circle at 75% 20%, rgba(255,255,255,.25) 0 90px, transparent 91px), radial-gradient(circle at 60% 75%, rgba(255,255,255,.3) 0 50px, transparent 51px), radial-gradient(circle at 90% 85%, rgba(255,255,255,.2) 0 120px, transparent 121px), linear-gradient(135deg, #38d9a9, #3bc9db)' },
-    ukraine: { name: 'Поле', css: 'radial-gradient(circle at 20% 22%, #fff 0 3%, transparent 3.5%), radial-gradient(circle at 24% 20%, #fff 0 4%, transparent 4.5%), radial-gradient(circle at 28% 23%, #fff 0 3%, transparent 3.5%), linear-gradient(#4aa3ff 0 55%, #ffd43b 55% 100%)' },
-    sky: { name: 'Небо', light: true, css: 'linear-gradient(160deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%)' },
-    sunset: { name: 'Захід сонця', css: 'radial-gradient(circle at 50% 78%, #fff3bf 0 6%, #ffd43b 6.5% 9%, transparent 9.5%), linear-gradient(#5f3dc4 0%, #e64980 45%, #ff922b 75%, #2b8a3e 75.5%, #2f9e44 100%)' },
-    ocean: { name: 'Океан', css: 'radial-gradient(140% 40% at 50% 100%, #0b7285 0 45%, transparent 45.5%), repeating-radial-gradient(ellipse at 50% 140%, #1c7ed6 0 18px, #228be6 18px 36px), linear-gradient(#74c0fc, #1971c2)' },
-    space: { name: 'Космос', css: 'radial-gradient(circle at 75% 30%, #ffa94d 0 6%, #e8590c 6.5% 7.5%, transparent 8%), radial-gradient(1.5px 1.5px at 10% 20%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 30% 70%, #fff 50%, transparent), radial-gradient(2px 2px at 55% 15%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 85% 80%, #fff 50%, transparent), radial-gradient(2px 2px at 65% 55%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 20% 90%, #fff 50%, transparent), radial-gradient(ellipse at 30% 40%, #3b2a7a, #120c2e 70%)' },
-    candy: { name: 'Цукерка', light: true, css: 'repeating-linear-gradient(45deg, #ffe3ef 0 28px, #fff0f6 28px 56px)' },
-    forest: { name: 'Ліс', css: 'radial-gradient(60px 120px at 10% 100%, #2b8a3e 98%, transparent), radial-gradient(70px 150px at 25% 100%, #2f9e44 98%, transparent), radial-gradient(60px 110px at 45% 100%, #2b8a3e 98%, transparent), radial-gradient(80px 160px at 70% 100%, #37b24d 98%, transparent), radial-gradient(60px 120px at 90% 100%, #2b8a3e 98%, transparent), linear-gradient(#d3f9d8, #8ce99a)' },
-    mint: { name: 'М\'ята', light: true, css: '#63e6be' },
-    lemon: { name: 'Лимон', light: true, css: '#ffe066' },
-    berry: { name: 'Ягідка', css: '#da77f2' },
-    night: { name: 'Ніч', css: '#1e293b' },
+    dawn: { name: tr('Світанок'), light: true, css: 'radial-gradient(55% 50% at 12% 18%, #ffd6a5 0, transparent 70%), radial-gradient(50% 45% at 88% 22%, #bde0fe 0, transparent 70%), radial-gradient(65% 55% at 70% 100%, #c3fae8 0, transparent 70%), radial-gradient(45% 40% at 20% 95%, #ffc9de 0, transparent 70%), linear-gradient(160deg, #fff4e6, #e7f5ff)' },
+    bubbles: { name: tr('Бульбашки'), css: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.35) 0 60px, transparent 61px), radial-gradient(circle at 75% 20%, rgba(255,255,255,.25) 0 90px, transparent 91px), radial-gradient(circle at 60% 75%, rgba(255,255,255,.3) 0 50px, transparent 51px), radial-gradient(circle at 90% 85%, rgba(255,255,255,.2) 0 120px, transparent 121px), linear-gradient(135deg, #38d9a9, #3bc9db)' },
+    ukraine: { name: tr('Поле'), css: 'radial-gradient(circle at 20% 22%, #fff 0 3%, transparent 3.5%), radial-gradient(circle at 24% 20%, #fff 0 4%, transparent 4.5%), radial-gradient(circle at 28% 23%, #fff 0 3%, transparent 3.5%), linear-gradient(#4aa3ff 0 55%, #ffd43b 55% 100%)' },
+    sky: { name: tr('Небо'), light: true, css: 'linear-gradient(160deg, #a5d8ff 0%, #d0bfff 55%, #ffd6e7 100%)' },
+    sunset: { name: tr('Захід сонця'), css: 'radial-gradient(circle at 50% 78%, #fff3bf 0 6%, #ffd43b 6.5% 9%, transparent 9.5%), linear-gradient(#5f3dc4 0%, #e64980 45%, #ff922b 75%, #2b8a3e 75.5%, #2f9e44 100%)' },
+    ocean: { name: tr('Океан'), css: 'radial-gradient(140% 40% at 50% 100%, #0b7285 0 45%, transparent 45.5%), repeating-radial-gradient(ellipse at 50% 140%, #1c7ed6 0 18px, #228be6 18px 36px), linear-gradient(#74c0fc, #1971c2)' },
+    space: { name: tr('Космос'), css: 'radial-gradient(circle at 75% 30%, #ffa94d 0 6%, #e8590c 6.5% 7.5%, transparent 8%), radial-gradient(1.5px 1.5px at 10% 20%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 30% 70%, #fff 50%, transparent), radial-gradient(2px 2px at 55% 15%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 85% 80%, #fff 50%, transparent), radial-gradient(2px 2px at 65% 55%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 20% 90%, #fff 50%, transparent), radial-gradient(ellipse at 30% 40%, #3b2a7a, #120c2e 70%)' },
+    candy: { name: tr('Цукерка'), light: true, css: 'repeating-linear-gradient(45deg, #ffe3ef 0 28px, #fff0f6 28px 56px)' },
+    forest: { name: tr('Ліс'), css: 'radial-gradient(60px 120px at 10% 100%, #2b8a3e 98%, transparent), radial-gradient(70px 150px at 25% 100%, #2f9e44 98%, transparent), radial-gradient(60px 110px at 45% 100%, #2b8a3e 98%, transparent), radial-gradient(80px 160px at 70% 100%, #37b24d 98%, transparent), radial-gradient(60px 120px at 90% 100%, #2b8a3e 98%, transparent), linear-gradient(#d3f9d8, #8ce99a)' },
+    mint: { name: tr('М\'ята'), light: true, css: '#63e6be' },
+    lemon: { name: tr('Лимон'), light: true, css: '#ffe066' },
+    berry: { name: tr('Ягідка'), css: '#da77f2' },
+    night: { name: tr('Ніч'), css: '#1e293b' },
   };
 
   let deskIcons, taskList, startMenu, startBtn, clockBtn, calendarEl = null;
@@ -44,15 +45,15 @@
 
   /* ---------- Робочий стіл ---------- */
   function renderDesktop() {
-    const sel = VOS.ui.selectedId(deskIcons);
+    const selection = VOS.ui.selectedIds(deskIcons);
     const focus = !!document.activeElement?.closest('.item') && deskIcons.contains(document.activeElement);
     const actions = deskIcons.querySelector('.bg-actions');
     deskIcons.innerHTML = '';
     fs.children('desktop').forEach((n) => deskIcons.append(VOS.ui.renderItem(n)));
     if (actions) deskIcons.append(actions);
-    const selected = fs.get(sel)?.parent === 'desktop' ? sel : null;
-    VOS.ui.select(deskIcons, selected, { focus, announce: false });
-    if (focus && !selected) deskIcons.focus();
+    const selected = selection.filter((id) => fs.get(id)?.parent === 'desktop');
+    VOS.ui.selectItems(deskIcons, selected, { focus, announce: false });
+    if (focus && !selected.length) deskIcons.focus();
   }
 
   /* ---------- Панель задач ---------- */
@@ -73,8 +74,8 @@
       const w = VOS.wm.get(win.id);
       if (!w) return;
       VOS.ui.menu(e.clientX, e.clientY - 10, [
-        { label: w.minimized ? 'Показати' : 'Згорнути', icon: w.minimized ? 'arrow-up' : 'minus', action: () => (w.minimized ? VOS.wm.restore(w.id) : VOS.wm.minimize(w.id)) },
-        { label: 'Закрити вікно', icon: 'x', danger: true, action: () => VOS.wm.close(w.id) },
+        { label: w.minimized ? tr('Показати') : tr('Згорнути'), icon: w.minimized ? 'arrow-up' : 'minus', action: () => (w.minimized ? VOS.wm.restore(w.id) : VOS.wm.minimize(w.id)) },
+        { label: tr('Закрити вікно'), icon: 'x', danger: true, action: () => VOS.wm.close(w.id) },
         { sep: true },
         VOS.explain.appItem(w.app),
       ]);
@@ -102,12 +103,12 @@
   }
 
   /* ---------- Годинник і календар ---------- */
-  const MONTHS = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+  const MONTHS = [tr('Січень'), tr('Лютий'), tr('Березень'), tr('Квітень'), tr('Травень'), tr('Червень'), tr('Липень'), tr('Серпень'), tr('Вересень'), tr('Жовтень'), tr('Листопад'), tr('Грудень')];
   function tick() {
     const d = new Date();
-    clockBtn.querySelector('.clock-time').textContent = d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
-    clockBtn.querySelector('.clock-date').textContent = d.toLocaleDateString('uk-UA');
-    clockBtn.title = d.toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    clockBtn.querySelector('.clock-time').textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    clockBtn.querySelector('.clock-date').textContent = d.toLocaleDateString(locale);
+    clockBtn.title = d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   function toggleCalendar() {
@@ -115,15 +116,15 @@
     closeStart();
     const today = new Date();
     let y = today.getFullYear(), m = today.getMonth();
-    calendarEl = el('div.calendar.popup', { role: 'dialog', 'aria-label': 'Календар' });
+    calendarEl = el('div.calendar.popup', { role: 'dialog', 'aria-label': tr('Календар') });
     const render = () => {
       calendarEl.innerHTML = '';
       const head = el('div.cal-head',
-        el('button.btn-icon', { type: 'button', 'aria-label': 'Попередній місяць', on: { click: () => { if (--m < 0) { m = 11; y--; } render(); } } }, VOS.icon('chevron-left')),
+        el('button.btn-icon', { type: 'button', 'aria-label': tr('Попередній місяць'), on: { click: () => { if (--m < 0) { m = 11; y--; } render(); } } }, VOS.icon('chevron-left')),
         el('strong', MONTHS[m] + ' ' + y),
-        el('button.btn-icon', { type: 'button', 'aria-label': 'Наступний місяць', on: { click: () => { if (++m > 11) { m = 0; y++; } render(); } } }, VOS.icon('chevron-right')));
+        el('button.btn-icon', { type: 'button', 'aria-label': tr('Наступний місяць'), on: { click: () => { if (++m > 11) { m = 0; y++; } render(); } } }, VOS.icon('chevron-right')));
       const grid = el('div.cal-grid');
-      ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].forEach((d, i) => grid.append(el('div.cal-dow' + (i > 4 ? '.we' : ''), d)));
+      [tr('Пн'), tr('Вт'), tr('Ср'), tr('Чт'), tr('Пт'), tr('Сб'), tr('Нд')].forEach((d, i) => grid.append(el('div.cal-dow' + (i > 4 ? '.we' : ''), d)));
       const first = (new Date(y, m, 1).getDay() + 6) % 7;
       const days = new Date(y, m + 1, 0).getDate();
       for (let i = 0; i < first; i++) grid.append(el('div'));
@@ -133,7 +134,7 @@
         grid.append(el('div.cal-day' + (isToday ? '.today' : '') + (dow > 4 ? '.we' : ''), String(d)));
       }
       calendarEl.append(
-        el('div.cal-big', today.toLocaleDateString('uk-UA', { weekday: 'long' }), el('br'), el('b', today.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }))),
+        el('div.cal-big', today.toLocaleDateString(locale, { weekday: 'long' }), el('br'), el('b', today.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }))),
         head, grid);
     };
     render();
@@ -183,19 +184,23 @@
     anim.onfinish = anim.oncancel = () => { fly.remove(); reveal(); };
   }
 
-  const opText = (op) => (op === 'cut' ? 'Вирізано' : 'Скопійовано');
+  const opText = (op) => (op === 'cut' ? tr('Вирізано') : tr('Скопійовано'));
+  const pocketNodes = (clip) => (clip?.ids || []).map((id) => fs.get(id)).filter((node) => node && !fs.isInTrash(node.id));
+  const pocketLabel = (nodes) => nodes.length > 1 ? tr('Об’єктів: ') + nodes.length : nodes[0]?.name;
 
   /** Оновлює вигляд кишені. animate=true — коли щойно скопіювали щось нове. */
   function updatePocket(animate) {
     const clip = VOS.ui.clipboard;
-    const n = clip ? fs.get(clip.id) : null;
+    const nodes = pocketNodes(clip);
+    const n = nodes[nodes.length - 1];
+    const label = pocketLabel(nodes);
     const old = pocketThumbShown;
     pocketBtn.classList.toggle('full', !!n);
     pocketBtn.dataset.op = n ? clip.op : '';
     pocketOp.hidden = !n;
     pocketOp.replaceChildren(n ? VOS.icon(clip.op === 'cut' ? 'scissors' : 'copy') : '');
-    pocketBtn.title = n ? 'Кишеня: ' + n.name + ' (' + opText(clip.op).toLowerCase() + ')' : 'Кишеня порожня';
-    pocketBtn.setAttribute('aria-label', n ? 'Кишеня: ' + n.name + ', ' + opText(clip.op).toLowerCase() : 'Кишеня порожня');
+    pocketBtn.title = n ? tr('Кишеня: ') + label + ' (' + opText(clip.op).toLowerCase() + ')' : tr('Кишеня порожня');
+    pocketBtn.setAttribute('aria-label', n ? tr('Кишеня: ') + label + ', ' + opText(clip.op).toLowerCase() : tr('Кишеня порожня'));
     if (!n) { old?.remove(); pocketThumbShown = null; }
     else if (animate) {
       if (old) popOut(old);
@@ -203,7 +208,7 @@
       pocketThumbShown = t;
       t.classList.add('pk-wait');
       pocketSlot.append(t);
-      flyToPocket(clip.id, t);
+      flyToPocket(n.id, t);
     } else {
       pocketThumbShown = pocketThumb(n);
       if (old) old.replaceWith(pocketThumbShown);
@@ -214,17 +219,18 @@
 
   function renderPocketPop() {
     const clip = VOS.ui.clipboard;
-    const n = clip ? fs.get(clip.id) : null;
+    const nodes = pocketNodes(clip);
+    const n = nodes[nodes.length - 1];
     pocketPop.innerHTML = '';
     if (!n) {
-      pocketPop.append(el('div.pocket-empty', VOS.icon('pocket', 36), el('p', 'Кишеня порожня. Скопіюй файл (Ctrl+C), і він з\'явиться тут.')));
+      pocketPop.append(el('div.pocket-empty', VOS.icon('pocket', 36), el('p', tr('Кишеня порожня. Скопіюй файл (Ctrl+C), і він з\'явиться тут.'))));
       return;
     }
     pocketPop.append(
       el('div.pocket-now', el('span.pocket-big', VOS.ui.renderIcon(n, 'pk-ico')),
-        el('div.pocket-info', el('b', 'У кишені: ' + n.name), el('span.pocket-op-text', VOS.icon(clip.op === 'cut' ? 'scissors' : 'copy'), ' ' + opText(clip.op)))),
-      el('p.pocket-note', 'Кишеня показує останній файл, папку чи ярлик, які ти скопіював або вирізав у Віконці. Відкрий потрібну папку і вибери «Дії» → «Вставити» або натисни Ctrl+V.'),
-      el('button.btn.pocket-clear', { type: 'button', on: { click: () => VOS.ui.clearClipboard() } }, VOS.icon('x'), ' Очистити кишеню'));
+        el('div.pocket-info', el('b', tr('У кишені: ') + pocketLabel(nodes)), el('span.pocket-op-text', VOS.icon(clip.op === 'cut' ? 'scissors' : 'copy'), ' ' + opText(clip.op)))),
+      el('p.pocket-note', tr('Відкрий потрібну папку і вибери «Дії» → «Вставити» або натисни Ctrl+V.')),
+      el('button.btn.pocket-clear', { type: 'button', on: { click: () => VOS.ui.clearClipboard() } }, VOS.icon('x'), tr(' Очистити кишеню')));
   }
 
   function closePocketPop() {
@@ -239,7 +245,7 @@
     if (pocketPop) { closePocketPop(); return; }
     closeStart();
     if (calendarEl) { calendarEl.remove(); calendarEl = null; }
-    pocketPop = el('div.pocket-pop.popup', { role: 'dialog', 'aria-label': 'Кишеня' });
+    pocketPop = el('div.pocket-pop.popup', { role: 'dialog', 'aria-label': tr('Кишеня') });
     renderPocketPop();
     document.body.append(pocketPop);
     pocketBtn.classList.add('active');
@@ -261,7 +267,7 @@
       e.preventDefault();
       e.stopPropagation();
       VOS.ui.menu(e.clientX, e.clientY - 10, [
-        { label: 'Очистити кишеню', icon: 'x', disabled: !VOS.ui.clipboard, action: () => VOS.ui.clearClipboard() },
+        { label: tr('Очистити кишеню'), icon: 'x', disabled: !VOS.ui.clipboard, action: () => VOS.ui.clearClipboard() },
         ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('pocket') })),
       ], { target: 'pocket' });
     });
@@ -269,7 +275,7 @@
     bus.on('clipboard:change', (d) => updatePocket(!!(d && d.op)));
     bus.on('fs:change', () => {
       const clip = VOS.ui.clipboard;
-      if (clip && (!fs.get(clip.id) || fs.isInTrash(clip.id))) VOS.ui.clearClipboard();
+      if (clip && !pocketNodes(clip).length) VOS.ui.clearClipboard();
       else if (clip) updatePocket(false);
     });
   }
@@ -284,15 +290,15 @@
 
   function appRow(app) {
     const shortcut = el('button.start-shortcut', {
-      type: 'button', title: 'Створити ярлик на робочому столі',
-      'aria-label': 'Створити ярлик на робочому столі: ' + app.name,
+      type: 'button', title: tr('Створити ярлик на робочому столі'),
+      'aria-label': tr('Створити ярлик на робочому столі: ') + app.name,
       on: { click: () => {
         const link = fs.ensureDesktopAppLink(app.id);
         closeStart();
         startBtn.focus();
-        toast('Ярлик «' + link.name + '» на робочому столі.', 'link');
+        toast(tr('Ярлик «') + fs.label(link) + tr('» на робочому столі.'), 'link');
       } },
-    }, VOS.icon('link'), el('span', 'Ярлик'));
+    }, VOS.icon('link'), el('span', tr('Ярлик')));
     return el('div.start-app-row', appButton(app), shortcut);
   }
 
@@ -300,13 +306,13 @@
     if (calendarEl) { calendarEl.remove(); calendarEl = null; }
     const p = VOS.session.profile;
     startMenu.innerHTML = '';
-    const search = el('input.start-search', { type: 'search', placeholder: 'Пошук програм…', 'aria-label': 'Пошук програм', autocomplete: 'off', dataset: { hint: 'start-search' } });
+    const search = el('input.start-search', { type: 'search', placeholder: tr('Пошук програм…'), 'aria-label': tr('Пошук програм'), autocomplete: 'off', dataset: { hint: 'start-search' } });
     const body = el('div.start-body');
     const renderHome = () => {
       body.innerHTML = '';
       const pinned = el('div.start-pinned');
       PINNED.map(VOS.apps.get).filter(Boolean).forEach((a) => pinned.append(appButton(a, 'start-tile')));
-      body.append(el('h3.start-h', 'Закріплені'), pinned, el('h3.start-h', 'Усі програми'));
+      body.append(el('h3.start-h', tr('Закріплені')), pinned, el('h3.start-h', tr('Усі програми')));
       VOS.apps.CATEGORIES.forEach((c) => {
         const apps = VOS.apps.list(c.id);
         if (!apps.length) return;
@@ -318,9 +324,9 @@
     const renderSearch = (q) => {
       body.innerHTML = '';
       const low = q.toLocaleLowerCase('uk');
-      const res = VOS.apps.list().filter((a) => (a.name + ' ' + (a.desc || '')).toLocaleLowerCase('uk').includes(low));
-      body.append(el('h3.start-h', 'Знайдено: ' + res.length));
-      if (!res.length) body.append(el('p.start-empty', 'Нічого не знайдено. Спробуй інше слово.'));
+      const res = VOS.apps.list().filter((a) => (a.name + ' ' + a.sourceName + ' ' + (a.desc || '')).toLocaleLowerCase('uk').includes(low));
+      body.append(el('h3.start-h', tr('Знайдено: ') + res.length));
+      if (!res.length) body.append(el('p.start-empty', tr('Нічого не знайдено. Спробуй інше слово.')));
       res.forEach((a) => body.append(appRow(a)));
     };
     search.addEventListener('input', VOS.debounce(() => {
@@ -335,25 +341,25 @@
     });
     renderHome();
 
-    const powerBtn = el('button.start-power', { type: 'button', title: 'Вимкнення', 'aria-label': 'Вимкнення', dataset: { hint: 'power' } }, VOS.icon('power'));
+    const powerBtn = el('button.start-power', { type: 'button', title: tr('Вимкнення'), 'aria-label': tr('Вимкнення'), dataset: { hint: 'power' } }, VOS.icon('power'));
     powerBtn.addEventListener('click', (e) => {
       const r = powerBtn.getBoundingClientRect();
       VOS.ui.menu(r.left, r.top - 150, [
-        { label: 'Вимкнути', icon: 'power', hint: 'power-off', action: () => VOS.session.powerOff() },
-        { label: 'Перезавантажити', icon: 'refresh', action: () => VOS.session.restart() },
-        { label: 'Завершити сеанс', icon: 'users', action: () => VOS.session.switchUser() },
+        { label: tr('Вимкнути'), icon: 'power', hint: 'power-off', action: () => VOS.session.powerOff() },
+        { label: tr('Перезавантажити'), icon: 'refresh', action: () => VOS.session.restart() },
+        { label: tr('Завершити сеанс'), icon: 'users', action: () => VOS.session.switchUser() },
         ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('power') })),
       ], { target: 'power' });
       e.stopPropagation();
     });
     startMenu.append(
-      el('div.start-top', el('span.start-avatar', VOS.icons.avatar(p.avatar)), el('div.start-user', el('b', p.name), el('small', 'Учень')), powerBtn),
+      el('div.start-top', el('span.start-avatar', VOS.icons.avatar(p.avatar)), el('div.start-user', el('b', p.name), el('small', tr('Учень'))), powerBtn),
       el('label.start-search-wrap', VOS.icon('search'), search),
       body,
       el('div.start-bottom',
-        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('explorer', { folder: 'docs' }); } } }, VOS.icon('books'), ' Документи'),
-        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('settings'); } } }, VOS.icon('settings'), ' Налаштування'),
-        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('help'); } } }, VOS.icon('help'), ' Довідка'))
+        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('explorer', { folder: 'docs' }); } } }, VOS.icon('books'), tr(' Документи')),
+        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('settings'); } } }, VOS.icon('settings'), tr(' Налаштування')),
+        el('button.start-link', { type: 'button', on: { click: () => { closeStart(); VOS.apps.launch('help'); } } }, VOS.icon('help'), tr(' Довідка')))
     );
     startMenu.classList.add('open');
     startBtn.classList.add('active');
@@ -383,8 +389,8 @@
       folder: () => 'desktop',
       extraBgMenu: () => [
         { sep: true },
-        { label: 'Змінити шпалери…', icon: 'palette', hint: 'bg-wallpaper', action: () => VOS.apps.launch('settings', { page: 'look' }) },
-        { label: 'Налаштування', icon: 'settings', action: () => VOS.apps.launch('settings') },
+        { label: tr('Змінити шпалери…'), icon: 'palette', hint: 'bg-wallpaper', action: () => VOS.apps.launch('settings', { page: 'look' }) },
+        { label: tr('Налаштування'), icon: 'settings', action: () => VOS.apps.launch('settings') },
       ],
     });
     VOS.transfer.bindDrop(deskIcons, () => 'desktop');
@@ -401,14 +407,14 @@
       e.preventDefault();
       e.stopPropagation();
       VOS.ui.menu(e.clientX, e.clientY - 10, [
-        { label: 'Відкрити меню', icon: 'logo', action: () => { if (!startMenu.classList.contains('open')) toggleStart(); } },
+        { label: tr('Відкрити меню'), icon: 'logo', action: () => { if (!startMenu.classList.contains('open')) toggleStart(); } },
         ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('start') })),
       ], { target: 'start-button' });
     });
     $('#taskbar').addEventListener('contextmenu', (e) => {
       e.preventDefault();
       VOS.ui.menu(e.clientX, e.clientY - 10, [
-        { label: 'Показати робочий стіл', icon: 'monitor', action: () => { closeStart(); VOS.wm.minimizeAll(); bus.emit('desktop:show', {}); } },
+        { label: tr('Показати робочий стіл'), icon: 'monitor', action: () => { closeStart(); VOS.wm.minimizeAll(); bus.emit('desktop:show', {}); } },
         ...VOS.explain.sepAndItem(() => ({ ...VOS.explain.kind('taskbar') })),
       ], { target: 'taskbar' });
     });
@@ -425,7 +431,7 @@
     tick();
     setInterval(tick, 10000);
 
-    bus.on('store:full', () => toast('Пам\'ять переповнена! Видали непотрібні малюнки й очисти кошик.', 'alert', 6000));
+    bus.on('store:full', () => toast(tr('Пам\'ять переповнена! Видали непотрібні малюнки й очисти кошик.'), 'alert', 6000));
   }
 
   function start() {

@@ -2,28 +2,29 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
+  const { tr } = VOS.i18n;
   const { bus, el, fs } = VOS;
 
-  const TITLE = 'Навчальний браузер';
+  const TITLE = tr('Навчальний браузер');
   const ICON = 'globe';
   const PORTAL = 'https://itnauka.org';
   const PAGES = {
     home: { title: TITLE },
-    library: { title: 'Шкільна бібліотека', path: '/library' },
-    gallery: { title: 'Галерея шкільної бібліотеки', path: '/gallery' },
+    library: { title: tr('Шкільна бібліотека'), path: '/library' },
+    gallery: { title: tr('Галерея шкільної бібліотеки'), path: '/gallery' },
   };
   const SITES = {
-    hotkeys: { title: 'Гарячі клавіші', path: '/services/digital_literacy/typing_skills/typing_lesson/', icon: 'keyboard', description: 'Інтерактивний урок про клавіатуру та сполучення клавіш.' },
-    data: { title: 'Дані та інформація', path: '/services/digital_literacy/data-and-information/', icon: 'table', description: 'Розпізнавай, групуй і читай дані в таблицях та діаграмах.' },
-    search: { title: 'Шукарик', path: '/services/security_and_safety/search_engine/', icon: 'search', description: 'Спробуй складати запити й обирати результати пошуку.' },
-    addresses: { title: 'Веселі адреси', path: '/services/digital_literacy/typing_skills/urls_typing/', icon: 'globe', description: 'Тренуйся вводити адреси вебсайтів.' },
-    klavio: { title: 'Клавіо', path: '/services/digital_literacy/typing_skills/klavio/', icon: 'keyboard', description: 'Уроки друку, вправи зі словами й спринт.' },
-    drukaryk: { title: 'Друкарик', path: '/tools/drukaryk/', icon: 'type', description: 'Напиши й оформи текст.' },
+    hotkeys: { title: tr('Гарячі клавіші'), path: '/services/digital_literacy/typing_skills/typing_lesson/', icon: 'keyboard', description: tr('Інтерактивний урок про клавіатуру та сполучення клавіш.') },
+    data: { title: tr('Дані та інформація'), path: '/services/digital_literacy/data-and-information/', icon: 'table', description: tr('Розпізнавай, групуй і читай дані в таблицях та діаграмах.') },
+    search: { title: tr('Шукарик'), path: '/services/security_and_safety/search_engine/', icon: 'search', description: tr('Спробуй складати запити й обирати результати пошуку.') },
+    addresses: { title: tr('Веселі адреси'), path: '/services/digital_literacy/typing_skills/urls_typing/', icon: 'globe', description: tr('Тренуйся вводити адреси вебсайтів.') },
+    klavio: { title: tr('Клавіо'), path: '/services/digital_literacy/typing_skills/klavio/', icon: 'keyboard', description: tr('Уроки друку, вправи зі словами й спринт.') },
+    drukaryk: { title: tr('Друкарик'), path: '/tools/drukaryk/', icon: 'type', description: tr('Напиши й оформи текст.') },
   };
-  const ASSET = { id: 'paper-kite', title: 'Паперовий змій', pageId: 'gallery' };
+  const ASSET = { id: 'paper-kite', title: tr('Паперовий змій'), pageId: 'gallery' };
   const addressOf = (pageId) => SITES[pageId] ? PORTAL + SITES[pageId].path
-    : pageId === 'home' ? 'Початкова сторінка Віконця' : 'school.test' + PAGES[pageId].path;
-  const source = '«' + ASSET.title + '» — ' + PAGES.gallery.title + '. Адреса: ' + addressOf('gallery');
+    : pageId === 'home' ? tr('Початкова сторінка Віконця') : 'school.test' + PAGES[pageId].path;
+  const source = '«' + ASSET.title + '» — ' + PAGES.gallery.title + tr('. Адреса: ') + addressOf('gallery');
 
   function makeIllustration() {
     const canvas = document.createElement('canvas');
@@ -102,16 +103,16 @@
     let closed = false;
     let saving = false;
     let imageData;
-    const address = el('input.input.br-address', { type: 'text', readonly: true, 'aria-label': 'Адреса навчальної сторінки' });
+    const address = el('input.input.br-address', { type: 'text', readonly: true, 'aria-label': tr('Адреса навчальної сторінки') });
     const viewport = el('div.br-viewport');
     const toolbarButton = (icon, label, action, hint) => el('button.br-nav-btn', {
       type: 'button', 'aria-label': label, title: label,
       dataset: hint ? { hint } : {}, on: { click: action },
     }, VOS.icon(icon));
-    const back = toolbarButton('chevron-left', 'Назад', () => travel(-1, 'back', back));
-    const forward = toolbarButton('chevron-right', 'Уперед', () => travel(1, 'forward', forward));
-    const home = toolbarButton('home', 'Початкова сторінка', () => go('home', 'home'), 'browser-home');
-    const toolbar = el('div.br-toolbar', { role: 'group', 'aria-label': 'Керування браузером' }, back, forward, home, address);
+    const back = toolbarButton('chevron-left', tr('Назад'), () => travel(-1, 'back', back));
+    const forward = toolbarButton('chevron-right', tr('Уперед'), () => travel(1, 'forward', forward));
+    const home = toolbarButton('home', tr('Початкова сторінка'), () => go('home', 'home'), 'browser-home');
+    const toolbar = el('div.br-toolbar', { role: 'group', 'aria-label': tr('Керування браузером') }, back, forward, home, address);
     const root = el('div.app-browser', toolbar, viewport);
     const win = VOS.wm.open({
       app: 'browser', title: TITLE, icon: ICON, content: root,
@@ -175,7 +176,7 @@
           link.rel = 'noopener';
         }
       });
-      return el('section.br-site', el('div.br-site-bar', heading, externalLink(PORTAL + site.path, 'Відкрити в новій вкладці')), frame);
+      return el('section.br-site', el('div.br-site-bar', heading, externalLink(PORTAL + site.path, tr('Відкрити в новій вкладці'))), frame);
     }
 
     async function saveIllustration(button) {
@@ -183,30 +184,30 @@
       saving = button.disabled = true;
       try {
         const result = await VOS.dialog.saveAs({
-          title: 'Зберегти ілюстрацію', name: fs.uniqueName('pics', ASSET.title + '.png'),
+          title: tr('Зберегти ілюстрацію'), name: fs.uniqueName('pics', ASSET.title + '.png'),
           folder: 'pics', defaultFolder: 'pics', ext: 'png',
         });
         if (!result || closed) return;
         const folder = fs.get(result.folder);
         if (!folder || folder.type !== 'folder' || result.folder === 'trash' || fs.isInTrash(result.folder)) {
-          throw new Error('Обери місце для збереження ще раз.');
+          throw new Error(tr('Обери місце для збереження ще раз.'));
         }
         const replacement = result.replaceId ? fs.get(result.replaceId) : null;
         if (result.replaceId && (!replacement || replacement.parent !== result.folder
           || replacement.name.toLocaleLowerCase('uk') !== result.name.toLocaleLowerCase('uk'))) {
-          throw new Error('Файл для заміни змінився. Обери, куди зберегти ілюстрацію.');
+          throw new Error(tr('Файл для заміни змінився. Обери, куди зберегти ілюстрацію.'));
         }
         const node = replacement ? fs.write(replacement.id, imageData) : fs.createFile(result.folder, result.name, imageData);
         await fs.flush();
         if (closed) return;
         const saved = fs.get(node.id);
         if (!saved || saved.content !== imageData || saved.parent !== result.folder) {
-          throw new Error('Ілюстрація змінилася під час збереження. Спробуй ще раз.');
+          throw new Error(tr('Ілюстрація змінилася під час збереження. Спробуй ще раз.'));
         }
-        VOS.toast('Ілюстрацію «' + ASSET.title + '» збережено', 'save');
+        VOS.toast(tr('Ілюстрацію «') + ASSET.title + tr('» збережено'), 'save');
         bus.emit('browser:save', { node: saved, pageId: ASSET.pageId, assetId: ASSET.id, winId: win.id });
       } catch (error) {
-        if (!closed) VOS.dialog.error('Не вдалося зберегти ілюстрацію. ' + (error?.message || 'Спробуй ще раз.'));
+        if (!closed) VOS.dialog.error(tr('Не вдалося зберегти ілюстрацію. ') + (error?.message || tr('Спробуй ще раз.')));
       } finally {
         saving = button.disabled = false;
         const currentButton = root.querySelector('[data-hint="browser-save"]');
@@ -226,13 +227,13 @@
       const save = el('button.btn.btn-primary', {
         type: 'button', disabled: saving || !imageData,
         dataset: { hint: 'browser-save' }, on: { click: () => saveIllustration(save) },
-      }, VOS.icon('download'), 'Зберегти малюнок');
+      }, VOS.icon('download'), tr('Зберегти малюнок'));
       const cite = el('button.btn', {
         type: 'button', dataset: { hint: 'browser-source' }, on: { click: citeIllustration },
-      }, VOS.icon('notebook'), 'Записати джерело');
+      }, VOS.icon('notebook'), tr('Записати джерело'));
       const illustration = imageData
-        ? el('img.br-illustration', { src: imageData, width: 560, height: 320, alt: 'Помаранчевий паперовий змій літає над зеленими пагорбами' })
-        : el('p', 'Не вдалося показати ілюстрацію.');
+        ? el('img.br-illustration', { src: imageData, width: 560, height: 320, alt: tr('Помаранчевий паперовий змій літає над зеленими пагорбами') })
+        : el('p', tr('Не вдалося показати ілюстрацію.'));
       return el('figure.br-gallery', illustration,
         el('figcaption.br-details', el('h3', ASSET.title), el('p.br-source', source),
           el('div.br-actions', save, cite)));
@@ -246,14 +247,14 @@
       const content = site ? siteContent(site, heading) : el('article.br-page.br-' + pageId, heading);
       if (pageId === 'home') {
         const cards = Object.entries(SITES).map(([id, item]) => pageLink(id, item.title, item.icon, item.description));
-        content.append(el('h3.br-section-title', 'Уроки й сервіси itnauka.org'), el('div.br-cards', cards),
-          externalLink(PORTAL + '/', 'Усі сервіси itnauka.org (нова вкладка)'),
-          el('h3.br-section-title', 'Сайт школи «Стежинка»'), pageLink('library', 'Шкільна бібліотека', 'books'));
+        content.append(el('h3.br-section-title', tr('Уроки й сервіси itnauka.org')), el('div.br-cards', cards),
+          externalLink(PORTAL + '/', tr('Усі сервіси itnauka.org (нова вкладка)')),
+          el('h3.br-section-title', tr('Сайт школи «Стежинка»')), pageLink('library', tr('Шкільна бібліотека'), 'books'));
       } else if (pageId === 'library') {
-        content.append(el('p', 'У бібліотеці вигаданої школи «Стежинка» зібрали малюнки для виставки «Вітер і небо».'),
-          pageLink('gallery', 'Галерея ілюстрацій', 'image'), pageLink('home', 'Початкова сторінка', 'home'));
+        content.append(el('p', tr('У бібліотеці вигаданої школи «Стежинка» зібрали малюнки для виставки «Вітер і небо».')),
+          pageLink('gallery', tr('Галерея ілюстрацій'), 'image'), pageLink('home', tr('Початкова сторінка'), 'home'));
       } else if (pageId === 'gallery') {
-        content.append(galleryContent(), pageLink('library', 'Назад до бібліотеки', 'books'));
+        content.append(galleryContent(), pageLink('library', tr('Назад до бібліотеки'), 'books'));
       }
       address.value = addressOf(pageId);
       back.disabled = position === 0;
@@ -268,7 +269,7 @@
   }
 
   VOS.apps.register({
-    id: 'browser', name: TITLE, icon: ICON, color: '#0e7490',
-    category: 'standard', desc: 'Уроки, тренажери й шкільна бібліотека', launch,
+    id: 'browser', name: 'Навчальний браузер', icon: ICON, color: '#0e7490',
+    category: 'standard', desc: tr('Уроки, тренажери й шкільна бібліотека'), launch,
   });
 })();
