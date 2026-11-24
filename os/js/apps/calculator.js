@@ -29,6 +29,12 @@
     };
     const norm = (v) => (isFinite(v) ? String(parseFloat(v.toPrecision(12))) : tr('Помилка'));
 
+    function evaluate(a, b, operator) {
+      const result = norm(calc(a, b, operator));
+      VOS.xray.compute(fmt(String(a)) + ' ' + SYM[operator] + ' ' + fmt(String(b)), fmt(result));
+      return result;
+    }
+
     function press(k) {
       if (cur === tr('Помилка') && k !== 'C') { cur = '0'; expr = ''; }
       if (/^\d$/.test(k)) {
@@ -36,21 +42,26 @@
       } else if (k === '.') {
         if (fresh) { cur = '0.'; fresh = false; } else if (!cur.includes('.')) cur += '.';
       } else if (k in SYM) {
-        if (op && !fresh) cur = norm(calc(prev, parseFloat(cur), op));
+        if (op && !fresh) cur = evaluate(prev, parseFloat(cur), op);
         prev = parseFloat(cur); op = k; fresh = true;
         expr = fmt(cur) + ' ' + SYM[k];
       } else if (k === '=') {
         if (op == null) return show();
         const b = parseFloat(cur);
         expr = fmt(String(prev)) + ' ' + SYM[op] + ' ' + fmt(cur) + ' =';
-        cur = norm(calc(prev, b, op));
+        cur = evaluate(prev, b, op);
         op = null; prev = null; fresh = true;
         bus.emit('calc:result', { value: cur });
       } else if (k === 'C') { cur = '0'; prev = null; op = null; fresh = true; expr = ''; }
       else if (k === 'CE') { cur = '0'; fresh = true; }
       else if (k === '⌫') { if (!fresh) { cur = cur.length > 1 && !(cur.length === 2 && cur[0] === '-') ? cur.slice(0, -1) : '0'; } }
       else if (k === '±') { if (cur !== '0') cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur; }
-      else if (k === '%') { cur = norm(prev != null ? (prev * parseFloat(cur)) / 100 : parseFloat(cur) / 100); fresh = true; }
+      else if (k === '%') {
+        const expression = fmt(cur) + '%' + (prev == null ? '' : ' × ' + fmt(String(prev)));
+        cur = norm(prev != null ? (prev * parseFloat(cur)) / 100 : parseFloat(cur) / 100);
+        VOS.xray.compute(expression, fmt(cur));
+        fresh = true;
+      }
       show();
     }
 

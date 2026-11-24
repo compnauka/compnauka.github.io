@@ -430,35 +430,19 @@
       ],
     },
     {
-      id: 'web-source', icon: 'books', title: tr('Малюнок із бібліотеки'), desc: tr('Переходимо за посиланням, зберігаємо ілюстрацію та підписуємо джерело.'),
+      id: 'web-source', icon: 'search', title: tr('Пошук у Шукарику'),
+      desc: tr('Вводимо пошуковий запит і повертаємося на початкову сторінку.'),
       steps: [
         { text: tr('Через «Меню» відкрий «Навчальний браузер».'), hint: startApp('browser'), check: newWindow('browser') },
-        { text: tr('На початковій сторінці знайди школу «Стежинка» і відкрий «Шкільна бібліотека».'), hint: winOf('browser', '[data-hint="browser-library"]'), check: (t, d, ctx) => t === 'browser:navigate' && d.fromPageId === 'home' && d.pageId === 'library' && d.via === 'link' && d.winId === ctx.state.win },
-        { text: tr('У бібліотеці перейди за посиланням до галереї.'), hint: winOf('browser', '[data-hint="browser-gallery"]'), check: (t, d, ctx) => t === 'browser:navigate' && d.fromPageId === 'library' && d.pageId === 'gallery' && d.via === 'link' && d.winId === ctx.state.win },
         {
-          text: tr('Збережи ілюстрацію «Паперовий змій» у папку «Малюнки».'),
-          tip: tr('Поки ти дивишся на малюнок у галереї, він є частиною сторінки. Кнопка «Зберегти малюнок» створює окремий файл у твоїй папці.'),
-          hint: ['.file-picker .btn-primary', winOf('browser', '[data-hint="browser-save"]')],
-          check: (t, d, ctx) => {
-            if (t !== 'browser:save' || d.node.parent !== 'pics' || d.assetId !== 'paper-kite' || d.winId !== ctx.state.win) return false;
-            ctx.state.file = d.node.id;
-            return true;
-          },
+          text: tr('У полі пошуку напиши «паролі» й натисни «Шукати».'),
+          hint: winOf('browser', '.br-search'),
+          check: (t, d, ctx) => t === 'browser:navigate' && d.pageId === 'search' && d.via === 'search' && d.winId === ctx.state.win,
         },
         {
-          text: tr('Натисни «Записати джерело», щоб відкрити підпис у Блокноті.'),
-          hint: winOf('browser', '[data-hint="browser-source"]'),
-          check: (t, d, ctx) => {
-            if (t !== 'browser:cite' || d.assetId !== 'paper-kite' || d.winId !== ctx.state.win) return false;
-            ctx.state.source = d.source;
-            ctx.state.draft = d.draftWinId;
-            return true;
-          },
-        },
-        {
-          text: tr('Збережи підпис у «Документах», щоб згодом знайти звідки взявся малюнок.'),
-          hint: ['.file-picker .btn-primary', winOf('notepad', '[data-hint="np-savebtn"]')],
-          check: (t, d, ctx) => t === 'notepad:save' && d.winId === ctx.state.draft && d.node.parent === 'docs' && d.node.content.includes(ctx.state.source) && fs().get(ctx.state.file)?.parent === 'pics',
+          text: tr('Переглянь результати й повернися на початкову сторінку кнопкою «Назад» або «Початкова сторінка».'),
+          hint: winOf('browser', '[data-hint="browser-home"]'),
+          check: (t, d, ctx) => t === 'browser:navigate' && d.pageId === 'home' && d.fromPageId === 'search' && d.winId === ctx.state.win,
         },
       ],
     },

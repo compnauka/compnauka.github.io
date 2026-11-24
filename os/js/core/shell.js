@@ -281,7 +281,7 @@
   }
 
   /* ---------- Меню програм (у Windows — «Пуск») ---------- */
-  const PINNED = ['explorer', 'notepad', 'paint', 'calculator', 'photos', 'missions', 'drukaryk', 'penslyk', 'settings'];
+  const PINNED = ['explorer', 'notepad', 'paint', 'calculator', 'photos', 'missions', 'drukaryk', 'penslyk', 'settings', 'xray'];
 
   function appButton(a, cls = 'start-app') {
     return el('button.' + cls, { type: 'button', dataset: { app: a.id, hint: 'start-' + a.id }, title: a.desc || a.name, on: { click: () => { closeStart(); VOS.apps.launch(a.id); } } },

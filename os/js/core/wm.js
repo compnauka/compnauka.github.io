@@ -8,17 +8,50 @@
   const wins = new Map();
   let z = 10;
   let cascade = 0;
-  let layer, desk, snapPreview;
+  let layer, snapPreview;
 
   function deskRect() {
-    return { w: desk.clientWidth, h: desk.clientHeight };
+    return { w: layer.clientWidth, h: layer.clientHeight };
+  }
+
+  function keepFrameLinks(doc, permits = (url) => url.origin === window.location.origin) {
+    function allowed(link) {
+      try {
+        const url = new URL(link.getAttribute('href'), doc.baseURI);
+        return permits(url) || (link.hasAttribute('download') && ['data:', 'blob:'].includes(url.protocol));
+      } catch {
+        return false;
+      }
+    }
+
+    for (const link of doc.querySelectorAll('a[href]')) {
+      link.removeAttribute('target');
+      if (!allowed(link)) {
+        link.removeAttribute('href');
+        link.removeAttribute('title');
+      }
+    }
+    doc.addEventListener('click', (event) => {
+      const link = event.target.closest?.('a[href]');
+      if (!link) return;
+      if (!allowed(link) || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      } else {
+        link.setAttribute('target', '_self');
+      }
+    }, { capture: true });
+    for (const type of ['auxclick', 'contextmenu']) {
+      doc.addEventListener(type, (event) => {
+        if (event.target.closest?.('a[href]')) event.preventDefault();
+      });
+    }
   }
 
   function init() {
-    desk = document.getElementById('desktop');
     layer = document.getElementById('windows');
     snapPreview = el('div.snap-preview');
-    desk.append(snapPreview);
+    layer.append(snapPreview);
 
     // Клацання всередині iframe не доходить до сторінки: ловимо втрату фокусу вікном браузера.
     window.addEventListener('blur', () => {
@@ -31,22 +64,23 @@
       }, 0);
     });
 
-    window.addEventListener('resize', VOS.debounce(() => {
+    const fitWindows = VOS.debounce(() => {
       const { w, h } = deskRect();
       for (const win of wins.values()) {
         if (isCompact() && !win.maximized) maximize(win.id, true);
         if (!win.maximized && !win.snapped) {
           // Екран зменшився — вікно не може бути більшим за робочий стіл
           win.w = Math.min(win.w, Math.max(win.minW, w - 8));
-          win.h = Math.min(win.h, Math.max(win.minH, h - 8));
+          win.h = Math.min(win.h, Math.max(1, h - 8));
           win.x = clamp(win.x, -win.w + 80, w - 80);
-          win.y = clamp(win.y, 0, h - 40);
+          win.y = clamp(win.y, 0, Math.max(0, h - win.h));
           apply(win);
         } else if (win.snapped) {
           snapTo(win, win.snapped, true);
         }
       }
-    }, 120));
+    }, 120);
+    new ResizeObserver(fitWindows).observe(layer);
   }
 
   function apply(win) {
@@ -150,6 +184,7 @@
             const st = d.createElement('style');
             st.textContent = '.ss-header,.ss-footer{display:none!important}body{padding-top:0!important}';
             d.head && d.head.append(st);
+            keepFrameLinks(d);
             d.addEventListener('pointerdown', () => focus(id, true), true);
             if (VOS.bridge) VOS.bridge.install(frame, win);
           }
@@ -337,7 +372,7 @@
     const bar = e.currentTarget;
     try { bar.setPointerCapture(e.pointerId); } catch (er) { /* синтетичні події */ }
     const startX = e.clientX, startY = e.clientY;
-    const dr = desk.getBoundingClientRect();
+    const dr = layer.getBoundingClientRect();
     let ox = win.x, oy = win.y, moved = false, snap = null;
 
     const onMove = (ev) => {
@@ -345,7 +380,7 @@
       if (!moved && Math.hypot(dx, dy) < 4) return;
       if (!moved) {
         moved = true;
-        desk.classList.add('wm-busy');
+        layer.classList.add('wm-busy');
         if (win.maximized || win.snapped) {
           // «Відриваємо» розгорнуте вікно під курсором, як у справжній ОС
           const prev = win.prev || { w: win.w, h: win.h };
@@ -371,7 +406,7 @@
       bar.removeEventListener('pointermove', onMove);
       bar.removeEventListener('pointerup', onUp);
       bar.removeEventListener('pointercancel', onUp);
-      desk.classList.remove('wm-busy');
+      layer.classList.remove('wm-busy');
       showSnap(null);
       if (!moved) return;
       if (snap === 'top') maximize(win.id);
@@ -397,7 +432,7 @@
     try { h.setPointerCapture(e.pointerId); } catch (er) { /* синтетичні події */ }
     const sx = e.clientX, sy = e.clientY;
     const o = { x: win.x, y: win.y, w: win.w, h: win.h };
-    desk.classList.add('wm-busy');
+    layer.classList.add('wm-busy');
     if (win.snapped) { win.snapped = null; win.el.classList.remove('snapped'); updateMaxBtn(win); }
     const onMove = (ev) => {
       const dx = ev.clientX - sx, dy = ev.clientY - sy;
@@ -420,7 +455,7 @@
       h.removeEventListener('pointermove', onMove);
       h.removeEventListener('pointerup', onUp);
       h.removeEventListener('pointercancel', onUp);
-      desk.classList.remove('wm-busy');
+      layer.classList.remove('wm-busy');
       if (win.w !== o.w || win.h !== o.h) bus.emit('win:resize', { winId: win.id, app: win.app, w: win.w, h: win.h });
     };
     h.addEventListener('pointermove', onMove);
@@ -443,7 +478,7 @@
   }
 
   VOS.wm = {
-    init, open, close, focus, minimize, restore, maximize, toggleMax, minimizeAll, closeAll,
+    init, open, close, focus, minimize, restore, maximize, toggleMax, minimizeAll, closeAll, keepFrameLinks,
     get: (id) => wins.get(id),
     list: () => [...wins.values()],
     byApp: (app) => [...wins.values()].filter((w) => w.app === app),

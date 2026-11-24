@@ -2,264 +2,233 @@
 (function () {
   'use strict';
   const VOS = window.VOS;
-  const { tr } = VOS.i18n;
-  const { bus, el, fs } = VOS;
+  const { lang, tr } = VOS.i18n;
+  const { bus, el } = VOS;
 
   const TITLE = tr('Навчальний браузер');
-  const ICON = 'globe';
   const PORTAL = 'https://itnauka.org';
-  const PAGES = {
-    home: { title: TITLE },
-    library: { title: tr('Шкільна бібліотека'), path: '/library' },
-    gallery: { title: tr('Галерея шкільної бібліотеки'), path: '/gallery' },
-  };
+  const SEARCH_TITLE = tr('Шукарик');
   const SITES = {
-    hotkeys: { title: tr('Гарячі клавіші'), path: '/services/digital_literacy/typing_skills/typing_lesson/', icon: 'keyboard', description: tr('Інтерактивний урок про клавіатуру та сполучення клавіш.') },
-    data: { title: tr('Дані та інформація'), path: '/services/digital_literacy/data-and-information/', icon: 'table', description: tr('Розпізнавай, групуй і читай дані в таблицях та діаграмах.') },
-    search: { title: tr('Шукарик'), path: '/services/security_and_safety/search_engine/', icon: 'search', description: tr('Спробуй складати запити й обирати результати пошуку.') },
-    addresses: { title: tr('Веселі адреси'), path: '/services/digital_literacy/typing_skills/urls_typing/', icon: 'globe', description: tr('Тренуйся вводити адреси вебсайтів.') },
-    klavio: { title: tr('Клавіо'), path: '/services/digital_literacy/typing_skills/klavio/', icon: 'keyboard', description: tr('Уроки друку, вправи зі словами й спринт.') },
-    drukaryk: { title: tr('Друкарик'), path: '/tools/drukaryk/', icon: 'type', description: tr('Напиши й оформи текст.') },
+    ravlyk: { title: tr('Равлик'), url: 'https://ravlyk.org/', icon: 'pencil', color: '#427530', description: tr('Малюй командами та вчися програмувати українською.'), terms: 'ravlyk равлик код команди цикли малюнок редактор програмування turtle' },
+    fact: { title: tr('Факт чи думка?'), path: '/games/fact-or-opinion/index.html', icon: 'check', color: '#855092', description: tr('Відрізняй перевірені факти від суджень.'), terms: 'факти думки медіаграмотність твердження' },
+    blockly: { title: 'Blockly Games', url: 'https://blockly.games/?lang=uk', icon: 'puzzle', color: '#136fa1', description: tr('Розв’язуй ігрові задачі за допомогою блоків коду.'), terms: 'блоклі програмування пазл лабіринт птах черепаха фільм музика цикли coding' },
+    ai: { title: tr('Привіт, ШІ!'), path: '/services/ai/pryvitshi/index.html', icon: 'sparkles', color: '#6749ac', description: tr('Інтерактивна книга про штучний інтелект.'), terms: 'штучний інтелект запит промпт нейромережі ai' },
+    safety: { title: tr('Кібербезпека для дітей'), path: '/services/security_and_safety/cybersecurity_for_kids/index.html', icon: 'first-aid', color: '#146e61', description: tr('Вчися захищати паролі й особисті дані.'), terms: 'безпека пароль паролі фішинг приватність захист інтернет' },
+    crypto: { title: tr('Криптографія для дітей'), path: '/services/security_and_safety/cryptography_for_kids/index.html', icon: 'letters', color: '#a04e1f', description: tr('Шифруй і розшифровуй таємні повідомлення.'), terms: 'шифри шифр цезаря шифрування ключ код таємниця' },
+    critical: { title: tr('Критичне мислення для дітей'), path: '/services/security_and_safety/critical_thinking_for_kids/index.html', icon: 'bulb', color: '#a13963', description: tr('Перевіряй джерела, новини й твердження.'), terms: 'фактчекінг джерело фейки новина медіаграмотність факти думки' },
+    data: { title: tr('Дані та інформація'), path: '/services/digital_literacy/data-and-information/index.html', icon: 'table', color: '#0b766b', description: tr('Розпізнавай, групуй і читай дані в таблицях та діаграмах.'), terms: 'дані інформація числа таблиці діаграми графіки' },
+    wiki: { title: tr('Вікі Енциклопедія'), local: 'wiki/?lang=' + lang, icon: 'books', color: '#39419a', description: tr('Статті про елементи та програми Віконця.'), terms: 'вікі довідник словник' },
   };
-  const ASSET = { id: 'paper-kite', title: tr('Паперовий змій'), pageId: 'gallery' };
-  const addressOf = (pageId) => SITES[pageId] ? PORTAL + SITES[pageId].path
-    : pageId === 'home' ? tr('Початкова сторінка Віконця') : 'school.test' + PAGES[pageId].path;
-  const source = '«' + ASSET.title + '» — ' + PAGES.gallery.title + tr('. Адреса: ') + addressOf('gallery');
 
-  function makeIllustration() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 560;
-    canvas.height = 320;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+  const siteUrl = (site) => site.url || (site.local ? new URL(site.local, document.baseURI).href : PORTAL + site.path);
+  const frameUrl = (site) => site.url || site.local || '..' + site.path;
+  const index = new Map();
+  const normalize = (value) => value.toLocaleLowerCase(lang).normalize('NFC').replace(/[’ʼ']/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
-    const sky = ctx.createLinearGradient(0, 0, 0, 320);
-    sky.addColorStop(0, '#86c5ec');
-    sky.addColorStop(1, '#f0f9ff');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, 560, 320);
-
-    ctx.fillStyle = '#fff0b3';
-    ctx.beginPath();
-    ctx.arc(433, 80, 39, 0, 2 * Math.PI);
-    ctx.fill();
-
-    ctx.fillStyle = '#fcfcf7';
-    for (const [x, y] of [[74, 80], [420, 148]]) {
-      ctx.beginPath();
-      ctx.ellipse(x, y, 43, 11, 0, 0, 2 * Math.PI);
-      ctx.ellipse(x - 13, y - 9, 16, 15, 0, 0, 2 * Math.PI);
-      ctx.ellipse(x + 11, y - 11, 18, 20, 0, 0, 2 * Math.PI);
-      ctx.fill();
+  function pageText(id, site) {
+    if (id === 'wiki') return Promise.resolve(VOS.explain.articles().flatMap(({ title, lines }) => [title, ...lines]).join(' '));
+    if (!site.path) return Promise.resolve('');
+    if (!index.has(id)) {
+      const url = frameUrl(site);
+      const report = VOS.xray.request(url, SEARCH_TITLE);
+      let status;
+      const pending = fetch(url, { signal: AbortSignal.timeout(7000) }).then(async (response) => {
+        status = response.status;
+        if (!response.ok) throw new Error(String(status));
+        const html = await response.text();
+        report?.('loaded', status);
+        const page = new DOMParser().parseFromString(html, 'text/html');
+        page.querySelectorAll('script, style, noscript, nav, footer, template').forEach((part) => part.remove());
+        return (page.querySelector('meta[name="description"]')?.content || '') + ' ' + page.body.innerText;
+      }).catch(() => {
+        report?.('error', status);
+        index.delete(id);
+        return '';
+      });
+      index.set(id, pending);
     }
+    return index.get(id);
+  }
 
-    ctx.fillStyle = '#89b29c';
-    ctx.beginPath();
-    ctx.moveTo(0, 221);
-    ctx.bezierCurveTo(170, 136, 294, 302, 560, 194);
-    ctx.lineTo(560, 320);
-    ctx.lineTo(0, 320);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#49866f';
-    ctx.beginPath();
-    ctx.moveTo(0, 278);
-    ctx.bezierCurveTo(260, 330, 265, 198, 560, 239);
-    ctx.lineTo(560, 320);
-    ctx.lineTo(0, 320);
-    ctx.closePath();
-    ctx.fill();
+  function keepCertificateInFrame(doc) {
+    const button = doc.getElementById('btn-print');
+    const certificate = doc.getElementById('certificate-content');
+    if (!button || !certificate) return;
+    const style = doc.createElement('style');
+    style.textContent = `
+      .br-print-certificate { display: none; }
+      @media print {
+        body > :not(.br-print-certificate) { display: none !important; }
+        .br-print-certificate { display: block !important; }
+      }
+    `;
+    doc.head.append(style);
+    button.addEventListener('click', (event) => {
+      event.stopImmediatePropagation();
+      doc.querySelector('.br-print-certificate')?.remove();
+      const copy = certificate.cloneNode(true);
+      copy.removeAttribute('id');
+      copy.classList.add('br-print-certificate');
+      doc.body.append(copy);
+      doc.defaultView.addEventListener('afterprint', () => copy.remove(), { once: true });
+      doc.defaultView.print();
+    }, { capture: true });
+  }
 
-    function fillPolygon(color, points) {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(...points[0]);
-      for (const point of points.slice(1)) ctx.lineTo(...point);
-      ctx.closePath();
-      ctx.fill();
-    }
+  function constrainDocument(doc, url) {
+    const lesson = new URL(url, document.baseURI);
+    const directory = lesson.pathname.slice(0, lesson.pathname.lastIndexOf('/') + 1);
+    const withinLesson = (target) => target.origin === lesson.origin
+      && (target.pathname === directory.slice(0, -1) || target.pathname.startsWith(directory));
+    VOS.wm.keepFrameLinks(doc, withinLesson);
+    doc.querySelectorAll('.ss-back, .ss-brand, .ss-footer-socials').forEach((part) => { part.hidden = true; });
 
-    ctx.strokeStyle = '#482d3e';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(246, 155);
-    ctx.bezierCurveTo(225, 203, 313, 204, 274, 245);
-    ctx.bezierCurveTo(248, 280, 330, 286, 304, 315);
-    ctx.stroke();
-    fillPolygon('#fd986c', [[253, 204], [253, 182], [280, 194], [297, 181], [300, 205], [278, 196]]);
-    fillPolygon('#ffdea2', [[254, 258], [261, 237], [272, 248], [292, 242], [290, 260], [273, 251]]);
-
-    const top = [286, 36], left = [216, 82], middle = [268, 100], right = [327, 105], bottom = [246, 155];
-    fillPolygon('#fbbd62', [top, middle, left]);
-    fillPolygon('#fb8c61', [top, right, middle]);
-    fillPolygon('#ec665f', [right, bottom, middle]);
-    fillPolygon('#d75271', [left, middle, bottom]);
-    return canvas.toDataURL('image/png');
+    doc.addEventListener('submit', (event) => {
+      const form = event.target;
+      const action = event.submitter?.getAttribute('formaction') ?? form.action;
+      if (!withinLesson(new URL(action, doc.baseURI))) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      } else {
+        form.target = '_self';
+        if (event.submitter?.hasAttribute('formtarget')) event.submitter.formTarget = '_self';
+      }
+    }, { capture: true });
   }
 
   function launch() {
-    const history = ['home'];
+    const history = [{ id: 'home', query: '' }];
     let position = 0;
-    let closed = false;
-    let saving = false;
-    let imageData;
+    let cancelLoad;
     const address = el('input.input.br-address', { type: 'text', readonly: true, 'aria-label': tr('Адреса навчальної сторінки') });
     const viewport = el('div.br-viewport');
     const toolbarButton = (icon, label, action, hint) => el('button.br-nav-btn', {
-      type: 'button', 'aria-label': label, title: label,
-      dataset: hint ? { hint } : {}, on: { click: action },
+      type: 'button', 'aria-label': label, title: label, dataset: hint ? { hint } : {}, on: { click: action },
     }, VOS.icon(icon));
-    const back = toolbarButton('chevron-left', tr('Назад'), () => travel(-1, 'back', back));
-    const forward = toolbarButton('chevron-right', tr('Уперед'), () => travel(1, 'forward', forward));
+    const back = toolbarButton('chevron-left', tr('Назад'), () => travel(-1, back));
+    const forward = toolbarButton('chevron-right', tr('Уперед'), () => travel(1, forward));
     const home = toolbarButton('home', tr('Початкова сторінка'), () => go('home', 'home'), 'browser-home');
     const toolbar = el('div.br-toolbar', { role: 'group', 'aria-label': tr('Керування браузером') }, back, forward, home, address);
-    const root = el('div.app-browser', toolbar, viewport);
     const win = VOS.wm.open({
-      app: 'browser', title: TITLE, icon: ICON, content: root,
-      width: 760, height: 590, minWidth: 300, minHeight: 270, onClose: () => { closed = true; },
+      app: 'browser', title: TITLE, icon: 'globe', content: el('div.app-browser', toolbar, viewport),
+      width: 760, height: 590, minWidth: 300, minHeight: 270, onClose: () => cancelLoad?.(),
     });
 
     function navigate(fromPageId, via, focusHeading) {
       render(focusHeading);
-      bus.emit('browser:navigate', { pageId: history[position], fromPageId, via, winId: win.id });
+      bus.emit('browser:navigate', { pageId: history[position].id, fromPageId, via, winId: win.id });
     }
 
-    function travel(offset, via, control) {
+    function travel(offset, control) {
       const next = position + offset;
       if (next < 0 || next >= history.length) return;
-      const previous = history[position];
+      const previous = history[position].id;
       position = next;
-      navigate(previous, via, next + offset < 0 || next + offset >= history.length);
+      navigate(previous, offset < 0 ? 'back' : 'forward', next + offset < 0 || next + offset >= history.length);
       if (!control.disabled) control.focus();
     }
 
-    function go(pageId, via) {
-      if ((!Object.hasOwn(PAGES, pageId) && !Object.hasOwn(SITES, pageId)) || history[position] === pageId) return;
+    function go(id, via, query = '') {
       const previous = history[position];
+      if (previous.id === id && previous.query === query) return;
       position++;
-      history.splice(position, history.length - position, pageId);
-      navigate(previous, via, true);
+      history.splice(position, history.length - position, { id, query });
+      navigate(previous.id, via, true);
     }
 
-    function pageLink(pageId, label, icon, description) {
-      const link = el('a.br-link', {
-        href: SITES[pageId] ? addressOf(pageId) : '#' + pageId,
-        dataset: { hint: 'browser-' + pageId },
-        on: {
-          click: (event) => { event.preventDefault(); go(pageId, 'link'); },
-          auxclick: (event) => event.preventDefault(),
-        },
-      }, VOS.icon(icon), description ? el('span.br-card-label', el('strong', label), el('small', description)) : label);
-      return link;
+    function siteLink(id, site, className, ...content) {
+      return el('button.' + className, {
+        type: 'button',
+        dataset: { hint: 'browser-' + id }, style: { '--card-color': site.color },
+        on: { click: () => go(id, 'link') },
+      }, content);
     }
 
-    const externalLink = (url, label) => el('a.br-link', {
-      href: url, target: '_blank', rel: 'noopener',
-    }, label);
+    function searchForm(query) {
+      const queryLabel = tr('Пошук у Шукарику');
+      const input = el('input.input', {
+        type: 'search', name: 'q', maxlength: 200, required: true, placeholder: queryLabel, 'aria-label': queryLabel,
+      });
+      input.value = query;
+      return el('form.br-search', { role: 'search', on: { submit: (event) => {
+        event.preventDefault();
+        const next = input.value.trim();
+        if (normalize(next)) go('search', 'search', next);
+      } } }, input, el('button.btn.btn-primary', { type: 'submit' }, VOS.icon('search'), tr('Шукати')));
+    }
+
+    function homeContent(heading) {
+      const cards = Object.entries(SITES).map(([id, site]) => siteLink(id, site, 'br-link',
+        el('span.br-card-icon', VOS.icon(site.icon)), el('span.br-card-label', el('strong', site.title))));
+      return el('article.br-page.br-home',
+        el('div.br-hero', el('div', heading, el('p.br-search-label', SEARCH_TITLE)), VOS.icon('owl', null, 'br-owl'), searchForm('')),
+        el('div.br-cards', cards));
+    }
+
+    function searchContent(heading, query) {
+      const finishSearch = VOS.xray.localSearch();
+      const terms = [...new Set(normalize(query).split(' '))];
+      const status = el('p.br-search-status', { role: 'status' }, tr('Шукаємо…'));
+      const results = el('ul.br-results');
+      Promise.all(Object.entries(SITES).map(async ([id, site]) => {
+        const title = normalize(site.title);
+        const summary = normalize([site.description, site.terms, siteUrl(site)].join(' '));
+        let body = '';
+        if (terms.some((term) => !title.includes(term) && !summary.includes(term))) body = normalize(await pageText(id, site));
+        const scores = terms.map((term) => title.includes(term) ? 3 : summary.includes(term) ? 2 : Number(body.includes(term)));
+        return { id, site, score: scores.every(Boolean) ? scores.reduce((total, score) => total + score, 0) : 0 };
+      })).then((entries) => {
+        if (!results.isConnected) return;
+        const matches = entries.filter(({ score }) => score > 0).sort((a, b) => b.score - a.score);
+        finishSearch?.(matches.length);
+        status.textContent = matches.length ? tr('Знайдено сайтів') + ' · ' + matches.length : tr('Нічого не знайдено. Спробуй інші слова.');
+        results.replaceChildren(...matches.map(({ id, site }) => el('li.br-result',
+          el('small', siteUrl(site)), siteLink(id, site, 'br-result-link', site.title), el('p', site.description))));
+      });
+      return el('article.br-page.br-home.br-search-page', heading, searchForm(query), status, results);
+    }
 
     function siteContent(site, heading) {
-      const frame = el('iframe.br-frame', { title: site.title, src: '..' + site.path, allow: 'fullscreen' });
+      const url = frameUrl(site);
+      let report = VOS.xray.request(url, site.title);
+      const sandbox = 'allow-scripts allow-same-origin allow-forms allow-downloads' + (site.url ? '' : ' allow-modals');
+      const frame = el('iframe.br-frame', { title: site.title, src: url, sandbox });
+      cancelLoad = () => report?.('canceled');
+      frame.addEventListener('error', () => {
+        if (!frame.isConnected) return;
+        cancelLoad = null;
+        report?.('error');
+        report = null;
+      });
       frame.addEventListener('load', () => {
         if (!frame.isConnected) return;
+        cancelLoad = null;
         const doc = frame.contentDocument;
+        const timing = doc && frame.contentWindow.performance.getEntriesByType('navigation')[0];
+        const status = timing?.responseStatus;
+        report?.((!doc && !site.url) || status >= 400 ? 'error' : 'loaded', status);
+        report = null;
         if (!doc) return;
-        // Посилання сервісів на головну ведуть до каталогу, а не до ще одного Віконця у фреймі.
-        const location = new URL(doc.URL, window.location.href);
-        const path = location.pathname;
-        if (location.origin === window.location.origin && path.startsWith(site.path)) {
-          address.value = PORTAL + path + location.search + location.hash;
-        }
-        for (const link of doc.links) {
-          if (link.origin !== window.location.origin || !['/', '/index.html'].includes(link.pathname)) continue;
-          link.href = PORTAL + '/' + link.search + link.hash;
-          link.target = '_blank';
-          link.rel = 'noopener';
-        }
+        constrainDocument(doc, url);
+        keepCertificateInFrame(doc);
       });
-      return el('section.br-site', el('div.br-site-bar', heading, externalLink(PORTAL + site.path, tr('Відкрити в новій вкладці'))), frame);
-    }
-
-    async function saveIllustration(button) {
-      if (saving || !imageData) return;
-      saving = button.disabled = true;
-      try {
-        const result = await VOS.dialog.saveAs({
-          title: tr('Зберегти ілюстрацію'), name: fs.uniqueName('pics', ASSET.title + '.png'),
-          folder: 'pics', defaultFolder: 'pics', ext: 'png',
-        });
-        if (!result || closed) return;
-        const folder = fs.get(result.folder);
-        if (!folder || folder.type !== 'folder' || result.folder === 'trash' || fs.isInTrash(result.folder)) {
-          throw new Error(tr('Обери місце для збереження ще раз.'));
-        }
-        const replacement = result.replaceId ? fs.get(result.replaceId) : null;
-        if (result.replaceId && (!replacement || replacement.parent !== result.folder
-          || replacement.name.toLocaleLowerCase('uk') !== result.name.toLocaleLowerCase('uk'))) {
-          throw new Error(tr('Файл для заміни змінився. Обери, куди зберегти ілюстрацію.'));
-        }
-        const node = replacement ? fs.write(replacement.id, imageData) : fs.createFile(result.folder, result.name, imageData);
-        await fs.flush();
-        if (closed) return;
-        const saved = fs.get(node.id);
-        if (!saved || saved.content !== imageData || saved.parent !== result.folder) {
-          throw new Error(tr('Ілюстрація змінилася під час збереження. Спробуй ще раз.'));
-        }
-        VOS.toast(tr('Ілюстрацію «') + ASSET.title + tr('» збережено'), 'save');
-        bus.emit('browser:save', { node: saved, pageId: ASSET.pageId, assetId: ASSET.id, winId: win.id });
-      } catch (error) {
-        if (!closed) VOS.dialog.error(tr('Не вдалося зберегти ілюстрацію. ') + (error?.message || tr('Спробуй ще раз.')));
-      } finally {
-        saving = button.disabled = false;
-        const currentButton = root.querySelector('[data-hint="browser-save"]');
-        if (currentButton) currentButton.disabled = false;
-      }
-    }
-
-    function citeIllustration() {
-      const draft = VOS.apps.launch('notepad', { text: source });
-      if (draft) bus.emit('browser:cite', {
-        pageId: ASSET.pageId, assetId: ASSET.id, source, winId: win.id, draftWinId: draft.id,
-      });
-    }
-
-    function galleryContent() {
-      imageData ||= makeIllustration();
-      const save = el('button.btn.btn-primary', {
-        type: 'button', disabled: saving || !imageData,
-        dataset: { hint: 'browser-save' }, on: { click: () => saveIllustration(save) },
-      }, VOS.icon('download'), tr('Зберегти малюнок'));
-      const cite = el('button.btn', {
-        type: 'button', dataset: { hint: 'browser-source' }, on: { click: citeIllustration },
-      }, VOS.icon('notebook'), tr('Записати джерело'));
-      const illustration = imageData
-        ? el('img.br-illustration', { src: imageData, width: 560, height: 320, alt: tr('Помаранчевий паперовий змій літає над зеленими пагорбами') })
-        : el('p', tr('Не вдалося показати ілюстрацію.'));
-      return el('figure.br-gallery', illustration,
-        el('figcaption.br-details', el('h3', ASSET.title), el('p.br-source', source),
-          el('div.br-actions', save, cite)));
+      const returnHome = el('button.btn.br-site-return', {
+        type: 'button', on: { click: () => go('home', 'home') },
+      }, VOS.icon('home'), tr('Початкова сторінка'));
+      return el('section.br-site', el('div.br-site-bar', heading, returnHome), frame);
     }
 
     function render(focusHeading) {
-      const pageId = history[position];
-      const site = SITES[pageId];
-      const page = site || PAGES[pageId];
-      const heading = el('h2.br-heading', { tabindex: '-1' }, page.title);
-      const content = site ? siteContent(site, heading) : el('article.br-page.br-' + pageId, heading);
-      if (pageId === 'home') {
-        const cards = Object.entries(SITES).map(([id, item]) => pageLink(id, item.title, item.icon, item.description));
-        content.append(el('h3.br-section-title', tr('Уроки й сервіси itnauka.org')), el('div.br-cards', cards),
-          externalLink(PORTAL + '/', tr('Усі сервіси itnauka.org (нова вкладка)')),
-          el('h3.br-section-title', tr('Сайт школи «Стежинка»')), pageLink('library', tr('Шкільна бібліотека'), 'books'));
-      } else if (pageId === 'library') {
-        content.append(el('p', tr('У бібліотеці вигаданої школи «Стежинка» зібрали малюнки для виставки «Вітер і небо».')),
-          pageLink('gallery', tr('Галерея ілюстрацій'), 'image'), pageLink('home', tr('Початкова сторінка'), 'home'));
-      } else if (pageId === 'gallery') {
-        content.append(galleryContent(), pageLink('library', tr('Назад до бібліотеки'), 'books'));
-      }
-      address.value = addressOf(pageId);
+      cancelLoad?.();
+      cancelLoad = null;
+      const { id, query } = history[position];
+      const site = SITES[id];
+      const title = site?.title || (id === 'search' ? SEARCH_TITLE : tr('Куди вирушимо?'));
+      const heading = el('h2.br-heading', { tabindex: '-1' }, title);
+      address.value = site ? siteUrl(site) : id === 'search' ? SEARCH_TITLE : tr('Початкова сторінка');
       back.disabled = position === 0;
       forward.disabled = position === history.length - 1;
-      viewport.replaceChildren(content);
+      viewport.replaceChildren(site ? siteContent(site, heading) : id === 'search' ? searchContent(heading, query) : homeContent(heading));
       viewport.scrollTop = 0;
       if (focusHeading) heading.focus({ preventScroll: true });
     }
@@ -269,7 +238,7 @@
   }
 
   VOS.apps.register({
-    id: 'browser', name: 'Навчальний браузер', icon: ICON, color: '#0e7490',
-    category: 'computer', desc: tr('Уроки, тренажери й шкільна бібліотека'), launch,
+    id: 'browser', name: 'Навчальний браузер', icon: 'globe', color: '#0e7490',
+    category: 'computer', desc: tr('Навчальні сайти, пошук і енциклопедія'), launch,
   });
 })();

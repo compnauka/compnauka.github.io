@@ -149,7 +149,7 @@
         VOS.shell.applyLook();
         VOS.toast(tr('Віконце повернуто до початкового стану'), 'sparkles');
       } } }, VOS.icon('refresh'), tr(' Скинути файли й налаштування')),
-      el('p.set-note', tr('Сайт: '), el('a', { href: 'https://itnauka.org/', target: '_blank', rel: 'noopener' }, 'itnauka.org')),
+      el('p.set-note', tr('Сайт: ') + 'itnauka.org'),
     ];
   }
 

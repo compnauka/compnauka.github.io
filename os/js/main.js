@@ -19,6 +19,7 @@
   let expiryTimer;
   let retiring = false;
   let entering = false;
+  let sessionFullscreen = false;
 
   async function purge(id) {
     store.removeProfileData(id);
@@ -99,9 +100,34 @@
   };
   VOS.session = session;
 
+  function requestSessionFullscreen() {
+    const page = document.documentElement;
+    const request = page.requestFullscreen || page.webkitRequestFullscreen;
+    if (!request || document.fullscreenElement || document.webkitFullscreenElement) return;
+    try {
+      const pending = request.call(page);
+      sessionFullscreen = true;
+      pending?.catch(() => { sessionFullscreen = false; });
+    } catch { /* Вхід працює і в звичайному вікні. */ }
+  }
+
+  function exitSessionFullscreen() {
+    if (!sessionFullscreen) return;
+    sessionFullscreen = false;
+    if ((document.fullscreenElement || document.webkitFullscreenElement) !== document.documentElement) return;
+    try {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      exit?.call(document)?.catch(() => {});
+    } catch { /* Браузер уже міг вийти з повноекранного режиму. */ }
+  }
+
   function show(id) {
     ['boot', 'login', 'off'].forEach((s) => { $('#' + s).hidden = s !== id; });
     document.body.classList.toggle('session', id === 'desktop');
+    if (id !== 'desktop') {
+      exitSessionFullscreen();
+      VOS.xray.close();
+    }
   }
 
   function boot(next) {
@@ -197,7 +223,10 @@
     event.preventDefault();
     if (entering || retiring || previewProfile) return;
     const current = classroom();
-    if (current && store.canWriteProfile(current.id)) return enter(current);
+    if (current && store.canWriteProfile(current.id)) {
+      requestSessionFullscreen();
+      return enter(current);
+    }
     if (current) retire(current).catch(error => console.warn('[session]', error));
     const created = Date.now();
     const profile = {
@@ -211,6 +240,7 @@
       VOS.dialog.error(tr('Браузер не дозволяє зберігати сеанс. Дозволь збереження даних сайту й спробуй ще раз.'));
       return;
     }
+    requestSessionFullscreen();
     return enter(profile);
   }
 

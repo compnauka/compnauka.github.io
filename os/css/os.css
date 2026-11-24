@@ -171,12 +171,13 @@ button:disabled { cursor: default; opacity: .45; }
 #desktop { position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--tb) + env(safe-area-inset-bottom)); overflow: hidden; background-size: cover !important; }
 body:not(.session) #desktop, body:not(.session) #taskbar { visibility: hidden; }
 .desk-icons {
-  position: absolute; inset: 0; padding: 10px; display: grid; grid-auto-flow: column;
+  position: absolute; inset: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  padding: 10px; display: grid; grid-auto-flow: column;
   grid-template-rows: repeat(auto-fill, var(--cell-h)); grid-auto-columns: var(--cell-w);
   gap: 6px; align-content: start; justify-content: start; outline: none;
 }
-#windows { position: absolute; inset: 0; z-index: 1; isolation: isolate; pointer-events: none; }
-#windows > * { pointer-events: auto; }
+#windows { position: absolute; inset: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); z-index: 1; isolation: isolate; pointer-events: none; }
+#windows > .win { pointer-events: auto; }
 
 /* ---------- Значки ---------- */
 .item {
@@ -273,7 +274,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
 /* ---------- Панель задач ---------- */
 #taskbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; height: calc(var(--tb) + env(safe-area-inset-bottom));
-  padding: 6px 0 calc(6px + env(safe-area-inset-bottom)) 8px; display: flex; align-items: center; gap: 6px;
+  padding: 6px env(safe-area-inset-right) calc(6px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left)); display: flex; align-items: center; gap: 6px;
   background: rgba(15, 23, 42, .86); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
   color: #fff; border-top: 1px solid rgba(255, 255, 255, .12);
 }
@@ -702,7 +703,6 @@ body.theme-dark .set-nav-btn.active { color: #93b4ff; }
    ========================================================================= */
 @media (max-width: 700px), (max-height: 480px) {
   :root { --tb: 60px; }
-  .desk-icons { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(auto-fill, minmax(var(--cell-w), 1fr)); grid-auto-rows: max-content; overflow-y: auto; justify-items: center; padding-bottom: 20px; }
   :root, body[data-icons="m"] { --cell-w: 90px; --ico: 50px; }
   .item-label { font-size: .78rem; }
   body[data-icons="s"] { --cell-w: 80px; --ico: 40px; }
@@ -720,7 +720,6 @@ body.theme-dark .set-nav-btn.active { color: #93b4ff; }
   .ctx-item { min-height: 46px; }
   .ctx-menu { min-width: 240px; max-width: calc(100vw - 16px); }
   .item-actions { opacity: .75; width: 28px; height: 28px; border: 0; background: rgba(255, 255, 255, .8); }
-  .desk-icons .bg-actions { position: fixed; top: 8px; right: 8px; }
   .ctx-sub { position: static; box-shadow: none; border: 0; padding: 0 0 0 16px; background: transparent; }
   .helper { left: 8px; right: 8px; width: auto; bottom: calc(var(--tb) + env(safe-area-inset-bottom) + 8px); max-height: 42dvh; }
   .hp-all { display: none; }
@@ -854,10 +853,40 @@ body.wp-light .desk-icons .item:hover { background: rgba(255, 255, 255, .45); }
   #clock { padding: 0 4px; }
 }
 
-/* Телефон: «Дії» не накриває перший ряд значків; підписи не рвуться посеред слова */
 .item-label { overflow-wrap: break-word; }
 @media (max-width: 700px), (max-height: 480px) {
-  .desk-icons { padding-top: 58px; }
   .item { padding: 6px 2px; }
   .item-label { font-size: .74rem; padding: 0 1px 2px; }
+}
+
+/* Сітка ярликів на телефонах і сенсорних планшетах */
+@media (max-width: 700px), (max-height: 480px), (pointer: coarse) and (max-width: 1440px) {
+  .desk-icons {
+    --desk-columns: 5;
+    --ico: 46px;
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    grid-template-columns: repeat(var(--desk-columns), minmax(0, 1fr));
+    grid-auto-rows: minmax(84px, max-content);
+    gap: 6px 2px;
+    padding: 58px 8px 16px;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+  }
+  body[data-icons="s"] .desk-icons { --ico: 38px; }
+  body[data-icons="l"] .desk-icons { --ico: 56px; }
+  .desk-icons .item { width: min(100%, 112px); min-width: 0; justify-self: center; padding: 6px 1px; }
+  .desk-icons .item-ico { width: min(var(--ico), 100%); height: auto; aspect-ratio: 1; }
+  .desk-icons .item-label { font-size: .75rem; padding-inline: 0; }
+  .desk-icons .item-actions { top: 0; right: 0; color: var(--text); background: var(--win-bg); }
+  .desk-icons .item-actions .ic { width: 15px; height: 15px; }
+  .desk-icons .bg-actions {
+    position: fixed;
+    top: calc(8px + env(safe-area-inset-top));
+    right: calc(8px + env(safe-area-inset-right));
+    min-height: 44px;
+  }
+}
+@media (max-width: 429px) {
+  .desk-icons { --desk-columns: 4; }
 }
