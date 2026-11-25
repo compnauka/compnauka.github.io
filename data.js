@@ -425,6 +425,13 @@ const CATEGORIES = [
     color: "#ef4444",
     services: [
       {
+        name: "Шукай правильно!",
+        description: "Тренажер безпечного пошуку, перевірки відповідей ШІ та гра «Детектив правди».",
+        link: "services/security_and_safety/safe_search/index.html",
+        image: "images/safe-search.webp",
+        tags: ["1-2 класи", "3-4 класи"]
+      },
+      {
         name: "Кібербезпека для дітей",
         description: "Дізнайся, як захистити себе в інтернеті.",
         link: "services/security_and_safety/cybersecurity_for_kids/index.html",

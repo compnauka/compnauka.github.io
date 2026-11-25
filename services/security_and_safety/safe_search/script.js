@@ -1,424 +1,306 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const byId = id => document.getElementById(id);
 
-  function smoothBehavior() {
-    return prefersReducedMotion ? "auto" : "smooth";
+const seniorCopy = {
+  query: "Назви тему й уточни, що саме хочеш дізнатися. Підійдуть і ключові слова «Місяць відбите світло», і запитання «Чому світить Місяць?».",
+  ad: "Шукай позначку «Реклама» або «Спонсоровано». Місце в результатах пошуку саме по собі не підтверджує правдивість інформації.",
+  source: "Перевір автора чи організацію, дату, докази та посилання. Кінець адреси може підказати тип сайту. Важливий факт звір у двох незалежних джерелах.",
+  regular: "Пошуковик добирає сторінки до запиту й може показувати короткі уривки. Відкрий джерело, щоб прочитати матеріал у контексті.",
+  ai: "Пошуковик іноді показує огляд, створений ШІ на основі вебсторінок. Деякі чатботи теж можуть шукати в інтернеті й давати посилання. Здатність шукати залежить від сервісу й увімкнених функцій.",
+  verify: "ШІ може пропустити важливу деталь, неправильно пояснити джерело або вигадати факт. Відкрий посилання, знайди саме це твердження на сторінці й звір його з іншим незалежним джерелом.",
+  "check-one": "Сформулюй точний запит без особистих даних.",
+  "check-two": "Зауваж, хто опублікував матеріал, коли й на чому ґрунтуються його твердження.",
+  "check-three": "Відкрий джерела огляду чи відповіді ШІ та звір важливий факт у двох незалежних джерелах."
+};
+
+const topics = [
+  {
+    label: "🌙 Місяць", query: "Чому світить Місяць?", match: /місяц|місяч|moon/iu,
+    confirmed: false,
+    claim: "Місяць світиться сам, як лампа.",
+    source: "Матеріал про місячне світло",
+    publisher: "NASA Science",
+    evidence: "Місяць відбиває світло Сонця. Саме це світло ми бачимо із Землі.",
+    second: "Для другої перевірки знайди в шкільному підручнику пояснення, чому видно освітлений Сонцем Місяць.",
+    ad: "Замов нічник у формі Місяця!"
+  },
+  {
+    label: "☀️ Сонце", query: "Чи є Сонце зорею?", match: /сонц|соняч|sun/iu,
+    confirmed: true,
+    claim: "Сонце — найближча до Землі зоря.",
+    source: "Навчальний матеріал про Сонце",
+    publisher: "NASA Science",
+    evidence: "Сонце — зоря. Воно ближче до Землі за інші зорі.",
+    second: "Для другої перевірки знайди у шкільній енциклопедії розділ про Сонячну систему.",
+    ad: "Купи набір наліпок із зорями!"
+  },
+  {
+    label: "🌍 Земля", query: "За скільки днів Земля обертається навколо Сонця?", match: /земл|365|тривалість року/iu,
+    confirmed: true,
+    claim: "Земля робить оберт навколо Сонця приблизно за 365 днів.",
+    source: "Словничок про рух Землі",
+    publisher: "NOAA, наукова установа США",
+    evidence: "Один оберт Землі навколо Сонця триває приблизно 365 і чверть доби.",
+    second: "Для другої перевірки пошукай у підручнику пояснення, скільки триває рік і чому бувають високосні роки.",
+    ad: "Сьогодні знижка на глобуси!"
   }
+];
 
-  function normalizeQuery(raw) {
-    return raw
-      .toLowerCase()
-      .trim()
-      .replace(/[’`]/g, "'")
-      .replace(/ґ/g, "г")
-      .replace(/\s+/g, " ");
+const juniorQuestions = [
+  {
+    prompt: "Ти хочеш дізнатися, чому світить Місяць. Який запит допоможе?",
+    answers: ["Покажи щось цікаве", "Чому світить Місяць?"],
+    correct: 1, detail: "У цьому запиті є тема й точне питання."
+  },
+  {
+    prompt: "Біля посилання на нічник написано «Реклама». Що це означає?",
+    answers: ["Хтось заплатив за показ", "Це вже перевірена відповідь"],
+    correct: 0, detail: "Реклама допомагає продавати. Для відповіді про Місяць краще знайти навчальну сторінку."
+  },
+  {
+    prompt: "ШІ написав, що Місяць світиться сам. Що зробиш?",
+    answers: ["Одразу перекажу це друзям", "Звірю з книжкою разом із дорослим"],
+    correct: 1, detail: "Місяць відбиває світло Сонця. Відповіді ШІ можуть містити помилки."
+  },
+  {
+    prompt: "На сторінці обіцяють подарунок за твою адресу. Як діяти?",
+    answers: ["Закрию сторінку й скажу дорослому", "Напишу свою адресу"],
+    correct: 0, detail: "Домашню адресу бережи. Дорослий допоможе, якщо сторінка викликає сумнів."
   }
+];
 
-  /* --- БАЗА ДАНИХ ПОШУКУ --- */
-  const searchDatabase = [
-    {
-      keys: ["київ", "столиця", "kyiv"],
-      results: [
-        {
-          title: "Київ - Вікіпедія",
-          url: "uk.wikipedia.org/wiki/Київ",
-          description: "Київ - столиця України.",
-          quality: "good",
-          reason: "Вікіпедія - гарне джерело для загальних фактів. Перевір іще 1-2 джерела."
-        },
-        {
-          title: "Динозаври в Києві!",
-          url: "fake-news-ufo.com",
-          description: "Шок! Динозавра помітили біля метро!",
-          quality: "bad",
-          reason: "Це вигадана новина (фейк) для привернення уваги."
-        }
-      ]
-    },
-    {
-      keys: ["гра", "ігри", "ігр", "гта", "gta", "майнкрафт", "minecraft", "роблокс", "roblox"],
-      results: [
-        {
-          title: "Steam: Ігри",
-          url: "store.steampowered.com",
-          description: "Офіційний магазин ігор.",
-          quality: "good",
-          reason: "Це офіційний магазин. Але все одно читай відгуки і перевіряй джерело."
-        },
-        {
-          title: "Завантажити безкоштовно без реєстрації",
-          url: "hacker-soft-free.net",
-          description: "Всі нові ігри безкоштовно!",
-          quality: "bad",
-          reason: "Такі сайти часто містять віруси або крадуть дані."
-        }
-      ]
-    },
-    {
-      keys: ["космос", "планети", "зірки", "наса", "nasa"],
-      results: [
-        {
-          title: "NASA Space Place",
-          url: "spaceplace.nasa.gov",
-          description: "Сайт для дітей про космос.",
-          quality: "good",
-          reason: "Офіційний сайт від NASA (.gov) для навчання."
-        }
-      ]
-    },
-    {
-      keys: ["айфон", "iphone", "телефон", "смартфон"],
-      results: [
-        {
-          title: "Apple Україна",
-          url: "www.apple.com/ua",
-          description: "Офіційний сайт Apple.",
-          quality: "good",
-          reason: "Це офіційний сайт виробника."
-        },
-        {
-          title: "Виграй iPhone 15 прямо зараз!",
-          url: "lucky-winner-2025.xyz",
-          description: "Ти став 1000-м відвідувачем! Забирай приз!",
-          quality: "bad",
-          reason: "Це шахрайство. Дорогу техніку просто так не роздають."
-        }
-      ]
-    },
-    {
-      keys: ["безпека", "безпек", "кіберполіція", "поліція", "шахрайство"],
-      results: [
-        {
-          title: "Кіберполіція України",
-          url: "cyberpolice.gov.ua",
-          description: "Правила безпеки в інтернеті.",
-          quality: "good",
-          reason: "Офіційний сайт урядової установи (.gov.ua)."
-        }
-      ]
-    },
-    {
-      keys: ["default"],
-      results: [
-        {
-          title: "Кіберполіція України",
-          url: "cyberpolice.gov.ua",
-          description: "Поради з цифрової безпеки для дітей і батьків.",
-          quality: "good",
-          reason: "Офіційне джерело. Перевіряй, хто автор і коли оновлено."
-        },
-        {
-          title: "Як стати багатим за 5 хвилин",
-          url: "easy-money-click.com",
-          description: "Натисни сюди і стань мільйонером!",
-          quality: "bad",
-          reason: "Це клікбейт і маніпуляція."
-        }
-      ]
-    }
-  ];
-
-  /* --- СЦЕНАРІЇ ГРИ --- */
-  const gameScenarios = [
-    {
-      scenario: "Треба підготувати коротку доповідь про бджіл.",
-      source: "Сайт National Geographic Kids або шкільна енциклопедія.",
-      correctAnswer: "good",
-      explanation: "Наукові джерела перевіряють факти перед публікацією."
-    },
-    {
-      scenario: "📱 У TikTok пишуть: 'Натисни сюди і виграй мільйон за 30 секунд!' 🤑",
-      source: "Коментар незнайомця без посилань.",
-      correctAnswer: "bad",
-      explanation: "Це клікбейт. Гроші за один клік - типова пастка."
-    },
-    {
-      scenario: "Прийшло повідомлення: 'Твій Instagram заблоковано, введи пароль'.",
-      source: "Посилання веде на security-support-123.com.",
-      correctAnswer: "bad",
-      explanation: "Це фішинг. Пароль на підозрілому сайті вводити не можна."
-    },
-    {
-      scenario: "Хочеш дізнатися, чи корисні щеплення.",
-      source: "Сайт МОЗ України (moz.gov.ua).",
-      correctAnswer: "good",
-      explanation: "Медичну інформацію краще брати з офіційних або наукових джерел."
-    },
-    {
-      scenario: "Сайт пропонує платну гру безкоштовно без реєстрації.",
-      source: "Super-Free-Games.xyz.",
-      correctAnswer: "bad",
-      explanation: "Такі сайти часто поширюють шкідливі файли."
-    },
-    {
-      scenario: "Потрібен рецепт пирога на вихідні.",
-      source: "Кулінарний сайт з фото кроків і відгуками.",
-      correctAnswer: "good",
-      explanation: "Для хобі і рецептів таке джерело може бути нормальним."
-    },
-    {
-      scenario: "Новина: 'Шоколад допомагає схуднути на 10 кг за день'.",
-      source: "Сайт із блимаючою рекламою 'чарівних засобів'.",
-      correctAnswer: "bad",
-      explanation: "Занадто гучна обіцянка - ознака маніпуляції."
-    },
-    {
-      scenario: "Ти не впевнений, чи сайт безпечний.",
-      source: "Сайт просить номер телефону та домашню адресу.",
-      correctAnswer: "bad",
-      explanation: "Золоте правило: одразу поклич дорослого."
-    }
-  ];
-
-  /* --- ЗМІННІ СТАНУ --- */
-  let currentScenarioIndex = 0;
-  let score = 0;
-  let currentQuestions = [];
-  const btnShowCert = document.getElementById("btn-show-cert");
-
-  function shuffle(array) {
-    const arrCopy = [...array];
-    for (let i = arrCopy.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
-    }
-    return arrCopy;
+const seniorQuestions = [
+  {
+    prompt: "Ти готуєш розповідь про Місяць. Який запит допоможе з’ясувати, звідки береться місячне світло?",
+    answers: ["Місяць цікаве", "Чому світить Місяць: відбите сонячне світло", "Найяскравіші фото Місяця"],
+    correct: 1, detail: "Точний запит називає тему й підказує, який факт потрібно знайти."
+  },
+  {
+    prompt: "ШІ додав посилання до відповіді. Як перевірити твердження?",
+    answers: ["Відкрити посилання, знайти підтвердження і звірити з незалежним джерелом", "Порахувати, скільки посилань додав ШІ", "Перечитати лише сам огляд ШІ"],
+    correct: 0, detail: "Кількість посилань мало що говорить. Важливо, чи джерела підтверджують саме це твердження."
+  },
+  {
+    prompt: "Два сайти повторюють дослівно одну новину й посилаються на той самий допис. Що далі?",
+    answers: ["Вважати новину перевіреною двічі", "Повірити сайту з красивішими фото", "Знайти незалежне джерело або першоджерело"],
+    correct: 2, detail: "Скопійована новина має те саме джерело. Незалежна перевірка дає додаткове підтвердження."
+  },
+  {
+    prompt: "Перший результат пошуку має позначку «Спонсоровано». Ти шукаєш науковий факт. Як діяти?",
+    answers: ["Обрати його, бо він перший", "Знайти матеріал фахової установи й перевірити докази", "Обрати будь-який сайт без рекламної позначки"],
+    correct: 1, detail: "Для наукового факту важливі авторство та докази. Місце в пошуку або відсутність рекламної позначки цього не доводять."
+  },
+  {
+    prompt: "Сторінка зі старою датою називає час роботи музею. Де перевірити розклад на завтра?",
+    answers: ["У свіжому розкладі на сайті музею", "У старому дописі з багатьма вподобайками", "У першому короткому уривку під посиланням"],
+    correct: 0, detail: "Розклад змінюється. Знайди актуальну інформацію самого музею."
+  },
+  {
+    prompt: "Чат із ШІ просить твої номер телефону й адресу, щоб відповісти на запитання про Сонце. Що зробиш?",
+    answers: ["Напишу лише адресу", "Надішлю фото з адресою", "Залишу дані при собі й звернуся до дорослого"],
+    correct: 2, detail: "Особисті дані зайві для такого запиту. Якщо сервіс їх просить, дорослий допоможе розібратися."
   }
+];
 
-  function performSearch() {
-    const input = document.getElementById("search-input");
-    const query = normalizeQuery(input.value);
-    const container = document.getElementById("search-results");
-    const errorMsg = document.getElementById("search-error");
+const juniorCopy = Object.fromEntries(Array.from(document.querySelectorAll("[data-copy]"), node => [node.dataset.copy, node.textContent]));
+const results = byId("results");
+const status = byId("search-status");
+const queryInput = byId("search-query");
+const topicsBox = byId("topics");
+const answersBox = byId("answers");
+const certificate = byId("certificate");
+let senior = false;
+let questions = juniorQuestions;
+let questionIndex = 0;
+let score = 0;
 
-    if (!query) {
-      errorMsg.style.display = "block";
-      container.style.display = "none";
-      return;
-    }
+function makeButton(label, action) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "button secondary";
+  button.textContent = label;
+  button.addEventListener("click", action);
+  return button;
+}
 
-    errorMsg.style.display = "none";
-    let data = null;
+function addText(parent, tag, content, className) {
+  const element = document.createElement(tag);
+  element.textContent = content;
+  if (className) element.className = className;
+  parent.append(element);
+  return element;
+}
 
-    for (const topic of searchDatabase) {
-      if (topic.keys.includes("default")) {
-        continue;
-      }
-      if (topic.keys.some((key) => query.includes(key))) {
-        data = topic.results;
-        break;
-      }
-    }
+function setLevel(value) {
+  senior = value === "senior";
+  questions = senior ? seniorQuestions : juniorQuestions;
+  byId("level-description").textContent = senior
+    ? "Власні запити, перевірка джерел і 6 завдань."
+    : "Готові запити, короткі пояснення і 4 завдання.";
+  const copy = senior ? seniorCopy : juniorCopy;
+  document.querySelectorAll("[data-copy]").forEach(node => { node.textContent = copy[node.dataset.copy]; });
+  byId("search-instructions").textContent = senior
+    ? "Обери тему або напиши свій запит про Місяць, Сонце чи Землю."
+    : "Обери, про що хочеш дізнатися.";
+  byId("search-form").hidden = !senior;
+  queryInput.value = "";
+  results.hidden = true;
+  results.replaceChildren();
+  status.textContent = "";
+  byId("start").hidden = false;
+  byId("question-panel").hidden = true;
+  byId("summary").hidden = true;
+  topicsBox.querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed", "false"));
+}
 
-    if (!data) {
-      data = searchDatabase.find((topic) => topic.keys.includes("default")).results;
-    }
-
-    container.innerHTML = "";
-    container.style.display = "block";
-
-    data.forEach((item) => {
-      const div = document.createElement("div");
-      div.className = "result-item";
-      const badge =
-        item.quality === "good"
-          ? '<span class="quality-badge good-source">✅ Надійне джерело</span>'
-          : '<span class="quality-badge bad-source">❌ Підозріле джерело</span>';
-
-      div.innerHTML = `
-        <div class="result-title" role="link">${item.title}</div>
-        <div class="result-url">${item.url}</div>
-        <div class="result-description">${item.description}</div>
-        ${badge}
-        <div style="margin-top: 8px; font-size: 0.9rem; color: #555;"><em>💡 ${item.reason}</em></div>
-      `;
-      container.appendChild(div);
-    });
-
-    container.scrollIntoView({ behavior: smoothBehavior(), block: "start" });
-  }
-
-  function updateScoreDisplay() {
-    document.getElementById("game-score").innerText = `Бали: ${score}`;
-  }
-
-  function enableAnswerButtons() {
-    document.getElementById("btn-good").disabled = false;
-    document.getElementById("btn-bad").disabled = false;
-  }
-
-  function disableAnswerButtons() {
-    document.getElementById("btn-good").disabled = true;
-    document.getElementById("btn-bad").disabled = true;
-  }
-
-  function startGame() {
-    score = 0;
-    currentScenarioIndex = 0;
-    currentQuestions = shuffle(gameScenarios).slice(0, 5);
-
-    updateScoreDisplay();
-    document.getElementById("game-feedback").style.display = "none";
-
-    document.getElementById("btn-start-game").style.display = "none";
-    document.getElementById("btn-good").style.display = "inline-block";
-    document.getElementById("btn-bad").style.display = "inline-block";
-    document.getElementById("btn-next").style.display = "none";
-    btnShowCert.style.display = "none";
-
-    enableAnswerButtons();
-    showScenario();
-  }
-
-  function showScenario() {
-    if (currentScenarioIndex >= currentQuestions.length) {
-      finishGame();
-      return;
-    }
-
-    const q = currentQuestions[currentScenarioIndex];
-    document.getElementById("scenario-display").innerHTML = `
-      <p><strong>Питання ${currentScenarioIndex + 1} з ${currentQuestions.length}</strong></p>
-      <p>${q.scenario}</p>
-      <div class="source-box"><strong>Джерело:</strong> ${q.source}</div>
-    `;
-
-    document.getElementById("game-area").scrollIntoView({ behavior: smoothBehavior(), block: "center" });
-  }
-
-  function answerGame(ans) {
-    const q = currentQuestions[currentScenarioIndex];
-    const feedback = document.getElementById("game-feedback");
-    const btnNext = document.getElementById("btn-next");
-
-    feedback.style.display = "block";
-    disableAnswerButtons();
-
-    if (ans === q.correctAnswer) {
-      score += 20;
-      feedback.className = "feedback feedback-correct";
-      feedback.innerHTML = `✅ Правильно!<br><small>${q.explanation}</small>`;
-    } else {
-      feedback.className = "feedback feedback-wrong";
-      feedback.innerHTML = `❌ На жаль, помилка.<br><small>${q.explanation}</small>`;
-    }
-
-    updateScoreDisplay();
-
-    if (currentScenarioIndex < currentQuestions.length - 1) {
-      btnNext.style.display = "inline-flex";
-      btnNext.focus();
-    } else {
-      setTimeout(finishGame, 3500);
-    }
-  }
-
-  function nextQuestion() {
-    currentScenarioIndex += 1;
-    document.getElementById("game-feedback").style.display = "none";
-    document.getElementById("btn-next").style.display = "none";
-
-    enableAnswerButtons();
-    showScenario();
-  }
-
-  function finishGame() {
-    document.getElementById("scenario-display").innerHTML = `
-      <h3>Гра завершена! 🎉</h3>
-      <p>Твій рахунок: <strong>${score} з 100</strong></p>
-    `;
-    document.getElementById("btn-good").style.display = "none";
-    document.getElementById("btn-bad").style.display = "none";
-    document.getElementById("btn-next").style.display = "none";
-    document.getElementById("game-feedback").style.display = "none";
-
-    const btnStart = document.getElementById("btn-start-game");
-    btnStart.style.display = "inline-block";
-
-    if (score >= 80) {
-      btnStart.innerText = "Грати знову";
-      btnShowCert.style.display = "inline-block";
-      setTimeout(openModal, 800);
-    } else {
-      btnStart.innerText = "Спробувати ще раз (Треба 80 балів)";
-      btnShowCert.style.display = "none";
-    }
-  }
-
-  function openModal() {
-    const modal = document.getElementById("certificate-modal");
-    modal.style.display = "flex";
-    setTimeout(() => modal.classList.add("show"), 10);
-    const closeBtn = document.getElementById("close-modal");
-    if (closeBtn) {
-      closeBtn.focus();
-    }
-  }
-
-  function closeModal() {
-    const modal = document.getElementById("certificate-modal");
-    modal.classList.remove("show");
-    setTimeout(() => {
-      modal.style.display = "none";
-    }, 300);
-  }
-
-  document.getElementById("btn-search").addEventListener("click", performSearch);
-  document.getElementById("search-input").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      performSearch();
-    }
+topics.forEach(topic => {
+  const button = makeButton(topic.label, () => {
+    queryInput.value = topic.query;
+    showSearch(topic);
   });
-
-  document.getElementById("btn-start-game").addEventListener("click", startGame);
-  document.getElementById("btn-good").addEventListener("click", () => answerGame("good"));
-  document.getElementById("btn-bad").addEventListener("click", () => answerGame("bad"));
-  document.getElementById("btn-next").addEventListener("click", nextQuestion);
-  btnShowCert.addEventListener("click", openModal);
-
-  const closeBtn = document.getElementById("close-modal");
-  closeBtn.addEventListener("click", closeModal);
-  closeBtn.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      closeModal();
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      const modal = document.getElementById("certificate-modal");
-      if (modal.classList.contains("show") || modal.style.display === "flex") {
-        closeModal();
-      }
-    }
-  });
-
-  window.addEventListener("click", (e) => {
-    const modal = document.getElementById("certificate-modal");
-    if (e.target === modal) {
-      closeModal();
-    }
-  });
-
-  document.getElementById("btn-generate-cert").addEventListener("click", () => {
-    const nameInput = document.getElementById("player-name");
-    const name = nameInput.value.trim();
-
-    if (!name) {
-      nameInput.style.borderColor = "#e53e3e";
-      return;
-    }
-
-    nameInput.style.borderColor = "#cbd5e0";
-    document.getElementById("cert-name-display").innerText = name;
-    document.getElementById("cert-date").innerText = new Date().toLocaleDateString("uk-UA");
-
-    document.getElementById("final-cert").style.display = "block";
-    nameInput.style.display = "none";
-    document.getElementById("btn-generate-cert").style.display = "none";
-    document.querySelector(".certificate > p:nth-of-type(2)").style.display = "none";
-  });
-
-  document.getElementById("btn-print").addEventListener("click", () => window.print());
+  button.setAttribute("aria-pressed", "false");
+  topicsBox.append(button);
 });
+
+document.querySelectorAll("[name=level]").forEach(radio => {
+  radio.addEventListener("change", () => setLevel(radio.value));
+});
+
+byId("search-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const query = queryInput.value.trim();
+  const [topic] = topics
+    .map(item => ({ item, position: query.search(item.match) }))
+    .filter(match => match.position >= 0)
+    .sort((left, right) => left.position - right.position)
+    .map(match => match.item);
+  if (topic) {
+    showSearch(topic);
+    return;
+  }
+  results.hidden = true;
+  results.replaceChildren();
+  topicsBox.querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed", "false"));
+  status.textContent = query
+    ? "Для цього запиту в тренажері немає прикладу. Спробуй тему «Місяць», «Сонце» або «Земля»."
+    : "Напиши запит або обери тему.";
+});
+
+function showSearch(topic) {
+  Array.from(topicsBox.children).forEach((button, index) => {
+    button.setAttribute("aria-pressed", String(topics[index] === topic));
+  });
+  status.textContent = "Навчальний приклад. Запит — " + topic.query;
+  results.replaceChildren();
+  results.hidden = false;
+
+  const overview = document.createElement("article");
+  overview.className = "sample-ai";
+  addText(overview, "p", "Змодельований огляд від ШІ", "tag");
+  addText(overview, "h3", topic.claim);
+  addText(overview, "p", "Нижче відкрий навчальне джерело й порівняй пояснення з оглядом.");
+
+  const ad = document.createElement("article");
+  addText(ad, "p", "Реклама · навчальний приклад", "tag ad");
+  addText(ad, "h3", topic.ad);
+  const source = document.createElement("details");
+  addText(source, "summary", "Відкрити навчальне джерело");
+  addText(source, "p", topic.source + " · " + topic.publisher);
+  addText(source, "p", topic.evidence);
+  if (senior) addText(source, "p", topic.second);
+
+  const check = document.createElement("article");
+  addText(check, "h3", "Чи підтвердило джерело огляд?");
+  const buttons = addText(check, "div", "", "result-buttons");
+  const feedback = addText(check, "p", "", "feedback");
+  feedback.setAttribute("role", "status");
+  ["Так, твердження збігається", "Ні, огляд містить помилку"].forEach((label, index) => {
+    buttons.append(makeButton(label, event => {
+      if (!source.open) {
+        feedback.textContent = "Спочатку відкрий навчальне джерело вище.";
+        source.querySelector("summary").focus();
+        return;
+      }
+
+      const correct = (index === 0) === topic.confirmed;
+      event.currentTarget.dataset.result = correct ? "correct" : "incorrect";
+      feedback.textContent = (correct ? "Саме так. " : "Звірмо ще раз. ") + topic.evidence;
+      buttons.querySelectorAll("button").forEach(button => { button.disabled = true; });
+      feedback.tabIndex = -1;
+      feedback.focus();
+    }));
+  });
+  if (senior) results.append(ad, overview, source, check);
+  else results.append(overview, source, check, ad);
+}
+
+function startGame() {
+  score = 0;
+  questionIndex = 0;
+  byId("start").hidden = true;
+  byId("summary").hidden = true;
+  byId("question-panel").hidden = false;
+  showQuestion();
+}
+
+function showQuestion() {
+  const question = questions[questionIndex];
+  byId("progress-text").textContent = "Завдання " + (questionIndex + 1) + " з " + questions.length;
+  byId("progress").max = questions.length;
+  byId("progress").value = questionIndex;
+  byId("question").textContent = question.prompt;
+  byId("game-feedback").textContent = "";
+  byId("next").hidden = true;
+  answersBox.replaceChildren();
+  question.answers.forEach((answer, index) => {
+    answersBox.append(makeButton(answer, event => answerQuestion(index, event.currentTarget)));
+  });
+  byId("question").focus();
+}
+
+function answerQuestion(index, button) {
+  const question = questions[questionIndex];
+  const correct = index === question.correct;
+  if (correct) score += 1;
+  button.dataset.result = correct ? "correct" : "incorrect";
+  answersBox.querySelectorAll("button").forEach(answer => { answer.disabled = true; });
+  byId("progress").value = questionIndex + 1;
+  const solution = correct ? "Саме так. " : "Кращий вибір — «" + question.answers[question.correct] + "». ";
+  byId("game-feedback").textContent = solution + question.detail;
+  byId("next").textContent = questionIndex + 1 === questions.length ? "Побачити результат" : "Наступне завдання";
+  byId("next").hidden = false;
+  byId("next").focus();
+}
+
+function advanceGame() {
+  questionIndex += 1;
+  if (questionIndex < questions.length) {
+    showQuestion();
+    return;
+  }
+  byId("question-panel").hidden = true;
+  byId("score").textContent = "Твій результат — " + score + " з " + questions.length;
+  byId("summary-note").textContent = score === questions.length
+    ? "Усі ситуації розгадано!"
+    : "Можеш зіграти ще раз і застосувати поради з гри.";
+  byId("summary").hidden = false;
+  byId("score").focus();
+}
+
+byId("start").addEventListener("click", startGame);
+byId("restart").addEventListener("click", startGame);
+byId("next").addEventListener("click", advanceGame);
+byId("show-certificate").addEventListener("click", () => {
+  byId("certificate-level").textContent = senior ? "Рівень 3–4 класів" : "Рівень 1–2 класів";
+  byId("player-name").value = "";
+  byId("certificate-name").textContent = "";
+  byId("certificate-name").hidden = true;
+  certificate.showModal();
+});
+byId("player-name").addEventListener("input", event => {
+  const name = event.currentTarget.value.trim();
+  byId("certificate-name").textContent = name;
+  byId("certificate-name").hidden = !name;
+});
+byId("print-certificate").addEventListener("click", () => window.print());
+
+setLevel(document.querySelector("[name=level]:checked").value);
