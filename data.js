@@ -427,7 +427,7 @@ const CATEGORIES = [
       {
         name: "Шукай правильно!",
         description: "Тренажер безпечного пошуку, перевірки відповідей ШІ та гра «Детектив правди».",
-        link: "services/security_and_safety/safe_search/index.html",
+        link: "services/security_and_safety/safe_search/",
         image: "images/safe-search.webp",
         tags: ["1-2 класи", "3-4 класи"]
       },
